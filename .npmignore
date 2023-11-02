@@ -1,10 +1,8 @@
 /node_modules
-/dist/temp
-/heroku-app
+/dist/examples
 /*.sh
 /*.bat
 
-.circleci/
 .idea/
 .vscode/
 

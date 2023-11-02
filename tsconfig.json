@@ -1,16 +1,5 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "module": "commonjs",
-        "jsx": "react",
-        "lib": [
-            "dom",
-            "es2015"
-        ],
-        "importHelpers": true,
-        "strict": true,
-        "strictNullChecks": false
-    },
+    "extends": "./tsconfig.base.json",
     "include": [
         "./examples/**/*.ts",
         "./examples/**/*.tsx",

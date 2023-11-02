@@ -30,11 +30,11 @@ $toolbarHeight: 30px;
   }
 
   &__toggle-left:after {
-    background-image: url('../images/left-panel.svg');
+    background-image: url('@images/left-panel.svg');
   }
 
   &__toggle-right:after {
-    background-image: url('../images/right-panel.svg');
+    background-image: url('@images/right-panel.svg');
   }
 
   &__toggle.active {
@@ -42,11 +42,11 @@ $toolbarHeight: 30px;
   }
 
   &__toggle-left.active:after {
-    background-image: url('../images/left-panel-active.svg');
+    background-image: url('@images/left-panel-active.svg');
   }
 
   &__toggle-right.active:after {
-    background-image: url('../images/right-panel-active.svg');
+    background-image: url('@images/right-panel-active.svg');
   }
 
   &__layout-group {

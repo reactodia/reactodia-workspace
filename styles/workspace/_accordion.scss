@@ -100,15 +100,15 @@
   &__handle-btn-left {
     left: 100%;
     margin-left: -10px;
-    &:before { background-image: url("../images/arrow-left.png"); }
-    &:hover:before { background-image: url("../images/arrow-left1.png"); }
+    &:before { background-image: url("@images/arrow-left.png"); }
+    &:hover:before { background-image: url("@images/arrow-left1.png"); }
   }
 
   &__handle-btn-right {
     right: 100%;
     margin-right: -10px;
-    &:before { background-image: url("../images/arrow-right.png"); }
-    &:hover:before { background-image: url("../images/arrow-right1.png"); }
+    &:before { background-image: url("@images/arrow-right.png"); }
+    &:hover:before { background-image: url("@images/arrow-right1.png"); }
   }
 
   &--collapsed &__handle-btn:before {
