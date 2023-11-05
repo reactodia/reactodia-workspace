@@ -1,9 +1,13 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { CommandHistory, Command } from '../diagram/history';
+import { EventObserver } from '../viewUtils/events';
+
 import { WorkspaceLanguage } from './workspace';
 
 export interface ToolbarProps {
+    history?: CommandHistory;
     canSaveDiagram?: boolean;
     onSaveDiagram?: () => void;
     canPersistChanges?: boolean;
@@ -26,11 +30,13 @@ const CLASS_NAME = 'ontodia-toolbar';
 
 export class DefaultToolbar extends React.Component<ToolbarProps, {}> {
     render() {
+        const {history} = this.props;
         return (
             <div className={CLASS_NAME}>
                 <div className='ontodia-btn-group ontodia-btn-group-sm'>
                     {this.renderSaveDiagramButton()}
                     {this.renderPersistAuthoredChangesButton()}
+                    {history ? <HistoryButtons history={history} /> : null}
                     {this.props.onClearAll ? (
                         <button type='button'
                             className={classnames(
@@ -136,3 +142,63 @@ export class DefaultToolbar extends React.Component<ToolbarProps, {}> {
         this.props.onChangeLanguage?.(value);
     }
 }
+
+function HistoryButtonsRaw(props: {
+    history: CommandHistory;
+}) {
+    const {history} = props;
+
+    const [version, setVersion] = React.useState(0);
+    React.useEffect(() => {
+        const observer = new EventObserver();
+        observer.listen(history.events, 'historyChanged', e => {
+            setVersion(v => v + 1);
+        });
+        return () => observer.stopListening();
+    }, [history]);
+
+    let undoCommand: Command | undefined;
+    let redoCommand: Command | undefined;
+    if (history) {
+        undoCommand = history.undoStack.length === 0
+            ? undefined : history.undoStack[history.undoStack.length - 1];
+        redoCommand = history.redoStack.length === 0
+            ? undefined : history.redoStack[history.redoStack.length - 1];
+    }
+
+    return (
+        <>
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__undo-button`,
+                    'ontodia-btn ontodia-btn-default'
+                )}
+                disabled={!undoCommand}
+                title={
+                    undoCommand && undoCommand.title
+                        ? `Undo: ${undoCommand.title}`
+                        : 'Undo last command'
+                }
+                onClick={() => history.undo()}
+            />
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__redo-button`,
+                    'ontodia-btn ontodia-btn-default'
+                )}
+                disabled={!redoCommand}
+                title={
+                    redoCommand && redoCommand.title
+                        ? `Redo: ${redoCommand.title}`
+                        : 'Redo last command'
+                }
+                onClick={() => history.redo()}
+            />
+        </>
+    );
+}
+
+const HistoryButtons = React.memo(
+    HistoryButtonsRaw,
+    (prevProps, nextProps) => nextProps.history !== prevProps.history
+);

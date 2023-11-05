@@ -7,6 +7,22 @@ $toolbarHeight: 30px;
     @include codicon-button("save");
   }
 
+  &__undo-button {
+    &::before {
+      @include codicon("discard");
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__redo-button {
+    &::before {
+      @include codicon("redo");
+      width: 18px;
+      height: 18px;
+    }
+  }
+
   &__clear-all-button {
     @include codicon-button("trash");
   }

@@ -451,6 +451,7 @@ class ToolbarWrapper extends Component<ToolbarWrapperProps, {}> {
         const canSaveDiagram = !canPersistChanges;
 
         const defaultToolbarProps: ToolbarProps = {
+            history: view.model.history,
             onZoomIn: workspace.zoomIn,
             onZoomOut: workspace.zoomOut,
             onZoomToFit: workspace.zoomToFit,
