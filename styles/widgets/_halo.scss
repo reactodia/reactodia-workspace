@@ -86,24 +86,25 @@
     right: -($buttonWidth + $buttonMargin);
   }
 
-  &__navigate {
+  &__navigate-open,
+  &__navigate-close {
     @include halo-button;
     @include e-docked;
-
-    &--open {
-      background-image: url("@images/connections.svg");
-    }
-
-    &--closed {
-      background-image: url("@images/close-connections.svg");
-    }
   }
 
-  &__folow {
+  &__navigate-open {
+    background-image: url("@codicons/compass.svg");
+  }
+
+  &__navigate-close {
+    background-image: url("@codicons/error.svg");
+  }
+
+  &__link {
     @include halo-button;
     @include w-docked;
 
-    background-image: url("@images/link.svg");
+    background-image: url("@codicons/link.svg");
   }
 
   &__remove {
@@ -117,11 +118,11 @@
     @include s-docked;
 
     &--open {
-      background-image: url("@images/expand-properties.png");
+      background-image: url("@codicons/chevron-down.svg");
     }
 
     &--closed {
-      background-image: url("@images/collapse-properties.png");
+      background-image: url("@codicons/chevron-up.svg");
     }
   }
 
@@ -131,16 +132,10 @@
     background-image: url("@images/add-to-filter.png");
   }
 
-  &__revert {
-    @include halo-button;
-    @include n-docked;
-    background-image: url("@images/font-awesome/undo-solid.svg");
-  }
-
   &__establish-connection {
     @include halo-button;
     @include sw-docked;
-    background-image: url("@images/font-awesome/plug.svg");
+    background-image: url("@codicons/plug.svg");
   }
 
   &__establish-connection-spinner {

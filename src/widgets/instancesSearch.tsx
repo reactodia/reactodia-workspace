@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { ElementModel, ElementIri } from '../data/model';
 import { FilterParams, LinkedElement } from '../data/provider';
@@ -90,9 +91,12 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                             }
                         }} />
                     <span className='ontodia-input-group-btn'>
-                        <button className='ontodia-btn ontodia-btn-default' type='button' title='Search'
+                        <button type='button' title='Search'
+                            className={classnames(
+                                `${CLASS_NAME}__search-button`,
+                                'ontodia-btn ontodia-btn-default'
+                            )}
                             onClick={() => this.submitCriteriaUpdate()}>
-                            <span className='fa fa-search' aria-hidden='true'/>
                         </button>
                     </span>
                 </div>
@@ -112,8 +116,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                         disabled={this.state.querying}
                         style={{display: this.state.moreItemsAvailable ? undefined : 'none'}}
                         onClick={() => this.queryItems(true)}>
-                        <span className='fa fa-chevron-down' aria-hidden='true' />
-                        &nbsp;Show more
+                        Show more
                     </button>
                 </div>
             </div>
@@ -168,9 +171,12 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
     private renderRemoveCriterionButtons(onClick: () => void) {
         return <div className={`${CLASS_NAME}__criterion-remove ontodia-btn-group ontodia-btn-group-xs`}>
-            <button type='button' className='ontodia-btn ontodia-btn-default' title='Remove criteria'
+            <button type='button' title='Remove criteria'
+                className={classnames(
+                    `${CLASS_NAME}__criterion-remove-button`,
+                    'ontodia-btn ontodia-btn-default'
+                )}
                 onClick={onClick}>
-                <span className='fa fa-times' aria-hidden='true'></span>
             </button>
         </div>;
     }

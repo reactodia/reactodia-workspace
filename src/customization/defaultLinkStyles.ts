@@ -1,7 +1,7 @@
 import { LinkTemplate, LinkTemplateResolver, LinkStyle } from './props';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-export const LINK_SHOW_IRI: LinkTemplate = {
+export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
     renderLink: (link, model): LinkStyle => ({
         properties: [{
             position: 0.5,

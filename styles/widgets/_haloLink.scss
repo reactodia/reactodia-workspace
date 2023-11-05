@@ -24,7 +24,7 @@
     background-color: #ccc;
     background-position: 50%;
     background-repeat: no-repeat;
-    background-size: 60%;
+    background-size: 65%;
     border-radius: 10px;
     height: 20px;
     width: 20px;
@@ -32,12 +32,12 @@
 
   &__edit {
     @include button;
-    background-image: url("@images/font-awesome/edit.svg");
+    background-image: url("@codicons/edit.svg");
   }
 
   &__delete {
     @include button;
-    background-image: url("@images/font-awesome/trash-alt.svg");
+    background-image: url("@codicons/trash.svg");
   }
 
   &__spinner {
@@ -45,14 +45,19 @@
   }
 
   &__edit-label-button {
-    background: transparent url("@images/font-awesome/pen-square-solid.svg") no-repeat;
-    background-size: cover;
-    border: 0 none;
-    cursor: pointer;
-    padding: 0;
+    background: white url("@codicons/edit.svg") no-repeat;
+    background-size: 80%;
+    background-position: center;
+    filter: #{"invert()"};
+
     position: absolute;
     margin-left: 5px;
+    padding: 0;
+    border: 0 none;
+    border-radius: 2px;
     outline: none;
+    
+    cursor: pointer;
     opacity: 0.5;
     transition: opacity 0.3s;
 

@@ -1,9 +1,13 @@
-import { Workspace, SparqlDataProvider, LinkTemplate, LinkStyle } from '../src/index';
+import * as N3 from 'n3';
+
+import { Workspace, RdfDataProvider, LinkTemplate, LinkStyle } from '../src/index';
 
 import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
 
-const CERTIFICATE_ICON = require('@images/font-awesome/certificate-solid.svg');
-const COG_ICON = require('@images/font-awesome/cog-solid.svg');
+const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
+const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
+
+const TURTLE_DATA = require('./resources/orgOntology.ttl');
 
 const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
     markerSource: {
@@ -36,17 +40,12 @@ function StyleCustomizationExample() {
         if (!workspace) {
             return;
         }
+
+        const dataProvider = new RdfDataProvider();
+        dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
+
         const diagram = tryLoadLayoutFromLocalStorage();
-        workspace.getModel().importLayout({
-            diagram,
-            dataProvider: new SparqlDataProvider({
-                endpointUrl: '/sparql',
-                imagePropertyUris: [
-                    'http://collection.britishmuseum.org/id/ontology/PX_has_main_representation',
-                    'http://xmlns.com/foaf/0.1/img',
-                ],
-            }),
-        });
+        workspace.getModel().importLayout({diagram, dataProvider});
     }
 
     return (

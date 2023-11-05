@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { ElementTypeIri } from '../../data/model';
 import { DiagramView } from '../../diagram/view';
@@ -6,10 +7,9 @@ import { highlightSubstring } from '../listElementView';
 
 import { TreeNode } from './treeModel';
 
-const EXPAND_ICON = require('@images/tree/expand-toggle.svg');
-const COLLAPSE_ICON = require('@images/tree/collapse-toggle.svg');
 const DEFAULT_LEAF_ICON = require('@images/tree/leaf-default.svg');
 const DEFAULT_PARENT_ICON = require('@images/tree/leaf-folder.svg');
+const CREATE_ICON = require('@codicons/add.svg');
 
 interface CommonProps {
     view: DiagramView;
@@ -29,7 +29,7 @@ interface State {
     expanded?: boolean;
 }
 
-const LEAF_CLASS = 'ontodia-class-leaf';
+const CLASS_NAME = 'ontodia-class-tree-item';
 
 export class Leaf extends React.Component<LeafProps, State> {
     constructor(props: LeafProps) {
@@ -52,56 +52,59 @@ export class Leaf extends React.Component<LeafProps, State> {
         const {view, selectedNode, searchText, creatableClasses} = otherProps;
         const {expanded} = this.state;
 
-        let toggleIcon: string | undefined;
-        if (node.derived.length > 0) {
-            toggleIcon = expanded ? COLLAPSE_ICON : EXPAND_ICON;
-        }
+        const toggleClass = (
+            node.derived.length === 0 ? `${CLASS_NAME}__toggle` :
+            expanded ? `${CLASS_NAME}__toggle-expanded` :
+            `${CLASS_NAME}__toggle-collapsed`
+        );
 
         let {icon} = view.getTypeStyle([node.model.id]);
         if (!icon) {
             icon = node.derived.length === 0 ? DEFAULT_LEAF_ICON : DEFAULT_PARENT_ICON;
         }
 
-        let bodyClass = `${LEAF_CLASS}__body`;
+        let bodyClass = `${CLASS_NAME}__body`;
         if (selectedNode && selectedNode.model === node.model) {
-            bodyClass += ` ${LEAF_CLASS}__body--selected`;
+            bodyClass += ` ${CLASS_NAME}__body--selected`;
         }
 
         const label = highlightSubstring(
-            node.label, searchText, {className: `${LEAF_CLASS}__highlighted-term`}
+            node.label, searchText, {className: `${CLASS_NAME}__highlighted-term`}
         );
 
         return (
-            <div className={LEAF_CLASS} role='tree-item'>
-                <div className={`${LEAF_CLASS}__row`}>
-                    <div className={`${LEAF_CLASS}__toggle`} onClick={this.toggle} role='button'>
-                        {toggleIcon ? <img className={`${LEAF_CLASS}__toggle-icon`} src={toggleIcon} /> : null}
-                    </div>
+            <div className={CLASS_NAME} role='tree-item'>
+                <div className={`${CLASS_NAME}__row`}>
+                    <div className={toggleClass}
+                        onClick={this.toggle}
+                        role='button'
+                    />
                     <a className={bodyClass} href={node.model.id} onClick={this.onClick}>
-                        <div className={`${LEAF_CLASS}__icon-container`}>
-                            <img className={`${LEAF_CLASS}__icon`} src={icon} />
+                        <div className={`${CLASS_NAME}__icon-container`}>
+                            <img className={`${CLASS_NAME}__icon`} src={icon} />
                         </div>
-                        <span className={`${LEAF_CLASS}__label`}>{label}</span>
+                        <span className={`${CLASS_NAME}__label`}>{label}</span>
                         {node.model.count ? (
-                            <span className={`${LEAF_CLASS}__count ontodia-badge`}>
+                            <span className={`${CLASS_NAME}__count ontodia-badge`}>
                                 {node.model.count}
                             </span>
                         ) : null}
                     </a>
                     {creatableClasses.get(node.model.id) ? (
-                        <div className={`${LEAF_CLASS}__create ontodia-btn-group ontodia-btn-group-xs`}>
-                            <button className='ontodia-btn ontodia-btn-default'
-                                title={'Click or drag to create new entity of this type'}
-                                draggable={true}
-                                onClick={this.onClickCreate}
-                                onDragStart={this.onDragCreate}>
-                                +
-                            </button>
-                        </div>
+                        <button title={'Click or drag to create new entity of this type'}
+                            className={classnames(
+                                `${CLASS_NAME}__create-button`,
+                                'ontodia-btn ontodia-btn-default'
+                            )}
+                            draggable={true}
+                            onClick={this.onClickCreate}
+                            onDragStart={this.onDragCreate}>
+                            <img src={CREATE_ICON} />
+                        </button>
                     ) : null}
                 </div>
                 {expanded && node.derived.length > 0 ? (
-                    <Forest className={`${LEAF_CLASS}__children`}
+                    <Forest className={`${CLASS_NAME}__children`}
                         nodes={node.derived}
                         {...otherProps}
                     />

@@ -32,6 +32,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "classnames": "^2.3.2",
     "d3-color": "^3.1.0",
     "file-saver": "^2.0.5",
     "n3": "^1.17.2",
@@ -48,6 +49,7 @@
     "@types/n3": "^1.16.3",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",
+    "@vscode/codicons": "^0.0.35",
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
     "react": "^17.0.2",

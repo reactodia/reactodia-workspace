@@ -3,23 +3,52 @@ import * as N3 from 'n3';
 
 import {
     Workspace, RdfDataProvider, GroupTemplate, PropertySuggestionHandler, PropertyScore,
-    delay,
+    LinkTemplate, DefaultLinkTemplateBundle, delay,
 } from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
 import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
 
-const data = require('./resources/orgOntology.ttl');
+const TURTLE_DATA = require('./resources/orgOntology.ttl');
+
+const CUSTOM_LINK_LABEL_IRI = 'urn:ramp-diagram:custom-link-label';
+const EDITABLE_LINK_TEMPLATE: LinkTemplate = {
+    renderLink: (link, model) => {
+        let editedLabel: string | undefined;
+        if (
+            link.linkState &&
+            Object.prototype.hasOwnProperty.call(link.linkState, CUSTOM_LINK_LABEL_IRI)
+        ) {
+            const customLabel = link.linkState[CUSTOM_LINK_LABEL_IRI];
+            if (typeof customLabel === 'string') {
+                editedLabel = customLabel;
+            }
+        }
+        return {
+            label: editedLabel === undefined ? undefined : {
+                label: [model.factory.literal(editedLabel)],
+                text: {
+                    fontStyle: 'italic',
+                    fontWeight: 'normal',
+                },
+            },
+        };
+    },
+    setLinkLabel: (link, label) => {
+        link.setLinkState({
+            ...link.linkState,
+            [CUSTOM_LINK_LABEL_IRI]: label.length === 0 ? undefined : label,
+        });
+    },
+};
 
 function RdfExample() {
     function onWorkspaceMounted(workspace: Workspace | null) {
         if (!workspace) {
             return;
         }
-        const dataProvider = new RdfDataProvider({
-            acceptBlankNodes: false,
-        });
-        dataProvider.addGraph(new N3.Parser().parse(data));
+        const dataProvider = new RdfDataProvider();
+        dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
     
         const diagram = tryLoadLayoutFromLocalStorage();
         workspace.getModel().importLayout({
@@ -69,6 +98,12 @@ function RdfExample() {
                     return GroupTemplate;
                 }
                 return undefined;
+            }}
+            linkTemplateResolver={type => {
+                if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
+                    return EDITABLE_LINK_TEMPLATE;
+                }
+                return DefaultLinkTemplateBundle(type);
             }}
         />
     );

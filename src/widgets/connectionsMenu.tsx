@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { Dictionary, ElementModel, ElementIri, LinkTypeIri } from '../data/model';
 
@@ -28,7 +29,7 @@ export interface PropertySuggestionParams {
     properties: string[];
     lang: string;
 }
-export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<Dictionary<PropertyScore>>;
+export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<PropertyScore[]>;
 
 type SortMode = 'alphabet' | 'smart';
 
@@ -57,6 +58,8 @@ export interface ConnectionsMenuProps {
     onAddElements: (elementIris: ElementIri[], linkType: FatLinkType | undefined) => void;
     suggestProperties?: PropertySuggestionHandler;
 }
+
+const CLASS_NAME = 'ontodia-connections-menu';
 
 export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
     static contextTypes = WorkspaceContextTypes;
@@ -312,8 +315,9 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
             const {link, direction} = this.props.objectsData.linkDataChunk;
             const localizedText = this.props.view.formatLabel(link.label, link.id);
 
-            return <span className='ontodia-connections-menu_bread-crumbs'>
-                <a className='ontodia-connections-menu__link' onClick={this.onCollapseLink}>Connections</a>
+            return <span className={`${CLASS_NAME}__breadcrumbs`}>
+                <a className={`${CLASS_NAME}__breadcrumbs-link`}
+                    onClick={this.onCollapseLink}>Connections</a>
                 {'\u00A0' + '/' + '\u00A0'}
                 {localizedText} {direction ? `(${direction})` : null}
             </span>;
@@ -324,7 +328,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
 
     private getBody = () => {
         if (this.props.state === 'error') {
-            return <label className='ontodia-label ontodia-connections-menu__error'>Error</label>;
+            return <label className={`ontodia-label ${CLASS_NAME}__error`}>Error</label>;
         } else if (this.props.objectsData && this.state.panel === 'objects') {
             return <ObjectsPanel
                 data={this.props.objectsData}
@@ -336,7 +340,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
             />;
         } else if (this.props.connectionsData && this.state.panel === 'connections') {
             if (this.props.state === ProgressState.loading) {
-                return <label className='ontodia-label ontodia-connections-menu__loading'>Loading...</label>;
+                return <label className={`ontodia-label ${CLASS_NAME}__loading`}>Loading...</label>;
             }
 
             return (
@@ -365,7 +369,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
         this.setState({sortMode: value});
     }
 
-    private renderSortSwitch = (id: string, icon: string, title: string) => {
+    private renderSortSwitch = (id: string, labelClass: string, title: string) => {
         return (
             <div>
                 <input
@@ -373,12 +377,12 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
                     name='sort'
                     id={id}
                     value={id}
-                    className='ontodia-connections-menu__sort-switch'
+                    className={`${CLASS_NAME}__sort-switch`}
                     onChange={this.onSortChange}
                     checked={this.state.sortMode === id}
                 />
-                <label htmlFor={id} className='ontodia-connections-menu__sort-switch-label' title={title}>
-                    <i className={`fa ${icon}`}/>
+                <label htmlFor={id} title={title}
+                    className={classnames(`${CLASS_NAME}__sort-switch-label`, labelClass)}>
                 </label>
             </div>
         );
@@ -388,22 +392,22 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
         if (this.state.panel !== 'connections' || !this.props.propertySuggestionCall) { return null; }
 
         return (
-            <div className='ontodia-connections-menu_search-line-sort-switches'>
-                {this.renderSortSwitch('alphabet', 'fa-sort-alpha-asc', 'Sort alphabetically')}
-                {this.renderSortSwitch('smart', 'fa-lightbulb-o', 'Smart sort')}
+            <div className={`${CLASS_NAME}__sort-switches`}>
+                {this.renderSortSwitch('alphabet', `${CLASS_NAME}__sort-label-alpha`, 'Sort alphabetically')}
+                {this.renderSortSwitch('smart', `${CLASS_NAME}__sort-label-smart`, 'Smart sort')}
             </div>
         );
     }
 
     render() {
         return (
-            <div className='ontodia-connections-menu'>
-                <label className='ontodia-label ontodia-connections-menu__title-label'>{this.getTitle()}</label>
+            <div className={CLASS_NAME}>
+                <label className={`ontodia-label ${CLASS_NAME}__title-label`}>{this.getTitle()}</label>
                 {this.getBreadCrumbs()}
-                <div className='ontodia-connections-menu_search-line'>
+                <div className={`${CLASS_NAME}__search-line`}>
                     <input
                         type='text'
-                        className='search-input ontodia-form-control ontodia-connections-menu__search-line-input'
+                        className={`search-input ontodia-form-control ${CLASS_NAME}__search-line-input`}
                         value={this.state.filterKey}
                         onChange={this.onChangeFilter}
                         placeholder='Search for...'
@@ -434,10 +438,16 @@ interface ConnectionsListProps {
     sortMode: SortMode;
 }
 
-class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Dictionary<PropertyScore> }> {
+interface ConnectionsListState {
+    readonly scores: ReadonlyMap<LinkTypeIri, PropertyScore>;
+}
+
+class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsListState> {
     constructor(props: ConnectionsListProps) {
         super(props);
-        this.state = { scores: {} };
+        this.state = {
+            scores: new Map(),
+        };
         this.updateScores(props);
     }
 
@@ -451,9 +461,13 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
             const lang = view.getLanguage();
             const token = filterKey.trim();
             const properties = data.links.map(l => l.id);
-            props.propertySuggestionCall({elementId: id, token, properties, lang}).then(scores =>
-                this.setState({scores})
-            );
+            props.propertySuggestionCall({elementId: id, token, properties, lang}).then(scoreList => {
+                const scores = new Map<LinkTypeIri, PropertyScore>();
+                for (const score of scoreList) {
+                    scores.set(score.propertyIri as LinkTypeIri, score);
+                }
+                this.setState({scores});
+            });
         }
     }
 
@@ -470,11 +484,12 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
 
     private compareLinksByWeight = (a: FatLinkType, b: FatLinkType) => {
         const {view} = this.props;
+        const {scores} = this.state;
         const aText = view.formatLabel(a.label, a.id);
         const bText = view.formatLabel(b.label, b.id);
 
-        const aWeight = this.state.scores[a.id] ? this.state.scores[a.id].score : 0;
-        const bWeight = this.state.scores[b.id] ? this.state.scores[b.id].score : 0;
+        const aWeight = scores.has(a.id) ? scores.get(a.id)!.score : 0;
+        const bWeight = scores.has(b.id) ? scores.get(b.id)!.score : 0;
 
         return (
             aWeight > bWeight ? -1 :
@@ -493,15 +508,20 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
     }
 
     private getProbableLinks = () => {
+        const {data} = this.props;
+        const {scores} = this.state;
         const isSmartMode = this.isSmartMode();
-        return (this.props.data.links || []).filter(link => {
-            return this.state.scores[link.id] && (this.state.scores[link.id].score > 0 || isSmartMode);
-        }).sort(this.compareLinksByWeight);
+        return (data.links ?? [])
+            .filter(link => {
+                return scores.has(link.id) && (scores.get(link.id)!.score > 0 || isSmartMode);
+            })
+            .sort(this.compareLinksByWeight);
     }
 
     private getViews = (links: FatLinkType[], notSure?: boolean) => {
-        const {view} = this.props;
-        const countMap = this.props.data.countMap || {};
+        const {view, data} = this.props;
+        const {scores} = this.state;
+        const countMap = data.countMap ?? {};
 
         const views: JSX.Element[] = [];
         const addView = (link: FatLinkType, direction: 'in' | 'out') => {
@@ -523,7 +543,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
                     filterKey={notSure ? '' : this.props.filterKey}
                     onMoveToFilter={this.props.onMoveToFilter}
                     probability={
-                        (this.state.scores[link.id] && notSure ? this.state.scores[link.id].score : 0)
+                        scores.has(link.id) && notSure ? scores.get(link.id)!.score : 0
                     }
                 />,
             );
@@ -548,7 +568,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
 
         let viewList: React.ReactElement<any> | React.ReactElement<any>[];
         if (views.length === 0 && probableViews.length === 0) {
-            viewList = <label className='ontodia-label ontodia-connections-menu_links-list__empty'>List empty</label>;
+            viewList = <label className={`ontodia-label ${CLASS_NAME}__empty-label`}>List empty</label>;
         } else {
             viewList = views;
             if (views.length > 1 || (isSmartMode && probableViews.length > 1)) {
@@ -563,7 +583,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
                         count={allRelatedElements.inCount + allRelatedElements.outCount}
                         onMoveToFilter={this.props.onMoveToFilter}
                     />,
-                <hr key='ontodia-hr-line' className='ontodia-connections-menu_links-list__hr'/>,
+                <hr key='ontodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
                 ].concat(viewList);
             }
         }
@@ -576,10 +596,15 @@ class ConnectionsList extends React.Component<ConnectionsListProps, { scores: Di
                 probableViews,
             ];
         }
-        return <ul className={
-            'ontodia-connections-menu_links-list '
-                + (views.length === 0 && probableViews.length === 0 ? 'ocm_links-list-empty' : '')
-        }>{viewList}{probablePart}</ul>;
+        return (
+            <ul className={classnames(
+                `${CLASS_NAME}__links-list`,
+                views.length === 0 && probableViews.length === 0
+                    ? `${CLASS_NAME}__links-list-empty` : undefined
+            )}>
+                {viewList}{probablePart}
+            </ul>
+        );
     }
 }
 
@@ -633,22 +658,23 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
 
         return (
             <li data-linktypeid={link.id}
-                className='link-in-popup-menu' title={`${directionName} of "${fullText}" ${view.formatIri(link.id)}`}
+                className={`${CLASS_NAME}__link`}
+                title={`${directionName} of "${fullText}" ${view.formatIri(link.id)}`}
                 onClick={() => this.onExpandLink(count, direction)}>
                 {direction === 'in' || direction === 'out' ?
-                <div className='link-in-popup-menu_direction'>
-                    {direction === 'in' && <div className='link-in-popup-menu_direction__in-direction' />}
-                    {direction === 'out' && <div className='link-in-popup-menu_direction__out-direction' />}
+                <div className={`${CLASS_NAME}__link-direction`}>
+                    {direction === 'in' && <div className={`${CLASS_NAME}__link-direction-in`} />}
+                    {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
                 </div>
                 : null}
-                <div className='link-in-popup-menu__link-title'>{textLine}</div>
-                <span className='ontodia-badge link-in-popup-menu__count'>
+                <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
+                <span className={`ontodia-badge ${CLASS_NAME}__link-count`}>
                     {count <= LINK_COUNT_PER_PAGE ? count : '100+'}
                 </span>
-                <div className='link-in-popup-menu__filter-button'
+                <div className={`${CLASS_NAME}__link-filter-button`}
                     onClick={this.onMoveToFilter}
                     title='Set as filter in the Instances panel' />
-                <div className='link-in-popup-menu__navigate-button'
+                <div className={`${CLASS_NAME}__link-navigate-button`}
                     title={`Navigate to ${directionName} "${fullText}" elements`} />
             </li>
         );
@@ -727,10 +753,10 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             `\u00A0(${wrongNodesString})` : `\u00A0(${wrongNodesString})`);
         const wrongNodesTitle = wrongNodes === 0 ? '' : (wrongNodes > 0 ? 'Unavailable nodes' : 'Extra nodes');
 
-        return <div className='ontodia-label ontodia-connections-menu_objects-panel_bottom-panel__count-label'>
+        return <div className={`ontodia-label ${CLASS_NAME}__objects-count`}>
             <span>{countString}</span>
-            <span className='ontodia-connections-menu_objects-panel_bottom-panel__extra-elements'
-                  title={wrongNodesTitle}>
+            <span className={`${CLASS_NAME}__objects-extra`}
+                title={wrongNodesTitle}>
                 {wrongNodesCount}
             </span>
         </div>;
@@ -745,8 +771,8 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         const nonPresented = objects.filter(el => !el.presentOnDiagram);
         const active = nonPresented.filter(el => selection.has(el.model.id));
 
-        return <div className='ontodia-connections-menu_objects-panel'>
-            <div className='ontodia-connections-menu_objects-panel__select-all'>
+        return <div className={`${CLASS_NAME}__objects`}>
+            <div className={`${CLASS_NAME}__objects-select-all`}>
                 <label>
                     <input type='checkbox'
                         checked={isAllSelected && nonPresented.length > 0}
@@ -755,12 +781,12 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     Select All
                 </label>
             </div>
-            {(
-                this.props.loading ?
-                <label className='ontodia-label ontodia-connections-menu__loading-objects'>Loading...</label> :
-                objects.length === 0 ?
-                <label className='ontodia-label ontodia-connections-menu__loading-objects'>No available nodes</label> :
-                <div className='ontodia-connections-menu_objects-panel_objects-list'>
+            {this.props.loading ? (
+                <label className={`ontodia-label ${CLASS_NAME}__objects-loading`}>Loading...</label>
+            ) : objects.length === 0 ? (
+                <label className={`ontodia-label ${CLASS_NAME}__objects-loading`}>No available nodes</label>
+            ) : (
+                <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
                         view={this.props.view}
                         items={this.getItems(objects)}
@@ -769,19 +795,20 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         highlightText={filterKey}
                     />
                     {this.props.data.linkDataChunk.expectedCount > LINK_COUNT_PER_PAGE ? (
-                        <div className='ontodia-connections-menu__move-to-filter'
+                        <div className={`${CLASS_NAME}__move-to-filter`}
                             onClick={() => this.props.onMoveToFilter(this.props.data.linkDataChunk)}>
                             The list was truncated, for more data click here to use the filter panel
                         </div>
                     ) : null}
                 </div>
             )}
-            <div className='ontodia-connections-menu_objects-panel_bottom-panel'>
+            <div className={`${CLASS_NAME}__objects-statusbar`}>
                 {this.counter(active.length)}
-                <button className={
-                        'ontodia-btn ontodia-btn-primary pull-right ' +
-                        'ontodia-connections-menu_objects-panel_bottom-panel__add-button'
-                    }
+                <button
+                    className={classnames(
+                        `${CLASS_NAME}__objects-add-button`,
+                        'ontodia-btn ontodia-btn-primary pull-right'
+                    )}
                     disabled={this.props.loading || nonPresented.length === 0}
                     onClick={() => onPressAddSelected(active.length > 0 ? active : nonPresented)}>
                     {active.length > 0 ? 'Add selected' : 'Add all'}

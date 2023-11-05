@@ -1,15 +1,11 @@
+@import "../mixin/icons";
+
 .ontodia-navigator {
   display: block;
   position: absolute;
   bottom: 25px;
   right: 25px;
   overflow: hidden;
-
-  // increase specificity to override default box-sizing,
-  // so border size won't be included into total size
-  .ontodia & {
-    box-sizing: content-box;
-  }
 
   background: #fff;
   border: 1px solid #ddd;
@@ -19,8 +15,8 @@
   transition: width $transition, height $transition;
 
   &--collapsed {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
   }
 
   > canvas {
@@ -60,9 +56,9 @@
     background-repeat: no-repeat;
   }
   &--expanded &__toggle-icon {
-    background-image: url('@images/font-awesome/minus-square-regular.svg');
+    @include codicon("diff-removed");
   }
   &--collapsed &__toggle-icon {
-    background-image: url('@images/font-awesome/plus-square-regular.svg');
+    @include codicon("diff-added");
   }
 }

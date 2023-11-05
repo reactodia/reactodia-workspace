@@ -1,0 +1,36 @@
+@import "../mixin/icons";
+
+.ontodia-zoom-control {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+
+  .ontodia-btn {
+    padding: 3px;
+  }
+
+  .ontodia-btn + .ontodia-btn {
+    margin-top: -1px;
+  }
+
+  &__zoom-in-button {
+    &::before {
+      @include codicon("zoom-in");
+    }
+  }
+
+  &__zoom-out-button {
+    &::before {
+      @include codicon("zoom-out");
+    }
+  }
+
+  &__zoom-fit-button {
+    &::before {
+      @include codicon("symbol-array");
+    }
+  }
+}

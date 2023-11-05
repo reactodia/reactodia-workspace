@@ -1,3 +1,5 @@
+@import "../mixin/icons";
+
 .ontodia-edit-form {
   height: 100%;
   display: flex;
@@ -40,6 +42,7 @@
   }
 
   &__search-icon {
+    @include codicon("search");
     opacity: 0.6;
     position: absolute;
     top: 50%;

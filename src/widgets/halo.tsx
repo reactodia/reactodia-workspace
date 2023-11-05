@@ -143,12 +143,14 @@ export class Halo extends React.Component<HaloProps, State> {
         return (
             <div className={CLASS_NAME} style={style}>
                 {this.renderRemoveOrDeleteButton()}
-                {onToggleNavigationMenu && <div className={`${CLASS_NAME}__navigate ` +
-                    `${CLASS_NAME}__navigate--${navigationMenuOpened ? 'closed' : 'open'}`}
-                    role='button'
-                    title='Open a dialog to navigate to connected elements'
+                {onToggleNavigationMenu && <div role='button'
+                    className={navigationMenuOpened
+                        ? `${CLASS_NAME}__navigate-close`
+                        : `${CLASS_NAME}__navigate-open`
+                    }
+                    title='Navigate to connected elements'
                     onClick={onToggleNavigationMenu} />}
-                {onFollowLink && <a className={`${CLASS_NAME}__folow`}
+                {onFollowLink && <a className={`${CLASS_NAME}__link`}
                     href={target.iri}
                     role='button'
                     title='Jump to resource'

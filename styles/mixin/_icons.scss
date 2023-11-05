@@ -1,0 +1,20 @@
+@mixin codicon($name) {
+    background-image: url("@codicons/" + $name + ".svg");
+    background-size: contain;
+    background-position: 0 0;
+    background-repeat: no-repeat;
+    content: '';
+    display: block;
+    height: 16px;
+    width: 16px;
+}
+
+@mixin codicon-button($name) {
+    display: flex;
+    align-items: center;
+
+    &::before {
+        @include codicon($name);
+        margin-right: 3px;
+    }
+}

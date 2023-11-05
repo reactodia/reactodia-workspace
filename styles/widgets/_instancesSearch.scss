@@ -1,3 +1,5 @@
+@import "../mixin/icons";
+
 .ontodia-instances-search {
   flex: auto;
   display: flex;
@@ -50,8 +52,21 @@
     float: right;
     margin: 0 10px 4px 4px;
   }
+  &__criterion-remove-button {
+    &::before {
+      @include codicon("close");
+    }
+  }
 
   &__text-criteria { margin: 0 10px; }
+
+  &__search-button {
+    height: 34px;
+
+    &::before {
+      @include codicon("search");
+    }
+  }
 
   &__rest {
     padding: 10px 10px 0 10px;
@@ -73,5 +88,14 @@
   &__rest-end { margin: 5px 0 10px 0; }
   &__load-more {
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &::before {
+      @include codicon("chevron-down");
+      margin-right: 5px;
+      filter: invert(100%);
+    }
   }
 }

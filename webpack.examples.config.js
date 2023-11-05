@@ -43,6 +43,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js'],
     alias: {
       '@images': path.resolve(__dirname, 'images'),
+      '@codicons': '@vscode/codicons/src/icons/',
     },
   },
   module: {

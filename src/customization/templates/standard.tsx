@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Component } from 'react';
+import classnames from 'classnames';
 
 import type * as Rdf from '../../data/rdf/rdfModel';
 import { TemplateProperties } from '../../data/schema';
@@ -16,7 +16,7 @@ const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
 
 const CLASS_NAME = 'ontodia-standard-template';
 
-export class StandardTemplate extends Component<TemplateProps, {}> {
+export class StandardTemplate extends React.Component<TemplateProps, {}> {
     render() {
         return (
             <AuthoredEntity templateProps={this.props}>
@@ -193,21 +193,25 @@ export class StandardTemplate extends Component<TemplateProps, {}> {
         return (
             <div className={`${CLASS_NAME}__actions`}>
                 <button type='button'
-                    className='ontodia-btn ontodia-btn-default'
+                    className={classnames(
+                        `${CLASS_NAME}__delete-button`,
+                        'ontodia-btn ontodia-btn-default'
+                    )}
                     title={canDelete ? 'Delete entity' : 'Deletion is unavailable for the selected element'}
                     disabled={!canDelete}
                     onClick={onDelete}>
-                    <span className='fa fa-trash' />&nbsp;
                     {canEdit === undefined
                         ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
                         : 'Delete'}
                 </button>
                 <button type='button'
-                    className='ontodia-btn ontodia-btn-default'
+                    className={classnames(
+                        `${CLASS_NAME}__edit-button`,
+                        'ontodia-btn ontodia-btn-default'
+                    )}
                     title={canEdit ? 'Edit entity' : 'Editing is unavailable for the selected element'}
                     disabled={!canEdit}
                     onClick={onEdit}>
-                    <span className='fa fa-edit' />&nbsp;
                     {canEdit === undefined
                         ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
                         : 'Edit'}

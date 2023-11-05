@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Reimplemented `RdfDataProvider` based on RDF/JS-compatible in-memory RDF store.
 - Moved element property formatting from `ElementLayer` into element templates themselves.
 - Changed link type visibility settings to affect only link rendering without removing them from the graph.
+- Bundle subset of [Codicons](https://github.com/microsoft/vscode-codicons) for icons,
+  removed dependency on the included Font Awesome on the host page.
 
 ### Fixed
 - Properly batch commands to history when placing elements from the Connections dialog.

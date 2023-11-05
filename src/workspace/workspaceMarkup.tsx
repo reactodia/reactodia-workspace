@@ -10,6 +10,7 @@ import { PaperArea, ZoomOptions } from '../diagram/paperArea';
 import { ClassTree } from '../widgets/classTree';
 import { InstancesSearch, SearchCriteria } from '../widgets/instancesSearch';
 import { LinkTypesToolbox } from '../widgets/linksToolbox';
+import { ZoomControl } from '../widgets/zoomControl';
 
 import { AsyncModel } from '../editor/asyncModel';
 import { EditorController } from '../editor/editorController';
@@ -63,17 +64,6 @@ export class WorkspaceMarkup extends React.Component<WorkspaceMarkupProps, {}> {
         const {onWorkspaceEvent} = this.props;
         if (onWorkspaceEvent) {
             onWorkspaceEvent(key);
-        }
-    }
-
-    private addToolbarWidgetToPaper() {
-        const {hideToolbar, view, toolbar} = this.props;
-        if (!hideToolbar) {
-            view.setPaperWidget({
-                key: 'toolbar',
-                widget: <ToolbarWidget>{toolbar}</ToolbarWidget>,
-                attachment: WidgetAttachment.Viewport,
-            });
         }
     }
 
@@ -215,8 +205,22 @@ export class WorkspaceMarkup extends React.Component<WorkspaceMarkupProps, {}> {
     };
 
     componentDidMount() {
+        const {hideToolbar, view, toolbar} = this.props;
+        if (!hideToolbar) {
+            view.setPaperWidget({
+                key: 'toolbar',
+                widget: <ToolbarWidget>{toolbar}</ToolbarWidget>,
+                attachment: WidgetAttachment.Viewport,
+            });
+        }
+
+        view.setPaperWidget({
+            key: 'zoom-control',
+            widget: <ZoomControl />,
+            attachment: WidgetAttachment.Viewport,
+        });
+
         document.addEventListener('mouseup', this.onDocumentMouseUp);
-        this.addToolbarWidgetToPaper();
     }
 
     componentWillUnmount() {

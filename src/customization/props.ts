@@ -1,4 +1,4 @@
-import { ComponentClass } from 'react';
+import * as React from 'react';
 import { DiagramModel } from '../diagram/model';
 
 import { ElementModel, PropertyTypeIri } from '../data/model';
@@ -14,7 +14,7 @@ export interface CustomTypeStyle {
     icon?: string;
 }
 
-export type ElementTemplate = ComponentClass<TemplateProps>;
+export type ElementTemplate = React.ComponentClass<TemplateProps>;
 
 export interface TemplateProps {
     readonly elementId: string;
@@ -97,10 +97,12 @@ export interface LinkLabelStyle {
         /** @default 0 */
         readonly strokeWidth?: number;
         /** @default '"Helvetica Neue", "Helvetica", "Arial", sans-serif' */
-        readonly fontFamily?: string;
+        readonly fontFamily?: React.CSSProperties['fontFamily'];
         /** @default "inherit" */
-        readonly fontSize?: string | number;
+        readonly fontSize?: React.CSSProperties['fontSize'];
+        /** @default "normal" */
+        readonly fontStyle?: React.CSSProperties['fontStyle'];
         /** @default "bold" */
-        readonly fontWeight?: 'normal' | 'bold' | 'lighter' | 'bolder' | number;
+        readonly fontWeight?: React.CSSProperties['fontWeight'];
     };
 }

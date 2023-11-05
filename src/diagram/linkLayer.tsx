@@ -411,11 +411,17 @@ function getLabelTextAttributes(label: LinkLabelStyle): CSSProperties {
         strokeWidth = 0,
         fontFamily = '"Helvetica Neue", "Helvetica", "Arial", sans-serif',
         fontSize = 'inherit',
+        fontStyle,
         fontWeight = 'bold',
     } = label.text ?? {};
     return {
-        fill, stroke, strokeWidth, fontFamily, fontSize,
-        fontWeight: fontWeight as CSSProperties['fontWeight'],
+        fill,
+        stroke,
+        strokeWidth,
+        fontFamily,
+        fontSize,
+        fontStyle,
+        fontWeight,
     };
 }
 

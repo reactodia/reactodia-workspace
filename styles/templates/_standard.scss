@@ -1,3 +1,5 @@
+@import "../mixin/icons";
+
 .ontodia-standard-template {
   min-width: 180px;
   max-width: 400px;
@@ -53,8 +55,9 @@
   }
 
   &__thumbnail-icon {
-    max-height: 26px;
-    max-width: 26px;
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
   }
 
   &__photo {
@@ -165,9 +168,21 @@
   &__actions {
     display: flex;
     justify-content: space-between;
-    button {
-      padding: 5px;
-      min-width: 60px;
-    }
+  }
+
+  &__delete-button,
+  &__edit-button {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    min-width: 60px;
+  }
+
+  &__delete-button {
+    @include codicon-button("trash");
+  }
+
+  &__edit-button {
+    @include codicon-button("edit");
   }
 }

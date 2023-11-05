@@ -5,7 +5,6 @@
 @import "viewUtils/btn-group";
 @import "viewUtils/form-control";
 @import "viewUtils/input-group";
-@import "viewUtils/list-group";
 @import "viewUtils/badge";
 
 @import "diagram/elementLayer";
@@ -29,9 +28,9 @@
 @import "widgets/navigator";
 @import "widgets/progressBar";
 @import "widgets/searchResults";
+@import "widgets/zoomControl";
 
 @import "workspace/accordion";
-@import "workspace/resizableSidebar";
 @import "workspace/tutorial";
 @import "workspace/toolbar";
 @import "workspace/workspace";

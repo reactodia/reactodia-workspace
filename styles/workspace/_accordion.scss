@@ -77,38 +77,47 @@
     z-index: 20;
     transition: 0.3s;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     &::before {
       background-position: 0 0;
       background-repeat: no-repeat;
       background-size: cover;
-      content: "";
-      height: 8px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-top: -4px;
-      margin-left: -4px;
-      width: 8px;
-      transition: background 0.3s;
+      content: '';
+      height: 16px;
+      width: 16px;
+      opacity: 0.3;
+      transition: opacity filter 0.3s;
     }
 
     &:hover {
       background: #17b;
+    }
+
+    &:hover::before {
+      opacity: 1;
+      filter: #{"invert()"};
     }
   }
 
   &__handle-btn-left {
     left: 100%;
     margin-left: -10px;
-    &:before { background-image: url("@images/arrow-left.png"); }
-    &:hover:before { background-image: url("@images/arrow-left1.png"); }
+
+    &::before {
+      background-image: url("@codicons/chevron-left.svg");
+    }
   }
 
   &__handle-btn-right {
     right: 100%;
     margin-right: -10px;
-    &:before { background-image: url("@images/arrow-right.png"); }
-    &:hover:before { background-image: url("@images/arrow-right1.png"); }
+
+    &:before {
+      background-image: url("@codicons/chevron-right.svg");
+    }
   }
 
   &--collapsed &__handle-btn:before {

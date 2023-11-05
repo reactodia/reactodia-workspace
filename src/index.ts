@@ -1,6 +1,6 @@
 require('../styles/main.scss');
 
-export { LINK_SHOW_IRI } from './customization/defaultLinkStyles';
+export { DefaultLinkTemplateBundle, LINK_STYLE_SHOW_IRI } from './customization/defaultLinkStyles';
 export * from './customization/props';
 export * from './customization/templates';
 

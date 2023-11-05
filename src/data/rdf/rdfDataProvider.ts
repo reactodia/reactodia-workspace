@@ -83,7 +83,7 @@ export class RdfDataProvider implements DataProvider {
 
     private readonly EMPTY_LINKS: ReadonlySet<LinkTypeIri> = new Set();
 
-    constructor(options: RdfDataProviderOptions) {
+    constructor(options: RdfDataProviderOptions = {}) {
         this.factory = options.factory ?? Rdf.DefaultDataFactory;
         this.dataset = makeIndexedDataset(
             IndexQuadBy.S |
