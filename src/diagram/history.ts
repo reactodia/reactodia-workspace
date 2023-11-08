@@ -1,4 +1,4 @@
-import { EventSource, Events } from '../viewUtils/events';
+import { EventSource, Events } from '../coreUtils/events';
 
 export interface Command {
     readonly title?: string;
@@ -147,6 +147,7 @@ export class InMemoryHistory implements CommandHistory {
             batch._inverses.push(command);
         } else {
             this._undoStack.push(command);
+            this._redoStack.length = 0;
             this.source.trigger('historyChanged', {hasChanges: this.hasChanges()});
         }
     }
@@ -161,8 +162,9 @@ export class InMemoryHistory implements CommandHistory {
             _inverses: [],
             history: this,
             store: () => {
-                if (this.batches.includes(batch)) {
+                if (!this.batches.includes(batch)) {
                     console.warn('Failed to find batch to store (already stored or discarded?)', batch);
+                    return;
                 }
                 while (this.batches.length > 0) {
                     const other = this.batches.pop()!;
@@ -181,6 +183,7 @@ export class InMemoryHistory implements CommandHistory {
             discard: () => {
                 if (!this.batches.includes(batch)) {
                     console.warn('Failed to find batch to store (already stored or discarded?)');
+                    return;
                 }
                 while (this.batches.length > 0) {
                     const other = this.batches.pop();

@@ -1,9 +1,11 @@
-import { HashSet } from '../../viewUtils/hashMap';
+import { HashSet } from '../../coreUtils/hashMap';
+
 import {
     Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
 import { DataProvider, FilterParams, LinkedElement } from '../provider';
+
 import { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 

@@ -1,21 +1,21 @@
+import { EventSource, Events } from '../coreUtils/events';
+
 import {
-    Dictionary, ElementModel, LinkModel, ClassModel, LinkType,
+    Dictionary, ElementModel, LinkModel, LinkType,
     ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { DataProvider } from '../data/provider';
 import { DataFactory } from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { Element, FatLinkType, FatClassModel, RichProperty, FatLinkTypeEvents, Link } from '../diagram/elements';
+import { Element, FatLinkType, FatClassModel, RichProperty, Link } from '../diagram/elements';
 import { CommandHistory, Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents, placeholderDataFromIri } from '../diagram/model';
 
-import { EventSource, Events, Listener } from '../viewUtils/events';
-
 import { DataFetcher } from './dataFetcher';
 import {
-    LayoutData, LayoutElement, makeLayoutData, convertToSerializedDiagram, emptyDiagram,
-    LinkTypeOptions, SerializedDiagram, makeSerializedDiagram, emptyLayoutData
+    LayoutData, LinkTypeOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
+    makeLayoutData, makeSerializedDiagram, 
 } from './serializedDiagram';
 
 export interface GroupBy {
@@ -41,7 +41,7 @@ export class AsyncModel extends DiagramModel {
     declare readonly events: Events<AsyncModelEvents>;
 
     private _dataProvider!: DataProvider;
-    private fetcher!: DataFetcher;
+    private fetcher: DataFetcher | undefined;
 
     private linkSettings: { [linkTypeId: string]: LinkTypeOptions } = {};
 
@@ -62,8 +62,23 @@ export class AsyncModel extends DiagramModel {
         return this._dataProvider.factory;
     }
 
+    resetGraph(): void {
+        super.resetGraph();
+        this.fetcher?.dispose();
+    }
+
     subscribeGraph() {
         super.subscribeGraph();
+        this.graphListener.listen(this.events, 'elementEvent', e => {
+            if (e.data.requestedGroupContent) {
+                this.loadGroupContent(e.data.requestedGroupContent.source)
+                    .catch(err => {
+                        if (!this.fetcher!.signal.aborted) {
+                            throw new Error('Error loading group content', {cause: err});
+                        }
+                    });
+            }
+        });
     }
 
     private setDataProvider(dataProvider: DataProvider) {
@@ -186,10 +201,10 @@ export class AsyncModel extends DiagramModel {
         const usedLinkTypes: { [typeId: string]: FatLinkType } = {};
 
         for (const layoutElement of layoutData.elements) {
-            const {'@id': id, iri, position, size, isExpanded, group, elementState} = layoutElement;
+            const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
             const template = preloadedElements[iri];
             const data = template || placeholderDataFromIri(iri);
-            const element = new Element({id, data, position, size, expanded: isExpanded, group, elementState});
+            const element = new Element({id, data, position, expanded: isExpanded, group, elementState});
             this.graph.addElement(element);
             if (!template) {
                 elementIrisToRequestData.push(element.iri);
@@ -246,7 +261,7 @@ export class AsyncModel extends DiagramModel {
     }
 
     requestElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {
-        return this.fetcher.fetchElementData(elementIris);
+        return this.fetcher!.fetchElementData(elementIris);
     }
 
     requestLinksOfType(linkTypeIds?: LinkTypeIri[]): Promise<void> {
@@ -262,7 +277,7 @@ export class AsyncModel extends DiagramModel {
             return existing;
         }
         const classModel = super.createClass(classId);
-        this.fetcher.fetchClass(classModel);
+        this.fetcher!.fetchClass(classModel);
         return classModel;
     }
 
@@ -276,7 +291,7 @@ export class AsyncModel extends DiagramModel {
             const {visible, showLabel} = setting;
             linkType.setVisibility({visible, showLabel: showLabel!});
         }
-        this.fetcher.fetchLinkType(linkType);
+        this.fetcher!.fetchLinkType(linkType);
         return linkType;
     }
 
@@ -285,7 +300,7 @@ export class AsyncModel extends DiagramModel {
             return super.createProperty(propertyIri);
         }
         const property = super.createProperty(propertyIri);
-        this.fetcher.fetchPropertyType(property);
+        this.fetcher!.fetchPropertyType(property);
         return property;
     }
 
@@ -313,23 +328,41 @@ export class AsyncModel extends DiagramModel {
         }
     }
 
-    loadEmbeddedElements(elementIri: ElementIri): Promise<Dictionary<ElementModel>> {
+    private async loadGroupContent(element: Element): Promise<void> {
+        const models = await this.loadEmbeddedElements(element.iri);
+        const batch = this.history.startBatch();
+        const elementIris = Object.keys(models) as ElementIri[];
+        const elements = elementIris.map(
+            key => this.createElement(models[key], element.id)
+        );
+        batch.discard();
+
+        await Promise.all([
+            this.requestElementData(elementIris),
+            this.requestLinksOfType(),
+        ]);
+        this.fetcher!.signal.throwIfAborted();
+
+        this.triggerChangeGroupContent(element.id, {layoutComplete: false});
+    }
+
+    private async loadEmbeddedElements(elementIri: ElementIri): Promise<Dictionary<ElementModel>> {
         const elements = this.groupByProperties.map(groupBy =>
             this.dataProvider.filter({
                 refElementId: elementIri,
                 refElementLinkId: groupBy.linkType as LinkTypeIri,
                 linkDirection: groupBy.linkDirection,
+                signal: this.fetcher!.signal,
             })
         );
-        return Promise.all(elements).then(res => {
-            const nestedModels: { [id: string]: ElementModel } = {};
-            for (const result of res) {
-                for (const {element} of result) {
-                    nestedModels[element.id] = element;
-                }
+        const results = await Promise.all(elements);
+        const nestedModels: { [id: string]: ElementModel } = {};
+        for (const result of results) {
+            for (const {element} of result) {
+                nestedModels[element.id] = element;
             }
-            return nestedModels;
-        });
+        }
+        return nestedModels;
     }
 }
 

@@ -1,17 +1,15 @@
+import * as React from 'react';
 import classnames from 'classnames';
 
-import { PaperWidgetProps } from '../diagram/paperArea';
+import { CanvasContext } from '../diagram/canvasApi';
+import { defineCanvasWidget } from '../diagram/canvasWidget';
 
-export interface ZoomControlProps extends PaperWidgetProps {}
-
-type ProvidedProps =
-    Omit<ZoomControlProps, keyof PaperWidgetProps> &
-    Required<PaperWidgetProps>;
+export interface ZoomControlProps {}
 
 const CLASS_NAME = 'ontodia-zoom-control';
 
 export function ZoomControl(props: ZoomControlProps) {
-    const {paperArea} = props as ProvidedProps;
+    const {canvas} = React.useContext(CanvasContext)!;
     return (
         <div className={CLASS_NAME}>
             <button type='button'
@@ -20,7 +18,7 @@ export function ZoomControl(props: ZoomControlProps) {
                     'ontodia-btn ontodia-btn-default'
                 )}
                 title='Zoom In'
-                onClick={() => paperArea.zoomIn()}>
+                onClick={() => canvas.zoomIn()}>
             </button>
             <button type='button'
                 className={classnames(
@@ -28,7 +26,7 @@ export function ZoomControl(props: ZoomControlProps) {
                     'ontodia-btn ontodia-btn-default'
                 )}
                 title='Zoom Out'
-                onClick={() => paperArea.zoomOut()}>
+                onClick={() => canvas.zoomOut()}>
             </button>
             <button type='button'
                 className={classnames(
@@ -36,8 +34,10 @@ export function ZoomControl(props: ZoomControlProps) {
                     'ontodia-btn ontodia-btn-default'
                 )}
                 title='Fit to Screen'
-                onClick={() => paperArea.zoomToFit()}>
+                onClick={() => canvas.zoomToFit({animate: true})}>
             </button>
         </div>
     );
 }
+
+defineCanvasWidget(ZoomControl, element => ({element, attachment: 'viewport'}));

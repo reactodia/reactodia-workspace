@@ -1,7 +1,9 @@
+import { mapAbortedToNull } from '../coreUtils/async';
+import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
+
 import { ElementIri, LinkModel, hashLink, sameLink } from '../data/model';
 import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
-import { mapAbortedToNull } from '../viewUtils/async';
-import { HashMap, ReadonlyHashMap } from '../viewUtils/hashMap';
+
 import { AuthoringState } from './authoringState';
 import { EditorController } from './editorController';
 

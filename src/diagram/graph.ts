@@ -1,6 +1,7 @@
+import { OrderedMap } from '../coreUtils/collections';
+import { EventSource, Events, AnyEvent, AnyListener } from '../coreUtils/events';
+
 import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
-import { OrderedMap } from '../viewUtils/collections';
-import { EventSource, Events, AnyEvent, AnyListener } from '../viewUtils/events';
 
 import {
     Element as DiagramElement, ElementEvents,

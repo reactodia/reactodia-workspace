@@ -1,15 +1,17 @@
 import * as React from 'react';
 
+import { mapAbortedToNull } from '../coreUtils/async';
+import { EventObserver } from '../coreUtils/events';
+
 import { MetadataApi } from '../data/metadataApi';
 import { LinkModel, ElementModel, sameLink } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { EditorController } from '../editor/editorController';
 import { FatLinkType, LinkDirection } from '../diagram/elements';
 import { DiagramView } from '../diagram/view';
-import { EventObserver } from '../viewUtils/events';
-import { mapAbortedToNull } from '../viewUtils/async';
-import { HtmlSpinner } from '../viewUtils/spinner';
+import { HtmlSpinner } from '../diagram/spinner';
+
+import { EditorController } from '../editor/editorController';
 
 const CLASS_NAME = 'ontodia-edit-form';
 

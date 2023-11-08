@@ -1,4 +1,4 @@
-.ontodia {
+.ontodia-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -12,26 +12,6 @@
 
   *, *:before, *:after {
     box-sizing: inherit;
-  }
-
-  &__toolbar-widget {
-    position: absolute;
-    left: 10px;
-    top: 10px;
-  }
-
-  &__workspace {
-    display: flex;
-    flex: auto;
-    overflow: hidden;
-    flex-direction: column;
-  }
-
-  &__main-panel {
-    display: flex;
-    flex: auto;
-    overflow: hidden;
-    width: 0;
   }
 
   &--unselectable {

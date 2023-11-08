@@ -3,59 +3,59 @@ export type AnyListener<Data> = (data: Partial<Data>, key: string) => void;
 export type Unsubscribe = () => void;
 
 export interface PropertyChange<Source, Value> {
-    source: Source;
-    previous: Value;
+    readonly source: Source;
+    readonly previous: Value;
 }
 
 export interface AnyEvent<Data> {
-    key: string;
-    data: Partial<Data>;
+    readonly key: string;
+    readonly data: Partial<Data>;
 }
 
-export interface Events<Data> {
+export interface Events<out Data> {
     on<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
     off<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
     onAny(listener: AnyListener<Data>): void;
     offAny(listener: AnyListener<Data>): void;
 }
 
-export class EventSource<Data> implements Events<Data> {
-    private listeners = new Map<keyof Data, Array<Listener<Data, any>>>();
-    private anyListeners: Array<AnyListener<Data>> | undefined;
+export interface EventTrigger<in Data> {
+    trigger<Key extends keyof Data>(eventKey: Key, data: Data[Key]): void;
+}
+
+export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
+    private listeners = new Map<keyof Data, Set<Listener<Data, any>>>();
+    private anyListeners: Set<AnyListener<Data>> | undefined;
 
     on<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void {
         let listeners = this.listeners.get(eventKey);
         if (!listeners) {
-            listeners = [];
+            listeners = new Set();
             this.listeners.set(eventKey, listeners);
         }
-        listeners.push(listener);
+        listeners.add(listener);
     }
 
     onAny(listener: AnyListener<Data>): void {
         let listeners = this.anyListeners;
         if (!listeners) {
-            listeners = [];
+            listeners = new Set();
             this.anyListeners = listeners;
         }
-        listeners.push(listener);
+        listeners.add(listener);
     }
 
     off<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void {
         const listeners = this.listeners.get(eventKey);
-        if (!listeners) { return; }
-        const index = listeners.indexOf(listener);
-        if (index >= 0) {
-            listeners.splice(index, 1);
+        if (listeners) {
+            listeners.delete(listener);
         }
     }
 
     offAny(listener: AnyListener<Data>): void {
         const listeners = this.anyListeners;
-        if (!listeners) { return; }
-        const index = listeners.indexOf(listener);
-        if (index >= 0) {
-            listeners.splice(index, 1);
+        if (listeners) {
+            listeners.delete(listener);
         }
     }
 

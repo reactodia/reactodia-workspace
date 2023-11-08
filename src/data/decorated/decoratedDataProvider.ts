@@ -1,4 +1,5 @@
-import { raceAbortSignal } from '../../viewUtils/async';
+import { raceAbortSignal } from '../../coreUtils/async';
+
 import type * as Rdf from '../rdf/rdfModel';
 import { DataProvider, FilterParams, LinkedElement } from '../provider';
 import {

@@ -1,10 +1,10 @@
+import { EventSource, Events, EventObserver, AnyEvent } from '../coreUtils/events';
+
 import {
     ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 import { GenerateID } from '../data/schema';
-
-import { EventSource, Events, EventObserver, AnyEvent } from '../viewUtils/events';
 
 import {
     Element, ElementEvents, Link, LinkEvents, FatLinkType, FatLinkTypeEvents,
@@ -15,11 +15,15 @@ import { CommandHistory, Command } from './history';
 
 export interface DiagramModelEvents {
     changeCells: CellsChangedEvent;
+    changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
     linkTypeEvent: AnyEvent<FatLinkTypeEvents>;
     classEvent: AnyEvent<FatClassModelEvents>;
-    changeGroupContent: { group: string };
+    changeGroupContent: {
+        readonly group: string;
+        readonly layoutComplete: boolean;
+    };
 }
 
 /**
@@ -99,6 +103,7 @@ export class DiagramModel {
 
     reorderElements(compare: (a: Element, b: Element) => number) {
         this.graph.reorderElements(compare);
+        this.source.trigger('changeCellOrder', {source: this});
     }
 
     createElement(elementIriOrModel: ElementIri | ElementModel, group?: string): Element {
@@ -205,8 +210,9 @@ export class DiagramModel {
         return property;
     }
 
-    triggerChangeGroupContent(group: string) {
-        this.source.trigger('changeGroupContent', {group});
+    triggerChangeGroupContent(group: string, options: { layoutComplete: boolean }) {
+        const {layoutComplete} = options;
+        this.source.trigger('changeGroupContent', {group, layoutComplete});
     }
 
     createTemporaryElement(): Element {

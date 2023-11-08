@@ -1,31 +1,51 @@
 import * as React from 'react';
 
+import { EventObserver } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
+
 import { LinkModel } from '../data/model';
 
-import { Vector, computePolyline, getPointAlongPolyline, computePolylineLength } from '../diagram/geometry';
+import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import {
+    Vector, boundsOf, computePolyline, getPointAlongPolyline, computePolylineLength,
+} from '../diagram/geometry';
 import { TransformedSvgCanvas } from '../diagram/paper';
-import { PaperWidgetProps } from '../diagram/paperArea';
-import { DiagramView, RenderingLayer } from '../diagram/view';
+import { RenderingLayer } from '../diagram/renderingState';
 import { Link } from '../diagram/elements';
+import { HtmlSpinner } from '../diagram/spinner';
 
-import { Debouncer } from '../viewUtils/scheduler';
-import { EventObserver } from '../viewUtils/events';
-import { HtmlSpinner } from '../viewUtils/spinner';
-
-import { EditorController } from './editorController';
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { AuthoringKind, AuthoringState } from './authoringState';
 import { LinkValidation, ElementValidation } from './validation';
 
-export interface Props extends PaperWidgetProps {
-    view: DiagramView;
-    editor: EditorController;
+export interface LinkStateWidgetProps {
+    /**
+     * @default 5
+     */
+    linkLabelMargin?: number;
+}
+
+export function LinkStateWidget(props: LinkStateWidgetProps) {
+    const workspace = React.useContext(WorkspaceContext)!;
+    const {canvas} = React.useContext(CanvasContext)!;
+    return (
+        <LinkStateWidgetInner {...props}
+            workspace={workspace}
+            canvas={canvas}
+        />
+    );
+}
+
+interface LinkStateWidgetInternalProps extends LinkStateWidgetProps {
+    workspace: WorkspaceContext;
+    canvas: CanvasApi;
 }
 
 const CLASS_NAME = `ontodia-authoring-state`;
-const LINK_LABEL_MARGIN = 5;
+const DEFAULT_LINK_LABEL_MARGIN = 5;
 
-export class LinkStateWidget extends React.Component<Props, {}> {
+class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
@@ -33,29 +53,19 @@ export class LinkStateWidget extends React.Component<Props, {}> {
         this.listenEvents();
     }
 
-    componentDidUpdate(prevProps: Props) {
-        const sameEventSources = (
-            this.props.view === prevProps.view
-        );
-        if (!sameEventSources) {
-            this.listener.stopListening();
-            this.listenEvents();
-        }
-    }
-
     componentWillUnmount() {
         this.listener.stopListening();
     }
 
     private listenEvents() {
-        const {editor, view} = this.props;
+        const {workspace: {view, editor}, canvas} = this.props;
         this.listener.listen(editor.model.events, 'elementEvent',  ({data}) => {
-            if (data.changeSize || data.changePosition) {
+            if (data.changePosition) {
                 this.scheduleUpdate();
             }
         });
         this.listener.listen(editor.model.events, 'linkEvent', ({data}) => {
-            if (data.changeVertices || data.changeLabelBounds) {
+            if (data.changeVertices) {
                 this.scheduleUpdate();
             }
         });
@@ -63,7 +73,13 @@ export class LinkStateWidget extends React.Component<Props, {}> {
         this.listener.listen(editor.events, 'changeAuthoringState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeTemporaryState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeValidationState', this.scheduleUpdate);
-        this.listener.listen(view.events, 'syncUpdate', ({layer}) => {
+        this.listener.listen(
+            canvas.renderingState.events, 'changeElementSize', this.scheduleUpdate
+        );
+        this.listener.listen(
+            canvas.renderingState.events, 'changeLinkLabelBounds', this.scheduleUpdate
+        );
+        this.listener.listen(canvas.renderingState.events, 'syncUpdate', ({layer}) => {
             if (layer === RenderingLayer.Editor) {
                 this.delayedUpdate.runSynchronously();
             }
@@ -84,22 +100,26 @@ export class LinkStateWidget extends React.Component<Props, {}> {
     }
 
     private calculatePolyline(link: Link) {
-        const {editor, view} = this.props;
+        const {workspace: {model}, canvas} = this.props;
 
-        const source = editor.model.getElement(link.sourceId)!;
-        const target = editor.model.getElement(link.targetId)!;
+        const source = model.getElement(link.sourceId)!;
+        const target = model.getElement(link.targetId)!;
 
-        const route = view.getRouting(link.id);
+        const route = canvas.renderingState.getRouting(link.id);
         const verticesDefinedByUser = link.vertices || [];
         const vertices = route ? route.vertices : verticesDefinedByUser;
 
-        return computePolyline(source, target, vertices);
+        return computePolyline(
+            boundsOf(source, canvas.renderingState),
+            boundsOf(target, canvas.renderingState),
+            vertices
+        );
     }
 
     private renderLinkStateLabels() {
-        const {editor} = this.props;
+        const {workspace: {model, editor}} = this.props;
 
-        return editor.model.links.map(link => {
+        return model.links.map(link => {
             let renderedState: JSX.Element | null = null;
             const state = editor.authoringState.links.get(link.data);
             if (state) {
@@ -154,8 +174,8 @@ export class LinkStateWidget extends React.Component<Props, {}> {
     }
 
     private renderLinkStateHighlighting() {
-        const {editor} = this.props;
-        return editor.model.links.map(link => {
+        const {workspace: {model, editor}} = this.props;
+        return model.links.map(link => {
             if (editor.temporaryState.links.has(link.data)) {
                 const path = this.calculateLinkPath(link);
                 return (
@@ -185,9 +205,14 @@ export class LinkStateWidget extends React.Component<Props, {}> {
     }
 
     private getLinkStateLabelPosition(link: Link): Vector {
-        if (link.labelBounds) {
-            const {x, y} = link.labelBounds;
-            return {x, y: y - LINK_LABEL_MARGIN / 2};
+        const {
+            canvas,
+            linkLabelMargin = DEFAULT_LINK_LABEL_MARGIN,
+        } = this.props;
+        const labelBounds = canvas.renderingState.getLinkLabelBounds(link);
+        if (labelBounds) {
+            const {x, y} = labelBounds;
+            return {x, y: y - linkLabelMargin / 2};
         } else {
             const polyline = this.calculatePolyline(link);
             const polylineLength = computePolylineLength(polyline);
@@ -196,7 +221,7 @@ export class LinkStateWidget extends React.Component<Props, {}> {
     }
 
     private renderLinkErrors(linkModel: LinkModel) {
-        const {editor} = this.props;
+        const {workspace: {editor}} = this.props;
         const {validationState} = editor;
 
         const validation = validationState.links.get(linkModel);
@@ -219,8 +244,9 @@ export class LinkStateWidget extends React.Component<Props, {}> {
     }
 
     render() {
-        const {editor, paperTransform} = this.props;
-        const {scale, originX, originY} = paperTransform!;
+        const {workspace: {editor}, canvas} = this.props;
+        const transform = canvas.metrics.getTransform();
+        const {scale, originX, originY} = transform;
         if (!editor.inAuthoringMode) {
             return null;
         }
@@ -229,7 +255,7 @@ export class LinkStateWidget extends React.Component<Props, {}> {
             transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
         };
         return <div className={`${CLASS_NAME}`}>
-            <TransformedSvgCanvas paperTransform={paperTransform!}
+            <TransformedSvgCanvas paperTransform={transform}
                 style={{overflow: 'visible', pointerEvents: 'none'}}>
                 {this.renderLinkStateHighlighting()}
             </TransformedSvgCanvas>

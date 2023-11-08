@@ -2,19 +2,25 @@ import * as React from 'react';
 import { findDOMNode } from 'react-dom';
 import { hcl } from 'd3-color';
 
+import { EventObserver } from '../coreUtils/events';
+import {
+    KeyedObserver, observeElementTypes, observeProperties,
+} from '../coreUtils/keyedObserver';
+import { Debouncer } from '../coreUtils/scheduler';
+
 import { ElementTypeIri, PropertyTypeIri } from '../data/model';
 import { TemplateProps } from '../customization/props';
-import { Debouncer } from '../viewUtils/scheduler';
-import { EventObserver } from '../viewUtils/events';
-import { PropTypes } from '../viewUtils/react';
-import { KeyedObserver, observeElementTypes, observeProperties } from '../viewUtils/keyedObserver';
 
 import { setElementExpanded } from './commands';
 import { Element } from './elements';
-import { DiagramView, RenderingLayer, IriClickIntent } from './view';
+import { DiagramModel } from './model';
+import { RenderingState, RenderingLayer } from './renderingState';
+import { DiagramView, IriClickIntent } from './view';
 
-export interface Props {
+export interface ElementLayerProps {
+    model: DiagramModel;
     view: DiagramView;
+    renderingState: RenderingState;
     group?: string;
     style: React.CSSProperties;
 }
@@ -29,14 +35,13 @@ interface ElementState {
     blurred: boolean;
 }
 
-// tslint:disable:no-bitwise
 enum RedrawFlags {
     None = 0,
-    Render = 1,
-    RecomputeTemplate = 1 | 2,
-    RecomputeBlurred = 1 | 4,
+    ScanCells = 1,
+    Render = 2,
+    RecomputeTemplate = Render | 4,
+    RecomputeBlurred = Render | 8,
 }
-// tslint:enable:no-bitwise
 
 interface RedrawBatch {
     requests: Map<string, RedrawFlags>;
@@ -48,7 +53,7 @@ interface SizeUpdateRequest {
     node: HTMLDivElement;
 }
 
-export class ElementLayer extends React.Component<Props, State> {
+export class ElementLayer extends React.Component<ElementLayerProps, State> {
     private readonly listener = new EventObserver();
 
     private redrawBatch: RedrawBatch = {
@@ -62,8 +67,8 @@ export class ElementLayer extends React.Component<Props, State> {
 
     private layer!: HTMLDivElement;
 
-    constructor(props: Props, context: any) {
-        super(props, context);
+    constructor(props: ElementLayerProps) {
+        super(props);
         const {view, group} = this.props;
         this.state = {
             elementStates: applyRedrawRequests(
@@ -76,7 +81,7 @@ export class ElementLayer extends React.Component<Props, State> {
     }
 
     render() {
-        const {view, style} = this.props;
+        const {style, view, renderingState} = this.props;
         const {elementStates} = this.state;
 
         const elementsToRender: ElementState[] = [];
@@ -95,6 +100,7 @@ export class ElementLayer extends React.Component<Props, State> {
                     <OverlaidElement key={state.element.id}
                         state={state}
                         view={view}
+                        renderingState={renderingState}
                         onInvalidate={this.requestRedraw}
                         onResize={this.requestSizeUpdate}
                     />
@@ -118,23 +124,20 @@ export class ElementLayer extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        const {view} = this.props;
-        this.listener.listen(view.model.events, 'changeCells', e => {
+        const {model, view, renderingState} = this.props;
+        this.listener.listen(model.events, 'changeCells', e => {
             if (e.updateAll) {
-                this.requestRedrawAll(RedrawFlags.None);
+                this.requestRedrawAll(RedrawFlags.ScanCells);
             } else {
                 if (e.changedElement) {
                     this.requestRedraw(e.changedElement, RedrawFlags.None);
                 }
             }
         });
-        this.listener.listen(view.events, 'changeLanguage', () => {
-            this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
+        this.listener.listen(model.events, 'changeCellOrder', () => {
+            this.requestRedrawAll(RedrawFlags.None);
         });
-        this.listener.listen(view.events, 'changeHighlight', () => {
-            this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
-        });
-        this.listener.listen(view.model.events, 'elementEvent', ({data}) => {
+        this.listener.listen(model.events, 'elementEvent', ({data}) => {
             const invalidatesTemplate = data.changeData || data.changeExpanded || data.changeElementState;
             if (invalidatesTemplate) {
                 this.requestRedraw(invalidatesTemplate.source, RedrawFlags.RecomputeTemplate);
@@ -144,7 +147,13 @@ export class ElementLayer extends React.Component<Props, State> {
                 this.requestRedraw(invalidatesRender.source, RedrawFlags.Render);
             }
         });
-        this.listener.listen(view.events, 'syncUpdate', ({layer}) => {
+        this.listener.listen(view.events, 'changeLanguage', () => {
+            this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
+        });
+        this.listener.listen(view.events, 'changeHighlight', () => {
+            this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
+        });
+        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
             if (layer === RenderingLayer.Element) {
                 this.delayedRedraw.runSynchronously();
             } else if (layer === RenderingLayer.ElementSize) {
@@ -153,12 +162,12 @@ export class ElementLayer extends React.Component<Props, State> {
         });
     }
 
-    componentWillReceiveProps(nextProps: Props) {
-        if (this.props.group !== nextProps.group) {
-            this.setState((state): State => ({
+    componentDidUpdate(prevProps: ElementLayerProps) {
+        if (this.props.group !== prevProps.group) {
+            this.setState((state, props): State => ({
                 elementStates: applyRedrawRequests(
-                    nextProps.view,
-                    nextProps.group,
+                    props.view,
+                    props.group,
                     this.redrawBatch,
                     state.elementStates
                 )
@@ -192,8 +201,7 @@ export class ElementLayer extends React.Component<Props, State> {
     }
 
     private redrawElements = () => {
-        const props = this.props;
-        this.setState((state): State => ({
+        this.setState((state, props): State => ({
             elementStates: applyRedrawRequests(
                 props.view,
                 props.group,
@@ -209,11 +217,12 @@ export class ElementLayer extends React.Component<Props, State> {
     }
 
     private recomputeQueuedSizes = () => {
+        const {renderingState} = this.props;
         const batch = this.sizeRequests;
         this.sizeRequests = new Map<string, SizeUpdateRequest>();
         batch.forEach(({element, node}) => {
             const {clientWidth, clientHeight} = node;
-            element.setSize({width: clientWidth, height: clientHeight});
+            renderingState.setElementSize(element, {width: clientWidth, height: clientHeight});
         });
     }
 }
@@ -224,6 +233,9 @@ function applyRedrawRequests(
     batch: RedrawBatch,
     previous: ReadonlyMap<string, ElementState>,
 ): ReadonlyMap<string, ElementState> {
+    if (batch.forAll === RedrawFlags.None && batch.requests.size === 0) {
+        return previous;
+    }
     const computed = new Map<string, ElementState>();
     for (const element of view.model.elements) {
         if (element.group !== targetGroup) { continue; }
@@ -261,34 +273,17 @@ function applyRedrawRequests(
 interface OverlaidElementProps {
     state: ElementState;
     view: DiagramView;
+    renderingState: RenderingState;
     onInvalidate: (model: Element, request: RedrawFlags) => void;
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 
-export interface ElementContextWrapper { ontodiaElement: ElementContext; }
-export const ElementContextTypes: { [K in keyof ElementContextWrapper]: any } = {
-    ontodiaElement: PropTypes.anything,
-};
-
-export interface ElementContext {
-    element: Element;
-}
-
 class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
-    static childContextTypes = ElementContextTypes;
-
     private readonly listener = new EventObserver();
     private disposed = false;
 
     private typesObserver!: KeyedObserver<ElementTypeIri>;
     private propertiesObserver!: KeyedObserver<PropertyTypeIri>;
-
-    getChildContext(): ElementContextWrapper {
-        const ontodiaElement: ElementContext = {
-            element: this.props.state.element,
-        };
-        return {ontodiaElement};
-    }
 
     private rerenderTemplate = () => {
         if (this.disposed) { return; }
@@ -308,7 +303,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
         // if (angle) { transform += `rotate(${angle}deg)`; }
 
         const className = (
-            `ontodia-overlayed-element ${blurred ? 'ontodia-overlayed-element--blurred' : ''}`
+            `ontodia-overlaid-element ${blurred ? 'ontodia-overlaid-element--blurred' : ''}`
         );
         return <div className={className}
             // set `element-id` to translate mouse events to paper
@@ -340,8 +335,9 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
         if (e.target instanceof HTMLElement && e.target.localName === 'a') {
             const anchor = e.target as HTMLAnchorElement;
             const {view, state} = this.props;
-            const clickIntent = e.target.getAttribute('data-iri-click-intent') === IriClickIntent.OpenEntityIri ?
-                IriClickIntent.OpenEntityIri : IriClickIntent.OpenOtherIri;
+            const rawIntent = e.target.getAttribute('data-iri-click-intent') as IriClickIntent;
+            const clickIntent: IriClickIntent = rawIntent === 'openEntityIri'
+                ? 'openEntityIri' : 'openOtherIri';
             view.onIriClick(decodeURI(anchor.href), state.element, clickIntent, e);
         }
     }
@@ -394,20 +390,20 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
 }
 
 class TemplatedElement extends React.Component<OverlaidElementProps, {}> {
-    private cachedTemplateClass: React.ComponentClass<TemplateProps> | undefined;
+    private cachedTemplateClass: React.ComponentType<TemplateProps> | undefined;
     private cachedTemplateProps: TemplateProps | undefined;
 
     render() {
-        const {state, view} = this.props;
+        const {state, renderingState} = this.props;
         const {element, templateProps} = state;
-        const templateClass = view.getElementTemplate(element.data.types);
+        const templateClass = renderingState.getElementTemplate(element.data.types);
         this.cachedTemplateClass = templateClass;
         this.cachedTemplateProps = templateProps;
         return React.createElement(templateClass, templateProps);
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
-        const templateClass = nextProps.view.getElementTemplate(nextProps.state.element.data.types);
+        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element.data.types);
         return !(
             this.cachedTemplateClass === templateClass &&
             this.cachedTemplateProps === nextProps.state.templateProps
@@ -423,6 +419,7 @@ function computeTemplateProps(model: Element, view: DiagramView): TemplateProps 
         color,
         iconUrl: icon,
         isExpanded: model.isExpanded,
+        elementState: model.elementState,
     };
 }
 

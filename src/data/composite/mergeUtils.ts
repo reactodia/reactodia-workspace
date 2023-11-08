@@ -1,5 +1,6 @@
-import { mapToObject } from '../../viewUtils/collections';
-import { HashSet } from '../../viewUtils/hashMap';
+import { mapToObject } from '../../coreUtils/collections';
+import { HashSet } from '../../coreUtils/hashMap';
+
 import * as Rdf from '../rdf/rdfModel';
 import {
     Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,

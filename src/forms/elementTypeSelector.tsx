@@ -1,17 +1,18 @@
 import * as React from 'react';
 
+import { mapAbortedToNull } from '../coreUtils/async';
+
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
+import { MetadataApi } from '../data/metadataApi';
 import { ElementModel, ElementTypeIri } from '../data/model';
 
-import { EditorController } from '../editor/editorController';
+import { HtmlSpinner } from '../diagram/spinner';
 import { DiagramView } from '../diagram/view';
-import { MetadataApi } from '../data/metadataApi';
+
+import { EditorController } from '../editor/editorController';
 
 import { createRequest } from '../widgets/instancesSearch';
 import { ListElementView } from '../widgets/listElementView';
-
-import { mapAbortedToNull } from '../viewUtils/async';
-import { HtmlSpinner } from '../viewUtils/spinner';
 
 const CLASS_NAME = 'ontodia-edit-form';
 

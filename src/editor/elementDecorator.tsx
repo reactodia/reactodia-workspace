@@ -1,23 +1,36 @@
 import * as React from 'react';
 
-import { EventObserver } from '../viewUtils/events';
-import { HtmlSpinner } from '../viewUtils/spinner';
+import { EventObserver } from '../coreUtils/events';
 
+import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { Element } from '../diagram/elements';
-import { DiagramView } from '../diagram/view';
 import { Vector } from '../diagram/geometry';
+import { HtmlSpinner } from '../diagram/spinner';
 
-import { EditorController } from './editorController';
+import { WorkspaceContext } from '../workspace/workspaceContext';
+
 import { ElementChange } from './authoringState';
 import { ElementValidation, LinkValidation } from './validation';
 
-const CLASS_NAME = `ontodia-authoring-state`;
-
 export interface ElementDecoratorProps {
-    model: Element;
-    view: DiagramView;
-    editor: EditorController;
+    target: Element;
     position: Vector;
+}
+
+export function ElementDecorator(props: ElementDecoratorProps) {
+    const {canvas} = React.useContext(CanvasContext)!;
+    const workspace = React.useContext(WorkspaceContext)!;
+    return (
+        <ElementDecoratorInner {...props}
+            canvas={canvas}
+            workspace={workspace}
+        />
+    );
+}
+
+interface ElementDecoratorInnerProps extends ElementDecoratorProps {
+    canvas: CanvasApi;
+    workspace: WorkspaceContext;
 }
 
 interface State {
@@ -26,45 +39,49 @@ interface State {
     isTemporary?: boolean;
 }
 
-export class ElementDecorator extends React.Component<ElementDecoratorProps, State> {
+const CLASS_NAME = `ontodia-authoring-state`;
+
+class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, State> {
     private readonly listener = new EventObserver();
 
-    constructor(props: ElementDecoratorProps) {
+    constructor(props: ElementDecoratorInnerProps) {
         super(props);
-        const {model, editor} = props;
+        const {target, workspace: {editor}} = this.props;
         this.state = {
-            state: editor.authoringState.elements.get(model.iri),
-            validation: editor.validationState.elements.get(model.iri),
-            isTemporary: editor.temporaryState.elements.has(model.iri),
+            state: editor.authoringState.elements.get(target.iri),
+            validation: editor.validationState.elements.get(target.iri),
+            isTemporary: editor.temporaryState.elements.has(target.iri),
         };
     }
 
     componentDidMount() {
-        const {model, editor} = this.props;
-        this.listener.listen(model.events, 'changeSize', () =>
-            this.forceUpdate()
-        );
+        const {target, canvas, workspace: {editor}} = this.props;
+        this.listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+            if (e.source === target) {
+                this.forceUpdate();
+            }
+        });
         this.listener.listen(editor.events, 'changeAuthoringState', e => {
-            const state = editor.authoringState.elements.get(model.iri);
-            if (state === e.previous.elements.get(model.iri)) { return; }
+            const state = editor.authoringState.elements.get(target.iri);
+            if (state === e.previous.elements.get(target.iri)) { return; }
             this.setState({state});
         });
         this.listener.listen(editor.events, 'changeValidationState', e => {
-            const validation = editor.validationState.elements.get(model.iri);
-            if (validation === e.previous.elements.get(model.iri)) { return; }
+            const validation = editor.validationState.elements.get(target.iri);
+            if (validation === e.previous.elements.get(target.iri)) { return; }
             this.setState({validation});
         });
         this.listener.listen(editor.events, 'changeTemporaryState', e => {
-            const isTemporary = editor.temporaryState.elements.has(model.iri);
-            if (isTemporary === e.previous.elements.has(model.iri)) { return; }
+            const isTemporary = editor.temporaryState.elements.has(target.iri);
+            if (isTemporary === e.previous.elements.has(target.iri)) { return; }
             this.setState({isTemporary});
         });
-        this.listener.listen(model.events, 'changeData', e => {
-            if (e.previous.id !== model.iri) {
+        this.listener.listen(target.events, 'changeData', e => {
+            if (e.previous.id !== target.iri) {
                 this.setState({
-                    isTemporary: editor.temporaryState.elements.has(model.iri),
-                    validation: editor.validationState.elements.get(model.iri),
-                    state: editor.authoringState.elements.get(model.iri),
+                    isTemporary: editor.temporaryState.elements.has(target.iri),
+                    validation: editor.validationState.elements.get(target.iri),
+                    state: editor.authoringState.elements.get(target.iri),
                 });
             }
         });
@@ -84,14 +101,14 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
     }
 
     private renderElementOutlines() {
-        const {model} = this.props;
+        const {target, canvas} = this.props;
         const {state, isTemporary} = this.state;
-        const {width, height} = model.size;
+        const {width, height} = canvas.renderingState.getElementSize(target) ?? {width: 0, height: 0};
         if (isTemporary) {
             return [
-                <rect key={`${model.id}-opacity`} x={0} y={0} width={width} height={height}
+                <rect key={`${target.id}-opacity`} x={0} y={0} width={width} height={height}
                     fill='rgba(255, 255, 255, 0.5)' />,
-                <rect key={`${model.id}-stripes`} x={0} y={0} width={width} height={height}
+                <rect key={`${target.id}-stripes`} x={0} y={0} width={width} height={height}
                     fill='url(#stripe-pattern)' />
             ];
         }
@@ -99,7 +116,7 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
             const right = width;
             const bottom = height;
             return (
-                <g key={model.id}>
+                <g key={target.id}>
                     <rect x={0} y={0} width={width} height={height} fill='white' fillOpacity={0.5} />
                     <line x1={0} y1={0} x2={right} y2={bottom} stroke='red' />
                     <line x1={right} y1={0} x2={0} y2={bottom} stroke='red' />
@@ -120,14 +137,14 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
     }
 
     private renderElementErrors() {
-        const {view} = this.props;
+        const {workspace: {model, view}} = this.props;
         const {validation} = this.state;
         if (!validation) {
             return null;
         }
         const title = validation.errors.map(error => {
             if (error.propertyType) {
-                const {id, label} = view.model.createProperty(error.propertyType);
+                const {id, label} = model.createProperty(error.propertyType);
                 const source = view.formatLabel(label, id);
                 return `${source}: ${error.message}`;
             } else {
@@ -139,7 +156,7 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
     }
 
     private renderElementState() {
-        const {model, editor} = this.props;
+        const {target, workspace: {editor}} = this.props;
         const {state} = this.state;
         if (state) {
             const onCancel = () => editor.discardChange(state);
@@ -173,7 +190,7 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
             if (renderedState || renderedErrors) {
                 return (
                     <div className={`${CLASS_NAME}__state-indicator`}
-                        key={model.id}
+                        key={target.id}
                         style={{left: 0, top: 0}}>
                         <div className={`${CLASS_NAME}__state-indicator-container`}>
                             <div className={`${CLASS_NAME}__state-indicator-body`}>
@@ -189,7 +206,9 @@ export class ElementDecorator extends React.Component<ElementDecoratorProps, Sta
     }
 
     render() {
-        const {position, size} = this.props.model;
+        const {target, canvas} = this.props;
+        const {position} = target;
+        const size = canvas.renderingState.getElementSize(target) ?? {width: 0, height: 0};
         const transform = `translate(${position.x}px,${position.y}px)`;
         const outlines = this.renderElementOutlines();
         const state = this.renderElementState();

@@ -1,15 +1,13 @@
 import * as React from 'react';
 
+import { CanvasContext } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
-import { DiagramView } from '../diagram/view';
 
 const CLASS_NAME = 'ontodia-edit-form';
 
 export interface EditLinkLabelFormProps {
-    view: DiagramView;
     link: Link;
-    onApply: (label: string) => void;
-    onCancel: () => void;
+    onFinish: () => void;
 }
 
 interface State {
@@ -17,8 +15,11 @@ interface State {
 }
 
 export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, State> {
-    constructor(props: EditLinkLabelFormProps) {
-        super(props);
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
+
+    constructor(props: EditLinkLabelFormProps, context: any) {
+        super(props, context);
         const label = this.computeLabel();
         this.state = {label};
     }
@@ -31,11 +32,12 @@ export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, S
     }
 
     private computeLabel(): string {
-        const {view, link} = this.props;
+        const {link} = this.props;
+        const {canvas, model, view} = this.context;
 
-        const linkType = view.model.getLinkType(link.typeId)!;
-        const template = view.createLinkTemplate(linkType);
-        const {label = {}} = template.renderLink(link, view.model);
+        const linkType = model.getLinkType(link.typeId)!;
+        const template = canvas.renderingState.createLinkTemplate(linkType);
+        const {label = {}} = template.renderLink(link, model);
 
         return (label.label && label.label.length > 0)
             ? view.selectLabel(label.label)!.value
@@ -43,7 +45,7 @@ export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, S
     }
 
     render() {
-        const {onApply, onCancel} = this.props;
+        const {onFinish} = this.props;
         const {label} = this.state;
         return (
             <div className={CLASS_NAME}>
@@ -55,15 +57,27 @@ export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, S
                     </div>
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-success ${CLASS_NAME}__apply-button`}
-                        onClick={() => onApply(label)}>
+                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
+                        onClick={this.onApply}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-danger' onClick={() => onCancel()}>
+                    <button className='ontodia-btn ontodia-btn-default' onClick={onFinish}>
                         Cancel
                     </button>
                 </div>
             </div>
         );
     }
+
+    private onApply = () => {
+        const {link, onFinish} = this.props;
+        const {canvas, model} = this.context;
+        const {label} = this.state;
+
+        const linkType = model.getLinkType(link.typeId)!;
+        const template = canvas.renderingState.createLinkTemplate(linkType);
+        template.setLinkLabel?.(link, label);
+
+        onFinish();
+    };
 }

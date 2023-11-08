@@ -1,12 +1,15 @@
 import * as React from 'react';
 
-import { EventObserver } from '../viewUtils/events';
+import { EventObserver } from '../coreUtils/events';
 
 import { Element, Cell } from './elements';
-import { ElementContextWrapper, ElementContextTypes } from './elementLayer';
 import { Vector, Rect, getContentFittingBox } from './geometry';
 import { Paper, PaperTransform } from './paper';
-import { PaperAreaContextTypes, PaperAreaContextWrapper } from './paperAreaContext';
+import { CanvasContext } from './canvasApi';
+
+export interface EmbeddedLayerProps {
+    elementId: string;
+}
 
 interface State {
     paperWidth: number;
@@ -15,10 +18,9 @@ interface State {
     offsetY: number;
 }
 
-export class EmbeddedLayer extends React.Component<{}, State> {
-    static contextTypes = {...ElementContextTypes, ...PaperAreaContextTypes};
-
-    declare readonly context: ElementContextWrapper & PaperAreaContextWrapper;
+export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
 
     private readonly listener = new EventObserver();
     private nestedElementListener = new EventObserver();
@@ -30,17 +32,19 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     private isNestedElementMoving = false;
     private previousPositions: Array<{ id: string; position: Vector }> = [];
 
-    constructor(props: {}) {
+    constructor(props: EmbeddedLayerProps) {
         super(props);
         this.state = {paperWidth: 0, paperHeight: 0, offsetX: 0, offsetY: 0};
     }
 
     componentDidMount() {
-        const {element} = this.context.ontodiaElement;
-        const {paperArea, view} = this.context.ontodiaPaperArea;
+        const {elementId} = this.props;
+        const {canvas, model} = this.context;
 
-        this.listener.listen(view.model.events, 'changeGroupContent', ({group}) => {
-            if (group === element.id) {
+        const element = model.getElement(elementId)!;
+
+        this.listener.listen(model.events, 'changeGroupContent', ({group, layoutComplete}) => {
+            if (group === element.id && layoutComplete) {
                 this.listenNestedElements(this.getNestedElements());
                 const {offsetX, offsetY} = this.getOffset();
                 this.moveNestedElements(offsetX, offsetY);
@@ -60,7 +64,7 @@ export class EmbeddedLayer extends React.Component<{}, State> {
             this.setState({offsetX, offsetY});
         });
 
-        this.listener.listen(paperArea.events, 'pointerUp', e => {
+        this.listener.listen(canvas.events, 'pointerUp', e => {
             this.isNestedElementMoving = false;
         });
 
@@ -81,11 +85,23 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     }
 
     private listenNestedElements(nestedElements: ReadonlyArray<Element>) {
+        const {canvas} = this.context;
+
         const listener = new EventObserver();
         for (const nestedElement of nestedElements) {
             listener.listen(nestedElement.events, 'changePosition', this.recomputeSelfBounds);
-            listener.listen(nestedElement.events, 'changeSize', this.recomputeSelfBounds);
         }
+
+        const nestedElementIds = new Set();
+        for (const element of nestedElements) {
+            nestedElementIds.add(element.id);
+        }
+        listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+            if (nestedElementIds.has(e.source.id)) {
+                this.recomputeSelfBounds();
+            }
+        });
+
         this.nestedElementListener.stopListening();
         this.nestedElementListener = listener;
     }
@@ -98,29 +114,32 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     }
 
     private getNestedElements() {
-        const {element} = this.context.ontodiaElement;
-        const {view} = this.context.ontodiaPaperArea;
-        return view.model.elements.filter(el => el.group === element.id);
+        const {elementId} = this.props;
+        const {model} = this.context;
+        return model.elements.filter(el => el.group === elementId);
     }
 
     private getContentFittingBox(): Rect {
+        const {canvas} = this.context;
         const nestedElements = this.getNestedElements();
-        return getContentFittingBox(nestedElements, []);
+        return getContentFittingBox(nestedElements, [], canvas.renderingState);
     }
 
     private removeElements() {
-        const {view} = this.context.ontodiaPaperArea;
-        const batch = view.model.history.startBatch();
+        const {model} = this.context;
+        const batch = model.history.startBatch();
         for (const element of this.getNestedElements()) {
-            view.model.removeElement(element.id);
+            model.removeElement(element.id);
         }
         batch.discard();
     }
 
     private getOffset(): { offsetX: number; offsetY: number } {
-        const {element} = this.context.ontodiaElement;
-        const {x: elementX, y: elementY} = element.position;
+        const {elementId} = this.props;
+        const {model} = this.context;
+        const element = model.getElement(elementId)!;
 
+        const {x: elementX, y: elementY} = element.position;
         const offsetX = elementX + this.layerOffsetLeft;
         const offsetY = elementY + this.layerOffsetTop;
 
@@ -144,7 +163,10 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     private recomputeSelfBounds = () => {
         if (this.isApplyingParentMove) { return; }
 
-        const {element} = this.context.ontodiaElement;
+        const {elementId} = this.props;
+        const {model} = this.context;
+        const element = model.getElement(elementId)!;
+
         const {x: offsetX, y: offsetY, width: paperWidth, height: paperHeight} = this.getContentFittingBox();
 
         if (this.isNestedElementMoving) {
@@ -170,8 +192,8 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     }
 
     private calculateOffset(layer: HTMLElement): { left: number; top: number } {
-        const {paperArea} = this.context.ontodiaPaperArea;
-        const scale = paperArea.getScale();
+        const {canvas} = this.context;
+        const scale = canvas.getScale();
         const parent = findParentElement(layer);
         const {left, top} = layer.getBoundingClientRect();
         const {left: parentLeft, top: parentTop} = parent.getBoundingClientRect();
@@ -189,8 +211,8 @@ export class EmbeddedLayer extends React.Component<{}, State> {
     }
 
     render() {
-        const {element} = this.context.ontodiaElement;
-        const {view} = this.context.ontodiaPaperArea;
+        const {elementId} = this.props;
+        const {canvas, model, view} = this.context;
         const {paperWidth, paperHeight, offsetX, offsetY} = this.state;
 
         const paperTransform: PaperTransform = {
@@ -205,10 +227,12 @@ export class EmbeddedLayer extends React.Component<{}, State> {
 
         return (
             <div className='ontodia-embedded-layer' ref={this.onLayerInit}>
-                <Paper view={view}
+                <Paper model={model}
+                    view={view}
+                    renderingState={canvas.renderingState}
                     paperTransform={paperTransform}
                     onPointerDown={this.onPaperPointerDown}
-                    group={element.id}
+                    group={elementId}
                 />
             </div>
         );

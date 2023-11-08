@@ -1,26 +1,37 @@
 import * as React from 'react';
 
-import { delay } from '../viewUtils/async';
-import { Debouncer, animateInterval, easeInOutBezier } from '../viewUtils/scheduler';
-import { EventObserver, Events, EventSource, PropertyChange } from '../viewUtils/events';
-import { ToSVGOptions, ToDataURLOptions, toSVG, toDataURL, fitRectKeepingAspectRatio } from '../viewUtils/toSvg';
+import { delay } from '../coreUtils/async';
+import { EventObserver, Events, EventSource } from '../coreUtils/events';
+import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/scheduler';
 
+import {
+    CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
+    CanvasDropEvent, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
+} from './canvasApi';
+import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
 import { Element, Link, Cell, LinkVertex } from './elements';
-import { Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox } from './geometry';
+import {
+    Vector, Rect, boundsOf, computePolyline, findNearestSegmentIndex, getContentFittingBox,
+} from './geometry';
+import { DiagramModel } from './model';
 import { CommandBatch } from './history';
-import { DiagramView, RenderingLayer, WidgetDescription, WidgetAttachment } from './view';
 import { Paper, PaperTransform } from './paper';
-import { PaperAreaContext, PaperAreaContextTypes, PaperAreaContextWrapper } from './paperAreaContext';
+import { RenderingState, RenderingLayer } from './renderingState';
+import {
+    ToSVGOptions, ToDataURLOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
+} from './toSvg';
+import { DiagramView } from './view';
 
 export interface PaperAreaProps {
+    model: DiagramModel;
     view: DiagramView;
+    renderingState: RenderingState;
     zoomOptions?: ZoomOptions;
     hideScrollBars?: boolean;
     watermarkSvg?: string;
     watermarkUrl?: string;
-    onDragDrop?: (e: DragEvent, paperPosition: { x: number; y: number }) => void;
-    onZoom?: (scaleX: number, scaleY: number) => void;
+    children?: React.ReactNode;
 }
 
 export interface ZoomOptions {
@@ -33,39 +44,14 @@ export interface ZoomOptions {
     requireCtrl?: boolean;
 }
 
-export interface PaperAreaEvents {
-    pointerDown: PointerEvent;
-    pointerMove: PointerEvent;
-    pointerUp: PointerUpEvent;
-    scroll: { source: PaperArea };
-    changeAnimatingGraph: PropertyChange<PaperArea, boolean>;
-}
-
-export interface PointerEvent {
-    source: PaperArea;
-    sourceEvent: React.MouseEvent<Element> | MouseEvent;
-    target: Cell | undefined;
-    panning: boolean;
-}
-
-export interface PointerUpEvent extends PointerEvent {
-    triggerAsClick: boolean;
-}
-
-export interface PaperWidgetProps {
-    paperArea?: PaperArea;
-    paperTransform?: PaperTransform;
-}
-
 interface State {
-    readonly paperWidth: number;
-    readonly paperHeight: number;
+    readonly width: number;
+    readonly height: number;
     readonly originX: number;
     readonly originY: number;
     readonly scale: number;
     readonly paddingX: number;
     readonly paddingY: number;
-    readonly renderedWidgets: ReadonlyArray<WidgetDescription>;
 }
 
 interface PointerMoveState {
@@ -92,44 +78,19 @@ interface ViewportAnimation {
     readonly cancellation: AbortController;
 }
 
-export interface ViewportOptions {
-    /**
-     * True if operation should be animated.
-     * If duration is not provided assumes default one.
-     */
-    animate?: boolean;
-    /**
-     * Animation duration in milliseconds.
-     * Implicitly sets `animate: true` if greater than zero.
-     */
-    duration?: number;
-    /**
-     * Elements to apply layout and zoomToFit operations.
-     * (In other words we narrowing down viewPort to selected elements)
-     */
-    elements?: ReadonlySet<Element>;
-}
-
-export interface ScaleOptions extends ViewportOptions {
-    pivot?: { x: number; y: number };
-}
-
 const CLASS_NAME = 'ontodia-paper-area';
 const DEFAULT_ANIMATION_DURATION = 500;
 const LEFT_MOUSE_BUTTON = 0;
 
-export class PaperArea extends React.Component<PaperAreaProps, State> {
-    static childContextTypes = PaperAreaContextTypes;
-
+export class PaperArea extends React.Component<PaperAreaProps, State> implements CanvasApi {
     private readonly listener = new EventObserver();
-    private readonly source = new EventSource<PaperAreaEvents>();
-    readonly events: Events<PaperAreaEvents> = this.source;
+    private readonly source = new EventSource<CanvasEvents>();
+    readonly events: Events<CanvasEvents> = this.source;
 
-    private outer!: HTMLDivElement;
     private area!: HTMLDivElement;
-    private widgets: { [key: string]: WidgetDescription | undefined } = {};
 
     private readonly pageSize = {x: 1500, y: 800};
+    private readonly canvasContext: CanvasContext;
 
     private viewportAnimation: ViewportAnimation | undefined;
     private cssAnimations = 0;
@@ -156,38 +117,46 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         return {min, max, step, maxFit, fitPadding, requireCtrl};
     }
 
+    readonly metrics: CanvasMetrics;
+
     constructor(props: PaperAreaProps, context: any) {
         super(props, context);
         this.state = {
-            paperWidth: this.pageSize.x,
-            paperHeight: this.pageSize.y,
+            width: this.pageSize.x,
+            height: this.pageSize.y,
             originX: 0,
             originY: 0,
             scale: 1,
             paddingX: 0,
             paddingY: 0,
-            renderedWidgets: [],
+        };
+        const paperArea = this;
+        this.metrics = new (class extends BasePaperMetrics {
+            get area() {
+                return paperArea.area;
+            }
+            get transform(): PaperTransform {
+                const {width, height, originX, originY, scale, paddingX, paddingY} = paperArea.state;
+                return {width, height, originX, originY, scale, paddingX, paddingY};
+            }
+            protected getClientRect(): { left: number; top: number; } {
+                return paperArea.area.getBoundingClientRect();
+            }
+        })();
+        this.canvasContext = {
+            canvas: this,
+            model: props.model,
+            view: props.view,
         };
     }
 
-    getChildContext(): PaperAreaContextWrapper {
-        const {view} = this.props;
-        const ontodiaPaperArea: PaperAreaContext = {paperArea: this, view};
-        return {ontodiaPaperArea};
+    get renderingState(): RenderingState {
+        return this.props.renderingState;
     }
 
     render() {
-        const {view, watermarkSvg, watermarkUrl} = this.props;
-        const {
-            paperWidth, paperHeight, originX,
-            originY, scale, paddingX, paddingY,
-            renderedWidgets
-        } = this.state;
-        const paperTransform: PaperTransform = {
-            width: paperWidth, height: paperHeight,
-            originX, originY, scale, paddingX, paddingY,
-        };
-        const widgetProps: PaperWidgetProps = {paperArea: this, paperTransform};
+        const {model, view, renderingState, watermarkSvg, watermarkUrl} = this.props;
+        const paperTransform = this.metrics.getTransform();
 
         let areaClass = `${CLASS_NAME}__area`;
         if (this.props.hideScrollBars) {
@@ -199,66 +168,86 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
             componentClass += ` ${CLASS_NAME}--animated`;
         }
 
+        const renderedWidgets = Array.from(this.getAllWidgets());
         return (
-            <div className={componentClass} ref={this.onOuterMount}>
-                <div className={areaClass}
-                    ref={this.onAreaMount}
-                    onMouseDown={this.onAreaPointerDown}>
-                    <Paper view={view}
-                        paperTransform={paperTransform}
-                        onPointerDown={this.onPaperPointerDown}
-                        linkLayerWidgets={
-                            <div className={`${CLASS_NAME}__widgets`} onMouseDown={this.onWidgetsMouseDown}>
-                                {renderedWidgets.filter(w => w.attachment === WidgetAttachment.OverLinks).map(
-                                    widget => React.cloneElement(widget.element, widgetProps)
-                                )}
-                            </div>
-                        }
-                        elementLayerWidgets={
-                            <div className={`${CLASS_NAME}__widgets`} onMouseDown={this.onWidgetsMouseDown}>
-                                {renderedWidgets.filter(w => w.attachment === WidgetAttachment.OverElements).map(
-                                    widget => React.cloneElement(widget.element, widgetProps)
-                                )}
-                            </div>
-                        } />
-                    {watermarkSvg ? (
-                        <a href={watermarkUrl} target='_blank' rel='noopener'>
-                            <img className={`${CLASS_NAME}__watermark`} src={watermarkSvg} draggable={false} />
-                        </a>
-                    ) : null}
+            <CanvasContext.Provider value={this.canvasContext}>
+                <div className={componentClass}>
+                    <div className={areaClass}
+                        ref={this.onAreaMount}
+                        onMouseDown={this.onAreaPointerDown}>
+                        <Paper model={model}
+                            view={view}
+                            renderingState={renderingState}
+                            paperTransform={paperTransform}
+                            onPointerDown={this.onPaperPointerDown}
+                            onContextMenu={this.onContextMenu}
+                            linkLayerWidgets={
+                                <div className={`${CLASS_NAME}__widgets`}
+                                    onMouseDown={this.onWidgetsMouseDown}>
+                                    {renderedWidgets
+                                        .filter(w => w.attachment === 'overLinks')
+                                        .map(widget => widget.element)
+                                    }
+                                </div>
+                            }
+                            elementLayerWidgets={
+                                <div className={`${CLASS_NAME}__widgets`}
+                                    onMouseDown={this.onWidgetsMouseDown}>
+                                    {renderedWidgets
+                                        .filter(w => w.attachment === 'overElements')
+                                        .map(widget => widget.element)
+                                    }
+                                </div>
+                            }
+                        />
+                        {watermarkSvg ? (
+                            <a href={watermarkUrl} target='_blank' rel='noopener'>
+                                <img className={`${CLASS_NAME}__watermark`}
+                                    src={watermarkSvg}
+                                    draggable={false}
+                                />
+                            </a>
+                        ) : null}
+                    </div>
+                    {renderedWidgets
+                        .filter(w => w.attachment === 'viewport')
+                        .map(widget => widget.element)
+                    }
                 </div>
-                {renderedWidgets.filter(w => w.attachment === WidgetAttachment.Viewport).map(widget => {
-                    return React.cloneElement(widget.element, widgetProps);
-                })}
-            </div>
+            </CanvasContext.Provider>
         );
     }
 
-    private onOuterMount = (outer: HTMLDivElement) => { this.outer = outer; };
-    private onAreaMount = (area: HTMLDivElement) => { this.area = area; };
+    private onAreaMount = (area: HTMLDivElement) => {
+        this.area = area;
+    };
 
     componentDidMount() {
         this.adjustPaper(() => this.centerTo());
 
-        const {view} = this.props;
+        const {model, view, renderingState} = this.props;
         const delayedAdjust = () => this.delayedPaperAdjust.call(this.adjustPaper);
-        this.listener.listen(view.model.events, 'changeCells', delayedAdjust);
-        this.listener.listen(view.model.events, 'elementEvent', ({data}) => {
-            if (data.changePosition || data.changeSize) {
+        this.listener.listen(model.events, 'changeCells', delayedAdjust);
+        this.listener.listen(model.events, 'elementEvent', ({data}) => {
+            if (data.changePosition) {
                 delayedAdjust();
             }
         });
-        this.listener.listen(view.model.events, 'linkEvent', ({data}) => {
+        this.listener.listen(model.events, 'linkEvent', ({data}) => {
             if (data.changeVertices) {
                 delayedAdjust();
             }
         });
-        this.listener.listen(view.events, 'syncUpdate', ({layer}) => {
+        this.listener.listen(renderingState.events, 'changeElementSize', delayedAdjust);
+        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
             if (layer !== RenderingLayer.PaperArea) { return; }
             this.delayedPaperAdjust.runSynchronously();
         });
-        this.listener.listen(view.events, 'updateWidgets', ({widgets}) => {
-            this.updateWidgets(widgets);
+        this.listener.listen(view.events, 'changeCanvasWidgets', () => {
+            this.forceUpdate();
+        });
+        this.listener.listen(view.events, 'findCanvas', e => {
+            e.canvases.push(this);
         });
 
         this.area.addEventListener('dragover', this.onDragOver);
@@ -286,22 +275,26 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     componentWillUnmount() {
         this.stopListeningToPointerMove();
         this.listener.stopListening();
+        this.delayedPaperAdjust.dispose();
         this.area.removeEventListener('dragover', this.onDragOver);
         this.area.removeEventListener('drop', this.onDragDrop);
         this.area.removeEventListener('scroll', this.onScroll);
         this.area.removeEventListener('wheel', this.onWheel);
     }
 
-    private updateWidgets(update: { [key: string]: WidgetDescription | undefined }) {
-        this.widgets = {...this.widgets, ...update};
-        const renderedWidgets = Object.keys(this.widgets)
-            .filter(key => this.widgets[key])
-            .map(key => {
-                const widget = this.widgets[key]!;
-                const element = React.cloneElement(widget.element, {key});
-                return {...widget, element};
-            });
-        this.setState({renderedWidgets});
+    private *getAllWidgets(): IterableIterator<CanvasWidgetDescription> {
+        const {view, children} = this.props;
+        for (const element of React.Children.toArray(children)) {
+            if (React.isValidElement(element)) {
+                const widget = extractCanvasWidget(element);
+                if (widget) {
+                    yield widget;
+                } else {
+                    console.warn('Unexpected non-widget canvas child: ', element);
+                }
+            }
+        }
+        yield* view.canvasWidgets.values();
     }
 
     private onWidgetsMouseDown = (e: React.MouseEvent<any>) => {
@@ -309,58 +302,14 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         e.stopPropagation();
     }
 
-    pageToPaperCoords(pageX: number, pageY: number) {
-        const {left, top} = this.area.getBoundingClientRect();
-        return this.clientToPaperCoords(
-            pageX - (left + window.pageXOffset),
-            pageY - (top + window.pageYOffset),
-        );
-    }
-
-    clientToPaperCoords(areaClientX: number, areaClientY: number) {
-        const {x: paneX, y: paneY} = this.clientToScrollablePaneCoords(areaClientX, areaClientY);
-        return this.scrollablePaneToPaperCoords(paneX, paneY);
-    }
-
-    clientToScrollablePaneCoords(areaClientX: number, areaClientY: number) {
-        const {paddingX, paddingY} = this.state;
-        const paneX = areaClientX + this.area.scrollLeft - paddingX;
-        const paneY = areaClientY + this.area.scrollTop - paddingY;
-        return {x: paneX, y: paneY};
-    }
-
-    scrollablePaneToPaperCoords(paneX: number, paneY: number) {
-        const {scale, paddingX, paddingY, originX, originY} = this.state;
-        const paperX = paneX / scale - originX;
-        const paperY = paneY / scale - originY;
-        return {x: paperX, y: paperY};
-    }
-
-    paperToScrollablePaneCoords(paperX: number, paperY: number) {
-        const {scale, paddingX, paddingY, originX, originY} = this.state;
-        const paneX = (paperX + originX) * scale;
-        const paneY = (paperY + originY) * scale;
-        return {x: paneX, y: paneY};
-    }
-
     /** Returns bounding box of paper content in paper coordinates. */
-    getContentFittingBox() {
-        const {elements, links} = this.props.view.model;
-        return getContentFittingBox(elements, links);
+    private getContentFittingBox() {
+        const {model, renderingState} = this.props;
+        const {elements, links} = model;
+        return getContentFittingBox(elements, links, renderingState);
     }
 
-    /** Returns paper size in paper coordinates. */
-    getPaperSize(): { width: number; height: number } {
-        const {paperWidth: width, paperHeight: height, scale} = this.state;
-        return {width: width / scale, height: height / scale};
-    }
-
-    getAreaMetrics() {
-        const {clientWidth, clientHeight, offsetWidth, offsetHeight} = this.area;
-        return {clientWidth, clientHeight, offsetWidth, offsetHeight};
-    }
-
-    private computeAdjustedBox(): Pick<State, 'paperWidth' | 'paperHeight' | 'originX' | 'originY'> {
+    private computeAdjustedBox(): Pick<State, 'width' | 'height' | 'originX' | 'originY'> {
         // bbox in paper coordinates
         const bbox = this.getContentFittingBox();
         const bboxLeft = bbox.x;
@@ -382,10 +331,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         const originX = -bboxGrid.left * gridWidth;
         const originY = -bboxGrid.top * gridHeight;
 
-        const paperWidth = Math.max(bboxGrid.right - bboxGrid.left, 1) * gridWidth;
-        const paperHeight = Math.max(bboxGrid.bottom - bboxGrid.top, 1) * gridHeight;
+        const width = Math.max(bboxGrid.right - bboxGrid.left, 1) * gridWidth;
+        const height = Math.max(bboxGrid.bottom - bboxGrid.top, 1) * gridHeight;
 
-        return {paperWidth, paperHeight, originX, originY};
+        return {width, height, originX, originY};
     }
 
     private adjustPaper = (callback?: () => void) => {
@@ -397,8 +346,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         } satisfies Partial<State>;
         const previous = this.state;
         const samePaperProps = (
-            adjusted.paperWidth === previous.paperWidth &&
-            adjusted.paperHeight === previous.paperHeight &&
+            adjusted.width === previous.width &&
+            adjusted.height === previous.height &&
             adjusted.originX === previous.originX &&
             adjusted.originY === previous.originY &&
             adjusted.paddingX === previous.paddingX &&
@@ -427,8 +376,9 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     private onPaperPointerDown = (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => {
         if (this.movingState) { return; }
 
-        const restore = RestoreGeometry.capture(this.props.view.model);
-        const batch = this.props.view.model.history.startBatch(restore.title);
+        const {model} = this.props;
+        const restore = RestoreGeometry.capture(model);
+        const batch = model.history.startBatch(restore.title);
 
         if (cell && e.button === LEFT_MOUSE_BUTTON) {
             if (cell instanceof Element) {
@@ -452,7 +402,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     }
 
     private startMoving(e: React.MouseEvent<HTMLElement>, element: Element) {
-        const {x: pointerX, y: pointerY} = this.pageToPaperCoords(e.pageX, e.pageY);
+        const {x: pointerX, y: pointerY} = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
         const {x: elementX, y: elementY} = element.position;
         this.movingElementOrigin = {pointerX, pointerY, elementX, elementY};
     }
@@ -472,13 +422,15 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     }
 
     private generateLinkVertex(link: Link, location: Vector): LinkVertex {
+        const {model, renderingState} = this.props;
         const previous = link.vertices;
         const vertices = previous ? [...previous] : [];
-        const model = this.props.view.model;
+        const source = model.getElement(link.sourceId)!;
+        const target = model.getElement(link.targetId)!;
         const polyline = computePolyline(
-            model.getElement(link.sourceId)!,
-            model.getElement(link.targetId)!,
-            vertices,
+            boundsOf(source, renderingState),
+            boundsOf(target, renderingState),
+            vertices
         );
         const segmentIndex = findNearestSegmentIndex(polyline, location);
         return new LinkVertex(link, segmentIndex);
@@ -513,6 +465,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
 
     private onPointerMove = (e: MouseEvent) => {
         if (!this.movingState || this.scrollBeforeUpdate) { return; }
+        const {renderingState} = this.props;
 
         const {origin, target, panning} = this.movingState;
         const pageOffsetX = e.pageX - origin.pageX;
@@ -528,24 +481,24 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
             }
             this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
         } else if (target instanceof Element) {
-            const {x, y} = this.pageToPaperCoords(e.pageX, e.pageY);
+            const {x, y} = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             const {pointerX, pointerY, elementX, elementY} = this.movingElementOrigin!;
             target.setPosition({
                 x: elementX + x - pointerX,
                 y: elementY + y - pointerY,
             });
             this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
-            this.props.view.performSyncUpdate();
+            renderingState.syncUpdate();
         } else if (target instanceof Link) {
-            const location = this.pageToPaperCoords(e.pageX, e.pageY);
+            const location = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             const linkVertex = this.generateLinkVertex(target, location);
             linkVertex.createAt(location);
             this.movingState.target = linkVertex;
         } else if (target instanceof LinkVertex) {
-            const location = this.pageToPaperCoords(e.pageX, e.pageY);
+            const location = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             target.moveTo(location);
             this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
-            this.props.view.performSyncUpdate();
+            renderingState.syncUpdate();
         }
     }
 
@@ -580,14 +533,14 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         if (this.shouldStartZooming(e)) {
             e.preventDefault();
             const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
-            const pivot = this.pageToPaperCoords(e.pageX, e.pageY);
+            const pivot = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             this.zoomBy(-delta * 0.1, {pivot});
         }
     }
 
     centerTo(paperPosition?: { x: number; y: number }, options: ViewportOptions = {}): Promise<void> {
-        const {paperWidth, paperHeight} = this.state;
-        const paperCenter = paperPosition || {x: paperWidth / 2, y: paperHeight / 2};
+        const {width, height} = this.state;
+        const paperCenter = paperPosition || {x: width / 2, y: height / 2};
         const viewportState: Partial<ViewportState> = {
             center: paperCenter,
         };
@@ -616,7 +569,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         let viewportState: Partial<ViewportState>;
         if (options && options.pivot) {
             const {x, y} = options.pivot;
-            const paperCenter = this.clientToPaperCoords(this.area.clientWidth / 2, this.area.clientHeight / 2);
+            const paperCenter = this.metrics.clientToPaperCoords(
+                this.area.clientWidth / 2,
+                this.area.clientHeight / 2
+            );
             const previousScale = this.state.scale;
             const scaledBy = scale / previousScale;
             viewportState = {
@@ -647,47 +603,37 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     }
 
     zoomToFit(options: ViewportOptions = {}): Promise<void> {
-        if (options.elements && options.elements.size === 0) {
-            return Promise.resolve();
-        }
-        if (this.props.view.model.elements.length === 0) {
+        const {model, renderingState} = this.props;
+        const {elements} = model;
+        if (elements.length === 0) {
             return this.centerTo();
         }
-
-        let elements: ReadonlyArray<Element>;
-        if (options.elements) {
-            const selectionElements: Element[] = [];
-            options.elements.forEach(el => selectionElements.push(el));
-            elements = selectionElements;
-        } else {
-            elements = this.props.view.model.elements;
-        }
-        const bbox = getContentFittingBox(elements, []);
+        const bbox = getContentFittingBox(elements, [], renderingState);
         return this.zoomToFitRect(bbox, options);
     }
 
     zoomToFitRect(
-        bbox: Rect, options: ViewportOptions = {},
+        paperRect: Rect, options: ViewportOptions = {},
     ): Promise<void> {
         const {clientWidth, clientHeight} = this.area;
 
-        if (bbox.width === 0) {
+        if (paperRect.width === 0) {
             return Promise.resolve();
         }
 
         const {width} = fitRectKeepingAspectRatio(
-            bbox.width, bbox.height,
+            paperRect.width, paperRect.height,
             clientWidth, clientHeight,
         );
 
-        let scale = width / bbox.width;
+        let scale = width / paperRect.width;
         const {min, maxFit} = this.zoomOptions;
         scale = Math.max(scale, min);
         scale = Math.min(scale, maxFit);
 
         const center = {
-            x: bbox.x + bbox.width / 2,
-            y: bbox.y + bbox.height / 2,
+            x: paperRect.x + paperRect.width / 2,
+            y: paperRect.y + paperRect.height / 2,
         };
 
         const viewPortState: ViewportState = {
@@ -709,24 +655,42 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
     }
 
     private onDragDrop = (e: DragEvent) => {
-        if (this.props.onDragDrop) {
-            const {x, y} = clientCoordsFor(this.area, e);
-            const paperPosition = this.clientToPaperCoords(x, y);
-            this.props.onDragDrop(e, paperPosition);
+        const {view} = this.props;
+        const {x, y} = clientCoordsFor(this.area, e);
+        const position = this.metrics.clientToPaperCoords(x, y);
+        const event: CanvasDropEvent = {
+            source: this,
+            sourceEvent: e,
+            position,
+        };
+        if (view.tryHandleDropOnPaper(event)) {
+            /* skip trigger -- already handled */
+        } else {
+            this.source.trigger('drop', event);
         }
     }
 
-    private onScroll = () => {
-        this.source.trigger('scroll', {source: this});
+    private onScroll = (e: Event) => {
+        this.source.trigger('scroll', {source: this, sourceEvent: e});
     }
 
+    private onContextMenu = (e: React.MouseEvent, cell: Cell | undefined) => {
+        this.source.trigger('contextMenu', {
+            source: this,
+            sourceEvent: e,
+            target: cell,
+        });
+    };
+
     private makeToSVGOptions(): ToSVGOptions {
+        const {model, renderingState} = this.props;
         const svg = this.area.querySelector('.ontodia-paper__canvas');
         if (!svg) {
             throw new Error('Cannot find SVG canvas to export');
         }
         return {
-            model: this.props.view.model,
+            model,
+            sizeProvider: renderingState,
             paper: svg as SVGSVGElement,
             contentBox: this.getContentFittingBox(),
             getOverlaidElement: id => this.area.querySelector(`[data-element-id='${id}']`) as HTMLElement,
@@ -737,11 +701,11 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         };
     }
 
-    exportSVG(): Promise<string> {
+    exportSvg(): Promise<string> {
         return toSVG(this.makeToSVGOptions());
     }
 
-    exportPNG(options: ToDataURLOptions): Promise<string> {
+    exportPng(options: ToDataURLOptions): Promise<string> {
         return toDataURL({...options, ...this.makeToSVGOptions()});
     }
 
@@ -749,13 +713,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         return this.cssAnimations > 0;
     }
 
-    /**
-     * Starts animation for graph elements and links.
-     *
-     * @param setupChanges immediately called function to perform animatable changes on graph
-     * @param duration animation duration in milliseconds (requires custom CSS to override)
-     * @returns promise which resolves when this animation ends
-     */
     animateGraph(setupChanges: () => void, duration?: number): Promise<void> {
         this.changeGraphAnimationCount(+1);
         setupChanges();
@@ -841,7 +798,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
         }
     }
 
-    applyViewportState = (targetState: ViewportState) => {
+    private applyViewportState = (targetState: ViewportState) => {
+        const previousScale = this.state.scale;
         const scale = targetState.scale.x;
         const paperCenter = targetState.center;
 
@@ -854,10 +812,90 @@ export class PaperArea extends React.Component<PaperAreaProps, State> {
             this.area.scrollLeft = scrollCenterX - clientWidth / 2 + paddingX;
             this.area.scrollTop = scrollCenterY - clientHeight / 2 + paddingY;
 
-            if (this.props.onZoom) {
-                this.props.onZoom(scale, scale);
+            if (scale !== previousScale) {
+                this.source.trigger('changeScale', {source: this, previous: previousScale});
             }
         });
+    }
+}
+
+abstract class BasePaperMetrics implements CanvasMetrics {
+    abstract get area(): CanvasAreaMetrics;
+    protected abstract get transform(): PaperTransform;
+    protected abstract getClientRect(): { left: number; top: number };
+
+    snapshot(): CanvasMetrics {
+        const {
+            clientWidth, clientHeight, offsetWidth, offsetHeight, scrollLeft, scrollTop,
+        } = this.area;
+        return new SnapshotPaperMetrics(
+            {clientWidth, clientHeight, offsetWidth, offsetHeight, scrollLeft, scrollTop},
+            this.getClientRect(),
+            this.transform
+        );
+    }
+
+    getTransform(): PaperTransform {
+        return this.transform;
+    }
+
+    /** Returns paper size in paper coordinates. */
+    getPaperSize(): { width: number; height: number } {
+        const {width, height, scale} = this.transform;
+        return {width: width / scale, height: height / scale};
+    }
+
+    pageToPaperCoords(pageX: number, pageY: number): Vector {
+        const {left, top} = this.getClientRect();
+        return this.clientToPaperCoords(
+            pageX - (left + window.pageXOffset),
+            pageY - (top + window.pageYOffset),
+        );
+    }
+
+    clientToPaperCoords(areaClientX: number, areaClientY: number) {
+        const {x: paneX, y: paneY} = this.clientToScrollablePaneCoords(areaClientX, areaClientY);
+        return this.scrollablePaneToPaperCoords(paneX, paneY);
+    }
+
+    clientToScrollablePaneCoords(areaClientX: number, areaClientY: number) {
+        const {paddingX, paddingY} = this.transform;
+        const {scrollLeft, scrollTop} = this.area;
+        const paneX = areaClientX + scrollLeft - paddingX;
+        const paneY = areaClientY + scrollTop - paddingY;
+        return {x: paneX, y: paneY};
+    }
+
+    scrollablePaneToPaperCoords(paneX: number, paneY: number) {
+        const {scale, originX, originY} = this.transform;
+        const paperX = paneX / scale - originX;
+        const paperY = paneY / scale - originY;
+        return {x: paperX, y: paperY};
+    }
+
+    paperToScrollablePaneCoords(paperX: number, paperY: number) {
+        const {scale, originX, originY} = this.transform;
+        const paneX = (paperX + originX) * scale;
+        const paneY = (paperY + originY) * scale;
+        return {x: paneX, y: paneY};
+    }
+}
+
+class SnapshotPaperMetrics extends BasePaperMetrics {
+    constructor(
+        readonly area: CanvasAreaMetrics,
+        private readonly clientRect: { left: number; top: number },
+        readonly transform: PaperTransform
+    ) {
+        super();
+    }
+
+    protected getClientRect(): { left: number; top: number; } {
+        return this.clientRect;
+    }
+
+    snapshot(): CanvasMetrics {
+        return this;
     }
 }
 

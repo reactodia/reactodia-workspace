@@ -1,38 +1,21 @@
 import * as React from 'react';
 
-import { DiagramView } from '../diagram/view';
+import { EventObserver, Unsubscribe } from '../coreUtils/events';
+
+import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { Element, Link } from '../diagram/elements';
-import { EventObserver, Unsubscribe } from '../viewUtils/events';
-import { PaperWidgetProps } from '../diagram/paperArea';
 import {
-    boundsOf,
-    computePolyline,
-    computePolylineLength,
-    getPointAlongPolyline,
-    Vector,
+    Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
+
 import { DraggableHandle } from '../workspace/draggableHandle';
 
-const DEFAULT_WIDTH = 300;
-const DEFAULT_HEIGHT = 300;
-const MIN_WIDTH = 250;
-const MIN_HEIGHT = 250;
-const MAX_WIDTH = 800;
-const MAX_HEIGHT = 800;
-
-const ELEMENT_OFFSET = 40;
-const LINK_OFFSET = 20;
-const FOCUS_OFFSET = 20;
-
-const CLASS_NAME = 'ontodia-dialog';
-
-export interface DialogProps extends PaperWidgetProps {
-    view: DiagramView;
+export interface DialogProps {
     target: Element | Link;
     size?: { width: number; height: number };
     caption?: string;
     offset?: Vector;
-    calculatePosition?: () => Vector;
+    calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
     onClose: () => void;
     children: React.ReactNode;
 }
@@ -42,16 +25,21 @@ interface State {
     height?: number;
 }
 
-type DefaultPropKeys = 'size';
-type ProvidedProps =
-    Omit<DialogProps, DefaultPropKeys & keyof PaperWidgetProps> &
-    Required<Pick<DialogProps, DefaultPropKeys>> &
-    Required<PaperWidgetProps>;
+const CLASS_NAME = 'ontodia-dialog';
+
+const DEFAULT_SIZE: Size = {width: 300, height: 300};
+const MIN_WIDTH = 250;
+const MIN_HEIGHT = 250;
+const MAX_WIDTH = 800;
+const MAX_HEIGHT = 800;
+
+const ELEMENT_OFFSET = 40;
+const LINK_OFFSET = 20;
+const FOCUS_OFFSET = 20;
 
 export class Dialog extends React.Component<DialogProps, State> {
-    private static defaultProps: Required<Pick<DialogProps, DefaultPropKeys>> = {
-        size: {width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT},
-    };
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
 
     private unsubscribeFromTarget: Unsubscribe | undefined = undefined;
     private readonly handler = new EventObserver();
@@ -87,7 +75,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         }
 
         if (target) {
-            const {view} = this.props;
+            const {view} = this.context;
 
             if (target instanceof Element) {
                 this.listenToElement(target);
@@ -102,29 +90,39 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private listenToElement(element: Element) {
+        const {canvas} = this.context;
         this.handler.listen(element.events, 'changePosition', this.updateAll);
-        this.handler.listen(element.events, 'changeSize', this.updateAll);
+        this.handler.listen(canvas.renderingState.events, 'changeElementSize', e => {
+            if (e.source === element) {
+                this.updateAll();
+            }
+        });
     }
 
     private listenToLink(link: Link) {
-        const {view} = this.props;
+        const {canvas, model} = this.context;
 
-        const source = view.model.getElement(link.sourceId)!;
-        const target = view.model.getElement(link.targetId)!;
+        const source = model.getElement(link.sourceId)!;
+        const target = model.getElement(link.targetId)!;
 
         this.listenToElement(source);
         this.listenToElement(target);
 
         this.handler.listen(link.events, 'changeVertices', this.updateAll);
-        this.handler.listen(link.events, 'changeLabelBounds', this.updateAll);
+        this.handler.listen(canvas.renderingState.events, 'changeLinkLabelBounds', e => {
+            if (e.source === link) {
+                this.updateAll();
+            }
+        });
     }
 
     private calculatePositionForElement(element: Element): Vector {
-        const {paperArea, size} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE} = this.props;
+        const {canvas} = this.context;
 
-        const bbox = boundsOf(element);
-        const {y: y0} = paperArea.paperToScrollablePaneCoords(bbox.x, bbox.y);
-        const {x: x1, y: y1} = paperArea.paperToScrollablePaneCoords(
+        const bbox = boundsOf(element, canvas.renderingState);
+        const {y: y0} = canvas.metrics.paperToScrollablePaneCoords(bbox.x, bbox.y);
+        const {x: x1, y: y1} = canvas.metrics.paperToScrollablePaneCoords(
             bbox.x + bbox.width,
             bbox.y + bbox.height,
         );
@@ -136,35 +134,42 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private calculatePositionForLink(link: Link): Vector {
-        const {view, paperArea} = this.props as ProvidedProps;
+        const {canvas, model} = this.context;
 
-        const source = view.model.getElement(link.sourceId);
-        const target = view.model.getElement(link.targetId);
+        const source = model.getElement(link.sourceId);
+        const target = model.getElement(link.targetId);
 
         if (!source || !target) {
             throw new Error('Source and target are not specified');
         }
 
-        const route = view.getRouting(link.id);
+        const route = canvas.renderingState.getRouting(link.id);
         const verticesDefinedByUser = link.vertices || [];
         const vertices = route ? route.vertices : verticesDefinedByUser;
 
-        const polyline = computePolyline(source, target, vertices);
+        const polyline = computePolyline(
+            boundsOf(source, canvas.renderingState),
+            boundsOf(target, canvas.renderingState),
+            vertices
+        );
         const polylineLength = computePolylineLength(polyline);
         const targetPoint = getPointAlongPolyline(polyline, polylineLength / 2);
 
-        const {x, y} = paperArea.paperToScrollablePaneCoords(targetPoint.x, targetPoint.y);
+        const {x, y} = canvas.metrics.paperToScrollablePaneCoords(targetPoint.x, targetPoint.y);
 
         return {y: y + LINK_OFFSET, x: x + LINK_OFFSET};
     }
 
     private calculatePosition(): Vector {
-        const {target, paperArea, offset = {x: 0, y: 0}, calculatePosition} = this.props as ProvidedProps;
+        const {target, offset = {x: 0, y: 0}, calculatePosition} = this.props;
+        const {canvas} = this.context;
 
         if (calculatePosition) {
-            const pos = calculatePosition();
-            const {x, y} = paperArea.paperToScrollablePaneCoords(pos.x, pos.y);
-            return {x: x + offset.x, y: y + offset.y};
+            const position = calculatePosition(canvas);
+            if (position) {
+                const {x, y} = canvas.metrics.paperToScrollablePaneCoords(position.x, position.y);
+                return {x: x + offset.x, y: y + offset.y};
+            }
         }
 
         if (target instanceof Element) {
@@ -177,17 +182,15 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private getViewPortScrollablePoints(): {min: Vector; max: Vector} {
-        const {paperArea} = this.props as ProvidedProps;
-        const paperAreaMetrics = paperArea.getAreaMetrics();
-        const min = paperArea.clientToScrollablePaneCoords(0, 0);
-        const max = paperArea.clientToScrollablePaneCoords(
-            paperAreaMetrics.clientWidth, paperAreaMetrics.clientHeight
-        );
+        const {canvas} = this.context;
+        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const min = canvas.metrics.clientToScrollablePaneCoords(0, 0);
+        const max = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
         return {min, max};
     }
 
     private getDialogScrollablePoints(): {min: Vector; max: Vector} {
-        const {size} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE} = this.props;
         const {x, y} = this.calculatePosition();
         const min = {
             x: x - FOCUS_OFFSET,
@@ -201,7 +204,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private focusOn() {
-        const {paperArea} = this.props as ProvidedProps;
+        const {canvas} = this.context;
         const {min: viewPortMin, max: viewPortMax} = this.getViewPortScrollablePoints();
         const {min, max} = this.getDialogScrollablePoints();
 
@@ -227,27 +230,27 @@ export class Dialog extends React.Component<DialogProps, State> {
             x: curScrollableCenter.x + xOffset,
             y: curScrollableCenter.y + yOffset,
         };
-        const paperCenter = paperArea.scrollablePaneToPaperCoords(
+        const paperCenter = canvas.metrics.scrollablePaneToPaperCoords(
             newScrollableCenter.x, newScrollableCenter.y,
         );
-        paperArea.centerTo(paperCenter);
+        canvas.centerTo(paperCenter);
     }
 
     private onStartDragging = (e: React.MouseEvent<HTMLDivElement>) => {
         this.preventSelection();
-        const {size} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE} = this.props;
         this.startSize = {x: this.state.width || size.width, y: this.state.height || size.height};
     }
 
     private calculateHeight(height: number) {
-        const {size} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE} = this.props;
         const minHeight = Math.min(size.height, MIN_HEIGHT);
         const maxHeight = Math.max(size.height, MAX_HEIGHT);
         return Math.max(minHeight, Math.min(maxHeight, height));
     }
 
     private calculateWidth(width: number) {
-        const {size} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE} = this.props;
         const minWidth = Math.min(size.width, MIN_WIDTH);
         const maxWidth = Math.max(size.width, MAX_WIDTH);
         return Math.max(minWidth, Math.min(maxWidth, width));
@@ -279,7 +282,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     render() {
-        const {size, caption} = this.props as ProvidedProps;
+        const {size = DEFAULT_SIZE, caption} = this.props;
         const {x, y} = this.calculatePosition();
         const width = this.state.width || size.width;
         const height = this.state.height || size.height;

@@ -2,7 +2,7 @@ import { ElementIri, LinkTypeIri } from '../data/model';
 import { DIAGRAM_CONTEXT_URL_V1 } from '../data/schema';
 
 import { Element, ElementTemplateState, Link, LinkTemplateState } from '../diagram/elements';
-import { Vector, Size } from '../diagram/geometry';
+import { Vector } from '../diagram/geometry';
 
 export interface SerializedDiagram {
     '@context': any;
@@ -29,7 +29,6 @@ export interface LayoutElement {
     '@id': string;
     iri: ElementIri;
     position: Vector;
-    size?: Size;
     angle?: number;
     isExpanded?: boolean;
     group?: string;
@@ -157,7 +156,6 @@ export function makeLayoutData(
         '@id': element.id,
         iri: element.iri,
         position: element.position,
-        size: element.size,
         isExpanded: element.isExpanded,
         group: element.group,
         elementState: element.elementState,

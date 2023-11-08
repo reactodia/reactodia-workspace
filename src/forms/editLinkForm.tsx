@@ -104,12 +104,12 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
                     ) : null}
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-success ${CLASS_NAME}__apply-button`}
+                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={() => this.props.onApply(linkValue.value.link)}
                         disabled={!isValid || isValidating}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-danger'
+                    <button className='ontodia-btn ontodia-btn-default'
                         onClick={this.props.onCancel}>
                         Cancel
                     </button>

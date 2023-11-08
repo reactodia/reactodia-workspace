@@ -1,28 +1,28 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { EventObserver, Events } from '../coreUtils/events';
+
 import { ElementModel, ElementIri } from '../data/model';
 import { FilterParams, LinkedElement } from '../data/provider';
-
 import { Element as DiagramElement, FatLinkType, FatClassModel } from '../diagram/elements';
-import { DiagramView } from '../diagram/view';
 
-import { AsyncModel } from '../editor/asyncModel';
-import { EventObserver } from '../viewUtils/events';
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
+
+import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
+
 import { SearchResults } from './searchResults';
 
-import { WorkspaceContextTypes, WorkspaceContextWrapper, WorkspaceEventKey } from '../workspace/workspaceContext';
-
-const DirectionInImage = require('@images/direction-in.png');
-const DirectionOutImage = require('@images/direction-out.png');
+const DIRECTION_IN_ICON = require('@images/direction-in.png');
+const DIRECTION_OUT_ICON = require('@images/direction-out.png');
 
 export interface InstancesSearchProps {
     className?: string;
-    model: AsyncModel;
-    view: DiagramView;
-    criteria: SearchCriteria;
-    onCriteriaChanged: (criteria: SearchCriteria) => void;
+    commands: Events<InstancesSearchCommands>;
+}
+
+export interface InstancesSearchCommands {
+    setCriteria: { readonly criteria: SearchCriteria };
 }
 
 export interface SearchCriteria {
@@ -34,6 +34,7 @@ export interface SearchCriteria {
 }
 
 interface State {
+    readonly criteria: SearchCriteria;
     readonly inputText?: string;
     readonly querying?: boolean;
     readonly resultId: number;
@@ -48,22 +49,51 @@ const CLASS_NAME = 'ontodia-instances-search';
 const ITEMS_PER_PAGE = 100;
 
 export class InstancesSearch extends React.Component<InstancesSearchProps, State> {
-    static contextTypes = WorkspaceContextTypes;
-    declare readonly context: WorkspaceContextWrapper;
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
 
     private readonly listener = new EventObserver();
 
+    private requestCancellation = new AbortController();
     private currentRequest: FilterParams | undefined;
 
     constructor(props: InstancesSearchProps, context: any) {
         super(props, context);
         this.state = {
+            criteria: {},
             resultId: 0,
             selection: new Set<ElementIri>(),
         };
     }
 
+    componentDidMount() {
+        const {commands} = this.props;
+        const {view, triggerWorkspaceEvent} = this.context;
+
+        this.listener.listen(view.events, 'changeLanguage', () => this.forceUpdate());
+        this.listener.listen(commands, 'setCriteria', ({criteria}) => {
+            triggerWorkspaceEvent(WorkspaceEventKey.searchUpdateCriteria);
+            this.setState({criteria, inputText: undefined});
+        });
+
+        this.queryItems(false);
+    }
+
+    componentDidUpdate(prevProps: InstancesSearchProps, prevState: State): void {
+        if (this.state.criteria !== prevState.criteria) {
+            this.queryItems(false)
+        }
+    }
+
+    componentWillUnmount() {
+        this.listener.stopListening();
+        this.requestCancellation.abort();
+        this.currentRequest = undefined;
+    }
+
     render() {
+        const {view} = this.context;
+
         const ENTER_KEY_CODE = 13;
 
         const className = `${CLASS_NAME} ${this.props.className || ''}`;
@@ -75,7 +105,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         );
 
         const searchTerm = this.state.inputText === undefined
-            ? this.props.criteria.text : this.state.inputText;
+            ? this.state.criteria.text : this.state.inputText;
 
         return <div className={className}>
             <ProgressBar state={progressState} />
@@ -104,9 +134,9 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div className={`${CLASS_NAME}__rest ontodia-scrollable`} key={this.state.resultId}>
                 <SearchResults
-                    view={this.props.view}
+                    view={view}
                     items={this.state.items}
-                    highlightText={this.props.criteria.text}
+                    highlightText={this.state.criteria.text}
                     selection={this.state.selection}
                     onSelectionChanged={this.onSelectionChanged}
                 />
@@ -128,15 +158,17 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private renderCriteria(): React.ReactElement<any> {
-        const {criteria = {}, view} = this.props;
+        const {view} = this.context;
+        const {criteria} = this.state;
         const criterions: React.ReactElement<any>[] = [];
 
         if (criteria.elementType) {
             const classInfo = criteria.elementType;
             const classLabel = view.formatLabel(classInfo.label, classInfo.id);
             criterions.push(<div key='hasType' className={`${CLASS_NAME}__criterion`}>
-                {this.renderRemoveCriterionButtons(() => this.props.onCriteriaChanged(
-                    {...this.props.criteria, elementType: undefined}))}
+                {this.renderRemoveCriterionButtons(() => this.setState({
+                    criteria: {...criteria, elementType: undefined},
+                }))}
                 Has type <span className={`${CLASS_NAME}__criterion-class`}
                     title={classInfo.id}>{classLabel}</span>
             </div>);
@@ -148,8 +180,9 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             const linkTypeLabel = linkType ? view.formatLabel(linkType.label, linkType.id) : undefined;
 
             criterions.push(<div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
-                {this.renderRemoveCriterionButtons(() => this.props.onCriteriaChanged(
-                    {...this.props.criteria, refElement: undefined, refElementLink: undefined}))}
+                {this.renderRemoveCriterionButtons(() => this.setState({
+                    criteria: {...criteria, refElement: undefined, refElementLink: undefined},
+                }))}
                 Connected to <span className={`${CLASS_NAME}__criterion-element`}
                     title={element ? element.iri : undefined}>{elementLabel}</span>
                 {linkType && <span>
@@ -157,10 +190,10 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                     <span className={`${CLASS_NAME}__criterion-link-type`}
                         title={linkType ? linkType.id : undefined}>{linkTypeLabel}</span>
                     {criteria.linkDirection === 'in' && <span>
-                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DirectionInImage} />&nbsp;source
+                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_IN_ICON} />&nbsp;source
                     </span>}
                     {criteria.linkDirection === 'out' && <span>
-                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DirectionOutImage} />&nbsp;target
+                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_OUT_ICON} />&nbsp;target
                     </span>}
                 </span>}
             </div>);
@@ -182,28 +215,20 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private submitCriteriaUpdate() {
-        let text = this.state.inputText === undefined ? this.props.criteria.text : this.state.inputText;
-        text = text === '' ? undefined : text;
-        this.props.onCriteriaChanged({...this.props.criteria, text});
-    }
-
-    componentDidMount() {
-        this.listener.listen(this.props.view.events, 'changeLanguage', () => this.forceUpdate());
-        this.queryItems(false);
-    }
-
-    componentWillReceiveProps(nextProps: InstancesSearchProps) {
-        if (this.props.criteria !== nextProps.criteria) {
-            this.setState({inputText: undefined}, () => this.queryItems(false));
-        }
-    }
-
-    componentWillUnmount() {
-        this.listener.stopListening();
-        this.currentRequest = undefined;
+        this.setState(state => {
+            let text = this.state.inputText === undefined ? state.criteria.text : state.inputText;
+            text = text === '' ? undefined : text;
+            return {
+                criteria: {...state.criteria, text},
+            };
+        });
     }
 
     private queryItems(loadMoreItems: boolean) {
+        const {model, triggerWorkspaceEvent} = this.context;
+
+        this.requestCancellation.abort();
+
         let request: FilterParams;
         if (loadMoreItems) {
             if (!this.currentRequest) {
@@ -215,7 +240,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                 limit: typeof limit === 'number' ? (limit + ITEMS_PER_PAGE) : limit,
             };
         } else {
-            request = createRequest(this.props.criteria);
+            request = createRequest(this.state.criteria);
         }
 
         if (!(request.text || request.elementTypeId || request.refElementId || request.refElementLinkId)) {
@@ -229,6 +254,10 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             return;
         }
 
+        this.requestCancellation = new AbortController();
+        const signal = this.requestCancellation.signal;
+        request = {...request, signal};
+
         this.currentRequest = request;
         this.setState({
             querying: true,
@@ -236,12 +265,12 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             moreItemsAvailable: false,
         });
 
-        this.props.model.dataProvider.filter(request).then(elements => {
-            if (this.currentRequest !== request) { return; }
+        model.dataProvider.filter(request).then(elements => {
+            if (signal.aborted) { return; }
             this.processFilterData(elements);
-            this.context.ontodiaWorkspace.triggerWorkspaceEvent(WorkspaceEventKey.searchQueryItem);
+            triggerWorkspaceEvent(WorkspaceEventKey.searchQueryItem);
         }).catch(error => {
-            if (this.currentRequest !== request) { return; }
+            if (signal.aborted) { return; }
             // tslint:disable-next-line:no-console
             console.error(error);
             this.setState({querying: false, error});

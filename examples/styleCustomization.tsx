@@ -1,6 +1,7 @@
+import * as React from 'react';
 import * as N3 from 'n3';
 
-import { Workspace, RdfDataProvider, LinkTemplate, LinkStyle } from '../src/index';
+import { Workspace, DefaultWorkspace, RdfDataProvider, LinkTemplate, LinkStyle } from '../src/index';
 
 import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
 
@@ -36,29 +37,29 @@ const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
 };
 
 function StyleCustomizationExample() {
-    function onWorkspaceMounted(workspace: Workspace | null) {
-        if (!workspace) {
-            return;
-        }
+    const workspaceRef = React.useRef<Workspace | null>(null);
+
+    React.useEffect(() => {
+        const cancellation = new AbortController();
+        const {model} = workspaceRef.current!.getContext();
 
         const dataProvider = new RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
 
         const diagram = tryLoadLayoutFromLocalStorage();
-        workspace.getModel().importLayout({diagram, dataProvider});
-    }
+        model.importLayout({
+            diagram,
+            dataProvider: dataProvider,
+            validateLinks: true,
+            signal: cancellation.signal,
+        });
+
+        return () => cancellation.abort();
+    }, []);
 
     return (
         <Workspace
-            ref={onWorkspaceMounted}
-            onSaveDiagram={workspace => {
-                const diagram = workspace.getModel().exportLayout();
-                window.location.hash = saveLayoutToLocalStorage(diagram);
-                window.location.reload();
-            }}
-            viewOptions={{
-                onIriClick: ({iri}) => window.open(iri),
-            }}
+            ref={workspaceRef}
             typeStyleResolver={types => {
                 if (types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1) {
                     return {icon: CERTIFICATE_ICON};
@@ -72,8 +73,21 @@ function StyleCustomizationExample() {
                     return undefined;
                 }
             }}
-            linkTemplateResolver={type => CUSTOM_LINK_TEMPLATE}
-        />
+            onIriClick={({iri}) => window.open(iri)}>
+            <DefaultWorkspace
+                canvas={{
+                    linkTemplateResolver: type => CUSTOM_LINK_TEMPLATE,
+                }}
+                toolbar={{
+                    onSaveDiagram: () => {
+                        const {model} = workspaceRef.current!.getContext();
+                        const diagram = model.exportLayout();
+                        window.location.hash = saveLayoutToLocalStorage(diagram);
+                        window.location.reload();
+                    },
+                }}
+            />
+        </Workspace>
     );
 }
 

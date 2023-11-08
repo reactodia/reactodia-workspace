@@ -1,69 +1,115 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
+
 import { Dictionary, ElementModel, ElementIri, LinkTypeIri } from '../data/model';
 
+import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { defineCanvasWidget } from '../diagram/canvasWidget';
+import { changeLinkTypeVisibility } from '../diagram/commands';
 import { FatLinkType, Element } from '../diagram/elements';
+import { placeElementsAround } from '../diagram/layout';
 import { DiagramView } from '../diagram/view';
 
-import { EditorController } from '../editor/editorController';
-import { EventObserver } from '../viewUtils/events';
+import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+
+import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
+
+import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
+
 import { highlightSubstring } from './listElementView';
 import { SearchResults } from './searchResults';
 
-import { WorkspaceContextTypes, WorkspaceContextWrapper, WorkspaceEventKey } from '../workspace/workspaceContext';
-
-interface ConnectionCount { inCount: number; outCount: number; }
-
-export interface ReactElementModel {
-    model: ElementModel;
-    presentOnDiagram: boolean;
+export interface ConnectionsMenuProps {
+    commands: Events<ConnectionsMenuCommands>;
+    suggestProperties?: PropertySuggestionHandler;
+    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
-const LINK_COUNT_PER_PAGE = 100;
+export interface ConnectionsMenuCommands {
+    show: { readonly target: Element };
+}
 
+export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<PropertyScore[]>;
 export interface PropertySuggestionParams {
     elementId: string;
     token: string;
     properties: string[];
     lang: string;
 }
-export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<PropertyScore[]>;
-
-type SortMode = 'alphabet' | 'smart';
-
 export interface PropertyScore {
     propertyIri: string;
     score: number;
 }
 
-export interface LinkDataChunk {
+export function ConnectionsMenu(props: ConnectionsMenuProps) {
+    const {commands} = props;
+
+    const workspace = React.useContext(WorkspaceContext)!;
+    const {canvas} = React.useContext(CanvasContext)!;
+
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(commands, 'show', ({target}) => {
+            const {overlayController} = workspace;
+            const onClose = () => overlayController.hideDialog();
+            overlayController.showDialog({
+                target,
+                dialogType: 'connectionsMenu',
+                content: (
+                    <ConnectionsMenuInner {...props}
+                        target={target}
+                        onClose={onClose}
+                        workspace={workspace}
+                        canvas={canvas}
+                    />
+                ),
+                onClose,
+            });
+        });
+        return () => listener.stopListening();
+    }, [commands]);
+
+    return null;
+}
+
+defineCanvasWidget(ConnectionsMenu, element => ({element, attachment: 'viewport'}));
+
+interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
+    target: Element;
+    onClose: () => void;
+    workspace: WorkspaceContext;
+    canvas: CanvasApi;
+}
+
+interface ConnectionCount { inCount: number; outCount: number; }
+
+interface ElementOnDiagram {
+    model: ElementModel;
+    presentOnDiagram: boolean;
+}
+
+type SortMode = 'alphabet' | 'smart';
+
+interface LinkDataChunk {
     link: FatLinkType;
     direction?: 'in' | 'out';
     expectedCount: number;
     pageCount: number;
 }
 
-export interface ObjectsData {
+interface ObjectsData {
     linkDataChunk: LinkDataChunk;
-    objects: ReactElementModel[];
-}
-
-export interface ConnectionsMenuProps {
-    view: DiagramView;
-    editor: EditorController;
-    target: Element;
-    onClose: () => void;
-    onAddElements: (elementIris: ElementIri[], linkType: FatLinkType | undefined) => void;
-    suggestProperties?: PropertySuggestionHandler;
+    objects: ElementOnDiagram[];
 }
 
 const CLASS_NAME = 'ontodia-connections-menu';
+const LINK_COUNT_PER_PAGE = 100;
 
-export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
-    static contextTypes = WorkspaceContextTypes;
-    declare readonly context: WorkspaceContextWrapper;
+class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
+    declare readonly context: never;
 
     private readonly ALL_RELATED_ELEMENTS_LINK: FatLinkType;
 
@@ -75,21 +121,21 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
     private countMap: { [linkTypeId: string]: ConnectionCount } | undefined;
 
     private linkDataChunk: LinkDataChunk | undefined;
-    private objects: ReactElementModel[] | undefined;
+    private objects: ElementOnDiagram[] | undefined;
 
-    constructor(props: ConnectionsMenuProps, context: any) {
-        super(props, context);
-        const {view} = this.props;
+    constructor(props: ConnectionsMenuInnerProps) {
+        super(props);
+        const {workspace: {model}} = this.props;
         this.ALL_RELATED_ELEMENTS_LINK = new FatLinkType({
             id: 'allRelatedElements' as LinkTypeIri,
-            label: [view.model.factory.literal('All')],
+            label: [model.factory.literal('All')],
         });
     }
 
     private updateAll = () => this.forceUpdate();
 
     componentDidMount() {
-        const {view} = this.props;
+        const {workspace: {view}} = this.props;
         this.handler.listen(view.events, 'changeLanguage', this.updateAll);
 
         this.loadLinks();
@@ -109,12 +155,12 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
     }
 
     private loadLinks() {
-        const {view, editor, target} = this.props;
+        const {target, workspace: {model, triggerWorkspaceEvent}} = this.props;
 
         this.loadingState = ProgressState.loading;
         this.links = [];
         this.countMap = {};
-        editor.model.dataProvider.linkTypesOf({elementId: target.iri})
+        model.dataProvider.linkTypesOf({elementId: target.iri})
             .then(linkTypes => {
                 this.loadingState = ProgressState.completed;
 
@@ -122,7 +168,7 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
                 const links: FatLinkType[] = [];
                 for (const {id: linkTypeId, inCount, outCount} of linkTypes) {
                     countMap[linkTypeId] = {inCount, outCount};
-                    links.push(view.model.createLinkType(linkTypeId));
+                    links.push(model.createLinkType(linkTypeId));
                 }
 
                 countMap[this.ALL_RELATED_ELEMENTS_LINK.id] = Object.keys(countMap)
@@ -137,7 +183,7 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
 
                 this.updateAll();
 
-                this.context.ontodiaWorkspace.triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadLinks);
+                triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadLinks);
             })
             .catch(err => {
                 // tslint:disable-next-line:no-console
@@ -149,28 +195,28 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
     }
 
     private loadObjects(linkDataChunk: LinkDataChunk) {
-        const {view, editor, target} = this.props;
+        const {target, workspace: {model, triggerWorkspaceEvent}} = this.props;
         const {link, direction, pageCount} = linkDataChunk;
 
         this.loadingState = ProgressState.loading;
         this.linkDataChunk = linkDataChunk;
         this.objects = [];
 
-        editor.model.dataProvider.filter({
+        model.dataProvider.filter({
             refElementId: target.iri,
             refElementLinkId: link === this.ALL_RELATED_ELEMENTS_LINK ? undefined : link.id,
             linkDirection: direction,
             limit: pageCount * LINK_COUNT_PER_PAGE,
         }).then(elements => {
             this.loadingState = ProgressState.completed;
-            const presentOnDiagramIris = new Set(view.model.elements.map(el => el.iri));
+            const presentOnDiagramIris = new Set(model.elements.map(el => el.iri));
             this.objects = elements.map(linked => ({
                 model: linked.element,
                 presentOnDiagram: presentOnDiagramIris.has(linked.element.id),
             }));
             this.updateAll();
 
-            this.context.ontodiaWorkspace.triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadElements);
+            triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadElements);
         }).catch(err => {
             // tslint:disable-next-line:no-console
             console.error(err);
@@ -179,18 +225,49 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
         });
     }
 
-    private addSelectedElements = (selectedObjects: ReactElementModel[]) => {
-        const {onClose, onAddElements} = this.props;
+    private addSelectedElements = (selectedObjects: ElementOnDiagram[]) => {
+        const {onClose} = this.props;
 
         const addedElementsIris = selectedObjects.map(item => item.model.id);
         const linkType = this.linkDataChunk ? this.linkDataChunk.link : undefined;
         const hasChosenLinkType = this.linkDataChunk && linkType !== this.ALL_RELATED_ELEMENTS_LINK;
 
-        onAddElements(addedElementsIris, hasChosenLinkType ? linkType : undefined);
+        this.onAddElements(addedElementsIris, hasChosenLinkType ? linkType : undefined);
         onClose();
     }
 
+    private onAddElements = (elementIris: ElementIri[], linkType: FatLinkType | undefined) => {
+        const {target, workspace: {model, view, triggerWorkspaceEvent}, canvas} = this.props;
+        const batch = model.history.startBatch('Add connected elements');
+
+        const elements = elementIris.map(iri => model.createElement(iri));
+        view.syncUpdateAllCanvases();
+
+        placeElementsAround({
+            elements,
+            model,
+            sizeProvider: canvas.renderingState,
+            targetElement: target,
+            preferredLinksLength: 300,
+        });
+
+        if (linkType && !linkType.visible) {
+            batch.history.execute(changeLinkTypeVisibility({
+                linkType,
+                visible: true,
+                showLabel: true,
+            }));
+        }
+
+        batch.history.execute(requestElementData(model, elementIris));
+        batch.history.execute(restoreLinksBetweenElements(model));
+        batch.store();
+
+        triggerWorkspaceEvent(WorkspaceEventKey.editorAddElements);
+    };
+
     private onExpandLink = (linkDataChunk: LinkDataChunk) => {
+        const {workspace: {triggerWorkspaceEvent}} = this.props;
         const alreadyLoaded = (
             this.objects &&
             this.linkDataChunk &&
@@ -202,37 +279,45 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
         }
         this.updateAll();
 
-        this.context.ontodiaWorkspace.triggerWorkspaceEvent(WorkspaceEventKey.connectionsExpandLink);
+        triggerWorkspaceEvent(WorkspaceEventKey.connectionsExpandLink);
     }
 
     private onMoveToFilter = (linkDataChunk: LinkDataChunk) => {
-        const {view, target} = this.props;
+        const {target, instancesSearchCommands, workspace: {model}} = this.props;
         const {link, direction} = linkDataChunk;
 
         if (link === this.ALL_RELATED_ELEMENTS_LINK) {
-            target.addToFilter();
+            instancesSearchCommands?.trigger('setCriteria', {
+                criteria: {refElement: target},
+            });
         } else {
-            const selectedElement = view.model.getElement(target.id)!;
-            selectedElement.addToFilter(link, direction);
+            const selectedElement = model.getElement(target.id)!;
+            instancesSearchCommands?.trigger('setCriteria', {
+                criteria: {
+                    refElement: selectedElement,
+                    refElementLink: link,
+                    linkDirection: direction,
+                },
+            });
         }
     }
 
     render() {
+        const {target, suggestProperties, instancesSearchCommands, workspace: {view}} = this.props;
+
         const connectionsData = {
             links: this.links || [],
             countMap: this.countMap || {},
         };
 
         let objectsData: ObjectsData | undefined;
-
         if (this.linkDataChunk && this.objects) {
             objectsData = {
                 linkDataChunk: this.linkDataChunk,
                 objects: this.objects,
             };
         }
-
-        const {view, target, suggestProperties} = this.props;
+        
         return (
             <MenuMarkup
                 target={target}
@@ -243,7 +328,7 @@ export class ConnectionsMenu extends React.Component<ConnectionsMenuProps, {}> {
                 allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                 onExpandLink={this.onExpandLink}
                 onPressAddSelected={this.addSelectedElements}
-                onMoveToFilter={this.onMoveToFilter}
+                onMoveToFilter={instancesSearchCommands ? this.onMoveToFilter : undefined}
                 propertySuggestionCall={suggestProperties}
             />
         );
@@ -265,8 +350,8 @@ interface MenuMarkupProps {
     allRelatedLink: FatLinkType;
 
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
-    onPressAddSelected: (selectedObjects: ReactElementModel[]) => void;
-    onMoveToFilter: (linkDataChunk: LinkDataChunk) => void;
+    onPressAddSelected: (selectedObjects: ElementOnDiagram[]) => void;
+    onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 
     propertySuggestionCall?: PropertySuggestionHandler;
 }
@@ -432,7 +517,7 @@ interface ConnectionsListProps {
 
     allRelatedLink: FatLinkType;
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
-    onMoveToFilter: (linkDataChunk: LinkDataChunk) => void;
+    onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 
     propertySuggestionCall?: PropertySuggestionHandler;
     sortMode: SortMode;
@@ -615,7 +700,7 @@ interface LinkInPopupMenuProps {
     view: DiagramView;
     filterKey?: string;
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
-    onMoveToFilter: (linkDataChunk: LinkDataChunk) => void;
+    onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
     probability?: number;
 }
 
@@ -635,7 +720,8 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
 
     private onMoveToFilter = (evt: React.MouseEvent<any>) => {
         evt.stopPropagation();
-        this.props.onMoveToFilter({
+        const {onMoveToFilter} = this.props;
+        onMoveToFilter?.({
             link: this.props.link,
             direction: this.props.direction,
             expectedCount: this.props.count,
@@ -671,9 +757,12 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
                 <span className={`ontodia-badge ${CLASS_NAME}__link-count`}>
                     {count <= LINK_COUNT_PER_PAGE ? count : '100+'}
                 </span>
-                <div className={`${CLASS_NAME}__link-filter-button`}
-                    onClick={this.onMoveToFilter}
-                    title='Set as filter in the Instances panel' />
+                {this.props.onMoveToFilter ? (
+                    <div className={`${CLASS_NAME}__link-filter-button`}
+                        onClick={this.onMoveToFilter}
+                        title='Set as filter in the Instances panel'
+                    />
+                ) : null}
                 <div className={`${CLASS_NAME}__link-navigate-button`}
                     title={`Navigate to ${directionName} "${fullText}" elements`} />
             </li>
@@ -686,8 +775,8 @@ interface ObjectsPanelProps {
     loading?: boolean;
     view: DiagramView;
     filterKey?: string;
-    onPressAddSelected: (selectedObjects: ReactElementModel[]) => void;
-    onMoveToFilter: (linkDataChunk: LinkDataChunk) => void;
+    onPressAddSelected: (selectedObjects: ElementOnDiagram[]) => void;
+    onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 }
 
 interface ObjectsPanelState {
@@ -714,7 +803,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         this.updateSelection(newSelection);
     }
 
-    private getFilteredObjects(): ReactElementModel[] {
+    private getFilteredObjects(): ElementOnDiagram[] {
         if (!this.props.filterKey) {
             return this.props.data.objects;
         }
@@ -727,7 +816,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         });
     }
 
-    private getItems(list: ReadonlyArray<ReactElementModel>) {
+    private getItems(list: ReadonlyArray<ElementOnDiagram>) {
         const added: { [id: string]: true } = {};
         const result: ElementModel[] = [];
         for (const obj of list) {
@@ -763,7 +852,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     }
 
     render() {
-        const {onPressAddSelected, filterKey} = this.props;
+        const {onPressAddSelected, filterKey, onMoveToFilter} = this.props;
         const {selection} = this.state;
         const objects = this.getFilteredObjects();
         const isAllSelected = allNonPresentedAreSelected(objects, selection);
@@ -795,10 +884,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         highlightText={filterKey}
                     />
                     {this.props.data.linkDataChunk.expectedCount > LINK_COUNT_PER_PAGE ? (
-                        <div className={`${CLASS_NAME}__move-to-filter`}
-                            onClick={() => this.props.onMoveToFilter(this.props.data.linkDataChunk)}>
-                            The list was truncated, for more data click here to use the filter panel
-                        </div>
+                        onMoveToFilter ? (
+                            <div className={`${CLASS_NAME}__move-to-filter`}
+                                onClick={() => onMoveToFilter(this.props.data.linkDataChunk)}>
+                                The list was truncated, for more data click here to use the filter panel
+                            </div>
+                        ) : (
+                            <div className={`${CLASS_NAME}__move-to-filter`}>
+                                The list was truncated.
+                            </div>
+                        )
                     ) : null}
                 </div>
             )}
@@ -818,7 +913,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     }
 }
 
-function selectNonPresented(objects: ReadonlyArray<ReactElementModel>) {
+function selectNonPresented(objects: ReadonlyArray<ElementOnDiagram>) {
     const selection = new Set<ElementIri>();
     for (const object of objects) {
         if (object.presentOnDiagram) { continue; }
@@ -828,7 +923,7 @@ function selectNonPresented(objects: ReadonlyArray<ReactElementModel>) {
 }
 
 function allNonPresentedAreSelected(
-    objects: ReadonlyArray<ReactElementModel>,
+    objects: ReadonlyArray<ElementOnDiagram>,
     selection: ReadonlySet<ElementIri>
 ): boolean {
     let allSelected = true;

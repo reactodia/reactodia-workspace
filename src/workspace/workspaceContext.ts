@@ -1,5 +1,12 @@
-import { PropTypes } from '../viewUtils/react';
-import { EditorController } from '../editor/editorController';
+import * as React from 'react';
+
+import type { CanvasApi } from '../diagram/canvasApi';
+import type { LayoutFunction } from '../diagram/layout';
+import type { DiagramView } from '../diagram/view';
+
+import type { AsyncModel } from '../editor/asyncModel';
+import type { EditorController } from '../editor/editorController';
+import type { OverlayController } from '../editor/overlayController';
 
 export type WorkspaceEventHandler = (key: WorkspaceEventKey) => void;
 export enum WorkspaceEventKey {
@@ -13,15 +20,23 @@ export enum WorkspaceEventKey {
     editorAddElements = 'editor:addElements',
 }
 
-export interface WorkspaceContextWrapper {
-    ontodiaWorkspace: WorkspaceContext;
-}
-
 export interface WorkspaceContext {
-    editor: EditorController;
-    triggerWorkspaceEvent: WorkspaceEventHandler;
+    readonly model: AsyncModel;
+    readonly view: DiagramView;
+    readonly editor: EditorController;
+    readonly overlayController: OverlayController;
+    readonly performLayout: WorkspacePerformLayout;
+    readonly exportSvg: (canvas: CanvasApi) => void;
+    readonly exportPng: (canvas: CanvasApi) => void;
+    readonly print: (canvas: CanvasApi) => void;
+    readonly triggerWorkspaceEvent: WorkspaceEventHandler;
 }
 
-export const WorkspaceContextTypes: { [K in keyof WorkspaceContextWrapper]: any } = {
-    ontodiaWorkspace: PropTypes.anything,
-};
+export type WorkspacePerformLayout = (params: {
+    canvas: CanvasApi;
+    layoutFunction: LayoutFunction;
+    animate?: boolean;
+    signal?: AbortSignal;
+}) => Promise<void>;
+
+export const WorkspaceContext = React.createContext<WorkspaceContext | null>(null);

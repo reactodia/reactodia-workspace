@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as N3 from 'n3';
 
 import {
-    Workspace, RdfDataProvider, GroupTemplate, PropertySuggestionHandler, PropertyScore,
+    Workspace, DefaultWorkspace, RdfDataProvider, GroupTemplate, PropertySuggestionHandler, PropertyScore,
     LinkTemplate, DefaultLinkTemplateBundle, delay,
 } from '../src/index';
 
@@ -43,20 +43,25 @@ const EDITABLE_LINK_TEMPLATE: LinkTemplate = {
 };
 
 function RdfExample() {
-    function onWorkspaceMounted(workspace: Workspace | null) {
-        if (!workspace) {
-            return;
-        }
+    const workspaceRef = React.useRef<Workspace | null>(null);
+
+    React.useEffect(() => {
+        const cancellation = new AbortController();
+        const {model} = workspaceRef.current!.getContext();
+
         const dataProvider = new RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
     
         const diagram = tryLoadLayoutFromLocalStorage();
-        workspace.getModel().importLayout({
+        model.importLayout({
             diagram,
-            validateLinks: true,
             dataProvider,
+            validateLinks: true,
+            signal: cancellation.signal,
         });
-    }
+        return () => cancellation.abort();
+    }, []);
+
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
     const [validationApi] = React.useState(() => new ExampleValidationApi());
     const suggestProperties = React.useCallback<PropertySuggestionHandler>(params => {
@@ -70,42 +75,48 @@ function RdfExample() {
         }));
         return delay(300).then(() => scores);
     }, []);
+
     return (
         <Workspace
-            ref={onWorkspaceMounted}
-            onSaveDiagram={workspace => {
-                const diagram = workspace.getModel().exportLayout();
-                window.location.hash = saveLayoutToLocalStorage(diagram);
-                window.location.reload();
-            }}
-            onPersistChanges={workspace => {
-                const state = workspace.getEditor().authoringState;
-                // tslint:disable-next-line:no-console
-                console.log('Authoring state:', state);
-            }}
+            ref={workspaceRef}
             metadataApi={metadataApi}
             validationApi={validationApi}
-            viewOptions={{
-                onIriClick: ({iri}) => window.open(iri),
-                groupBy: [
-                    {linkType: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', linkDirection: 'in'},
-                ],
-                suggestProperties,
-            }}
-            elementTemplateResolver={types => {
-                if (types.length === 0) {
-                    // use group template only for classes
-                    return GroupTemplate;
-                }
-                return undefined;
-            }}
-            linkTemplateResolver={type => {
-                if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
-                    return EDITABLE_LINK_TEMPLATE;
-                }
-                return DefaultLinkTemplateBundle(type);
-            }}
-        />
+            groupBy={[
+                {linkType: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', linkDirection: 'in'},
+            ]}
+            onIriClick={({iri}) => window.open(iri)}>
+            <DefaultWorkspace
+                canvas={{
+                    elementTemplateResolver: types => {
+                        if (types.length === 0) {
+                            // use group template only for classes
+                            return GroupTemplate;
+                        }
+                        return undefined;
+                    },
+                    linkTemplateResolver: type => {
+                        if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
+                            return EDITABLE_LINK_TEMPLATE;
+                        }
+                        return DefaultLinkTemplateBundle(type);
+                    },
+                }}
+                connectionsMenu={{suggestProperties}}
+                toolbar={{
+                    onSaveDiagram: () => {
+                        const {model} = workspaceRef.current!.getContext();
+                        const diagram = model.exportLayout();
+                        window.location.hash = saveLayoutToLocalStorage(diagram);
+                        window.location.reload();
+                    },
+                    onPersistChanges: () => {
+                        const {editor} = workspaceRef.current!.getContext();
+                        const state = editor.authoringState;
+                        console.log('Authoring state:', state);
+                    },
+                }}
+            />
+        </Workspace>
     );
 }
 

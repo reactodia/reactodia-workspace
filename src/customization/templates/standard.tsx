@@ -5,36 +5,44 @@ import type * as Rdf from '../../data/rdf/rdfModel';
 import { TemplateProperties } from '../../data/schema';
 import { isEncodedBlank } from '../../data/sparql/blankNodes';
 
-import { TemplateProps, FormattedProperty } from '../props';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { AuthoredEntity, AuthoredEntityContext } from '../../editor/authoredEntity';
+import { AuthoredEntityContext, useAuthoredEntity } from '../../editor/authoredEntity';
 import { AuthoringState } from '../../editor/authoringState';
 
-import { HtmlSpinner } from '../../viewUtils/spinner';
+import { WorkspaceContext } from '../../workspace/workspaceContext';
 
-const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
+import { TemplateProps, FormattedProperty } from '../props';
+
+export function StandardTemplate(props: TemplateProps) {
+    const workspace = React.useContext(WorkspaceContext)!;
+    const entityContext = useAuthoredEntity(props.elementId, props.data, props.isExpanded);
+    return (
+        <StandardTemplateInner {...props}
+            workspace={workspace}
+            entityContext={entityContext}
+        />
+    );
+}
+
+interface StandardTemplateInnerProps extends TemplateProps {
+    workspace: WorkspaceContext;
+    entityContext: AuthoredEntityContext;
+}
 
 const CLASS_NAME = 'ontodia-standard-template';
+const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
 
-export class StandardTemplate extends React.Component<TemplateProps, {}> {
+class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> {
     render() {
-        return (
-            <AuthoredEntity templateProps={this.props}>
-                {context => this.renderTemplate(context)}
-            </AuthoredEntity>
-        );
-    }
-
-    private renderTemplate(context: AuthoredEntityContext) {
-        const {data, color, isExpanded} = this.props;
-        const {editor, view} = context;
+        const {data, color, isExpanded, workspace: {view, editor}} = this.props;
 
         const isNewElement = AuthoringState.isNewElement(editor.authoringState, data.id);
         const leftStripeColor = isNewElement ? 'white' : color;
-        const pinnedPropertyKeys = this.findPinnedProperties(context) ?? {};
+        const pinnedPropertyKeys = this.findPinnedProperties() ?? {};
 
         const typesLabel = data.types.length > 0 ? view.getElementTypeString(data) : 'Thing';
-        const label = this.formatLabel(context);
+        const label = this.formatLabel();
         const propertyList = view.formatPropertyList(data.properties);
         const pinnedProperties = propertyList.filter(p => Boolean(
             Object.prototype.hasOwnProperty.call(pinnedPropertyKeys, p.propertyId) &&
@@ -65,10 +73,10 @@ export class StandardTemplate extends React.Component<TemplateProps, {}> {
                     <div className={`${CLASS_NAME}__dropdown`} style={{borderColor: color}}>
                         {this.renderPhoto()}
                         <div className={`${CLASS_NAME}__dropdown-content`}>
-                            {this.renderIri(context)}
+                            {this.renderIri()}
                             {this.renderProperties(propertyList)}
                             {editor.inAuthoringMode ? <hr className={`${CLASS_NAME}__hr`} /> : null}
-                            {editor.inAuthoringMode ? this.renderActions(context) : null}
+                            {editor.inAuthoringMode ? this.renderActions() : null}
                         </div>
                     </div>
                 ) : null}
@@ -76,9 +84,8 @@ export class StandardTemplate extends React.Component<TemplateProps, {}> {
         );
     }
 
-    private formatLabel(context: AuthoredEntityContext): string {
-        const {data} = this.props;
-        const {view} = context;
+    private formatLabel(): string {
+        const {data, workspace: {view}} = this.props;
         const foafName = Object.prototype.hasOwnProperty.call(data.properties, FOAF_NAME)
             ? data.properties[FOAF_NAME] : undefined;
         if (foafName) {
@@ -90,12 +97,12 @@ export class StandardTemplate extends React.Component<TemplateProps, {}> {
         return view.formatLabel(data.label, data.id);
     }
 
-    private findPinnedProperties(context: AuthoredEntityContext): PinnedProperties | undefined {
-        const {isExpanded, elementId} = this.props;
-        if (isExpanded) { return undefined; }
-        const templateState = context.view.model.getElement(elementId)!.elementState;
-        if (!templateState) { return undefined; }
-        const pinned = templateState[TemplateProperties.PinnedProperties] as PinnedProperties;
+    private findPinnedProperties(): PinnedProperties | undefined {
+        const {isExpanded, elementState} = this.props;
+        if (isExpanded || !elementState) {
+            return undefined;
+        }
+        const pinned = elementState[TemplateProperties.PinnedProperties] as PinnedProperties;
         return pinned;
     }
 
@@ -138,14 +145,14 @@ export class StandardTemplate extends React.Component<TemplateProps, {}> {
         );
     }
 
-    private renderIri(context: AuthoredEntityContext) {
-        const {data} = this.props;
-        const finalIri = context.editedIri === undefined ? data.id : context.editedIri;
+    private renderIri() {
+        const {data, entityContext} = this.props;
+        const finalIri = entityContext.editedIri === undefined ? data.id : entityContext.editedIri;
         return (
             <div>
                 <div className={`${CLASS_NAME}__iri`}>
                     <div className={`${CLASS_NAME}__iri-key`}>
-                        IRI{context.editedIri ? '\u00A0(edited)' : ''}:
+                        IRI{entityContext.editedIri ? '\u00A0(edited)' : ''}:
                     </div>
                     <div className={`${CLASS_NAME}__iri-value`}>
                         {isEncodedBlank(finalIri)
@@ -186,8 +193,9 @@ export class StandardTemplate extends React.Component<TemplateProps, {}> {
         );
     }
 
-    private renderActions(context: AuthoredEntityContext) {
-        const {canEdit, canDelete, onEdit, onDelete} = context;
+    private renderActions() {
+        const {entityContext} = this.props;
+        const {canEdit, canDelete, onEdit, onDelete} = entityContext;
         const SPINNER_WIDTH = 15;
         const SPINNER_HEIGHT = 12;
         return (

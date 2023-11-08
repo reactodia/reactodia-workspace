@@ -1,10 +1,10 @@
+import { EventSource, Events, PropertyChange } from '../coreUtils/events';
+
 import * as Rdf from '../data/rdf/rdfModel';
 import {
     ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { GenerateID } from '../data/schema';
-
-import { EventSource, Events, PropertyChange } from '../viewUtils/events';
 
 import { Vector, Size, isPolylineEqual, Rect } from './geometry';
 
@@ -18,18 +18,12 @@ export enum LinkDirection {
 export interface ElementEvents {
     changeData: PropertyChange<Element, ElementModel>;
     changePosition: PropertyChange<Element, Vector>;
-    changeSize: PropertyChange<Element, Size>;
     changeExpanded: PropertyChange<Element, boolean>;
     changeGroup: PropertyChange<Element, string | undefined>;
     changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
     requestedFocus: { source: Element };
-    requestedGroupContent: { source: Element };
-    requestedAddToFilter: {
-        source: Element;
-        linkType?: FatLinkType;
-        direction?: 'in' | 'out';
-    };
     requestedRedraw: { source: Element };
+    requestedGroupContent: { source: Element };
 }
 
 export class Element {
@@ -42,7 +36,6 @@ export class Element {
 
     private _data: ElementModel;
     private _position: Vector;
-    private _size: Size;
     private _expanded: boolean;
     private _group: string | undefined;
     private _elementState: ElementTemplateState | undefined;
@@ -62,7 +55,6 @@ export class Element {
             id,
             data,
             position = {x: 0, y: 0},
-            size = {width: 0, height: 0},
             expanded = false,
             group,
             elementState,
@@ -72,7 +64,6 @@ export class Element {
         this.id = id;
         this._data = data;
         this._position = position;
-        this._size = size;
         this._expanded = expanded;
         this._group = group;
         this._elementState = elementState;
@@ -100,18 +91,6 @@ export class Element {
         if (same) { return; }
         this._position = value;
         this.source.trigger('changePosition', {source: this, previous});
-    }
-
-    get size(): Size { return this._size; }
-    setSize(value: Size) {
-        const previous = this._size;
-        const same = (
-            previous.width === value.width &&
-            previous.height === value.height
-        );
-        if (same) { return; }
-        this._size = value;
-        this.source.trigger('changeSize', {source: this, previous});
     }
 
     get isExpanded(): boolean { return this._expanded; }
@@ -144,18 +123,12 @@ export class Element {
         this.source.trigger('requestedFocus', {source: this});
     }
 
-    requestGroupContent() {
-        this.source.trigger('requestedGroupContent', {source: this});
-    }
-
-    addToFilter(linkType?: FatLinkType, direction?: 'in' | 'out') {
-        this.source.trigger('requestedAddToFilter', {
-            source: this, linkType, direction,
-        });
-    }
-
     redraw() {
         this.source.trigger('requestedRedraw', {source: this});
+    }
+
+    requestGroupContent() {
+        this.source.trigger('requestedGroupContent', {source: this});
     }
 }
 
@@ -181,6 +154,91 @@ function updateLinksToReferByNewIri(element: Element, oldIri: ElementIri, newIri
         }
         link.setData(data);
     }
+}
+
+export interface LinkEvents {
+    changeData: PropertyChange<Link, LinkModel>;
+    changeLayoutOnly: PropertyChange<Link, boolean>;
+    changeVertices: PropertyChange<Link, ReadonlyArray<Vector>>;
+    changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
+}
+
+export class Link {
+    private readonly source = new EventSource<LinkEvents>();
+    readonly events: Events<LinkEvents> = this.source;
+
+    readonly id: string;
+
+    private _sourceId: string;
+    private _targetId: string;
+
+    private _data: LinkModel;
+    private _labelBounds: Rect | undefined;
+    private _layoutOnly = false;
+    private _vertices: ReadonlyArray<Vector>;
+
+    private _linkState: LinkTemplateState | undefined;
+
+    constructor(props: {
+        id?: string;
+        sourceId: string;
+        targetId: string;
+        data: LinkModel;
+        vertices?: ReadonlyArray<Vector>;
+        linkState?: LinkTemplateState;
+    }) {
+        const {id = GenerateID.forLink(), sourceId, targetId, data, vertices = [], linkState} = props;
+        this.id = id;
+        this._sourceId = sourceId;
+        this._targetId = targetId;
+        this._data = data;
+        this._vertices = vertices;
+        this._linkState = linkState;
+    }
+
+    get typeId() { return this._data?.linkTypeId; }
+    get sourceId(): string { return this._sourceId; }
+    get targetId(): string { return this._targetId; }
+
+    get data() { return this._data; }
+    setData(value: LinkModel) {
+        const previous = this._data;
+        if (previous === value) { return; }
+        this._data = value;
+        this.source.trigger('changeData', {source: this, previous});
+    }
+
+    get layoutOnly(): boolean { return this._layoutOnly; }
+    setLayoutOnly(value: boolean) {
+        const previous = this._layoutOnly;
+        if (previous === value) { return; }
+        this._layoutOnly = value;
+        this.source.trigger('changeLayoutOnly', {source: this, previous});
+    }
+
+    get vertices(): ReadonlyArray<Vector> { return this._vertices; }
+    setVertices(value: ReadonlyArray<Vector>) {
+        const previous = this._vertices;
+        if (isPolylineEqual(this._vertices, value)) { return; }
+        this._vertices = value;
+        this.source.trigger('changeVertices', {source: this, previous});
+    }
+
+    get linkState(): LinkTemplateState | undefined { return this._linkState; }
+    setLinkState(value: LinkTemplateState | undefined) {
+        const previous = this._linkState;
+        if (previous === value) { return; }
+        this._linkState = value;
+        this.source.trigger('changeLinkState', {source: this, previous});
+    }
+}
+
+export interface LinkTemplateState {
+    [propertyIri: string]: unknown;
+}
+
+export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
+    return `ramp-marker-${startMarker ? 'mstart' : 'mend'}-${linkTypeIndex}`;
 }
 
 export interface FatClassModelEvents {
@@ -255,113 +313,12 @@ export class RichProperty {
     }
 }
 
-export interface LinkEvents {
-    changeData: PropertyChange<Link, LinkModel>;
-    changeLayoutOnly: PropertyChange<Link, boolean>;
-    changeVertices: PropertyChange<Link, ReadonlyArray<Vector>>;
-    changeLabelBounds: PropertyChange<Link, Rect | undefined>;
-    changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
-}
-
-export class Link {
-    private readonly source = new EventSource<LinkEvents>();
-    readonly events: Events<LinkEvents> = this.source;
-
-    readonly id: string;
-
-    private _sourceId: string;
-    private _targetId: string;
-
-    private _data: LinkModel;
-    private _labelBounds: Rect | undefined;
-    private _layoutOnly = false;
-    private _vertices: ReadonlyArray<Vector>;
-
-    private _linkState: LinkTemplateState | undefined;
-
-    constructor(props: {
-        id?: string;
-        sourceId: string;
-        targetId: string;
-        data: LinkModel;
-        vertices?: ReadonlyArray<Vector>;
-        linkState?: LinkTemplateState;
-    }) {
-        const {id = GenerateID.forLink(), sourceId, targetId, data, vertices = [], linkState} = props;
-        this.id = id;
-        this._sourceId = sourceId;
-        this._targetId = targetId;
-        this._data = data;
-        this._vertices = vertices;
-        this._linkState = linkState;
-    }
-
-    get typeId() { return this._data?.linkTypeId; }
-    get sourceId(): string { return this._sourceId; }
-    get targetId(): string { return this._targetId; }
-
-    get data() { return this._data; }
-    setData(value: LinkModel) {
-        const previous = this._data;
-        if (previous === value) { return; }
-        this._data = value;
-        this.source.trigger('changeData', {source: this, previous});
-    }
-
-    get labelBounds() { return this._labelBounds; }
-    setLabelBounds(value: Rect | undefined) {
-        const previous = this._labelBounds;
-        if (previous === value) { return; }
-        this._labelBounds = value;
-        this.source.trigger('changeLabelBounds', {source: this, previous});
-    }
-
-    get layoutOnly(): boolean { return this._layoutOnly; }
-    setLayoutOnly(value: boolean) {
-        const previous = this._layoutOnly;
-        if (previous === value) { return; }
-        this._layoutOnly = value;
-        this.source.trigger('changeLayoutOnly', {source: this, previous});
-    }
-
-    get vertices(): ReadonlyArray<Vector> { return this._vertices; }
-    setVertices(value: ReadonlyArray<Vector>) {
-        const previous = this._vertices;
-        if (isPolylineEqual(this._vertices, value)) { return; }
-        this._vertices = value;
-        this.source.trigger('changeVertices', {source: this, previous});
-    }
-
-    get linkState(): LinkTemplateState | undefined { return this._linkState; }
-    setLinkState(value: LinkTemplateState | undefined) {
-        const previous = this._linkState;
-        if (previous === value) { return; }
-        this._linkState = value;
-        this.source.trigger('changeLinkState', {source: this, previous});
-    }
-}
-
-export interface LinkTemplateState {
-    [propertyIri: string]: unknown;
-}
-
-export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `ramp-marker-${startMarker ? 'mstart' : 'mend'}-${linkTypeIndex}`;
-}
-
 export interface FatLinkTypeEvents {
     changeLabel: PropertyChange<FatLinkType, ReadonlyArray<Rdf.Literal>>;
     changeIsNew: PropertyChange<FatLinkType, boolean>;
     changeVisibility: { source: FatLinkType };
 }
 
-/**
- * Properties:
- *     visible: boolean
- *     showLabel: boolean
- *     isNew?: boolean
- *     label?: { values: LocalizedString[] }
- */
 export class FatLinkType {
     private readonly source = new EventSource<FatLinkTypeEvents>();
     readonly events: Events<FatLinkTypeEvents> = this.source;

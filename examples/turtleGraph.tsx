@@ -1,8 +1,11 @@
+import * as React from 'react';
 import * as N3 from 'n3';
 
-import { Workspace, RdfDataProvider, ElementIri } from '../src/index';
+import {
+    Workspace, DefaultWorkspace, RdfDataProvider, ElementIri, layoutForcePadded,
+} from '../src/index';
 
-import { mountOnLoad } from './resources/common';
+import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
 
 const EXAMPLE = `@prefix fts: <https://w3id.org/datafabric.cc/ontologies/fts#> .
  @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -47,20 +50,26 @@ const DIAGRAM =
         ex:LE-1-RegInfo-1157847449121 .`;
 
 function TurtleGraphExample() {
-    function onWorkspaceMounted(workspace: Workspace | null) {
-        if (!workspace) {
-            return;
-        }
-        const parser = new N3.Parser();
-        const provider = new RdfDataProvider({});
-        provider.addGraph(parser.parse(EXAMPLE));
+    const workspaceRef = React.useRef<Workspace | null>(null);
 
-        const model = workspace.getModel();
-        return model
-            .createNewDiagram({
-                dataProvider: provider,
-            })
-            .then(() => {
+    React.useEffect(() => {
+        const cancellation = new AbortController();
+        const {model, view, performLayout} = workspaceRef.current!.getContext();
+
+        const parser = new N3.Parser();
+        const dataProvider = new RdfDataProvider();
+        dataProvider.addGraph(parser.parse(EXAMPLE));
+    
+        const diagram = tryLoadLayoutFromLocalStorage();
+        if (diagram) {
+            model.importLayout({
+                diagram,
+                dataProvider,
+                validateLinks: true,
+                signal: cancellation.signal,
+            });
+        } else {
+            model.createNewDiagram({dataProvider}).then(async () => {
                 const elementIris = new Set<ElementIri>();
                 const parsedDiagram = parser.parse(DIAGRAM);
                 for (const {subject, object} of parsedDiagram) {
@@ -74,19 +83,37 @@ function TurtleGraphExample() {
                 for (const iri of elementIris) {
                     model.createElement(iri);
                 }
-                return Promise.all([
+                await Promise.all([
                     model.requestElementData(Array.from(elementIris)),
                     model.requestLinksOfType(),
                 ]);
-            }).then(() => {
-                workspace.forceLayout();
-                workspace.zoomToFit();
+                const canvas = view.findAnyCanvas();
+                if (canvas) {
+                    canvas.renderingState.syncUpdate();
+                    await performLayout({
+                        canvas,
+                        layoutFunction: layoutForcePadded,
+                        signal: cancellation.signal,
+                    });
+                }
             });
-    }
+        }
+        return () => cancellation.abort();
+    }, []);
+
     return (
-        <Workspace
-            ref={onWorkspaceMounted}
-        />
+        <Workspace ref={workspaceRef}>
+            <DefaultWorkspace
+                toolbar={{
+                    onSaveDiagram: () => {
+                        const {model} = workspaceRef.current!.getContext();
+                        const diagram = model.exportLayout();
+                        window.location.hash = saveLayoutToLocalStorage(diagram);
+                        window.location.reload();
+                    },
+                }}
+            />
+        </Workspace>
     );
 }
 

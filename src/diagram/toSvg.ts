@@ -1,10 +1,9 @@
-import { DiagramModel } from '../diagram/model';
-import { Rect, Vector, boundsOf } from '../diagram/geometry';
-
-const SVG_NAMESPACE: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
+import { DiagramModel } from './model';
+import { Rect, SizeProvider, Vector, boundsOf } from './geometry';
 
 export interface ToSVGOptions {
     model: DiagramModel;
+    sizeProvider: SizeProvider;
     paper: SVGSVGElement;
     contentBox: Rect;
     getOverlaidElement: (id: string) => HTMLElement;
@@ -21,6 +20,7 @@ interface Bounds {
     height: number;
 }
 
+const SVG_NAMESPACE: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
 /**
  * Padding (in px) for <foreignObject> elements of exported SVG to
  * mitigate issues with elements body overflow caused by missing styles
@@ -155,7 +155,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
     svgClone: SVGSVGElement;
     imageBounds: { [path: string]: Bounds };
 } {
-    const {model, paper, getOverlaidElement} = options;
+    const {model, sizeProvider, paper, getOverlaidElement} = options;
     const svgClone = paper.cloneNode(true) as SVGSVGElement;
     svgClone.removeAttribute('class');
     svgClone.removeAttribute('style');
@@ -186,7 +186,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
         let newRoot = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
         newRoot.appendChild(overlaidViewContent);
 
-        const {x, y, width, height} = boundsOf(element);
+        const {x, y, width, height} = boundsOf(element, sizeProvider);
         newRoot.setAttribute('transform', `translate(${x},${y})`);
         newRoot.setAttribute('width', (width + elementSizePadding).toString());
         newRoot.setAttribute('height', (height + elementSizePadding).toString());

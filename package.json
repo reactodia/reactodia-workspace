@@ -49,6 +49,7 @@
     "@types/n3": "^1.16.3",
     "@types/react": "^18.2.33",
     "@types/react-dom": "^18.2.14",
+    "@types/use-sync-external-store": "^0.0.6",
     "@vscode/codicons": "^0.0.35",
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
@@ -61,6 +62,7 @@
     "ts-loader": "^9.5.0",
     "tslib": "^2.6.2",
     "typescript": "^5.2.2",
+    "use-sync-external-store": "^1.2.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"

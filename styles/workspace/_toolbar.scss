@@ -3,6 +3,10 @@
 $toolbarHeight: 30px;
 
 .ontodia-toolbar {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+
   &__save-button {
     @include codicon-button("save");
   }

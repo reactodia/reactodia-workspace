@@ -1,4 +1,4 @@
-import { Element, Link } from './elements';
+import type { Element, Link } from './elements';
 
 export interface Vector {
     readonly x: number;
@@ -41,10 +41,18 @@ export namespace Rect {
     }
 }
 
-export function boundsOf(element: Element): Rect {
+export interface SizeProvider {
+    getElementSize(element: Element): Size | undefined;
+}
+
+export function boundsOf(element: Element, sizeProvider: SizeProvider): Rect {
     const {x, y} = element.position;
-    const {width, height} = element.size;
-    return {x, y, width, height};
+    const size = sizeProvider.getElementSize(element);
+    return {
+        x, y,
+        width: size ? size.width : 0,
+        height: size ? size.height : 0,
+    };
 }
 
 function intersectRayFromRectangleCenter(sourceRect: Rect, rayTarget: Vector) {
@@ -100,12 +108,10 @@ export function isPolylineEqual(left: ReadonlyArray<Vector>, right: ReadonlyArra
 }
 
 export function computePolyline(
-    source: Element,
-    target: Element,
-    vertices: ReadonlyArray<Vector>,
+    sourceRect: Rect,
+    targetRect: Rect,
+    vertices: ReadonlyArray<Vector>
 ): Vector[] {
-    const sourceRect = boundsOf(source);
-    const targetRect = boundsOf(target);
     const startPoint = intersectRayFromRectangleCenter(
         sourceRect, vertices.length > 0 ? vertices[0] : Rect.center(targetRect));
     const endPoint = intersectRayFromRectangleCenter(
@@ -175,10 +181,14 @@ export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, locatio
     return foundIndex;
 }
 
-export function findElementAtPoint(elements: ReadonlyArray<Element>, point: Vector): Element | undefined {
+export function findElementAtPoint(
+    elements: ReadonlyArray<Element>,
+    point: Vector,
+    sizeProvider: SizeProvider
+): Element | undefined {
     for (let i = elements.length - 1; i >= 0; i--) {
         const element = elements[i];
-        const {x, y, width, height} = boundsOf(element);
+        const {x, y, width, height} = boundsOf(element, sizeProvider);
 
         if (element.temporary) { continue; }
 
@@ -207,18 +217,19 @@ export function computeGrouping(elements: ReadonlyArray<Element>): Map<string, E
 
 export function getContentFittingBox(
     elements: ReadonlyArray<Element>,
-    links: ReadonlyArray<Link>
+    links: ReadonlyArray<Link>,
+    sizeProvider: SizeProvider
 ): Rect {
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;
 
     for (const element of elements) {
         const {x, y} = element.position;
-        const size = element.size;
+        const size = sizeProvider.getElementSize(element);
         minX = Math.min(minX, x);
         minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + size.width);
-        maxY = Math.max(maxY, y + size.height);
+        maxX = Math.max(maxX, x + (size ? size.width : 0));
+        maxY = Math.max(maxY, y + (size ? size.height : 0));
     }
 
     for (const link of links) {

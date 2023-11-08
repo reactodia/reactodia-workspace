@@ -1,4 +1,5 @@
-import { HashMap } from '../../viewUtils/hashMap';
+import { HashMap } from '../../coreUtils/hashMap';
+
 import {
     Quad, Term, DefaultDataFactory, dropHighestNonSignBit, hashTerm, equalTerms, hashQuad, equalQuads,
 } from './rdfModel';

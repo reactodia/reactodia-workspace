@@ -1,6 +1,6 @@
 import * as N3 from 'n3';
 
-import { getOrCreateArrayInMap } from '../../viewUtils/collections';
+import { getOrCreateArrayInMap } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
 import { DataProvider, FilterParams, LinkedElement } from '../provider';
 import {

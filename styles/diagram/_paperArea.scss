@@ -37,6 +37,21 @@
   &--hide-scrollbars {
     overflow: hidden;
   }
+
+  &--animated {
+    .ontodia-overlaid-element {
+      transition: transform 0.5s ease-in-out;
+    }
+    .ontodia-link-layer {
+      transition: none;
+      opacity: 0;
+    }
+  }
+
+  &--animated &__widgets {
+    transition: none;
+    opacity: 0;
+  }
 }
 
 .ontodia-paper {

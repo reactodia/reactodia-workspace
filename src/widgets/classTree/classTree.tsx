@@ -1,26 +1,29 @@
 import * as React from 'react';
 
+import { mapAbortedToNull } from '../../coreUtils/async';
+import { getOrCreateSetInMap } from '../../coreUtils/collections';
+import { Debouncer } from '../../coreUtils/scheduler';
+import { EventObserver, EventTrigger } from '../../coreUtils/events';
+
 import { ElementTypeIri, ClassModel, ClassGraphModel, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/provider';
-import { FatClassModel } from '../../diagram/elements';
-import { Vector } from '../../diagram/geometry';
+
+import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
+import { Element, FatClassModel } from '../../diagram/elements';
+import { Vector, SizeProvider } from '../../diagram/geometry';
+import { HtmlSpinner } from '../../diagram/spinner';
 import { DiagramView } from '../../diagram/view';
-import { EditorController } from '../../editor/editorController';
-import { mapAbortedToNull } from '../../viewUtils/async';
-import { getOrCreateSetInMap } from '../../viewUtils/collections';
-import { Debouncer } from '../../viewUtils/scheduler';
-import { EventObserver } from '../../viewUtils/events';
-import { HtmlSpinner } from '../../viewUtils/spinner';
-import { ProgressBar, ProgressState } from '../../widgets/progressBar';
+
+import { ProgressBar, ProgressState } from '../progressBar';
+import type { InstancesSearchCommands } from '../instancesSearch';
+
+import { WorkspaceContext } from '../../workspace/workspaceContext';
 
 import { TreeNode } from './treeModel';
 import { Forest } from './leaf';
 
 export interface ClassTreeProps {
-    view: DiagramView;
-    editor: EditorController;
-    onClassSelected: (classId: ElementTypeIri) => void;
-    onCreateInstance: (classId: ElementTypeIri, position?: Vector) => void;
+    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 interface State {
@@ -42,6 +45,9 @@ const CLASS_NAME = 'ontodia-class-tree';
 const MIN_TERM_LENGTH = 3;
 
 export class ClassTree extends React.Component<ClassTreeProps, State> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
     private readonly listener = new EventObserver();
     private readonly delayedClassUpdate = new Debouncer();
     private readonly delayedSearch = new Debouncer(200 /* ms */);
@@ -50,6 +56,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
     private loadClassesOperation = new AbortController();
     private refreshOperation = new AbortController();
+    private createElementCancellation = new AbortController();
 
     constructor(props: ClassTreeProps) {
         super(props);
@@ -65,7 +72,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     render() {
-        const {view, editor} = this.props;
+        const {view, editor} = this.context;
         const {
             refreshingState, requestedSearchText, appliedSearchText, filteredRoots, selectedNode, constructibleClasses,
             showOnlyConstructible
@@ -118,7 +125,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     componentDidMount() {
-        const {view, editor} = this.props;
+        const {view, editor} = this.context;
         this.listener.listen(view.events, 'changeLanguage', () => this.refreshClassTree());
         this.listener.listen(editor.model.events, 'loadingStart', () => {
             this.initClassTree();
@@ -137,11 +144,12 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         this.delayedSearch.dispose();
         this.loadClassesOperation.abort();
         this.refreshOperation.abort();
+        this.createElementCancellation.abort();
     }
 
     private async initClassTree() {
-        if (this.dataProvider !== this.props.editor.model.dataProvider) {
-            this.dataProvider = this.props.editor.model.dataProvider;
+        if (this.dataProvider !== this.context.model.dataProvider) {
+            this.dataProvider = this.context.model.dataProvider;
             this.classTree = undefined;
 
             const cancellation = new AbortController();
@@ -186,26 +194,28 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private onSelectNode = (node: TreeNode) => {
-        const {onClassSelected} = this.props;
-        this.setState({selectedNode: node});
-        onClassSelected(node.model.id);
+        const {instancesSearchCommands} = this.props;
+        this.setState({selectedNode: node}, () => {
+            instancesSearchCommands?.trigger('setCriteria', {
+                criteria: {elementType: node.model},
+            });
+        });
     }
 
     private onCreateInstance = (node: TreeNode) => {
-        const {onCreateInstance} = this.props;
-        onCreateInstance(node.model.id);
+        this.createInstanceAt(node.model.id);
     }
 
     private onDragCreate = (node: TreeNode) => {
-        const {view, onCreateInstance} = this.props;
+        const {view} = this.context;
         view.setHandlerForNextDropOnPaper(e => {
-            onCreateInstance(node.model.id, e.paperPosition);
+            this.createInstanceAt(node.model.id,  e);
         });
     }
 
     private refreshClassTree = () => {
         const cancellation = new AbortController();
-        const {editor} = this.props;
+        const {view, editor} = this.context;
         this.refreshOperation.abort();
         this.refreshOperation = cancellation;
 
@@ -224,22 +234,22 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 }
             }
 
-            const roots = createRoots(this.classTree, props.view);
+            const roots = createRoots(this.classTree, view);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     }
 
     private setClassTree(graph: ClassGraphModel) {
-        const {editor} = this.props;
+        const {model} = this.context;
 
         this.classTree = constructTree(graph);
 
-        for (const model of graph.classes) {
-            const existing = editor.model.getClass(model.id);
+        for (const classModel of graph.classes) {
+            const existing = model.getClass(classModel.id);
             if (!existing) {
-                const {id, label, count} = model;
+                const {id, label, count} = classModel;
                 const richClass = new FatClassModel({id, label, count});
-                editor.model.addClass(richClass);
+                model.addClass(richClass);
             }
         }
 
@@ -247,7 +257,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
-        const {metadataApi} = this.props.editor;
+        const {metadataApi} = this.context.editor;
         if (!metadataApi) {
             return;
         }
@@ -269,6 +279,43 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             console.error(err);
             this.setState((state): State => applyFilters({...state, refreshingState: ProgressState.error}));
         }
+    }
+
+    private async createInstanceAt(classId: ElementTypeIri, dropEvent?: CanvasDropEvent) {
+        const {model, view, editor, overlayController} = this.context;
+        const batch = model.history.startBatch();
+
+        const signal = this.createElementCancellation.signal;
+        const elementModel = await mapAbortedToNull(
+            editor.metadataApi!.generateNewElement([classId], signal),
+            signal
+        );
+        if (elementModel === null) {
+            return;
+        }
+
+        const element = editor.createNewEntity({elementModel});
+        let createAt: [CanvasApi, Vector] | undefined;
+
+        if (dropEvent) {
+            createAt = [dropEvent.source, dropEvent.position];
+        } else {
+            const canvas = view.findAnyCanvas();
+            if (canvas) {
+                createAt = [canvas, getViewportCenterInPaperCoords(canvas)];
+            }
+        }
+
+        if (createAt) {
+            const [canvas, targetPosition] = createAt;
+            element.setPosition(targetPosition);
+            canvas.renderingState.syncUpdate();
+            moveElementCenterToPosition(element, targetPosition, canvas.renderingState);
+        }
+
+        batch.store();
+        editor.setSelection([element]);
+        overlayController.showEditEntityForm(element);
     }
 }
 
@@ -431,4 +478,29 @@ function filterOnlyCreatable(
         return acc;
     }
     return roots.reduce(collectOnlyCreatable, []);
+}
+
+function forceNonReactExecutionContext(): Promise<void> {
+    // force non-React executing context to resolve forceUpdate() synchronously
+    return Promise.resolve();
+}
+
+function getViewportCenterInPaperCoords(canvas: CanvasApi): Vector {
+    const viewport = canvas.metrics.area;
+    return canvas.metrics.clientToPaperCoords(
+        viewport.clientWidth / 2,
+        viewport.clientHeight / 2
+    );
+}
+
+function moveElementCenterToPosition(
+    element: Element,
+    center: Vector,
+    sizeProvider: SizeProvider
+): void {
+    const size = sizeProvider.getElementSize(element) ?? {width: 0, height: 0};
+    element.setPosition({
+        x: center.x - size.width / 2,
+        y: center.y - size.height / 2,
+    });
 }

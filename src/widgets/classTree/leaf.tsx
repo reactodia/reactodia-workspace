@@ -39,10 +39,10 @@ export class Leaf extends React.Component<LeafProps, State> {
         };
     }
 
-    componentWillReceiveProps(nextProps: LeafProps) {
-        if (this.props.searchText !== nextProps.searchText) {
+    componentDidUpdate(prevProps: LeafProps) {
+        if (this.props.searchText !== prevProps.searchText) {
             this.setState({
-                expanded: Boolean(nextProps.searchText),
+                expanded: Boolean(this.props.searchText),
             });
         }
     }

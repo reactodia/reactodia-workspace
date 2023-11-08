@@ -1,23 +1,40 @@
 import * as React from 'react';
 import { hcl } from 'd3-color';
 
-import { Element } from '../diagram/elements';
-import { DiagramView } from '../diagram/view';
-import { PaperWidgetProps } from '../diagram/paperArea';
+import { Debouncer } from '../coreUtils/scheduler';
+import { EventObserver } from '../coreUtils/events';
 
-import { Debouncer } from '../viewUtils/scheduler';
-import { EventObserver } from '../viewUtils/events';
+import { CanvasContext } from '../diagram/canvasApi';
+import { defineCanvasWidget } from '../diagram/canvasWidget';
+import { Element } from '../diagram/elements';
+import { boundsOf, getContentFittingBox } from '../diagram/geometry';
+
 import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
 import { Vector } from '../diagram/geometry';
 
-export interface NavigatorProps extends PaperWidgetProps {
-    view: DiagramView;
+export interface NavigatorProps {
+    /**
+     * @default 300
+     */
     width?: number;
+    /**
+     * @default 160
+     */
     height?: number;
+    /**
+     * @default 0.2
+     */
     scalePadding?: number;
+    /**
+     * @default true
+     */
     expanded?: boolean;
+}
+
+interface State {
+    expanded: boolean;
 }
 
 interface NavigatorTransform {
@@ -28,28 +45,14 @@ interface NavigatorTransform {
 
 const CLASS_NAME = 'ontodia-navigator';
 const MIN_SCALE = 0.25;
-
-interface State {
-    expanded?: boolean;
-}
-
-type DefaultPropKeys =
-    | 'width'
-    | 'height'
-    | 'scalePadding'
-    | 'expanded';
-type ProvidedProps =
-    Omit<NavigatorProps, DefaultPropKeys & keyof PaperWidgetProps> &
-    Required<Pick<NavigatorProps, DefaultPropKeys>> &
-    Required<PaperWidgetProps>;
+const DEFAULT_WIDTH = 300;
+const DEFAULT_HEIGHT = 160;
+const DEFAULT_SCALE_PADDING = 0.2;
+const DEFAULT_EXPANDED = true;
 
 export class Navigator extends React.Component<NavigatorProps, State> {
-    static defaultProps: Required<Pick<NavigatorProps, DefaultPropKeys>> = {
-        width: 300,
-        height: 160,
-        scalePadding: 0.2,
-        expanded: true,
-    };
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
 
     private readonly delayedRedraw = new Debouncer();
     private readonly listener = new EventObserver();
@@ -60,16 +63,18 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
     constructor(props: NavigatorProps, context: any) {
         super(props, context);
-        this.state = {expanded: this.props.expanded};
+        const {expanded = DEFAULT_EXPANDED} = this.props;
+        this.state = {expanded};
     }
 
     componentDidMount() {
-        const {view, paperArea} = this.props as ProvidedProps;
+        const {canvas, model, view} = this.context;
         this.listener.listen(view.events, 'changeHighlight', this.scheduleRedraw);
-        this.listener.listen(view.model.events, 'changeCells', this.scheduleRedraw);
-        this.listener.listen(view.model.events, 'elementEvent', this.scheduleRedraw);
-        this.listener.listen(paperArea.events, 'pointerMove', this.scheduleRedraw);
-        this.listener.listen(paperArea.events, 'scroll', this.scheduleRedraw);
+        this.listener.listen(model.events, 'changeCells', this.scheduleRedraw);
+        this.listener.listen(model.events, 'elementEvent', this.scheduleRedraw);
+        this.listener.listen(canvas.events, 'pointerMove', this.scheduleRedraw);
+        this.listener.listen(canvas.events, 'scroll', this.scheduleRedraw);
+        this.listener.listen(canvas.renderingState.events, 'changeElementSize', this.scheduleRedraw);
     }
 
     shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
@@ -89,9 +94,11 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     }
 
     private draw = () => {
-        const {paperTransform: pt, width, height} = this.props as ProvidedProps;
+        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
+        const {canvas} = this.context;
+        const pt = canvas.metrics.getTransform();
 
-        this.calculateTransform();
+        this.calculateTransform(pt);
 
         const ctx = this.canvas.getContext('2d')!;
         ctx.fillStyle = '#EEEEEE';
@@ -112,22 +119,22 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
         ctx.save();
 
-        this.drawElements(ctx);
-        this.drawViewport(ctx);
+        this.drawElements(ctx, pt);
+        this.drawViewport(ctx, pt);
 
         ctx.restore();
     }
 
-    private drawElements(ctx: CanvasRenderingContext2D) {
-        const {view, paperTransform: pt} = this.props as ProvidedProps;
-        view.model.elements.forEach(element => {
-            const {position, size} = element;
+    private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
+        const {canvas, model} = this.context;
+        model.elements.forEach(element => {
+            const {x, y, width, height} = boundsOf(element, canvas.renderingState);
             ctx.fillStyle = this.chooseElementColor(element);
 
-            const {x: x1, y: y1} = canvasFromPaperCoords(position, pt, this.transform);
+            const {x: x1, y: y1} = canvasFromPaperCoords({x, y}, pt, this.transform);
             const {x: x2, y: y2} = canvasFromPaperCoords({
-                x: position.x + size.width,
-                y: position.y + size.height,
+                x: x + width,
+                y: y + height,
             }, pt, this.transform);
 
             ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
@@ -135,7 +142,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     }
 
     private chooseElementColor(element: Element): string {
-        const {view} = this.props as ProvidedProps;
+        const {view} = this.context;
         const isBlurred = view.highlighter && !view.highlighter(element);
         if (isBlurred) {
             return 'lightgray';
@@ -144,15 +151,16 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         return hcl(h, c, l).toString();
     }
 
-    private drawViewport(ctx: CanvasRenderingContext2D) {
-        const {paperArea, paperTransform: pt, width, height} = this.props as ProvidedProps;
+    private drawViewport(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
+        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
+        const {canvas} = this.context;
 
         ctx.strokeStyle = '#337ab7';
         ctx.lineWidth = 2;
 
-        const {clientWidth, clientHeight} = paperArea.getAreaMetrics();
-        const viewportStart = paperArea.clientToScrollablePaneCoords(0, 0);
-        const viewportEnd = paperArea.clientToScrollablePaneCoords(clientWidth, clientHeight);
+        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const viewportStart = canvas.metrics.clientToScrollablePaneCoords(0, 0);
+        const viewportEnd = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
 
         const {x: x1, y: y1} = canvasFromPaneCoords(viewportStart, pt, this.transform);
         const {x: x2, y: y2} = canvasFromPaneCoords(viewportEnd, pt, this.transform);
@@ -185,10 +193,15 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         ctx.stroke();
     }
 
-    private calculateTransform() {
-        const {paperArea, paperTransform: pt, width, height, scalePadding} = this.props as ProvidedProps;
+    private calculateTransform(pt: PaperTransform) {
+        const {
+            width = DEFAULT_WIDTH,
+            height = DEFAULT_HEIGHT,
+            scalePadding = DEFAULT_SCALE_PADDING,
+        } = this.props;
+        const {canvas, model} = this.context;
 
-        const box = paperArea.getContentFittingBox();
+        const box = getContentFittingBox(model.elements, model.links, canvas.renderingState);
         const displayPadding: Vector = {
             x: Math.max(box.width, width / MIN_SCALE) * scalePadding,
             y: Math.max(box.height, height / MIN_SCALE) * scalePadding,
@@ -223,7 +236,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     }
 
     render() {
-        const {width, height} = this.props as ProvidedProps;
+        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
         const {expanded} = this.state;
         return (
             <div className={`${CLASS_NAME} ${CLASS_NAME}--${expanded ? 'expanded' : 'collapsed'}`}
@@ -269,10 +282,11 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     private onDragViewport = (e: MouseEvent | React.MouseEvent<{}>) => {
         e.preventDefault();
         if (this.isDraggingViewport) {
-            const {paperArea, paperTransform} = this.props as ProvidedProps;
-            const canvas = this.canvasFromPageCoords(e.pageX, e.pageY);
-            const paper = paperFromCanvasCoords(canvas, paperTransform, this.transform);
-            paperArea.centerTo(paper);
+            const {canvas} = this.context;
+            const canvasCoords = this.canvasFromPageCoords(e.pageX, e.pageY);
+            const paperTransform = canvas.metrics.getTransform();
+            const paperCoords = paperFromCanvasCoords(canvasCoords, paperTransform, this.transform);
+            canvas.centerTo(paperCoords);
         }
     }
 
@@ -282,9 +296,9 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
     private onWheel = (e: React.WheelEvent<{}>) => {
         e.preventDefault();
-        const {paperArea} = this.props as ProvidedProps;
+        const {canvas} = this.context;
         const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
-        paperArea.zoomBy(-delta * 0.1);
+        canvas.zoomBy(-delta * 0.1);
     }
 
     private onToggleClick = () => {
@@ -294,6 +308,8 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         );
     }
 }
+
+defineCanvasWidget(Navigator, element => ({element, attachment: 'viewport'}));
 
 function canvasFromPaneCoords(pane: Vector, pt: PaperTransform, nt: NavigatorTransform): Vector {
     return {

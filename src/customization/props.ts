@@ -1,27 +1,30 @@
 import * as React from 'react';
-import { DiagramModel } from '../diagram/model';
 
-import { ElementModel, PropertyTypeIri } from '../data/model';
+import type { ElementModel, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
-import { Link } from '../diagram/elements';
 
-export type TypeStyleResolver = (types: ReadonlyArray<string>) => CustomTypeStyle | undefined;
+import type { ElementTemplateState, Link } from '../diagram/elements';
+import type { SizeProvider } from '../diagram/geometry';
+import type { DiagramModel } from '../diagram/model';
+
+export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
 export type LinkTemplateResolver = (linkType: string) => LinkTemplate | undefined;
 export type TemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
 
-export interface CustomTypeStyle {
-    color?: string;
-    icon?: string;
+export interface TypeStyle {
+    readonly color?: string;
+    readonly icon?: string;
 }
 
-export type ElementTemplate = React.ComponentClass<TemplateProps>;
+export type ElementTemplate = React.ComponentType<TemplateProps>;
 
 export interface TemplateProps {
     readonly elementId: string;
     readonly data: ElementModel;
     readonly color: string;
     readonly iconUrl?: string;
-    readonly isExpanded?: boolean;
+    readonly isExpanded: boolean;
+    readonly elementState?: ElementTemplateState;
 }
 
 export interface FormattedProperty {
@@ -51,7 +54,7 @@ export interface LinkStyle {
 }
 
 export interface LinkRouter {
-    route(model: DiagramModel): RoutedLinks;
+    route(model: DiagramModel, sizeProvider: SizeProvider): RoutedLinks;
 }
 
 export type RoutedLinks = Map<string, RoutedLink>;

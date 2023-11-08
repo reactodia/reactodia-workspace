@@ -1,3 +1,5 @@
+import { shallowArrayEqual } from '../coreUtils/collections';
+
 import { hashFnv32a } from '../data/utils';
 import * as Rdf from './rdf/rdfModel';
 
@@ -93,14 +95,6 @@ export function sameElement(a: ElementModel, b: ElementModel): boolean {
         a.image === b.image &&
         propertiesEqual(a.properties, b.properties)
     );
-}
-
-function shallowArrayEqual(a: ReadonlyArray<string>, b: ReadonlyArray<string>): boolean {
-    if (a.length !== b.length) { return false; }
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) { return false; }
-    }
-    return true;
 }
 
 function termArrayEqual(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>): boolean {

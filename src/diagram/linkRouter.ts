@@ -1,12 +1,13 @@
 import { LinkRouter, RoutedLinks, Vertex } from '../customization/props';
+
 import { DiagramModel } from './model';
-import { Link as DiagramLink, Element as DiagramElement } from './elements';
-import { Vector } from './geometry';
+import { Link } from './elements';
+import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
 
 export class DefaultLinkRouter implements LinkRouter {
     constructor(private gap = 20) {}
 
-    route(model: DiagramModel): RoutedLinks {
+    route(model: DiagramModel, sizeProvider: SizeProvider): RoutedLinks {
         const routings: RoutedLinks = new Map();
 
         for (const link of model.links) {
@@ -18,19 +19,23 @@ export class DefaultLinkRouter implements LinkRouter {
             if (!sourceId || !targetId) {
                 continue;
             } else if (sourceId === targetId) {
-                this.routeFeedbackSiblingLinks(model, sourceId, routings);
+                this.routeFeedbackSiblingLinks(sourceId, model, sizeProvider, routings);
             } else {
-                this.routeNormalSiblingLinks(model, sourceId, targetId, routings);
+                this.routeNormalSiblingLinks(sourceId, targetId, model, sizeProvider, routings);
             }
         }
 
         return routings;
     }
 
-    private routeFeedbackSiblingLinks(model: DiagramModel, elementId: string, routings: RoutedLinks) {
+    private routeFeedbackSiblingLinks(
+        elementId: string,
+        model: DiagramModel,
+        sizeProvider: SizeProvider,
+        routings: RoutedLinks
+    ) {
         const element = model.getElement(elementId)!;
-        const {x, y} = element.position;
-        const {width, height} = element.size;
+        const {x, y, width, height} = boundsOf(element, sizeProvider);
 
         let index = 0;
         for (const sibling of element.links) {
@@ -52,16 +57,17 @@ export class DefaultLinkRouter implements LinkRouter {
     }
 
     private routeNormalSiblingLinks(
-        model: DiagramModel,
         sourceId: string,
         targetId: string,
+        model: DiagramModel,
+        sizeProvider: SizeProvider,
         routings: RoutedLinks
     ): void {
         const source = model.getElement(sourceId)!;
         const target = model.getElement(targetId)!;
 
-        const sourceCenter = centerOfElement(source);
-        const targetCenter = centerOfElement(target);
+        const sourceCenter = Rect.center(boundsOf(source, sizeProvider));
+        const targetCenter = Rect.center(boundsOf(target, sizeProvider));
         const midPoint = {
             x: (sourceCenter.x + targetCenter.x) / 2,
             y: (sourceCenter.y + targetCenter.y) / 2,
@@ -138,13 +144,6 @@ export class DefaultLinkRouter implements LinkRouter {
     }
 }
 
-function hasUserPlacedVertices(link: DiagramLink) {
-    const vertices = link.vertices;
-    return vertices && vertices.length > 0;
-}
-
-function centerOfElement(element: DiagramElement): Vector {
-    const {x, y} = element.position;
-    const {width, height} = element.size;
-    return {x: x + width / 2, y: y + height / 2};
+function hasUserPlacedVertices(link: Link) {
+    return link.vertices.length > 0;
 }

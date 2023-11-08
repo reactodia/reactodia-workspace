@@ -1,19 +1,19 @@
 import * as React from 'react';
 
+import { CanvasContext } from '../../diagram/canvasApi';
 import { EmbeddedLayer } from '../../diagram/embeddedLayer';
-import { PaperAreaContextTypes, PaperAreaContextWrapper } from '../../diagram/paperAreaContext';
 
 import { TemplateProps } from '../props';
 
 const CLASS = 'ontodia-group-template';
 
 export class GroupTemplate extends React.Component<TemplateProps, {}> {
-    static contextTypes = PaperAreaContextTypes;
-    declare readonly context: PaperAreaContextWrapper;
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
 
     render() {
-        const {data, iconUrl, color, isExpanded} = this.props;
-        const {ontodiaPaperArea: {view}} = this.context;
+        const {elementId, data, iconUrl, color, isExpanded} = this.props;
+        const {view} = this.context;
 
         const typesLabel = data.types.length > 0 ? view.getElementTypeString(data) : 'Thing';
         const label = view.formatLabel(data.label, data.id);
@@ -41,7 +41,7 @@ export class GroupTemplate extends React.Component<TemplateProps, {}> {
                         {
                             isExpanded ? (
                                 <div className={`${CLASS}__embedded-layer`}>
-                                    <EmbeddedLayer />
+                                    <EmbeddedLayer elementId={elementId} />
                                 </div>
                             ) : null
                         }

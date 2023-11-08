@@ -1,18 +1,18 @@
 import * as React from 'react';
 
-import { PaperAreaContextTypes, PaperAreaContextWrapper } from '../../diagram/paperAreaContext';
+import { CanvasContext } from '../../diagram/canvasApi';
 
 import { TemplateProps, FormattedProperty } from '../props';
 
 const CLASS_NAME = 'ontodia-default-template';
 
 export class DefaultElementTemplate extends React.Component<TemplateProps, {}> {
-    static contextTypes = PaperAreaContextTypes;
-    declare readonly context: PaperAreaContextWrapper;
+    static contextType = CanvasContext;
+    declare readonly context: CanvasContext;
 
     render() {
         const {data, color, iconUrl, isExpanded} = this.props;
-        const {ontodiaPaperArea: {view}} = this.context;
+        const {view} = this.context;
 
         const typesLabel = data.types.length > 0 ? view.getElementTypeString(data) : 'Thing';
         const label = view.formatLabel(data.label, data.id);

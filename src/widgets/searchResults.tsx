@@ -1,9 +1,11 @@
 import * as React from 'react';
 
+import { EventObserver } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
+
 import { ElementModel, ElementIri } from '../data/model';
 import { DiagramView } from '../diagram/view';
-import { Debouncer } from '../viewUtils/scheduler';
-import { EventObserver } from '../viewUtils/events';
+
 import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'ontodia-search-results';
@@ -35,9 +37,6 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
 
     constructor(props: SearchResultProps) {
         super(props);
-        this.state = {
-            selection: props.selection || {},
-        };
     }
 
     render(): React.ReactElement<any> {
@@ -102,10 +101,6 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
             }
             this.updateSelection(newSelection);
         }
-    }
-
-    componentWillReceiveProps(props: SearchResultProps) {
-        this.setState({selection: props.selection || {}});
     }
 
     componentWillUnmount() {

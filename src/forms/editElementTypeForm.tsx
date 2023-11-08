@@ -1,12 +1,13 @@
 import * as React from 'react';
 
-import { EditorController } from '../editor/editorController';
-import { DiagramView } from '../diagram/view';
 import { ElementModel, LinkModel } from '../data/model';
 import { MetadataApi } from '../data/metadataApi';
-import { LinkDirection } from '../diagram/elements';
 
-import { HtmlSpinner } from '../viewUtils/spinner';
+import { LinkDirection } from '../diagram/elements';
+import { HtmlSpinner } from '../diagram/spinner';
+import { DiagramView } from '../diagram/view';
+
+import { EditorController } from '../editor/editorController';
 
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
 
@@ -165,7 +166,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                     ) : null}
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-success ${CLASS_NAME}__apply-button`}
+                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={() => this.props.onApply(
                             elementValue.value,
                             elementValue.isNew,
@@ -174,7 +175,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                         disabled={elementValue.loading || !isValid || isValidating}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-danger'
+                    <button className='ontodia-btn ontodia-btn-default'
                         onClick={this.props.onCancel}>
                         Cancel
                     </button>

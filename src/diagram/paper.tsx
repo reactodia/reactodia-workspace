@@ -6,12 +6,16 @@ import { ElementLayer } from './elementLayer';
 import { Vector } from './geometry';
 import { LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
+import { RenderingState } from './renderingState';
 import { DiagramView } from './view';
 
 export interface PaperProps {
+    model: DiagramModel;
     view: DiagramView;
+    renderingState: RenderingState;
     paperTransform: PaperTransform;
     onPointerDown?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
+    onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     group?: string;
     linkLayerWidgets?: React.ReactElement<any>;
     elementLayerWidgets?: React.ReactElement<any>;
@@ -19,9 +23,11 @@ export interface PaperProps {
 
 const CLASS_NAME = 'ontodia-paper';
 
-export class Paper extends Component<PaperProps, {}> {
+export class Paper extends Component<PaperProps> {
     render() {
-        const {view, group, paperTransform, linkLayerWidgets, elementLayerWidgets} = this.props;
+        const {
+            model, view, renderingState, group, paperTransform, linkLayerWidgets, elementLayerWidgets,
+        } = this.props;
         const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
 
         const scaledWidth = width * scale;
@@ -43,28 +49,54 @@ export class Paper extends Component<PaperProps, {}> {
         };
 
         return (
-            <div className={CLASS_NAME} style={style} onMouseDown={this.onMouseDown}>
+            <div className={CLASS_NAME}
+                style={style}
+                onMouseDown={this.onMouseDown}
+                onContextMenu={this.onContextMenu}>
                 <TransformedSvgCanvas className={`${CLASS_NAME}__canvas`}
                     style={{overflow: 'visible'}}
                     paperTransform={paperTransform}>
-                    <LinkMarkers view={view} />
-                    <LinkLayer view={view} links={view.model.links} group={group} />
+                    <LinkMarkers model={model}
+                        renderingState={renderingState}
+                    />
+                    <LinkLayer model={model}
+                        view={view}
+                        renderingState={renderingState}
+                        links={model.links}
+                        group={group}
+                    />
                 </TransformedSvgCanvas>
                 {linkLayerWidgets}
-                <ElementLayer view={view} group={group} style={htmlTransformStyle} />
+                <ElementLayer model={model}
+                    view={view}
+                    renderingState={renderingState}
+                    group={group}
+                    style={htmlTransformStyle}
+                />
                 {elementLayerWidgets}
             </div>
         );
     }
 
     private onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        const {view, onPointerDown} = this.props;
-        const cell = e.target instanceof Element
-            ? findCell(e.target, e.currentTarget, view.model) : undefined;
+        const {model, onPointerDown} = this.props;
         if (onPointerDown) {
+            const cell = e.target instanceof Element
+                ? findCell(e.target, e.currentTarget, model)
+                : undefined;
             onPointerDown(e, cell);
         }
-    }
+    };
+
+    private onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+        const {model, onContextMenu} = this.props;
+        if (onContextMenu) {
+            const cell = e.target instanceof Element
+                ? findCell(e.target, e.currentTarget, model)
+                : undefined;
+            onContextMenu(e, cell);
+        }
+    };
 }
 
 function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | undefined {
