@@ -9,7 +9,7 @@ import {
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementTypeIri, PropertyTypeIri } from '../data/model';
-import { TemplateProps } from '../customization/props';
+import { TemplateProps } from './customization';
 
 import { setElementExpanded } from './commands';
 import { Element } from './elements';

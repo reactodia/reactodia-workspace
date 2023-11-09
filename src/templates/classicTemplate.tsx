@@ -1,12 +1,11 @@
 import * as React from 'react';
 
-import { CanvasContext } from '../../diagram/canvasApi';
-
-import { TemplateProps, FormattedProperty } from '../props';
+import { CanvasContext } from '../diagram/canvasApi';
+import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 const CLASS_NAME = 'ontodia-default-template';
 
-export class DefaultElementTemplate extends React.Component<TemplateProps, {}> {
+export class ClassicTemplate extends React.Component<TemplateProps, {}> {
     static contextType = CanvasContext;
     declare readonly context: CanvasContext;
 

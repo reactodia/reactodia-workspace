@@ -3,7 +3,7 @@ import { saveAs } from 'file-saver';
 
 import { EventObserver } from '../coreUtils/events';
 
-import { TypeStyleResolver } from '../customization/props';
+import { TypeStyleResolver } from '../diagram/customization';
 
 import { MetadataApi } from '../data/metadataApi';
 import { ValidationApi } from '../data/validationApi';

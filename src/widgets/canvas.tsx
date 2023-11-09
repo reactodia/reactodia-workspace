@@ -1,14 +1,13 @@
 import * as React from 'react';
 
-import { LinkRouter, LinkTemplateResolver, TemplateResolver } from '../customization/props';
-
+import { LinkRouter, LinkTemplateResolver, ElementTemplateResolver } from '../diagram/customization';
 import { PaperArea, ZoomOptions } from '../diagram/paperArea';
 import { RenderingState } from '../diagram/renderingState';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 export interface CanvasProps {
-    elementTemplateResolver?: TemplateResolver;
+    elementTemplateResolver?: ElementTemplateResolver;
     linkTemplateResolver?: LinkTemplateResolver;
     linkRouter?: LinkRouter;
     /**

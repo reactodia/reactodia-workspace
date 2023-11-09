@@ -6,7 +6,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import type * as Rdf from '../data/rdf/rdfModel';
 import {
     LinkStyle, LinkLabelStyle, LinkMarkerStyle, RoutedLink,
-} from '../customization/props';
+} from './customization';
 
 import { restoreCapturedLinkGeometry } from './commands';
 import { Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, FatLinkType } from './elements';

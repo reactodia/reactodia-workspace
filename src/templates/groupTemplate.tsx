@@ -1,9 +1,8 @@
 import * as React from 'react';
 
-import { CanvasContext } from '../../diagram/canvasApi';
-import { EmbeddedLayer } from '../../diagram/embeddedLayer';
-
-import { TemplateProps } from '../props';
+import { CanvasContext } from '../diagram/canvasApi';
+import { TemplateProps } from '../diagram/customization';
+import { EmbeddedLayer } from '../diagram/embeddedLayer';
 
 const CLASS = 'ontodia-group-template';
 

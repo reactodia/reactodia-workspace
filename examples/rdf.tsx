@@ -3,7 +3,7 @@ import * as N3 from 'n3';
 
 import {
     Workspace, DefaultWorkspace, RdfDataProvider, GroupTemplate, PropertySuggestionHandler, PropertyScore,
-    LinkTemplate, DefaultLinkTemplateBundle, delay,
+    LinkTemplate, SemanticTypeStyles, OntologyLinkTemplates, delay,
 } from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
@@ -11,7 +11,7 @@ import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } 
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl');
 
-const CUSTOM_LINK_LABEL_IRI = 'urn:ramp-diagram:custom-link-label';
+const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
 const EDITABLE_LINK_TEMPLATE: LinkTemplate = {
     renderLink: (link, model) => {
         let editedLabel: string | undefined;
@@ -81,6 +81,7 @@ function RdfExample() {
             ref={workspaceRef}
             metadataApi={metadataApi}
             validationApi={validationApi}
+            typeStyleResolver={SemanticTypeStyles}
             groupBy={[
                 {linkType: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', linkDirection: 'in'},
             ]}
@@ -98,7 +99,7 @@ function RdfExample() {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return EDITABLE_LINK_TEMPLATE;
                         }
-                        return DefaultLinkTemplateBundle(type);
+                        return OntologyLinkTemplates(type); 
                     },
                 }}
                 connectionsMenu={{suggestProperties}}

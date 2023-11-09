@@ -1,5 +1,5 @@
-import { LinkTemplate, LinkTemplateResolver, LinkStyle } from './props';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { LinkTemplate, LinkTemplateResolver, LinkStyle } from '../diagram/customization';
 
 export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
     renderLink: (link, model): LinkStyle => ({
@@ -67,7 +67,7 @@ const LINK_TYPE_OF: LinkTemplate = {
     }),
 };
 
-export const DefaultLinkTemplateBundle: LinkTemplateResolver = type => {
+export const OntologyLinkTemplates: LinkTemplateResolver = type => {
     if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
         return LINK_SUB_CLASS_OF;
     } else if (type === 'http://www.w3.org/2000/01/rdf-schema#domain') {

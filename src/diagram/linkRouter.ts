@@ -1,4 +1,4 @@
-import { LinkRouter, RoutedLinks, Vertex } from '../customization/props';
+import { LinkRouter, RoutedLinks, Vertex } from './customization';
 
 import { DiagramModel } from './model';
 import { Link } from './elements';

@@ -14,10 +14,6 @@ export {
 } from './diagram/layout';
 export * from './coreUtils/scheduler';
 
-export { DefaultLinkTemplateBundle, LINK_STYLE_SHOW_IRI } from './customization/defaultLinkStyles';
-export * from './customization/props';
-export * from './customization/templates';
-
 export * from './data/model';
 export * from './data/metadataApi';
 export * from './data/validationApi';
@@ -33,6 +29,7 @@ export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
 export { RestoreGeometry, setElementExpanded, setElementData, setLinkData } from './diagram/commands';
+export * from './diagram/customization';
 export {
     Element, ElementEvents, ElementTemplateState, Link, LinkEvents, LinkTemplateState, LinkVertex, Cell, LinkDirection
 } from './diagram/elements';
@@ -59,6 +56,12 @@ export {
     LayoutData, SerializedDiagram, LinkTypeOptions,
     convertToSerializedDiagram, makeSerializedDiagram, makeLayoutData,
 } from './editor/serializedDiagram';
+
+export { ClassicTemplate } from './templates/classicTemplate';
+export { GroupTemplate } from './templates/groupTemplate';
+export { StandardTemplate } from './templates/standardTemplate';
+export { SemanticTypeStyles } from './templates/typeStyles';
+export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
 
 export { ClassTree, ClassTreeProps } from './widgets/classTree';
 export { Canvas, CanvasProps } from './widgets/canvas';

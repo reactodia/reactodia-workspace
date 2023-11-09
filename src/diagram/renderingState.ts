@@ -1,14 +1,13 @@
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 
 import {
-    TemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate, LinkMarkerStyle, LinkStyle,
+    ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate, LinkMarkerStyle, LinkStyle,
     LinkRouter, RoutedLink, RoutedLinks,
-} from '../customization/props';
-import { DefaultLinkTemplateBundle } from '../customization/defaultLinkStyles';
-import { DefaultElementTemplateBundle } from '../customization/templates/bundle';
-import { StandardTemplate } from '../customization/templates/standard';
+} from './customization';
 
 import { ElementTypeIri, LinkTypeIri } from '../data/model';
+
+import { StandardTemplate } from '../templates/standardTemplate';
 
 import { Element, Link, FatLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
@@ -17,7 +16,7 @@ import { DiagramModel } from './model';
 
 export interface RenderingStateOptions {
     model: DiagramModel;
-    elementTemplateResolver?: TemplateResolver;
+    elementTemplateResolver?: ElementTemplateResolver;
     linkTemplateResolver?: LinkTemplateResolver;
     linkRouter?: LinkRouter;
 }
@@ -41,13 +40,16 @@ export enum RenderingLayer {
     LastToUpdate = Editor,
 }
 
+const DEFAULT_ELEMENT_TEMPLATE_RESOLVER: ElementTemplateResolver = types => undefined;
+const DEFAULT_LINK_TEMPLATE_RESOLVER: LinkTemplateResolver = type => undefined;
+
 export class RenderingState implements SizeProvider {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<RenderingStateEvents>();
     readonly events: Events<RenderingStateEvents> = this.source;
 
     private readonly model: DiagramModel;
-    private readonly resolveElementTemplate: TemplateResolver;
+    private readonly resolveElementTemplate: ElementTemplateResolver;
     private readonly resolveLinkTemplate: LinkTemplateResolver;
     private readonly linkRouter: LinkRouter;
 
@@ -59,8 +61,10 @@ export class RenderingState implements SizeProvider {
 
     constructor(options: RenderingStateOptions) {
         this.model = options.model;
-        this.resolveLinkTemplate = options.linkTemplateResolver ?? DefaultLinkTemplateBundle;
-        this.resolveElementTemplate = options.elementTemplateResolver ?? DefaultElementTemplateBundle;
+        this.resolveElementTemplate = options.elementTemplateResolver
+            ?? DEFAULT_ELEMENT_TEMPLATE_RESOLVER;
+        this.resolveLinkTemplate = options.linkTemplateResolver
+            ?? DEFAULT_LINK_TEMPLATE_RESOLVER;
         this.linkRouter = options.linkRouter ?? new DefaultLinkRouter();
 
         this.listener.listen(this.model.events, 'changeCells', () =>  this.updateRoutings());

@@ -1,16 +1,16 @@
-import { TypeStyleResolver } from './props';
+import { TypeStyleResolver } from '../diagram/customization';
 
-const classIcon = require('@images/icons/class.svg');
-const objectPropertyIcon = require('@images/icons/objectProperty.svg');
-const datatypePropertyIcon = require('@images/icons/datatypeProperty.svg');
-const personIcon = require('@images/icons/person.svg');
-const countryIcon = require('@images/icons/country.svg');
-const organizationIcon = require('@images/icons/organization.svg');
-const locationIcon = require('@images/icons/location.svg');
-const eventIcon = require('@images/icons/event.svg');
-const objectIcon = require('@images/icons/object.svg');
+const classIcon = require('@images/semantic/class.svg');
+const objectPropertyIcon = require('@images/semantic/objectProperty.svg');
+const datatypePropertyIcon = require('@images/semantic/datatypeProperty.svg');
+const personIcon = require('@images/semantic/person.svg');
+const countryIcon = require('@images/semantic/country.svg');
+const organizationIcon = require('@images/semantic/organization.svg');
+const locationIcon = require('@images/semantic/location.svg');
+const eventIcon = require('@images/semantic/event.svg');
+const objectIcon = require('@images/semantic/object.svg');
 
-export const DefaultTypeStyleBundle: TypeStyleResolver = types => {
+export const SemanticTypeStyles: TypeStyleResolver = types => {
     if (types.indexOf('http://www.w3.org/2002/07/owl#Class') !== -1 ||
         types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1
     ) {

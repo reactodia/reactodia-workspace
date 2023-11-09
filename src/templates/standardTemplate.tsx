@@ -1,18 +1,18 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import type * as Rdf from '../../data/rdf/rdfModel';
-import { TemplateProperties } from '../../data/schema';
-import { isEncodedBlank } from '../../data/sparql/blankNodes';
+import type * as Rdf from '../data/rdf/rdfModel';
+import { TemplateProperties } from '../data/schema';
+import { isEncodedBlank } from '../data/sparql/blankNodes';
 
-import { HtmlSpinner } from '../../diagram/spinner';
+import { HtmlSpinner } from '../diagram/spinner';
 
-import { AuthoredEntityContext, useAuthoredEntity } from '../../editor/authoredEntity';
-import { AuthoringState } from '../../editor/authoringState';
+import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
+import { AuthoringState } from '../editor/authoringState';
 
-import { WorkspaceContext } from '../../workspace/workspaceContext';
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
-import { TemplateProps, FormattedProperty } from '../props';
+import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 export function StandardTemplate(props: TemplateProps) {
     const workspace = React.useContext(WorkspaceContext)!;

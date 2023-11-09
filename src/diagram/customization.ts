@@ -3,13 +3,13 @@ import * as React from 'react';
 import type { ElementModel, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { ElementTemplateState, Link } from '../diagram/elements';
-import type { SizeProvider } from '../diagram/geometry';
-import type { DiagramModel } from '../diagram/model';
+import type { ElementTemplateState, Link } from './elements';
+import type { SizeProvider } from './geometry';
+import type { DiagramModel } from './model';
 
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
+export type ElementTemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
 export type LinkTemplateResolver = (linkType: string) => LinkTemplate | undefined;
-export type TemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
 
 export interface TypeStyle {
     readonly color?: string;

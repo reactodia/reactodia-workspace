@@ -3,9 +3,6 @@ import { hcl } from 'd3-color';
 
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
 
-import { TypeStyleResolver, FormattedProperty } from '../customization/props';
-import { DefaultTypeStyleBundle } from '../customization/defaultTypeStyles';
-
 import { ElementModel, ElementTypeIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 import { isEncodedBlank } from '../data/sparql/blankNodes';
@@ -14,6 +11,7 @@ import { hashFnv32a, getUriLocalName } from '../data/utils';
 import type {
     CanvasApi, CanvasDropEvent, CanvasWidgetDescription, CanvasWidgetAttachment,
 } from './canvasApi';
+import { TypeStyleResolver, FormattedProperty } from './customization';
 import { Element, Link } from './elements';
 import { DiagramModel } from './model';
 
@@ -64,6 +62,8 @@ export type CellHighlighter = (item: Element | Link) => boolean;
 
 export type ElementDecoratorResolver = (element: Element) => React.ReactNode | undefined;
 
+const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
+
 export class DiagramView {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<DiagramViewEvents>();
@@ -85,7 +85,7 @@ export class DiagramView {
 
     constructor(options: DiagramViewOptions) {
         this.model = options.model;
-        this.resolveTypeStyle = options.typeStyleResolver ?? DefaultTypeStyleBundle;
+        this.resolveTypeStyle = options.typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.selectLabelLanguage = options.selectLabelLanguage ?? defaultSelectLabel;
     }
 
