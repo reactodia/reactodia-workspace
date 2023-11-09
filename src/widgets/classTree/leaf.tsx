@@ -7,10 +7,6 @@ import { highlightSubstring } from '../listElementView';
 
 import { TreeNode } from './treeModel';
 
-const DEFAULT_LEAF_ICON = require('@images/tree/leaf-default.svg');
-const DEFAULT_PARENT_ICON = require('@images/tree/leaf-folder.svg');
-const CREATE_ICON = require('@codicons/add.svg');
-
 interface CommonProps {
     view: DiagramView;
     searchText?: string;
@@ -58,10 +54,7 @@ export class Leaf extends React.Component<LeafProps, State> {
             `${CLASS_NAME}__toggle-collapsed`
         );
 
-        let {icon} = view.getTypeStyle([node.model.id]);
-        if (!icon) {
-            icon = node.derived.length === 0 ? DEFAULT_LEAF_ICON : DEFAULT_PARENT_ICON;
-        }
+        const {icon} = view.getTypeStyle([node.model.id]);
 
         let bodyClass = `${CLASS_NAME}__body`;
         if (selectedNode && selectedNode.model === node.model) {
@@ -81,7 +74,14 @@ export class Leaf extends React.Component<LeafProps, State> {
                     />
                     <a className={bodyClass} href={node.model.id} onClick={this.onClick}>
                         <div className={`${CLASS_NAME}__icon-container`}>
-                            <img className={`${CLASS_NAME}__icon`} src={icon} />
+                            {icon ? (
+                                <img className={`${CLASS_NAME}__icon`} src={icon} />
+                            ) : (
+                                <div className={node.derived.length === 0
+                                    ? `${CLASS_NAME}__default-icon-leaf`
+                                    : `${CLASS_NAME}__default-icon-parent`
+                                } />
+                            )}
                         </div>
                         <span className={`${CLASS_NAME}__label`}>{label}</span>
                         {node.model.count ? (
@@ -91,16 +91,16 @@ export class Leaf extends React.Component<LeafProps, State> {
                         ) : null}
                     </a>
                     {creatableClasses.get(node.model.id) ? (
-                        <button title={'Click or drag to create new entity of this type'}
+                        <div role='button'
+                            title={'Click or drag to create new entity of this type'}
                             className={classnames(
                                 `${CLASS_NAME}__create-button`,
                                 'ontodia-btn ontodia-btn-default'
                             )}
                             draggable={true}
                             onClick={this.onClickCreate}
-                            onDragStart={this.onDragCreate}>
-                            <img src={CREATE_ICON} />
-                        </button>
+                            onDragStart={this.onDragCreate}
+                        />
                     ) : null}
                 </div>
                 {expanded && node.derived.length > 0 ? (

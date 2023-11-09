@@ -70,6 +70,13 @@
     height: 100%;
   }
 
+  &__default-icon-leaf,
+  &__default-icon-parent {
+    @include codicon("symbol-method");
+    width: 20px;
+    height: 20px;
+  }
+
   &__label {
     margin-left: 5px;
     color: black;
@@ -124,10 +131,8 @@
     padding: 5px;
     cursor: move;
 
-    img {
-      display: block;
-      background: url("@codicons/add.svg") no-repeat;
-      background-size: contain;
+    &::before {
+      @include codicon("add");
       width: 12px;
       height: 12px;
     }
