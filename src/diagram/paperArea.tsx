@@ -186,7 +186,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                     onMouseDown={this.onWidgetsMouseDown}>
                                     {renderedWidgets
                                         .filter(w => w.attachment === 'overLinks')
-                                        .map(widget => widget.element)
+                                        .map(widget => ensureWidgetGetRendered(widget.element))
                                     }
                                 </div>
                             }
@@ -195,7 +195,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                     onMouseDown={this.onWidgetsMouseDown}>
                                     {renderedWidgets
                                         .filter(w => w.attachment === 'overElements')
-                                        .map(widget => widget.element)
+                                        .map(widget => ensureWidgetGetRendered(widget.element))
                                     }
                                 </div>
                             }
@@ -211,7 +211,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                     </div>
                     {renderedWidgets
                         .filter(w => w.attachment === 'viewport')
-                        .map(widget => widget.element)
+                        .map(widget => ensureWidgetGetRendered(widget.element))
                     }
                 </div>
             </CanvasContext.Provider>
@@ -908,4 +908,8 @@ function clientCoordsFor(container: HTMLElement, e: MouseEvent) {
         x: e.offsetX + (targetBox.left - containerBox.left),
         y: e.offsetY + (targetBox.top - containerBox.top),
     };
+}
+
+function ensureWidgetGetRendered(element: React.ReactElement) {
+    return React.cloneElement(element);
 }
