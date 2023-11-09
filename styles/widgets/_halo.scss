@@ -129,7 +129,7 @@
   &__add-to-filter {
     @include halo-button;
     @include se-docked;
-    background-image: url("@images/add-to-filter.png");
+    background-image: url("@images/add-to-filter.svg");
   }
 
   &__establish-connection {
