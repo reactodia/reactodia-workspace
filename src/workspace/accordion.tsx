@@ -37,7 +37,7 @@ interface State {
     readonly resizing: boolean;
 }
 
-const CLASS_NAME = 'ontodia-accordion';
+const CLASS_NAME = 'reactodia-accordion';
 
 type DefaultPropKeys = 'direction' | 'animationDuration';
 type ProvidedProps =

@@ -9,7 +9,7 @@ import {
 import type { LinkedElement } from '../provider';
 import type { DataProviderDefinition } from './composite';
 
-const DATA_PROVIDER_PROPERTY = 'http://ontodia.org/property/DataProvider';
+const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
 
 export type CompositeResponse<T> = readonly [T, DataProviderDefinition];
 

@@ -1,4 +1,4 @@
-.ontodia-workspace {
+.reactodia-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -48,12 +48,12 @@
   }
 }
 
-.ontodia-scrollable {
+.reactodia-scrollable {
   flex: 1 1 0px; // IE 11 requires a unit to be added to the third argument
   overflow-y: scroll;
 }
 
 // fixes the bug in Chrome with redrawing children in scrollable elements
-.ontodia-scrollable > * {
+.reactodia-scrollable > * {
   position: relative;
 }

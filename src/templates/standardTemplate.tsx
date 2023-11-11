@@ -30,7 +30,7 @@ interface StandardTemplateInnerProps extends TemplateProps {
     entityContext: AuthoredEntityContext;
 }
 
-const CLASS_NAME = 'ontodia-standard-template';
+const CLASS_NAME = 'reactodia-standard-template';
 const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
 
 class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> {
@@ -203,7 +203,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__delete-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title={canDelete ? 'Delete entity' : 'Deletion is unavailable for the selected element'}
                     disabled={!canDelete}
@@ -215,7 +215,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__edit-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title={canEdit ? 'Edit entity' : 'Editing is unavailable for the selected element'}
                     disabled={!canEdit}

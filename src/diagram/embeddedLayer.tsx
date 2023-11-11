@@ -226,7 +226,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
         };
 
         return (
-            <div className='ontodia-embedded-layer' ref={this.onLayerInit}>
+            <div className='reactodia-embedded-layer' ref={this.onLayerInit}>
                 <Paper model={model}
                     view={view}
                     renderingState={canvas.renderingState}

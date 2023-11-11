@@ -43,7 +43,7 @@ interface NavigatorTransform {
     paneOffset: Vector;
 }
 
-const CLASS_NAME = 'ontodia-navigator';
+const CLASS_NAME = 'reactodia-navigator';
 const MIN_SCALE = 0.25;
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 160;

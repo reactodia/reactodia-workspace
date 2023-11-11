@@ -20,7 +20,7 @@ export interface CanvasProps {
     children?: React.ReactNode;
 }
 
-const CLASS_NAME = 'ontodia-canvas';
+const CLASS_NAME = 'reactodia-canvas';
 
 export function Canvas(props: CanvasProps) {
     const {model, view} = React.useContext(WorkspaceContext)!;

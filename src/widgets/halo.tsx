@@ -65,7 +65,7 @@ interface State {
     canLink?: boolean;
 }
 
-const CLASS_NAME = 'ontodia-halo';
+const CLASS_NAME = 'reactodia-halo';
 
 class HaloInner extends React.Component<HaloInnerProps, State> {
     private readonly listener = new EventObserver();

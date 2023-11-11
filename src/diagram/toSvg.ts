@@ -89,7 +89,7 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
     }));
 
     return convertingImages.then(() => {
-        // workaround to include only ontodia-related stylesheets
+        // workaround to include only library-related stylesheets
         const exportedCssText = extractCSSFromDocument(svgClone);
 
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -106,7 +106,7 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
 }
 
 function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {
-    const WATERMARK_CLASS = 'ontodia-exported-watermark';
+    const WATERMARK_CLASS = 'reactodia-exported-watermark';
     const WATERMARK_MAX_WIDTH = 120;
     const WATERMARK_PADDING = 20;
 
@@ -181,7 +181,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
 
         const elementRoot = document.createElementNS(SVG_NAMESPACE, 'g');
         const overlaidViewContent = overlaidView.firstChild!.cloneNode(true) as HTMLElement;
-        elementRoot.setAttribute('class', 'ontodia-exported-element');
+        elementRoot.setAttribute('class', 'reactodia-exported-element');
 
         const newRoot = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
         newRoot.appendChild(overlaidViewContent);

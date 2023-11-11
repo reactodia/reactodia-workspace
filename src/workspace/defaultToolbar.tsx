@@ -27,7 +27,7 @@ export interface WorkspaceLanguage {
     readonly label: string;
 }
 
-const CLASS_NAME = 'ontodia-toolbar';
+const CLASS_NAME = 'reactodia-toolbar';
 const DEFAULT_LANGUAGES = [
     {code: 'en', label: 'English'},
     {code: 'ru', label: 'Russian'},
@@ -52,7 +52,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
 
     return (
         <div className={CLASS_NAME}>
-            <div className='ontodia-btn-group ontodia-btn-group-sm'>
+            <div className='reactodia-btn-group reactodia-btn-group-sm'>
                 <SaveButtons editor={editor}
                     onSaveDiagram={onSaveDiagram}
                     onPersistChanges={onPersistChanges}
@@ -61,7 +61,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__clear-all-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title='Clear All'
                     onClick={() => {
@@ -74,7 +74,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__layout-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title='Force layout'
                     onClick={() => performLayout({
@@ -88,7 +88,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__export-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title='Export diagram as PNG'
                     onClick={() => exportPng(canvas)}>
@@ -97,7 +97,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__export-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title='Export diagram as SVG'
                     onClick={() => exportSvg(canvas)}>
@@ -106,7 +106,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__print-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     title='Print diagram'
                     onClick={() => print(canvas)}>
@@ -114,7 +114,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
                 </button>
                 {languages.length === 0 ? null : (
                     <span className={`${CLASS_NAME}__language-selector`}>
-                        <label className='ontodia-label'><span>Data Language:</span></label>
+                        <label className='reactodia-label'><span>Data Language:</span></label>
                         <select value={view.getLanguage()}
                             onChange={e => view.setLanguage(e.currentTarget.value)}>
                             {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
@@ -147,7 +147,7 @@ function SaveButtonsRaw(props: {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__save-button`,
-                        'ontodia-btn ontodia-btn-primary'
+                        'reactodia-btn reactodia-btn-primary'
                     )}
                     disabled={!canSaveDiagram}
                     onClick={() => onSaveDiagram()}>
@@ -158,7 +158,7 @@ function SaveButtonsRaw(props: {
                 <button type='button'
                     className={classnames(
                         `${CLASS_NAME}__save-button`,
-                        'ontodia-btn ontodia-btn-default'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     disabled={!canPersistChanges}
                     onClick={() => onPersistChanges()}>
@@ -203,7 +203,7 @@ function HistoryButtonsRaw(props: {
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__undo-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 disabled={!undoCommand}
                 title={
@@ -216,7 +216,7 @@ function HistoryButtonsRaw(props: {
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__redo-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 disabled={!redoCommand}
                 title={

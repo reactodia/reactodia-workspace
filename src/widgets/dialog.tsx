@@ -25,7 +25,7 @@ interface State {
     height?: number;
 }
 
-const CLASS_NAME = 'ontodia-dialog';
+const CLASS_NAME = 'reactodia-dialog';
 
 const DEFAULT_SIZE: Size = {width: 300, height: 300};
 const MIN_WIDTH = 250;
@@ -274,11 +274,11 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     private preventSelection() {
         const onMouseUp = () => {
-            document.body.classList.remove('ontodia--unselectable');
+            document.body.classList.remove('reactodia--unselectable');
             document.removeEventListener('mouseup', onMouseUp);
         };
         document.addEventListener('mouseup', onMouseUp);
-        document.body.classList.add('ontodia--unselectable');
+        document.body.classList.add('reactodia--unselectable');
     }
 
     render() {
@@ -296,7 +296,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         return (
             <div className={CLASS_NAME} style={style}>
                 <button className={`${CLASS_NAME}__close-button`} onClick={() => this.props.onClose()} />
-                {caption ? <div className='ontodia-dialog__caption'>{caption}</div> : null}
+                {caption ? <div className='reactodia-dialog__caption'>{caption}</div> : null}
                 {this.props.children}
                 <DraggableHandle
                     className={`${CLASS_NAME}__bottom-handle`}

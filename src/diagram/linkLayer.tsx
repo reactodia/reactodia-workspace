@@ -32,7 +32,7 @@ enum UpdateRequest {
     All,
 }
 
-const CLASS_NAME = 'ontodia-link-layer';
+const CLASS_NAME = 'reactodia-link-layer';
 
 export class LinkLayer extends React.Component<LinkLayerProps> {
     private readonly listener = new EventObserver();
@@ -220,7 +220,7 @@ interface LinkViewProps {
     route?: RoutedLink;
 }
 
-const LINK_CLASS = 'ontodia-link';
+const LINK_CLASS = 'reactodia-link';
 const LABEL_GROUPING_PRECISION = 100;
 // temporary, cleared-before-render map to hold line numbers for labels
 // grouped on the same link offset

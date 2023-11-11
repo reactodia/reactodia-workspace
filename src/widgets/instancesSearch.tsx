@@ -44,7 +44,7 @@ interface State {
     readonly moreItemsAvailable?: boolean;
 }
 
-const CLASS_NAME = 'ontodia-instances-search';
+const CLASS_NAME = 'reactodia-instances-search';
 
 const ITEMS_PER_PAGE = 100;
 
@@ -111,8 +111,8 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             <ProgressBar state={progressState} />
             <div className={`${CLASS_NAME}__criteria`}>
                 {this.renderCriteria()}
-                <div className={`${CLASS_NAME}__text-criteria ontodia-input-group`}>
-                    <input type='text' className='ontodia-form-control' placeholder='Search for...'
+                <div className={`${CLASS_NAME}__text-criteria reactodia-input-group`}>
+                    <input type='text' className='reactodia-form-control' placeholder='Search for...'
                         value={searchTerm || ''}
                         onChange={e => this.setState({inputText: e.currentTarget.value})}
                         onKeyUp={e => {
@@ -120,11 +120,11 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                                 this.submitCriteriaUpdate();
                             }
                         }} />
-                    <span className='ontodia-input-group-btn'>
+                    <span className='reactodia-input-group-btn'>
                         <button type='button' title='Search'
                             className={classnames(
                                 `${CLASS_NAME}__search-button`,
-                                'ontodia-btn ontodia-btn-default'
+                                'reactodia-btn reactodia-btn-default'
                             )}
                             onClick={() => this.submitCriteriaUpdate()}>
                         </button>
@@ -132,7 +132,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                 </div>
             </div>
             {/* specify resultId as key to reset scroll position when loaded new search results */}
-            <div className={`${CLASS_NAME}__rest ontodia-scrollable`} key={this.state.resultId}>
+            <div className={`${CLASS_NAME}__rest reactodia-scrollable`} key={this.state.resultId}>
                 <SearchResults
                     view={view}
                     items={this.state.items ?? []}
@@ -142,7 +142,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                 />
                 <div className={`${CLASS_NAME}__rest-end`}>
                     <button type='button'
-                        className={`${CLASS_NAME}__load-more ontodia-btn ontodia-btn-primary`}
+                        className={`${CLASS_NAME}__load-more reactodia-btn reactodia-btn-primary`}
                         disabled={this.state.querying}
                         style={{display: this.state.moreItemsAvailable ? undefined : 'none'}}
                         onClick={() => this.queryItems(true)}>
@@ -203,11 +203,11 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private renderRemoveCriterionButtons(onClick: () => void) {
-        return <div className={`${CLASS_NAME}__criterion-remove ontodia-btn-group ontodia-btn-group-xs`}>
+        return <div className={`${CLASS_NAME}__criterion-remove reactodia-btn-group reactodia-btn-group-xs`}>
             <button type='button' title='Remove criteria'
                 className={classnames(
                     `${CLASS_NAME}__criterion-remove-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 onClick={onClick}>
             </button>

@@ -1,9 +1,9 @@
-.ontodia-input-group {
+.reactodia-input-group {
   position: relative;
   display: table;
   border-collapse: separate;
 
-  .ontodia-form-control {
+  .reactodia-form-control {
     display: table-cell;
     position: relative;
     z-index: 2;
@@ -12,13 +12,13 @@
     margin-bottom: 0;
   }
 
-  .ontodia-form-control:first-child {
+  .reactodia-form-control:first-child {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
 }
 
-.ontodia-input-group-btn {
+.reactodia-input-group-btn {
   display: table-cell;
   width: 1%;
   vertical-align: middle;
@@ -26,7 +26,7 @@
   font-size: 0;
   white-space: nowrap;
 
-  &:last-child > .ontodia-btn {
+  &:last-child > .reactodia-btn {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     z-index: 2;

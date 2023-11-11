@@ -6,7 +6,7 @@ import { defineCanvasWidget } from '../diagram/canvasWidget';
 
 export interface ZoomControlProps {}
 
-const CLASS_NAME = 'ontodia-zoom-control';
+const CLASS_NAME = 'reactodia-zoom-control';
 
 export function ZoomControl(props: ZoomControlProps) {
     const {canvas} = React.useContext(CanvasContext)!;
@@ -15,7 +15,7 @@ export function ZoomControl(props: ZoomControlProps) {
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__zoom-in-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 title='Zoom In'
                 onClick={() => canvas.zoomIn()}>
@@ -23,7 +23,7 @@ export function ZoomControl(props: ZoomControlProps) {
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__zoom-out-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 title='Zoom Out'
                 onClick={() => canvas.zoomOut()}>
@@ -31,7 +31,7 @@ export function ZoomControl(props: ZoomControlProps) {
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__zoom-fit-button`,
-                    'ontodia-btn ontodia-btn-default'
+                    'reactodia-btn reactodia-btn-default'
                 )}
                 title='Fit to Screen'
                 onClick={() => canvas.zoomToFit({animate: true})}>

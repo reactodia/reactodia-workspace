@@ -78,7 +78,7 @@ interface ViewportAnimation {
     readonly cancellation: AbortController;
 }
 
-const CLASS_NAME = 'ontodia-paper-area';
+const CLASS_NAME = 'reactodia-paper-area';
 const DEFAULT_ANIMATION_DURATION = 500;
 const LEFT_MOUSE_BUTTON = 0;
 
@@ -88,6 +88,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     readonly events: Events<CanvasEvents> = this.source;
 
     private area!: HTMLDivElement;
+    private readonly svgCanvasRef = React.createRef<SVGSVGElement>();
 
     private readonly pageSize = {x: 1500, y: 800};
     private readonly canvasContext: CanvasContext;
@@ -181,6 +182,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                             view={view}
                             renderingState={renderingState}
                             paperTransform={paperTransform}
+                            svgCanvasRef={this.svgCanvasRef}
                             onPointerDown={this.onPaperPointerDown}
                             onContextMenu={this.onContextMenu}
                             linkLayerWidgets={
@@ -686,19 +688,19 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private makeToSVGOptions(): ToSVGOptions {
         const {model, renderingState} = this.props;
-        const svg = this.area.querySelector('.ontodia-paper__canvas');
+        const svg = this.svgCanvasRef.current;
         if (!svg) {
             throw new Error('Cannot find SVG canvas to export');
         }
         return {
             model,
             sizeProvider: renderingState,
-            paper: svg as SVGSVGElement,
+            paper: svg,
             contentBox: this.getContentFittingBox(),
             getOverlaidElement: id => this.area.querySelector(`[data-element-id='${id}']`) as HTMLElement,
             preserveDimensions: true,
             convertImagesToDataUris: true,
-            elementsToRemoveSelector: '.ontodia-link__vertex-tools',
+            elementsToRemoveSelector: '.reactodia-link__vertex-tools',
             watermarkSvg: this.props.watermarkSvg,
         };
     }

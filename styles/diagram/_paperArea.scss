@@ -1,4 +1,4 @@
-.ontodia-paper-area {
+.reactodia-paper-area {
   flex: auto;
   width: 0;
   display: flex;
@@ -39,10 +39,10 @@
   }
 
   &--animated {
-    .ontodia-overlaid-element {
+    .reactodia-overlaid-element {
       transition: transform 0.5s ease-in-out;
     }
-    .ontodia-link-layer {
+    .reactodia-link-layer {
       transition: none;
       opacity: 0;
     }
@@ -54,11 +54,11 @@
   }
 }
 
-.ontodia-paper {
+.reactodia-paper {
   position: relative;
 }
 
-.ontodia-exported-watermark {
+.reactodia-exported-watermark {
   opacity: 0.3;
   transition: opacity 0.3s;
 }

@@ -67,7 +67,7 @@ function tryParseDefaultDragAndDropData(e: DragEvent): ElementIri[] {
         }
     };
 
-    return tryGetIri('application/x-ontodia-elements')
+    return tryGetIri('application/x-reactodia-elements')
         || tryGetIri('text/uri-list', true)
         || tryGetIri('text') // IE11, Edge
         || [];

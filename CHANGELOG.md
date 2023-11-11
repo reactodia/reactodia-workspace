@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Many changes to code structure and small changes to the naming.
+- CSS classes prefix changed to `reactodia-`.
 - Enabled full `strict` TypeScript compiler mode with null checks.
 - Migrated from legacy React Context to the modern one (`React.createContext()`).
 - Use RDF/JS-compatible IRI and literal terms.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed link type visibility settings to affect only link rendering without removing them from the graph.
 - Bundle subset of [Codicons](https://github.com/microsoft/vscode-codicons) for icons,
   removed dependency on the included Font Awesome on the host page.
+- Moved default type style and link customizations into opt-in `SemanticTypeStyles` and `OntologyLinkTemplates`.
 
 ### Fixed
 - Properly batch commands to history when placing elements from the Connections dialog.

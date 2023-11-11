@@ -1,4 +1,4 @@
-.ontodia-overlaid-element {
+.reactodia-overlaid-element {
   cursor: move;
   outline: none;
 
@@ -8,8 +8,8 @@
   }
 }
 
-.ontodia-overlaid-element,
-.ontodia-exported-element {
+.reactodia-overlaid-element,
+.reactodia-exported-element {
   // set defaults for all inherited properties
   box-sizing: border-box;
   color: black;
@@ -21,7 +21,7 @@
   img { vertical-align: middle; }
 }
 
-.ontodia-exported-element {
+.reactodia-exported-element {
   *, *:before, *:after {
     box-sizing: inherit;
   }

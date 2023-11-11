@@ -4,7 +4,7 @@ import { DiagramView } from '../diagram/view';
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
-const CLASS_NAME = 'ontodia-edit-form';
+const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditEntityFormProps {
     view: DiagramView;
@@ -43,7 +43,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                     {
                         values.map((term, index) => (
                             <input key={index}
-                                className='ontodia-form-control'
+                                className='reactodia-form-control'
                                 defaultValue={term.value}
                             />
                         ))
@@ -72,7 +72,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <label>
                 Type
-                <input className='ontodia-form-control' value={label} disabled={true} />
+                <input className='reactodia-form-control' value={label} disabled={true} />
             </label>
         );
     }
@@ -96,7 +96,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
             <label>
                 IRI
                 <input
-                    className='ontodia-form-control'
+                    className='reactodia-form-control'
                     defaultValue={elementModel.id}
                     onChange={this.onChangeIri}
                 />
@@ -121,7 +121,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <label>
                 Label
-                <input className='ontodia-form-control' value={text} onChange={this.onChangeLabel} />
+                <input className='reactodia-form-control' value={text} onChange={this.onChangeLabel} />
             </label>
         );
     }
@@ -142,11 +142,11 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                     {this.renderProperties()}
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
+                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={() => this.props.onApply(this.state.elementModel)}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-default'
+                    <button className='reactodia-btn reactodia-btn-default'
                         onClick={this.props.onCancel}>
                         Cancel
                     </button>

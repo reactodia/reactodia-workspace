@@ -9,7 +9,7 @@ export interface WorkspaceRootProps {
     children: React.ReactNode;
 }
 
-const CLASS_NAME = 'ontodia-workspace';
+const CLASS_NAME = 'reactodia-workspace';
 
 export function WorkspaceRoot(props: WorkspaceRootProps) {
     const rootRef = React.useRef<HTMLDivElement | null>(null);

@@ -459,7 +459,7 @@ function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
     const x = spinnerProps.statusText ? clientWidth / 3 : clientHeight / 2;
     const position = {x, y: clientHeight / 2};
     return (
-        <div className='ontodia-loading-widget'>
+        <div className='reactodia-loading-widget'>
             <svg width={clientWidth} height={clientHeight}>
                 <Spinner position={position} {...spinnerProps} />
             </svg>

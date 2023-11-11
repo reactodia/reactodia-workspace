@@ -112,7 +112,7 @@ interface ObjectsData {
     objects: ElementOnDiagram[];
 }
 
-const CLASS_NAME = 'ontodia-connections-menu';
+const CLASS_NAME = 'reactodia-connections-menu';
 const LINK_COUNT_PER_PAGE = 100;
 
 class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
@@ -420,7 +420,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
 
     private getBody() {
         if (this.props.state === 'error') {
-            return <label className={`ontodia-label ${CLASS_NAME}__error`}>Error</label>;
+            return <label className={`reactodia-label ${CLASS_NAME}__error`}>Error</label>;
         } else if (this.props.objectsData && this.state.panel === 'objects') {
             return <ObjectsPanel
                 data={this.props.objectsData}
@@ -432,7 +432,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
             />;
         } else if (this.props.connectionsData && this.state.panel === 'connections') {
             if (this.props.state === ProgressState.loading) {
-                return <label className={`ontodia-label ${CLASS_NAME}__loading`}>Loading...</label>;
+                return <label className={`reactodia-label ${CLASS_NAME}__loading`}>Loading...</label>;
             }
 
             return (
@@ -494,12 +494,12 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
     render() {
         return (
             <div className={CLASS_NAME}>
-                <label className={`ontodia-label ${CLASS_NAME}__title-label`}>{this.getTitle()}</label>
+                <label className={`reactodia-label ${CLASS_NAME}__title-label`}>{this.getTitle()}</label>
                 {this.getBreadCrumbs()}
                 <div className={`${CLASS_NAME}__search-line`}>
                     <input
                         type='text'
-                        className={`search-input ontodia-form-control ${CLASS_NAME}__search-line-input`}
+                        className={`search-input reactodia-form-control ${CLASS_NAME}__search-line-input`}
                         value={this.state.filterKey}
                         onChange={this.onChangeFilter}
                         placeholder='Search for...'
@@ -678,7 +678,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 
         let viewList: React.ReactElement<any> | React.ReactElement<any>[];
         if (views.length === 0 && probableViews.length === 0) {
-            viewList = <label className={`ontodia-label ${CLASS_NAME}__empty-label`}>List empty</label>;
+            viewList = <label className={`reactodia-label ${CLASS_NAME}__empty-label`}>List empty</label>;
         } else {
             viewList = views;
             if (views.length > 1 || (isSmartMode && probableViews.length > 1)) {
@@ -693,7 +693,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
                         count={allRelatedElements.inCount + allRelatedElements.outCount}
                         onMoveToFilter={this.props.onMoveToFilter}
                     />,
-                    <hr key='ontodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
+                    <hr key='reactodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
                 ].concat(viewList);
             }
         }
@@ -702,7 +702,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
             probablePart = [
                 isSmartMode ? null : (
                     <li key='probable-links'>
-                        <span className='ontodia-label'>Probably, you are looking for..</span>
+                        <span className='reactodia-label'>Probably, you are looking for..</span>
                     </li>
                 ),
                 probableViews,
@@ -783,7 +783,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
                     </div>
                 ) : null}
                 <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
-                <span className={`ontodia-badge ${CLASS_NAME}__link-count`}>
+                <span className={`reactodia-badge ${CLASS_NAME}__link-count`}>
                     {count <= LINK_COUNT_PER_PAGE ? count : '100+'}
                 </span>
                 {this.props.onMoveToFilter ? (
@@ -885,7 +885,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             `\u00A0(${wrongNodesString})` : `\u00A0(${wrongNodesString})`);
         const wrongNodesTitle = wrongNodes === 0 ? '' : (wrongNodes > 0 ? 'Unavailable nodes' : 'Extra nodes');
 
-        return <div className={`ontodia-label ${CLASS_NAME}__objects-count`}>
+        return <div className={`reactodia-label ${CLASS_NAME}__objects-count`}>
             <span>{countString}</span>
             <span className={`${CLASS_NAME}__objects-extra`}
                 title={wrongNodesTitle}>
@@ -914,9 +914,9 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 </label>
             </div>
             {this.props.loading ? (
-                <label className={`ontodia-label ${CLASS_NAME}__objects-loading`}>Loading...</label>
+                <label className={`reactodia-label ${CLASS_NAME}__objects-loading`}>Loading...</label>
             ) : objects.length === 0 ? (
-                <label className={`ontodia-label ${CLASS_NAME}__objects-loading`}>No available nodes</label>
+                <label className={`reactodia-label ${CLASS_NAME}__objects-loading`}>No available nodes</label>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
@@ -945,7 +945,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 <button
                     className={classnames(
                         `${CLASS_NAME}__objects-add-button`,
-                        'ontodia-btn ontodia-btn-primary pull-right'
+                        'reactodia-btn reactodia-btn-primary pull-right'
                     )}
                     disabled={this.props.loading || nonPresented.length === 0}
                     onClick={() => onPressAddSelected(active.length > 0 ? active : nonPresented)}>

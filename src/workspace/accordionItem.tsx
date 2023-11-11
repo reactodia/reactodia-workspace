@@ -32,7 +32,7 @@ interface ParentProvidedProps {
     onEndDragHandle?: () => void;
 }
 
-const CLASS_NAME = 'ontodia-accordion-item';
+const CLASS_NAME = 'reactodia-accordion-item';
 
 interface State {
     resizing?: boolean;

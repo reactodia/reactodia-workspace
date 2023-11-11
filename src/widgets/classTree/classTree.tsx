@@ -41,7 +41,7 @@ interface ClassTreeItem extends ClassModel {
     children: ReadonlyArray<ClassTreeItem>;
 }
 
-const CLASS_NAME = 'ontodia-class-tree';
+const CLASS_NAME = 'reactodia-class-tree';
 const MIN_TERM_LENGTH = 3;
 
 export class ClassTree extends React.Component<ClassTreeProps, State> {
@@ -88,7 +88,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 <div className={`${CLASS_NAME}__filter`}>
                     <div className={`${CLASS_NAME}__filter-group`}>
                         <input type='text'
-                            className='search-input ontodia-form-control'
+                            className='search-input reactodia-form-control'
                             placeholder='Search for...'
                             value={this.state.requestedSearchText}
                             onChange={this.onSearchTextChange}
@@ -105,7 +105,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 </div>
                 <ProgressBar state={refreshingState} />
                 {this.classTree ? (
-                    <Forest className={`${CLASS_NAME}__tree ontodia-scrollable`}
+                    <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
                         view={view}
                         nodes={filteredRoots}
                         searchText={searchText}

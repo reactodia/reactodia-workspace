@@ -42,7 +42,7 @@ interface LinkStateWidgetInternalProps extends LinkStateWidgetProps {
     canvas: CanvasApi;
 }
 
-const CLASS_NAME = 'ontodia-authoring-state';
+const CLASS_NAME = 'reactodia-authoring-state';
 const DEFAULT_LINK_LABEL_MARGIN = 5;
 
 class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps> {

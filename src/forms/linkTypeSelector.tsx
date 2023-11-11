@@ -13,7 +13,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { EditorController } from '../editor/editorController';
 
-const CLASS_NAME = 'ontodia-edit-form';
+const CLASS_NAME = 'reactodia-edit-form';
 
 export interface Value {
     link: LinkModel;
@@ -142,7 +142,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                 <label>Link Type</label>
                 {
                     fatLinkTypes ? (
-                        <select className='ontodia-form-control'
+                        <select className='reactodia-form-control'
                             value={value}
                             onChange={this.onChangeType}
                             disabled={disabled}>

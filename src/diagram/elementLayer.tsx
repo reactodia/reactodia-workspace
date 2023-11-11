@@ -92,7 +92,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             }
         }
 
-        return <div className='ontodia-element-layer'
+        return <div className='reactodia-element-layer'
             ref={this.onMount}
             style={style}>
             {elementsToRender.map(state => {
@@ -303,7 +303,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         // if (angle) { transform += `rotate(${angle}deg)`; }
 
         const className = (
-            `ontodia-overlaid-element ${blurred ? 'ontodia-overlaid-element--blurred' : ''}`
+            `reactodia-overlaid-element ${blurred ? 'reactodia-overlaid-element--blurred' : ''}`
         );
         return <div className={className}
             // set `element-id` to translate mouse events to paper

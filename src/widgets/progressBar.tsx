@@ -13,7 +13,7 @@ export interface ProgressBarProps {
     height?: number;
 }
 
-const CLASS_NAME = 'ontodia-progress-bar';
+const CLASS_NAME = 'reactodia-progress-bar';
 
 export class ProgressBar extends React.Component<ProgressBarProps> {
     render() {

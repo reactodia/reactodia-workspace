@@ -14,6 +14,7 @@ export interface PaperProps {
     view: DiagramView;
     renderingState: RenderingState;
     paperTransform: PaperTransform;
+    svgCanvasRef?: React.RefObject<SVGSVGElement>;
     onPointerDown?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     group?: string;
@@ -21,12 +22,13 @@ export interface PaperProps {
     elementLayerWidgets?: React.ReactElement<any>;
 }
 
-const CLASS_NAME = 'ontodia-paper';
+const CLASS_NAME = 'reactodia-paper';
 
 export class Paper extends Component<PaperProps> {
     render() {
         const {
-            model, view, renderingState, group, paperTransform, linkLayerWidgets, elementLayerWidgets,
+            model, view, renderingState, group, paperTransform, svgCanvasRef,
+            linkLayerWidgets, elementLayerWidgets,
         } = this.props;
         const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
 
@@ -53,7 +55,8 @@ export class Paper extends Component<PaperProps> {
                 style={style}
                 onMouseDown={this.onMouseDown}
                 onContextMenu={this.onContextMenu}>
-                <TransformedSvgCanvas className={`${CLASS_NAME}__canvas`}
+                <TransformedSvgCanvas svgCanvasRef={svgCanvasRef}
+                    className={`${CLASS_NAME}__canvas`}
                     style={{overflow: 'visible'}}
                     paperTransform={paperTransform}>
                     <LinkMarkers model={model}
@@ -134,6 +137,7 @@ export interface PaperTransform {
 
 export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement> {
     paperTransform: PaperTransform;
+    svgCanvasRef?: React.RefObject<SVGSVGElement>;
 }
 
 export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps> {
@@ -143,7 +147,7 @@ export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps> {
         left: 0,
     };
     render() {
-        const {paperTransform, style, children, ...otherProps} = this.props;
+        const {svgCanvasRef, paperTransform, style, children, ...otherProps} = this.props;
         const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
         const scaledWidth = width * scale;
         const scaledHeight = height * scale;
@@ -152,7 +156,11 @@ export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps> {
             svgStyle = {...svgStyle, ...style};
         }
         return (
-            <svg width={scaledWidth} height={scaledHeight} style={svgStyle} {...otherProps}>
+            <svg ref={svgCanvasRef}
+                width={scaledWidth}
+                height={scaledHeight}
+                style={svgStyle}
+                {...otherProps}>
                 <g transform={`scale(${scale},${scale})translate(${originX},${originY})`}>
                     {children}
                 </g>

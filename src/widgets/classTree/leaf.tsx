@@ -25,7 +25,7 @@ interface State {
     expanded?: boolean;
 }
 
-const CLASS_NAME = 'ontodia-class-tree-item';
+const CLASS_NAME = 'reactodia-class-tree-item';
 
 export class Leaf extends React.Component<LeafProps, State> {
     constructor(props: LeafProps) {
@@ -85,7 +85,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                         </div>
                         <span className={`${CLASS_NAME}__label`}>{label}</span>
                         {node.model.count ? (
-                            <span className={`${CLASS_NAME}__count ontodia-badge`}>
+                            <span className={`${CLASS_NAME}__count reactodia-badge`}>
                                 {node.model.count}
                             </span>
                         ) : null}
@@ -95,7 +95,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                             title={'Click or drag to create new entity of this type'}
                             className={classnames(
                                 `${CLASS_NAME}__create-button`,
-                                'ontodia-btn ontodia-btn-default'
+                                'reactodia-btn reactodia-btn-default'
                             )}
                             draggable={true}
                             onClick={this.onClickCreate}

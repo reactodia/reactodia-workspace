@@ -8,7 +8,7 @@ import { DiagramView } from '../diagram/view';
 
 import { ListElementView, startDragElements } from './listElementView';
 
-const CLASS_NAME = 'ontodia-search-results';
+const CLASS_NAME = 'reactodia-search-results';
 
 export interface SearchResultProps {
     view: DiagramView;

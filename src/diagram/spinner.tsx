@@ -8,7 +8,7 @@ export interface SpinnerProps {
     errorOccurred?: boolean;
 }
 
-const CLASS_NAME = 'ontodia-spinner';
+const CLASS_NAME = 'reactodia-spinner';
 
 export class Spinner extends React.Component<SpinnerProps> {
     render() {

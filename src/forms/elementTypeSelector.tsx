@@ -14,7 +14,7 @@ import { EditorController } from '../editor/editorController';
 import { createRequest } from '../widgets/instancesSearch';
 import { ListElementView } from '../widgets/listElementView';
 
-const CLASS_NAME = 'ontodia-edit-form';
+const CLASS_NAME = 'reactodia-edit-form';
 
 export interface ElementValue {
     value: ElementModel;
@@ -141,7 +141,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                 <label>Entity Type</label>
                 {
                     elementTypes ? (
-                        <select className='ontodia-form-control' value={value} onChange={this.onElementTypeChange}>
+                        <select className='reactodia-form-control' value={value} onChange={this.onElementTypeChange}>
                             <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>Select entity type</option>
                             {
                                 elementTypes.map(this.renderPossibleElementType)
@@ -204,7 +204,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                     <span className={`${CLASS_NAME}__search-icon`} />
                     <input value={searchString}
                         onChange={e => this.setState({searchString: (e.target as HTMLInputElement).value})}
-                        className={`ontodia-form-control ${CLASS_NAME}__search-input`}
+                        className={`reactodia-form-control ${CLASS_NAME}__search-input`}
                         placeholder='Search for...'
                         autoFocus />
                 </div>

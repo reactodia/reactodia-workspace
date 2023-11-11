@@ -67,7 +67,7 @@ interface State {
     canEdit?: boolean;
 }
 
-const CLASS_NAME = 'ontodia-halo-link';
+const CLASS_NAME = 'reactodia-halo-link';
 const DEFAULT_BUTTON_SIZE = 20;
 const DEFAULT_BUTTON_MARGIN = 5;
 

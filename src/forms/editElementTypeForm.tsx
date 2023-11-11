@@ -14,7 +14,7 @@ import { ProgressBar, ProgressState } from '../widgets/progressBar';
 import { ElementTypeSelector, ElementValue, validateElementType } from './elementTypeSelector';
 import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
 
-const CLASS_NAME = 'ontodia-edit-form';
+const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditElementTypeFormProps {
     editor: EditorController;
@@ -166,7 +166,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                     ) : null}
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
+                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={() => this.props.onApply(
                             elementValue.value,
                             elementValue.isNew,
@@ -175,7 +175,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                         disabled={elementValue.loading || !isValid || isValidating}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-default'
+                    <button className='reactodia-btn reactodia-btn-default'
                         onClick={this.props.onCancel}>
                         Cancel
                     </button>

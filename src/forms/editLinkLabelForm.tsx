@@ -3,7 +3,7 @@ import * as React from 'react';
 import { CanvasContext } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
 
-const CLASS_NAME = 'ontodia-edit-form';
+const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditLinkLabelFormProps {
     link: Link;
@@ -52,16 +52,16 @@ export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, S
                 <div className={`${CLASS_NAME}__body`}>
                     <div className={`${CLASS_NAME}__form-row`}>
                         <label>Link Label</label>
-                        <input className='ontodia-form-control' value={label}
+                        <input className='reactodia-form-control' value={label}
                             onChange={e => this.setState({label: (e.target as HTMLInputElement).value})} />
                     </div>
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`ontodia-btn ontodia-btn-primary ${CLASS_NAME}__apply-button`}
+                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={this.onApply}>
                         Apply
                     </button>
-                    <button className='ontodia-btn ontodia-btn-default' onClick={onFinish}>
+                    <button className='reactodia-btn reactodia-btn-default' onClick={onFinish}>
                         Cancel
                     </button>
                 </div>
