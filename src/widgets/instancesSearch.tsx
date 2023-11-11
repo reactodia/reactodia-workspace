@@ -13,8 +13,8 @@ import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceConte
 
 import { SearchResults } from './searchResults';
 
-const DIRECTION_IN_ICON = require('@images/direction-in.png');
-const DIRECTION_OUT_ICON = require('@images/direction-out.png');
+const DIRECTION_IN_ICON = require('@images/direction-in.svg');
+const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
 
 export interface InstancesSearchProps {
     className?: string;

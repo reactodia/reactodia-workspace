@@ -51,77 +51,75 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
     }, []);
 
     return (
-        <div className={CLASS_NAME}>
-            <div className='reactodia-btn-group reactodia-btn-group-sm'>
-                <SaveButtons editor={editor}
-                    onSaveDiagram={onSaveDiagram}
-                    onPersistChanges={onPersistChanges}
-                />
-                <HistoryButtons history={model.history} />
-                <button type='button'
-                    className={classnames(
-                        `${CLASS_NAME}__clear-all-button`,
-                        'reactodia-btn reactodia-btn-default'
-                    )}
-                    title='Clear All'
-                    onClick={() => {
-                        const batch = model.history.startBatch('Clear all');
-                        editor.removeItems(model.elements);
-                        batch.store();
-                    }}>
-                    Clear All
-                </button>
-                <button type='button'
-                    className={classnames(
-                        `${CLASS_NAME}__layout-button`,
-                        'reactodia-btn reactodia-btn-default'
-                    )}
-                    title='Force layout'
-                    onClick={() => performLayout({
-                        canvas,
-                        layoutFunction: layoutForcePadded,
-                        animate: true,
-                        signal: cancellation.signal,
-                    })}>
-                    Layout
-                </button>
-                <button type='button'
-                    className={classnames(
-                        `${CLASS_NAME}__export-button`,
-                        'reactodia-btn reactodia-btn-default'
-                    )}
-                    title='Export diagram as PNG'
-                    onClick={() => exportPng(canvas)}>
-                    PNG
-                </button>
-                <button type='button'
-                    className={classnames(
-                        `${CLASS_NAME}__export-button`,
-                        'reactodia-btn reactodia-btn-default'
-                    )}
-                    title='Export diagram as SVG'
-                    onClick={() => exportSvg(canvas)}>
-                    SVG
-                </button>
-                <button type='button'
-                    className={classnames(
-                        `${CLASS_NAME}__print-button`,
-                        'reactodia-btn reactodia-btn-default'
-                    )}
-                    title='Print diagram'
-                    onClick={() => print(canvas)}>
-                    Print
-                </button>
-                {languages.length === 0 ? null : (
-                    <span className={`${CLASS_NAME}__language-selector`}>
-                        <label className='reactodia-label'><span>Data Language:</span></label>
-                        <select value={view.getLanguage()}
-                            onChange={e => view.setLanguage(e.currentTarget.value)}>
-                            {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
-                        </select>
-                    </span>
+        <div className={classnames(CLASS_NAME, 'reactodia-btn-group reactodia-btn-group-sm')}>
+            <SaveButtons editor={editor}
+                onSaveDiagram={onSaveDiagram}
+                onPersistChanges={onPersistChanges}
+            />
+            <HistoryButtons history={model.history} />
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__clear-all-button`,
+                    'reactodia-btn reactodia-btn-default'
                 )}
-            </div>
+                title='Clear All'
+                onClick={() => {
+                    const batch = model.history.startBatch('Clear all');
+                    editor.removeItems(model.elements);
+                    batch.store();
+                }}>
+                Clear All
+            </button>
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__layout-button`,
+                    'reactodia-btn reactodia-btn-default'
+                )}
+                title='Force layout'
+                onClick={() => performLayout({
+                    canvas,
+                    layoutFunction: layoutForcePadded,
+                    animate: true,
+                    signal: cancellation.signal,
+                })}>
+                Layout
+            </button>
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__export-button`,
+                    'reactodia-btn reactodia-btn-default'
+                )}
+                title='Export diagram as PNG'
+                onClick={() => exportPng(canvas)}>
+                PNG
+            </button>
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__export-button`,
+                    'reactodia-btn reactodia-btn-default'
+                )}
+                title='Export diagram as SVG'
+                onClick={() => exportSvg(canvas)}>
+                SVG
+            </button>
+            <button type='button'
+                className={classnames(
+                    `${CLASS_NAME}__print-button`,
+                    'reactodia-btn reactodia-btn-default'
+                )}
+                title='Print diagram'
+                onClick={() => print(canvas)}>
+                Print
+            </button>
+            {languages.length === 0 ? null : (
+                <span className={`${CLASS_NAME}__language-selector`}>
+                    <label className='reactodia-label'><span>Data Language:</span></label>
+                    <select value={view.getLanguage()}
+                        onChange={e => view.setLanguage(e.currentTarget.value)}>
+                        {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
+                    </select>
+                </span>
+            )}
         </div>
     );
 }

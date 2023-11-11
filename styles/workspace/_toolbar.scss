@@ -7,6 +7,13 @@ $toolbarHeight: 30px;
   left: 10px;
   top: 10px;
 
+  /* Make transparent toolbar parts "click-through"
+    while keeping buttons clickable */
+  pointer-events: none;
+  > * {
+    pointer-events: auto;
+  }
+
   &__save-button {
     @include codicon-button("save");
   }

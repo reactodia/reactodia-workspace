@@ -145,20 +145,20 @@
   }
 
   &__link-direction-in {
-    background: url("@images/direction-in.png") 0 0 no-repeat;
+    background: url("@images/direction-in.svg") 0 0 no-repeat;
     flex-shrink: 0;
-    width: 22px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     margin: 0 14px 0 0;
     background-size: contain;
     opacity: 0.5;
   }
   
   &__link-direction-out {
-    background: url("@images/direction-out.png") 0 0 no-repeat;
+    background: url("@images/direction-out.svg") 0 0 no-repeat;
     flex-shrink: 0;
-    width: 22px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     margin: 0 8px 0 6px;
     background-size: contain;
     opacity: 0.5;
@@ -179,9 +179,9 @@
 
   &__link-navigate-button {
     float: right;
-    background-image: url("@images/expand-link.png");
-    width: 16px;
-    height: 16px;
+    background-image: url("@codicons/chevron-right.svg");
+    width: 20px;
+    height: 20px;
     opacity: 0.5;
     margin-left: 10px;
     min-width: 16px;
