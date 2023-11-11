@@ -344,7 +344,7 @@ export class RdfDataProvider implements DataProvider {
         for (const t of this.dataset.iterateMatches(null, null, elementIri)) {
             if (t.predicate.termType === 'NamedNode' && t.subject.termType === 'NamedNode') {
                 const linkTypeIri = this.encodeIri(t.predicate) as LinkTypeIri;
-                outCounts.set(linkTypeIri, (outCounts.get(linkTypeIri) ?? 0) + 1);
+                inCounts.set(linkTypeIri, (inCounts.get(linkTypeIri) ?? 0) + 1);
             }
         }
 
