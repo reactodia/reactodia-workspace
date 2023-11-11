@@ -141,7 +141,7 @@ function mergeElementModels(a: ElementModel, b: ElementModel): ElementModel {
         image: a.image || b.image,
         properties: mergeProperties(a.properties, b.properties),
     };
-};
+}
 
 export function mergeProperties(
     a: { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },

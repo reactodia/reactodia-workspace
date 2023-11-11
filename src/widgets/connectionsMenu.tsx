@@ -4,6 +4,7 @@ import classnames from 'classnames';
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 
 import { Dictionary, ElementModel, ElementIri, LinkTypeIri } from '../data/model';
+import { generate128BitID } from '../data/utils';
 
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
@@ -38,6 +39,7 @@ export interface PropertySuggestionParams {
     token: string;
     properties: string[];
     lang: string;
+    signal: AbortSignal | undefined;
 }
 export interface PropertyScore {
     propertyIri: string;
@@ -94,6 +96,11 @@ interface ElementOnDiagram {
 type SortMode = 'alphabet' | 'smart';
 
 interface LinkDataChunk {
+    /**
+     * Random key to check if chunk is different from another
+     * (i.e. should be re-rendered).
+     */
+    chunkId: string;
     link: FatLinkType;
     direction?: 'in' | 'out';
     expectedCount: number;
@@ -234,7 +241,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
 
         this.onAddElements(addedElementsIris, hasChosenLinkType ? linkType : undefined);
         onClose();
-    }
+    };
 
     private onAddElements = (elementIris: ElementIri[], linkType: FatLinkType | undefined) => {
         const {target, workspace: {model, view, triggerWorkspaceEvent}, canvas} = this.props;
@@ -280,7 +287,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         this.updateAll();
 
         triggerWorkspaceEvent(WorkspaceEventKey.connectionsExpandLink);
-    }
+    };
 
     private onMoveToFilter = (linkDataChunk: LinkDataChunk) => {
         const {target, instancesSearchCommands, workspace: {model}} = this.props;
@@ -300,7 +307,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
                 },
             });
         }
-    }
+    };
 
     render() {
         const {target, suggestProperties, instancesSearchCommands, workspace: {view}} = this.props;
@@ -375,9 +382,9 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
     private onChangeFilter = (e: React.FormEvent<HTMLInputElement>) => {
         const filterKey = e.currentTarget.value;
         this.setState({filterKey});
-    }
+    };
 
-    private getTitle = () => {
+    private getTitle() {
         if (this.props.objectsData && this.state.panel === 'objects') {
             return 'Objects';
         } else if (this.props.connectionsData && this.state.panel === 'connections') {
@@ -389,13 +396,13 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
     private onExpandLink = (linkDataChunk: LinkDataChunk) => {
         this.setState({ filterKey: '',  panel: 'objects' });
         this.props.onExpandLink(linkDataChunk);
-    }
+    };
 
     private onCollapseLink = () => {
         this.setState({ filterKey: '',  panel: 'connections' });
-    }
+    };
 
-    private getBreadCrumbs = () => {
+    private getBreadCrumbs() {
         if (this.props.objectsData && this.state.panel === 'objects') {
             const {link, direction} = this.props.objectsData.linkDataChunk;
             const localizedText = this.props.view.formatLabel(link.label, link.id);
@@ -411,7 +418,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
         }
     }
 
-    private getBody = () => {
+    private getBody() {
         if (this.props.state === 'error') {
             return <label className={`ontodia-label ${CLASS_NAME}__error`}>Error</label>;
         } else if (this.props.objectsData && this.state.panel === 'objects') {
@@ -452,9 +459,9 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
         if (this.state.sortMode === value) { return; }
 
         this.setState({sortMode: value});
-    }
+    };
 
-    private renderSortSwitch = (id: string, labelClass: string, title: string) => {
+    private renderSortSwitch(id: string, labelClass: string, title: string) {
         return (
             <div>
                 <input
@@ -473,7 +480,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
         );
     }
 
-    private renderSortSwitches = () => {
+    private renderSortSwitches() {
         if (this.state.panel !== 'connections' || !this.props.propertySuggestionCall) { return null; }
 
         return (
@@ -528,31 +535,48 @@ interface ConnectionsListState {
 }
 
 class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsListState> {
+    private suggestionCancellation = new AbortController();
+
     constructor(props: ConnectionsListProps) {
         super(props);
         this.state = {
             scores: new Map(),
         };
-        this.updateScores(props);
+        this.tryUpdateScores();
     }
 
-    componentWillReceiveProps(newProps: ConnectionsListProps) {
-        this.updateScores(newProps);
+    componentDidUpdate(prevProps: ConnectionsListProps) {
+        if (!(
+            this.props.filterKey === prevProps.filterKey &&
+            this.props.sortMode === prevProps.sortMode
+        )) {
+            this.tryUpdateScores();
+        }
     }
 
-    private updateScores = (props: ConnectionsListProps) => {
-        if (props.propertySuggestionCall && (props.filterKey || props.sortMode === 'smart')) {
-            const {id, data, view, filterKey} = props;
+    componentWillUnmount() {
+        this.suggestionCancellation.abort();
+    }
+
+    private tryUpdateScores() {
+        const {propertySuggestionCall, filterKey, sortMode, id, data, view} = this.props;
+        if (propertySuggestionCall && (filterKey || sortMode === 'smart')) {
             const lang = view.getLanguage();
             const token = filterKey.trim();
             const properties = data.links.map(l => l.id);
-            props.propertySuggestionCall({elementId: id, token, properties, lang}).then(scoreList => {
-                const scores = new Map<LinkTypeIri, PropertyScore>();
-                for (const score of scoreList) {
-                    scores.set(score.propertyIri as LinkTypeIri, score);
-                }
-                this.setState({scores});
-            });
+
+            this.suggestionCancellation.abort();
+            this.suggestionCancellation = new AbortController();
+            const signal = this.suggestionCancellation.signal;
+    
+            propertySuggestionCall({elementId: id, token, properties, lang, signal})
+                .then(scoreList => {
+                    const scores = new Map<LinkTypeIri, PropertyScore>();
+                    for (const score of scoreList) {
+                        scores.set(score.propertyIri as LinkTypeIri, score);
+                    }
+                    this.setState({scores});
+                });
         }
     }
 
@@ -565,7 +589,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         const aText = view.formatLabel(a.label, a.id);
         const bText = view.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
-    }
+    };
 
     private compareLinksByWeight = (a: FatLinkType, b: FatLinkType) => {
         const {view} = this.props;
@@ -581,18 +605,19 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
             aWeight < bWeight ? 1 :
             aText.localeCompare(bText)
         );
-    }
+    };
 
-    private getLinks = () => {
+    private getLinks() {
         const {view, data, filterKey} = this.props;
-        return (data.links || []).filter(link => {
-            const text = view.formatLabel(link.label, link.id).toLowerCase();
-            return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
-        })
-        .sort(this.compareLinks);
+        return (data.links || [])
+            .filter(link => {
+                const text = view.formatLabel(link.label, link.id).toLowerCase();
+                return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
+            })
+            .sort(this.compareLinks);
     }
 
-    private getProbableLinks = () => {
+    private getProbableLinks() {
         const {data} = this.props;
         const {scores} = this.state;
         const isSmartMode = this.isSmartMode();
@@ -640,7 +665,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         }
 
         return views;
-    }
+    };
 
     render() {
         const {view, allRelatedLink} = this.props;
@@ -668,7 +693,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
                         count={allRelatedElements.inCount + allRelatedElements.outCount}
                         onMoveToFilter={this.props.onMoveToFilter}
                     />,
-                <hr key='ontodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
+                    <hr key='ontodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
                 ].concat(viewList);
             }
         }
@@ -676,7 +701,9 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         if (probableViews.length !== 0) {
             probablePart = [
                 isSmartMode ? null : (
-                    <li key='probable-links'><span className='ontodia-label'>Probably, you're looking for..</span></li>
+                    <li key='probable-links'>
+                        <span className='ontodia-label'>Probably, you are looking for..</span>
+                    </li>
                 ),
                 probableViews,
             ];
@@ -704,13 +731,14 @@ interface LinkInPopupMenuProps {
     probability?: number;
 }
 
-class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
+class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
     constructor(props: LinkInPopupMenuProps) {
         super(props);
     }
 
-    private onExpandLink = (expectedCount: number, direction?: 'in' | 'out') => {
+    private onExpandLink(expectedCount: number, direction?: 'in' | 'out') {
         this.props.onExpandLink({
+            chunkId: generate128BitID(),
             link: this.props.link,
             direction,
             expectedCount,
@@ -722,12 +750,13 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
         evt.stopPropagation();
         const {onMoveToFilter} = this.props;
         onMoveToFilter?.({
+            chunkId: generate128BitID(),
             link: this.props.link,
             direction: this.props.direction,
             expectedCount: this.props.count,
             pageCount: 1,
         });
-    }
+    };
 
     render() {
         const {view, link, filterKey, direction, count, probability = 0} = this.props;
@@ -747,12 +776,12 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps, {}> {
                 className={`${CLASS_NAME}__link`}
                 title={`${directionName} of "${fullText}" ${view.formatIri(link.id)}`}
                 onClick={() => this.onExpandLink(count, direction)}>
-                {direction === 'in' || direction === 'out' ?
-                <div className={`${CLASS_NAME}__link-direction`}>
-                    {direction === 'in' && <div className={`${CLASS_NAME}__link-direction-in`} />}
-                    {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
-                </div>
-                : null}
+                {direction === 'in' || direction === 'out' ? (
+                    <div className={`${CLASS_NAME}__link-direction`}>
+                        {direction === 'in' && <div className={`${CLASS_NAME}__link-direction-in`} />}
+                        {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
+                    </div>
+                ) : null}
                 <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
                 <span className={`ontodia-badge ${CLASS_NAME}__link-count`}>
                     {count <= LINK_COUNT_PER_PAGE ? count : '100+'}
@@ -780,28 +809,42 @@ interface ObjectsPanelProps {
 }
 
 interface ObjectsPanelState {
+    chunkId: string;
     selection: ReadonlySet<ElementIri>;
 }
 
 class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState> {
     constructor(props: ObjectsPanelProps) {
         super(props);
-        this.state = {selection: new Set<ElementIri>()};
+        this.state = ObjectsPanel.makeStateFromProps(props);
     }
 
-    componentWillReceiveProps(nextProps: ObjectsPanelProps) {
-        if (this.props.data.objects.length < nextProps.data.objects.length) {
-            this.setState({selection: new Set<ElementIri>()});
+    static getDerivedStateFromProps(
+        props: ObjectsPanelProps,
+        state: ObjectsPanelState | undefined
+    ): ObjectsPanelState | null {
+        if (state && state.chunkId === props.data.linkDataChunk.chunkId) {
+            return null;
         }
+        return ObjectsPanel.makeStateFromProps(props);
+    }
+
+    static makeStateFromProps(props: ObjectsPanelProps): ObjectsPanelState {
+        return {
+            chunkId: props.data.linkDataChunk.chunkId,
+            selection: new Set<ElementIri>(),
+        };
     }
 
     private onSelectAll = () => {
         const objects = this.props.data.objects;
         if (objects.length === 0) { return; }
         const allSelected = allNonPresentedAreSelected(objects, this.state.selection);
-        const newSelection = allSelected ? new Set<ElementIri>() : selectNonPresented(this.props.data.objects);
+        const newSelection = allSelected
+            ? new Set<ElementIri>()
+            : selectNonPresented(this.props.data.objects);
         this.updateSelection(newSelection);
-    }
+    };
 
     private getFilteredObjects(): ElementOnDiagram[] {
         if (!this.props.filterKey) {
@@ -829,9 +872,9 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
 
     private updateSelection = (newSelection: ReadonlySet<ElementIri>) => {
         this.setState({selection: newSelection});
-    }
+    };
 
-    private counter = (activeObjCount: number) => {
+    private renderCounter(activeObjCount: number) {
         const countString = `${activeObjCount}\u00A0of\u00A0${this.props.data.objects.length}`;
 
         const wrongNodes =
@@ -898,7 +941,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 </div>
             )}
             <div className={`${CLASS_NAME}__objects-statusbar`}>
-                {this.counter(active.length)}
+                {this.renderCounter(active.length)}
                 <button
                     className={classnames(
                         `${CLASS_NAME}__objects-add-button`,

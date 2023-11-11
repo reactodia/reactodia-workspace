@@ -42,7 +42,7 @@ interface LinkStateWidgetInternalProps extends LinkStateWidgetProps {
     canvas: CanvasApi;
 }
 
-const CLASS_NAME = `ontodia-authoring-state`;
+const CLASS_NAME = 'ontodia-authoring-state';
 const DEFAULT_LINK_LABEL_MARGIN = 5;
 
 class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps> {
@@ -88,11 +88,11 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
 
     private scheduleUpdate = () => {
         this.delayedUpdate.call(this.performUpdate);
-    }
+    };
 
     private performUpdate = () => {
         this.forceUpdate();
-    }
+    };
 
     private calculateLinkPath(link: Link) {
         const polyline = this.calculatePolyline(link);
@@ -144,7 +144,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                         <span>
                             <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
                             [<span className={`${CLASS_NAME}__state-cancel`}
-                                    onClick={onCancel} title={title}>cancel</span>]
+                                onClick={onCancel} title={title}>cancel</span>]
                         </span>
                     );
                 }

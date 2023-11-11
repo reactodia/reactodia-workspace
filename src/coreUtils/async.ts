@@ -6,7 +6,7 @@ export function mapAbortedToNull<T>(
         if (signal && signal.aborted) { return null; }
         return value;
     };
-    const onReject = (err: any): null | Promise<null> => {
+    const onReject = (err: unknown): null | Promise<null> => {
         if (signal && signal.aborted) { return null; }
         return Promise.reject(err);
     };

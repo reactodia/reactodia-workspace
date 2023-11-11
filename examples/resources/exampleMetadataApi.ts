@@ -50,21 +50,24 @@ export class ExampleMetadataApi implements MetadataApi {
         target: ElementModel,
         ct: AbortSignal | undefined
     ): Promise<DirectedLinkType[]> {
-        await delay(SIMULATED_DELAY, ct);
-        return (
-            hasType(source, owl.class) && hasType(target, owl.class) ?
-                mapLinkTypes([rdfs.subClassOf]).concat(mapLinkTypes([rdfs.subClassOf], LinkDirection.in)) :
-            hasType(source, owl.objectProperty) && hasType(target, owl.class) ?
-                mapLinkTypes([owl.domain, owl.range]) :
-            hasType(target, owl.objectProperty) && hasType(source, owl.class) ?
-                mapLinkTypes([owl.domain, owl.range], LinkDirection.in) :
-            hasType(source, owl.objectProperty) && hasType(target, owl.objectProperty) ?
-                mapLinkTypes([rdfs.subPropertyOf]).concat(mapLinkTypes([rdfs.subPropertyOf], LinkDirection.in)) :
-            []
-        );
-
-        function mapLinkTypes(types: LinkTypeIri[], direction: LinkDirection = LinkDirection.out): DirectedLinkType[] {
+        function mapLinkTypes(
+            types: LinkTypeIri[],
+            direction: LinkDirection = LinkDirection.out
+        ): DirectedLinkType[] {
             return types.map(linkTypeIri => ({linkTypeIri, direction}));
+        }
+
+        await delay(SIMULATED_DELAY, ct);
+        if (hasType(source, owl.class) && hasType(target, owl.class)) {
+            return mapLinkTypes([rdfs.subClassOf]).concat(mapLinkTypes([rdfs.subClassOf], LinkDirection.in));
+        } else if (hasType(source, owl.objectProperty) && hasType(target, owl.class)) {
+            return mapLinkTypes([owl.domain, owl.range]);
+        } else if (hasType(target, owl.objectProperty) && hasType(source, owl.class)) {
+            return mapLinkTypes([owl.domain, owl.range], LinkDirection.in);
+        } else if (hasType(source, owl.objectProperty) && hasType(target, owl.objectProperty)) {
+            return mapLinkTypes([rdfs.subPropertyOf]).concat(mapLinkTypes([rdfs.subPropertyOf], LinkDirection.in));
+        } else {
+            return [];
         }
     }
 

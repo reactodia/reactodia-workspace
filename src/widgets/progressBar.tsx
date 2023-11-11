@@ -15,7 +15,7 @@ export interface ProgressBarProps {
 
 const CLASS_NAME = 'ontodia-progress-bar';
 
-export class ProgressBar extends React.Component<ProgressBarProps, {}> {
+export class ProgressBar extends React.Component<ProgressBarProps> {
     render() {
         const {state, percent = 100, height = 20} = this.props;
         const className = `${CLASS_NAME} ${CLASS_NAME}--${state}`;

@@ -23,7 +23,7 @@ export interface SparqlDataProviderSettings {
     fullTextSearch: FullTextSearchSettings;
 
     /**
-     * SELECT query to retreive class tree.
+     * SELECT query to retrieve class tree.
      *
      * Parametrized variables:
      *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
@@ -223,9 +223,9 @@ export interface SparqlDataProviderSettings {
 }
 
 /**
- * Full text search settings,
- * developer could use anything from search extensions of triplestore to regular expressions match
- * See wikidata and dbpedia examples for reusing full text search capabilities of Blazegraph and Virtuozo
+ * Full text search settings.
+ * 
+ * It is possible to use anything from search extensions of a Triplestore to a regular expressions match.
  */
 export interface FullTextSearchSettings {
     /**
@@ -356,10 +356,10 @@ export const RdfSettings: SparqlDataProviderSettings = {
 
     fullTextSearch: {
         prefix: '',
-        queryPattern: ``,
+        queryPattern: '',
     },
 
-    classTreeQuery: ``,
+    classTreeQuery: '',
 
     classInfoQuery:
 `SELECT ?class ?label ?instcount WHERE {
@@ -374,7 +374,7 @@ export const RdfSettings: SparqlDataProviderSettings = {
     OPTIONAL { ?link \${schemaLabelProperty} ?label }
 }`,
 
-    linkTypesPattern: ``,
+    linkTypesPattern: '',
 
     linkTypesInfoQuery:
 `SELECT ?link ?label WHERE {
@@ -388,15 +388,15 @@ export const RdfSettings: SparqlDataProviderSettings = {
     OPTIONAL { ?property \${schemaLabelProperty} ?label }
 }`,
 
-    elementInfoQuery: ``,
-    imageQueryPattern: ``,
+    elementInfoQuery: '',
+    imageQueryPattern: '',
 
-    linkTypesOfQuery: ``,
-    linkTypesStatisticsQuery: ``,
+    linkTypesOfQuery: '',
+    linkTypesStatisticsQuery: '',
     filterRefElementLinkPattern: '',
-    filterTypePattern: ``,
-    filterAdditionalRestriction: ``,
-    filterElementInfoPattern: ``,
+    filterTypePattern: '',
+    filterAdditionalRestriction: '',
+    filterElementInfoPattern: '',
 };
 
 const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
@@ -439,7 +439,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
 
-    linkTypesQuery: ``,
+    linkTypesQuery: '',
     linkTypesPattern: `
         ?link wdt:P279* wd:Q18616576.
         BIND(0 as ?instcount)
@@ -506,7 +506,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
     filterRefElementLinkPattern: '?claim <http://wikiba.se/ontology#directClaim> ?link .',
-    filterTypePattern: `?inst wdt:P31 ?instType. ?instType wdt:P279* ?class`,
+    filterTypePattern: '?inst wdt:P31 ?instType. ?instType wdt:P279* ?class',
     filterAdditionalRestriction: `FILTER ISIRI(?inst)
                         BIND(STR(?inst) as ?strInst)
                         FILTER exists {?inst ?someprop ?someobj}
@@ -573,7 +573,7 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
             }
         }
     `,
-    imageQueryPattern: `{ ?inst ?linkType ?image } UNION { [] ?linkType ?inst. BIND(?inst as ?image) }`,
+    imageQueryPattern: '{ ?inst ?linkType ?image } UNION { [] ?linkType ?inst. BIND(?inst as ?image) }',
     linkTypesOfQuery: `
         SELECT DISTINCT ?link
         WHERE {
@@ -597,7 +597,7 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
     filterRefElementLinkPattern: '',
-    filterTypePattern: `?inst a ?instType. ?instType rdfs:subClassOf* ?class`,
+    filterTypePattern: '?inst a ?instType. ?instType rdfs:subClassOf* ?class',
     filterElementInfoPattern: `OPTIONAL {?inst rdf:type ?foundClass}
                 BIND (coalesce(?foundClass, owl:Thing) as ?class)
                 OPTIONAL {?inst \${dataLabelProperty} ?label}`,
@@ -664,7 +664,7 @@ const DBPediaOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
 
-    filterTypePattern: `?inst a ?instType. ?instType rdfs:subClassOf* ?class`,
+    filterTypePattern: '?inst a ?instType. ?instType rdfs:subClassOf* ?class',
     filterElementInfoPattern: `
         OPTIONAL {?inst rdf:type ?foundClass. FILTER (!contains(str(?foundClass), 'http://dbpedia.org/class/yago'))}
         BIND (coalesce(?foundClass, owl:Thing) as ?class)

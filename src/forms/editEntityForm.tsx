@@ -20,20 +20,19 @@ interface State {
 export class EditEntityForm extends React.Component<EditEntityFormProps, State> {
     constructor(props: EditEntityFormProps) {
         super(props);
-
         this.state = {elementModel: props.entity};
     }
 
-    componentWillReceiveProps(nextProps: EditEntityFormProps) {
-        if (this.props.entity !== nextProps.entity) {
-            this.setState({elementModel: nextProps.entity});
+    componentDidUpdate(prevProps: EditEntityFormProps) {
+        if (this.props.entity !== prevProps.entity) {
+            this.setState({elementModel: this.props.entity});
         }
     }
 
-    private renderProperty = (
+    private renderProperty(
         key: PropertyTypeIri,
         values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
-    ) => {
+    ) {
         const {view} = this.props;
         const richProperty = view.model.getProperty(key)!;
         const label = view.formatLabel(richProperty.label, key);
@@ -89,7 +88,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                 }
             };
         });
-    }
+    };
 
     private renderIri() {
         const {elementModel} = this.state;
@@ -113,7 +112,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
             ...this.state.elementModel,
             label: labels,
         }});
-    }
+    };
 
     private renderLabel() {
         const {view} = this.props;

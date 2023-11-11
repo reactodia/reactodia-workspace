@@ -6,7 +6,7 @@ import { EmbeddedLayer } from '../diagram/embeddedLayer';
 
 const CLASS = 'ontodia-group-template';
 
-export class GroupTemplate extends React.Component<TemplateProps, {}> {
+export class GroupTemplate extends React.Component<TemplateProps> {
     static contextType = CanvasContext;
     declare readonly context: CanvasContext;
 

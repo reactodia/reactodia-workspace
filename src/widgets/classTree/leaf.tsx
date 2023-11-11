@@ -113,19 +113,19 @@ export class Leaf extends React.Component<LeafProps, State> {
         );
     }
 
-    private onClick = (e: React.MouseEvent<{}>) => {
+    private onClick = (e: React.MouseEvent) => {
         e.preventDefault();
         const {node, onSelect} = this.props;
         onSelect(node);
-    }
+    };
 
     private toggle = () => {
         this.setState((state): State => ({expanded: !state.expanded}));
-    }
+    };
 
     private onClickCreate = () => {
         this.props.onClickCreate(this.props.node);
-    }
+    };
 
     private onDragCreate = (e: React.DragEvent<any>) => {
         // sets the drag data to support drag-n-drop in Firefox
@@ -134,7 +134,7 @@ export class Leaf extends React.Component<LeafProps, State> {
         e.dataTransfer.setData('text', '');
 
         this.props.onDragCreate(this.props.node);
-    }
+    };
 }
 
 export interface ForestProps extends CommonProps {
@@ -142,7 +142,7 @@ export interface ForestProps extends CommonProps {
     nodes: ReadonlyArray<TreeNode>;
 }
 
-export class Forest extends React.Component<ForestProps, {}> {
+export class Forest extends React.Component<ForestProps> {
     render() {
         const {nodes, className, ...otherProps} = this.props;
         return (

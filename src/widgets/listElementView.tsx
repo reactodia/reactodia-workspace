@@ -17,7 +17,7 @@ export interface ListElementViewProps {
 
 const CLASS_NAME = 'ontodia-list-element-view';
 
-export class ListElementView extends React.Component<ListElementViewProps, {}> {
+export class ListElementView extends React.Component<ListElementViewProps> {
     render() {
         const {className, view, model, highlightText, disabled, selected, onDragStart} = this.props;
 
@@ -48,10 +48,10 @@ export class ListElementView extends React.Component<ListElementViewProps, {}> {
             event.persist();
             onClick(event, model);
         }
-    }
+    };
 }
 
-export function startDragElements(e: React.DragEvent<{}>, iris: ReadonlyArray<string>) {
+export function startDragElements(e: React.DragEvent<unknown>, iris: ReadonlyArray<string>) {
     try {
         e.dataTransfer.setData('application/x-ontodia-elements', JSON.stringify(iris));
     } catch (ex) { // IE fix
@@ -61,7 +61,7 @@ export function startDragElements(e: React.DragEvent<{}>, iris: ReadonlyArray<st
 }
 
 const DEFAULT_HIGHLIGHT_PROPS: React.HTMLProps<HTMLSpanElement> = {
-    className: `ontodia-text-highlight`
+    className: 'ontodia-text-highlight'
 };
 
 export function highlightSubstring(

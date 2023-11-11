@@ -79,7 +79,7 @@ export class Graph {
 
     private onElementEvent: AnyListener<ElementEvents> = (data, key) => {
         this.source.trigger('elementEvent', {key, data});
-    }
+    };
 
     removeElement(elementId: string): void {
         const element = this.elements.get(elementId);
@@ -128,7 +128,7 @@ export class Graph {
 
     private onLinkEvent: AnyListener<LinkEvents> = (data, key) => {
         this.source.trigger('linkEvent', {key, data});
-    }
+    };
 
     removeLink(linkId: string, options?: { silent?: boolean }) {
         const link = this.links.delete(linkId);
@@ -174,7 +174,7 @@ export class Graph {
 
     private onLinkTypeEvent: AnyListener<FatLinkTypeEvents> = (data, key) => {
         this.source.trigger('linkTypeEvent', {key, data});
-    }
+    };
 
     getProperty(propertyId: PropertyTypeIri): RichProperty | undefined {
         return this.propertiesById.get(propertyId);
@@ -207,7 +207,7 @@ export class Graph {
 
     private onClassEvent: AnyListener<FatClassModelEvents> = (data, key) => {
         this.source.trigger('classEvent', {key, data});
-    }
+    };
 }
 
 function removeLinkFrom(links: DiagramLink[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {

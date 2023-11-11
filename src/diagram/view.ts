@@ -25,7 +25,6 @@ export type LabelLanguageSelector =
     (labels: ReadonlyArray<Rdf.Literal>, language: string) => Rdf.Literal | undefined;
 
 export interface DiagramViewEvents {
-    requestSyncUpdate: {};
     changeLanguage: PropertyChange<DiagramView, string>;
     changeHighlight: PropertyChange<DiagramView, CellHighlighter | undefined>;
     changeCanvasWidgets: PropertyChange<
@@ -34,7 +33,7 @@ export interface DiagramViewEvents {
     >;
     findCanvas: FindCanvasEvent;
     iriClick: IriClickEvent;
-    dispose: {};
+    dispose: { readonly source: DiagramView };
 }
 
 export interface FindCanvasEvent {
@@ -91,7 +90,7 @@ export class DiagramView {
 
     dispose() {
         if (this.disposed) { return; }
-        this.source.trigger('dispose', {});
+        this.source.trigger('dispose', {source: this});
         this.listener.stopListening();
         this.disposed = true;
     }

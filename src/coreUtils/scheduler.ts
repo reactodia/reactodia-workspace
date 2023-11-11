@@ -113,7 +113,7 @@ export function animateInterval(
         };
 
         if (signal) {
-            let onAbort = () => {
+            const onAbort = () => {
                 cancelAnimationFrame(animationFrameId);
                 cleanupAbort?.();
                 resolve();

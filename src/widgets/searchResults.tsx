@@ -22,11 +22,9 @@ export interface SearchResultProps {
 
 const enum Direction { Up, Down }
 
-export class SearchResults extends React.Component<SearchResultProps, {}> {
-    static defaultProps: Partial<SearchResultProps> = {
-        useDragAndDrop: true,
-    };
+const DEFAULT_USE_DRAG_AND_DROP = true;
 
+export class SearchResults extends React.Component<SearchResultProps> {
     private readonly listener = new EventObserver();
     private readonly delayedChangeCells = new Debouncer();
 
@@ -40,7 +38,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
     }
 
     render(): React.ReactElement<any> {
-        const items = this.props.items || [];
+        const {items} = this.props;
         return <ul className={CLASS_NAME}
             ref={this.onRootMount}
             tabIndex={-1}
@@ -52,10 +50,10 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
 
     private onRootMount = (root: HTMLElement | null) => {
         this.root = root;
-    }
+    };
 
     private renderResultItem = (model: ElementModel) => {
-        const {useDragAndDrop} = this.props;
+        const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
         const canBeSelected = this.canBeSelected(model);
         return (
             <ListElementView
@@ -77,7 +75,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
                 } : undefined}
             />
         );
-    }
+    };
 
     componentDidMount() {
         this.listener.listen(this.props.view.model.events, 'changeCells', () => {
@@ -88,7 +86,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
     private onChangeCells = () => {
         const {items, selection} = this.props;
         if (selection.size === 0) {
-            if (items && items.length > 0) {
+            if (items.length > 0) {
                 // redraw "already on diagram" state
                 this.forceUpdate();
             }
@@ -101,7 +99,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
             }
             this.updateSelection(newSelection);
         }
-    }
+    };
 
     componentWillUnmount() {
         this.removeKeyListener();
@@ -115,14 +113,14 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
     }
 
     private addKeyListener = () => {
-        document.addEventListener('keydown', this.onKeyUp);
-    }
+        document.addEventListener('keydown', this.onKeyDown);
+    };
 
     private removeKeyListener = () => {
-        document.removeEventListener('keydown', this.onKeyUp);
-    }
+        document.removeEventListener('keydown', this.onKeyDown);
+    };
 
-    private onKeyUp = (event: KeyboardEvent) => {
+    private onKeyDown = (event: KeyboardEvent) => {
         const {items} = this.props;
         const isPressedUp = event.keyCode === 38 || event.which === 38;
         const isPressDown = event.keyCode === 40 || event.which === 40;
@@ -160,7 +158,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
             }
         }
         event.preventDefault();
-    }
+    };
 
     private onItemClick = (event: React.MouseEvent<any>, model: ElementModel) => {
         event.preventDefault();
@@ -193,7 +191,7 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
         }
 
         onSelectionChanged(newSelection);
-    }
+    };
 
     private selectRange(start: number, end: number): Set<ElementIri> {
         const {items} = this.props;
@@ -225,10 +223,11 @@ export class SearchResults extends React.Component<SearchResultProps, {}> {
     }
 
     private canBeSelected(model: ElementModel) {
-        const alreadyOnDiagram = this.props.view.model.elements.findIndex(
+        const {view, useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
+        const alreadyOnDiagram = view.model.elements.findIndex(
             element => element.iri === model.id && element.group === undefined
         ) >= 0;
-        return !this.props.useDragAndDrop || !alreadyOnDiagram;
+        return !useDragAndDrop || !alreadyOnDiagram;
     }
 
     private focusOn(index: number) {

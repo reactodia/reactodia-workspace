@@ -55,7 +55,7 @@ export function termToString(node: Term): string {
         case 'Variable':
             return `?${node.value}`;
         case 'Quad': {
-            let str = `<< `;
+            let str = '<< ';
             str += termToString(node.subject) + ' ';
             str += termToString(node.predicate) + ' ';
             str += termToString(node.object) + ' ';

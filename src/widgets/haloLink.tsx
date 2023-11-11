@@ -269,7 +269,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
         const {target, canvas, workspace: {overlayController}} = this.props;
         const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
         overlayController.startEditing({target, mode: 'moveLinkSource', point});
-    }
+    };
 
     private renderTargetButton(polyline: ReadonlyArray<Vector>) {
         const {
@@ -298,7 +298,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
         const {target, canvas, workspace: {overlayController}} = this.props;
         const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
         overlayController.startEditing({target, mode: 'moveLinkTarget', point});
-    }
+    };
 
     private renderEditButton(polyline: ReadonlyArray<Vector>) {
         const {canEdit} = this.state;
@@ -324,7 +324,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     private onEdit = () => {
         const {target, workspace: {overlayController}} = this.props;
         overlayController.showEditLinkForm(target);
-    }
+    };
 
     private renderDeleteButton(polyline: ReadonlyArray<Vector>) {
         const {canDelete} = this.state;
@@ -350,7 +350,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     private onDelete = () => {
         const {target, workspace: {editor}} = this.props;
         editor.deleteLink(target.data);
-    }
+    };
 
     private getButtonPosition(polyline: ReadonlyArray<Vector>, index: number): { top: number; left: number } {
         const {

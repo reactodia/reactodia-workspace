@@ -163,8 +163,12 @@ async function processValidationResult(
         }
     } catch (err) {
         // tslint:disable-next-line:no-console
-        console.error(`Failed to validate element`, e.target, err);
-        allErrors = [{type: 'element', target: e.target.id, message: `Failed to validate element`}];
+        console.error('Failed to validate element', e.target, err);
+        allErrors = [{
+            type: 'element',
+            target: e.target.id,
+            message: 'Failed to validate element',
+        }];
     }
 
     const elementErrors: ElementError[] = [];

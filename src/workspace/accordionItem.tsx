@@ -86,35 +86,38 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
 
         // unmount child component when the accordion item is collapsed and has dockSide
         const isMounted = !(collapsed && dockSide);
-
-        return <div className={
-                `${CLASS_NAME} ${CLASS_NAME}--${collapsed ? 'collapsed' : 'expanded'} ${CLASS_NAME}--${direction}
-                ${resizing ? `${CLASS_NAME}--resizing` : ''}`
-            }
-            ref={element => this._element = element}
-            style={style}>
-            <div className={`${CLASS_NAME}__inner`}>
-                {heading ? <div className={`${CLASS_NAME}__header`}
-                    ref={header => this._header = header}
-                    onClick={() => this.props.onChangeCollapsed!(!collapsed)}>{heading}</div> : null}
-                <div className={`${CLASS_NAME}__body`}>
-                    {children && isMounted ? children :
-                        <div ref={bodyRef} className={`${bodyClassName || ''}`} />}
+        return (
+            <div
+                className={
+                    `${CLASS_NAME} ${CLASS_NAME}--${collapsed ? 'collapsed' : 'expanded'} ${CLASS_NAME}--${direction}
+                    ${resizing ? `${CLASS_NAME}--resizing` : ''}`
+                }
+                ref={element => this._element = element}
+                style={style}>
+                <div className={`${CLASS_NAME}__inner`}>
+                    {heading ? <div className={`${CLASS_NAME}__header`}
+                        ref={header => this._header = header}
+                        onClick={() => this.props.onChangeCollapsed!(!collapsed)}>{heading}</div> : null}
+                    <div className={`${CLASS_NAME}__body`}>
+                        {children && isMounted
+                            ? children
+                            : <div ref={bodyRef} className={`${bodyClassName || ''}`} />}
+                    </div>
                 </div>
+                {shouldRenderHandle ? (
+                    <DraggableHandle className={`${CLASS_NAME}__handle ${CLASS_NAME}__handle-${direction}`}
+                        onBeginDragHandle={e => {
+                            this.setState({resizing: true});
+                            onBeginDragHandle();
+                        }}
+                        onDragHandle={(e, x, y) => onDragHandle(x, y)}
+                        onEndDragHandle={e => {
+                            this.setState({resizing: false});
+                            onEndDragHandle();
+                        }}/>
+                ) : null}
+                {this.renderToggleButton()}
             </div>
-            {shouldRenderHandle ? (
-                <DraggableHandle className={`${CLASS_NAME}__handle ${CLASS_NAME}__handle-${direction}`}
-                    onBeginDragHandle={e => {
-                        this.setState({resizing: true});
-                        onBeginDragHandle();
-                    }}
-                    onDragHandle={(e, x, y) => onDragHandle(x, y)}
-                    onEndDragHandle={e => {
-                        this.setState({resizing: false});
-                        onEndDragHandle();
-                    }}/>
-            ) : null}
-            {this.renderToggleButton()}
-        </div>;
+        );
     }
 }

@@ -33,7 +33,7 @@ export function mapSparqlResponseIntoRdfJs(
     factory: Rdf.DataFactory
 ): SparqlResponse<any> {
     function mapSparqlBinding(binding: { [name: string]: SparqlTerm }): { [name: string]: Rdf.Term } {
-        let mapped: { [name: string]: Rdf.Term } = {};
+        const mapped: { [name: string]: Rdf.Term } = {};
         for (const key in binding) {
             if (Object.prototype.hasOwnProperty.call(binding, key)) {
                 const term = binding[key];

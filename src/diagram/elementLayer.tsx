@@ -121,7 +121,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
 
     private onMount = (layer: HTMLDivElement) => {
         this.layer = layer;
-    }
+    };
 
     componentDidMount() {
         const {model, view, renderingState} = this.props;
@@ -192,7 +192,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         this.redrawBatch.requests.set(element.id, existing | request);
         this.delayedRedraw.call(this.redrawElements);
         // tslint:enable:no-bitwise
-    }
+    };
 
     private requestRedrawAll(request: RedrawFlags) {
         // tslint:disable-next-line:no-bitwise
@@ -209,12 +209,12 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                 state.elementStates
             )
         }));
-    }
+    };
 
     private requestSizeUpdate = (element: Element, node: HTMLDivElement) => {
         this.sizeRequests.set(element.id, {element, node});
         this.delayedUpdateSizes.call(this.recomputeQueuedSizes);
-    }
+    };
 
     private recomputeQueuedSizes = () => {
         const {renderingState} = this.props;
@@ -224,7 +224,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             const {clientWidth, clientHeight} = node;
             renderingState.setElementSize(element, {width: clientWidth, height: clientHeight});
         });
-    }
+    };
 }
 
 function applyRedrawRequests(
@@ -249,10 +249,10 @@ function applyRedrawRequests(
                     element,
                     templateProps:
                         (request & RedrawFlags.RecomputeTemplate) === RedrawFlags.RecomputeTemplate
-                        ? computeTemplateProps(state.element, view) : state.templateProps,
+                            ? computeTemplateProps(state.element, view) : state.templateProps,
                     blurred:
                         (request & RedrawFlags.RecomputeBlurred) === RedrawFlags.RecomputeBlurred
-                        ? computeIsBlurred(state.element, view) : state.blurred,
+                            ? computeIsBlurred(state.element, view) : state.blurred,
                 };
             }
             computed.set(elementId, state);
@@ -278,7 +278,7 @@ interface OverlaidElementProps {
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 
-class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
+class OverlaidElement extends React.Component<OverlaidElementProps> {
     private readonly listener = new EventObserver();
     private disposed = false;
 
@@ -288,7 +288,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
     private rerenderTemplate = () => {
         if (this.disposed) { return; }
         this.props.onInvalidate(this.props.state.element, RedrawFlags.RecomputeTemplate);
-    }
+    };
 
     render(): React.ReactElement<any> {
         const {state: {element, blurred}} = this.props;
@@ -311,8 +311,11 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
             style={{position: 'absolute', transform}}
             tabIndex={0}
             ref={this.onMount}
-            // resize element when child image loaded
+            // Resize element when child image loaded,
+            // works through automatic bubbling for these events in React.
+            // eslint-disable-next-line react/no-unknown-property
             onLoad={this.onLoadOrErrorEvent}
+            // eslint-disable-next-line react/no-unknown-property
             onError={this.onLoadOrErrorEvent}
             onClick={this.onClick}
             onDoubleClick={this.onDoubleClick}>
@@ -324,12 +327,14 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
         if (!node) { return; }
         const {state, onResize} = this.props;
         onResize(state.element, node);
-    }
+    };
 
     private onLoadOrErrorEvent = () => {
         const {state, onResize} = this.props;
+        // TODO: replace findDOMNode() usage by accessing a ref
+        // eslint-disable-next-line react/no-find-dom-node
         onResize(state.element, findDOMNode(this) as HTMLDivElement);
-    }
+    };
 
     private onClick = (e: React.MouseEvent<EventTarget>) => {
         if (e.target instanceof HTMLElement && e.target.localName === 'a') {
@@ -340,7 +345,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
                 ? 'openEntityIri' : 'openOtherIri';
             view.onIriClick(decodeURI(anchor.href), state.element, clickIntent, e);
         }
-    }
+    };
 
     private onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -349,11 +354,13 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
         view.model.history.execute(
             setElementExpanded(element, !element.isExpanded)
         );
-    }
+    };
 
     componentDidMount() {
         const {state, view} = this.props;
         this.listener.listen(state.element.events, 'requestedFocus', () => {
+            // TODO: replace findDOMNode() usage by accessing a ref
+            // eslint-disable-next-line react/no-find-dom-node
             const element = findDOMNode(this) as HTMLElement;
             if (element) { element.focus(); }
         });
@@ -379,6 +386,8 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
 
     componentDidUpdate() {
         this.observeTypes();
+        // TODO: replace findDOMNode() usage by accessing a ref
+        // eslint-disable-next-line react/no-find-dom-node
         this.props.onResize(this.props.state.element, findDOMNode(this) as HTMLDivElement);
     }
 
@@ -389,7 +398,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps, {}> {
     }
 }
 
-class TemplatedElement extends React.Component<OverlaidElementProps, {}> {
+class TemplatedElement extends React.Component<OverlaidElementProps> {
     private cachedTemplateClass: React.ComponentType<TemplateProps> | undefined;
     private cachedTemplateProps: TemplateProps | undefined;
 

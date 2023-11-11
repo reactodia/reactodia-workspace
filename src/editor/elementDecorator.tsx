@@ -39,7 +39,7 @@ interface State {
     isTemporary?: boolean;
 }
 
-const CLASS_NAME = `ontodia-authoring-state`;
+const CLASS_NAME = 'ontodia-authoring-state';
 
 class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, State> {
     private readonly listener = new EventObserver();

@@ -160,7 +160,7 @@ export class EditorController {
         ) {
             this.removeSelectedElements();
         }
-    }
+    };
 
     removeSelectedElements() {
         const itemsToRemove = this.selection;

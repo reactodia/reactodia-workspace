@@ -5,7 +5,7 @@ import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 const CLASS_NAME = 'ontodia-default-template';
 
-export class ClassicTemplate extends React.Component<TemplateProps, {}> {
+export class ClassicTemplate extends React.Component<TemplateProps> {
     static contextType = CanvasContext;
     declare readonly context: CanvasContext;
 

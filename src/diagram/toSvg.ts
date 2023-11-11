@@ -20,7 +20,7 @@ interface Bounds {
     height: number;
 }
 
-const SVG_NAMESPACE: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 /**
  * Padding (in px) for <foreignObject> elements of exported SVG to
  * mitigate issues with elements body overflow caused by missing styles
@@ -183,7 +183,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
         const overlaidViewContent = overlaidView.firstChild!.cloneNode(true) as HTMLElement;
         elementRoot.setAttribute('class', 'ontodia-exported-element');
 
-        let newRoot = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
+        const newRoot = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
         newRoot.appendChild(overlaidViewContent);
 
         const {x, y, width, height} = boundsOf(element, sizeProvider);
@@ -224,7 +224,7 @@ function exportAsDataUri(original: HTMLImageElement): Promise<string> {
         context.drawImage(image, 0, 0);
 
         // match extensions like "http://example.com/images/foo.JPG&w=200"
-        const extensionMatch = url.match(/\.([a-zA-Z0-9]+)[^\.a-zA-Z0-9]?[^\.]*$/);
+        const extensionMatch = url.match(/\.([a-zA-Z0-9]+)[^.a-zA-Z0-9]?[^.]*$/);
         const extension = extensionMatch ? extensionMatch[1].toLowerCase() : 'png';
 
         try {

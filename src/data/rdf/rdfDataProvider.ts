@@ -354,7 +354,7 @@ export class RdfDataProvider implements DataProvider {
                 id: linkTypeId,
                 inCount: inCounts.get(linkTypeId) ?? 0,
                 outCount,
-            })
+            });
         }
         for (const [linkTypeId, inCount] of inCounts) {
             if (outCounts.has(linkTypeId)) {

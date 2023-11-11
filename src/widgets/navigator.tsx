@@ -91,7 +91,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         if (this.state.expanded) {
             this.delayedRedraw.call(this.draw);
         }
-    }
+    };
 
     private draw = () => {
         const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
@@ -123,7 +123,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         this.drawViewport(ctx, pt);
 
         ctx.restore();
-    }
+    };
 
     private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
         const {canvas, model} = this.context;
@@ -279,7 +279,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         }
     }
 
-    private onDragViewport = (e: MouseEvent | React.MouseEvent<{}>) => {
+    private onDragViewport = (e: MouseEvent | React.MouseEvent) => {
         e.preventDefault();
         if (this.isDraggingViewport) {
             const {canvas} = this.context;
@@ -288,25 +288,25 @@ export class Navigator extends React.Component<NavigatorProps, State> {
             const paperCoords = paperFromCanvasCoords(canvasCoords, paperTransform, this.transform);
             canvas.centerTo(paperCoords);
         }
-    }
+    };
 
     private onMouseUp = () => {
         this.stopDragViewport();
-    }
+    };
 
-    private onWheel = (e: React.WheelEvent<{}>) => {
+    private onWheel = (e: React.WheelEvent) => {
         e.preventDefault();
         const {canvas} = this.context;
         const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
         canvas.zoomBy(-delta * 0.1);
-    }
+    };
 
     private onToggleClick = () => {
         this.setState(
             (state): State => ({expanded: !state.expanded}),
             this.scheduleRedraw
         );
-    }
+    };
 }
 
 defineCanvasWidget(Navigator, element => ({element, attachment: 'viewport'}));

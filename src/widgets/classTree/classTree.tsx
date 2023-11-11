@@ -172,7 +172,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         const requestedSearchText = e.currentTarget.value;
         this.setState({requestedSearchText});
         this.delayedSearch.call(this.performSearch);
-    }
+    };
 
     private performSearch = () => {
         const {requestedSearchText} = this.state;
@@ -185,13 +185,13 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         this.setState((state): State => applyFilters(
             {...state, appliedSearchText}
         ));
-    }
+    };
 
     private onShowOnlyCreatableChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         this.setState((state): State => applyFilters(
             {...state, showOnlyConstructible: !state.showOnlyConstructible}
         ));
-    }
+    };
 
     private onSelectNode = (node: TreeNode) => {
         const {instancesSearchCommands} = this.props;
@@ -200,18 +200,18 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 criteria: {elementType: node.model},
             });
         });
-    }
+    };
 
     private onCreateInstance = (node: TreeNode) => {
         this.createInstanceAt(node.model.id);
-    }
+    };
 
     private onDragCreate = (node: TreeNode) => {
         const {view} = this.context;
         view.setHandlerForNextDropOnPaper(e => {
             this.createInstanceAt(node.model.id,  e);
         });
-    }
+    };
 
     private refreshClassTree = () => {
         const cancellation = new AbortController();
@@ -237,7 +237,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             const roots = createRoots(this.classTree, view);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
-    }
+    };
 
     private setClassTree(graph: ClassGraphModel) {
         const {model} = this.context;

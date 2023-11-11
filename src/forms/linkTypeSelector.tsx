@@ -115,7 +115,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             };
         }
         this.props.onChange({link, direction});
-    }
+    };
 
     private renderPossibleLinkType = (
         {fatLinkType, direction}: { fatLinkType: FatLinkType; direction: LinkDirection }, index: number
@@ -129,7 +129,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
         }
         return <option key={index} value={index}>{label} [{sourceLabel} &rarr; {targetLabel}]</option>;
-    }
+    };
 
     render() {
         const {linkValue, disabled} = this.props;
@@ -143,13 +143,11 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                 {
                     fatLinkTypes ? (
                         <select className='ontodia-form-control'
-                             value={value}
-                             onChange={this.onChangeType}
-                             disabled={disabled}>
+                            value={value}
+                            onChange={this.onChangeType}
+                            disabled={disabled}>
                             <option value={-1} disabled={true}>Select link type</option>
-                            {
-                                fatLinkTypes.map(this.renderPossibleLinkType)
-                            }
+                            {fatLinkTypes.map(this.renderPossibleLinkType)}
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }

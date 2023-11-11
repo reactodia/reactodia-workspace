@@ -130,19 +130,21 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             paddingX: 0,
             paddingY: 0,
         };
-        const paperArea = this;
         this.metrics = new (class extends BasePaperMetrics {
+            constructor(private readonly paperArea: PaperArea) {
+                super();
+            }
             get area() {
-                return paperArea.area;
+                return this.paperArea.area;
             }
             get transform(): PaperTransform {
-                const {width, height, originX, originY, scale, paddingX, paddingY} = paperArea.state;
+                const {width, height, originX, originY, scale, paddingX, paddingY} = this.paperArea.state;
                 return {width, height, originX, originY, scale, paddingX, paddingY};
             }
             protected getClientRect(): { left: number; top: number; } {
-                return paperArea.area.getBoundingClientRect();
+                return this.paperArea.area.getBoundingClientRect();
             }
-        })();
+        })(this);
         this.canvasContext = {
             canvas: this,
             model: props.model,
@@ -201,7 +203,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                             }
                         />
                         {watermarkSvg ? (
-                            <a href={watermarkUrl} target='_blank' rel='noopener'>
+                            <a href={watermarkUrl} target='_blank' rel='noreferrer'>
                                 <img className={`${CLASS_NAME}__watermark`}
                                     src={watermarkSvg}
                                     draggable={false}
@@ -300,7 +302,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private onWidgetsMouseDown = (e: React.MouseEvent<any>) => {
         // prevent PaperArea from generating click on a blank area
         e.stopPropagation();
-    }
+    };
 
     /** Returns bounding box of paper content in paper coordinates. */
     private getContentFittingBox() {
@@ -362,7 +364,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         } else if (callback) {
             callback();
         }
-    }
+    };
 
     private shouldStartZooming(e: MouseEvent | React.MouseEvent<any>) {
         return Boolean(e.ctrlKey) && Boolean(this.zoomOptions.requireCtrl) || !this.zoomOptions.requireCtrl;
@@ -393,13 +395,13 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             e.preventDefault();
             this.listenToPointerMove(e, undefined, batch, restore);
         }
-    }
+    };
 
     private onAreaPointerDown = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === this.area) {
             this.onPaperPointerDown(e, undefined);
         }
-    }
+    };
 
     private startMoving(e: React.MouseEvent<HTMLElement>, element: Element) {
         const {x: pointerX, y: pointerY} = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
@@ -500,7 +502,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
             renderingState.syncUpdate();
         }
-    }
+    };
 
     private stopListeningToPointerMove = (e?: MouseEvent) => {
         const movingState = this.movingState;
@@ -527,7 +529,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             }
             batch.store();
         }
-    }
+    };
 
     private onWheel = (e: WheelEvent) => {
         if (this.shouldStartZooming(e)) {
@@ -536,7 +538,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             const pivot = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             this.zoomBy(-delta * 0.1, {pivot});
         }
-    }
+    };
 
     centerTo(paperPosition?: { x: number; y: number }, options: ViewportOptions = {}): Promise<void> {
         const {width, height} = this.state;
@@ -652,7 +654,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         }
         const {x, y} = clientCoordsFor(this.area, e);
         return false;
-    }
+    };
 
     private onDragDrop = (e: DragEvent) => {
         const {view} = this.props;
@@ -668,11 +670,11 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         } else {
             this.source.trigger('drop', event);
         }
-    }
+    };
 
     private onScroll = (e: Event) => {
         this.source.trigger('scroll', {source: this, sourceEvent: e});
-    }
+    };
 
     private onContextMenu = (e: React.MouseEvent, cell: Cell | undefined) => {
         this.source.trigger('contextMenu', {
@@ -798,7 +800,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         }
     }
 
-    private applyViewportState = (targetState: ViewportState) => {
+    private applyViewportState(targetState: ViewportState) {
         const previousScale = this.state.scale;
         const scale = targetState.scale.x;
         const paperCenter = targetState.center;

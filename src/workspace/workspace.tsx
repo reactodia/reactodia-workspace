@@ -189,7 +189,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             batch.store();
             canvas.zoomToFit();
         }
-    }
+    };
 
     private onExportSvg = (canvas: CanvasApi) => {
         canvas.exportSvg().then(svg => {
@@ -197,14 +197,14 @@ export class Workspace extends React.Component<WorkspaceProps> {
             const blob = new Blob([xmlEncodingHeader + svg], {type: 'image/svg+xml'});
             saveAs(blob, 'diagram.svg');
         });
-    }
+    };
 
     private onExportPng = (canvas: CanvasApi) => {
         canvas.exportPng({backgroundColor: 'white'}).then(dataUri => {
             const blob = dataURLToBlob(dataUri);
             saveAs(blob, 'diagram.png');
         });
-    }
+    };
 
     private onPrint = (canvas: CanvasApi) => {
         canvas.exportSvg().then(svg => {
@@ -213,5 +213,5 @@ export class Workspace extends React.Component<WorkspaceProps> {
             printWindow.document.close();
             printWindow.print();
         });
-    }
+    };
 }

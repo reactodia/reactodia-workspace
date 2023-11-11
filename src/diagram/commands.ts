@@ -1,6 +1,6 @@
 import { ElementModel, ElementIri, LinkModel, sameLink } from '../data/model';
 
-import { Element, Link, FatLinkType, Cell, LinkVertex } from './elements';
+import { Element, Link, FatLinkType } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import { DiagramModel } from './model';
@@ -96,7 +96,7 @@ export function changeLinkTypeVisibility(params: {
 }
 
 export function setElementData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
-    let command = Command.create('Set element data', () => {
+    const command = Command.create('Set element data', () => {
         const previous = new Map<Element, ElementModel>();
         for (const element of model.elements.filter(el => el.iri === target)) {
             previous.set(element, element.data);

@@ -146,7 +146,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
         return {offsetX, offsetY};
     }
 
-    private moveNestedElements = (offsetX: number, offsetY: number) => {
+    private moveNestedElements(offsetX: number, offsetY: number) {
         this.isApplyingParentMove = true;
         try {
             for (const element of this.getNestedElements()) {
@@ -178,7 +178,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
         }
 
         this.setState({offsetX, offsetY, paperWidth, paperHeight}, () => element.redraw());
-    }
+    };
 
     private onPaperPointerDown = (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => {
         if (e.button !== 0 /* left mouse button */) {
@@ -189,7 +189,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
             e.preventDefault();
             this.isNestedElementMoving = true;
         }
-    }
+    };
 
     private calculateOffset(layer: HTMLElement): { left: number; top: number } {
         const {canvas} = this.context;
@@ -208,7 +208,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
 
         this.layerOffsetLeft = left;
         this.layerOffsetTop = top;
-    }
+    };
 
     render() {
         const {elementId} = this.props;

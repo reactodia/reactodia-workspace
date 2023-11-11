@@ -89,7 +89,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         document.removeEventListener('mouseup', this.onMouseUp);
     }
 
-    private beginCreatingLink = (params: { source: Element; point: Vector }) => {
+    private beginCreatingLink(params: { source: Element; point: Vector }) {
         const {workspace: {editor}} = this.props;
         const {source, point} = params;
 
@@ -168,7 +168,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             this.queryCanDropOnElement(newTargetElement);
         }
         this.setState({targetElement: newTargetElement});
-    }
+    };
 
     private queryCanLinkFrom() {
         const {workspace: {editor}} = this.props;
@@ -265,7 +265,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         this.setState({waitingForMetadata: true});
         const selectedPosition = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
         this.executeEditOperation(selectedPosition);
-    }
+    };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
         const {mode, canvas, workspace: {model, editor, overlayController}} = this.props;
@@ -328,7 +328,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         }
     }
 
-    private createNewElement = async (source: ElementModel): Promise<Element> => {
+    private async createNewElement(source: ElementModel): Promise<Element> {
         const {workspace: {editor}} = this.props;
         if (!editor.metadataApi) {
             throw new Error('Cannot create new element without MetadataApi');

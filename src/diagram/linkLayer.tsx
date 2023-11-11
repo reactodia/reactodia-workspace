@@ -34,7 +34,7 @@ enum UpdateRequest {
 
 const CLASS_NAME = 'ontodia-link-layer';
 
-export class LinkLayer extends React.Component<LinkLayerProps, {}> {
+export class LinkLayer extends React.Component<LinkLayerProps> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
@@ -133,7 +133,7 @@ export class LinkLayer extends React.Component<LinkLayerProps, {}> {
             this.scheduledToUpdate = new Set<string>();
         }
         this.delayedUpdate.call(this.performUpdate);
-    }
+    };
 
     private scheduleUpdateLink(linkId: string) {
         if (this.updateState === UpdateRequest.Partial) {
@@ -153,9 +153,9 @@ export class LinkLayer extends React.Component<LinkLayerProps, {}> {
 
     private performUpdate = () => {
         this.forceUpdate();
-    }
+    };
 
-    private getLinks = () => {
+    private getLinks() {
         const {view, links, group} = this.props;
 
         if (!group) { return links; }
@@ -226,36 +226,44 @@ const LABEL_GROUPING_PRECISION = 100;
 // grouped on the same link offset
 const TEMPORARY_LABEL_LINES = new Map<number, number>();
 
-class LinkView extends React.Component<LinkViewProps, {}> {
-    private linkType!: FatLinkType;
-    private template!: FilledLinkTemplate;
+interface LinkViewState {
+    readonly linkType: FatLinkType;
+    readonly template: FilledLinkTemplate;
+}
 
+class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     constructor(props: LinkViewProps) {
         super(props);
-        this.grabLinkTemplate(this.props);
+        this.state = LinkView.makeStateFromProps(this.props);
     }
 
-    componentWillReceiveProps(nextProps: LinkViewProps) {
-        if (this.linkType.id !== nextProps.link.typeId) {
-            this.grabLinkTemplate(nextProps);
+    static getDerivedStateFromProps(
+        props: LinkViewProps,
+        state: LinkViewState | undefined
+    ): LinkViewState | null {
+        if (state && state.linkType.id === props.link.typeId) {
+            return null;
         }
+        return LinkView.makeStateFromProps(props);
     }
 
-    shouldComponentUpdate(nextProps: LinkViewProps, nextState: {}) {
-        return nextProps.shouldUpdate;
-    }
-
-    private grabLinkTemplate(props: LinkViewProps) {
+    static makeStateFromProps(props: LinkViewProps): LinkViewState {
         const {view, renderingState} = props;
-        this.linkType = props.view.model.getLinkType(props.link.typeId)!;
-        this.template = renderingState.createLinkTemplate(this.linkType);
+        const linkType = view.model.getLinkType(props.link.typeId)!;
+        const template = renderingState.createLinkTemplate(linkType);
+        return {linkType, template};
+    }
+
+    shouldComponentUpdate(nextProps: LinkViewProps) {
+        return nextProps.shouldUpdate;
     }
 
     render() {
         const {link, route, view, renderingState} = this.props;
+        const {linkType, template} = this.state;
         const source = view.model.getElement(link.sourceId);
         const target = view.model.getElement(link.targetId);
-        if (!(source && target && this.linkType.visible)) {
+        if (!(source && target && linkType.visible)) {
             return null;
         }
 
@@ -269,8 +277,8 @@ class LinkView extends React.Component<LinkViewProps, {}> {
 
         const path = 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
 
-        const {index: typeIndex, showLabel} = this.linkType;
-        const style = this.template.renderLink(link, view.model);
+        const {index: typeIndex, showLabel} = linkType;
+        const style = template.renderLink(link, view.model);
         const pathAttributes = getPathAttributes(link, style);
 
         const isBlurred = view.highlighter && !view.highlighter(link);
@@ -323,12 +331,12 @@ class LinkView extends React.Component<LinkViewProps, {}> {
             restoreCapturedLinkGeometry(vertex.link)
         );
         vertex.remove();
-    }
+    };
 
     private onBoundsUpdate = (newBounds: Rect | undefined) => {
         const {link, renderingState} = this.props;
         renderingState.setLinkLabelBounds(link, newBounds);
-    }
+    };
 
     private renderLabels(polyline: ReadonlyArray<Vector>, style: LinkStyle) {
         const {link, route, view} = this.props;
@@ -500,19 +508,19 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
         const dy = '0.6ex';
 
         return (
-          <g style={transform ? {transform} : undefined}>
-              {label.title ? <title>{label.title}</title> : undefined}
-              <rect x={rectX} y={rectY}
-                  width={width} height={height}
-                  style={label.attributes.rect}
-              />
-              <text ref={this.onTextMount}
-                x={x} y={y} dy={dy}
-                textAnchor={textAnchor}
-                style={label.attributes.text}>
-                  {label.text.value}
-              </text>
-          </g>
+            <g style={transform ? {transform} : undefined}>
+                {label.title ? <title>{label.title}</title> : undefined}
+                <rect x={rectX} y={rectY}
+                    width={width} height={height}
+                    style={label.attributes.rect}
+                />
+                <text ref={this.onTextMount}
+                    x={x} y={y} dy={dy}
+                    textAnchor={textAnchor}
+                    style={label.attributes.text}>
+                    {label.text.value}
+                </text>
+            </g>
         );
     }
 
@@ -536,10 +544,10 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
 
     private onTextMount = (text: SVGTextElement | null) => {
         this.text = text;
-    }
+    };
 
     componentDidMount() {
-        this.recomputeBounds(this.props);
+        this.tryRecomputeBounds(this.props);
     }
 
     componentWillUnmount() {
@@ -547,15 +555,15 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
         onBoundsUpdate?.(undefined);
     }
 
-    componentWillReceiveProps(nextProps: LinkLabelProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: LinkLabelProps) {
         this.shouldUpdateBounds = true;
     }
 
     componentDidUpdate(props: LinkLabelProps) {
-        this.recomputeBounds(this.props);
+        this.tryRecomputeBounds(this.props);
     }
 
-    private recomputeBounds(props: LinkLabelProps) {
+    private tryRecomputeBounds(props: LinkLabelProps) {
         if (this.text && this.shouldUpdateBounds) {
             const {onBoundsUpdate} = this.props;
             this.shouldUpdateBounds = false;
@@ -601,7 +609,7 @@ class VertexTools extends React.Component<{
         e.stopPropagation();
         const {onRemove, model, vertexIndex} = this.props;
         onRemove(new LinkVertex(model, vertexIndex));
-    }
+    };
 }
 
 export interface LinkMarkersProps {
@@ -672,9 +680,9 @@ interface LinkMarkerProps {
     style: LinkMarkerStyle;
 }
 
-const SVG_NAMESPACE: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg';
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
-class LinkMarker extends React.Component<LinkMarkerProps, {}> {
+class LinkMarker extends React.Component<LinkMarkerProps> {
     render() {
         return <marker ref={this.onMarkerMount}></marker>;
     }
@@ -710,5 +718,5 @@ class LinkMarker extends React.Component<LinkMarkerProps, {}> {
         if (style.strokeWidth !== undefined) { path.setAttribute('stroke-width', style.strokeWidth); }
 
         marker.appendChild(path);
-    }
+    };
 }

@@ -1,4 +1,4 @@
-import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel, ElementIri } from './model';
+import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel } from './model';
 import { LinkDirection } from '../diagram/elements';
 
 export interface MetadataApi {

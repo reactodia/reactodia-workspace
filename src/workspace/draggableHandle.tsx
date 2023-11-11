@@ -6,7 +6,7 @@ export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElemen
     onEndDragHandle?: (e: MouseEvent) => void;
 }
 
-export class DraggableHandle extends React.Component<DraggableHandleProps, {}> {
+export class DraggableHandle extends React.Component<DraggableHandleProps> {
     private holdOriginPage: {
         x: number;
         y: number;
@@ -39,7 +39,7 @@ export class DraggableHandle extends React.Component<DraggableHandleProps, {}> {
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
         this.props.onBeginDragHandle(e);
-    }
+    };
 
     private onMouseMove = (e: MouseEvent) => {
         if (!this.holdOriginPage) { return; }
@@ -49,14 +49,14 @@ export class DraggableHandle extends React.Component<DraggableHandleProps, {}> {
             e.pageX - this.holdOriginPage.x,
             e.pageY - this.holdOriginPage.y
         );
-    }
+    };
 
     private onMouseUp = (e: MouseEvent) => {
         this.removeListeners();
         if (this.props.onEndDragHandle) {
             this.props.onEndDragHandle(e);
         }
-    }
+    };
 
     private removeListeners() {
         if (this.holdOriginPage) {

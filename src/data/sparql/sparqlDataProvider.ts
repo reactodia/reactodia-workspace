@@ -405,11 +405,11 @@ export class SparqlDataProvider implements DataProvider {
         const linkTypeIds = getLinksTypeIds(linkTypeBindings, this.linkByPredicate, this.openWorldLinks);
 
         const navigateElementFilterOut = this.acceptBlankNodes
-            ? `FILTER (IsIri(?outObject) || IsBlank(?outObject))`
-            : `FILTER IsIri(?outObject)`;
+            ? 'FILTER (IsIri(?outObject) || IsBlank(?outObject))'
+            : 'FILTER IsIri(?outObject)';
         const navigateElementFilterIn = this.acceptBlankNodes
-            ? `FILTER (IsIri(?inObject) || IsBlank(?inObject))`
-            : `FILTER IsIri(?inObject)`;
+            ? 'FILTER (IsIri(?inObject) || IsBlank(?inObject))'
+            : 'FILTER IsIri(?inObject)';
 
         const foundLinkStats: LinkCount[] = [];
         await Promise.all(linkTypeIds.map(async linkId => {
@@ -610,7 +610,7 @@ export class SparqlDataProvider implements DataProvider {
             }
         }
 
-        let resultPattern = unionParts.length === 0 ? 'FILTER(false)' : unionParts.join(`\nUNION\n`);
+        let resultPattern = unionParts.length === 0 ? 'FILTER(false)' : unionParts.join('\nUNION\n');
 
         const useAllLinksPattern = !linkId && this.settings.filterRefElementLinkPattern.length > 0;
         if (useAllLinksPattern) {
@@ -642,14 +642,14 @@ export class SparqlDataProvider implements DataProvider {
                 const linkType = escapeIri(link.id);
                 if (!direction || direction === 'out') {
                     const path = this.formatLinkPath(link.path, fixedIri, outElementVar);
-                    const boundedDirection = bindDirection ? `BIND("out" as ?direction) ` : '';
+                    const boundedDirection = bindDirection ? 'BIND("out" as ?direction) ' : '';
                     unionParts.push(
                         `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
                     );
                 }
                 if (!direction || direction === 'in') {
                     const path = this.formatLinkPath(link.path, inElementVar, fixedIri);
-                    const boundedDirection = bindDirection ? `BIND("in" as ?direction) ` : '';
+                    const boundedDirection = bindDirection ? 'BIND("in" as ?direction) ' : '';
                     unionParts.push(
                         `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
                     );
@@ -677,7 +677,7 @@ export class SparqlDataProvider implements DataProvider {
 
         const usePredicatePart = this.openWorldLinks || hasDirectLink;
         if (usePredicatePart) {
-            unionParts.push(`?source ?type ?target`);
+            unionParts.push('?source ?type ?target');
         }
 
         return (
@@ -708,7 +708,7 @@ export class SparqlDataProvider implements DataProvider {
 
         const usePredicatePart = this.openWorldProperties || hasDirectProperty;
         if (usePredicatePart) {
-            unionParts.push(`{ ?inst ?propType ?propValue }`);
+            unionParts.push('{ ?inst ?propType ?propValue }');
         }
 
         return unionParts.join('\nUNION\n');
@@ -739,9 +739,9 @@ export class SparqlDataProvider implements DataProvider {
         const {filterTypePattern} = this.settings;
         const ids = elements.map(iri => `(${escapeIri(iri)})`).join(' ');
 
-        const queryTemplate = `SELECT ?inst ?class { VALUES(?inst) { \${ids} } \${filterTypePattern} }`;
+        const queryTemplate = 'SELECT ?inst ?class { VALUES(?inst) { ${ids} } ${filterTypePattern} }';
         const query = resolveTemplate(queryTemplate, {ids, filterTypePattern});
-        let response = await this.executeSparqlSelect<ElementTypeBinding>(query, {signal});
+        const response = await this.executeSparqlSelect<ElementTypeBinding>(query, {signal});
 
         return getElementTypes(response);
     }
@@ -787,7 +787,7 @@ function prepareElementImages(
 function resolveTemplate(template: string, values: { [key: string]: string | undefined }) {
     let result = template;
     for (const replaceKey in values) {
-        if (!values.hasOwnProperty(replaceKey)) { continue; }
+        if (!Object.prototype.hasOwnProperty.call(values, replaceKey)) { continue; }
         const replaceValue = values[replaceKey];
         if (replaceValue) {
             result = result.replace(new RegExp('\\${' + replaceKey + '}', 'g'), replaceValue);

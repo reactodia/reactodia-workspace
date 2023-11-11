@@ -108,7 +108,7 @@ export class Accordion extends React.Component<AccordionProps, State> {
         return this.isVertical ? offsetHeight : offsetWidth;
     }
 
-    private updateSizes = () => {
+    private updateSizes() {
         const {children} = this.props;
         const defaultProps = new Map<number, DefaultItemProps>();
         React.Children.forEach(children, (child, index) => {
@@ -218,7 +218,7 @@ export class Accordion extends React.Component<AccordionProps, State> {
         });
     }
 
-    private onBeginDragHandle = (itemIndex: number) => {
+    private onBeginDragHandle(itemIndex: number) {
         this.dragOrigin = {
             totalSize: this.clientSize(this.element!),
             sizes: this.computeEffectiveItemSizes(),
@@ -234,7 +234,7 @@ export class Accordion extends React.Component<AccordionProps, State> {
 
     private onEndDragHandle = () => {
         this.setState({resizing: false});
-    }
+    };
 
     private computeEffectiveItemSizes(): number[] {
         const sizes: Array<number> = [];
@@ -258,9 +258,9 @@ export class Accordion extends React.Component<AccordionProps, State> {
         }
         const headerSize = item.header ? this.clientSize(item.header) : 0;
         return headerSize + (this.offsetSize(item.element!) - this.clientSize(item.element!));
-    }
+    };
 
-    private onDragHandle = (itemIndex: number, dx: number, dy: number) => {
+    private onDragHandle(itemIndex: number, dx: number, dy: number) {
         const sizes = [...this.dragOrigin!.sizes];
         const collapsed = [...this.dragOrigin!.collapsed];
         const originTotalSize = this.dragOrigin!.totalSize;

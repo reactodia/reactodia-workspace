@@ -23,7 +23,7 @@ export interface RenderingStateOptions {
 
 export interface RenderingStateEvents {
     syncUpdate: { readonly layer: RenderingLayer };
-    changeLinkTemplates: {};
+    changeLinkTemplates: { readonly source: RenderingState };
     changeElementSize: PropertyChange<Element, Size | undefined>;
     changeLinkLabelBounds: PropertyChange<Link, Rect | undefined>;
     updateRoutings: PropertyChange<RenderingState, RoutedLinks>;
@@ -152,7 +152,7 @@ export class RenderingState implements SizeProvider {
         const rawTemplate = this.resolveLinkTemplate(linkType.id);
         const template = fillLinkTemplateDefaults(rawTemplate ?? {});
         this.linkTemplates.set(linkType.id, template);
-        this.source.trigger('changeLinkTemplates', {});
+        this.source.trigger('changeLinkTemplates', {source: this});
         return template;
     }
 

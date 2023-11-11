@@ -28,19 +28,19 @@ type LinkTypeVisibility = 'invisible' | 'withoutLabels' | 'allVisible';
 
 const CLASS_NAME = 'link-types-toolbox';
 
-class LinkInToolBox extends React.Component<LinkInToolBoxProps, {}> {
+class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     private onPressFilter = () => {
         if (this.props.onPressFilter) {
             this.props.onPressFilter(this.props.link);
         }
-    }
+    };
 
-    private changeState = (state: LinkTypeVisibility) => {
+    private changeState(state: LinkTypeVisibility) {
         const history = this.props.view.model.history;
         changeLinkTypeState(history, state, [this.props.link]);
     }
 
-    private isChecked = (stateName: LinkTypeVisibility): boolean => {
+    private isChecked(stateName: LinkTypeVisibility): boolean {
         let curState: LinkTypeVisibility;
         if (!this.props.link.visible) {
             curState = 'invisible';
@@ -52,7 +52,7 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps, {}> {
         return stateName === curState;
     }
 
-    private getText = () => {
+    private getText() {
         const {link: linkType, view, filterKey} = this.props;
         const fullText = view.formatLabel(linkType.label, linkType.id);
         return highlightSubstring(fullText, filterKey);
@@ -134,26 +134,27 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
         const aText = view.formatLabel(a.label, a.id);
         const bText = view.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
-    }
+    };
 
     private onChangeInput = (e: React.SyntheticEvent<HTMLInputElement>) => {
         this.setState({filterKey: e.currentTarget.value});
-    }
+    };
 
     private onDropFilter = () => {
         this.setState({filterKey: ''});
-    }
+    };
 
-    private getLinks = () => {
+    private getLinks() {
         const {view, links = []} = this.props;
-        return links.filter(linkType => {
-            const text = view.formatLabel(linkType.label, linkType.id).toLowerCase();
-            return !this.state.filterKey || text.indexOf(this.state.filterKey.toLowerCase()) >= 0;
-        })
-        .sort(this.compareLinks);
+        return links
+            .filter(linkType => {
+                const text = view.formatLabel(linkType.label, linkType.id).toLowerCase();
+                return !this.state.filterKey || text.indexOf(this.state.filterKey.toLowerCase()) >= 0;
+            })
+            .sort(this.compareLinks);
     }
 
-    private getViews = (links: FatLinkType[]) => {
+    private getViews(links: FatLinkType[]) {
         const countMap = this.props.countMap || {};
         const views: React.ReactElement<any>[] = [];
         for (const link of links) {
@@ -280,8 +281,8 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 
         const {model, view, editor} = this.context;
 
-        this.listener.listen(view.events, 'changeLanguage', () => this.updateOnCurrentSelection());
-        this.listener.listen(model.events, 'loadingSuccess', () => this.updateOnCurrentSelection());
+        this.listener.listen(view.events, 'changeLanguage', this.updateOnCurrentSelection);
+        this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
         this.listener.listen(editor.events, 'changeSelection', () => {
             this.debounceSelection.call(this.updateOnCurrentSelection);
         });
@@ -305,7 +306,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         if (single !== this.state.selectedElement && single instanceof Element) {
             this.requestLinksOf(single);
         }
-    }
+    };
 
     private requestLinksOf(selectedElement: Element) {
         const {editor} = this.context;
@@ -362,7 +363,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 
     private onLinkChanged = () => {
         this.forceUpdate();
-    }
+    };
 
     render() {
         const {instancesSearchCommands} = this.props;
@@ -386,7 +387,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
                 refElementLink: linkType,
             }
         });
-    }
+    };
 }
 
 function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<FatLinkType>) {

@@ -124,7 +124,7 @@ class HaloInner extends React.Component<HaloInnerProps, State> {
         if (data.changeData) {
             this.queryAllowedActions();
         }
-    }
+    };
 
     private queryAllowedActions() {
         this.queryDebouncer.call(() => {
@@ -206,10 +206,12 @@ class HaloInner extends React.Component<HaloInnerProps, State> {
                         onClick={this.onAddToFilter}
                     />
                 ) : null}
-                <div className={`${CLASS_NAME}__expand ` +
-                    `${CLASS_NAME}__expand--${target.isExpanded ? 'closed' : 'open'}`}
+                <div
+                    className={`${CLASS_NAME}__expand ` +
+                        `${CLASS_NAME}__expand--${target.isExpanded ? 'closed' : 'open'}`
+                    }
                     role='button'
-                    title={`Expand an element to reveal additional properties`}
+                    title='Expand an element to reveal additional properties'
                     onClick={this.onExpand}
                 />
                 {editor.inAuthoringMode ? this.renderEstablishNewLinkButton() : null}
@@ -295,5 +297,5 @@ class HaloInner extends React.Component<HaloInnerProps, State> {
         const {target, workspace: {overlayController}, canvas} = this.props;
         const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
         overlayController.startEditing({target, mode: 'establishLink', point});
-    }
+    };
 }

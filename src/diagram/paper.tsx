@@ -136,7 +136,7 @@ export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement
     paperTransform: PaperTransform;
 }
 
-export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps, {}> {
+export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps> {
     private static readonly SVG_STYLE: CSSProperties = {
         position: 'absolute',
         top: 0,

@@ -58,9 +58,9 @@ export class Dialog extends React.Component<DialogProps, State> {
         this.focusOn();
     }
 
-    componentWillReceiveProps(nextProps: DialogProps) {
-        if (nextProps.target !== this.props.target) {
-            this.listenToTarget(nextProps.target);
+    componentDidUpdate(prevProps: DialogProps) {
+        if (this.props.target !== prevProps.target) {
+            this.listenToTarget(this.props.target);
         }
     }
 
@@ -240,7 +240,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         this.preventSelection();
         const {size = DEFAULT_SIZE} = this.props;
         this.startSize = {x: this.state.width || size.width, y: this.state.height || size.height};
-    }
+    };
 
     private calculateHeight(height: number) {
         const {size = DEFAULT_SIZE} = this.props;
@@ -259,20 +259,20 @@ export class Dialog extends React.Component<DialogProps, State> {
     private onDragHandleBottom = (e: MouseEvent, dx: number, dy: number) => {
         const height = this.calculateHeight(this.startSize!.y + dy);
         this.setState({height});
-    }
+    };
 
     private onDragHandleRight = (e: MouseEvent, dx: number) => {
         const width = this.calculateWidth(this.startSize!.x + dx);
         this.setState({width});
-    }
+    };
 
     private onDragHandleBottomRight = (e: MouseEvent, dx: number, dy: number) => {
         const width = this.calculateWidth(this.startSize!.x + dx);
         const height = this.calculateHeight(this.startSize!.y + dy);
         this.setState({width, height});
-    }
+    };
 
-    private preventSelection = () => {
+    private preventSelection() {
         const onMouseUp = () => {
             document.body.classList.remove('ontodia--unselectable');
             document.removeEventListener('mouseup', onMouseUp);

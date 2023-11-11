@@ -164,13 +164,13 @@ export class OverlayController {
                 document.activeElement.blur();
             }
         }
-    }
+    };
 
     private updateElementDecorator() {
         this.view._setElementDecorator(
             this.editor.inAuthoringMode ? this.authoringStateDecorator : undefined
         );
-    };
+    }
 
     setSpinner(props: SpinnerProps | undefined) {
         this.view.setCanvasWidget('loadingWidget', props ? {

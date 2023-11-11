@@ -57,7 +57,7 @@ export class DataFetcher {
                 element.setData(loadedModel);
             }
         }
-    }
+    };
 
     fetchClass(model: FatClassModel): void {
         this.classQueue.push(model.id);
@@ -72,7 +72,7 @@ export class DataFetcher {
                 model.setCount(count);
             }
         }
-    }
+    };
 
     fetchLinkType(linkType: FatLinkType): void {
         this.linkTypeQueue.push(linkType.id);
@@ -84,7 +84,7 @@ export class DataFetcher {
             if (!model) { continue; }
             model.setLabel(label);
         }
-    }
+    };
 
     fetchPropertyType(propertyType: RichProperty): void {
         if (!this.dataProvider.propertyInfo) { return; }
@@ -100,5 +100,5 @@ export class DataFetcher {
                 targetProperty.setLabel(label);
             }
         }
-    }
+    };
 }

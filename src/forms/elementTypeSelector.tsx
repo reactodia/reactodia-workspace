@@ -120,14 +120,14 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
             isNew: true,
             loading: false,
         });
-    }
+    };
 
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
         const {view} = this.props;
         const type = view.model.createClass(elementType);
         const label = view.formatLabel(type.label, type.id);
         return <option key={elementType} value={elementType}>{label}</option>;
-    }
+    };
 
     private renderElementTypeSelector() {
         const {elementValue} = this.props;

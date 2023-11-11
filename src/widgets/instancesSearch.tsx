@@ -81,7 +81,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
     componentDidUpdate(prevProps: InstancesSearchProps, prevState: State): void {
         if (this.state.criteria !== prevState.criteria) {
-            this.queryItems(false)
+            this.queryItems(false);
         }
     }
 
@@ -117,7 +117,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                         onChange={e => this.setState({inputText: e.currentTarget.value})}
                         onKeyUp={e => {
                             if (e.keyCode === ENTER_KEY_CODE) {
-                               this.submitCriteriaUpdate();
+                                this.submitCriteriaUpdate();
                             }
                         }} />
                     <span className='ontodia-input-group-btn'>
@@ -135,7 +135,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             <div className={`${CLASS_NAME}__rest ontodia-scrollable`} key={this.state.resultId}>
                 <SearchResults
                     view={view}
-                    items={this.state.items}
+                    items={this.state.items ?? []}
                     highlightText={this.state.criteria.text}
                     selection={this.state.selection}
                     onSelectionChanged={this.onSelectionChanged}
@@ -155,7 +155,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
     private onSelectionChanged = (newSelection: ReadonlySet<ElementIri>) => {
         this.setState({selection: newSelection});
-    }
+    };
 
     private renderCriteria(): React.ReactElement<any> {
         const {view} = this.context;

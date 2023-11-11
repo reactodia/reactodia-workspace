@@ -10,7 +10,7 @@ export interface SpinnerProps {
 
 const CLASS_NAME = 'ontodia-spinner';
 
-export class Spinner extends React.Component<SpinnerProps, {}> {
+export class Spinner extends React.Component<SpinnerProps> {
     render() {
         const {position = {x: 0, y: 0}, size = 50, statusText, errorOccurred} = this.props;
 
@@ -30,7 +30,7 @@ export class Spinner extends React.Component<SpinnerProps, {}> {
     }
 }
 
-export class HtmlSpinner extends React.Component<{ width: number; height: number }, {}> {
+export class HtmlSpinner extends React.Component<{ width: number; height: number }> {
     render() {
         const {width, height} = this.props;
         const size = Math.min(width, height);

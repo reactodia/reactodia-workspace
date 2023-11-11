@@ -46,7 +46,7 @@ export class DecoratedDataProvider implements DataProvider {
         method: T,
         params: Parameters<DataProvider[T]>
     ): ReturnType<DataProvider[T]> {
-        const body: Function = this[method];
+        const body: (...args: any[]) => any = this[method];
         const bound = body.bind(this);
         const {decorator} = this;
         return decorator(method, params[0], bound) as ReturnType<DataProvider[T]>;
