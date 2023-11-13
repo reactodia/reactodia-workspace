@@ -22,6 +22,12 @@ export {
     TemplateProperties, DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
 } from './data/schema';
 export * from './data/composite/composite';
+export {
+    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, randomDelayProviderDecorator,
+} from './data/decorated/decoratedDataProvider';
+export {
+    IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
+} from './data/decorated/indexedDbCachedProvider';
 export * from './data/rdf/rdfDataProvider';
 export * as Rdf from './data/rdf/rdfModel';
 export * from './data/sparql/sparqlDataProvider';

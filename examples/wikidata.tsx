@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {
-    Workspace, DefaultWorkspace, SparqlDataProvider, WikidataSettings,
+    Workspace, DefaultWorkspace, SparqlDataProvider, IndexedDbCachedProvider, WikidataSettings,
 } from '../src/index';
 
 import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
@@ -12,7 +12,7 @@ function WikidataExample() {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
-        const dataProvider = new SparqlDataProvider({
+        const sparqlProvider = new SparqlDataProvider({
             endpointUrl: '/wikidata',
             imagePropertyUris: [
                 'http://www.wikidata.org/prop/direct/P18',
@@ -20,6 +20,11 @@ function WikidataExample() {
             ],
             queryMethod: 'POST',
         }, WikidataSettings);
+
+        const dataProvider = new IndexedDbCachedProvider({
+            baseProvider: sparqlProvider,
+            dbName: 'reactodia-wikidata-cache',
+        });
 
         const diagram = tryLoadLayoutFromLocalStorage();
         model.importLayout({
