@@ -354,7 +354,6 @@ export class SparqlDataProvider implements DataProvider {
         const linkConfigurations = this.formatLinkLinks();
 
         let bindings: Promise<SparqlResponse<LinkBinding>>;
-        let types: Promise<Map<ElementIri, Set<ElementTypeIri>>>;
         if (elementIds.length > 0) {
             const ids = elementIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const linksInfoQuery =  this.settings.defaultPrefix + resolveTemplate(this.settings.linksInfoQuery, {
@@ -362,14 +361,18 @@ export class SparqlDataProvider implements DataProvider {
                 linkConfigurations,
             });
             bindings = this.executeSparqlSelect<LinkBinding>(linksInfoQuery, {signal});
-            types = this.queryManyElementTypes(elementIds, signal);
         } else {
             bindings = Promise.resolve({
                 head: {vars: []},
                 results: {bindings: []},
             });
-            types = this.queryManyElementTypes([], signal);
         }
+
+        const types = this.queryManyElementTypes(
+            // Optimization for common case without link configurations
+            this.linkByPredicate.size === 0 ? [] : elementIds,
+            signal
+        );
 
         let linksInfo = getLinksInfo(
             await bindings,
