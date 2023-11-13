@@ -78,7 +78,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                             <Halo {...halo}
                                 instancesSearchCommands={instancesSearchCommands}
                                 connectionsMenuCommands={
-                                    connectionsMenu ? connectionsMenuCommands : undefined
+                                    connectionsMenu === null ? undefined : connectionsMenuCommands
                                 }
                             />
                         )}
