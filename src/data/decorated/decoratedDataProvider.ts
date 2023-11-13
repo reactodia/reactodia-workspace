@@ -1,10 +1,10 @@
 import { raceAbortSignal } from '../../coreUtils/async';
 
 import type * as Rdf from '../rdf/rdfModel';
-import { DataProvider, FilterParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams, LinkedElement } from '../provider';
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyModel,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyType,
 } from '../model';
 
 export interface DecoratedDataProviderOptions {
@@ -13,15 +13,15 @@ export interface DecoratedDataProviderOptions {
 }
 
 export type DecoratedMethodName =
-    | 'classTree'
-    | 'classInfo'
-    | 'propertyInfo'
+    | 'knownElementTypes'
+    | 'knownLinkTypes'
+    | 'elementTypes'
+    | 'propertyTypes'
     | 'linkTypes'
-    | 'linkTypesInfo'
-    | 'elementInfo'
-    | 'linksInfo'
-    | 'linkTypesOf'
-    | 'filter';
+    | 'elements'
+    | 'links'
+    | 'connectedLinkStats'
+    | 'lookup';
 
 export type DataProviderDecorator = <P extends { signal?: AbortSignal }, R>(
     method: DecoratedMethodName,
@@ -52,63 +52,63 @@ export class DecoratedDataProvider implements DataProvider {
         return decorator(method, params[0], bound) as ReturnType<DataProvider[T]>;
     }
 
-    classTree(params: {
+    knownElementTypes(params: {
         signal?: AbortSignal;
-    }): Promise<ClassGraphModel> {
-        return this.decorate('classTree', [params]);
+    }): Promise<ElementTypeGraph> {
+        return this.decorate('knownElementTypes', [params]);
     }
 
-    classInfo(params: {
+    knownLinkTypes(params: {
+        signal?: AbortSignal;
+    }): Promise<LinkType[]> {
+        return this.decorate('knownLinkTypes', [params]);
+    }
+
+    elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<ClassModel[]> {
-        return this.decorate('classInfo', [params]);
+    }): Promise<Map<ElementTypeIri, ElementType>> {
+        return this.decorate('elementTypes', [params]);
     }
 
-    propertyInfo(params: {
+    propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<PropertyModel>> {
-        return this.decorate('propertyInfo', [params]);
+    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+        return this.decorate('propertyTypes', [params]);
     }
 
     linkTypes(params: {
+        linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<Map<LinkTypeIri, LinkType>> {
         return this.decorate('linkTypes', [params]);
     }
 
-    linkTypesInfo(params: {
-        linkTypeIds: ReadonlyArray<LinkTypeIri>;
-        signal?: AbortSignal;
-    }): Promise<LinkType[]> {
-        return this.decorate('linkTypesInfo', [params]);
-    }
-
-    elementInfo(params: {
+    elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<ElementModel>> {
-        return this.decorate('elementInfo', [params]);
+    }): Promise<Map<ElementIri, ElementModel>> {
+        return this.decorate('elements', [params]);
     }
 
-    linksInfo(params: {
+    links(params: {
         elementIds: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        return this.decorate('linksInfo', [params]);
+        return this.decorate('links', [params]);
     }
 
-    linkTypesOf(params: {
+    connectedLinkStats(params: {
         elementId: ElementIri;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
-        return this.decorate('linkTypesOf', [params]);
+        return this.decorate('connectedLinkStats', [params]);
     }
 
-    filter(params: FilterParams): Promise<LinkedElement[]> {
-        return this.decorate('filter', [params]);
+    lookup(params: LookupParams): Promise<LinkedElement[]> {
+        return this.decorate('lookup', [params]);
     }
 }
 

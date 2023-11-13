@@ -314,7 +314,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
             const request = {elementId: selectedElement.iri};
             this.currentRequest = request;
             this.setState({dataState: ProgressState.loading, selectedElement});
-            editor.model.dataProvider.linkTypesOf(request).then(linkTypes => {
+            editor.model.dataProvider.connectedLinkStats(request).then(linkTypes => {
                 if (this.currentRequest !== request) { return; }
                 const {linksOfElement, countMap} = this.computeStateFromRequestResult(linkTypes);
                 this.subscribeOnLinksEvents(linksOfElement);

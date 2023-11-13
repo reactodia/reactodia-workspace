@@ -95,7 +95,7 @@ export class AsyncModel extends DiagramModel {
         this.setDataProvider(dataProvider);
         this.asyncSource.trigger('loadingStart', {source: this});
 
-        return this.dataProvider.linkTypes({signal}).then((linkTypes: LinkType[]) => {
+        return this.dataProvider.knownLinkTypes({signal}).then(linkTypes => {
             const allLinkTypes = this.initLinkTypes(linkTypes);
             return this.loadAndRenderLayout({
                 allLinkTypes,
@@ -125,7 +125,7 @@ export class AsyncModel extends DiagramModel {
         this.setDataProvider(dataProvider);
         this.asyncSource.trigger('loadingStart', {source: this});
 
-        return this.dataProvider.linkTypes({signal}).then(linkTypes => {
+        return this.dataProvider.knownLinkTypes({signal}).then(linkTypes => {
             const allLinkTypes = this.initLinkTypes(linkTypes);
             const diagram = params.diagram ? params.diagram : emptyDiagram();
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
@@ -265,7 +265,7 @@ export class AsyncModel extends DiagramModel {
     }
 
     requestLinksOfType(linkTypeIds?: LinkTypeIri[]): Promise<void> {
-        return this.dataProvider.linksInfo({
+        return this.dataProvider.links({
             elementIds: this.graph.getElements().map(element => element.iri),
             linkTypeIds,
         }).then(links => this.onLinkInfoLoaded(links));
@@ -277,7 +277,7 @@ export class AsyncModel extends DiagramModel {
             return existing;
         }
         const classModel = super.createClass(classId);
-        this.fetcher!.fetchClass(classModel);
+        this.fetcher!.fetchElementType(classModel);
         return classModel;
     }
 
@@ -348,7 +348,7 @@ export class AsyncModel extends DiagramModel {
 
     private async loadEmbeddedElements(elementIri: ElementIri): Promise<Dictionary<ElementModel>> {
         const elements = this.groupByProperties.map(groupBy =>
-            this.dataProvider.filter({
+            this.dataProvider.lookup({
                 refElementId: elementIri,
                 refElementLinkId: groupBy.linkType as LinkTypeIri,
                 linkDirection: groupBy.linkDirection,

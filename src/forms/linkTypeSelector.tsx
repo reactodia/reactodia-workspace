@@ -193,7 +193,7 @@ export function validateLinkType(
     if (alreadyOnDiagram) {
         return Promise.resolve({error: 'The link already exists.', allowChange: false});
     }
-    return editor.model.dataProvider.linksInfo({
+    return editor.model.dataProvider.links({
         elementIds: [currentLink.sourceId, currentLink.targetId],
         linkTypeIds: [currentLink.linkTypeId],
     }).then((links): Pick<LinkValue, 'error' | 'allowChange'> => {

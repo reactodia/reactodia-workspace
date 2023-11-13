@@ -5,7 +5,7 @@ import { getOrCreateSetInMap } from '../../coreUtils/collections';
 import { Debouncer } from '../../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
 
-import { ElementTypeIri, ClassModel, ClassGraphModel, SubtypeEdge } from '../../data/model';
+import { ElementTypeIri, ElementType, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/provider';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
@@ -37,7 +37,7 @@ interface State {
     showOnlyConstructible: boolean;
 }
 
-interface ClassTreeItem extends ClassModel {
+interface ClassTreeItem extends ElementType {
     children: ReadonlyArray<ClassTreeItem>;
 }
 
@@ -157,7 +157,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             this.loadClassesOperation = cancellation;
 
             const classTree = await mapAbortedToNull(
-                this.dataProvider.classTree({signal: cancellation.signal}),
+                this.dataProvider.knownElementTypes({signal: cancellation.signal}),
                 cancellation.signal
             );
             if (classTree === null) {
@@ -239,12 +239,12 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         });
     };
 
-    private setClassTree(graph: ClassGraphModel) {
+    private setClassTree(graph: ElementTypeGraph) {
         const {model} = this.context;
 
         this.classTree = constructTree(graph);
 
-        for (const classModel of graph.classes) {
+        for (const classModel of graph.elementTypes) {
             const existing = model.getClass(classModel.id);
             if (!existing) {
                 const {id, label, count} = classModel;
@@ -319,13 +319,13 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 }
 
-function constructTree(graph: ClassGraphModel): ClassTreeItem[] {
-    interface MutableClassItem extends ClassModel {
+function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
+    interface MutableClassItem extends ElementType {
         children: MutableClassItem[];
     }
 
     const items = new Map<ElementTypeIri, MutableClassItem>();
-    for (const model of graph.classes) {
+    for (const model of graph.elementTypes) {
         const item: MutableClassItem = {
             id: model.id,
             label: model.label,

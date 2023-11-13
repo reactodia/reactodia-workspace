@@ -92,7 +92,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
             const signal = this.filterCancellation.signal;
 
             const request = createRequest({text: searchString});
-            editor.model.dataProvider.filter(request).then(elements => {
+            editor.model.dataProvider.lookup(request).then(elements => {
                 if (signal.aborted) { return; }
                 const existingElements = elements.map(linked => linked.element);
                 this.setState({existingElements, isLoading: false});
@@ -189,10 +189,10 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         const signal = this.loadingItemCancellation.signal;
 
         onChange({value: model, isNew: false, loading: true});
-        const result = await editor.model.dataProvider.elementInfo({elementIds: [model.id]});
+        const result = await editor.model.dataProvider.elements({elementIds: [model.id]});
         if (signal.aborted) { return; }
 
-        const loadedModel = result[model.id];
+        const loadedModel = result.get(model.id)!;
         onChange({value: loadedModel, isNew: false, loading: false});
     }
 

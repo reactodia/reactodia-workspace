@@ -2,9 +2,9 @@ import * as N3 from 'n3';
 
 import { getOrCreateArrayInMap } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, FilterParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams, LinkedElement } from '../provider';
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../model';
 import {
@@ -68,9 +68,9 @@ export interface SparqlDataProviderOptions {
      * Allows to extract/fetch image URLs externally instead of using `imagePropertyUris` option.
      */
     prepareImages?: (
-        elementInfo: Dictionary<ElementModel>,
+        elementInfo: Iterable<ElementModel>,
         signal: AbortSignal | undefined
-    ) => Promise<Dictionary<string>>;
+    ) => Promise<Map<ElementIri, string>>;
 
     /**
      * Allows to extract/fetch labels separately from SPARQL query as an alternative or
@@ -139,13 +139,13 @@ export class SparqlDataProvider implements DataProvider {
             Boolean(settings.openWorldProperties);
     }
 
-    async classTree(params: {
+    async knownElementTypes(params: {
         signal?: AbortSignal;
-    }): Promise<ClassGraphModel> {
+    }): Promise<ElementTypeGraph> {
         const {signal} = params;
         const {defaultPrefix, schemaLabelProperty, classTreeQuery} = this.settings;
         if (!classTreeQuery) {
-            return {classes: [], subtypeOf: []};
+            return {elementTypes: [], subtypeOf: []};
         }
 
         const query = defaultPrefix + resolveTemplate(classTreeQuery, {
@@ -155,20 +155,20 @@ export class SparqlDataProvider implements DataProvider {
         const classTree = getClassTree(result);
 
         if (this.options.prepareLabels) {
-            await attachLabels(classTree.classes, this.options.prepareLabels, signal);
+            await attachLabels(classTree.elementTypes, this.options.prepareLabels, signal);
         }
 
         return classTree;
     }
 
-    async propertyInfo(params: {
+    async propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<PropertyModel>> {
+    }): Promise<Map<PropertyTypeIri, PropertyType>> {
         const {propertyIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, propertyInfoQuery} = this.settings;
 
-        let properties: Dictionary<PropertyModel>;
+        let properties: Map<PropertyTypeIri, PropertyType>;
         if (propertyInfoQuery) {
             const ids = propertyIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
@@ -178,27 +178,27 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
             properties = getPropertyInfo(result);
         } else {
-            properties = {};
+            properties = new Map<PropertyTypeIri, PropertyType>();
             for (const id of propertyIds) {
-                properties[id] = {id, label: []};
+                properties.set(id, {id, label: []});
             }
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(Object.values(properties), this.options.prepareLabels, signal);
+            await attachLabels(properties.values(), this.options.prepareLabels, signal);
         }
 
         return properties;
     }
 
-    async classInfo(params: {
+    async elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<ClassModel[]> {
+    }): Promise<Map<ElementTypeIri, ElementType>> {
         const {classIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, classInfoQuery} = this.settings;
 
-        let classes: ClassModel[];
+        let classes: Map<ElementTypeIri, ElementType>;
         if (classInfoQuery) {
             const ids = classIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(classInfoQuery, {
@@ -208,24 +208,27 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
             classes = getClassInfo(result);
         } else {
-            classes = classIds.map((id): ClassModel => ({id, label: []}));
+            classes = new Map<ElementTypeIri, ElementType>();
+            for (const classId of classIds) {
+                classes.set(classId, {id: classId, label: []});
+            }
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(classes, this.options.prepareLabels, signal);
+            await attachLabels(classes.values(), this.options.prepareLabels, signal);
         }
 
         return classes;
     }
 
-    async linkTypesInfo(params: {
+    async linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<Map<LinkTypeIri, LinkType>> {
         const {linkTypeIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, linkTypesInfoQuery} = this.settings;
 
-        let linkTypes: LinkType[];
+        let linkTypes: Map<LinkTypeIri, LinkType>;
         if (linkTypesInfoQuery) {
             const ids = linkTypeIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
@@ -235,19 +238,20 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
             linkTypes = getLinkTypes(result);
         } else {
-            linkTypes = linkTypeIds.map((id): LinkType => (
-                {id, label: []}
-            ));
+            linkTypes = new Map<LinkTypeIri, LinkType>();
+            for (const typeId of linkTypeIds) {
+                linkTypes.set(typeId, {id: typeId, label: []});
+            }
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(linkTypes, this.options.prepareLabels, signal);
+            await attachLabels(linkTypes.values(), this.options.prepareLabels, signal);
         }
 
         return linkTypes;
     }
 
-    async linkTypes(params: {
+    async knownLinkTypes(params: {
         signal?: AbortSignal;
     }): Promise<LinkType[]> {
         const {signal} = params;
@@ -264,16 +268,16 @@ export class SparqlDataProvider implements DataProvider {
         const linkTypes = getLinkTypes(result);
 
         if (this.options.prepareLabels) {
-            await attachLabels(linkTypes, this.options.prepareLabels, signal);
+            await attachLabels(linkTypes.values(), this.options.prepareLabels, signal);
         }
 
-        return linkTypes;
+        return Array.from(linkTypes.values());
     }
 
-    async elementInfo(params: {
+    async elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<ElementModel>> {
+    }): Promise<Map<ElementIri, ElementModel>> {
         const {elementIds, signal} = params;
 
         let triples: Rdf.Quad[];
@@ -304,7 +308,7 @@ export class SparqlDataProvider implements DataProvider {
         );
 
         if (this.options.prepareLabels) {
-            await attachLabels(Object.values(elementModels), this.options.prepareLabels, signal);
+            await attachLabels(elementModels.values(), this.options.prepareLabels, signal);
         }
 
         if (this.options.prepareImages) {
@@ -317,11 +321,11 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     private async attachImages(
-        elementsInfo: Dictionary<ElementModel>,
+        elements: Map<ElementIri, ElementModel>,
         types: string[],
         signal: AbortSignal | undefined
     ): Promise<void> {
-        const ids = Object.keys(elementsInfo).map(escapeIri).map(id => ` ( ${id} )`).join(' ');
+        const ids = Array.from(elements.keys(), id => ` ( ${escapeIri(id)} )`).join(' ');
         const typesString = types.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
 
         const query = this.settings.defaultPrefix + `
@@ -334,14 +338,14 @@ export class SparqlDataProvider implements DataProvider {
         `;
         try {
             const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
-            enrichElementsWithImages(bindings, elementsInfo);
+            enrichElementsWithImages(bindings, elements);
         } catch (err) {
             // tslint:disable-next-line:no-console
             console.error(err);
         }
     }
 
-    async linksInfo(params: {
+    async links(params: {
         elementIds: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
@@ -380,7 +384,7 @@ export class SparqlDataProvider implements DataProvider {
         return linksInfo;
     }
 
-    async linkTypesOf(params: {
+    async connectedLinkStats(params: {
         elementId: ElementIri;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
@@ -452,9 +456,9 @@ export class SparqlDataProvider implements DataProvider {
         return foundLinkStats;
     }
 
-    async filter(baseParams: FilterParams): Promise<LinkedElement[]> {
+    async lookup(baseParams: LookupParams): Promise<LinkedElement[]> {
         const {signal} = baseParams;
-        const params: FilterParams = {
+        const params: LookupParams = {
             ...baseParams,
             limit: baseParams.limit === undefined ? 100 : baseParams.limit,
         };
@@ -481,7 +485,7 @@ export class SparqlDataProvider implements DataProvider {
         return linkedElements;
     }
 
-    private createFilterQuery(params: FilterParams): string {
+    private createFilterQuery(params: LookupParams): string {
         if (!params.refElementId && params.refElementLinkId) {
             throw new Error('Cannot execute refElementLink filter without refElement');
         }
@@ -753,7 +757,7 @@ interface LabeledItem {
 }
 
 async function attachLabels(
-    items: ReadonlyArray<LabeledItem>,
+    items: Iterable<LabeledItem>,
     fetchLabels: NonNullable<SparqlDataProviderOptions['prepareLabels']>,
     signal: AbortSignal | undefined
 ): Promise<void> {
@@ -771,14 +775,15 @@ async function attachLabels(
 }
 
 function prepareElementImages(
-    elementsInfo: Dictionary<ElementModel>,
+    elements: Map<ElementIri, ElementModel>,
     fetchImages: NonNullable<SparqlDataProviderOptions['prepareImages']>,
     signal: AbortSignal | undefined
 ): Promise<void> {
-    return fetchImages(elementsInfo, signal).then(images => {
-        for (const iri in images) {
-            if (Object.prototype.hasOwnProperty.call(images, iri) && elementsInfo[iri]) {
-                (elementsInfo[iri] as { image: string }).image = images[iri];
+    return fetchImages(elements.values(), signal).then(images => {
+        for (const [iri, image] of images) {
+            const model = elements.get(iri) as { image: string | undefined };
+            if (model) {
+                model.image = image;
             }
         }
     });

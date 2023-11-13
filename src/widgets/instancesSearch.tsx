@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { EventObserver, Events } from '../coreUtils/events';
 
 import { ElementModel, ElementIri } from '../data/model';
-import { FilterParams, LinkedElement } from '../data/provider';
+import { LookupParams, LinkedElement } from '../data/provider';
 import { Element as DiagramElement, FatLinkType, FatClassModel } from '../diagram/elements';
 
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
@@ -55,7 +55,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     private readonly listener = new EventObserver();
 
     private requestCancellation = new AbortController();
-    private currentRequest: FilterParams | undefined;
+    private currentRequest: LookupParams | undefined;
 
     constructor(props: InstancesSearchProps, context: any) {
         super(props, context);
@@ -229,7 +229,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
         this.requestCancellation.abort();
 
-        let request: FilterParams;
+        let request: LookupParams;
         if (loadMoreItems) {
             if (!this.currentRequest) {
                 throw new Error('Cannot request more items without initial request.');
@@ -265,7 +265,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             moreItemsAvailable: false,
         });
 
-        model.dataProvider.filter(request).then(elements => {
+        model.dataProvider.lookup(request).then(elements => {
             if (signal.aborted) { return; }
             this.processFilterData(elements);
             triggerWorkspaceEvent(WorkspaceEventKey.searchQueryItem);
@@ -315,7 +315,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 }
 
-export function createRequest(criteria: SearchCriteria): FilterParams {
+export function createRequest(criteria: SearchCriteria): LookupParams {
     const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
     return {
         text,

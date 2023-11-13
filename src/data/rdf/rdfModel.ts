@@ -17,16 +17,22 @@ export type DataFactory = RdfJs.DataFactory;
 export const DefaultDataFactory: RdfJs.DataFactory = N3.DataFactory;
 
 export function looksLikeTerm(value: unknown): value is Term {
-    if (!(typeof value === 'object' && value && 'termType' in value)) {
+    if (!(
+        typeof value === 'object' && value &&
+        'termType' in value &&
+        'equals' in value &&
+        typeof value.equals === 'function'
+    )) {
         return false;
     }
-    const { termType } = value as Term;
+    const {termType} = value as Term;
     switch (termType) {
         case 'NamedNode':
         case 'Literal':
         case 'BlankNode':
         case 'DefaultGraph':
         case 'Variable':
+        case 'Quad':
             return true;
         default:
             return false;

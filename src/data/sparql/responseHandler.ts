@@ -3,7 +3,7 @@ import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    Dictionary, LinkType, ClassModel, ClassGraphModel, ElementModel, LinkModel, PropertyModel, LinkCount,
+    LinkType, ElementType, ElementTypeGraph, ElementModel, LinkModel, PropertyType, LinkCount,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, sameLink, hashLink
 } from '../model';
@@ -27,7 +27,7 @@ interface MutableClassModel {
     count?: number;
 }
 
-export function getClassTree(response: SparqlResponse<ClassBinding>): ClassGraphModel {
+export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTypeGraph {
     const nodes = new Map<ElementTypeIri, MutableClassModel>();
     const edges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
 
@@ -70,12 +70,14 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ClassGraph
     }
 
     return {
-        classes: Array.from(nodes.values()),
+        elementTypes: Array.from(nodes.values()),
         subtypeOf: Array.from(edges.values()),
     };
 }
 
-export function getClassInfo(response: SparqlResponse<ClassBinding>): ClassModel[] {
+export function getClassInfo(
+    response: SparqlResponse<ClassBinding>
+): Map<ElementTypeIri, ElementType> {
     const classes = new Map<ElementTypeIri, MutableClassModel>();
     for (const binding of response.results.bindings) {
         if (!binding.class) { continue; }
@@ -100,7 +102,7 @@ export function getClassInfo(response: SparqlResponse<ClassBinding>): ClassModel
         }
     }
 
-    return Array.from(classes.values());
+    return classes;
 }
 
 interface MutablePropertyModel {
@@ -108,7 +110,9 @@ interface MutablePropertyModel {
     label: Rdf.Literal[];
 }
 
-export function getPropertyInfo(response: SparqlResponse<PropertyBinding>): Dictionary<PropertyModel> {
+export function getPropertyInfo(
+    response: SparqlResponse<PropertyBinding>
+): Map<PropertyTypeIri, PropertyType> {
     const models = new Map<PropertyTypeIri, MutablePropertyModel>();
 
     for (const binding of response.results.bindings) {
@@ -123,7 +127,7 @@ export function getPropertyInfo(response: SparqlResponse<PropertyBinding>): Dict
             });
         }
     }
-    return mapToObject(models);
+    return models;
 }
 
 interface MutableLinkType {
@@ -132,7 +136,9 @@ interface MutableLinkType {
     count?: number;
 }
 
-export function getLinkTypes(response: SparqlResponse<LinkTypeBinding>): LinkType[] {
+export function getLinkTypes(
+    response: SparqlResponse<LinkTypeBinding>
+): Map<LinkTypeIri, LinkType> {
     const linkTypes = new Map<LinkTypeIri, MutableLinkType>();
 
     for (const binding of response.results.bindings) {
@@ -145,13 +151,13 @@ export function getLinkTypes(response: SparqlResponse<LinkTypeBinding>): LinkTyp
         }
     }
 
-    return Array.from(linkTypes.values());
+    return linkTypes;
 }
 
 export function triplesToElementBinding(
     triples: ReadonlyArray<Rdf.Quad>,
 ): SparqlResponse<ElementBinding> {
-    const map: Dictionary<ElementBinding> = {};
+    const elements = new Map<ElementIri, ElementBinding>();
     const convertedResponse: SparqlResponse<ElementBinding> = {
         head: {
             vars: ['inst', 'class', 'label', 'blankType', 'propType', 'propValue'],
@@ -161,33 +167,36 @@ export function triplesToElementBinding(
         },
     };
     for (const t of triples) {
-        const subject = t.subject.value;
-        if (!map[subject]) {
-            map[subject] = createAndPushBinding(t);
+        if (!isRdfIri(t.subject)) {
+            continue;
+        }
+        const subject = t.subject.value as ElementIri;
+        if (!elements.has(subject)) {
+            elements.set(subject, createAndPushBinding(t));
         }
 
         if (t.predicate.value === LABEL_URI && isRdfLiteral(t.object)) { // Label
-            if (map[subject].label) {
-                map[subject] = createAndPushBinding(t);
+            if (elements.get(subject)!.label) {
+                elements.set(subject, createAndPushBinding(t));
             }
-            map[subject].label = t.object;
+            elements.get(subject)!.label = t.object;
         } else if ( // Class
             t.predicate.value === RDF_TYPE_URI &&
             isRdfIri(t.object) && isRdfIri(t.predicate)
         ) {
-            if (map[subject].class) {
-                map[subject] = createAndPushBinding(t);
+            if (elements.get(subject)!.class) {
+                elements.set(subject, createAndPushBinding(t));
             }
-            map[subject].class = t.object;
+            elements.get(subject)!.class = t.object;
         } else if (
             (isRdfIri(t.object) || isRdfLiteral(t.object)) &&
             isRdfIri(t.predicate)
         ) { // Property
-            if (map[subject].propType) {
-                map[subject] = createAndPushBinding(t);
+            if (elements.get(subject)!.propType) {
+                elements.set(subject, createAndPushBinding(t));
             }
-            map[subject].propType = t.predicate;
-            map[subject].propValue = t.object;
+            elements.get(subject)!.propType = t.predicate;
+            elements.get(subject)!.propValue = t.object;
         }
     }
 
@@ -215,7 +224,7 @@ export function getElementsInfo(
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
     propertyByPredicate: ReadonlyMap<string, readonly PropertyConfiguration[]> = EMPTY_MAP,
     openWorldProperties = true,
-): Dictionary<ElementModel> {
+): Map<ElementIri, ElementModel> {
     const instances = new Map<ElementIri, MutableElementModel>();
 
     for (const binding of response.results.bindings) {
@@ -238,7 +247,7 @@ export function getElementsInfo(
         }
     }
 
-    return mapToObject(instances);
+    return instances;
 }
 
 function mapPropertiesByConfig(
@@ -266,13 +275,15 @@ function mapPropertiesByConfig(
 
 export function enrichElementsWithImages(
     response: SparqlResponse<ElementImageBinding>,
-    elementsInfo: Dictionary<ElementModel>,
+    elements: Map<ElementIri, ElementModel>,
 ): void {
-    const respElements = response.results.bindings;
-    for (const respEl of respElements) {
-        const elementInfo = elementsInfo[respEl.inst.value];
+    for (const binding of response.results.bindings) {
+        if (!isRdfIri(binding.inst)) {
+            continue;
+        }
+        const elementInfo = elements.get(binding.inst.value as ElementIri);
         if (elementInfo) {
-            (elementInfo as MutableElementModel).image = respEl.image.value;
+            (elementInfo as MutableElementModel).image = binding.image.value;
         }
     }
 }

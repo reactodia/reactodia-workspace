@@ -1,7 +1,7 @@
 import { BufferingQueue } from '../coreUtils/scheduler';
 
 import {
-    ElementModel, ClassModel, LinkType, PropertyModel,
+    ElementModel, ElementType, LinkType, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { DataProvider } from '../data/provider';
@@ -14,17 +14,17 @@ export class DataFetcher {
 
     private classQueue = new BufferingQueue<ElementTypeIri>(classIds => {
         this.dataProvider
-            .classInfo({classIds, signal: this.signal})
-            .then(this.onClassesLoaded);
+            .elementTypes({classIds, signal: this.signal})
+            .then(this.onElementTypesLoaded);
     });
     private linkTypeQueue = new BufferingQueue<LinkTypeIri>(linkTypeIds => {
         this.dataProvider
-            .linkTypesInfo({linkTypeIds, signal: this.signal})
+            .linkTypes({linkTypeIds, signal: this.signal})
             .then(this.onLinkTypesLoaded);
     });
     private propertyTypeQueue = new BufferingQueue<PropertyTypeIri>(propertyIds => {
         this.dataProvider
-            .propertyInfo({propertyIds, signal: this.signal})
+            .propertyTypes({propertyIds, signal: this.signal})
             .then(this.onPropertyTypesLoaded);
     });
 
@@ -46,25 +46,25 @@ export class DataFetcher {
             return Promise.resolve();
         }
         return this.dataProvider
-            .elementInfo({elementIds: [...elementIris], signal: this.signal})
+            .elements({elementIds: [...elementIris], signal: this.signal})
             .then(this.onElementInfoLoaded);
     }
 
-    private onElementInfoLoaded = (elements: { [elementId: string]: ElementModel }) => {
+    private onElementInfoLoaded = (elements: Map<ElementIri, ElementModel>) => {
         for (const element of this.graph.getElements()) {
-            const loadedModel = elements[element.iri];
+            const loadedModel = elements.get(element.iri);
             if (loadedModel) {
                 element.setData(loadedModel);
             }
         }
     };
 
-    fetchClass(model: FatClassModel): void {
+    fetchElementType(model: FatClassModel): void {
         this.classQueue.push(model.id);
     }
 
-    private onClassesLoaded = (classInfos: ClassModel[]) => {
-        for (const {id, label, count} of classInfos) {
+    private onElementTypesLoaded = (elementTypes: Map<ElementTypeIri, ElementType>) => {
+        for (const {id, label, count} of elementTypes.values()) {
             const model = this.graph.getClass(id);
             if (!model) { continue; }
             model.setLabel(label);
@@ -78,8 +78,8 @@ export class DataFetcher {
         this.linkTypeQueue.push(linkType.id);
     }
 
-    private onLinkTypesLoaded = (linkTypesInfo: LinkType[]) => {
-        for (const {id, label} of linkTypesInfo) {
+    private onLinkTypesLoaded = (linkTypes: Map<LinkTypeIri, LinkType>) => {
+        for (const {id, label} of linkTypes.values()) {
             const model = this.graph.getLinkType(id);
             if (!model) { continue; }
             model.setLabel(label);
@@ -87,14 +87,11 @@ export class DataFetcher {
     };
 
     fetchPropertyType(propertyType: RichProperty): void {
-        if (!this.dataProvider.propertyInfo) { return; }
         this.propertyTypeQueue.push(propertyType.id);
     }
 
-    private onPropertyTypesLoaded = (propertyModels: { [propertyId: string]: PropertyModel }) => {
-        for (const propId in propertyModels) {
-            if (!Object.prototype.hasOwnProperty.call(propertyModels, propId)) { continue; }
-            const {id, label} = propertyModels[propId];
+    private onPropertyTypesLoaded = (propertyTypes: Map<PropertyTypeIri, PropertyType>) => {
+        for (const {id, label} of propertyTypes.values()) {
             const targetProperty = this.graph.getProperty(id);
             if (targetProperty) {
                 targetProperty.setLabel(label);

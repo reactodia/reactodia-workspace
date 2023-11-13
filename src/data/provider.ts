@@ -1,6 +1,6 @@
 import type { DataFactory } from './rdf/rdfModel';
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
+    Dictionary, ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from './model';
 
@@ -13,54 +13,54 @@ export interface DataProvider {
     /**
      * Returns the structure of the class tree.
      */
-    classTree(params: {
+    knownElementTypes(params: {
         signal?: AbortSignal;
-    }): Promise<ClassGraphModel>;
+    }): Promise<ElementTypeGraph>;
 
     /**
      * Returns link types along with statistics.
      */
-    linkTypes(params: {
+    knownLinkTypes(params: {
         signal?: AbortSignal;
     }): Promise<LinkType[]>;
 
     /**
      * Class information
      */
-    classInfo(params: {
+    elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<ClassModel[]>;
+    }): Promise<Map<ElementTypeIri, ElementType>>;
 
     /**
      * Data properties information
      */
-    propertyInfo(params: {
+    propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<PropertyModel>>;
+    }): Promise<Map<PropertyTypeIri, PropertyType>>;
 
     /**
      * Link type information.
      */
-    linkTypesInfo(params: {
+    linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<LinkType[]>;
+    }): Promise<Map<LinkTypeIri, LinkType>>;
 
     /**
      * Getting the elements from the data source on diagram initialization and on navigation events
      */
-    elementInfo(params: {
+    elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<ElementModel>>;
+    }): Promise<Map<ElementIri, ElementModel>>;
 
     /**
      * Should return all links between elements.
      * linkTypeIds is ignored in current sparql providers and is subject to be removed
      */
-    linksInfo(params: {
+    links(params: {
         elementIds: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
@@ -69,20 +69,21 @@ export interface DataProvider {
     /**
      * Get link types of element to build navigation menu
      */
-    linkTypesOf(params: {
+    connectedLinkStats(params: {
         elementId: ElementIri;
         signal?: AbortSignal;
     }): Promise<LinkCount[]>;
 
     /**
-     * Supports filter functionality with different filters - by type,
+     * Looks up elements with different filters:
+     *  - by type (),
      * by element and it's connection, by full-text search.
      * Implementation should implement all possible combinations.
      */
-    filter(params: FilterParams): Promise<LinkedElement[]>;
+    lookup(params: LookupParams): Promise<LinkedElement[]>;
 }
 
-export interface FilterParams {
+export interface LookupParams {
     /**
      * Filter by element type.
      */

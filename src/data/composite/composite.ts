@@ -1,20 +1,20 @@
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, FilterParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams, LinkedElement } from '../provider';
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../model';
 import {
     CompositeResponse,
-    mergeClassTree,
-    mergePropertyInfo,
-    mergeClassInfo,
-    mergeLinkTypesInfo,
+    mergeKnownElementTypes,
+    mergeKnownLinkTypes,
+    mergeElementTypes,
+    mergePropertyTypes,
     mergeLinkTypes,
     mergeElementInfo,
     mergeLinksInfo,
-    mergeLinkTypesOf,
-    mergeFilter,
+    mergeConnectedLinkStats,
+    mergeLookup,
 } from './mergeUtils';
 
 export interface CompositeDataProviderOptions {
@@ -53,62 +53,62 @@ export class CompositeDataProvider implements DataProvider {
         return merged;
     }
 
-    async classTree(params: {
+    knownElementTypes(params: {
         signal?: AbortSignal;
-    }): Promise<ClassGraphModel> {
-        return this.requestWithMerge(p => p.classTree(params), mergeClassTree);
+    }): Promise<ElementTypeGraph> {
+        return this.requestWithMerge(p => p.knownElementTypes(params), mergeKnownElementTypes);
     }
 
-    async propertyInfo(params: {
-        propertyIds: ReadonlyArray<PropertyTypeIri>;
-        signal?: AbortSignal;
-    }): Promise<Dictionary<PropertyModel>> {
-        return this.requestWithMerge(p => p.propertyInfo(params), mergePropertyInfo);
-    }
-
-    classInfo(params: {
-        classIds: ReadonlyArray<ElementTypeIri>;
-        signal?: AbortSignal;
-    }): Promise<ClassModel[]> {
-        return this.requestWithMerge(p => p.classInfo(params), mergeClassInfo);
-    }
-
-    linkTypesInfo(params: {
-        linkTypeIds: ReadonlyArray<LinkTypeIri>;
+    knownLinkTypes(params: {
         signal?: AbortSignal;
     }): Promise<LinkType[]> {
-        return this.requestWithMerge(p => p.linkTypesInfo(params), mergeLinkTypesInfo);
+        return this.requestWithMerge(p => p.knownLinkTypes(params), mergeKnownLinkTypes);
+    }
+
+    elementTypes(params: {
+        classIds: ReadonlyArray<ElementTypeIri>;
+        signal?: AbortSignal;
+    }): Promise<Map<ElementTypeIri, ElementType>> {
+        return this.requestWithMerge(p => p.elementTypes(params), mergeElementTypes);
+    }
+
+    propertyTypes(params: {
+        propertyIds: ReadonlyArray<PropertyTypeIri>;
+        signal?: AbortSignal;
+    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+        return this.requestWithMerge(p => p.propertyTypes(params), mergePropertyTypes);
     }
 
     linkTypes(params: {
+        linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<Map<LinkTypeIri, LinkType>> {
         return this.requestWithMerge(p => p.linkTypes(params), mergeLinkTypes);
     }
 
-    elementInfo(params: {
+    elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<ElementModel>> {
-        return this.requestWithMerge(p => p.elementInfo(params), mergeElementInfo);
+    }): Promise<Map<ElementIri, ElementModel>> {
+        return this.requestWithMerge(p => p.elements(params), mergeElementInfo);
     }
 
-    linksInfo(params: {
+    links(params: {
         elementIds: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        return this.requestWithMerge(p => p.linksInfo(params), mergeLinksInfo);
+        return this.requestWithMerge(p => p.links(params), mergeLinksInfo);
     }
 
-    linkTypesOf(params: {
+    connectedLinkStats(params: {
         elementId: ElementIri;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
-        return this.requestWithMerge(p => p.linkTypesOf(params), mergeLinkTypesOf);
+        return this.requestWithMerge(p => p.connectedLinkStats(params), mergeConnectedLinkStats);
     }
 
-    filter(params: FilterParams): Promise<LinkedElement[]> {
-        return this.requestWithMerge(p => p.filter(params), mergeFilter);
+    lookup(params: LookupParams): Promise<LinkedElement[]> {
+        return this.requestWithMerge(p => p.lookup(params), mergeLookup);
     }
 }

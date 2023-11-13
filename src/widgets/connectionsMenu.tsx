@@ -167,7 +167,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         this.loadingState = ProgressState.loading;
         this.links = [];
         this.countMap = {};
-        model.dataProvider.linkTypesOf({elementId: target.iri})
+        model.dataProvider.connectedLinkStats({elementId: target.iri})
             .then(linkTypes => {
                 this.loadingState = ProgressState.completed;
 
@@ -209,7 +209,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         this.linkDataChunk = linkDataChunk;
         this.objects = [];
 
-        model.dataProvider.filter({
+        model.dataProvider.lookup({
             refElementId: target.iri,
             refElementLinkId: link === this.ALL_RELATED_ELEMENTS_LINK ? undefined : link.id,
             linkDirection: direction,

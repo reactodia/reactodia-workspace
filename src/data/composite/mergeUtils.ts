@@ -1,10 +1,10 @@
-import { mapToObject } from '../../coreUtils/collections';
 import { HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
-    ElementIri, ElementTypeIri, LinkTypeIri, hashSubtypeEdge, equalSubtypeEdges,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount,
+    PropertyTypeIri, PropertyType, ElementIri, ElementTypeIri, LinkTypeIri,
+    hashLink, sameLink, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
 import type { LinkedElement } from '../provider';
 import type { DataProviderDefinition } from './composite';
@@ -13,12 +13,12 @@ const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
 
 export type CompositeResponse<T> = readonly [T, DataProviderDefinition];
 
-export function mergeClassTree(composite: CompositeResponse<ClassGraphModel>[]): ClassGraphModel {
-    const classes = new Map<ElementTypeIri, ClassModel>();
+export function mergeKnownElementTypes(composite: CompositeResponse<ElementTypeGraph>[]): ElementTypeGraph {
+    const classes = new Map<ElementTypeIri, ElementType>();
     const edges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
 
-    for (const [response, provider] of composite) {
-        for (const model of response.classes) {
+    for (const [response] of composite) {
+        for (const model of response.elementTypes) {
             const existing = classes.get(model.id);
             classes.set(model.id, existing ? mergeClassModel(existing, model) : model);
         }
@@ -28,95 +28,88 @@ export function mergeClassTree(composite: CompositeResponse<ClassGraphModel>[]):
     }
 
     return {
-        classes: Array.from(classes.values()),
+        elementTypes: Array.from(classes.values()),
         subtypeOf: Array.from(edges.values()),
     };
 }
 
-export function mergePropertyInfo(
-    response: CompositeResponse<Dictionary<PropertyModel>>[],
-): Dictionary<PropertyModel> {
-    const result: Dictionary<PropertyModel> = {};
-    const props = response.map(([response]) => response);
-    for (const model of props) {
-        const keys = Object.keys(model);
-        for (const key of keys) {
-            const prop = model[key];
-            if (!result[key]) {
-                result[key] = prop;
-            } else {
-                result[key] = {
-                    ...result[key],
-                    label: mergeLabels(result[key].label, prop.label)
-                };
-            }
+export function mergeKnownLinkTypes(responses: CompositeResponse<LinkType[]>[]): LinkType[] {
+    const result = new Map<LinkTypeIri, LinkType>();
+    for (const [response] of responses) {
+        for (const model of response) {
+            const existing = result.get(model.id);
+            result.set(model.id, existing ? mergeLinkType(existing, model) : model);
+        }
+    }
+    return Array.from(result.values());
+}
+
+export function mergePropertyTypes(
+    responses: CompositeResponse<Map<PropertyTypeIri, PropertyType>>[],
+): Map<PropertyTypeIri, PropertyType> {
+    return mergeMapResponses(responses, mergePropertyModel);
+}
+
+function mergePropertyModel(a: PropertyType, b: PropertyType): PropertyType {
+    return {
+        ...a,
+        ...b,
+        label: mergeLabels(a.label, b.label),
+    };
+}
+
+export function mergeElementTypes(
+    responses: CompositeResponse<Map<ElementTypeIri, ElementType>>[]
+): Map<ElementTypeIri, ElementType> {
+    return mergeMapResponses(responses, mergeClassModel);
+}
+
+export function mergeLinkTypes(
+    responses: CompositeResponse<Map<LinkTypeIri, LinkType>>[]
+): Map<LinkTypeIri, LinkType> {
+    return mergeMapResponses(responses, mergeLinkType);
+}
+
+function mergeLinkType(a: LinkType, b: LinkType): LinkType {
+    return {
+        ...a,
+        ...b,
+        label: mergeLabels(a.label, b.label),
+        count: a.count || b.count
+            ? (a.count ?? 0) + (b.count ?? 0)
+            : undefined,
+    };
+}
+
+function mergeMapResponses<K extends string, V>(
+    responses: Iterable<CompositeResponse<Map<K, V>>>,
+    mergeItems: (a: V, b: V) => V
+): Map<K, V> {
+    const result = new Map<K, V>();
+    for (const [response] of responses) {
+        for (const [key, model] of response) {
+            const existing = result.get(key);
+            result.set(key, existing ? mergeItems(existing, model) : model);
         }
     }
     return result;
 }
 
-export function mergeClassInfo(response: CompositeResponse<ClassModel[]>[]): ClassModel[] {
-    const dictionaries = response.map(([response]) => response);
-    const dictionary: Dictionary<ClassModel> = {};
-
-    for (const models of dictionaries) {
-        for (const model of models) {
-            if (!dictionary[model.id]) {
-                dictionary[model.id] = model;
-            } else {
-                dictionary[model.id] = mergeClassModel(dictionary[model.id], model);
-            }
-        }
-    }
-    return Object.keys(dictionary).map(key => dictionary[key]);
-}
-
-export function mergeLinkTypesInfo(response: CompositeResponse<LinkType[]>[]): LinkType[] {
-    const lists = response.map(([response]) => response);
-
-    const mergeLinkType = (a: LinkType, b: LinkType): LinkType => {
-        return {
-            id: a.id,
-            label: mergeLabels(a.label, b.label),
-            count: a.count || b.count
-                ? (a.count ?? 0) + (b.count ?? 0)
-                : undefined,
-        };
-    };
-
-    const dictionary: Dictionary<LinkType> = {};
-
-    for (const linkTypes of lists) {
-        for (const linkType of linkTypes) {
-            if (!dictionary[linkType.id]) {
-                dictionary[linkType.id] = linkType;
-            } else {
-                dictionary[linkType.id] = mergeLinkType(dictionary[linkType.id], linkType);
-            }
-        }
-    }
-    return Object.keys(dictionary).map(key => dictionary[key]);
-}
-
-export function mergeLinkTypes(response: CompositeResponse<LinkType[]>[]): LinkType[] {
-    return mergeLinkTypesInfo(response);
-}
-
-export function mergeElementInfo(composite: CompositeResponse<Dictionary<ElementModel>>[]): Dictionary<ElementModel> {
-    const models = new Map<ElementIri, ElementModel>();
-
-    for (const [response, provider] of composite) {
-        for (const baseModel of Object.keys(response).map(k => response[k])) {
+export function mergeElementInfo(
+    responses: CompositeResponse<Map<ElementIri, ElementModel>>[]
+): Map<ElementIri, ElementModel> {
+    const result = new Map<ElementIri, ElementModel>();
+    for (const [response, provider] of responses) {
+        for (const [key, baseModel] of response) {
             const model: ElementModel = {
                 ...baseModel,
                 properties: addSourceProperty(baseModel.properties, provider),
             };
-            const existing = models.get(model.id);
-            models.set(model.id, existing ? mergeElementModels(existing, model) : model);
+            const existing = result.get(key);
+            result.set(key, existing ? mergeElementModels(existing, model) : model);
         }
     }
-
-    return mapToObject(models);
+    return result;
 }
 
 function addSourceProperty(
@@ -135,7 +128,8 @@ function mergeElementModels(a: ElementModel, b: ElementModel): ElementModel {
         typeSet.add(t);
     }
     return {
-        id: a.id,
+        ...a,
+        ...b,
         label: mergeLabels(a.label, b.label),
         types: Array.from(typeSet).sort(),
         image: a.image || b.image,
@@ -143,7 +137,7 @@ function mergeElementModels(a: ElementModel, b: ElementModel): ElementModel {
     };
 }
 
-export function mergeProperties(
+function mergeProperties(
     a: { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
     b: { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> }
 ): { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> } {
@@ -175,48 +169,38 @@ export function mergeProperties(
     return result;
 }
 
-export function mergeLinksInfo(response: CompositeResponse<LinkModel[]>[]): LinkModel[] {
-    const lists = response.map(([response]) => response);
-    const resultInfo: LinkModel[] = [];
-
-    function compareLinksInfo(a: LinkModel, b: LinkModel): boolean {
-        return a.sourceId === b.sourceId &&
-               a.targetId === b.targetId &&
-               a.linkTypeId === b.linkTypeId;
-    }
-
-    for (const linkInfo of lists) {
-        for (const linkModel of linkInfo) {
-            if (!resultInfo.some(l => compareLinksInfo(l, linkModel))) {
-                resultInfo.push(linkModel);
+export function mergeLinksInfo(responses: CompositeResponse<LinkModel[]>[]): LinkModel[] {
+    const resultSet = new HashSet(hashLink, sameLink);
+    const result: LinkModel[] = [];
+    for (const [response] of responses) {
+        for (const link of response) {
+            if (!resultSet.has(link)) {
+                resultSet.add(link);
+                result.push(link);
             }
         }
     }
-    return resultInfo;
+    return result;
 }
 
-export function mergeLinkTypesOf(response: CompositeResponse<LinkCount[]>[]): LinkCount[] {
-    const lists = response.map(([response]) => response);
-    const dictionary: Dictionary<LinkCount> = {};
-
-    const merge = (a: LinkCount, b: LinkCount): LinkCount => {
-        return {
-            id: a.id,
-            inCount: a.inCount + b.inCount,
-            outCount: a.outCount + b.outCount,
-        };
-    };
-
-    for (const linkCount of lists) {
-        for (const lCount of linkCount) {
-            if (!dictionary[lCount.id]) {
-                dictionary[lCount.id] = lCount;
-            } else {
-                dictionary[lCount.id] = merge(lCount, dictionary[lCount.id]);
-            }
+export function mergeConnectedLinkStats(responses: CompositeResponse<LinkCount[]>[]): LinkCount[] {
+    const result = new Map<LinkTypeIri, LinkCount>();
+    for (const [response] of responses) {
+        for (const model of response) {
+            const existing = result.get(model.id);
+            result.set(model.id, existing ? mergeLinkCount(existing, model) : model);
         }
     }
-    return Object.keys(dictionary).map(key => dictionary[key]);
+    return Array.from(result.values());
+}
+
+function mergeLinkCount(a: LinkCount, b: LinkCount): LinkCount {
+    return {
+        ...a,
+        ...b,
+        inCount: a.inCount + b.inCount,
+        outCount: a.outCount + b.outCount,
+    };
 }
 
 interface MutableLinkedElement {
@@ -225,9 +209,9 @@ interface MutableLinkedElement {
     outLinks: Set<LinkTypeIri>;
 }
 
-export function mergeFilter(composite: CompositeResponse<LinkedElement[]>[]): LinkedElement[] {
+export function mergeLookup(responses: CompositeResponse<LinkedElement[]>[]): LinkedElement[] {
     const linkedElements = new Map<ElementIri, MutableLinkedElement>();
-    for (const [response, provider] of composite) {
+    for (const [response, provider] of responses) {
         for (const {element: baseElement, inLinks, outLinks} of response) {
             const element: ElementModel = {
                 ...baseElement,
@@ -254,7 +238,7 @@ export function mergeFilter(composite: CompositeResponse<LinkedElement[]>[]): Li
     return Array.from(linkedElements.values());
 }
 
-export function mergeLabels(
+function mergeLabels(
     a: ReadonlyArray<Rdf.Literal>,
     b: ReadonlyArray<Rdf.Literal>
 ): ReadonlyArray<Rdf.Literal> {
@@ -278,9 +262,10 @@ function addUniqueTerms<T extends Rdf.Term>(
     }
 }
 
-function mergeClassModel(a: ClassModel, b: ClassModel): ClassModel {
+function mergeClassModel(a: ElementType, b: ElementType): ElementType {
     return {
-        id: a.id,
+        ...a,
+        ...b,
         label: mergeLabels(a.label, b.label),
         count: mergeCounts(a.count, b.count),
     };

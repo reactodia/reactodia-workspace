@@ -1,10 +1,10 @@
 import { HashSet } from '../../coreUtils/hashMap';
 
 import {
-    Dictionary, ClassModel, ClassGraphModel, LinkType, ElementModel, LinkModel, LinkCount, PropertyModel,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import { DataProvider, FilterParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams, LinkedElement } from '../provider';
 
 import { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
@@ -118,9 +118,9 @@ export class RdfDataProvider implements DataProvider {
         return this.factory.namedNode(iri);
     }
 
-    classTree(params: {
+    knownElementTypes(params: {
         signal?: AbortSignal;
-    }): Promise<ClassGraphModel> {
+    }): Promise<ElementTypeGraph> {
         const typeCounts = this.computeTypeCounts();
         for (const baseType of this.elementTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
@@ -151,7 +151,7 @@ export class RdfDataProvider implements DataProvider {
                 }
             }
         }
-        const classes: ClassModel[] = [];
+        const classes: ElementType[] = [];
         for (const [typeId, count] of typeCounts) {
             const typeIri = this.decodeIri(typeId);
             classes.push({
@@ -162,14 +162,14 @@ export class RdfDataProvider implements DataProvider {
                 count,
             });
         }
-        const classTree: ClassGraphModel = {
-            classes,
+        const classTree: ElementTypeGraph = {
+            elementTypes: classes,
             subtypeOf: Array.from(subtypeOf.values()),
         };
         return Promise.resolve(classTree);
     }
 
-    linkTypes(params: {
+    knownLinkTypes(params: {
         signal?: AbortSignal;
     }): Promise<LinkType[]> {
         const linkCounts = this.computeLinkCounts();
@@ -197,59 +197,56 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(Array.from(models.values()));
     }
 
-    classInfo(params: {
+    elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<ClassModel[]> {
+    }): Promise<Map<ElementTypeIri, ElementType>> {
         const {classIds} = params;
-        const models: ClassModel[] = [];
+        const models = new Map<ElementTypeIri, ElementType>();
         for (const classId of classIds) {
             const classIri = this.decodeIri(classId);
             let instanceCount = 0;
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, classIri)) {
                 instanceCount++;
             }
-            const model: ClassModel = {
+            const model: ElementType = {
                 id: classId,
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, classIri, this.labelPredicate)
                     : [],
                 count: instanceCount,
             };
-            models.push(model);
+            models.set(classId, model);
         }
         return Promise.resolve(models);
     }
 
-    propertyInfo(params: {
+    propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<PropertyModel>> {
+    }): Promise<Map<PropertyTypeIri, PropertyType>> {
         const {propertyIds} = params;
-        const models: { [id: string]: PropertyModel } = {};
+        const models = new Map<PropertyTypeIri, PropertyType>();
         for (const propertyId of propertyIds) {
-            if (Object.prototype.hasOwnProperty.call(models, propertyId)) {
-                continue;
-            }
             const propertyIri = this.decodeIri(propertyId);
-            const model: PropertyModel = {
+            const model: PropertyType = {
                 id: propertyId,
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, propertyIri, this.labelPredicate)
                     : [],
             };
-            models[propertyId] = model;
+            models.set(propertyId, model);
         }
         return Promise.resolve(models);
     }
 
-    linkTypesInfo(params: {
+    linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<Map<LinkTypeIri, LinkType>> {
         const {linkTypeIds} = params;        
         const linkCounts = this.computeLinkCounts(linkTypeIds);
-        const models: LinkType[] = [];
+        const models = new Map<LinkTypeIri, LinkType>();
         for (const linkTypeId of linkTypeIds) {
             const linkTypeIri = this.decodeIri(linkTypeId);
             const model: LinkType = {
@@ -259,21 +256,18 @@ export class RdfDataProvider implements DataProvider {
                     : [],
                 count: linkCounts.get(linkTypeId) ?? 0,
             };
-            models.push(model);
+            models.set(linkTypeId, model);
         }
         return Promise.resolve(models);
     }
 
-    elementInfo(params: {
+    elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
-    }): Promise<Dictionary<ElementModel>> {
+    }): Promise<Map<ElementIri, ElementModel>> {
         const {elementIds} = params;
-        const result: { [id: string]: ElementModel } = {};
+        const result = new Map<ElementIri, ElementModel>();
         for (const elementId of elementIds) {
-            if (Object.prototype.hasOwnProperty.call(result, elementId)) {
-                continue;
-            }
             const elementIri = this.decodeIri(elementId);
             if (this.dataset.hasMatches(elementIri, null, null)) {
                 const typeIris = findIris(this.dataset, elementIri, this.typePredicate);
@@ -289,13 +283,13 @@ export class RdfDataProvider implements DataProvider {
                     image: imageTerm ? imageTerm.value : undefined,
                     properties: findProperties(this.dataset, elementIri),
                 };
-                result[elementId] = model;
+                result.set(elementId, model);
             }
         }
         return Promise.resolve(result);
     }
 
-    linksInfo(params: {
+    links(params: {
         elementIds: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
@@ -325,7 +319,7 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(links);
     }
 
-    linkTypesOf(params: {
+    connectedLinkStats(params: {
         elementId: ElementIri;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
@@ -369,7 +363,7 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(counts);
     }
 
-    filter(params: FilterParams): Promise<LinkedElement[]> {
+    lookup(params: LookupParams): Promise<LinkedElement[]> {
         interface ResultItem {
             readonly iri: Rdf.NamedNode;
             outLinks?: Set<LinkTypeIri>;

@@ -13,8 +13,8 @@ export type ElementTypeIri = string & { readonly classBrand: void };
 export type LinkTypeIri = string & { readonly linkTypeBrand: void };
 export type PropertyTypeIri = string & { readonly propertyTypeBrand: void };
 
-export interface ClassGraphModel {
-    readonly classes: ReadonlyArray<ClassModel>;
+export interface ElementTypeGraph {
+    readonly elementTypes: ReadonlyArray<ElementType>;
     readonly subtypeOf: ReadonlyArray<SubtypeEdge>;
 }
 
@@ -35,16 +35,10 @@ export interface LinkModel {
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
-export interface ClassModel {
+export interface ElementType {
     readonly id: ElementTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
     readonly count?: number;
-}
-
-export interface LinkCount {
-    readonly id: LinkTypeIri;
-    readonly inCount: number;
-    readonly outCount: number;
 }
 
 export interface LinkType {
@@ -53,9 +47,15 @@ export interface LinkType {
     readonly count?: number;
 }
 
-export interface PropertyModel {
+export interface PropertyType {
     readonly id: PropertyTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
+}
+
+export interface LinkCount {
+    readonly id: LinkTypeIri;
+    readonly inCount: number;
+    readonly outCount: number;
 }
 
 export function hashSubtypeEdge(edge: SubtypeEdge): number {
