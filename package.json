@@ -26,7 +26,7 @@
     "build": "webpack",
     "build-examples": "webpack --config webpack.examples.config.js",
     "serve": "webpack-dev-server --config webpack.examples.config.js --open",
-    "test": "npm run build && npm run lint",
+    "test": "npm run build && npm run build-examples",
     "typings": "tsc --project tsconfig.base.json --declaration --emitDeclarationOnly --outDir dist/typings",
     "lint": "eslint --ext .jx,.jsx,.ts,.tsx src/ examples/",
     "clean": "rimraf dist"
@@ -72,5 +72,21 @@
     "webpack-dev-server": "^4.15.1"
   },
   "main": "dist/reactodia-workspace.js",
-  "typings": "dist/typings/index.d.ts"
+  "typings": "dist/typings/index.d.ts",
+  "files": [
+    "dist/reactodia-workspace.js",
+    "dist/typings",
+    "images",
+    "src",
+    "styles",
+    "typings",
+    "CHANGELOG.md",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "THIRDPARTY.md",
+    "tsconfig.base.json",
+    "tsconfig.json",
+    "webpack.config.js"
+  ]
 }

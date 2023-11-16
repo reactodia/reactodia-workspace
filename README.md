@@ -1,4 +1,4 @@
-# Reactodia Workspace
+# Reactodia Workspace [![npm version](https://badge.fury.io/js/@reactodia%2Fworkspace.svg)](https://badge.fury.io/js/@reactodia%2Fworkspace)
 
 `reactodia-workspace` is a JS/TS library that allows to visualize, navigate and explore data in the form of an interactive graph based on underlying data sources.
 
