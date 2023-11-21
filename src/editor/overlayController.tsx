@@ -100,6 +100,7 @@ export class OverlayController {
                     layoutFunction: layoutForcePadded,
                     model: this.model,
                     sizeProvider: canvas.renderingState,
+                    group,
                 });
                 applyLayout(layout, this.model);
                 this.model.triggerChangeGroupContent(group, {layoutComplete: true});

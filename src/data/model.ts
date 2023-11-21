@@ -58,6 +58,10 @@ export interface LinkCount {
     readonly outCount: number;
 }
 
+export function isEncodedBlank(iri: string): boolean {
+    return iri.startsWith('urn:reactodia:blank:');
+}
+
 export function hashSubtypeEdge(edge: SubtypeEdge): number {
     const [from, to] = edge;
     let hash = Rdf.hashString(from);

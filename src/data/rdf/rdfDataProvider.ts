@@ -1,8 +1,9 @@
-import { HashSet } from '../../coreUtils/hashMap';
+import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import {
     ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, hashSubtypeEdge, equalSubtypeEdges,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge,
+    hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
 import { DataProvider, LookupParams, LinkedElement } from '../provider';
 
@@ -58,6 +59,8 @@ export interface RdfDataProviderOptions {
     readonly linkTypeBaseTypes?: ReadonlyArray<string>;
 }
 
+const BLANK_PREFIX = 'urn:reactodia:blank:rdf:';
+
 const OWL_CLASS = 'http://www.w3.org/2002/07/owl#Class';
 const OWL_DATATYPE_PROPERTY = 'http://www.w3.org/2002/07/owl#DatatypeProperty';
 const OWL_OBJECT_PROPERTY = 'http://www.w3.org/2002/07/owl#ObjectProperty';
@@ -75,6 +78,7 @@ export class RdfDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
 
     private readonly dataset: MemoryDataset;
+    private readonly acceptBlankNodes: boolean;
 
     private readonly typePredicate: Rdf.NamedNode;
     private readonly labelPredicate: Rdf.NamedNode | null;
@@ -93,6 +97,7 @@ export class RdfDataProvider implements DataProvider {
             IndexQuadBy.O |
             IndexQuadBy.OP
         );
+        this.acceptBlankNodes = options.acceptBlankNodes ?? true;
         this.typePredicate = this.factory.namedNode(options.typePredicate ?? RDF_TYPE);
         this.labelPredicate = options.labelPredicate === null
             ? null : this.factory.namedNode(options.labelPredicate ?? RDFS_LABEL);
@@ -107,15 +112,29 @@ export class RdfDataProvider implements DataProvider {
     }
 
     addGraph(quads: Iterable<Rdf.Quad>): void {
-        this.dataset.addAll(quads);
+        if (this.acceptBlankNodes) {
+            this.dataset.addAll(quads);
+        } else {
+            for (const q of quads) {
+                if (!(
+                    q.subject.termType === 'BlankNode' ||
+                    q.object.termType === 'BlankNode' ||
+                    q.graph.termType === 'BlankNode'
+                )) {
+                    this.dataset.add(q);
+                }
+            }
+        }
     }
 
-    encodeIri(iri: Rdf.NamedNode): string {
-        return iri.value;
+    encodeTerm(term: Rdf.NamedNode | Rdf.BlankNode): string {
+        return encodeTerm(term);
     }
 
-    decodeIri(iri: ElementIri | ElementTypeIri | LinkTypeIri | PropertyTypeIri): Rdf.NamedNode {
-        return this.factory.namedNode(iri);
+    decodeTerm(
+        iri: ElementIri | ElementTypeIri | LinkTypeIri | PropertyTypeIri
+    ): Rdf.NamedNode | Rdf.BlankNode {
+        return decodeTerm(iri, this.factory);
     }
 
     knownElementTypes(params: {
@@ -124,48 +143,54 @@ export class RdfDataProvider implements DataProvider {
         const typeCounts = this.computeTypeCounts();
         for (const baseType of this.elementTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
-                if (t.subject.termType === 'NamedNode') {
-                    const elementTypeId = this.encodeIri(t.subject) as ElementTypeIri;
+                if (isResourceTerm(t.subject)) {
+                    const elementTypeId = this.encodeTerm(t.subject) as ElementTypeIri;
                     if (!typeCounts.has(elementTypeId)) {
                         typeCounts.set(elementTypeId, 0);
                     }
                 }
             }
         }
-        const subtypeOf = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
+        const foundEdges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
         if (this.elementSubtypePredicate) {
             for (const t of this.dataset.iterateMatches(null, this.elementSubtypePredicate, null)) {
-                if (t.subject.termType === 'NamedNode' && t.object.termType === 'NamedNode') {
-                    const derivedTypeId = this.encodeIri(t.subject) as ElementTypeIri;
+                if (isResourceTerm(t.subject) && isResourceTerm(t.object)) {
+                    const derivedTypeId = this.encodeTerm(t.subject) as ElementTypeIri;
                     if (!typeCounts.has(derivedTypeId)) {
                         typeCounts.set(derivedTypeId, 0);
                     }
-                    const baseTypeId = this.encodeIri(t.object) as ElementTypeIri;
+                    const baseTypeId = this.encodeTerm(t.object) as ElementTypeIri;
                     if (!typeCounts.has(baseTypeId)) {
                         typeCounts.set(baseTypeId, 0);
                     }
-                    subtypeOf.add([
-                        this.encodeIri(t.subject) as ElementTypeIri,
-                        this.encodeIri(t.object) as ElementTypeIri
+                    foundEdges.add([
+                        this.encodeTerm(t.subject) as ElementTypeIri,
+                        this.encodeTerm(t.object) as ElementTypeIri
                     ]);
                 }
             }
         }
-        const classes: ElementType[] = [];
+        const elementTypes: ElementType[] = [];
+        const excluded = new Set<ElementTypeIri>();
         for (const [typeId, count] of typeCounts) {
-            const typeIri = this.decodeIri(typeId);
-            classes.push({
-                id: typeId,
-                label: this.labelPredicate
-                    ? findLiterals(this.dataset, typeIri, this.labelPredicate)
-                    : [],
-                count,
-            });
+            const typeIri = this.decodeTerm(typeId);
+            const label = this.labelPredicate
+                ? findLiterals(this.dataset, typeIri, this.labelPredicate)
+                : [];
+            if (typeIri.termType === 'BlankNode' && label.length === 0) {
+                excluded.add(typeId);
+            } else {
+                elementTypes.push({id: typeId, label, count});
+            }
         }
-        const classTree: ElementTypeGraph = {
-            elementTypes: classes,
-            subtypeOf: Array.from(subtypeOf.values()),
-        };
+        const subtypeOf: SubtypeEdge[] = [];
+        for (const edge of foundEdges.values()) {
+            const [from, to] = edge;
+            if (!excluded.has(from) && !excluded.has(to)) {
+                subtypeOf.push(edge);
+            }
+        }
+        const classTree: ElementTypeGraph = {elementTypes, subtypeOf};
         return Promise.resolve(classTree);
     }
 
@@ -175,8 +200,8 @@ export class RdfDataProvider implements DataProvider {
         const linkCounts = this.computeLinkCounts();
         for (const baseType of this.linkTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
-                if (t.subject.termType === 'NamedNode') {
-                    const linkTypeId = this.encodeIri(t.subject) as LinkTypeIri;
+                if (isResourceTerm(t.subject)) {
+                    const linkTypeId = this.encodeTerm(t.subject) as LinkTypeIri;
                     if (!linkCounts.has(linkTypeId)) {
                         linkCounts.set(linkTypeId, 0);
                     }
@@ -185,14 +210,14 @@ export class RdfDataProvider implements DataProvider {
         }
         const models = new Map<LinkTypeIri, LinkType>();
         for (const [linkTypeId, count] of linkCounts) {
-            const linkTypeIri = this.decodeIri(linkTypeId);
-            models.set(linkTypeId, {
-                id: linkTypeId,
-                label: this.labelPredicate
-                    ? findLiterals(this.dataset, linkTypeIri, this.labelPredicate)
-                    : [],
-                count,
-            });
+            const linkTypeIri = this.decodeTerm(linkTypeId);
+            const label = this.labelPredicate
+                ? findLiterals(this.dataset, linkTypeIri, this.labelPredicate)
+                : [];
+            if (linkTypeIri.termType === 'BlankNode' && label.length === 0) {
+                continue;
+            }
+            models.set(linkTypeId, {id: linkTypeId, label, count});
         }
         return Promise.resolve(Array.from(models.values()));
     }
@@ -204,7 +229,7 @@ export class RdfDataProvider implements DataProvider {
         const {classIds} = params;
         const models = new Map<ElementTypeIri, ElementType>();
         for (const classId of classIds) {
-            const classIri = this.decodeIri(classId);
+            const classIri = this.decodeTerm(classId);
             let instanceCount = 0;
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, classIri)) {
                 instanceCount++;
@@ -228,7 +253,7 @@ export class RdfDataProvider implements DataProvider {
         const {propertyIds} = params;
         const models = new Map<PropertyTypeIri, PropertyType>();
         for (const propertyId of propertyIds) {
-            const propertyIri = this.decodeIri(propertyId);
+            const propertyIri = this.decodeTerm(propertyId);
             const model: PropertyType = {
                 id: propertyId,
                 label: this.labelPredicate
@@ -248,7 +273,7 @@ export class RdfDataProvider implements DataProvider {
         const linkCounts = this.computeLinkCounts(linkTypeIds);
         const models = new Map<LinkTypeIri, LinkType>();
         for (const linkTypeId of linkTypeIds) {
-            const linkTypeIri = this.decodeIri(linkTypeId);
+            const linkTypeIri = this.decodeTerm(linkTypeId);
             const model: LinkType = {
                 id: linkTypeId,
                 label: this.labelPredicate
@@ -268,15 +293,14 @@ export class RdfDataProvider implements DataProvider {
         const {elementIds} = params;
         const result = new Map<ElementIri, ElementModel>();
         for (const elementId of elementIds) {
-            const elementIri = this.decodeIri(elementId);
+            const elementIri = this.decodeTerm(elementId);
             if (this.dataset.hasMatches(elementIri, null, null)) {
-                const typeIris = findIris(this.dataset, elementIri, this.typePredicate);
                 const imageTerm = this.imagePredicate
                     ? findFirstIriOrLiteral(this.dataset, elementIri, this.imagePredicate)
                     : undefined;
                 const model: ElementModel = {
                     id: elementId,
-                    types: typeIris.map(iri => this.encodeIri(iri) as ElementTypeIri),
+                    types: findTypes(this.dataset, elementIri, this.typePredicate),
                     label: this.labelPredicate
                         ? findLiterals(this.dataset, elementIri, this.labelPredicate)
                         : [],
@@ -295,23 +319,26 @@ export class RdfDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
         const {elementIds, linkTypeIds} = params;
-        const targets = new Set<string>(elementIds);
+        const targets = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
+        for (const elementId of elementIds) {
+            targets.add(this.decodeTerm(elementId));
+        }
         const linkTypeSet = linkTypeIds ? new Set<string>(linkTypeIds) : undefined;
         const links: LinkModel[] = [];
         // TODO avoid full scan
         for (const t of this.dataset) {
             if (
-                t.subject.termType === 'NamedNode' &&
+                isResourceTerm(t.subject) &&
                 t.predicate.termType === 'NamedNode' &&
-                t.object.termType === 'NamedNode' &&
-                (targets.has(t.subject.value) || targets.has(t.object.value)) &&
+                isResourceTerm(t.object) &&
+                (targets.has(t.subject) || targets.has(t.object)) &&
                 (!linkTypeSet || !linkTypeSet.has(t.predicate.value))
             ) {
                 const properties = findProperties(this.dataset, t);
                 links.push({
-                    sourceId: this.encodeIri(t.subject) as ElementIri,
-                    targetId: this.encodeIri(t.object) as ElementIri,
-                    linkTypeId: this.encodeIri(t.predicate) as LinkTypeIri,
+                    sourceId: this.encodeTerm(t.subject) as ElementIri,
+                    targetId: this.encodeTerm(t.object) as ElementIri,
+                    linkTypeId: this.encodeTerm(t.predicate) as LinkTypeIri,
                     properties,
                 });
             }
@@ -324,20 +351,20 @@ export class RdfDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
         const {elementId} = params;
-        const elementIri = this.decodeIri(elementId);
+        const elementIri = this.decodeTerm(elementId);
         
         const outCounts = new Map<LinkTypeIri, number>();
         for (const t of this.dataset.iterateMatches(elementIri, null, null)) {
-            if (t.predicate.termType === 'NamedNode' && t.object.termType === 'NamedNode') {
-                const linkTypeIri = this.encodeIri(t.predicate) as LinkTypeIri;
+            if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.object)) {
+                const linkTypeIri = this.encodeTerm(t.predicate) as LinkTypeIri;
                 outCounts.set(linkTypeIri, (outCounts.get(linkTypeIri) ?? 0) + 1);
             }
         }
 
         const inCounts = new Map<LinkTypeIri, number>();
         for (const t of this.dataset.iterateMatches(null, null, elementIri)) {
-            if (t.predicate.termType === 'NamedNode' && t.subject.termType === 'NamedNode') {
-                const linkTypeIri = this.encodeIri(t.predicate) as LinkTypeIri;
+            if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.subject)) {
+                const linkTypeIri = this.encodeTerm(t.predicate) as LinkTypeIri;
                 inCounts.set(linkTypeIri, (inCounts.get(linkTypeIri) ?? 0) + 1);
             }
         }
@@ -365,73 +392,79 @@ export class RdfDataProvider implements DataProvider {
 
     lookup(params: LookupParams): Promise<LinkedElement[]> {
         interface ResultItem {
-            readonly iri: Rdf.NamedNode;
+            readonly term: Rdf.NamedNode | Rdf.BlankNode;
             outLinks?: Set<LinkTypeIri>;
             inLinks?: Set<LinkTypeIri>;
         }
 
-        const items = new Map<string, ResultItem>();
+        const items = new HashMap<Rdf.NamedNode | Rdf.BlankNode, ResultItem>(
+            Rdf.hashTerm, Rdf.equalTerms
+        );
         let requiredTextFilter = params.text ? new RegExp(escapeRegexp(params.text), 'i') : undefined;
 
         if (params.refElementId) {
-            const refElementIri = this.decodeIri(params.refElementId);
+            const refElementIri = this.decodeTerm(params.refElementId);
             const refLinkIri = params.refElementLinkId
-                ? this.decodeIri(params.refElementLinkId) : null;
-            for (const t of this.dataset.iterateMatches(refElementIri, refLinkIri, null)) {
-                if (t.predicate.termType === 'NamedNode' && t.object.termType === 'NamedNode') {
-                    const iri = t.object;
-                    let item = items.get(iri.value);
-                    if (!item) {
-                        item = {iri};
-                        items.set(iri.value, item);
+                ? this.decodeTerm(params.refElementLinkId) : null;
+            if (!params.linkDirection || params.linkDirection === 'out') {
+                for (const t of this.dataset.iterateMatches(refElementIri, refLinkIri, null)) {
+                    if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.object)) {
+                        const term = t.object;
+                        let item = items.get(term);
+                        if (!item) {
+                            item = {term};
+                            items.set(term, item);
+                        }
+                        const predicate = this.encodeTerm(t.predicate) as LinkTypeIri;
+                        if (!item.outLinks) {
+                            item.outLinks = new Set();
+                        }
+                        item.outLinks.add(predicate);
                     }
-                    const predicate = this.encodeIri(t.predicate) as LinkTypeIri;
-                    if (!item.outLinks) {
-                        item.outLinks = new Set();
-                    }
-                    item.outLinks.add(predicate);
                 }
             }
-            for (const t of this.dataset.iterateMatches(null, refLinkIri, refElementIri)) {
-                if (t.predicate.termType === 'NamedNode' && t.subject.termType === 'NamedNode') {
-                    const iri = t.subject;
-                    let item = items.get(iri.value);
-                    if (!item) {
-                        item = {iri};
-                        items.set(iri.value, item);
+            if (!params.linkDirection || params.linkDirection === 'in') {
+                for (const t of this.dataset.iterateMatches(null, refLinkIri, refElementIri)) {
+                    if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.subject)) {
+                        const term = t.subject;
+                        let item = items.get(term);
+                        if (!item) {
+                            item = {term};
+                            items.set(term, item);
+                        }
+                        const predicate = this.encodeTerm(t.predicate) as LinkTypeIri;
+                        if (!item.inLinks) {
+                            item.inLinks = new Set();
+                        }
+                        item.inLinks.add(predicate);
                     }
-                    const predicate = this.encodeIri(t.predicate) as LinkTypeIri;
-                    if (!item.inLinks) {
-                        item.inLinks = new Set();
-                    }
-                    item.inLinks.add(predicate);
                 }
             }
             // join with filtered by type
             if (params.elementTypeId) {
-                const typeIri = this.decodeIri(params.elementTypeId);
+                const typeTerm = this.decodeTerm(params.elementTypeId);
                 for (const item of Array.from(items.values())) {
-                    if (!this.dataset.hasMatches(item.iri, this.typePredicate, typeIri)) {
-                        items.delete(item.iri.value);
+                    if (!this.dataset.hasMatches(item.term, this.typePredicate, typeTerm)) {
+                        items.delete(item.term);
                     }
                 }
             }
         } else if (params.elementTypeId) {
-            const typeIri = this.decodeIri(params.elementTypeId);
-            for (const t of this.dataset.iterateMatches(null, this.typePredicate, typeIri)) {
-                if (t.subject.termType === 'NamedNode' && !items.has(t.subject.value)) {
-                    items.set(t.subject.value, {iri: t.subject});
+            const typeTerm = this.decodeTerm(params.elementTypeId);
+            for (const t of this.dataset.iterateMatches(null, this.typePredicate, typeTerm)) {
+                if (isResourceTerm(t.subject) && !items.has(t.subject)) {
+                    items.set(t.subject, {term: t.subject});
                 }
             }
         } else if (requiredTextFilter && this.labelPredicate) {
             for (const t of this.dataset.iterateMatches(null, this.labelPredicate, null)) {
                 if (
-                    t.subject.termType === 'NamedNode' &&
+                    isResourceTerm(t.subject) &&
                     t.object.termType === 'Literal' &&
                     requiredTextFilter.test(t.object.value) &&
-                    !items.has(t.subject.value)
+                    !items.has(t.subject)
                 ) {
-                    items.set(t.subject.value, {iri: t.subject});
+                    items.set(t.subject, {term: t.subject});
                 }
             }
             requiredTextFilter = undefined;
@@ -445,7 +478,7 @@ export class RdfDataProvider implements DataProvider {
             }
             let labels: Rdf.Literal[];
             if (this.labelPredicate) {
-                labels = findLiterals(this.dataset, item.iri, this.labelPredicate);
+                labels = findLiterals(this.dataset, item.term, this.labelPredicate);
                 if (requiredTextFilter) {
                     let foundMatch = false;
                     for (const label of labels) {
@@ -461,13 +494,12 @@ export class RdfDataProvider implements DataProvider {
             } else {
                 labels = [];
             }
-            const typeIris = findIris(this.dataset, item.iri, this.typePredicate);
             const imageTerm = this.imagePredicate
-                ? findFirstIriOrLiteral(this.dataset, item.iri, this.imagePredicate)
+                ? findFirstIriOrLiteral(this.dataset, item.term, this.imagePredicate)
                 : undefined;
             const model: ElementModel = {
-                id: this.encodeIri(item.iri) as ElementIri,
-                types: typeIris.map(iri => this.encodeIri(iri) as ElementTypeIri),
+                id: this.encodeTerm(item.term) as ElementIri,
+                types: findTypes(this.dataset, item.term, this.typePredicate),
                 label: labels,
                 image: imageTerm ? imageTerm.value : undefined,
                 properties: {},
@@ -485,8 +517,8 @@ export class RdfDataProvider implements DataProvider {
     private computeTypeCounts(): Map<ElementTypeIri, number> {
         const instanceCounts = new Map<ElementTypeIri, number>();
         for (const t of this.dataset.iterateMatches(null, this.typePredicate, null)) {
-            if (t.object.termType === 'NamedNode') {
-                const elementTypeId = this.encodeIri(t.object) as ElementTypeIri;
+            if (isResourceTerm(t.object)) {
+                const elementTypeId = this.encodeTerm(t.object) as ElementTypeIri;
                 instanceCounts.set(elementTypeId, (instanceCounts.get(elementTypeId) ?? 0) + 1);
             }
         }
@@ -500,13 +532,23 @@ export class RdfDataProvider implements DataProvider {
         const linkStats = new Map<LinkTypeIri, number>();
         for (const t of this.dataset) {
             if (t.predicate.termType === 'NamedNode') {
-                const linkTypeId = this.encodeIri(t.predicate) as LinkTypeIri;
+                const linkTypeId = this.encodeTerm(t.predicate) as LinkTypeIri;
                 if (!linkTypeSet || linkTypeSet.has(linkTypeId)) {
                     linkStats.set(linkTypeId, (linkStats.get(linkTypeId) ?? 0) + 1);
                 }
             }
         }
         return linkStats;
+    }
+}
+
+function isResourceTerm(term: Rdf.Term): term is Rdf.NamedNode | Rdf.BlankNode {
+    switch (term.termType) {
+        case 'NamedNode':
+        case 'BlankNode':
+            return true;
+        default:
+            return false;
     }
 }
 
@@ -526,18 +568,19 @@ function findFirstIriOrLiteral(
     return undefined;
 }
 
-function findIris(
+function findTypes(
     dataset: MemoryDataset,
     subject: Rdf.NamedNode | Rdf.BlankNode | Rdf.Quad,
     predicate: Rdf.NamedNode
-): Rdf.NamedNode[] {
-    const iris: Rdf.NamedNode[] = [];
+): ElementTypeIri[] {
+    const typeSet = new Set<ElementTypeIri>();
     for (const t of dataset.iterateMatches(subject, predicate, null)) {
-        if (t.object.termType === 'NamedNode') {
-            iris.push(t.object);
+        if (isResourceTerm(t.object)) {
+            const typeId = encodeTerm(t.object) as ElementTypeIri;
+            typeSet.add(typeId);
         }
     }
-    return iris;
+    return Array.from(typeSet).sort();
 }
 
 function findLiterals(
@@ -560,18 +603,43 @@ function findProperties(
 ): { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> } {
     const properties: { [id: string]: Array<Rdf.NamedNode | Rdf.Literal> } = {};
     for (const t of dataset.iterateMatches(subject, null, null)) {
-        if (t.object.termType === 'Literal') {
+        if (t.predicate.termType === 'NamedNode' && t.object.termType === 'Literal') {
+            const propertyId = encodeTerm(t.predicate);
             let values: Array<Rdf.NamedNode | Rdf.Literal>;
-            if (Object.prototype.hasOwnProperty.call(properties, t.predicate.value)) {
-                values = properties[t.predicate.value];
+            if (Object.prototype.hasOwnProperty.call(properties, propertyId)) {
+                values = properties[propertyId];
             } else {
                 values = [];
-                properties[t.predicate.value] = values;
+                properties[propertyId] = values;
             }
             values.push(t.object);
         }
     }
     return properties;
+}
+
+function encodeTerm(term: Rdf.NamedNode | Rdf.BlankNode): string {
+    switch (term.termType) {
+        case 'NamedNode':
+            return term.value;
+        case 'BlankNode':
+            return BLANK_PREFIX + term.value;
+        default:
+            throw new Error(
+                `Unexpected term type to encode: ${(term as Rdf.Term).termType}`
+            );
+    }
+}
+
+function decodeTerm(
+    iri: ElementIri | ElementTypeIri | LinkTypeIri | PropertyTypeIri,
+    factory: Rdf.DataFactory
+): Rdf.NamedNode | Rdf.BlankNode {
+    if (iri.startsWith(BLANK_PREFIX)) {
+        return factory.blankNode(iri.substring(BLANK_PREFIX.length));
+    } else {
+        return factory.namedNode(iri);
+    }
 }
 
 function escapeRegexp(token: string): string {

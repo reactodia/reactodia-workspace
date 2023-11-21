@@ -2,8 +2,8 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import type * as Rdf from '../data/rdf/rdfModel';
+import { isEncodedBlank } from '../data/model';
 import { TemplateProperties } from '../data/schema';
-import { isEncodedBlank } from '../data/sparql/blankNodes';
 
 import { HtmlSpinner } from '../diagram/spinner';
 

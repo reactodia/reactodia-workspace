@@ -3,9 +3,8 @@ import { hcl } from 'd3-color';
 
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
 
-import { ElementModel, ElementTypeIri, PropertyTypeIri } from '../data/model';
+import { ElementModel, ElementTypeIri, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
-import { isEncodedBlank } from '../data/sparql/blankNodes';
 import { hashFnv32a, getUriLocalName } from '../data/utils';
 
 import type {
