@@ -4,7 +4,7 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
 import { ElementModel, LinkModel } from '../data/model';
-import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { Element, Link, LinkDirection } from '../diagram/elements';
@@ -125,7 +125,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         const temporaryElement = this.createTemporaryElement(startingPoint);
         const linkTemplate = new Link({
-            id,
+            id: GenerateID.forLink(),
             sourceId: mode === 'moveLinkSource' ? temporaryElement.id : sourceId,
             targetId: mode === 'moveLinkTarget' ? temporaryElement.id : targetId,
             data: {
