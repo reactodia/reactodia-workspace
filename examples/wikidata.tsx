@@ -5,6 +5,8 @@ import {
 
 import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
 
+declare const WIKIDATA_ENDPOINT: string | undefined;
+
 function WikidataExample() {
     const workspaceRef = React.useRef<Workspace | null>(null);
 
@@ -13,12 +15,12 @@ function WikidataExample() {
         const {model} = workspaceRef.current!.getContext();
 
         const sparqlProvider = new SparqlDataProvider({
-            endpointUrl: '/wikidata',
+            endpointUrl: WIKIDATA_ENDPOINT || '/wikidata',
             imagePropertyUris: [
                 'http://www.wikidata.org/prop/direct/P18',
                 'http://www.wikidata.org/prop/direct/P154',
             ],
-            queryMethod: 'POST',
+            queryMethod: WIKIDATA_ENDPOINT ? 'GET' : 'POST',
         }, WikidataSettings);
 
         const dataProvider = new IndexedDbCachedProvider({

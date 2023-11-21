@@ -1,5 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+
+const IS_DEV_SERVER = Boolean(process.env.WEBPACK_SERVE);
 
 const SPARQL_ENDPOINT = process.env.SPARQL_ENDPOINT;
 const WIKIDATA_ENDPOINT = process.env.WIKIDATA_ENDPOINT
@@ -74,6 +77,9 @@ module.exports = {
     ]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'WIKIDATA_ENDPOINT': IS_DEV_SERVER ? 'undefined' : `'${WIKIDATA_ENDPOINT}'`,
+    }),
     ...EXAMPLES.map(key =>
       new HtmlWebpackPlugin({
         filename: `${key}.html`,
