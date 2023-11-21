@@ -5,7 +5,7 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 import { ElementModel, LinkModel } from '../data/model';
 
 import { CanvasApi, CanvasContext, CanvasPointerUpEvent } from '../diagram/canvasApi';
-import { Element, Link, LinkVertex } from '../diagram/elements';
+import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { calculateLayout, applyLayout, layoutForcePadded } from '../diagram/layout';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
@@ -294,73 +294,17 @@ export class OverlayController {
         targetIsNew: boolean;
     }) {
         const onCancel = () => {
-            this.editor.removeTemporaryCells([target, link]);
+            this.editor.removeAllTemporaryCells();
             this.hideDialog();
         };
         const content = (
-            <EditElementTypeForm editor={this.editor}
-                view={this.view}
-                metadataApi={this.editor.metadataApi}
-                link={link.data}
-                source={source.data}
-                target={{value: target.data, isNew: targetIsNew}}
-                onChangeElement={(data: ElementModel) => {
-                    const previous = target.data;
-                    this.editor.setTemporaryState(TemporaryState.deleteElement(this.editor.temporaryState, previous));
-                    target.setData(data);
-                    this.editor.setTemporaryState(TemporaryState.addElement(this.editor.temporaryState, data));
-                }}
-                onChangeLink={(data: LinkModel) => {
-                    this.editor.removeTemporaryCells([link]);
-                    const newLink = makeLinkWithDirection(
-                        new Link({
-                            sourceId: source.id,
-                            targetId: target.id,
-                            data: {
-                                ...data,
-                                sourceId: source.iri,
-                                targetId: target.iri,
-                            }
-                        }),
-                        data
-                    );
-                    link = this.editor.createNewLink({link: newLink, temporary: true});
-                }}
-                onApply={(elementData: ElementModel, isNewElement: boolean, linkData: LinkModel) => {
-                    this.editor.removeTemporaryCells([target, link]);
-
-                    const batch = this.model.history.startBatch(
-                        isNewElement ? 'Create new entity' : 'Link to entity'
-                    );
-
-                    this.model.addElement(target);
-                    if (isNewElement) {
-                        target.setExpanded(true);
-                        this.editor.setAuthoringState(
-                            AuthoringState.addElement(this.editor.authoringState, target.data)
-                        );
-                    } else {
-                        this.model.requestLinksOfType();
-                    }
-
-                    const newLink = makeLinkWithDirection(
-                        new Link({
-                            sourceId: source.id,
-                            targetId: target.id,
-                            data: {
-                                ...link.data,
-                                sourceId: source.iri,
-                                targetId: target.iri,
-                            }
-                        }),
-                        linkData
-                    );
-                    this.editor.createNewLink({link: newLink});
-
-                    batch.store();
-
+            <EditElementTypeForm source={source}
+                target={target}
+                targetIsNew={targetIsNew}
+                originalLink={link}
+                onAfterApply={() => {
                     this.hideDialog();
-                    if (isNewElement) {
+                    if (targetIsNew) {
                         this.showEditEntityForm(target);
                     }
                 }}
@@ -478,18 +422,4 @@ function CanvasOverlayHandler(props: {
         return () => listener.stopListening();
     }, [onCanvasPointerUp]);
     return null;
-}
-
-function makeLinkWithDirection(original: Link, data: LinkModel): Link {
-    if (!(data.sourceId === original.data.sourceId || data.sourceId === original.data.targetId)) {
-        throw new Error('New link source IRI is unrelated to original link');
-    }
-    if (!(data.targetId === original.data.sourceId || data.targetId === original.data.targetId)) {
-        throw new Error('New link target IRI is unrelated to original link');
-    }
-    const sourceId = data.sourceId === original.data.sourceId
-        ? original.sourceId : original.targetId;
-    const targetId = data.targetId === original.data.targetId
-        ? original.targetId : original.sourceId;
-    return new Link({sourceId, targetId, data});
 }

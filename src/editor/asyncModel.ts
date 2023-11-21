@@ -224,15 +224,16 @@ export class AsyncModel extends DiagramModel {
                     targetId: targetElement.iri,
                     properties: {},
                 };
-                const link = this.addLink(new Link({
+                const link = new Link({
                     id,
                     sourceId: sourceElement.id,
                     targetId: targetElement.id,
                     data,
                     vertices,
                     linkState,
-                }));
+                });
                 link.setLayoutOnly(markLinksAsLayoutOnly);
+                this.addLink(link);
             }
         }
 
@@ -323,7 +324,7 @@ export class AsyncModel extends DiagramModel {
         const targets = this.graph.getElements().filter(el => el.iri === data.targetId);
         for (const source of sources) {
             for (const target of targets) {
-                this.addLink(new Link({sourceId: source.id, targetId: target.id, data}));
+                this.createLink(new Link({sourceId: source.id, targetId: target.id, data}));
             }
         }
     }

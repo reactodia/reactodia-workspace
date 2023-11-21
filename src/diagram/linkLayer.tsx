@@ -50,7 +50,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         const {model, view, renderingState} = this.props;
 
         const scheduleUpdateElementLinks = (element: DiagramElement) => {
-            for (const link of element.links) {
+            for (const link of model.getElementLinks(element)) {
                 this.scheduleUpdateLink(link.id);
             }
         };

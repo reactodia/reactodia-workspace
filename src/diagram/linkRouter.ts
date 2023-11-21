@@ -38,7 +38,7 @@ export class DefaultLinkRouter implements LinkRouter {
         const {x, y, width, height} = boundsOf(element, sizeProvider);
 
         let index = 0;
-        for (const sibling of element.links) {
+        for (const sibling of model.getElementLinks(element)) {
             if (routings.has(sibling.id) || hasUserPlacedVertices(sibling)) {
                 continue;
             }
@@ -77,7 +77,7 @@ export class DefaultLinkRouter implements LinkRouter {
             y: targetCenter.y - sourceCenter.y,
         });
 
-        const siblings = source.links.filter(link =>
+        const siblings = model.getElementLinks(source).filter(link =>
             (link.sourceId === targetId || link.targetId === targetId) &&
             !routings.has(link.id) &&
             !hasUserPlacedVertices(link)

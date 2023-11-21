@@ -1,15 +1,14 @@
 import * as React from 'react';
 
-import { ElementModel, LinkModel } from '../data/model';
-import { MetadataApi } from '../data/metadataApi';
-
-import { LinkDirection } from '../diagram/elements';
+import { setElementData } from '../diagram/commands';
+import { Element, Link, LinkDirection, makeLinkWithDirection } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
-import { DiagramView } from '../diagram/view';
 
-import { EditorController } from '../editor/editorController';
+import { AuthoringState, TemporaryState } from '../editor/authoringState';
 
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
+
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { ElementTypeSelector, ElementValue, validateElementType } from './elementTypeSelector';
 import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
@@ -17,18 +16,11 @@ import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelecto
 const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditElementTypeFormProps {
-    editor: EditorController;
-    view: DiagramView;
-    metadataApi?: MetadataApi;
-    link: LinkModel;
-    source: ElementModel;
-    target: {
-        value: ElementModel;
-        isNew: boolean;
-    };
-    onChangeElement: (value: ElementModel) => void;
-    onChangeLink: (value: LinkModel) => void;
-    onApply: (elementData: ElementModel, isNewElement: boolean, linkData: LinkModel) => void;
+    source: Element;
+    target: Element;
+    targetIsNew: boolean;
+    originalLink: Link;
+    onAfterApply: () => void;
     onCancel: () => void;
 }
 
@@ -39,21 +31,27 @@ interface State {
 }
 
 export class EditElementTypeForm extends React.Component<EditElementTypeFormProps, State> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
+    private link: Link;
+
     private validationCancellation = new AbortController();
 
-    constructor(props: EditElementTypeFormProps) {
-        super(props);
-        const {target, link} = this.props;
+    constructor(props: EditElementTypeFormProps, context: any) {
+        super(props, context);
+        const {target, targetIsNew, originalLink} = this.props;
+        this.link = originalLink;
         this.state = {
             elementValue: {
-                value: target.value,
-                isNew: target.isNew,
+                value: target.data,
+                isNew: targetIsNew,
                 loading: false,
                 validated: true,
                 allowChange: true,
             },
             linkValue: {
-                value: {link, direction: LinkDirection.out},
+                value: {link: originalLink.data, direction: LinkDirection.out},
                 validated: true,
                 allowChange: true,
             },
@@ -68,29 +66,9 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
         this.validationCancellation.abort();
     }
 
-    private setElementOrLink({elementValue, linkValue}: {
-        elementValue?: ElementValue;
-        linkValue?: LinkValue;
-    }) {
-        this.setState(state => ({
-            elementValue: elementValue || state.elementValue,
-            linkValue: linkValue || state.linkValue,
-        }),
-        () => {
-            if ((elementValue && !elementValue.validated) || (linkValue && !linkValue.validated)) {
-                this.validate();
-            }
-            if (elementValue && elementValue.validated && elementValue.allowChange) {
-                this.props.onChangeElement(elementValue.value);
-            }
-            if (linkValue && linkValue.validated && linkValue.allowChange) {
-                this.props.onChangeLink(linkValue.value.link);
-            }
-        });
-    }
-
     private validate() {
-        const {editor, link: originalLink} = this.props;
+        const {editor} = this.context;
+        const {originalLink} = this.props;
         const {elementValue, linkValue} = this.state;
         this.setState({isValidating: true});
 
@@ -99,7 +77,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
         const signal = this.validationCancellation.signal;
 
         const validateElement = validateElementType(elementValue.value);
-        const validateLink = validateLinkType(editor, linkValue.value.link, originalLink);
+        const validateLink = validateLinkType(editor, linkValue.value.link, originalLink.data);
         Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
             if (signal.aborted) { return; }
             this.setState({isValidating: false});
@@ -111,7 +89,8 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
     }
 
     render() {
-        const {editor, view, metadataApi, source, link: originalLink} = this.props;
+        const {editor, view} = this.context;
+        const {source, originalLink} = this.props;
         const {elementValue, linkValue, isValidating} = this.state;
         const isValid = !elementValue.error && !linkValue.error;
         return (
@@ -119,8 +98,8 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                 <div className={`${CLASS_NAME}__body`}>
                     <ElementTypeSelector editor={editor}
                         view={view}
-                        metadataApi={metadataApi}
-                        source={source}
+                        metadataApi={editor.metadataApi}
+                        source={source.data}
                         elementValue={elementValue}
                         onChange={newState => {
                             this.setElementOrLink({
@@ -134,7 +113,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                                 },
                                 linkValue: {
                                     value: {
-                                        link: {...originalLink, targetId: newState.value.id},
+                                        link: {...originalLink.data, targetId: newState.value.id},
                                         direction: LinkDirection.out,
                                     },
                                     validated: false,
@@ -149,9 +128,9 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                     ) : (
                         <LinkTypeSelector editor={editor}
                             view={view}
-                            metadataApi={metadataApi}
+                            metadataApi={editor.metadataApi}
                             linkValue={linkValue}
-                            source={source}
+                            source={source.data}
                             target={elementValue.value}
                             onChange={value => this.setElementOrLink({
                                 linkValue: {value, error: undefined, validated: false, allowChange: false},
@@ -167,11 +146,7 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
                     <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
-                        onClick={() => this.props.onApply(
-                            elementValue.value,
-                            elementValue.isNew,
-                            linkValue.value.link
-                        )}
+                        onClick={this.onApply}
                         disabled={elementValue.loading || !isValid || isValidating}>
                         Apply
                     </button>
@@ -183,4 +158,95 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
             </div>
         );
     }
+
+    private setElementOrLink({elementValue, linkValue}: {
+        elementValue?: ElementValue;
+        linkValue?: LinkValue;
+    }) {
+        const {model, editor} = this.context;
+        this.setState(state => ({
+            elementValue: elementValue || state.elementValue,
+            linkValue: linkValue || state.linkValue,
+        }),
+        () => {
+            const {source, target} = this.props;
+            const {elementValue, linkValue} = this.state;
+            if ((elementValue && !elementValue.validated) || (linkValue && !linkValue.validated)) {
+                this.validate();
+            }
+            if (elementValue && elementValue.validated && elementValue.allowChange) {
+                const previous = target.data;
+
+                let temporaryState = editor.temporaryState;
+                temporaryState = TemporaryState.deleteElement(temporaryState, previous);
+                temporaryState = TemporaryState.deleteLink(temporaryState, this.link.data);
+                editor.setTemporaryState(temporaryState);
+                // Target IRI change may also update link data
+                const batch = model.history.startBatch();
+                batch.history.execute(setElementData(model, target.iri, elementValue.value));
+                batch.discard();
+                
+                temporaryState = TemporaryState.addElement(temporaryState, target.data);
+                temporaryState = TemporaryState.addLink(temporaryState, this.link.data);
+                editor.setTemporaryState(temporaryState);
+            }
+            if (linkValue && linkValue.validated && linkValue.allowChange) {
+                editor.removeTemporaryCells([this.link]);
+                const newLink = makeLinkWithDirection(
+                    new Link({
+                        sourceId: source.id,
+                        targetId: target.id,
+                        data: {
+                            ...linkValue.value.link,
+                            sourceId: source.iri,
+                            targetId: target.iri,
+                        }
+                    }),
+                    linkValue.value.link
+                );
+                this.link = editor.createNewLink({link: newLink, temporary: true});
+            }
+        });
+    }
+
+    private onApply = () => {
+        const {model, editor} = this.context;
+        const {source, target, targetIsNew, onAfterApply} = this.props;
+        const {linkValue} = this.state;
+        const link = this.link;
+
+        editor.removeTemporaryCells([target, link]);
+
+        const batch = model.history.startBatch(
+            targetIsNew ? 'Create new entity' : 'Link to entity'
+        );
+
+        if (targetIsNew) {
+            model.addElement(target);
+            target.setExpanded(true);
+            editor.setAuthoringState(
+                AuthoringState.addElement(editor.authoringState, target.data)
+            );
+        } else {
+            model.requestLinksOfType();
+        }
+
+        const newLink = makeLinkWithDirection(
+            new Link({
+                sourceId: source.id,
+                targetId: target.id,
+                data: {
+                    ...link.data,
+                    sourceId: source.iri,
+                    targetId: target.iri,
+                }
+            }),
+            linkValue.value.link
+        );
+        editor.createNewLink({link: newLink});
+
+        batch.store();
+
+        onAfterApply();
+    };
 }

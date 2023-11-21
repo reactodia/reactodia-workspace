@@ -2,7 +2,8 @@ import { EventSource, Events } from '../coreUtils/events';
 
 export interface Command {
     readonly title?: string;
-    readonly invoke: CommandAction;
+    /** @returns Inverse command */
+    invoke(): Command;
 }
 
 /** @returns Inverse command */

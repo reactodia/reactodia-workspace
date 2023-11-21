@@ -324,9 +324,10 @@ export function placeElementsAround(params: {
         y: targetElementBounds.y + targetElementBounds.height / 2,
     };
     let outgoingAngle = 0;
-    if (targetElement.links.length > 0) {
+    const targetLinks = model.getElementLinks(targetElement);
+    if (targetLinks.length > 0) {
         const averageSourcePosition = calculateAveragePosition(
-            targetElement.links.map(link => {
+            targetLinks.map(link => {
                 const linkSource = model.sourceOf(link)!;
                 return linkSource !== targetElement ? linkSource : model.targetOf(link)!;
             }),

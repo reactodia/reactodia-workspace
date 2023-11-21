@@ -55,6 +55,10 @@ export class DiagramModel {
         return this.graph.getElement(elementId);
     }
 
+    getElementLinks(element: Element): ReadonlyArray<Link> {
+        return this.graph.getElementLinks(element);
+    }
+
     getLinkById(linkId: string): Link | undefined {
         return this.graph.getLink(linkId);
     }
@@ -127,7 +131,7 @@ export class DiagramModel {
 
     addElement(element: Element): void {
         this.history.execute(
-            addElement(this.graph, element, [])
+            new AddElementCommand(this.graph, element, [])
         );
     }
 
@@ -135,17 +139,13 @@ export class DiagramModel {
         const element = this.getElement(elementId);
         if (element) {
             this.history.execute(
-                removeElement(this.graph, element)
+                new RemoveElementCommand(this.graph, element)
             );
         }
     }
 
-    addLink(link: Link): Link {
+    createLink(link: Link): Link {
         const {typeId, sourceId, targetId, data} = link;
-        if (data && data.linkTypeId !== typeId) {
-            throw new Error('linkTypeId must match linkType.id');
-        }
-
         const existingLink = this.findLink(typeId, sourceId, targetId);
         if (existingLink) {
             if (link.data) {
@@ -155,13 +155,23 @@ export class DiagramModel {
             return existingLink;
         }
 
-        this.createLinkType(link.typeId);
-        this.graph.addLink(link);
+        this.addLink(link);
         return link;
     }
 
+    addLink(link: Link): void {
+        if (link.data.linkTypeId !== link.typeId) {
+            throw new Error('link.data.linkTypeId must match link.typeId');
+        }
+        this.createLinkType(link.typeId);
+        this.history.execute(new AddLinkCommand(this.graph, link));
+    }
+
     removeLink(linkId: string) {
-        this.graph.removeLink(linkId);
+        const link = this.graph.getLink(linkId);
+        if (link) {
+            this.history.execute(new RemoveLinkCommand(this.graph, link));
+        }
     }
 
     getClass(classIri: ElementTypeIri): FatClassModel | undefined {
@@ -237,8 +247,19 @@ export function placeholderDataFromIri(iri: ElementIri): ElementModel {
     };
 }
 
-function addElement(graph: Graph, element: Element, connectedLinks: ReadonlyArray<Link>): Command {
-    return Command.create('Add element', () => {
+class AddElementCommand implements Command {
+    constructor(
+        readonly graph: Graph,
+        readonly element: Element,
+        readonly connectedLinks: ReadonlyArray<Link>
+    ) {}
+
+    get title(): string {
+        return 'Add element';
+    }
+
+    invoke(): Command {
+        const {graph, element, connectedLinks} = this;
         graph.addElement(element);
         for (const link of connectedLinks) {
             const existing = graph.getLink(link.id) || graph.findLink(link.typeId, link.sourceId, link.targetId);
@@ -246,14 +267,58 @@ function addElement(graph: Graph, element: Element, connectedLinks: ReadonlyArra
                 graph.addLink(link);
             }
         }
-        return removeElement(graph, element);
-    });
+        return new RemoveElementCommand(graph, element);
+    }
 }
 
-function removeElement(graph: Graph, element: Element): Command {
-    return Command.create('Remove element', () => {
-        const connectedLinks = [...element.links];
+class RemoveElementCommand implements Command {
+    constructor(
+        readonly graph: Graph,
+        readonly element: Element
+    ) {}
+
+    get title(): string {
+        return 'Remove element';
+    }
+
+    invoke(): Command {
+        const {graph, element} = this;
+        const connectedLinks = [...graph.getElementLinks(element)];
         graph.removeElement(element.id);
-        return addElement(graph, element, connectedLinks);
-    });
+        return new AddElementCommand(graph, element, connectedLinks);
+    }
+}
+
+class AddLinkCommand implements Command {
+    constructor(
+        readonly graph: Graph,
+        readonly link: Link
+    ) {}
+
+    get title(): string {
+        return 'Add link';
+    }
+
+    invoke(): Command {
+        const {graph, link} = this;
+        graph.addLink(link);
+        return new RemoveLinkCommand(graph, link);
+    }
+}
+
+class RemoveLinkCommand implements Command {
+    constructor(
+        readonly graph: Graph,
+        readonly link: Link
+    ) {}
+
+    get title(): string {
+        return 'Remove link';
+    }
+
+    invoke(): Command {
+        const {graph, link} = this;
+        graph.removeLink(link.id);
+        return new AddLinkCommand(graph, link);
+    }
 }

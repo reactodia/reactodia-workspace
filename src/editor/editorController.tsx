@@ -269,7 +269,7 @@ export class EditorController {
         // remove new connected links
         const linksToRemove = new Set<string>();
         for (const element of elements) {
-            for (const link of element.links) {
+            for (const link of this.model.getElementLinks(element)) {
                 if (link.data && AuthoringState.isNewLink(state, link.data)) {
                     linksToRemove.add(link.id);
                 }
@@ -296,7 +296,7 @@ export class EditorController {
 
         const batch = this.model.history.startBatch('Create new link');
 
-        const addedLink = this.model.addLink(base);
+        this.model.addLink(base);
         if (!temporary) {
             this.model.createLinks(base.data);
         }
@@ -318,7 +318,7 @@ export class EditorController {
             batch.discard();
         }
 
-        return addedLink;
+        return base;
     }
 
     changeLink(oldData: LinkModel, newData: LinkModel) {
@@ -412,13 +412,13 @@ export class EditorController {
         for (const cell of cells) {
             if (cell instanceof Element) {
                 if (temporaryState.elements.has(cell.iri)) {
+                    nextTemporaryState = TemporaryState.deleteElement(nextTemporaryState, cell.data);
                     this.model.removeElement(cell.id);
-                    nextTemporaryState = TemporaryState.deleteElement(temporaryState, cell.data);
                 }
             } else if (cell instanceof Link) {
                 if (temporaryState.links.has(cell.data)) {
+                    nextTemporaryState = TemporaryState.deleteLink(nextTemporaryState, cell.data);
                     this.model.removeLink(cell.id);
-                    nextTemporaryState = TemporaryState.deleteLink(temporaryState, cell.data);
                 }
             }
         }

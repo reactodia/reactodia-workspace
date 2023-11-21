@@ -29,11 +29,12 @@ export class Graph {
     private readonly source = new EventSource<GraphEvents>();
     readonly events: Events<GraphEvents> = this.source;
 
-    private elements = new OrderedMap<DiagramElement>();
-    private links = new OrderedMap<DiagramLink>();
+    private readonly elements = new OrderedMap<DiagramElement>();
+    private readonly links = new OrderedMap<DiagramLink>();
+    private readonly elementLinks = new WeakMap<DiagramElement, DiagramLink[]>();
 
-    private classesById = new Map<ElementTypeIri, FatClassModel>();
-    private propertiesById = new Map<PropertyTypeIri, RichProperty>();
+    private readonly classesById = new Map<ElementTypeIri, FatClassModel>();
+    private readonly propertiesById = new Map<PropertyTypeIri, RichProperty>();
 
     private linkTypes = new Map<LinkTypeIri, FatLinkType>();
     private static nextLinkTypeIndex = 0;
@@ -45,11 +46,18 @@ export class Graph {
         return this.links.get(linkId);
     }
 
+    getElementLinks(element: DiagramElement): ReadonlyArray<DiagramLink> {
+        return this.elementLinks.get(element) ?? [];
+    }
+
     findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): DiagramLink | undefined {
         const source = this.getElement(sourceId);
         if (!source) { return undefined; }
-        const index = findLinkIndex(source.links, linkTypeId, sourceId, targetId);
-        return index >= 0 ? source.links[index] : undefined;
+        const links = this.elementLinks.get(source);
+        if (links) {
+            const index = findLinkIndex(links, linkTypeId, sourceId, targetId);
+            return index >= 0 ? links[index] : undefined;
+        }
     }
 
     sourceOf(link: DiagramLink) {
@@ -86,7 +94,7 @@ export class Graph {
         if (element) {
             const options = {silent: true};
             // clone links to prevent modifications during iteration
-            const changedLinks = [...element.links];
+            const changedLinks = [...this.getElementLinks(element)];
             for (const link of changedLinks) {
                 this.removeLink(link.id, options);
             }
@@ -116,9 +124,21 @@ export class Graph {
         if (!target) {
             throw new Error(`Link source '${link.targetId}' not found`);
         }
-        source.links.push(link);
+
+        let sourceLinks = this.elementLinks.get(source);
+        if (!sourceLinks) {
+            sourceLinks = [];
+            this.elementLinks.set(source, sourceLinks);
+        }
+        sourceLinks.push(link);
+
         if (link.sourceId !== link.targetId) {
-            target.links.push(link);
+            let targetLinks = this.elementLinks.get(target);
+            if (!targetLinks) {
+                targetLinks = [];
+                this.elementLinks.set(target, targetLinks);
+            }
+            targetLinks.push(link);
         }
 
         link.events.onAny(this.onLinkEvent);
@@ -145,11 +165,24 @@ export class Graph {
     private removeLinkReferences(linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
         const source = this.getElement(sourceId);
         if (source) {
-            removeLinkFrom(source.links, linkTypeId, sourceId, targetId);
+            const sourceLinks = this.elementLinks.get(source);
+            if (sourceLinks) {
+                removeLinkFrom(sourceLinks, linkTypeId, sourceId, targetId);
+                if (sourceLinks.length === 0) {
+                    this.elementLinks.delete(source);
+                }
+            }
         }
+
         const target = this.getElement(targetId);
         if (target) {
-            removeLinkFrom(target.links, linkTypeId, sourceId, targetId);
+            const targetLinks = this.elementLinks.get(target);
+            if (targetLinks) {
+                removeLinkFrom(targetLinks, linkTypeId, sourceId, targetId);
+                if (targetLinks.length === 0) {
+                    this.elementLinks.delete(target);
+                }
+            }
         }
     }
 

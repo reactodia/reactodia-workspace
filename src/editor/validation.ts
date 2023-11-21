@@ -86,7 +86,7 @@ export function changedElementsToValidate(
 
             // when we remove element incoming link are removed as well so we should update their sources
             if ((current || previous)!.deleted) {
-                for (const link of element.links) {
+                for (const link of editor.model.getElementLinks(element)) {
                     if (link.data.sourceId !== element.iri) {
                         toValidate.add(link.data.sourceId);
                     }
@@ -112,12 +112,12 @@ export function validateElements(
             continue;
         }
 
-        const outboundLinks = element.links.reduce((acc: LinkModel[], link) => {
+        const outboundLinks: LinkModel[] = [];
+        for (const link of editor.model.getElementLinks(element)) {
             if (link.sourceId === element.id) {
-                acc.push(link.data);
+                outboundLinks.push(link.data);
             }
-            return acc;
-        }, []);
+        }
 
         if (targets.has(element.iri)) {
             const event: ValidationEvent = {

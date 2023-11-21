@@ -2,11 +2,11 @@ import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import * as Rdf from '../data/rdf/rdfModel';
 import {
-    ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementModel, LinkModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { GenerateID } from '../data/schema';
 
-import { Vector, Size, isPolylineEqual, Rect } from './geometry';
+import { Vector, Size, isPolylineEqual } from './geometry';
 
 export type Cell = Element | Link | LinkVertex;
 
@@ -31,8 +31,6 @@ export class Element {
     readonly events: Events<ElementEvents> = this.source;
 
     readonly id: string;
-    /** All in and out links of the element */
-    readonly links: Link[] = [];
 
     private _data: ElementModel;
     private _position: Vector;
@@ -78,7 +76,6 @@ export class Element {
         if (previous === value) { return; }
         this._data = value;
         this.source.trigger('changeData', {source: this, previous});
-        updateLinksToReferByNewIri(this, previous.id, value.id);
     }
 
     get position(): Vector { return this._position; }
@@ -142,20 +139,6 @@ export interface AddToFilterRequest {
     direction?: 'in' | 'out';
 }
 
-function updateLinksToReferByNewIri(element: Element, oldIri: ElementIri, newIri: ElementIri) {
-    if (oldIri === newIri) { return; }
-    for (const link of element.links) {
-        let data = link.data;
-        if (data.sourceId === oldIri) {
-            data = {...data, sourceId: newIri};
-        }
-        if (data.targetId === oldIri) {
-            data = {...data, targetId: newIri};
-        }
-        link.setData(data);
-    }
-}
-
 export interface LinkEvents {
     changeData: PropertyChange<Link, LinkModel>;
     changeLayoutOnly: PropertyChange<Link, boolean>;
@@ -173,7 +156,6 @@ export class Link {
     private _targetId: string;
 
     private _data: LinkModel;
-    private _labelBounds: Rect | undefined;
     private _layoutOnly = false;
     private _vertices: ReadonlyArray<Vector>;
 
@@ -238,7 +220,21 @@ export interface LinkTemplateState {
 }
 
 export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `ramp-marker-${startMarker ? 'mstart' : 'mend'}-${linkTypeIndex}`;
+    return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
+}
+
+export function makeLinkWithDirection(original: Link, data: LinkModel): Link {
+    if (!(data.sourceId === original.data.sourceId || data.sourceId === original.data.targetId)) {
+        throw new Error('New link source IRI is unrelated to original link');
+    }
+    if (!(data.targetId === original.data.sourceId || data.targetId === original.data.targetId)) {
+        throw new Error('New link target IRI is unrelated to original link');
+    }
+    const sourceId = data.sourceId === original.data.sourceId
+        ? original.sourceId : original.targetId;
+    const targetId = data.targetId === original.data.targetId
+        ? original.targetId : original.sourceId;
+    return new Link({sourceId, targetId, data});
 }
 
 export interface FatClassModelEvents {
