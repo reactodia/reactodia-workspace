@@ -1,10 +1,10 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/AlexeyMz/reactodia-workspace.git"
+    "url": "git+ssh://git@github.com/reactodia/reactodia-workspace.git"
   },
   "keywords": [
     "owl",
@@ -19,9 +19,9 @@
   },
   "license": "LGPL-2.1",
   "bugs": {
-    "url": "https://github.com/AlexeyMz/reactodia-workspace/issues"
+    "url": "https://github.com/reactodia/reactodia-workspace/issues"
   },
-  "homepage": "https://github.com/AlexeyMz/reactodia-workspace",
+  "homepage": "https://github.com/reactodia/reactodia-workspace",
   "scripts": {
     "build": "webpack",
     "build-examples": "webpack --config webpack.examples.config.js",

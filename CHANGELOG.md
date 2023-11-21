@@ -6,7 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
 
-## [0.20.0]
+## [0.21.0] - 2023-11-21
+### Changed
+- **[Breaking]** Expose `Element.links` only through `DiagramModel.getElementLinks()`.
+- **[Breaking]** Make `DiagramModel.addLink()` consistent with `addElement()`:
+  * `addLink` and `removeLink` use command history;
+  * `addLink` will error on trying to add existing link, use `createLink()` for the previous behavior;
+
+### Fixed
+- Element does not redraw on its removal in some cases.
+- Avoid error when trying to change element type when dragging out of another in the authoring mode.
+- Link is never lost when dragging its source or target connector in the authoring mode.
+
+## [0.20.0] - 2023-11-16
 ### Added
 - Forked library as OSS project, see [previous CHANGELOG](https://github.com/metaphacts/ontodia/blob/master/CHANGELOG.md) if needed.
 - Implemented in-memory `CommandHistory` interface by default.
@@ -36,5 +48,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/AlexeyMz/reactodia-workspace/compare/v0.20.0...HEAD
-[0.20.0]: https://github.com/AlexeyMz/reactodia-workspace/compare/v0.12.0...v0.20.0
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...HEAD
+[0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
+[0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.0...v0.20.0
