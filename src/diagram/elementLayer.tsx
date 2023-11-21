@@ -37,7 +37,7 @@ interface ElementState {
 
 enum RedrawFlags {
     None = 0,
-    ScanCells = 1,
+    ScanCell = 1,
     Render = 2,
     RecomputeTemplate = Render | 4,
     RecomputeBlurred = Render | 8,
@@ -127,10 +127,10 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         const {model, view, renderingState} = this.props;
         this.listener.listen(model.events, 'changeCells', e => {
             if (e.updateAll) {
-                this.requestRedrawAll(RedrawFlags.ScanCells);
+                this.requestRedrawAll(RedrawFlags.ScanCell);
             } else {
                 if (e.changedElement) {
-                    this.requestRedraw(e.changedElement, RedrawFlags.None);
+                    this.requestRedraw(e.changedElement, RedrawFlags.ScanCell);
                 }
             }
         });
