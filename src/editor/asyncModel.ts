@@ -309,6 +309,7 @@ export class AsyncModel extends DiagramModel {
         let allowToCreate: boolean;
         const cancel = () => { allowToCreate = false; };
 
+        const batch = this.history.startBatch('Create loaded links');
         for (const linkModel of links) {
             this.createLinkType(linkModel.linkTypeId);
             allowToCreate = true;
@@ -317,16 +318,19 @@ export class AsyncModel extends DiagramModel {
                 this.createLinks(linkModel);
             }
         }
+        batch.discard();
     }
 
     createLinks(data: LinkModel) {
         const sources = this.graph.getElements().filter(el => el.iri === data.sourceId);
         const targets = this.graph.getElements().filter(el => el.iri === data.targetId);
+        const batch = this.history.startBatch('Create links');
         for (const source of sources) {
             for (const target of targets) {
                 this.createLink(new Link({sourceId: source.id, targetId: target.id, data}));
             }
         }
+        batch.store();
     }
 
     private async loadGroupContent(element: Element): Promise<void> {
