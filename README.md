@@ -1,5 +1,7 @@
 # Reactodia Workspace [![npm version](https://badge.fury.io/js/@reactodia%2Fworkspace.svg)](https://badge.fury.io/js/@reactodia%2Fworkspace)
 
+[Interactive examples](https://reactodia.github.io/workspace/rdf.html)
+
 `reactodia-workspace` is a JS/TS library that allows to visualize, navigate and explore data in the form of an interactive graph based on underlying data sources.
 
 `reactodia-workspace` is an open-source fork of [Ontodia](https://github.com/metaphacts/ontodia) project.
