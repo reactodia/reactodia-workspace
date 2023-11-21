@@ -110,7 +110,7 @@ function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | un
             if (target.hasAttribute('data-element-id')) {
                 return model.getElement(target.getAttribute('data-element-id')!);
             } else if (target.hasAttribute('data-link-id')) {
-                const link = model.getLinkById(target.getAttribute('data-link-id')!);
+                const link = model.getLink(target.getAttribute('data-link-id')!);
                 if (!link) {
                     return undefined;
                 }

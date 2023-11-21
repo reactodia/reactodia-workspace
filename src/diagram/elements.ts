@@ -135,7 +135,7 @@ export interface ElementTemplateState {
 
 export interface AddToFilterRequest {
     element: Element;
-    linkType?: FatLinkType;
+    linkType?: RichLinkType;
     direction?: 'in' | 'out';
 }
 
@@ -237,14 +237,14 @@ export function makeLinkWithDirection(original: Link, data: LinkModel): Link {
     return new Link({sourceId, targetId, data});
 }
 
-export interface FatClassModelEvents {
-    changeLabel: PropertyChange<FatClassModel, ReadonlyArray<Rdf.Literal>>;
-    changeCount: PropertyChange<FatClassModel, number | undefined>;
+export interface RichElementTypeEvents {
+    changeLabel: PropertyChange<RichElementType, ReadonlyArray<Rdf.Literal>>;
+    changeCount: PropertyChange<RichElementType, number | undefined>;
 }
 
-export class FatClassModel {
-    private readonly source = new EventSource<FatClassModelEvents>();
-    readonly events: Events<FatClassModelEvents> = this.source;
+export class RichElementType {
+    private readonly source = new EventSource<RichElementTypeEvents>();
+    readonly events: Events<RichElementTypeEvents> = this.source;
 
     readonly id: ElementTypeIri;
 
@@ -309,15 +309,15 @@ export class RichProperty {
     }
 }
 
-export interface FatLinkTypeEvents {
-    changeLabel: PropertyChange<FatLinkType, ReadonlyArray<Rdf.Literal>>;
-    changeIsNew: PropertyChange<FatLinkType, boolean>;
-    changeVisibility: { source: FatLinkType };
+export interface RichLinkTypeEvents {
+    changeLabel: PropertyChange<RichLinkType, ReadonlyArray<Rdf.Literal>>;
+    changeIsNew: PropertyChange<RichLinkType, boolean>;
+    changeVisibility: { source: RichLinkType };
 }
 
-export class FatLinkType {
-    private readonly source = new EventSource<FatLinkTypeEvents>();
-    readonly events: Events<FatLinkTypeEvents> = this.source;
+export class RichLinkType {
+    private readonly source = new EventSource<RichLinkTypeEvents>();
+    readonly events: Events<RichLinkTypeEvents> = this.source;
 
     readonly id: LinkTypeIri;
 

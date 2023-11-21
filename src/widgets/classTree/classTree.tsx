@@ -9,7 +9,7 @@ import { ElementTypeIri, ElementType, ElementTypeGraph, SubtypeEdge } from '../.
 import { DataProvider } from '../../data/provider';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
-import { Element, FatClassModel } from '../../diagram/elements';
+import { Element, RichElementType } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 import { DiagramView } from '../../diagram/view';
@@ -244,12 +244,12 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
         this.classTree = constructTree(graph);
 
-        for (const classModel of graph.elementTypes) {
-            const existing = model.getClass(classModel.id);
+        for (const typeModel of graph.elementTypes) {
+            const existing = model.getElementType(typeModel.id);
             if (!existing) {
-                const {id, label, count} = classModel;
-                const richClass = new FatClassModel({id, label, count});
-                model.addClass(richClass);
+                const {id, label, count} = typeModel;
+                const richType = new RichElementType({id, label, count});
+                model.addElementType(richType);
             }
         }
 
@@ -395,7 +395,7 @@ function createRoots(
     view: DiagramView
 ): TreeNode[] {
     const mapClass = (model: ClassTreeItem): TreeNode => {
-        const richClass = view.model.createClass(model.id);
+        const richClass = view.model.createElementType(model.id);
         return {
             model: richClass,
             label: view.formatLabel(richClass.label, richClass.id),

@@ -6,7 +6,7 @@ import {
 } from '../data/model';
 import { DataProvider } from '../data/provider';
 
-import { FatClassModel, FatLinkType, RichProperty } from '../diagram/elements';
+import { RichElementType, RichLinkType, RichProperty } from '../diagram/elements';
 import { Graph } from '../diagram/graph';
 
 export class DataFetcher {
@@ -59,7 +59,7 @@ export class DataFetcher {
         }
     };
 
-    fetchElementType(model: FatClassModel): void {
+    fetchElementType(model: RichElementType): void {
         this.classQueue.push(model.id);
     }
 
@@ -74,7 +74,7 @@ export class DataFetcher {
         }
     };
 
-    fetchLinkType(linkType: FatLinkType): void {
+    fetchLinkType(linkType: RichLinkType): void {
         this.linkTypeQueue.push(linkType.id);
     }
 

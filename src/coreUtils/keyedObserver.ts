@@ -1,6 +1,6 @@
 import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 
-import { FatClassModelEvents, FatLinkTypeEvents, RichPropertyEvents } from '../diagram/elements';
+import { RichElementTypeEvents, RichLinkTypeEvents, RichPropertyEvents } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 
 import { Unsubscribe, Listener } from './events';
@@ -41,11 +41,11 @@ export class KeyedObserver<Key extends string> {
     }
 }
 
-export function observeElementTypes<Event extends keyof FatClassModelEvents>(
-    model: DiagramModel, event: Event, listener: Listener<FatClassModelEvents, Event>
+export function observeElementTypes<Event extends keyof RichElementTypeEvents>(
+    model: DiagramModel, event: Event, listener: Listener<RichElementTypeEvents, Event>
 ) {
     return new KeyedObserver<ElementTypeIri>(key => {
-        const type = model.getClass(key);
+        const type = model.getElementType(key);
         if (type) {
             type.events.on(event, listener);
             return () => type.events.off(event, listener);
@@ -67,8 +67,8 @@ export function observeProperties<Event extends keyof RichPropertyEvents>(
     });
 }
 
-export function observeLinkTypes<Event extends keyof FatLinkTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<FatLinkTypeEvents, Event>
+export function observeLinkTypes<Event extends keyof RichLinkTypeEvents>(
+    model: DiagramModel, event: Event, listener: Listener<RichLinkTypeEvents, Event>
 ) {
     return new KeyedObserver<LinkTypeIri>(key => {
         const type = model.createLinkType(key);

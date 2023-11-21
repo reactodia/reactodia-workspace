@@ -186,7 +186,7 @@ export class DiagramView {
 
     getElementTypeString(elementModel: ElementModel): string {
         return elementModel.types.map(typeId => {
-            const type = this.model.createClass(typeId);
+            const type = this.model.createElementType(typeId);
             return this.formatLabel(type.label, type.id);
         }).sort().join(', ');
     }

@@ -5,7 +5,7 @@ import { EventObserver, Events } from '../coreUtils/events';
 
 import { ElementModel, ElementIri } from '../data/model';
 import { LookupParams, LinkedElement } from '../data/provider';
-import { Element as DiagramElement, FatLinkType, FatClassModel } from '../diagram/elements';
+import { Element as DiagramElement, RichLinkType, RichElementType } from '../diagram/elements';
 
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
 
@@ -27,9 +27,9 @@ export interface InstancesSearchCommands {
 
 export interface SearchCriteria {
     readonly text?: string;
-    readonly elementType?: FatClassModel;
+    readonly elementType?: RichElementType;
     readonly refElement?: DiagramElement;
-    readonly refElementLink?: FatLinkType;
+    readonly refElementLink?: RichLinkType;
     readonly linkDirection?: 'in' | 'out';
 }
 

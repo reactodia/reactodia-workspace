@@ -175,11 +175,10 @@ export class ExampleValidationApi implements ValidationApi {
                         target: e.after,
                         message: 'Cannot add any new link from a Class',
                     });
-                    const linkType = event.model.createLinkType(e.after.linkTypeId);
                     errors.push({
                         type: 'element',
                         target: event.target.id,
-                        message: `Cannot create <${linkType.id}> link from a Class`,
+                        message: `Cannot create <${e.after.linkTypeId}> link from a Class`,
                     });
                 }
             });

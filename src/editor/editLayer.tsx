@@ -235,6 +235,12 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             return;
         }
 
+        const targetEvent = editor.authoringState.elements.get(targetElement.iri);
+        if (targetEvent && targetEvent.deleted) {
+            this.setState({canDropOnElement: false});
+            return;
+        }
+
         this.setState({canDropOnElement: undefined});
 
         let source!: ElementModel;

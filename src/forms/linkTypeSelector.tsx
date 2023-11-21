@@ -7,7 +7,7 @@ import { MetadataApi } from '../data/metadataApi';
 import { LinkModel, ElementModel, sameLink } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { FatLinkType, LinkDirection } from '../diagram/elements';
+import { RichLinkType, LinkDirection } from '../diagram/elements';
 import { DiagramView } from '../diagram/view';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -28,7 +28,7 @@ export interface LinkValue {
 }
 
 interface DirectedFatLinkType {
-    fatLinkType: FatLinkType;
+    fatLinkType: RichLinkType;
     direction: LinkDirection;
 }
 
@@ -95,7 +95,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         this.listenToLinkLabels(fatLinkTypes);
     }
 
-    private listenToLinkLabels(fatLinkTypes: Array<{ fatLinkType: FatLinkType; direction: LinkDirection }>) {
+    private listenToLinkLabels(fatLinkTypes: Array<{ fatLinkType: RichLinkType; direction: LinkDirection }>) {
         fatLinkTypes.forEach(({fatLinkType}) =>
             this.listener.listen(fatLinkType.events, 'changeLabel', this.updateAll)
         );
@@ -118,7 +118,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     };
 
     private renderPossibleLinkType = (
-        {fatLinkType, direction}: { fatLinkType: FatLinkType; direction: LinkDirection }, index: number
+        {fatLinkType, direction}: { fatLinkType: RichLinkType; direction: LinkDirection }, index: number
     ) => {
         const {view, linkValue, source, target} = this.props;
         const label = view.formatLabel(fatLinkType.label, fatLinkType.id);

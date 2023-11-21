@@ -1,7 +1,7 @@
 import { ElementModel, ElementIri, LinkModel, sameLink } from '../data/model';
 
 import type { CanvasApi } from './canvasApi';
-import type { Element, Link, FatLinkType } from './elements';
+import type { Element, Link, RichLinkType } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
@@ -79,7 +79,7 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
 }
 
 export function changeLinkTypeVisibility(params: {
-    linkType: FatLinkType;
+    linkType: RichLinkType;
     visible: boolean;
     showLabel: boolean;
 }): Command {

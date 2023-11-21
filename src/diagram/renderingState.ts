@@ -9,7 +9,7 @@ import { ElementTypeIri, LinkTypeIri } from '../data/model';
 
 import { StandardTemplate } from '../templates/standardTemplate';
 
-import { Element, Link, FatLinkType } from './elements';
+import { Element, Link, RichLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
@@ -143,7 +143,7 @@ export class RenderingState implements SizeProvider {
         return this.linkTemplates;
     }
 
-    createLinkTemplate(linkType: FatLinkType): FilledLinkTemplate {
+    createLinkTemplate(linkType: RichLinkType): FilledLinkTemplate {
         const existingTemplate = this.linkTemplates.get(linkType.id);
         if (existingTemplate) {
             return existingTemplate;

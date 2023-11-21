@@ -1,7 +1,7 @@
-import { FatClassModel } from '../../diagram/elements';
+import { RichElementType } from '../../diagram/elements';
 
 export interface TreeNode {
-    model: FatClassModel;
+    model: RichElementType;
     label: string;
     derived: ReadonlyArray<TreeNode>;
 }

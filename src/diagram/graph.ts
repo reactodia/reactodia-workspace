@@ -6,8 +6,8 @@ import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 import {
     Element as DiagramElement, ElementEvents,
     Link as DiagramLink, LinkEvents,
-    FatLinkType, FatLinkTypeEvents,
-    FatClassModel, FatClassModelEvents,
+    RichLinkType, RichLinkTypeEvents,
+    RichElementType, RichElementTypeEvents,
     RichProperty,
 } from './elements';
 
@@ -15,8 +15,8 @@ export interface GraphEvents {
     changeCells: CellsChangedEvent;
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    linkTypeEvent: AnyEvent<FatLinkTypeEvents>;
-    classEvent: AnyEvent<FatClassModelEvents>;
+    linkTypeEvent: AnyEvent<RichLinkTypeEvents>;
+    classEvent: AnyEvent<RichElementTypeEvents>;
 }
 
 export interface CellsChangedEvent {
@@ -33,10 +33,10 @@ export class Graph {
     private readonly links = new OrderedMap<DiagramLink>();
     private readonly elementLinks = new WeakMap<DiagramElement, DiagramLink[]>();
 
-    private readonly classesById = new Map<ElementTypeIri, FatClassModel>();
+    private readonly classesById = new Map<ElementTypeIri, RichElementType>();
     private readonly propertiesById = new Map<PropertyTypeIri, RichProperty>();
 
-    private linkTypes = new Map<LinkTypeIri, FatLinkType>();
+    private linkTypes = new Map<LinkTypeIri, RichLinkType>();
     private static nextLinkTypeIndex = 0;
 
     getElements() { return this.elements.items; }
@@ -186,17 +186,17 @@ export class Graph {
         }
     }
 
-    getLinkTypes(): FatLinkType[] {
-        const result: FatLinkType[] = [];
+    getLinkTypes(): RichLinkType[] {
+        const result: RichLinkType[] = [];
         this.linkTypes.forEach(type => result.push(type));
         return result;
     }
 
-    getLinkType(linkTypeId: LinkTypeIri): FatLinkType | undefined {
+    getLinkType(linkTypeId: LinkTypeIri): RichLinkType | undefined {
         return this.linkTypes.get(linkTypeId);
     }
 
-    addLinkType(linkType: FatLinkType): void {
+    addLinkType(linkType: RichLinkType): void {
         if (this.getLinkType(linkType.id)) {
             throw new Error(`Link type '${linkType.id}' already exists.`);
         }
@@ -205,7 +205,7 @@ export class Graph {
         this.linkTypes.set(linkType.id, linkType);
     }
 
-    private onLinkTypeEvent: AnyListener<FatLinkTypeEvents> = (data, key) => {
+    private onLinkTypeEvent: AnyListener<RichLinkTypeEvents> = (data, key) => {
         this.source.trigger('linkTypeEvent', {key, data});
     };
 
@@ -220,17 +220,17 @@ export class Graph {
         this.propertiesById.set(property.id, property);
     }
 
-    getClass(classId: ElementTypeIri): FatClassModel | undefined {
+    getClass(classId: ElementTypeIri): RichElementType | undefined {
         return this.classesById.get(classId);
     }
 
-    getClasses(): FatClassModel[] {
-        const classes: FatClassModel[] = [];
+    getClasses(): RichElementType[] {
+        const classes: RichElementType[] = [];
         this.classesById.forEach(richClass => classes.push(richClass));
         return classes;
     }
 
-    addClass(classModel: FatClassModel): void {
+    addClass(classModel: RichElementType): void {
         if (this.getClass(classModel.id)) {
             throw new Error(`Class '${classModel.id}' already exists.`);
         }
@@ -238,7 +238,7 @@ export class Graph {
         this.classesById.set(classModel.id, classModel);
     }
 
-    private onClassEvent: AnyListener<FatClassModelEvents> = (data, key) => {
+    private onClassEvent: AnyListener<RichElementTypeEvents> = (data, key) => {
         this.source.trigger('classEvent', {key, data});
     };
 }

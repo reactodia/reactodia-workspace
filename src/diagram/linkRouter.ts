@@ -1,13 +1,13 @@
-import { LinkRouter, RoutedLinks, Vertex } from './customization';
+import type { LinkRouter, RoutedLinks, Vertex } from './customization';
 
-import { DiagramModel } from './model';
-import { Link } from './elements';
+import type { GraphStructure } from './model';
+import type { Link } from './elements';
 import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
 
 export class DefaultLinkRouter implements LinkRouter {
     constructor(private gap = 20) {}
 
-    route(model: DiagramModel, sizeProvider: SizeProvider): RoutedLinks {
+    route(model: GraphStructure, sizeProvider: SizeProvider): RoutedLinks {
         const routings: RoutedLinks = new Map();
 
         for (const link of model.links) {
@@ -30,7 +30,7 @@ export class DefaultLinkRouter implements LinkRouter {
 
     private routeFeedbackSiblingLinks(
         elementId: string,
-        model: DiagramModel,
+        model: GraphStructure,
         sizeProvider: SizeProvider,
         routings: RoutedLinks
     ) {
@@ -59,7 +59,7 @@ export class DefaultLinkRouter implements LinkRouter {
     private routeNormalSiblingLinks(
         sourceId: string,
         targetId: string,
-        model: DiagramModel,
+        model: GraphStructure,
         sizeProvider: SizeProvider,
         routings: RoutedLinks
     ): void {

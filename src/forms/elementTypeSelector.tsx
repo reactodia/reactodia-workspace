@@ -124,7 +124,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
 
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
         const {view} = this.props;
-        const type = view.model.createClass(elementType);
+        const type = view.model.createElementType(elementType);
         const label = view.formatLabel(type.label, type.id);
         return <option key={elementType} value={elementType}>{label}</option>;
     };
@@ -229,8 +229,8 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
 
 function makeElementTypeComparatorByLabel(view: DiagramView) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
-        const typeA = view.model.createClass(a);
-        const typeB = view.model.createClass(b);
+        const typeA = view.model.createElementType(a);
+        const typeB = view.model.createElementType(b);
         const labelA = view.formatLabel(typeA.label, typeA.id);
         const labelB = view.formatLabel(typeB.label, typeB.id);
         return labelA.localeCompare(labelB);

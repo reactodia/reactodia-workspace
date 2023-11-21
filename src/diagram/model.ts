@@ -7,8 +7,8 @@ import * as Rdf from '../data/rdf/rdfModel';
 import { GenerateID } from '../data/schema';
 
 import {
-    Element, ElementEvents, Link, LinkEvents, FatLinkType, FatLinkTypeEvents,
-    FatClassModel, FatClassModelEvents, RichProperty,
+    Element, ElementEvents, Link, LinkEvents, RichLinkType, RichLinkTypeEvents,
+    RichElementType, RichElementTypeEvents, RichProperty,
 } from './elements';
 import { Graph, CellsChangedEvent } from './graph';
 import { CommandHistory, Command } from './history';
@@ -18,18 +18,35 @@ export interface DiagramModelEvents {
     changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    linkTypeEvent: AnyEvent<FatLinkTypeEvents>;
-    classEvent: AnyEvent<FatClassModelEvents>;
+    linkTypeEvent: AnyEvent<RichLinkTypeEvents>;
+    classEvent: AnyEvent<RichElementTypeEvents>;
     changeGroupContent: {
         readonly group: string;
         readonly layoutComplete: boolean;
     };
 }
 
+export interface GraphStructure {
+    get factory(): Rdf.DataFactory;
+    get elements(): ReadonlyArray<Element>;
+    get links(): ReadonlyArray<Link>;
+
+    getElement(elementId: string): Element | undefined;
+    getElementLinks(element: Element): ReadonlyArray<Link>;
+    getLink(linkId: string): Link | undefined;
+    findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined;
+    sourceOf(link: Link): Element | undefined;
+    targetOf(link: Link): Element | undefined;
+
+    getElementType(elementTypeIri: ElementTypeIri): RichElementType | undefined;
+    getLinkType(linkTypeIri: LinkTypeIri): RichLinkType | undefined;
+    getProperty(propertyTypeIri: PropertyTypeIri): RichProperty | undefined;
+}
+
 /**
  * Model of diagram.
  */
-export class DiagramModel {
+export class DiagramModel implements GraphStructure {
     protected readonly source = new EventSource<DiagramModelEvents>();
     readonly events: Events<DiagramModelEvents> = this.source;
 
@@ -59,22 +76,20 @@ export class DiagramModel {
         return this.graph.getElementLinks(element);
     }
 
-    getLinkById(linkId: string): Link | undefined {
+    getLink(linkId: string): Link | undefined {
         return this.graph.getLink(linkId);
-    }
-
-    linksOfType(linkTypeId: LinkTypeIri): ReadonlyArray<Link> {
-        return this.graph.getLinks().filter(link => link.typeId === linkTypeId);
     }
 
     findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined {
         return this.graph.findLink(linkTypeId, sourceId, targetId);
     }
 
-    sourceOf(link: Link) { return this.getElement(link.sourceId); }
-    targetOf(link: Link) { return this.getElement(link.targetId); }
-    isSourceAndTargetVisible(link: Link): boolean {
-        return Boolean(this.sourceOf(link) && this.targetOf(link));
+    sourceOf(link: Link) {
+        return this.getElement(link.sourceId);
+    }
+
+    targetOf(link: Link) {
+        return this.getElement(link.targetId);
     }
 
     resetGraph() {
@@ -174,34 +189,34 @@ export class DiagramModel {
         }
     }
 
-    getClass(classIri: ElementTypeIri): FatClassModel | undefined {
-        return this.graph.getClass(classIri);
+    getElementType(elementTypeIri: ElementTypeIri): RichElementType | undefined {
+        return this.graph.getClass(elementTypeIri);
     }
 
-    createClass(classIri: ElementTypeIri): FatClassModel {
-        const existing = this.graph.getClass(classIri);
+    createElementType(elementTypeIri: ElementTypeIri): RichElementType {
+        const existing = this.graph.getClass(elementTypeIri);
         if (existing) {
             return existing;
         }
-        const classModel = new FatClassModel({id: classIri});
-        this.addClass(classModel);
+        const classModel = new RichElementType({id: elementTypeIri});
+        this.addElementType(classModel);
         return classModel;
     }
 
-    addClass(model: FatClassModel) {
+    addElementType(model: RichElementType) {
         this.graph.addClass(model);
     }
 
-    getLinkType(linkTypeIri: LinkTypeIri): FatLinkType | undefined {
+    getLinkType(linkTypeIri: LinkTypeIri): RichLinkType | undefined {
         return this.graph.getLinkType(linkTypeIri);
     }
 
-    createLinkType(linkTypeIri: LinkTypeIri): FatLinkType {
+    createLinkType(linkTypeIri: LinkTypeIri): RichLinkType {
         const existing = this.graph.getLinkType(linkTypeIri);
         if (existing) {
             return existing;
         }
-        const linkType = new FatLinkType({id: linkTypeIri});
+        const linkType = new RichLinkType({id: linkTypeIri});
         this.graph.addLinkType(linkType);
         return linkType;
     }

@@ -5,7 +5,7 @@ import type * as Rdf from '../data/rdf/rdfModel';
 
 import type { ElementTemplateState, Link } from './elements';
 import type { SizeProvider } from './geometry';
-import type { DiagramModel } from './model';
+import type { GraphStructure } from './model';
 
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
 export type ElementTemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
@@ -36,7 +36,7 @@ export interface FormattedProperty {
 export interface LinkTemplate {
     markerSource?: LinkMarkerStyle;
     markerTarget?: LinkMarkerStyle;
-    renderLink?(link: Link, model: DiagramModel): LinkStyle;
+    renderLink?(link: Link, model: GraphStructure): LinkStyle;
     setLinkLabel?: (link: Link, label: string) => void;
 }
 
@@ -54,7 +54,7 @@ export interface LinkStyle {
 }
 
 export interface LinkRouter {
-    route(model: DiagramModel, sizeProvider: SizeProvider): RoutedLinks;
+    route(model: GraphStructure, sizeProvider: SizeProvider): RoutedLinks;
 }
 
 export type RoutedLinks = Map<string, RoutedLink>;

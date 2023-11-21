@@ -1,7 +1,7 @@
-import { DiagramModel } from '../diagram/model';
-import { AuthoringState } from '../editor/authoringState';
+import type { GraphStructure } from '../diagram/model';
+import type { AuthoringState } from '../editor/authoringState';
 
-import { ElementModel, LinkModel, ElementIri, PropertyTypeIri } from './model';
+import type { ElementModel, LinkModel, ElementIri, PropertyTypeIri } from './model';
 
 export interface ElementError {
     readonly type: 'element';
@@ -19,7 +19,7 @@ export interface LinkError {
 export interface ValidationEvent {
     readonly target: ElementModel;
     readonly outboundLinks: ReadonlyArray<LinkModel>;
-    readonly model: DiagramModel;
+    readonly model: GraphStructure;
     readonly state: AuthoringState;
     readonly signal: AbortSignal | undefined;
 }

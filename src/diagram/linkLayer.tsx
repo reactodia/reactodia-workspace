@@ -9,7 +9,7 @@ import {
 } from './customization';
 
 import { restoreCapturedLinkGeometry } from './commands';
-import { Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, FatLinkType } from './elements';
+import { Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType } from './elements';
 import {
     Rect, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline, computeGrouping,
 } from './geometry';
@@ -90,7 +90,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
             const linkTypeEvent = data.changeLabel || data.changeVisibility;
             if (!linkTypeEvent) { return; }
             const linkTypeId = linkTypeEvent.source.id;
-            for (const link of view.model.linksOfType(linkTypeId)) {
+            for (const link of view.model.links.filter(link => link.typeId === linkTypeId)) {
                 this.scheduleUpdateLink(link.id);
             }
         });
@@ -227,7 +227,7 @@ const LABEL_GROUPING_PRECISION = 100;
 const TEMPORARY_LABEL_LINES = new Map<number, number>();
 
 interface LinkViewState {
-    readonly linkType: FatLinkType;
+    readonly linkType: RichLinkType;
     readonly template: FilledLinkTemplate;
 }
 

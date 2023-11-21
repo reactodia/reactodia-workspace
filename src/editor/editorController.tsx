@@ -201,7 +201,7 @@ export class EditorController {
         if (this.selection.length === 0) { return; }
         const newSelection = this.selection.filter(item =>
             item instanceof Element ? this.model.getElement(item.id) :
-            item instanceof Link ? this.model.getLinkById(item.id) :
+            item instanceof Link ? this.model.getLink(item.id) :
             false
         );
         if (newSelection.length < this.selection.length) {

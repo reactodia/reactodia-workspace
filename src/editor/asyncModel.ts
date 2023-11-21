@@ -8,7 +8,7 @@ import { DataProvider } from '../data/provider';
 import { DataFactory } from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { Element, FatLinkType, FatClassModel, RichProperty, Link } from '../diagram/elements';
+import { Element, RichLinkType, RichElementType, RichProperty, Link } from '../diagram/elements';
 import { CommandHistory, Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents, placeholderDataFromIri } from '../diagram/model';
 
@@ -160,10 +160,10 @@ export class AsyncModel extends DiagramModel {
         return makeSerializedDiagram({layoutData, linkTypeOptions});
     }
 
-    private initLinkTypes(linkTypes: LinkType[]): FatLinkType[] {
-        const types: FatLinkType[] = [];
+    private initLinkTypes(linkTypes: LinkType[]): RichLinkType[] {
+        const types: RichLinkType[] = [];
         for (const {id, label} of linkTypes) {
-            const linkType = new FatLinkType({id, label});
+            const linkType = new RichLinkType({id, label});
             this.graph.addLinkType(linkType);
             types.push(linkType);
         }
@@ -186,7 +186,7 @@ export class AsyncModel extends DiagramModel {
         layoutData?: LayoutData;
         preloadedElements?: Dictionary<ElementModel>;
         markLinksAsLayoutOnly: boolean;
-        allLinkTypes: ReadonlyArray<FatLinkType>;
+        allLinkTypes: ReadonlyArray<RichLinkType>;
         hideUnusedLinkTypes?: boolean;
         signal?: AbortSignal;
     }): Promise<void> {
@@ -198,7 +198,7 @@ export class AsyncModel extends DiagramModel {
         } = params;
 
         const elementIrisToRequestData: ElementIri[] = [];
-        const usedLinkTypes: { [typeId: string]: FatLinkType } = {};
+        const usedLinkTypes: { [typeId: string]: RichLinkType } = {};
 
         for (const layoutElement of layoutData.elements) {
             const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
@@ -248,8 +248,8 @@ export class AsyncModel extends DiagramModel {
     }
 
     private hideUnusedLinkTypes(
-        allTypes: ReadonlyArray<FatLinkType>,
-        usedTypes: { [typeId: string]: FatLinkType }
+        allTypes: ReadonlyArray<RichLinkType>,
+        usedTypes: { [typeId: string]: RichLinkType }
     ) {
         for (const linkType of allTypes) {
             if (!usedTypes[linkType.id]) {
@@ -272,17 +272,17 @@ export class AsyncModel extends DiagramModel {
         }).then(links => this.onLinkInfoLoaded(links));
     }
 
-    createClass(classId: ElementTypeIri): FatClassModel {
-        const existing = super.getClass(classId);
+    createElementType(elementTypeIri: ElementTypeIri): RichElementType {
+        const existing = super.getElementType(elementTypeIri);
         if (existing) {
             return existing;
         }
-        const classModel = super.createClass(classId);
+        const classModel = super.createElementType(elementTypeIri);
         this.fetcher!.fetchElementType(classModel);
         return classModel;
     }
 
-    createLinkType(linkTypeId: LinkTypeIri): FatLinkType {
+    createLinkType(linkTypeId: LinkTypeIri): RichLinkType {
         if (this.graph.getLinkType(linkTypeId)) {
             return super.createLinkType(linkTypeId);
         }

@@ -6,7 +6,7 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 
 import { LinkCount } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { Element, FatLinkType } from '../diagram/elements';
+import { Element, RichLinkType } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
 import { DiagramView } from '../diagram/view';
 
@@ -18,9 +18,9 @@ import { ProgressBar, ProgressState } from './progressBar';
 
 interface LinkInToolBoxProps {
     view: DiagramView;
-    link: FatLinkType;
+    link: RichLinkType;
     count: number;
-    onPressFilter?: (type: FatLinkType) => void;
+    onPressFilter?: (type: RichLinkType) => void;
     filterKey?: string;
 }
 
@@ -116,11 +116,11 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
 
 interface LinkTypesToolboxViewProps {
     view: DiagramView;
-    links: ReadonlyArray<FatLinkType> | undefined;
+    links: ReadonlyArray<RichLinkType> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
     selectedElement: Element | undefined;
     dataState: ProgressState;
-    filterCallback: ((type: FatLinkType) => void) | undefined;
+    filterCallback: ((type: RichLinkType) => void) | undefined;
 }
 
 class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { filterKey: string }> {
@@ -129,7 +129,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
         this.state = {filterKey: ''};
     }
 
-    private compareLinks = (a: FatLinkType, b: FatLinkType) => {
+    private compareLinks = (a: RichLinkType, b: RichLinkType) => {
         const {view} = this.props;
         const aText = view.formatLabel(a.label, a.id);
         const bText = view.formatLabel(b.label, b.id);
@@ -154,7 +154,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
             .sort(this.compareLinks);
     }
 
-    private getViews(links: FatLinkType[]) {
+    private getViews(links: RichLinkType[]) {
         const countMap = this.props.countMap || {};
         const views: React.ReactElement<any>[] = [];
         for (const link of links) {
@@ -262,7 +262,7 @@ export interface LinkTypesToolboxProps {
 interface LinkTypesToolboxState {
     readonly dataState: ProgressState;
     readonly selectedElement?: Element;
-    readonly linksOfElement?: ReadonlyArray<FatLinkType>;
+    readonly linksOfElement?: ReadonlyArray<RichLinkType>;
     readonly countMap?: { readonly [linkTypeId: string]: number };
 }
 
@@ -339,7 +339,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     private computeStateFromRequestResult(linkTypes: ReadonlyArray<LinkCount>) {
         const {model} = this.context;
 
-        const linksOfElement: FatLinkType[] = [];
+        const linksOfElement: RichLinkType[] = [];
         const countMap: { [linkTypeId: string]: number } = {};
 
         for (const linkType of linkTypes) {
@@ -351,7 +351,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         return {linksOfElement, countMap};
     }
 
-    private subscribeOnLinksEvents(linksOfElement: FatLinkType[]) {
+    private subscribeOnLinksEvents(linksOfElement: RichLinkType[]) {
         this.linkListener.stopListening();
 
         const listener = this.linkListener;
@@ -378,7 +378,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         />;
     }
 
-    private onAddToFilter = (linkType: FatLinkType) => {
+    private onAddToFilter = (linkType: RichLinkType) => {
         const {instancesSearchCommands} = this.props;
         const {selectedElement} = this.state;
         instancesSearchCommands?.trigger('setCriteria', {
@@ -390,7 +390,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     };
 }
 
-function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<FatLinkType>) {
+function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<RichLinkType>) {
     const batch = history.startBatch();
     const {visible, showLabel} = (
         state === 'invisible' ? {visible: false, showLabel: false} :

@@ -9,7 +9,7 @@ import { generate128BitID } from '../data/utils';
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { FatLinkType, Element } from '../diagram/elements';
+import { RichLinkType, Element } from '../diagram/elements';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramView } from '../diagram/view';
 
@@ -101,7 +101,7 @@ interface LinkDataChunk {
      * (i.e. should be re-rendered).
      */
     chunkId: string;
-    link: FatLinkType;
+    link: RichLinkType;
     direction?: 'in' | 'out';
     expectedCount: number;
     pageCount: number;
@@ -118,13 +118,13 @@ const LINK_COUNT_PER_PAGE = 100;
 class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     declare readonly context: never;
 
-    private readonly ALL_RELATED_ELEMENTS_LINK: FatLinkType;
+    private readonly ALL_RELATED_ELEMENTS_LINK: RichLinkType;
 
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
     private loadingState = ProgressState.none;
 
-    private links: FatLinkType[] | undefined;
+    private links: RichLinkType[] | undefined;
     private countMap: { [linkTypeId: string]: ConnectionCount } | undefined;
 
     private linkDataChunk: LinkDataChunk | undefined;
@@ -133,7 +133,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
         const {workspace: {model}} = this.props;
-        this.ALL_RELATED_ELEMENTS_LINK = new FatLinkType({
+        this.ALL_RELATED_ELEMENTS_LINK = new RichLinkType({
             id: 'allRelatedElements' as LinkTypeIri,
             label: [model.factory.literal('All')],
         });
@@ -153,7 +153,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         this.linkTypesListener.stopListening();
     }
 
-    private resubscribeOnLinkTypeEvents(linkTypesOfElement: ReadonlyArray<FatLinkType>) {
+    private resubscribeOnLinkTypeEvents(linkTypesOfElement: ReadonlyArray<RichLinkType>) {
         this.linkTypesListener.stopListening();
         for (const linkType of linkTypesOfElement) {
             this.linkTypesListener.listen(linkType.events, 'changeLabel', this.updateAll);
@@ -172,7 +172,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
                 this.loadingState = ProgressState.completed;
 
                 const countMap: Dictionary<ConnectionCount> = {};
-                const links: FatLinkType[] = [];
+                const links: RichLinkType[] = [];
                 for (const {id: linkTypeId, inCount, outCount} of linkTypes) {
                     countMap[linkTypeId] = {inCount, outCount};
                     links.push(model.createLinkType(linkTypeId));
@@ -243,7 +243,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         onClose();
     };
 
-    private onAddElements = (elementIris: ElementIri[], linkType: FatLinkType | undefined) => {
+    private onAddElements = (elementIris: ElementIri[], linkType: RichLinkType | undefined) => {
         const {target, workspace: {model, view, triggerWorkspaceEvent}, canvas} = this.props;
         const batch = model.history.startBatch('Add connected elements');
 
@@ -346,7 +346,7 @@ interface MenuMarkupProps {
     target: Element;
 
     connectionsData: {
-        links: FatLinkType[];
+        links: RichLinkType[];
         countMap: { [linkTypeId: string]: ConnectionCount };
     };
 
@@ -354,7 +354,7 @@ interface MenuMarkupProps {
 
     view: DiagramView;
     state: ProgressState;
-    allRelatedLink: FatLinkType;
+    allRelatedLink: RichLinkType;
 
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onPressAddSelected: (selectedObjects: ElementOnDiagram[]) => void;
@@ -516,13 +516,13 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
 interface ConnectionsListProps {
     id: string;
     data: {
-        links: FatLinkType[];
+        links: RichLinkType[];
         countMap: { [linkTypeId: string]: ConnectionCount };
     };
     view: DiagramView;
     filterKey: string;
 
-    allRelatedLink: FatLinkType;
+    allRelatedLink: RichLinkType;
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 
@@ -584,14 +584,14 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         return this.props.sortMode === 'smart' && !this.props.filterKey;
     }
 
-    private compareLinks = (a: FatLinkType, b: FatLinkType) => {
+    private compareLinks = (a: RichLinkType, b: RichLinkType) => {
         const {view} = this.props;
         const aText = view.formatLabel(a.label, a.id);
         const bText = view.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
-    private compareLinksByWeight = (a: FatLinkType, b: FatLinkType) => {
+    private compareLinksByWeight = (a: RichLinkType, b: RichLinkType) => {
         const {view} = this.props;
         const {scores} = this.state;
         const aText = view.formatLabel(a.label, a.id);
@@ -628,13 +628,13 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
             .sort(this.compareLinksByWeight);
     }
 
-    private getViews = (links: FatLinkType[], notSure?: boolean) => {
+    private getViews = (links: RichLinkType[], notSure?: boolean) => {
         const {view, data} = this.props;
         const {scores} = this.state;
         const countMap = data.countMap ?? {};
 
         const views: JSX.Element[] = [];
-        const addView = (link: FatLinkType, direction: 'in' | 'out') => {
+        const addView = (link: RichLinkType, direction: 'in' | 'out') => {
             const count = direction === 'in'
                 ? countMap[link.id].inCount
                 : countMap[link.id].outCount;
@@ -721,7 +721,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 }
 
 interface LinkInPopupMenuProps {
-    link: FatLinkType;
+    link: RichLinkType;
     count: number;
     direction?: 'in' | 'out';
     view: DiagramView;
