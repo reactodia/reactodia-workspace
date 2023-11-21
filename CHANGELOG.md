@@ -50,4 +50,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 [Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...HEAD
 [0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
-[0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.0...v0.20.0
+[0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.2...v0.20.0
