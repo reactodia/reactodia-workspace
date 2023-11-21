@@ -16,7 +16,7 @@ export interface CanvasApi {
     readonly metrics: CanvasMetrics;
     centerTo(
         paperPosition?: Vector,
-        options?: ViewportOptions
+        options?: CenterToOptions
     ): Promise<void>;
     centerContent(options?: ViewportOptions): Promise<void>;
     getScale(): number;
@@ -110,6 +110,10 @@ export interface ViewportOptions {
      * Implicitly sets `animate: true` if greater than zero.
      */
     duration?: number;
+}
+
+export interface CenterToOptions extends ViewportOptions {
+    scale?: number;
 }
 
 export interface ScaleOptions extends ViewportOptions {

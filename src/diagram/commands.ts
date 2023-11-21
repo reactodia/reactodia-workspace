@@ -1,9 +1,10 @@
 import { ElementModel, ElementIri, LinkModel, sameLink } from '../data/model';
 
-import { Element, Link, FatLinkType } from './elements';
+import type { CanvasApi } from './canvasApi';
+import type { Element, Link, FatLinkType } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
-import { DiagramModel } from './model';
+import type { DiagramModel } from './model';
 
 export class RestoreGeometry implements Command {
     readonly title = 'Move elements and links';
@@ -141,4 +142,31 @@ export function setLinkData(model: DiagramModel, oldData: LinkModel, newData: Li
         }
         return setLinkData(model, newData, oldData);
     });
+}
+
+export function restoreViewport(canvas: CanvasApi): Command {
+    interface CapturedViewport {
+        readonly center: Vector;
+        readonly scale: number;
+    }
+    function capture(): CapturedViewport {
+        const {metrics} = canvas;
+        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const center = metrics.clientToPaperCoords(clientWidth / 2, clientHeight / 2);
+        const {scale} = metrics.getTransform();
+        return {center, scale};
+    }
+    function apply({center, scale}: CapturedViewport): void {
+        canvas.centerTo(center, {scale});
+    }
+    const initialViewport = capture();
+    const command = Command.create('Restore viewport', () => {
+        const revertedViewport = capture();
+        apply(initialViewport);
+        return Command.create('Revert viewport', () => {
+            apply(revertedViewport);
+            return command;
+        });
+    });
+    return command;
 }

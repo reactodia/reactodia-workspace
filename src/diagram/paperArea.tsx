@@ -6,7 +6,7 @@ import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/schedu
 
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
-    CanvasDropEvent, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
+    CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
 } from './canvasApi';
 import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
@@ -542,13 +542,25 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         }
     };
 
-    centerTo(paperPosition?: { x: number; y: number }, options: ViewportOptions = {}): Promise<void> {
+    centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
         const {width, height} = this.state;
         const paperCenter = paperPosition || {x: width / 2, y: height / 2};
-        const viewportState: Partial<ViewportState> = {
-            center: paperCenter,
-        };
-        return this.setViewportState(viewportState, options);
+        if (typeof options.scale === 'number') {
+            const {min, max} = this.zoomOptions;
+            let scale = options.scale;
+            scale = Math.max(scale, min);
+            scale = Math.min(scale, max);
+            const viewportState: Partial<ViewportState> = {
+                center: paperCenter,
+                scale: {x: scale, y: scale},
+            };
+            return this.setViewportState(viewportState, options);
+        } else {
+            const viewportState: Partial<ViewportState> = {
+                center: paperCenter,
+            };
+            return this.setViewportState(viewportState, options);
+        }
     }
 
     centerContent(options: ViewportOptions = {}): Promise<void> {

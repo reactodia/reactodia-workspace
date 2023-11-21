@@ -149,7 +149,6 @@ export function layoutBiasFreePaddedWith(
 
 export interface CalculatedLayout {
     group?: string;
-    keepAveragePosition: boolean;
     positions: Map<string, Vector>;
     sizes: Map<string, Size>;
     nestedLayouts: CalculatedLayout[];
@@ -174,7 +173,6 @@ export async function calculateLayout(params: {
             positions: new Map(),
             sizes: new Map(),
             nestedLayouts: [],
-            keepAveragePosition: false,
         };
     }
     return internalRecursion(params.group);
@@ -209,9 +207,6 @@ export async function calculateLayout(params: {
 
         const links: LayoutLink[] = [];
         for (const link of model.links) {
-            if (!model.isSourceAndTargetVisible(link)) {
-                continue;
-            }
             const source = model.sourceOf(link)!;
             const target = model.targetOf(link)!;
             const sourceNode = nodeById[source.id];
@@ -234,7 +229,6 @@ export async function calculateLayout(params: {
             sizes,
             group,
             nestedLayouts,
-            keepAveragePosition: Boolean(selectedElements)
         };
     }
 }
@@ -243,7 +237,7 @@ export function applyLayout(
     layout: CalculatedLayout,
     model: DiagramModel
 ): void {
-    const {positions, sizes, group, nestedLayouts, keepAveragePosition} = layout;
+    const {positions, sizes, group, nestedLayouts} = layout;
     const sizeProvider = new StaticSizeProvider(sizes);
 
     const elements = model.elements.filter(({id}) => positions.has(id));
@@ -256,9 +250,7 @@ export function applyLayout(
         translateToPositiveQuadrant(positions, offset);
     }
 
-    const averagePosition = keepAveragePosition
-        ? calculateAveragePosition(elements, sizeProvider)
-        : undefined;
+    const averagePosition = calculateAveragePosition(elements, sizeProvider);
     for (const element of elements) {
         const position = positions.get(element.id);
         if (position) {
@@ -266,18 +258,16 @@ export function applyLayout(
         }
     }
 
-    if (keepAveragePosition) {
-        const newAveragePosition = calculateAveragePosition(elements, sizeProvider);
-        const averageDiff = {
-            x: averagePosition!.x - newAveragePosition.x,
-            y: averagePosition!.y - newAveragePosition.y,
-        };
-        positions.forEach((position, elementId) => {
-            const element = model.getElement(elementId)!;
-            element.setPosition({
-                x: position.x + averageDiff.x,
-                y: position.y + averageDiff.y,
-            });
+    const newAveragePosition = calculateAveragePosition(elements, sizeProvider);
+    const averageDiff: Vector = {
+        x: averagePosition.x - newAveragePosition.x,
+        y: averagePosition.y - newAveragePosition.y,
+    };
+    for (const [elementId, position] of positions) {
+        const element = model.getElement(elementId)!;
+        element.setPosition({
+            x: position.x + averageDiff.x,
+            y: position.y + averageDiff.y,
         });
     }
 }

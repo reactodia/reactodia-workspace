@@ -3,13 +3,12 @@ import { saveAs } from 'file-saver';
 
 import { EventObserver } from '../coreUtils/events';
 
-import { TypeStyleResolver } from '../diagram/customization';
-
 import { MetadataApi } from '../data/metadataApi';
 import { ValidationApi } from '../data/validationApi';
 
 import type { CanvasApi } from '../diagram/canvasApi';
-import { RestoreGeometry } from '../diagram/commands';
+import { RestoreGeometry, restoreViewport } from '../diagram/commands';
+import { TypeStyleResolver } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import { calculateLayout, applyLayout } from '../diagram/layout';
 import { dataURLToBlob } from '../diagram/toSvg';
@@ -176,6 +175,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             link.setVertices([]);
         }
 
+        batch.history.registerToUndo(restoreViewport(canvas));
         if (animate) {
             await Promise.all([
                 canvas.animateGraph(() => {
