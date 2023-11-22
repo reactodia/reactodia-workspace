@@ -139,7 +139,8 @@ function extractCSSFromDocument(targetSubtree: Element): string {
         for (let j = 0; j < rules.length; j++) {
             const rule = rules[j];
             if (rule instanceof CSSStyleRule) {
-                if (targetSubtree.querySelector(rule.selectorText)) {
+                const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
+                if (targetSubtree.querySelector(selectorWithoutPseudo)) {
                     exportedRules.add(rule);
                 }
             }
@@ -209,37 +210,42 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
     return {svgClone, imageBounds};
 }
 
-function exportAsDataUri(original: HTMLImageElement): Promise<string> {
+async function exportAsDataUri(original: HTMLImageElement): Promise<string> {
     const url = original.src;
     if (!url || url.startsWith('data:')) {
-        return Promise.resolve(url);
+        return url;
     }
 
-    return loadCrossOriginImage(original.src).then(image => {
-        const canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
+    // match extensions like "http://example.com/images/foo.JPG&w=200"
+    const extensionMatch = url.match(/\.([a-zA-Z0-9]+)[^.a-zA-Z0-9]?[^.]*$/);
+    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : undefined;
 
-        const context = canvas.getContext('2d')!;
-        context.drawImage(image, 0, 0);
-
-        // match extensions like "http://example.com/images/foo.JPG&w=200"
-        const extensionMatch = url.match(/\.([a-zA-Z0-9]+)[^.a-zA-Z0-9]?[^.]*$/);
-        const extension = extensionMatch ? extensionMatch[1].toLowerCase() : 'png';
-
+    if (extension === 'svg') {
         try {
-            const mimeType = 'image/' + (extension === 'jpg' ? 'jpeg' : extension);
-            const dataUri = canvas.toDataURL(mimeType);
-            return Promise.resolve(dataUri);
-        } catch (e) {
-            if (extension !== 'svg') {
-                return Promise.reject('Failed to convert image to data URI');
+            const response = await fetch(url);
+            const svgText = await response.text();
+            if (svgText.length > 0) {
+                return 'data:image/svg+xml,' + encodeURIComponent(svgText);
             }
-            return fetch(url)
-                .then(response => response.text())
-                .then(svg => svg.length > 0 ? ('data:image/svg+xml,' + encodeURIComponent(svg)) : '');
+        } catch (err) {
+            /* Failed to fetch image as SVG */
         }
-    });
+    }
+
+    const image = await loadCrossOriginImage(original.src);
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    const context = canvas.getContext('2d')!;
+    context.drawImage(image, 0, 0);
+    try {
+        const mimeType = 'image/' + (extension === 'jpg' ? 'jpeg' : 'png');
+        const dataUri = canvas.toDataURL(mimeType);
+        return dataUri;
+    } catch (e) {
+        throw new Error(`Failed to convert image to data URI: ${url}`, {cause: e});
+    }
 }
 
 function loadCrossOriginImage(src: string): Promise<HTMLImageElement> {
