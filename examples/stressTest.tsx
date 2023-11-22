@@ -11,10 +11,10 @@ function TurtleGraphExample() {
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        const {model, view, performLayout} = workspaceRef.current!.getContext();
+        const {model, view} = workspaceRef.current!.getContext();
 
         const dataProvider = new RdfDataProvider();
-        const [graphData, nodes] = createLayout(450, 2, dataProvider.factory);
+        const [graphData, nodes] = createLayout(500, 2, dataProvider.factory);
         dataProvider.addGraph(graphData);
     
         const diagram = tryLoadLayoutFromLocalStorage();
@@ -57,11 +57,6 @@ function TurtleGraphExample() {
                 if (canvas) {
                     canvas.renderingState.syncUpdate();
                     canvas.zoomToFit();
-                    // await performLayout({
-                    //     canvas,
-                    //     layoutFunction: layoutForcePadded,
-                    //     signal: cancellation.signal,
-                    // });
                 }
             });
         }

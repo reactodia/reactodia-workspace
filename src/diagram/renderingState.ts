@@ -5,11 +5,12 @@ import {
     LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
 
-import { ElementTypeIri, LinkTypeIri } from '../data/model';
+import { ElementTypeIri, LinkModel, LinkTypeIri } from '../data/model';
+import * as Rdf from '../data/rdf/rdfModel';
 
 import { StandardTemplate } from '../templates/standardTemplate';
 
-import { Element, Link, RichLinkType } from './elements';
+import { Element, Link, LinkTemplateState, RichLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
@@ -34,6 +35,7 @@ export enum RenderingLayer {
     ElementSize,
     PaperArea,
     Link,
+    LinkLabel,
     Editor,
 
     FirstToUpdate = Element,
@@ -183,7 +185,11 @@ export class RenderingState implements SizeProvider {
 export interface FilledLinkTemplate {
     readonly markerSource?: LinkMarkerStyle;
     readonly markerTarget: LinkMarkerStyle;
-    readonly renderLink: (link: Link, model: DiagramModel) => LinkStyle;
+    readonly renderLink: (
+        data: LinkModel,
+        state: LinkTemplateState | undefined,
+        factory: Rdf.DataFactory
+    ) => LinkStyle;
     readonly setLinkLabel?: (link: Link, label: string) => void;
 }
 

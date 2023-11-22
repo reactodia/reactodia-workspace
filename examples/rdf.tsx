@@ -13,20 +13,20 @@ const TURTLE_DATA = require('./resources/orgOntology.ttl');
 
 const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
 const EDITABLE_LINK_TEMPLATE: LinkTemplate = {
-    renderLink: (link, model) => {
+    renderLink: (data, state, factory) => {
         let editedLabel: string | undefined;
         if (
-            link.linkState &&
-            Object.prototype.hasOwnProperty.call(link.linkState, CUSTOM_LINK_LABEL_IRI)
+            state &&
+            Object.prototype.hasOwnProperty.call(state, CUSTOM_LINK_LABEL_IRI)
         ) {
-            const customLabel = link.linkState[CUSTOM_LINK_LABEL_IRI];
+            const customLabel = state[CUSTOM_LINK_LABEL_IRI];
             if (typeof customLabel === 'string') {
                 editedLabel = customLabel;
             }
         }
         return {
             label: editedLabel === undefined ? undefined : {
-                label: [model.factory.literal(editedLabel)],
+                label: [factory.literal(editedLabel)],
                 text: {
                     fontStyle: 'italic',
                     fontWeight: 'normal',

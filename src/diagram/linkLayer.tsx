@@ -3,15 +3,16 @@ import * as React from 'react';
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
+import { LinkModel } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
+
+import { restoreCapturedLinkGeometry } from './commands';
 import {
     LinkStyle, LinkLabelStyle, LinkMarkerStyle, RoutedLink,
 } from './customization';
-
-import { restoreCapturedLinkGeometry } from './commands';
 import { Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType } from './elements';
 import {
-    Rect, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline, computeGrouping,
+    Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline, computeGrouping,
 } from './geometry';
 import { DiagramModel } from './model';
 import { RenderingState, RenderingLayer, FilledLinkTemplate } from './renderingState';
@@ -32,6 +33,18 @@ enum UpdateRequest {
     All,
 }
 
+type ScheduleLabelMeasure = (
+    label: MeasurableLabel,
+    clear: boolean
+) => void;
+
+interface MeasurableLabel {
+    readonly owner: DiagramLink | undefined;
+    measureSize(): Size | undefined;
+    applySize({width, height}: Size): void;
+    computeBounds({width, height}: Size): Rect;
+}
+
 const CLASS_NAME = 'reactodia-link-layer';
 
 export class LinkLayer extends React.Component<LinkLayerProps> {
@@ -41,6 +54,9 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     private updateState = UpdateRequest.Partial;
     /** List of link IDs to update at the next flush event */
     private scheduledToUpdate = new Set<string>();
+
+    private labelMeasureRequests = new Set<MeasurableLabel>();
+    private delayedMeasureLabels = new Debouncer();
 
     private readonly memoizedLinks = new WeakMap<DiagramLink, JSX.Element>();
 
@@ -115,8 +131,16 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
             updateChangedRoutes(previous, newRoutes);
         });
         this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer !== RenderingLayer.Link) { return; }
-            this.delayedUpdate.runSynchronously();
+            switch (layer) {
+                case RenderingLayer.Link: {
+                    this.delayedUpdate.runSynchronously();
+                    break;
+                }
+                case RenderingLayer.LinkLabel: {
+                    this.delayedMeasureLabels.runSynchronously();
+                    break;
+                }
+            }
         });
     }
 
@@ -152,6 +176,47 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
             ? () => true
             : link => scheduledToUpdate.has(link.id);
     }
+
+    private scheduleLabelMeasure: ScheduleLabelMeasure = (label, clear) => {
+        if (label.owner && clear) {
+            const {renderingState} = this.props;
+            renderingState.setLinkLabelBounds(label.owner, undefined);
+        } else {
+            this.labelMeasureRequests.add(label);
+            this.delayedMeasureLabels.call(this.measureLabels);
+        }
+    };
+
+    private measureLabels = () => {
+        const {renderingState} = this.props;
+        const requests = Array.from(this.labelMeasureRequests);
+        this.labelMeasureRequests.clear();
+
+        const sizes: Array<Size | undefined> = [];
+        for (const label of requests) {
+            sizes.push(label.measureSize());
+        }
+
+        for (let i = 0; i < requests.length; i++) {
+            const label = requests[i];
+            const size = sizes[i];
+            if (label.owner && size) {
+                const bounds = label.computeBounds(size);
+                renderingState.setLinkLabelBounds(label.owner, bounds);
+            }
+        }
+
+        this.setState(() => {
+            for (let i = 0; i < requests.length; i++) {
+                const label = requests[i];
+                const size = sizes[i];
+                if (size) {
+                    label.applySize(size);
+                }
+            }
+            return null;
+        });
+    };
 
     private performUpdate = () => {
         this.forceUpdate();
@@ -202,6 +267,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
                                 route={renderingState.getRouting(link.id)}
                                 view={view}
                                 renderingState={renderingState}
+                                scheduleLabelMeasure={this.scheduleLabelMeasure}
                             />
                         );
                         memoizedLinks.set(link, linkView);
@@ -235,6 +301,7 @@ interface LinkViewProps {
     view: DiagramView;
     renderingState: RenderingState;
     route?: RoutedLink;
+    scheduleLabelMeasure: ScheduleLabelMeasure;
 }
 
 const LINK_CLASS = 'reactodia-link';
@@ -291,7 +358,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
         const path = 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
 
         const {index: typeIndex, showLabel} = linkType;
-        const style = template.renderLink(link, view.model);
+        const style = template.renderLink(link.data, link.linkState, view.model.factory);
         const pathAttributes = getPathAttributes(link, style);
 
         const isBlurred = view.highlighter && !view.highlighter(link);
@@ -309,6 +376,9 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     }
 
     private renderVertices(vertices: ReadonlyArray<Vector>, fill: string | undefined) {
+        if (vertices.length === 0) {
+            return null;
+        }
         const {link} = this.props;
         const elements: React.ReactElement[] = [];
 
@@ -324,7 +394,6 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
             );
             elements.push(
                 <VertexTools key={index * 2 + 1}
-                    className={`${LINK_CLASS}__vertex-tools`}
                     model={link}
                     vertexIndex={index}
                     vertexRadius={vertexRadius}
@@ -346,15 +415,10 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
         vertex.remove();
     };
 
-    private onBoundsUpdate = (newBounds: Rect | undefined) => {
-        const {link, renderingState} = this.props;
-        renderingState.setLinkLabelBounds(link, newBounds);
-    };
-
     private renderLabels(polyline: ReadonlyArray<Vector>, style: LinkStyle) {
-        const {link, route, view} = this.props;
+        const {link, route, view, scheduleLabelMeasure} = this.props;
 
-        const labels = computeLinkLabels(link, style, view);
+        const labels = computeLinkLabels(link.data, style, view);
 
         let textAnchor: 'start' | 'middle' | 'end' = 'middle';
         if (route && route.labelTextAnchor) {
@@ -365,7 +429,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
         TEMPORARY_LABEL_LINES.clear();
 
         return (
-            <g className={`${LINK_CLASS}__labels`}>
+            <>
                 {labels.map((label, index) => {
                     const {x, y} = getPointAlongPolyline(polyline, polylineLength * label.offset);
                     const groupKey = Math.round(label.offset * LABEL_GROUPING_PRECISION) / LABEL_GROUPING_PRECISION;
@@ -377,16 +441,17 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
                             line={line}
                             label={label}
                             textAnchor={textAnchor}
-                            onBoundsUpdate={index === 0 ? this.onBoundsUpdate : undefined}
+                            owner={index === 0 ? link : undefined}
+                            scheduleMeasure={scheduleLabelMeasure}
                         />
                     );
                 })}
-            </g>
+            </>
         );
     }
 }
 
-function computeLinkLabels(model: DiagramLink, style: LinkStyle, view: DiagramView) {
+function computeLinkLabels(data: LinkModel, style: LinkStyle, view: DiagramView) {
     const labelStyle = style.label ?? {};
 
     let text: Rdf.Literal;
@@ -394,10 +459,10 @@ function computeLinkLabels(model: DiagramLink, style: LinkStyle, view: DiagramVi
     if (labelStyle.label && labelStyle.label.length > 0) {
         text = view.selectLabel(labelStyle.label)!;
     } else {
-        const type = view.model.getLinkType(model.typeId)!;
+        const type = view.model.getLinkType(data.linkTypeId)!;
         text = view.selectLabel(type.label) || view.model.factory.literal(view.formatLabel([], type.id));
         if (title === undefined) {
-            title = `${text.value} ${view.formatIri(model.typeId)}`;
+            title = `${text.value} ${view.formatIri(data.linkTypeId)}`;
         }
     }
 
@@ -491,7 +556,8 @@ interface LinkLabelProps {
     line: number;
     label: LabelAttributes;
     textAnchor: 'start' | 'middle' | 'end';
-    onBoundsUpdate?: (newBounds: Rect | undefined) => void;
+    owner: DiagramLink | undefined;
+    scheduleMeasure: ScheduleLabelMeasure;
 }
 
 interface LinkLabelState {
@@ -501,7 +567,7 @@ interface LinkLabelState {
 
 const GROUPED_LABEL_MARGIN = 2;
 
-class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
+class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
     private text: SVGTextElement | undefined | null;
     private shouldUpdateBounds = true;
 
@@ -510,10 +576,14 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
         this.state = {width: 0, height: 0};
     }
 
+    get owner(): DiagramLink | undefined {
+        return this.props.owner;
+    }
+
     render() {
         const {x, y, label, line, textAnchor} = this.props;
         const {width, height} = this.state;
-        const {x: rectX, y: rectY} = this.getLabelRectangle(width, height);
+        const {x: rectX, y: rectY} = this.computeBounds({width, height});
 
         const transform = line === 0 ? undefined :
             `translate(0, ${line * (height + GROUPED_LABEL_MARGIN)}px)`;
@@ -521,7 +591,8 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
         const dy = '0.6ex';
 
         return (
-            <g style={transform ? {transform} : undefined}>
+            <g className={`${LINK_CLASS}__label`}
+                style={transform ? {transform} : undefined}>
                 {label.title ? <title>{label.title}</title> : undefined}
                 <rect x={rectX} y={rectY}
                     width={width} height={height}
@@ -537,7 +608,21 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
         );
     }
 
-    private getLabelRectangle(width: number, height: number): Rect {
+    measureSize(): Size | undefined {
+        const {width, height} = this.text!.getBBox();
+        return {width, height};
+    }
+
+    applySize({width, height}: Size): void {
+        if (!(
+            width === this.state.width &&
+            height === this.state.height
+        )) {
+            this.setState({width, height});
+        }
+    }
+
+    computeBounds({width, height}: Size): Rect {
         const {x, y, textAnchor} = this.props;
 
         let xOffset = 0;
@@ -564,8 +649,8 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
     }
 
     componentWillUnmount() {
-        const {onBoundsUpdate} = this.props;
-        onBoundsUpdate?.(undefined);
+        const {scheduleMeasure} = this.props;
+        scheduleMeasure(this, true);
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: LinkLabelProps) {
@@ -578,25 +663,14 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> {
 
     private tryRecomputeBounds(props: LinkLabelProps) {
         if (this.text && this.shouldUpdateBounds) {
-            const {onBoundsUpdate} = this.props;
             this.shouldUpdateBounds = false;
-            const bounds = this.text.getBBox();
-
-            if (onBoundsUpdate) {
-                const labelBounds = this.getLabelRectangle(bounds.width, bounds.height);
-                onBoundsUpdate(labelBounds);
-            }
-
-            this.setState({
-                width: bounds.width,
-                height: bounds.height,
-            });
+            const {scheduleMeasure} = this.props;
+            scheduleMeasure(this, false);
         }
     }
 }
 
 class VertexTools extends React.Component<{
-    className: string;
     model: DiagramLink;
     vertexIndex: number;
     vertexRadius: number;
@@ -605,10 +679,12 @@ class VertexTools extends React.Component<{
     onRemove: (vertex: LinkVertex) => void;
 }> {
     render() {
-        const {className, vertexIndex, vertexRadius, x, y} = this.props;
+        const {vertexRadius, x, y} = this.props;
         const transform = `translate(${x + 2 * vertexRadius},${y - 2 * vertexRadius})scale(${vertexRadius})`;
         return (
-            <g className={className} transform={transform} onMouseDown={this.onRemoveVertex}>
+            <g className={`${LINK_CLASS}__vertex-tools`}
+                transform={transform}
+                onMouseDown={this.onRemoveVertex}>
                 <title>Remove vertex</title>
                 <circle r={1} />
                 <path d='M-0.5,-0.5 L0.5,0.5 M0.5,-0.5 L-0.5,0.5' strokeWidth={2 / vertexRadius} />

@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import type { ElementModel, PropertyTypeIri } from '../data/model';
+import type { ElementModel, LinkModel, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { ElementTemplateState, Link } from './elements';
+import type { ElementTemplateState, Link, LinkTemplateState } from './elements';
 import type { SizeProvider } from './geometry';
 import type { GraphStructure } from './model';
 
@@ -36,7 +36,11 @@ export interface FormattedProperty {
 export interface LinkTemplate {
     markerSource?: LinkMarkerStyle;
     markerTarget?: LinkMarkerStyle;
-    renderLink?(link: Link, model: GraphStructure): LinkStyle;
+    renderLink?(
+        data: LinkModel,
+        state: LinkTemplateState | undefined,
+        factory: Rdf.DataFactory
+    ): LinkStyle;
     setLinkLabel?: (link: Link, label: string) => void;
 }
 

@@ -2,10 +2,10 @@ import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 import { LinkTemplate, LinkTemplateResolver, LinkStyle } from '../diagram/customization';
 
 export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
-    renderLink: (link, model): LinkStyle => ({
+    renderLink: (data, state, factory): LinkStyle => ({
         properties: [{
             position: 0.5,
-            label: [model.factory.literal(link.typeId)],
+            label: [factory.literal(data.linkTypeId)],
             text: {
                 fill: 'gray',
                 fontSize: 12,

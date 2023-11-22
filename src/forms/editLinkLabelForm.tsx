@@ -37,7 +37,7 @@ export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, S
 
         const linkType = model.getLinkType(link.typeId)!;
         const template = canvas.renderingState.createLinkTemplate(linkType);
-        const {label = {}} = template.renderLink(link, model);
+        const {label = {}} = template.renderLink(link.data, link.linkState, model.factory);
 
         return (label.label && label.label.length > 0)
             ? view.selectLabel(label.label)!.value
