@@ -28,6 +28,7 @@ export {
 export {
     IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
 } from './data/decorated/indexedDbCachedProvider';
+export { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './data/rdf/memoryDataset';
 export * from './data/rdf/rdfDataProvider';
 export * as Rdf from './data/rdf/rdfModel';
 export * from './data/sparql/sparqlDataProvider';

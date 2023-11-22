@@ -16,10 +16,21 @@ import { Navigator, NavigatorProps } from '../widgets/navigator';
 import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
 
 import { DefaultToolbar, DefaultToolbarProps } from './defaultToolbar';
-import { WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem } from './workspaceLayout';
+import {
+    WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem, WorkspaceLayoutContainerProps,
+} from './workspaceLayout';
 import { WorkspaceRoot } from './workspaceRoot';
 
 export interface DefaultWorkspaceProps {
+    /**
+     * **Default**: `{defaultSize: 275}`
+     */
+    leftColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
+    /**
+     * **Default**: `{defaultSize: 275, defaultCollapsed: true}`
+     */
+    rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
+
     canvas?: CanvasProps;
     connectionsMenu?: Omit<ConnectionsMenuProps, 'commands'> | null;
     dropOnCanvas?: DropOnCanvasProps | null;
@@ -39,6 +50,7 @@ export interface DefaultWorkspaceProps {
 
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
+        leftColumn, rightColumn,
         canvas, connectionsMenu, dropOnCanvas, halo, haloLink, navigator, zoomControl, toolbar,
         classTree, instancesSearch, linkToolbox,
     } = props;
@@ -53,7 +65,8 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     return (
         <WorkspaceRoot>
             <WorkspaceLayoutRow>
-                <WorkspaceLayoutColumn defaultSize={275}>
+                <WorkspaceLayoutColumn defaultSize={275}
+                    {...leftColumn}>
                     <WorkspaceLayoutItem id='classes' heading='Classes'>
                         <ClassTree {...classTree}
                             instancesSearchCommands={instancesSearchCommands}
@@ -89,7 +102,8 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                     </Canvas>
                 </WorkspaceLayoutItem>
                 <WorkspaceLayoutColumn defaultSize={275}
-                    defaultCollapsed={true}>
+                    defaultCollapsed={true}
+                    {...rightColumn}>
                     <WorkspaceLayoutItem id='connections'
                         heading='Connections'>
                         <LinkTypesToolbox {...linkToolbox}

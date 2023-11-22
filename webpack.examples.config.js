@@ -11,8 +11,8 @@ const WIKIDATA_ENDPOINT = process.env.WIKIDATA_ENDPOINT
 const EXAMPLES = [
   'rdf',
   'sparql',
+  'stressTest',
   'styleCustomization',
-  'turtleGraph',
   'wikidata'
 ];
 
@@ -33,13 +33,13 @@ module.exports = {
   },
   optimization: {
     splitChunks: {
-        cacheGroups: {
-            commons: {
-                name: 'commons',
-                chunks: 'initial',
-                minChunks: 2,
-            }
+      cacheGroups: {
+        commons: {
+          name: 'commons',
+          chunks: 'initial',
+          minChunks: 2,
         }
+      }
     },
   },
   resolve: {
@@ -100,16 +100,16 @@ module.exports = {
     },
     proxy: {
       '/sparql**': {
-          target: SPARQL_ENDPOINT,
-          pathRewrite: {'/sparql' : ''},
-          changeOrigin: true,
-          secure: false,
+        target: SPARQL_ENDPOINT,
+        pathRewrite: {'/sparql' : ''},
+        changeOrigin: true,
+        secure: false,
       },
       '/wikidata**': {
-          target: WIKIDATA_ENDPOINT || SPARQL_ENDPOINT,
-          pathRewrite: {'/wikidata' : ''},
-          changeOrigin: true,
-          secure: false,
+        target: WIKIDATA_ENDPOINT || SPARQL_ENDPOINT,
+        pathRewrite: {'/wikidata' : ''},
+        changeOrigin: true,
+        secure: false,
       }
     },
   }

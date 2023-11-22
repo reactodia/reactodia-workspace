@@ -19,6 +19,18 @@ module.exports = {
             'parserOptions': {
                 'sourceType': 'script'
             }
+        },
+        {
+            'env': {
+                'node': true
+            },
+            'files': ['*.config.js'],
+            'rules': {
+                'indent': ['warn', 2, {
+                    'flatTernaryExpressions': true,
+                    'SwitchCase': 1,
+                }],
+            }
         }
     ],
     'parser': '@typescript-eslint/parser',

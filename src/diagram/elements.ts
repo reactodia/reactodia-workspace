@@ -6,7 +6,7 @@ import {
 } from '../data/model';
 import { GenerateID } from '../data/schema';
 
-import { Vector, Size, isPolylineEqual } from './geometry';
+import { Vector, isPolylineEqual } from './geometry';
 
 export type Cell = Element | Link | LinkVertex;
 
@@ -43,7 +43,6 @@ export class Element {
         id: string;
         data: ElementModel;
         position?: Vector;
-        size?: Size;
         expanded?: boolean;
         group?: string;
         elementState?: ElementTemplateState;
