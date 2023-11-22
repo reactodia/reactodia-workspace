@@ -61,6 +61,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         forAll: RedrawFlags.None,
     };
     private delayedRedraw = new Debouncer();
+    private readonly memoizedElements = new WeakMap<ElementState, JSX.Element>();
 
     private sizeRequests = new Map<string, SizeUpdateRequest>();
     private delayedUpdateSizes = new Debouncer();
@@ -83,6 +84,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     render() {
         const {style, view, renderingState} = this.props;
         const {elementStates} = this.state;
+        const {memoizedElements} = this;
 
         const elementsToRender: ElementState[] = [];
         for (const {id} of view.model.elements) {
@@ -92,31 +94,37 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             }
         }
 
-        return <div className='reactodia-element-layer'
-            ref={this.onMount}
-            style={style}>
-            {elementsToRender.map(state => {
-                const overlayElement = (
-                    <OverlaidElement key={state.element.id}
-                        state={state}
-                        view={view}
-                        renderingState={renderingState}
-                        onInvalidate={this.requestRedraw}
-                        onResize={this.requestSizeUpdate}
-                    />
-                );
-                const elementDecorator = view._decorateElement(state.element);
-                if (elementDecorator) {
-                    return (
-                        <div key={state.element.id}>
-                            {overlayElement}
-                            {elementDecorator}
-                        </div>
-                    );
-                }
-                return overlayElement;
-            })}
-        </div>;
+        return (
+            <div className='reactodia-element-layer'
+                ref={this.onMount}
+                style={style}>
+                {elementsToRender.map(state => {
+                    let overlaidElement = memoizedElements.get(state);
+                    if (!overlaidElement) {
+                        overlaidElement = (
+                            <OverlaidElement key={state.element.id}
+                                state={state}
+                                view={view}
+                                renderingState={renderingState}
+                                onInvalidate={this.requestRedraw}
+                                onResize={this.requestSizeUpdate}
+                            />
+                        );
+                        const elementDecorator = view._decorateElement(state.element);
+                        if (elementDecorator) {
+                            overlaidElement = (
+                                <div key={state.element.id}>
+                                    {overlaidElement}
+                                    {elementDecorator}
+                                </div>
+                            );
+                        }
+                        memoizedElements.set(state, overlaidElement);
+                    }
+                    return overlaidElement;
+                })}
+            </div>
+        );
     }
 
     private onMount = (layer: HTMLDivElement) => {

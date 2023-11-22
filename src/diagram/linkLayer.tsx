@@ -42,6 +42,8 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     /** List of link IDs to update at the next flush event */
     private scheduledToUpdate = new Set<string>();
 
+    private readonly memoizedLinks = new WeakMap<DiagramLink, JSX.Element>();
+
     constructor(props: LinkLayerProps) {
         super(props);
     }
@@ -179,19 +181,35 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
 
     render() {
         const {view, renderingState} = this.props;
-        const shouldUpdate = this.popShouldUpdatePredicate();
+        const {memoizedLinks} = this;
 
-        return <g className={CLASS_NAME}>
-            {this.getLinks().map(link => (
-                <LinkView key={link.id}
-                    link={link}
-                    route={renderingState.getRouting(link.id)}
-                    shouldUpdate={shouldUpdate(link)}
-                    view={view}
-                    renderingState={renderingState}
-                />
-            ))}
-        </g>;
+        const shouldUpdate = this.popShouldUpdatePredicate();
+        const links = this.getLinks();
+        for (const link of links) {
+            if (shouldUpdate(link)) {
+                memoizedLinks.delete(link);
+            }
+        }
+
+        return (
+            <g className={CLASS_NAME}>
+                {links.map(link => {
+                    let linkView = memoizedLinks.get(link);
+                    if (!linkView) {
+                        linkView = (
+                            <LinkView key={link.id}
+                                link={link}
+                                route={renderingState.getRouting(link.id)}
+                                view={view}
+                                renderingState={renderingState}
+                            />
+                        );
+                        memoizedLinks.set(link, linkView);
+                    }
+                    return linkView;
+                })}
+            </g>
+        );
     }
 }
 
@@ -216,7 +234,6 @@ interface LinkViewProps {
     link: DiagramLink;
     view: DiagramView;
     renderingState: RenderingState;
-    shouldUpdate: boolean;
     route?: RoutedLink;
 }
 
@@ -252,10 +269,6 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
         const linkType = view.model.getLinkType(props.link.typeId)!;
         const template = renderingState.createLinkTemplate(linkType);
         return {linkType, template};
-    }
-
-    shouldComponentUpdate(nextProps: LinkViewProps) {
-        return nextProps.shouldUpdate;
     }
 
     render() {

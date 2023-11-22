@@ -39,7 +39,7 @@ export function HaloLink(props: HaloLinkProps) {
         () => editor.selection
     );
 
-    if (editor.selection.length === 1) {
+    if (selection.length === 1) {
         const [target] = editor.selection;
         if (target instanceof Link) {
             return (
