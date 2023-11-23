@@ -198,10 +198,16 @@ export class DiagramView {
         const propertyList = propertyIris.map((key): FormattedProperty => {
             const property = this.model.createProperty(key);
             const label = this.formatLabel(property.label, key);
+            const allValues = properties[key];
+            const localizedValues = allValues.filter(v =>
+                v.termType === 'NamedNode' ||
+                v.language === '' ||
+                v.language === this._language
+            );
             return {
                 propertyId: key,
                 label,
-                values: properties[key],
+                values: localizedValues.length === 0 ? allValues : localizedValues,
             };
         });
         propertyList.sort((a, b) => a.label.localeCompare(b.label));

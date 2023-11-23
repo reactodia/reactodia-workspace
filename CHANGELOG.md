@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Prevent canvas scroll jumping on undo action after layout:
   * Add `restoreViewport()` command to undo/redo viewport state in similar cases;
 - Fix diagram export/print to correctly embed CSS for pseudo-elements and SVG images.
+- Display only property values in currently selected language if possible via `DiagramView.formatPropertyList()`.
 
 ## [0.21.0] - 2023-11-21
 ### Changed
