@@ -2,21 +2,23 @@
 
 [Changelog](https://github.com/reactodia/reactodia-workspace/blob/master/CHANGELOG.md) | [Interactive examples](https://reactodia.github.io/workspace/rdf.html)
 
-`reactodia-workspace` is a JS/TS library that allows to visualize, navigate and explore data in the form of an interactive graph based on underlying data sources.
+`reactodia-workspace` is a TypeScript library that allows to explore, visualize and make changes to the data in the form of an interactive graph based on underlying data sources.
 
 `reactodia-workspace` is an open-source fork of [Ontodia](https://github.com/metaphacts/ontodia) project.
 
+![reactodia_wikidata](https://github.com/reactodia/reactodia-workspace/assets/1636942/10818259-a78d-41f1-b0c9-867b2164d8bd)
+
 ## Quick example
 
-TODO
+*TODO*
 
 ## License
 
 The library is distributed under LGPL-2.1.
 
-## Giving credit to the original authors
+## Scientific citations
 
-If you use the library in your projects, please provide a link to this repository in your publication and a citation reference to the following paper:
+If you use the library in your scientific projects, it would be great if you provide a link to this repository in your publication and a citation reference to the following paper:
 
 Mouromtsev, D., Pavlov, D., Emelyanov, Y., Morozov, A., Razdyakonov, D. and Galkin, M., 2015. The Simple Web-based Tool for Visualization and Sharing of Semantic Data and Ontologies. In International Semantic Web Conference (Posters & Demos).
 
