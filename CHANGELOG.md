@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.22.0] - 2023-11-24
 ### Added
 - Support resources represented by blank nodes in `RdfDataProvider` when `acceptBlankNodes` is enabled.
 - Support native scroll and pan in `PaperArea` (e.g. using mouse wheel or touchpad scrolling).
@@ -74,6 +76,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.2...v0.20.0
