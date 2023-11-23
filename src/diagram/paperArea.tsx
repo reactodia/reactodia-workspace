@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { delay } from '../coreUtils/async';
 import { EventObserver, Events, EventSource } from '../coreUtils/events';
@@ -158,24 +159,20 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     render() {
-        const {model, view, renderingState, watermarkSvg, watermarkUrl} = this.props;
+        const {model, view, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
         const paperTransform = this.metrics.getTransform();
 
-        let areaClass = `${CLASS_NAME}__area`;
-        if (this.props.hideScrollBars) {
-            areaClass += ` ${CLASS_NAME}--hide-scrollbars`;
-        }
-
-        let componentClass = CLASS_NAME;
-        if (this.isAnimatingGraph()) {
-            componentClass += ` ${CLASS_NAME}--animated`;
-        }
+        const className = classnames(
+            CLASS_NAME,
+            hideScrollBars ? `${CLASS_NAME}--hide-scrollbars` : undefined,
+            this.isAnimatingGraph() ? `${CLASS_NAME}--animated` : undefined
+        );
 
         const renderedWidgets = Array.from(this.getAllWidgets());
         return (
             <CanvasContext.Provider value={this.canvasContext}>
-                <div className={componentClass}>
-                    <div className={areaClass}
+                <div className={className}>
+                    <div className={`${CLASS_NAME}__area`}
                         ref={this.onAreaMount}
                         onMouseDown={this.onAreaPointerDown}>
                         <Paper model={model}
@@ -256,7 +253,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
         this.area.addEventListener('dragover', this.onDragOver);
         this.area.addEventListener('drop', this.onDragDrop);
-        this.area.addEventListener('scroll', this.onScroll);
+        this.area.addEventListener('scroll', this.onScroll, {passive: true});
         this.area.addEventListener('wheel', this.onWheel, {passive: false});
     }
 

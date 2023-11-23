@@ -8,7 +8,18 @@
 
   &__area {
     flex: auto;
-    overflow: hidden;
+    overflow: scroll;
+    touch-action: pan-x pan-y;
+  }
+
+  &--hide-scrollbars &__area {
+    /* For Firefox */
+    scrollbar-width: none;
+
+    /* For Safari, Chrome, etc */
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   &__widgets {
@@ -32,10 +43,6 @@
     &:hover {
       opacity: 0.5;
     }
-  }
-
-  &--hide-scrollbars {
-    overflow: hidden;
   }
 
   &--animated {
