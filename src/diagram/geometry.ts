@@ -5,10 +5,25 @@ export interface Vector {
     readonly y: number;
 }
 export namespace Vector {
-    export function equals(a: Vector, b: Vector) {
+    export function add(a: Vector, b: Vector): Vector {
+        return {
+            x: a.x + b.x,
+            y: a.y + b.y,
+        };
+    }
+    export function subtract(a: Vector, b: Vector): Vector {
+        return {
+            x: a.x - b.x,
+            y: a.y - b.y,
+        };
+    }
+    export function scale(v: Vector, factor: number): Vector {
+        return {x: v.x * factor, y: v.y * factor};
+    }
+    export function equals(a: Vector, b: Vector): boolean {
         return a.x === b.x && a.y === b.y;
     }
-    export function length({x, y}: Vector) {
+    export function length({x, y}: Vector): number {
         return Math.sqrt(x * x + y * y);
     }
     export function normalize({x, y}: Vector) {

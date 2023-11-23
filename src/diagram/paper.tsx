@@ -15,7 +15,7 @@ export interface PaperProps {
     renderingState: RenderingState;
     paperTransform: PaperTransform;
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
-    onPointerDown?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
+    onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     group?: string;
     linkLayerWidgets?: React.ReactElement<any>;
@@ -53,7 +53,7 @@ export class Paper extends Component<PaperProps> {
         return (
             <div className={CLASS_NAME}
                 style={style}
-                onMouseDown={this.onMouseDown}
+                onPointerDown={this.onPointerDown}
                 onContextMenu={this.onContextMenu}>
                 <TransformedSvgCanvas svgCanvasRef={svgCanvasRef}
                     className={`${CLASS_NAME}__canvas`}
@@ -81,7 +81,7 @@ export class Paper extends Component<PaperProps> {
         );
     }
 
-    private onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    private onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         const {model, onPointerDown} = this.props;
         if (onPointerDown) {
             const cell = e.target instanceof Element

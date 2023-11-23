@@ -684,7 +684,7 @@ class VertexTools extends React.Component<{
         return (
             <g className={`${LINK_CLASS}__vertex-tools`}
                 transform={transform}
-                onMouseDown={this.onRemoveVertex}>
+                onPointerDown={this.onRemoveVertex}>
                 <title>Remove vertex</title>
                 <circle r={1} />
                 <path d='M-0.5,-0.5 L0.5,0.5 M0.5,-0.5 L-0.5,0.5' strokeWidth={2 / vertexRadius} />

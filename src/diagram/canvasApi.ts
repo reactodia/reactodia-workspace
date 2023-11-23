@@ -83,9 +83,12 @@ export interface CanvasMetrics {
     getTransform(): PaperTransform;
     snapshot(): CanvasMetrics;
     getPaperSize(): { width: number; height: number };
+
     pageToPaperCoords(pageX: number, pageY: number): Vector;
+    paperToPageCoords(paperX: number, paperY: number): Vector
     clientToPaperCoords(areaClientX: number, areaClientY: number): Vector;
     clientToScrollablePaneCoords(areaClientX: number, areaClientY: number): Vector;
+    scrollablePaneToClientCoords(paneX: number, paneY: number): Vector
     scrollablePaneToPaperCoords(paneX: number, paneY: number): Vector;
     paperToScrollablePaneCoords(paperX: number, paperY: number): Vector;
 }
