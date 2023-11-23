@@ -7,9 +7,13 @@ import { CanvasContext } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { CommandHistory } from '../diagram/history';
 import { layoutForcePadded } from '../diagram/layout';
+import { DiagramModel } from '../diagram/model';
+import { DiagramView } from '../diagram/view';
 
 import { AuthoringState } from '../editor/authoringState';
 import { EditorController } from '../editor/editorController';
+
+import { HamburgerMenu, HamburgerMenuItem } from '../widgets/hamburgerMenu';
 
 import { WorkspaceContext } from './workspaceContext';
 
@@ -17,7 +21,7 @@ export interface DefaultToolbarProps {
     onSaveDiagram?: () => void;
     onPersistChanges?: () => void;
     /**
-     * Set of languages to display diagram data.W
+     * Set of languages to display diagram data.
      */
     languages?: ReadonlyArray<WorkspaceLanguage>;
 }
@@ -28,16 +32,12 @@ export interface WorkspaceLanguage {
 }
 
 const CLASS_NAME = 'reactodia-toolbar';
-const DEFAULT_LANGUAGES = [
-    {code: 'en', label: 'English'},
-    {code: 'ru', label: 'Russian'},
-];
 
 export function DefaultToolbar(props: DefaultToolbarProps) {
     const {
         onSaveDiagram,
         onPersistChanges,
-        languages = DEFAULT_LANGUAGES,
+        languages = [],
     } = props;
     const {
         model, view, editor,
@@ -51,75 +51,68 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
     }, []);
 
     return (
-        <div className={classnames(CLASS_NAME, 'reactodia-btn-group reactodia-btn-group-sm')}>
-            <SaveButtons editor={editor}
-                onSaveDiagram={onSaveDiagram}
-                onPersistChanges={onPersistChanges}
-            />
-            <HistoryButtons history={model.history} />
-            <button type='button'
-                className={classnames(
-                    `${CLASS_NAME}__clear-all-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                title='Clear All'
-                onClick={() => {
-                    const batch = model.history.startBatch('Clear all');
-                    editor.removeItems(model.elements);
-                    batch.store();
-                }}>
-                Clear All
-            </button>
-            <button type='button'
-                className={classnames(
-                    `${CLASS_NAME}__layout-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                title='Force layout'
-                onClick={() => performLayout({
-                    canvas,
-                    layoutFunction: layoutForcePadded,
-                    animate: true,
-                    signal: cancellation.signal,
-                })}>
-                Layout
-            </button>
-            <button type='button'
-                className={classnames(
-                    `${CLASS_NAME}__export-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                title='Export diagram as PNG'
-                onClick={() => exportPng(canvas)}>
-                PNG
-            </button>
-            <button type='button'
-                className={classnames(
-                    `${CLASS_NAME}__export-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                title='Export diagram as SVG'
-                onClick={() => exportSvg(canvas)}>
-                SVG
-            </button>
-            <button type='button'
-                className={classnames(
-                    `${CLASS_NAME}__print-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                title='Print diagram'
-                onClick={() => print(canvas)}>
-                Print
-            </button>
-            {languages.length === 0 ? null : (
-                <span className={`${CLASS_NAME}__language-selector`}>
-                    <label className='reactodia-label'><span>Data Language:</span></label>
-                    <select value={view.getLanguage()}
-                        onChange={e => view.setLanguage(e.currentTarget.value)}>
-                        {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
-                    </select>
-                </span>
-            )}
+        <div className={CLASS_NAME}>
+            <HamburgerMenu className={`${CLASS_NAME}__menu`}
+                title='Open main menu'>
+                <SaveButtons editor={editor}
+                    onSaveDiagram={onSaveDiagram}
+                    onPersistChanges={onPersistChanges}
+                />
+                <HamburgerMenuItem
+                    className={classnames(
+                        `${CLASS_NAME}__clear-all-button`,
+                        'reactodia-btn reactodia-btn-default'
+                    )}
+                    title='Remove all elements and links from the diagram'
+                    onClick={() => {
+                        const batch = model.history.startBatch('Clear all');
+                        editor.removeItems([...model.elements]);
+                        batch.store();
+                    }}>
+                    Clear All
+                </HamburgerMenuItem>
+                <HamburgerMenuItem
+                    className={classnames(
+                        `${CLASS_NAME}__export-button`,
+                        'reactodia-btn reactodia-btn-default'
+                    )}
+                    title='Export the diagram as a PNG image'
+                    onClick={() => exportPng(canvas)}>
+                    Export as PNG
+                </HamburgerMenuItem>
+                <HamburgerMenuItem
+                    className={classnames(
+                        `${CLASS_NAME}__export-button`,
+                        'reactodia-btn reactodia-btn-default'
+                    )}
+                    title='Export the diagram as an SVG image'
+                    onClick={() => exportSvg(canvas)}>
+                    Export as SVG
+                </HamburgerMenuItem>
+                <HamburgerMenuItem
+                    className={classnames(
+                        `${CLASS_NAME}__print-button`,
+                        'reactodia-btn reactodia-btn-default'
+                    )}
+                    title='Print the diagram'
+                    onClick={() => print(canvas)}>
+                    Print
+                </HamburgerMenuItem>
+            </HamburgerMenu>
+            <div className={`${CLASS_NAME}__quick-access-group reactodia-btn-group reactodia-btn-group-sm`}>
+                <HistoryButtons history={model.history} />
+                <LayoutButton model={model}
+                    onClick={() => performLayout({
+                        canvas,
+                        layoutFunction: layoutForcePadded,
+                        animate: true,
+                        signal: cancellation.signal,
+                    })}
+                />
+                <LanguageSelector view={view}
+                    languages={languages}
+                />
+            </div>
         </div>
     );
 }
@@ -142,18 +135,18 @@ function SaveButtonsRaw(props: {
     return (
         <>
             {onSaveDiagram ? (
-                <button type='button'
+                <HamburgerMenuItem
                     className={classnames(
                         `${CLASS_NAME}__save-button`,
-                        'reactodia-btn reactodia-btn-primary'
+                        'reactodia-btn reactodia-btn-default'
                     )}
                     disabled={!canSaveDiagram}
                     onClick={() => onSaveDiagram()}>
                     Save diagram
-                </button>
+                </HamburgerMenuItem>
             ) : null}
             {onPersistChanges ? (
-                <button type='button'
+                <HamburgerMenuItem
                     className={classnames(
                         `${CLASS_NAME}__save-button`,
                         'reactodia-btn reactodia-btn-default'
@@ -161,7 +154,7 @@ function SaveButtonsRaw(props: {
                     disabled={!canPersistChanges}
                     onClick={() => onPersistChanges()}>
                     Save data
-                </button>
+                </HamburgerMenuItem>
             ) : null}
         </>
     );
@@ -232,3 +225,50 @@ const HistoryButtons = React.memo(
     HistoryButtonsRaw,
     (prevProps, nextProps) => nextProps.history !== prevProps.history
 );
+
+function LayoutButton(props: {
+    model: DiagramModel;
+    onClick: () => void;
+}) {
+    const {model, onClick} = props;
+    const elementCount = useObservedProperty(
+        model.events,
+        'changeCells',
+        () => model.elements.length
+    );
+    return (
+        <button type='button'
+            className={classnames(
+                `${CLASS_NAME}__layout-button`,
+                'reactodia-btn reactodia-btn-default'
+            )}
+            title='Layout diagram using force-directed algorithm'
+            disabled={elementCount === 0}
+            onClick={onClick}>
+            Layout
+        </button>
+    );
+}
+
+function LanguageSelector(props: {
+    view: DiagramView;
+    languages: ReadonlyArray<WorkspaceLanguage>;
+}) {
+    const {view, languages} = props;
+    const currentLanguage = useObservedProperty(
+        view.events,
+        'changeLanguage',
+        () => view.getLanguage()
+    );
+    return languages.length === 0 ? null : (
+        <div className={`${CLASS_NAME}__language-selector`}
+            title='Select language for the data (labels, properties, etc)'>
+            <label htmlFor='reactodia-language-selector' />
+            <select id='reactodia-language-selector'
+                value={currentLanguage}
+                onChange={e => view.setLanguage(e.currentTarget.value)}>
+                {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
+            </select>
+        </div>
+    );
+}

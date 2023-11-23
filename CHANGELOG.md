@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Support touch input: native pan scroll and custom pinch zoom:
   * Add new coordination conversions to `CanvasMetrics`: `paperToPageCoords()` and `scrollablePaneToClientCoords()`;
   * Add `Vector.{add, subtract, scale}` functions;
+- Create `HamburgerMenu` to improve toolbar UI, make it more compact.
 
 ### Changed
 - **[Breaking]** Introduce `GraphStructure` as a read-only view for the `DiagramModel`:

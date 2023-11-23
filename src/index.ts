@@ -80,6 +80,9 @@ export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
+    HamburgerMenu, HamburgerMenuProps, HamburgerMenuItem, HamburgerMenuItemProps,
+} from './widgets/hamburgerMenu';
+export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,
 } from './widgets/instancesSearch';
 export { LinkTypesToolbox, LinkTypesToolboxProps } from './widgets/linksToolbox';

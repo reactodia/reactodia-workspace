@@ -51,6 +51,17 @@ function WikidataExample() {
                         window.location.hash = saveLayoutToLocalStorage(diagram);
                         window.location.reload();
                     },
+                    languages: [
+                        {code: 'de', label: 'Deutsch'},
+                        {code: 'en', label: 'english'},
+                        {code: 'es', label: 'español'},
+                        {code: 'fr', label: 'français'},
+                        {code: 'ja', label: '日本語'},
+                        {code: 'hi', label: 'हिन्दी'},
+                        {code: 'pt', label: 'português'},
+                        {code: 'ru', label: 'русский'},
+                        {code: 'zh', label: '汉语'},
+                    ],
                 }}
             />
         </Workspace>

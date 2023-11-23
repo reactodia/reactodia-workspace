@@ -1,0 +1,45 @@
+@import "../mixin/icons";
+
+.reactodia-hamburger-menu {
+  position: relative;
+  float: left;
+  z-index: 1;
+
+  &__toggle {
+    &::before {
+      @include codicon("menu");
+    }
+  }
+
+  &--expanded &__toggle {
+    background-color: #bfbfbf;
+  }
+
+  &__items {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    opacity: 1;
+    background: white;
+    list-style: none;
+
+    transition: opacity 0.1s ease-in-out;
+  }
+
+  &--collapsed &__items {
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.reactodia-hamburger-menu-item {
+  & ~ & {
+    margin-top: -1px;
+  }
+  &--disabled, &--disabled:hover {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+    opacity: .65;
+  }
+}
