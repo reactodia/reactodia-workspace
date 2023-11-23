@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Support resources represented by blank nodes in `RdfDataProvider` when `acceptBlankNodes` is enabled.
+- Support native scroll and pan in `PaperArea` (e.g. using mouse wheel or touchpad scrolling).
+- Support touch input: native pan scroll and custom pinch zoom:
+  * Add new coordination conversions to `CanvasMetrics`: `paperToPageCoords()` and `scrollablePaneToClientCoords()`;
+  * Add `Vector.{add, subtract, scale}` functions;
+
+### Changed
+- **[Breaking]** Introduce `GraphStructure` as a read-only view for the `DiagramModel`:
+  * Use `GraphStructure` in `LinkRouter`, `LinkStyle` and `ValidationApi`;
+- **[Breaking]** Use consistent naming for diagram model data accessors:
+  * Rename method `getLinkById()` -> `getLink()`;
+  * Rename methods `getClass()` / `createClass()` -> `getElementType()` / `createElementType()`;
+  * Remove unnecessary methods `linksOfType()`, `isSourceAndTargetVisible()`;
+  * Rename classes `FatClassModel` / `FatLinkType` -> `RichElementType` / `RichLinkType`;
+- Optimize `ElementLayer` and `LinkLayer` rendering, reducing unnecessary React updates and DOM reflows:
+  * **[Breaking]** Make `LinkStyle.renderLink()` explicitly depend only on link data and state for future optimizations;
+
+### Fixed
+- Ignored lookup direction `linkDirection` in `RdfDataProvider.lookup()`.
+- Prevent creating loaded links from cluttering the command history.
+- Prevent canvas scroll jumping on undo action after layout:
+  * Add `restoreViewport()` command to undo/redo viewport state in similar cases;
+- Fix diagram export/print to correctly embed CSS for pseudo-elements and SVG images.
 
 ## [0.21.0] - 2023-11-21
 ### Changed
@@ -48,6 +72,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...HEAD
 [0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.2...v0.20.0
