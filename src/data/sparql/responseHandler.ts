@@ -1,4 +1,4 @@
-import { getOrCreateSetInMap, mapToObject } from '../../coreUtils/collections';
+import { getOrCreateSetInMap } from '../../coreUtils/collections';
 import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';

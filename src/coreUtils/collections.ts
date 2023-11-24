@@ -16,14 +16,6 @@ export function getOrCreateSetInMap<K, V>(map: Map<K, Set<V>>, key: K): Set<V> {
     return values;
 }
 
-export function mapToObject<K extends string, V>(map: ReadonlyMap<K, V>): { [key: string]: V } {
-    const result: { [key: string]: V } = {};
-    for (const [k, v] of map) {
-        result[k] = v;
-    }
-    return result;
-}
-
 export function shallowArrayEqual<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {
     if (a.length !== b.length) { return false; }
     for (let i = 0; i < a.length; i++) {

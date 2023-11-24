@@ -2,7 +2,7 @@ import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import * as Rdf from '../data/rdf/rdfModel';
 import {
-    ElementModel, LinkModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { GenerateID } from '../data/schema';
 
@@ -40,7 +40,7 @@ export class Element {
     private _temporary: boolean;
 
     constructor(props: {
-        id: string;
+        id?: string;
         data: ElementModel;
         position?: Vector;
         expanded?: boolean;
@@ -49,7 +49,7 @@ export class Element {
         temporary?: boolean;
     }) {
         const {
-            id,
+            id = GenerateID.forElement(),
             data,
             position = {x: 0, y: 0},
             expanded = false,
@@ -65,6 +65,15 @@ export class Element {
         this._group = group;
         this._elementState = elementState;
         this._temporary = temporary;
+    }
+
+    static placeholderData(iri: ElementIri): ElementModel {
+        return {
+            id: iri,
+            types: [],
+            label: [],
+            properties: {},
+        };
     }
 
     get iri() { return this._data.id; }

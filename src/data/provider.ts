@@ -1,6 +1,6 @@
 import type { DataFactory } from './rdf/rdfModel';
 import {
-    Dictionary, ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
+    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from './model';
 

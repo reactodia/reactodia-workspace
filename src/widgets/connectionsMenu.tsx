@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 
-import { Dictionary, ElementModel, ElementIri, LinkTypeIri } from '../data/model';
+import { ElementModel, ElementIri, LinkTypeIri } from '../data/model';
 import { generate128BitID } from '../data/utils';
 
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
@@ -125,7 +125,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     private loadingState = ProgressState.none;
 
     private links: RichLinkType[] | undefined;
-    private countMap: { [linkTypeId: string]: ConnectionCount } | undefined;
+    private countMap: ReadonlyMap<LinkTypeIri, ConnectionCount> | undefined;
 
     private linkDataChunk: LinkDataChunk | undefined;
     private objects: ElementOnDiagram[] | undefined;
@@ -166,23 +166,29 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
 
         this.loadingState = ProgressState.loading;
         this.links = [];
-        this.countMap = {};
+        this.countMap = new Map();
         model.dataProvider.connectedLinkStats({elementId: target.iri})
             .then(linkTypes => {
                 this.loadingState = ProgressState.completed;
 
-                const countMap: Dictionary<ConnectionCount> = {};
+                const countMap = new Map<LinkTypeIri, ConnectionCount>();
                 const links: RichLinkType[] = [];
                 for (const {id: linkTypeId, inCount, outCount} of linkTypes) {
-                    countMap[linkTypeId] = {inCount, outCount};
+                    countMap.set(linkTypeId, {inCount, outCount});
                     links.push(model.createLinkType(linkTypeId));
                 }
 
-                countMap[this.ALL_RELATED_ELEMENTS_LINK.id] = Object.keys(countMap)
-                    .map(key => countMap[key])
-                    .reduce((a, b) => {
-                        return {inCount: a.inCount + b.inCount, outCount: a.outCount + b.outCount};
-                    }, {inCount: 0, outCount: 0});
+                countMap.set(
+                    this.ALL_RELATED_ELEMENTS_LINK.id,
+                    Array.from(countMap.values())
+                        .reduce(
+                            (a, b) => ({
+                                inCount: a.inCount + b.inCount,
+                                outCount: a.outCount + b.outCount,
+                            }),
+                            {inCount: 0, outCount: 0}
+                        )
+                );
 
                 this.countMap = countMap;
                 this.links = links;
@@ -312,9 +318,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     render() {
         const {target, suggestProperties, instancesSearchCommands, workspace: {view}} = this.props;
 
-        const connectionsData = {
-            links: this.links || [],
-            countMap: this.countMap || {},
+        const connectionsData: ConnectionsData = {
+            links: this.links ?? [],
+            countMap: this.countMap ?? new Map(),
         };
 
         let objectsData: ObjectsData | undefined;
@@ -345,11 +351,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
 interface MenuMarkupProps {
     target: Element;
 
-    connectionsData: {
-        links: RichLinkType[];
-        countMap: { [linkTypeId: string]: ConnectionCount };
-    };
-
+    connectionsData: ConnectionsData;
     objectsData?: ObjectsData;
 
     view: DiagramView;
@@ -515,10 +517,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
 
 interface ConnectionsListProps {
     id: string;
-    data: {
-        links: RichLinkType[];
-        countMap: { [linkTypeId: string]: ConnectionCount };
-    };
+    data: ConnectionsData;
     view: DiagramView;
     filterKey: string;
 
@@ -528,6 +527,11 @@ interface ConnectionsListProps {
 
     propertySuggestionCall?: PropertySuggestionHandler;
     sortMode: SortMode;
+}
+
+interface ConnectionsData {
+    readonly links: ReadonlyArray<RichLinkType>;
+    readonly countMap: ReadonlyMap<LinkTypeIri, ConnectionCount>;
 }
 
 interface ConnectionsListState {
@@ -635,12 +639,16 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 
         const views: JSX.Element[] = [];
         const addView = (link: RichLinkType, direction: 'in' | 'out') => {
-            const count = direction === 'in'
-                ? countMap[link.id].inCount
-                : countMap[link.id].outCount;
+            const count = (
+                direction === 'in'
+                    ? countMap.get(link.id)?.inCount
+                    : countMap.get(link.id)?.outCount
+            ) ?? 0;
+
             if (count === 0) {
                 return;
             }
+
             const postfix = notSure ? '-probable' : '';
             views.push(
                 <LinkInPopupMenu
@@ -682,8 +690,8 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         } else {
             viewList = views;
             if (views.length > 1 || (isSmartMode && probableViews.length > 1)) {
-                const countMap = this.props.data.countMap || {};
-                const allRelatedElements = countMap[allRelatedLink.id];
+                const countMap = this.props.data.countMap;
+                const allRelatedElements = countMap.get(allRelatedLink.id)!;
                 viewList = [
                     <LinkInPopupMenu
                         key={allRelatedLink.id}

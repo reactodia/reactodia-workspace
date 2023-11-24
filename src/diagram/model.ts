@@ -136,10 +136,10 @@ export class DiagramModel implements GraphStructure {
         }
 
         let data = typeof elementIriOrModel === 'string'
-            ? placeholderDataFromIri(elementIri)
+            ? Element.placeholderData(elementIri)
             : elementIriOrModel as ElementModel;
         data = {...data, id: data.id};
-        const element = new Element({id: GenerateID.forElement(), data, group});
+        const element = new Element({data, group});
         this.addElement(element);
         return element;
     }
@@ -242,8 +242,7 @@ export class DiagramModel implements GraphStructure {
 
     createTemporaryElement(): Element {
         const target = new Element({
-            id: GenerateID.forElement(),
-            data: placeholderDataFromIri('' as ElementIri),
+            data: Element.placeholderData('' as ElementIri),
             temporary: true,
         });
 
@@ -251,15 +250,6 @@ export class DiagramModel implements GraphStructure {
 
         return target;
     }
-}
-
-export function placeholderDataFromIri(iri: ElementIri): ElementModel {
-    return {
-        id: iri,
-        types: [],
-        label: [],
-        properties: {},
-    };
 }
 
 class AddElementCommand implements Command {

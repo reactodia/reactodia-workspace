@@ -1,7 +1,7 @@
 import { EventSource, Events } from '../coreUtils/events';
 
 import {
-    Dictionary, ElementModel, LinkModel, LinkType,
+    ElementModel, LinkModel, LinkType,
     ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { DataProvider } from '../data/provider';
@@ -10,7 +10,7 @@ import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { Element, RichLinkType, RichElementType, RichProperty, Link } from '../diagram/elements';
 import { CommandHistory, Command } from '../diagram/history';
-import { DiagramModel, DiagramModelEvents, placeholderDataFromIri } from '../diagram/model';
+import { DiagramModel, DiagramModelEvents } from '../diagram/model';
 
 import { DataFetcher } from './dataFetcher';
 import {
@@ -114,7 +114,7 @@ export class AsyncModel extends DiagramModel {
 
     importLayout(params: {
         dataProvider: DataProvider;
-        preloadedElements?: Dictionary<ElementModel>;
+        preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         validateLinks?: boolean;
         diagram?: SerializedDiagram;
         hideUnusedLinkTypes?: boolean;
@@ -131,7 +131,7 @@ export class AsyncModel extends DiagramModel {
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
             const loadingModels = this.loadAndRenderLayout({
                 layoutData: diagram.layoutData,
-                preloadedElements: params.preloadedElements || {},
+                preloadedElements: params.preloadedElements,
                 markLinksAsLayoutOnly: params.validateLinks || false,
                 allLinkTypes,
                 hideUnusedLinkTypes: params.hideUnusedLinkTypes,
@@ -184,7 +184,7 @@ export class AsyncModel extends DiagramModel {
 
     private loadAndRenderLayout(params: {
         layoutData?: LayoutData;
-        preloadedElements?: Dictionary<ElementModel>;
+        preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         markLinksAsLayoutOnly: boolean;
         allLinkTypes: ReadonlyArray<RichLinkType>;
         hideUnusedLinkTypes?: boolean;
@@ -192,7 +192,7 @@ export class AsyncModel extends DiagramModel {
     }): Promise<void> {
         const {
             layoutData = emptyLayoutData(),
-            preloadedElements = {},
+            preloadedElements,
             markLinksAsLayoutOnly,
             hideUnusedLinkTypes,
         } = params;
@@ -202,8 +202,8 @@ export class AsyncModel extends DiagramModel {
 
         for (const layoutElement of layoutData.elements) {
             const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
-            const template = preloadedElements[iri];
-            const data = template || placeholderDataFromIri(iri);
+            const template = preloadedElements?.get(iri);
+            const data = template ?? Element.placeholderData(iri);
             const element = new Element({id, data, position, expanded: isExpanded, group, elementState});
             this.graph.addElement(element);
             if (!template) {
@@ -336,14 +336,13 @@ export class AsyncModel extends DiagramModel {
     private async loadGroupContent(element: Element): Promise<void> {
         const models = await this.loadEmbeddedElements(element.iri);
         const batch = this.history.startBatch();
-        const elementIris = Object.keys(models) as ElementIri[];
-        const elements = elementIris.map(
-            key => this.createElement(models[key], element.id)
-        );
+        for (const model of models.values()) {
+            this.createElement(model, element.id);
+        }
         batch.discard();
 
         await Promise.all([
-            this.requestElementData(elementIris),
+            this.requestElementData(Array.from(models.keys())),
             this.requestLinksOfType(),
         ]);
         this.fetcher!.signal.throwIfAborted();
@@ -351,7 +350,7 @@ export class AsyncModel extends DiagramModel {
         this.triggerChangeGroupContent(element.id, {layoutComplete: false});
     }
 
-    private async loadEmbeddedElements(elementIri: ElementIri): Promise<Dictionary<ElementModel>> {
+    private async loadEmbeddedElements(elementIri: ElementIri): Promise<Map<ElementIri, ElementModel>> {
         const elements = this.groupByProperties.map(groupBy =>
             this.dataProvider.lookup({
                 refElementId: elementIri,
@@ -361,10 +360,10 @@ export class AsyncModel extends DiagramModel {
             })
         );
         const results = await Promise.all(elements);
-        const nestedModels: { [id: string]: ElementModel } = {};
+        const nestedModels = new Map<ElementIri, ElementModel>();
         for (const result of results) {
             for (const {element} of result) {
-                nestedModels[element.id] = element;
+                nestedModels.set(element.id, element);
             }
         }
         return nestedModels;

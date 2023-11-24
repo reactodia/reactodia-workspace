@@ -3,11 +3,6 @@ import { shallowArrayEqual } from '../coreUtils/collections';
 import { hashFnv32a } from '../data/utils';
 import * as Rdf from './rdf/rdfModel';
 
-/**
- * @deprecated
- */
-export interface Dictionary<T> { [key: string]: T; }
-
 export type ElementIri = string & { readonly elementBrand: void };
 export type ElementTypeIri = string & { readonly classBrand: void };
 export type LinkTypeIri = string & { readonly linkTypeBrand: void };
