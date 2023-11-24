@@ -15,8 +15,8 @@ import {
     isRdfIri, isRdfBlank, isRdfLiteral,
 } from './sparqlModels';
 
-const LABEL_URI = 'http://www.w3.org/2000/01/rdf-schema#label';
-const RDF_TYPE_URI = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+const TYPE_PREDICATE = 'urn:reactodia:sparql:type';
+const LABEL_PREDICATE = 'urn:reactodia:sparql:label';
 
 const EMPTY_MAP: ReadonlyMap<any, any> = new Map();
 const EMPTY_SET: ReadonlySet<any> = new Set();
@@ -175,13 +175,13 @@ export function triplesToElementBinding(
             elements.set(subject, createAndPushBinding(t));
         }
 
-        if (t.predicate.value === LABEL_URI && isRdfLiteral(t.object)) { // Label
+        if (t.predicate.value === LABEL_PREDICATE && isRdfLiteral(t.object)) { // Label
             if (elements.get(subject)!.label) {
                 elements.set(subject, createAndPushBinding(t));
             }
             elements.get(subject)!.label = t.object;
         } else if ( // Class
-            t.predicate.value === RDF_TYPE_URI &&
+            t.predicate.value === TYPE_PREDICATE &&
             isRdfIri(t.object) && isRdfIri(t.predicate)
         ) {
             if (elements.get(subject)!.class) {
@@ -351,11 +351,6 @@ export function getLinksInfo(
     }
 
     return Array.from(links.values());
-}
-
-export function getLinksTypesOf(response: SparqlResponse<LinkCountBinding>): LinkCount[] {
-    const sparqlLinkTypes = response.results.bindings.filter(b => !isRdfBlank(b.link));
-    return sparqlLinkTypes.map((sLink: LinkCountBinding) => getLinkCount(sLink));
 }
 
 export function getLinksTypeIds(
@@ -539,7 +534,7 @@ export function enrichElement(element: MutableElementModel, binding: ElementBind
     if (binding.class && element.types.indexOf(binding.class.value as ElementTypeIri) < 0) {
         element.types.push(binding.class.value as ElementTypeIri);
     }
-    if (binding.propType && binding.propValue && binding.propType.value !== LABEL_URI) {
+    if (binding.propType && binding.propValue && binding.propType.value !== LABEL_PREDICATE) {
         appendProperty(element.properties, binding.propType, binding.propValue);
     }
 }
@@ -600,20 +595,5 @@ function getLinkTypeInfo(binding: LinkTypeBinding): MutableLinkType {
         id: binding.link.value as LinkTypeIri,
         label: binding.label ? [binding.label] : [],
         count: binding.instcount ? parseCount(binding.instcount) : undefined,
-    };
-}
-
-export function prependAdditionalBindings<Binding>(
-    base: SparqlResponse<Binding>,
-    additional: SparqlResponse<Binding> | undefined,
-): SparqlResponse<Binding> {
-    if (!additional) {
-        return base;
-    }
-    return {
-        head: {vars: base.head.vars},
-        results: {
-            bindings: [...additional.results.bindings, ...base.results.bindings]
-        },
     };
 }

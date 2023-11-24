@@ -107,8 +107,8 @@ export interface SparqlDataProviderSettings {
      *   - `${propertyConfigurations}`
      *
      * Expected output format for triples:
-     *   - `?inst rdf:type ?class` element has type
-     *   - `?inst rdfs:label ?label` element has label
+     *   - `?inst <urn:reactodia:sparql:type> ?class` element has type
+     *   - `?inst <urn:reactodia:sparql:label> ?label` element has label
      *   - `?inst ?property ?value` element has value for a datatype property
      */
     elementInfoQuery: string;
@@ -456,8 +456,8 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
 
     elementInfoQuery: `
         CONSTRUCT {
-            ?inst rdf:type ?class .
-            ?inst rdfs:label ?label .
+            ?inst <urn:reactodia:sparql:type> ?class .
+            ?inst <urn:reactodia:sparql:label> ?label .
             ?inst ?propType ?propValue.
         } WHERE {
             VALUES (?inst) {\${ids}}
@@ -560,8 +560,8 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     `,
     elementInfoQuery: `
         CONSTRUCT {
-            ?inst rdf:type ?class .
-            ?inst rdfs:label ?label .
+            ?inst <urn:reactodia:sparql:type> ?class .
+            ?inst <urn:reactodia:sparql:label> ?label .
             ?inst ?propType ?propValue.
         } WHERE {
             VALUES (?inst) {\${ids}}
@@ -649,8 +649,8 @@ const DBPediaOverride: Partial<SparqlDataProviderSettings> = {
 
     elementInfoQuery: `
         CONSTRUCT {
-            ?inst rdf:type ?class .
-            ?inst rdfs:label ?label .
+            ?inst <urn:reactodia:sparql:type> ?class .
+            ?inst <urn:reactodia:sparql:label> ?label .
             ?inst ?propType ?propValue.
         } WHERE {
             VALUES (?inst) {\${ids}}

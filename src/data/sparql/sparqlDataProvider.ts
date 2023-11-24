@@ -8,7 +8,6 @@ import {
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../model';
 import {
-    prependAdditionalBindings,
     enrichElementsWithImages,
     getClassTree,
     getClassInfo,
@@ -19,7 +18,6 @@ import {
     getLinksInfo,
     getLinksTypeIds,
     getFilteredData,
-    getLinksTypesOf,
     getLinkStatistics,
     triplesToElementBinding,
     isDirectLink,
