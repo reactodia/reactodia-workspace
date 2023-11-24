@@ -158,6 +158,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const {canvas, layoutFunction, animate, signal} = params;
         const {model, disposeSignal} = this.workspaceContext;
 
+        canvas.renderingState.syncUpdate();
         const calculatedLayout = await calculateLayout({
             layoutFunction,
             model,

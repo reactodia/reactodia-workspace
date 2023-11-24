@@ -10,6 +10,7 @@ const WIKIDATA_ENDPOINT = process.env.WIKIDATA_ENDPOINT
 
 const EXAMPLES = [
   'index',
+  'basic',
   'rdf',
   'sparql',
   'stressTest',
@@ -88,7 +89,7 @@ module.exports = {
         chunks: ['commons', key],
         template: path.join(__dirname, 'examples/resources/template.ejs'),
         templateParameters: {
-          EXAMPLES,
+          EXAMPLES: EXAMPLES.filter(key => key !== 'index'),
         }
       })
     )
