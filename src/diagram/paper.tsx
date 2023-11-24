@@ -17,6 +17,7 @@ export interface PaperProps {
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
     onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
+    onScrollCapture?: (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => void;
     group?: string;
     linkLayerWidgets?: React.ReactElement<any>;
     elementLayerWidgets?: React.ReactElement<any>;
@@ -54,7 +55,8 @@ export class Paper extends Component<PaperProps> {
             <div className={CLASS_NAME}
                 style={style}
                 onPointerDown={this.onPointerDown}
-                onContextMenu={this.onContextMenu}>
+                onContextMenu={this.onContextMenu}
+                onScrollCapture={this.onScrollCapture}>
                 <TransformedSvgCanvas svgCanvasRef={svgCanvasRef}
                     className={`${CLASS_NAME}__canvas`}
                     style={{overflow: 'visible'}}
@@ -98,6 +100,16 @@ export class Paper extends Component<PaperProps> {
                 ? findCell(e.target, e.currentTarget, model)
                 : undefined;
             onContextMenu(e, cell);
+        }
+    };
+
+    private onScrollCapture = (e: React.UIEvent<HTMLElement>) => {
+        const {model, onScrollCapture} = this.props;
+        if (onScrollCapture) {
+            const cell = e.target instanceof Element
+                ? findCell(e.target, e.currentTarget, model)
+                : undefined;
+            onScrollCapture(e, cell);
         }
     };
 }

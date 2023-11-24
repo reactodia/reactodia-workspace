@@ -191,6 +191,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                             svgCanvasRef={this.svgCanvasRef}
                             onPointerDown={this.onPaperPointerDown}
                             onContextMenu={this.onContextMenu}
+                            onScrollCapture={this.onPaperScrollCapture}
                             linkLayerWidgets={
                                 <div className={`${CLASS_NAME}__widgets`}
                                     onPointerDown={this.onWidgetsPointerDown}>
@@ -593,6 +594,13 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private onPointerCancel = (e: PointerEvent) => {
         this.stopListeningToPointerMove();
+    };
+
+    private onPaperScrollCapture = (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => {
+        if (cell instanceof Element && this.movingState) {
+            // Prevent element move when interacting with nested scrollbars
+            this.stopListeningToPointerMove();
+        }
     };
 
     private stopListeningToPointerMove = (e?: PointerEvent) => {
