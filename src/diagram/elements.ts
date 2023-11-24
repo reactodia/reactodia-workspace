@@ -320,8 +320,10 @@ export class RichProperty {
 export interface RichLinkTypeEvents {
     changeLabel: PropertyChange<RichLinkType, ReadonlyArray<Rdf.Literal>>;
     changeIsNew: PropertyChange<RichLinkType, boolean>;
-    changeVisibility: { source: RichLinkType };
+    changeVisibility: PropertyChange<RichLinkType, LinkTypeVisibility>;
 }
+
+export type LinkTypeVisibility = 'hidden' | 'withoutLabel' | 'visible';
 
 export class RichLinkType {
     private readonly source = new EventSource<RichLinkTypeEvents>();
@@ -334,8 +336,7 @@ export class RichLinkType {
     private _label: ReadonlyArray<Rdf.Literal>;
     private _isNew = false;
 
-    private _visible = true;
-    private _showLabel = true;
+    private _visibility: LinkTypeVisibility = 'visible';
 
     constructor(props: {
         id: LinkTypeIri;
@@ -364,28 +365,14 @@ export class RichLinkType {
         this.source.trigger('changeLabel', {source: this, previous});
     }
 
-    get visible() { return this._visible; }
-    get showLabel() { return this._showLabel; }
-    setVisibility(params: {
-        visible: boolean;
-        showLabel: boolean;
-    }) {
-        const same = (
-            this._visible === params.visible &&
-            this._showLabel === params.showLabel
-        );
-        if (same) { return; }
-        this._visible = params.visible;
-        this._showLabel = params.showLabel;
-        this.source.trigger('changeVisibility', {source: this});
+    get visibility() {
+        return this._visibility;
     }
-
-    get isNew() { return this._isNew; }
-    setIsNew(value: boolean) {
-        const previous = this._isNew;
+    setVisibility(value: LinkTypeVisibility) {
+        const previous = this._visibility;
         if (previous === value) { return; }
-        this._isNew = value;
-        this.source.trigger('changeIsNew', {source: this, previous});
+        this._visibility = value;
+        this.source.trigger('changeVisibility', {source: this, previous});
     }
 }
 

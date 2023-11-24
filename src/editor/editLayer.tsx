@@ -105,8 +105,8 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             },
         });
         const temporaryLink = editor.createNewLink({link: linkTemplate, temporary: true});
-        const fatLinkType = editor.model.createLinkType(temporaryLink.typeId);
-        fatLinkType.setVisibility({visible: true, showLabel: false});
+        const linkType = editor.model.createLinkType(temporaryLink.typeId);
+        linkType.setVisibility('withoutLabel');
 
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;

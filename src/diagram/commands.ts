@@ -1,7 +1,7 @@
 import { ElementModel, ElementIri, LinkModel, sameLink } from '../data/model';
 
 import type { CanvasApi } from './canvasApi';
-import type { Element, Link, RichLinkType } from './elements';
+import type { Element, Link, RichLinkType, LinkTypeVisibility } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
@@ -78,21 +78,14 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
     });
 }
 
-export function changeLinkTypeVisibility(params: {
-    linkType: RichLinkType;
-    visible: boolean;
-    showLabel: boolean;
-}): Command {
-    const {linkType, visible, showLabel} = params;
+export function changeLinkTypeVisibility(
+    linkType: RichLinkType,
+    visibility: LinkTypeVisibility
+): Command {
     return Command.create('Change link type visibility', () => {
-        const previousVisible = linkType.visible;
-        const previousShowLabel = linkType.showLabel;
-        linkType.setVisibility({visible, showLabel});
-        return changeLinkTypeVisibility({
-            linkType,
-            visible: previousVisible,
-            showLabel: previousShowLabel,
-        });
+        const previous = linkType.visibility;
+        linkType.setVisibility(visibility);
+        return changeLinkTypeVisibility(linkType, previous);
     });
 }
 

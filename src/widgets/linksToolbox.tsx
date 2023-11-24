@@ -6,7 +6,7 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 
 import { LinkCount } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { Element, RichLinkType } from '../diagram/elements';
+import { Element, RichLinkType, LinkTypeVisibility } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
 import { DiagramView } from '../diagram/view';
 
@@ -24,8 +24,6 @@ interface LinkInToolBoxProps {
     filterKey?: string;
 }
 
-type LinkTypeVisibility = 'invisible' | 'withoutLabels' | 'allVisible';
-
 const CLASS_NAME = 'link-types-toolbox';
 
 class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
@@ -41,15 +39,7 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     }
 
     private isChecked(stateName: LinkTypeVisibility): boolean {
-        let curState: LinkTypeVisibility;
-        if (!this.props.link.visible) {
-            curState = 'invisible';
-        } else if (!this.props.link.showLabel) {
-            curState = 'withoutLabels';
-        } else {
-            curState = 'allVisible';
-        }
-        return stateName === curState;
+        return this.props.link.visibility === stateName;
     }
 
     private getText() {
@@ -59,16 +49,6 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     }
 
     render() {
-        const newIcon = this.props.link.isNew ? (
-            <span className={`${CLASS_NAME}__new-tag`}>new</span>
-        ) : null;
-        const countIcon = this.props.count > 0 ? (
-            <span className={classnames(`${CLASS_NAME}__count-badge`, 'reactodia-badge')}>
-                {this.props.count}
-            </span>
-        ) : null;
-        const badgeContainer = newIcon || countIcon ? <div>{newIcon}{countIcon}</div> : null;
-
         return (
             <li data-linktypeid={this.props.link.id}
                 className={classnames(`${CLASS_NAME}__link-item`, 'clearfix')}>
@@ -77,33 +57,37 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
                         `${CLASS_NAME}__link-buttons`,
                         'reactodia-btn-group reactodia-btn-group-xs'
                     )}>
-                    <button id='invisible' title='Hide links and labels'
+                    <button id='hidden' title='Hide links and labels'
                         className={classnames(
                             `${CLASS_NAME}__toggle-invisible`,
                             'reactodia-btn reactodia-btn-default',
-                            this.isChecked('invisible') ? 'active' : undefined
+                            this.isChecked('hidden') ? 'active' : undefined
                         )}
-                        onClick={() => this.changeState('invisible')}>
+                        onClick={() => this.changeState('hidden')}>
                     </button>
-                    <button id='withoutLabels' title='Show only lines for links (without labels)'
+                    <button id='withoutLabel' title='Show only lines for links (without labels)'
                         className={classnames(
                             `${CLASS_NAME}__toggle-lines-only`,
                             'reactodia-btn reactodia-btn-default',
-                            this.isChecked('withoutLabels') ? 'active' : undefined
+                            this.isChecked('withoutLabel') ? 'active' : undefined
                         )}
-                        onClick={() => this.changeState('withoutLabels')}>
+                        onClick={() => this.changeState('withoutLabel')}>
                     </button>
-                    <button id='allVisible' title='Show links with labels'
+                    <button id='visible' title='Show links with labels'
                         className={classnames(
                             `${CLASS_NAME}__toggle-visible`,
                             'reactodia-btn reactodia-btn-default',
-                            this.isChecked('allVisible') ? 'active' : undefined
+                            this.isChecked('visible') ? 'active' : undefined
                         )}
-                        onClick={() => this.changeState('allVisible')}>
+                        onClick={() => this.changeState('visible')}>
                     </button>
                 </span>
                 <div className={`${CLASS_NAME}__link-title`}>{this.getText()}</div>
-                {badgeContainer}
+                {this.props.count === 0 ? null : (
+                    <span className={classnames(`${CLASS_NAME}__count-badge`, 'reactodia-badge')}>
+                        {this.props.count}
+                    </span>
+                )}
                 {this.props.onPressFilter ? (
                     <div className={`${CLASS_NAME}__filter-button`}
                         onClick={this.onPressFilter}
@@ -221,7 +205,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'invisible', links)}>
+                                onClick={() => changeLinkTypeState(history, 'hidden', links)}>
                             </button>
                             <button title='Show only lines for links (without labels)'
                                 className={classnames(
@@ -229,7 +213,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'withoutLabels', links)}>
+                                onClick={() => changeLinkTypeState(history, 'withoutLabel', links)}>
                             </button>
                             <button title='Show links with labels'
                                 className={classnames(
@@ -237,7 +221,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'allVisible', links)}>
+                                onClick={() => changeLinkTypeState(history, 'visible', links)}>
                             </button>
                         </div>
                         <span>&nbsp;Switch all</span>
@@ -391,15 +375,9 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 }
 
 function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<RichLinkType>) {
-    const batch = history.startBatch();
-    const {visible, showLabel} = (
-        state === 'invisible' ? {visible: false, showLabel: false} :
-        state === 'withoutLabels' ? {visible: true, showLabel: false} :
-        state === 'allVisible' ? {visible: true, showLabel: true} :
-        {visible: true, showLabel: true}
-    );
+    const batch = history.startBatch('Change link types visibility');
     for (const linkType of links) {
-        history.execute(changeLinkTypeVisibility({linkType, visible, showLabel}));
+        history.execute(changeLinkTypeVisibility(linkType, state));
     }
     batch.store();
 }

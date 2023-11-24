@@ -8,7 +8,9 @@ import { DataProvider } from '../data/provider';
 import { DataFactory } from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { Element, RichLinkType, RichElementType, RichProperty, Link } from '../diagram/elements';
+import {
+    Element, RichLinkType, RichElementType, RichProperty, Link, LinkTypeVisibility,
+} from '../diagram/elements';
 import { CommandHistory, Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents } from '../diagram/model';
 
@@ -43,7 +45,7 @@ export class AsyncModel extends DiagramModel {
     private _dataProvider!: DataProvider;
     private fetcher: DataFetcher | undefined;
 
-    private linkSettings: { [linkTypeId: string]: LinkTypeOptions } = {};
+    private linkSettings = new Map<LinkTypeIri, LinkTypeVisibility>();
 
     constructor(
         history: CommandHistory,
@@ -65,6 +67,7 @@ export class AsyncModel extends DiagramModel {
     resetGraph(): void {
         super.resetGraph();
         this.fetcher?.dispose();
+        this.linkSettings.clear();
     }
 
     subscribeGraph() {
@@ -154,9 +157,16 @@ export class AsyncModel extends DiagramModel {
         const layoutData = makeLayoutData(this.graph.getElements(), this.graph.getLinks());
         const linkTypeOptions = this.graph.getLinkTypes()
             // do not serialize default link type options
-            .filter(linkType => (!linkType.visible || !linkType.showLabel) && linkType.id !== PLACEHOLDER_LINK_TYPE)
-            .map(({id, visible, showLabel}): LinkTypeOptions =>
-                ({'@type': 'LinkTypeOptions', property: id, visible, showLabel}));
+            .filter(linkType => (
+                linkType.visibility !== 'visible' &&
+                linkType.id !== PLACEHOLDER_LINK_TYPE
+            ))
+            .map(({id, visibility}): LinkTypeOptions => ({
+                '@type': 'LinkTypeOptions',
+                property: id,
+                visible: visibility !== 'hidden',
+                showLabel: visibility === 'visible',
+            }));
         return makeSerializedDiagram({layoutData, linkTypeOptions});
     }
 
@@ -174,10 +184,15 @@ export class AsyncModel extends DiagramModel {
         for (const setting of settings) {
             const {visible = true, showLabel = true} = setting;
             const linkTypeId = setting.property as LinkTypeIri;
-            this.linkSettings[linkTypeId] = {'@type': 'LinkTypeOptions', property: linkTypeId, visible, showLabel};
+            const visibility: LinkTypeVisibility = (
+                visible && showLabel ? 'visible' :
+                visible && !showLabel ? 'withoutLabel' :
+                'hidden'
+            );
+            this.linkSettings.set(linkTypeId, visibility);
             const linkType = this.getLinkType(linkTypeId);
             if (linkType) {
-                linkType.setVisibility({visible, showLabel});
+                linkType.setVisibility(visibility);
             }
         }
     }
@@ -198,7 +213,7 @@ export class AsyncModel extends DiagramModel {
         } = params;
 
         const elementIrisToRequestData: ElementIri[] = [];
-        const usedLinkTypes: { [typeId: string]: RichLinkType } = {};
+        const usedLinkTypes = new Set<LinkTypeIri>();
 
         for (const layoutElement of layoutData.elements) {
             const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
@@ -214,7 +229,7 @@ export class AsyncModel extends DiagramModel {
         for (const layoutLink of layoutData.links) {
             const {'@id': id, property, source, target, vertices, linkState} = layoutLink;
             const linkType = this.createLinkType(property);
-            usedLinkTypes[linkType.id] = linkType;
+            usedLinkTypes.add(linkType.id);
             const sourceElement = this.graph.getElement(source['@id']);
             const targetElement = this.graph.getElement(target['@id']);
             if (sourceElement && targetElement) {
@@ -249,14 +264,11 @@ export class AsyncModel extends DiagramModel {
 
     private hideUnusedLinkTypes(
         allTypes: ReadonlyArray<RichLinkType>,
-        usedTypes: { [typeId: string]: RichLinkType }
+        usedTypes: ReadonlySet<LinkTypeIri>
     ) {
         for (const linkType of allTypes) {
-            if (!usedTypes[linkType.id]) {
-                linkType.setVisibility({
-                    visible: false,
-                    showLabel: linkType.showLabel,
-                });
+            if (!usedTypes.has(linkType.id)) {
+                linkType.setVisibility('hidden');
             }
         }
     }
@@ -287,10 +299,9 @@ export class AsyncModel extends DiagramModel {
             return super.createLinkType(linkTypeId);
         }
         const linkType = super.createLinkType(linkTypeId);
-        const setting = this.linkSettings[linkType.id];
-        if (setting) {
-            const {visible, showLabel} = setting;
-            linkType.setVisibility({visible, showLabel: showLabel!});
+        const visibility = this.linkSettings.get(linkType.id);
+        if (visibility) {
+            linkType.setVisibility(visibility);
         }
         this.fetcher!.fetchLinkType(linkType);
         return linkType;

@@ -70,13 +70,18 @@ export class RenderingState implements SizeProvider {
         this.linkRouter = options.linkRouter ?? new DefaultLinkRouter();
 
         this.listener.listen(this.model.events, 'changeCells', () =>  this.updateRoutings());
-        this.listener.listen(this.model.events, 'linkEvent', ({key, data}) => {
+        this.listener.listen(this.model.events, 'linkEvent', ({data}) => {
             if (data.changeVertices) {
                 this.updateRoutings();
             }
         });
-        this.listener.listen(this.model.events, 'elementEvent', ({key, data}) => {
+        this.listener.listen(this.model.events, 'elementEvent', ({data}) => {
             if (data.changePosition) {
+                this.updateRoutings();
+            }
+        });
+        this.listener.listen(this.model.events, 'linkTypeEvent', ({data}) => {
+            if (data.changeVisibility) {
                 this.updateRoutings();
             }
         });

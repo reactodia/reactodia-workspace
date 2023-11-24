@@ -264,12 +264,8 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
             preferredLinksLength: 300,
         });
 
-        if (linkType && !linkType.visible) {
-            batch.history.execute(changeLinkTypeVisibility({
-                linkType,
-                visible: true,
-                showLabel: true,
-            }));
+        if (linkType && linkType.visibility === 'hidden') {
+            batch.history.execute(changeLinkTypeVisibility(linkType, 'visible'));
         }
 
         batch.history.execute(requestElementData(model, elementIris));

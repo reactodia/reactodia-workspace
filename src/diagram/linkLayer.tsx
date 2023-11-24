@@ -340,10 +340,10 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
 
     render() {
         const {link, route, view, renderingState} = this.props;
-        const {linkType, template} = this.state;
+        const {linkType: {index: typeIndex, visibility}, template} = this.state;
         const source = view.model.getElement(link.sourceId);
         const target = view.model.getElement(link.targetId);
-        if (!(source && target && linkType.visible)) {
+        if (!(source && target && visibility !== 'hidden')) {
             return null;
         }
 
@@ -357,7 +357,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
 
         const path = 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
 
-        const {index: typeIndex, showLabel} = linkType;
+        
         const style = template.renderLink(link.data, link.linkState, view.model.factory);
         const pathAttributes = getPathAttributes(link, style);
 
@@ -369,7 +369,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
                     markerStart={`url(#${linkMarkerKey(typeIndex!, true)})`}
                     markerEnd={`url(#${linkMarkerKey(typeIndex!, false)})`} />
                 <path className={`${LINK_CLASS}__wrap`} d={path} />
-                {showLabel ? this.renderLabels(polyline, style) : undefined}
+                {visibility === 'visible' ? this.renderLabels(polyline, style) : undefined}
                 {this.renderVertices(verticesDefinedByUser, pathAttributes.stroke)}
             </g>
         );

@@ -39,7 +39,11 @@ export class DefaultLinkRouter implements LinkRouter {
 
         let index = 0;
         for (const sibling of model.getElementLinks(element)) {
-            if (routings.has(sibling.id) || hasUserPlacedVertices(sibling)) {
+            if (
+                routings.has(sibling.id) ||
+                !linkIsVisible(sibling, model) ||
+                hasUserPlacedVertices(sibling)
+            ) {
                 continue;
             }
             const {sourceId, targetId} = sibling;
@@ -80,7 +84,8 @@ export class DefaultLinkRouter implements LinkRouter {
         const siblings = model.getElementLinks(source).filter(link =>
             (link.sourceId === targetId || link.targetId === targetId) &&
             !routings.has(link.id) &&
-            !hasUserPlacedVertices(link)
+            !hasUserPlacedVertices(link) &&
+            linkIsVisible(link, model)
         );
         if (siblings.length <= 1) {
             return;
@@ -142,6 +147,11 @@ export class DefaultLinkRouter implements LinkRouter {
 
         return 'middle';
     }
+}
+
+function linkIsVisible(link: Link, graph: GraphStructure): boolean {
+    const linkType = graph.getLinkType(link.typeId);
+    return !linkType || linkType.visibility !== 'hidden';
 }
 
 function hasUserPlacedVertices(link: Link) {
