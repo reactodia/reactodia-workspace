@@ -120,7 +120,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         this.listener.listen(model.events, 'loadingSuccess', () => {
             for (const canvas of view.findAllCanvases()) {
                 canvas.renderingState.syncUpdate();
-                canvas.centerContent();
+                canvas.zoomToFit();
             }
         });
         this.listener.listen(view.events, 'iriClick', e => {
