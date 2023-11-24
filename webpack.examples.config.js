@@ -9,6 +9,7 @@ const WIKIDATA_ENDPOINT = process.env.WIKIDATA_ENDPOINT
   ?? 'https://query.wikidata.org/sparql';
 
 const EXAMPLES = [
+  'index',
   'rdf',
   'sparql',
   'stressTest',

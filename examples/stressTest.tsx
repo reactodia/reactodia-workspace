@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import {
-    Workspace, DefaultWorkspace, Rdf, RdfDataProvider, ElementIri, Element, layoutForcePadded,
+    Workspace, DefaultWorkspace, Rdf, RdfDataProvider, ElementIri, Element,
 } from '../src/index';
 
-import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
+import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 function TurtleGraphExample() {
     const workspaceRef = React.useRef<Workspace | null>(null);
@@ -68,12 +68,7 @@ function TurtleGraphExample() {
             <DefaultWorkspace
                 leftColumn={{defaultCollapsed: true}}
                 toolbar={{
-                    onSaveDiagram: () => {
-                        const {model} = workspaceRef.current!.getContext();
-                        const diagram = model.exportLayout();
-                        window.location.hash = saveLayoutToLocalStorage(diagram);
-                        window.location.reload();
-                    },
+                    menu: <ExampleToolbarMenu />,
                 }}
                 navigator={{
                     expanded: false,

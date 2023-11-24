@@ -3,7 +3,7 @@ import {
     Workspace, SparqlDataProvider, OwlStatsSettings, DefaultWorkspace,
 } from '../src/index';
 
-import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
+import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 function SparqlExample() {
     const workspaceRef = React.useRef<Workspace | null>(null);
@@ -37,16 +37,17 @@ function SparqlExample() {
             onIriClick={({iri}) => window.open(iri)}>
             <DefaultWorkspace
                 toolbar={{
-                    onSaveDiagram: () => {
-                        const {model} = workspaceRef.current!.getContext();
-                        const diagram = model.exportLayout();
-                        window.location.hash = saveLayoutToLocalStorage(diagram);
-                        window.location.reload();
-                    },
+                    menu: <ExampleToolbarMenu />,
                     languages: [
-                        {code: 'en', label: 'English'},
-                        {code: 'de', label: 'German'},
-                        {code: 'ru', label: 'Russian'},
+                        {code: 'de', label: 'Deutsch'},
+                        {code: 'en', label: 'english'},
+                        {code: 'es', label: 'español'},
+                        {code: 'fr', label: 'français'},
+                        {code: 'ja', label: '日本語'},
+                        {code: 'hi', label: 'हिन्दी'},
+                        {code: 'pt', label: 'português'},
+                        {code: 'ru', label: 'русский'},
+                        {code: 'zh', label: '汉语'},
                     ],
                 }}
             />

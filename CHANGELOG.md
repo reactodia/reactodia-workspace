@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Support customizable `DefaultToolbar` with its actions decomposed into separate components:
+  * Generic component for toolbar actions: `ToolbarItem`;
+  * Default menu items: `ToolbarActionClearAll`, `ToolbarActionExport` (for PNG, SVG and print);
+  * Default panel items: `ToolbarActionUndo`, `ToolbarActionRedo`, `ToolbarActionLayout`;
+- Expose SVG and raster image export options in corresponding `CanvasApi` methods.
+- Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
+
+### Changed
+- **[Breaking]** Rename `CanvasApi.exportPng()` -> `CanvasApi.exportRaster()`.
 
 ## [0.22.0] - 2023-11-24
 ### Added
@@ -13,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Support touch input: native pan scroll and custom pinch zoom:
   * Add new coordination conversions to `CanvasMetrics`: `paperToPageCoords()` and `scrollablePaneToClientCoords()`;
   * Add `Vector.{add, subtract, scale}` functions;
-- Create `HamburgerMenu` to improve toolbar UI, make it more compact.
+- Create dropdown menu to improve toolbar UI, make it more compact.
 
 ### Changed
 - **[Breaking]** Introduce `GraphStructure` as a read-only view for the `DiagramModel`:

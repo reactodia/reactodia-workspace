@@ -12,6 +12,7 @@ export interface IndexedDbCachedProviderOptions {
      * @default false
      */
     readonly cacheTextLookups?: boolean;
+    readonly closeSignal: AbortSignal;
 }
 
 const enum ObjectStore {
@@ -68,20 +69,39 @@ export class IndexedDbCachedProvider implements DataProvider {
     private readonly baseProvider: DataProvider;
     private readonly dbName: string;
     private readonly cacheTextLookups: boolean;
+    private readonly closeSignal: AbortSignal;
 
     private openedDb: Promise<IDBDatabase> | undefined;
+    private deleteRequest: Promise<void> | undefined;
 
     constructor(options: IndexedDbCachedProviderOptions) {
         this.baseProvider = options.baseProvider;
         this.dbName = options.dbName;
         this.cacheTextLookups = options.cacheTextLookups ?? false;
+        this.closeSignal = options.closeSignal;
+        this.closeSignal.addEventListener('abort', this.onClose);
     }
 
     get factory(): Rdf.DataFactory {
         return this.baseProvider.factory;
     }
 
-    private openDb(): Promise<IDBDatabase> {
+    clearCache(): Promise<void> {
+        this.deleteRequest = this.deleteDatabase();
+        return this.deleteRequest;
+    }
+
+    private async deleteDatabase(): Promise<void> {
+        await this.closeDatabase();
+        await indexedDbRequestAsPromise(indexedDB.deleteDatabase(this.dbName));
+    }
+
+    private async openDb(): Promise<IDBDatabase> {
+        if (this.deleteRequest) {
+            await this.deleteRequest.catch(() => {
+                /* clear errors will be handled by the original caller */
+            });
+        }
         if (!this.openedDb) {
             this.openedDb = new Promise<IDBDatabase>((resolve, reject) => {
                 const request = indexedDB.open(this.dbName, IndexedDbCachedProvider.DB_VERSION);
@@ -144,6 +164,19 @@ export class IndexedDbCachedProvider implements DataProvider {
             });
         }
         return this.openedDb;
+    }
+
+    private onClose = async () => {
+        this.closeSignal.removeEventListener('abort', this.onClose);
+        this.closeDatabase();
+    };
+
+    private async closeDatabase(): Promise<void> {
+        if (this.openedDb) {
+            const db = await this.openedDb;
+            db.close();
+            this.openedDb = undefined;
+        }
     }
 
     async knownElementTypes(params: { signal?: AbortSignal | undefined; }): Promise<ElementTypeGraph> {

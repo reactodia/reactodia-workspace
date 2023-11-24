@@ -7,7 +7,7 @@ import {
 } from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
-import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
+import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl');
 
@@ -104,17 +104,7 @@ function RdfExample() {
                 }}
                 connectionsMenu={{suggestProperties}}
                 toolbar={{
-                    onSaveDiagram: () => {
-                        const {model} = workspaceRef.current!.getContext();
-                        const diagram = model.exportLayout();
-                        window.location.hash = saveLayoutToLocalStorage(diagram);
-                        window.location.reload();
-                    },
-                    onPersistChanges: () => {
-                        const {editor} = workspaceRef.current!.getContext();
-                        const state = editor.authoringState;
-                        console.log('Authoring state:', state);
-                    },
+                    menu: <ExampleToolbarMenu />
                 }}
             />
         </Workspace>

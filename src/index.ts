@@ -61,7 +61,7 @@ export { ValidationState, ElementValidation, LinkValidation } from './editor/val
 
 export {
     LayoutData, SerializedDiagram, LinkTypeOptions,
-    convertToSerializedDiagram, makeSerializedDiagram, makeLayoutData,
+    makeSerializedDiagram, makeLayoutData,
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate } from './templates/classicTemplate';
@@ -80,8 +80,8 @@ export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
-    HamburgerMenu, HamburgerMenuProps, HamburgerMenuItem, HamburgerMenuItemProps,
-} from './widgets/hamburgerMenu';
+    Dropdown as HamburgerMenu, DropdownProps as HamburgerMenuProps, DropdownItem as HamburgerMenuItem, DropdownItemProps as HamburgerMenuItemProps,
+} from './widgets/dropdown';
 export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,
 } from './widgets/instancesSearch';
@@ -93,7 +93,17 @@ export { Navigator, NavigatorProps } from './widgets/navigator';
 export { SearchResults, SearchResultProps } from './widgets/searchResults';
 export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
 
-export { DefaultToolbar, DefaultToolbarProps, WorkspaceLanguage } from './workspace/defaultToolbar';
+export {
+    DefaultToolbar, DefaultToolbarProps,
+    ToolbarItem, ToolbarItemProps,
+    ToolbarActionSave, ToolbarActionSaveProps,
+    ToolbarActionClearAll, ToolbarActionClearAllProps,
+    ToolbarActionExport, ToolbarActionExportProps,
+    ToolbarActionUndo, ToolbarActionUndoProps,
+    ToolbarActionRedo, ToolbarActionRedoProps,
+    ToolbarActionLayout, ToolbarActionLayoutProps,
+    ToolbarLanguageSelector, ToolbarLanguageSelectorProps, WorkspaceLanguage,
+} from './workspace/defaultToolbar';
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export { Workspace, WorkspaceProps } from './workspace/workspace';

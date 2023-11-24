@@ -1,5 +1,5 @@
 import { DiagramModel } from './model';
-import { Rect, SizeProvider, Vector, boundsOf } from './geometry';
+import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
 
 export interface ToSVGOptions {
     model: DiagramModel;
@@ -9,10 +9,12 @@ export interface ToSVGOptions {
     getOverlaidElement: (id: string) => HTMLElement;
     preserveDimensions?: boolean;
     convertImagesToDataUris?: boolean;
-    blacklistedCssAttributes?: string[];
-    elementsToRemoveSelector?: string;
-    mockImages?: boolean;
+    removeByCssSelectors?: ReadonlyArray<string>;
     watermarkSvg?: string;
+    /** @default {x: 100, y: 100} */
+    borderPadding?: Vector;
+    /** @default false */
+    addXmlHeader?: boolean;
 }
 
 interface Bounds {
@@ -27,18 +29,29 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
  * in exported image.
  */
 const FOREIGN_OBJECT_SIZE_PADDING = 2;
-const BORDER_PADDING = 100;
+const DEFAULT_BORDER_PADDING: Vector = {x: 100, y: 100};
+const XML_ENCODING_HEADER = '<?xml version="1.0" encoding="UTF-8"?>';
 
 export function toSVG(options: ToSVGOptions): Promise<string> {
-    return exportSVG(options).then(svg => new XMLSerializer().serializeToString(svg));
+    return exportSVG(options)
+        .then(svg => {
+            const svgText = new XMLSerializer().serializeToString(svg);
+            return options.addXmlHeader
+                ? (XML_ENCODING_HEADER + svgText) : svgText;
+        });
 }
 
 function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
-    const {contentBox: bbox, watermarkSvg} = options;
+    const {
+        contentBox: bbox,
+        watermarkSvg,
+        removeByCssSelectors = [],
+        borderPadding = DEFAULT_BORDER_PADDING,
+    } = options;
     const {svgClone, imageBounds} = clonePaperSvg(options, FOREIGN_OBJECT_SIZE_PADDING);
 
-    const paddedWidth = bbox.width + 2 * BORDER_PADDING;
-    const paddedHeight = bbox.height + 2 * BORDER_PADDING;
+    const paddedWidth = bbox.width + 2 * borderPadding.x;
+    const paddedHeight = bbox.height + 2 * borderPadding.y;
 
     if (options.preserveDimensions) {
         svgClone.setAttribute('width', paddedWidth.toString());
@@ -49,8 +62,8 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
     }
 
     const viewBox: Rect = {
-        x: bbox.x - BORDER_PADDING,
-        y: bbox.y - BORDER_PADDING,
+        x: bbox.x - borderPadding.x,
+        y: bbox.y - borderPadding.y,
         width: paddedWidth,
         height: paddedHeight,
     };
@@ -96,9 +109,10 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         defs.innerHTML = `<style>${exportedCssText}</style>`;
         svgClone.insertBefore(defs, svgClone.firstChild);
 
-        if (options.elementsToRemoveSelector) {
-            foreachNode(svgClone.querySelectorAll(options.elementsToRemoveSelector),
-                node => node.remove());
+        for (const selector of removeByCssSelectors) {
+            for (const node of svgClone.querySelectorAll(selector)) {
+                node.remove();
+            }
         }
 
         return svgClone;
@@ -273,12 +287,17 @@ export interface ToDataURLOptions {
     /** Background color, transparent by default. */
     backgroundColor?: string;
     quality?: number;
+    /** @default {width: 4096, height: 4096} */
+    maxFallbackSize?: Size;
 }
 
-const MAX_CANVAS_LENGTH = 4096;
+const DEFAULT_MAX_FALLBACK_SIZE: Size = {width: 4096, height: 4096};
 
 export async function toDataURL(options: ToSVGOptions & ToDataURLOptions): Promise<string> {
-    const {paper, mimeType = 'image/png'} = options;
+    const {
+        mimeType = 'image/png',
+        maxFallbackSize = DEFAULT_MAX_FALLBACK_SIZE,
+    } = options;
     const svgOptions = {
         ...options,
         convertImagesToDataUris: true,
@@ -293,7 +312,7 @@ export async function toDataURL(options: ToSVGOptions & ToDataURLOptions): Promi
 
     const containerSize = (typeof options.width === 'number' || typeof options.height === 'number')
         ? {width: options.width, height: options.height}
-        : fallbackContainerSize(svgBox);
+        : fallbackContainerSize(svgBox, maxFallbackSize);
 
     const {innerSize, outerSize, offset} = computeAutofit(svgBox, containerSize);
     svg.setAttribute('width', innerSize.width.toString());
@@ -358,10 +377,10 @@ function computeAutofit(itemSize: Bounds, containerSize: Partial<Bounds>) {
     return {innerSize, outerSize, offset};
 }
 
-function fallbackContainerSize(itemSize: Bounds): Bounds {
+function fallbackContainerSize(itemSize: Bounds, maxCanvasSize: Size): Bounds {
     const maxResolutionScale = Math.min(
-        MAX_CANVAS_LENGTH / itemSize.width,
-        MAX_CANVAS_LENGTH / itemSize.height,
+        maxCanvasSize.width / itemSize.width,
+        maxCanvasSize.height / itemSize.height,
     );
     const resolutionScale = Math.min(2.0, maxResolutionScale);
     const width = Math.floor(itemSize.width * resolutionScale);

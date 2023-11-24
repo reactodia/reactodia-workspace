@@ -1,9 +1,10 @@
 import * as React from 'react';
 import {
-    Workspace, DefaultWorkspace, SparqlDataProvider, IndexedDbCachedProvider, WikidataSettings,
+    Workspace, DefaultWorkspace, ToolbarItem, SparqlDataProvider, IndexedDbCachedProvider,
+    WikidataSettings,
 } from '../src/index';
 
-import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
+import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 declare const WIKIDATA_ENDPOINT: string | undefined;
 
@@ -26,6 +27,7 @@ function WikidataExample() {
         const dataProvider = new IndexedDbCachedProvider({
             baseProvider: sparqlProvider,
             dbName: 'reactodia-wikidata-cache',
+            closeSignal: cancellation.signal,
         });
 
         const diagram = tryLoadLayoutFromLocalStorage();
@@ -45,12 +47,18 @@ function WikidataExample() {
             onIriClick={({iri}) => window.open(iri)}>
             <DefaultWorkspace
                 toolbar={{
-                    onSaveDiagram: () => {
-                        const {model} = workspaceRef.current!.getContext();
-                        const diagram = model.exportLayout();
-                        window.location.hash = saveLayoutToLocalStorage(diagram);
-                        window.location.reload();
-                    },
+                    menu: <>
+                        <ExampleToolbarMenu />
+                        <ToolbarItem
+                            onSelect={() => {
+                                const {model: {dataProvider}} = workspaceRef.current!.getContext();
+                                if (dataProvider instanceof IndexedDbCachedProvider) {
+                                    dataProvider.clearCache();
+                                }
+                            }}>
+                            Clear Wikidata cache
+                        </ToolbarItem>
+                    </>,
                     languages: [
                         {code: 'de', label: 'Deutsch'},
                         {code: 'en', label: 'english'},

@@ -8,6 +8,7 @@ import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/schedu
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
     CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
+    ExportSvgOptions, ExportRasterOptions,
 } from './canvasApi';
 import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
@@ -791,8 +792,11 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         });
     };
 
-    private makeToSVGOptions(): ToSVGOptions {
+    private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {
         const {model, renderingState} = this.props;
+        const {
+            removeByCssSelectors = [],
+        } = baseOptions;
         const svg = this.svgCanvasRef.current;
         if (!svg) {
             throw new Error('Cannot find SVG canvas to export');
@@ -805,17 +809,20 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             getOverlaidElement: id => this.area.querySelector(`[data-element-id='${id}']`) as HTMLElement,
             preserveDimensions: true,
             convertImagesToDataUris: true,
-            elementsToRemoveSelector: '.reactodia-link__vertex-tools',
+            removeByCssSelectors: [
+                '.reactodia-link__vertex-tools',
+                ...removeByCssSelectors
+            ],
             watermarkSvg: this.props.watermarkSvg,
         };
     }
 
-    exportSvg(): Promise<string> {
-        return toSVG(this.makeToSVGOptions());
+    exportSvg(options: ExportSvgOptions = {}): Promise<string> {
+        return toSVG(this.makeToSVGOptions(options));
     }
 
-    exportPng(options: ToDataURLOptions): Promise<string> {
-        return toDataURL({...options, ...this.makeToSVGOptions()});
+    exportRaster(options: ExportRasterOptions = {}): Promise<string> {
+        return toDataURL({...options, ...this.makeToSVGOptions(options)});
     }
 
     isAnimatingGraph(): boolean {

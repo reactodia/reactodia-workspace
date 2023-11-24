@@ -1,24 +1,24 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-export interface HamburgerMenuProps {
+export interface DropdownProps {
     className?: string;
     title?: string;
     children: React.ReactNode;
 }
 
-const CLASS_NAME = 'reactodia-hamburger-menu';
+const CLASS_NAME = 'reactodia-dropdown';
 
-interface HamburgerMenuContext {
+interface DropdownContext {
     closeMenu: () => void;
 }
-const HamburgerMenuContext = React.createContext<HamburgerMenuContext | null>(null);
+const DropdownContext = React.createContext<DropdownContext | null>(null);
 
-export function HamburgerMenu(props: HamburgerMenuProps) {
+export function Dropdown(props: DropdownProps) {
     const {className, title, children} = props;
     const menuRef = React.useRef<HTMLElement | null>(null);
     const [expanded, setExpanded] = React.useState(false);
-    const providedContext = React.useMemo((): HamburgerMenuContext => ({
+    const providedContext = React.useMemo((): DropdownContext => ({
         closeMenu: () => setExpanded(false),
     }), [setExpanded]);
 
@@ -36,7 +36,7 @@ export function HamburgerMenu(props: HamburgerMenuProps) {
     }, [expanded]);
 
     return (
-        <HamburgerMenuContext.Provider value={providedContext}>
+        <DropdownContext.Provider value={providedContext}>
             <nav ref={menuRef}
                 className={classnames(
                     className,
@@ -53,39 +53,45 @@ export function HamburgerMenu(props: HamburgerMenuProps) {
                     {children}
                 </ul>
             </nav>
-        </HamburgerMenuContext.Provider>
+        </DropdownContext.Provider>
     );
 }
 
-export interface HamburgerMenuItemProps {
+export interface DropdownItemProps {
     className?: string;
     title?: string;
     disabled?: boolean;
-    onClick?: () => void;
+    onSelect?: () => void;
     children: React.ReactNode;
 }
 
-const ITEM_CLASS_NAME = 'reactodia-hamburger-menu-item';
+const ITEM_CLASS_NAME = 'reactodia-dropdown-item';
 
-export function HamburgerMenuItem(props: HamburgerMenuItemProps) {
-    const {className, title, disabled, onClick, children} = props;
-    const menuContext = React.useContext(HamburgerMenuContext);
+export function DropdownItem(props: DropdownItemProps) {
+    const {className, title, disabled, onSelect, children} = props;
+    const menuContext = React.useContext(DropdownContext);
 
     const wrappedOnClick = React.useCallback(() => {
         menuContext?.closeMenu();
-        onClick?.();
-    }, [onClick, menuContext]);
+        onSelect?.();
+    }, [onSelect, menuContext]);
 
     return (
         <li role='menuitem'
             className={classnames(
                 className,
                 ITEM_CLASS_NAME,
-                disabled ? `${ITEM_CLASS_NAME}--disabled` : undefined
+                disabled ? `${ITEM_CLASS_NAME}--disabled` : undefined,
+                'reactodia-btn reactodia-btn-default'
             )}
             title={title}
             onClick={disabled ? undefined : wrappedOnClick}>
             {children}
         </li>
     );
+}
+
+export function useInsideDropdown(): boolean {
+    const menuContext = React.useContext(DropdownContext);
+    return Boolean(menuContext);
 }

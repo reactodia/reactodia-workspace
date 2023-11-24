@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { saveAs } from 'file-saver';
 
 import { EventObserver } from '../coreUtils/events';
 
@@ -11,7 +10,6 @@ import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import { calculateLayout, applyLayout } from '../diagram/layout';
-import { dataURLToBlob } from '../diagram/toSvg';
 import { DiagramView, IriClickEvent, LabelLanguageSelector } from '../diagram/view';
 
 import { AsyncModel, GroupBy } from '../editor/asyncModel';
@@ -51,6 +49,7 @@ const DEFAULT_LANGUAGE = 'en';
 
 export class Workspace extends React.Component<WorkspaceProps> {
     private readonly listener = new EventObserver();
+    private readonly cancellation = new AbortController();
 
     private readonly workspaceContext: WorkspaceContext;
 
@@ -95,10 +94,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
             view,
             editor,
             overlayController,
+            disposeSignal: this.cancellation.signal,
             performLayout: this.onPerformLayout,
-            exportSvg: this.onExportSvg,
-            exportPng: this.onExportPng,
-            print: this.onPrint,
             triggerWorkspaceEvent: onWorkspaceEvent,
         };
     }
@@ -159,17 +156,17 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private onPerformLayout: WorkspacePerformLayout = async params => {
         const {canvas, layoutFunction, animate, signal} = params;
-
-        const {model} = this.workspaceContext;
-        const batch = model.history.startBatch('Graph layout');
-        batch.history.registerToUndo(RestoreGeometry.capture(model));
+        const {model, disposeSignal} = this.workspaceContext;
 
         const calculatedLayout = await calculateLayout({
             layoutFunction,
             model,
             sizeProvider: canvas.renderingState,
-            signal,
+            signal: signal ?? disposeSignal,
         });
+
+        const batch = model.history.startBatch('Graph layout');
+        batch.history.registerToUndo(RestoreGeometry.capture(model));
 
         for (const link of model.links) {
             link.setVertices([]);
@@ -189,29 +186,5 @@ export class Workspace extends React.Component<WorkspaceProps> {
             batch.store();
             canvas.zoomToFit();
         }
-    };
-
-    private onExportSvg = (canvas: CanvasApi) => {
-        canvas.exportSvg().then(svg => {
-            const xmlEncodingHeader = '<?xml version="1.0" encoding="UTF-8"?>';
-            const blob = new Blob([xmlEncodingHeader + svg], {type: 'image/svg+xml'});
-            saveAs(blob, 'diagram.svg');
-        });
-    };
-
-    private onExportPng = (canvas: CanvasApi) => {
-        canvas.exportPng({backgroundColor: 'white'}).then(dataUri => {
-            const blob = dataURLToBlob(dataUri);
-            saveAs(blob, 'diagram.png');
-        });
-    };
-
-    private onPrint = (canvas: CanvasApi) => {
-        canvas.exportSvg().then(svg => {
-            const printWindow = window.open('', undefined, 'width=1280,height=720')!;
-            printWindow.document.write(svg);
-            printWindow.document.close();
-            printWindow.print();
-        });
     };
 }

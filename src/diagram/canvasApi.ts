@@ -26,8 +26,8 @@ export interface CanvasApi {
     zoomOut(scaleOptions?: ScaleOptions): Promise<void>;
     zoomToFit(options?: ViewportOptions): Promise<void>;
     zoomToFitRect(paperRect: Rect, options?: ViewportOptions): Promise<void>;
-    exportSvg(): Promise<string>;
-    exportPng(options: ToDataURLOptions): Promise<string>;
+    exportSvg(options?: ExportSvgOptions): Promise<string>;
+    exportRaster(options?: ExportRasterOptions): Promise<string>;
     isAnimatingGraph(): boolean;
     /**
      * Starts animation for graph elements and links.
@@ -122,6 +122,14 @@ export interface CenterToOptions extends ViewportOptions {
 export interface ScaleOptions extends ViewportOptions {
     pivot?: Vector;
 }
+
+export interface ExportSvgOptions {
+    removeByCssSelectors?: ReadonlyArray<string>;
+    /** @default false */
+    addXmlHeader?: boolean;
+}
+
+export interface ExportRasterOptions extends ExportSvgOptions, ToDataURLOptions {}
 
 export type CanvasWidgetAttachment = 'viewport' | 'overElements' | 'overLinks';
 

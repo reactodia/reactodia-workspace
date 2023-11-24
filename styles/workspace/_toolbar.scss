@@ -18,23 +18,23 @@ $toolbarHeight: 30px;
     margin-right: 5px;
   }
 
-  &__save-button {
+  &__save {
     @include codicon-button("save");
   }
 
-  &__clear-all-button {
+  &__clear-all {
     @include codicon-button("trash");
   }
 
-  &__export-button {
+  &__export-image {
     @include codicon-button("file-media");
   }
 
-  &__print-button {
+  &__print {
     @include codicon-button("file-pdf");
   }  
 
-  &__undo-button {
+  &__undo:empty {
     &::before {
       @include codicon("discard");
       width: 18px;
@@ -42,7 +42,11 @@ $toolbarHeight: 30px;
     }
   }
 
-  &__redo-button {
+  &__undo:not(:empty) {
+    @include codicon-button("discard");
+  }
+
+  &__redo:empty {
     &::before {
       @include codicon("redo");
       width: 18px;
@@ -50,7 +54,11 @@ $toolbarHeight: 30px;
     }
   }
 
-  &__layout-button {
+  &__redo:not(:empty) {
+    @include codicon-button("redo");
+  }
+
+  &__layout {
     margin-right: 5px;
     @include codicon-button("type-hierarchy-sub");
   }

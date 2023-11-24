@@ -25,10 +25,8 @@ export interface WorkspaceContext {
     readonly view: DiagramView;
     readonly editor: EditorController;
     readonly overlayController: OverlayController;
+    readonly disposeSignal: AbortSignal;
     readonly performLayout: WorkspacePerformLayout;
-    readonly exportSvg: (canvas: CanvasApi) => void;
-    readonly exportPng: (canvas: CanvasApi) => void;
-    readonly print: (canvas: CanvasApi) => void;
     readonly triggerWorkspaceEvent: WorkspaceEventHandler;
 }
 

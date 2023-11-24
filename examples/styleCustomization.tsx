@@ -3,7 +3,7 @@ import * as N3 from 'n3';
 
 import { Workspace, DefaultWorkspace, RdfDataProvider, LinkTemplate, LinkStyle } from '../src/index';
 
-import { mountOnLoad, tryLoadLayoutFromLocalStorage, saveLayoutToLocalStorage } from './resources/common';
+import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
 const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
@@ -79,12 +79,7 @@ function StyleCustomizationExample() {
                     linkTemplateResolver: type => CUSTOM_LINK_TEMPLATE,
                 }}
                 toolbar={{
-                    onSaveDiagram: () => {
-                        const {model} = workspaceRef.current!.getContext();
-                        const diagram = model.exportLayout();
-                        window.location.hash = saveLayoutToLocalStorage(diagram);
-                        window.location.reload();
-                    },
+                    menu: <ExampleToolbarMenu />,
                 }}
             />
         </Workspace>
