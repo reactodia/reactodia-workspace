@@ -15,10 +15,10 @@ import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelecto
 
 const CLASS_NAME = 'reactodia-edit-form';
 
-export interface EditElementTypeFormProps {
+export interface FindOrCreateEntityFormProps {
     source: Element;
     target: Element;
-    targetIsNew: boolean;
+    initialTargetIsNew: boolean;
     originalLink: Link;
     onAfterApply: () => void;
     onCancel: () => void;
@@ -30,7 +30,7 @@ interface State {
     isValidating?: boolean;
 }
 
-export class EditElementTypeForm extends React.Component<EditElementTypeFormProps, State> {
+export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFormProps, State> {
     static contextType = WorkspaceContext;
     declare readonly context: WorkspaceContext;
 
@@ -38,14 +38,14 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
 
     private validationCancellation = new AbortController();
 
-    constructor(props: EditElementTypeFormProps, context: any) {
+    constructor(props: FindOrCreateEntityFormProps, context: any) {
         super(props, context);
-        const {target, targetIsNew, originalLink} = this.props;
+        const {target, initialTargetIsNew, originalLink} = this.props;
         this.link = originalLink;
         this.state = {
             elementValue: {
                 value: target.data,
-                isNew: targetIsNew,
+                isNew: initialTargetIsNew,
                 loading: false,
                 validated: true,
                 allowChange: true,
@@ -211,17 +211,23 @@ export class EditElementTypeForm extends React.Component<EditElementTypeFormProp
 
     private onApply = () => {
         const {model, editor} = this.context;
-        const {source, target, targetIsNew, onAfterApply} = this.props;
-        const {linkValue} = this.state;
+        const {source, target, onAfterApply} = this.props;
+        const {elementValue, linkValue} = this.state;
         const link = this.link;
 
+        if (!elementValue.isNew) {
+            editor.setTemporaryState(TemporaryState.deleteElement(
+                editor.temporaryState,
+                elementValue.value
+            ));
+        }
         editor.removeTemporaryCells([target, link]);
 
         const batch = model.history.startBatch(
-            targetIsNew ? 'Create new entity' : 'Link to entity'
+            elementValue.isNew ? 'Create new entity' : 'Link to entity'
         );
 
-        if (targetIsNew) {
+        if (elementValue.isNew) {
             model.addElement(target);
             target.setExpanded(true);
             editor.setAuthoringState(

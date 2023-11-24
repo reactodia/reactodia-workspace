@@ -321,7 +321,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 } else if (createdTarget && modifiedLink) {
                     editor.setSelection([createdTarget]);
                     const source = model.getElement(modifiedLink.sourceId)!;
-                    overlayController.showEditElementTypeForm({
+                    overlayController.showFindOrCreateEntityForm({
                         link: modifiedLink,
                         source,
                         target: createdTarget,

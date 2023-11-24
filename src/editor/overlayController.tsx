@@ -14,12 +14,12 @@ import { DiagramView, ElementDecoratorResolver } from '../diagram/view';
 import { Dialog } from '../widgets/dialog';
 
 import { EditEntityForm } from '../forms/editEntityForm';
-import { EditElementTypeForm } from '../forms/editElementTypeForm';
 import { EditLinkForm } from '../forms/editLinkForm';
 import { EditLinkLabelForm } from '../forms/editLinkLabelForm';
+import { FindOrCreateEntityForm } from '../forms/findOrCreateEntityForm';
 
 import { AsyncModel } from './asyncModel';
-import { AuthoringState, TemporaryState } from './authoringState';
+import { AuthoringState } from './authoringState';
 import { EditorController } from './editorController';
 import { EditLayer, EditLayerMode } from './editLayer';
 import { ElementDecorator } from './elementDecorator';
@@ -288,7 +288,7 @@ export class OverlayController {
         });
     }
 
-    showEditElementTypeForm({link, source, target, targetIsNew}: {
+    showFindOrCreateEntityForm({link, source, target, targetIsNew}: {
         link: Link;
         source: Element;
         target: Element;
@@ -299,13 +299,13 @@ export class OverlayController {
             this.hideDialog();
         };
         const content = (
-            <EditElementTypeForm source={source}
+            <FindOrCreateEntityForm source={source}
                 target={target}
-                targetIsNew={targetIsNew}
+                initialTargetIsNew={targetIsNew}
                 originalLink={link}
                 onAfterApply={() => {
                     this.hideDialog();
-                    if (targetIsNew) {
+                    if (AuthoringState.isNewElement(this.editor.authoringState, target.iri)) {
                         this.showEditEntityForm(target);
                     }
                 }}
