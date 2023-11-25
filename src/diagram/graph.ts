@@ -85,8 +85,8 @@ export class Graph {
         this.source.trigger('changeCells', {updateAll: false, changedElement: element});
     }
 
-    private onElementEvent: AnyListener<ElementEvents> = (data, key) => {
-        this.source.trigger('elementEvent', {key, data});
+    private onElementEvent: AnyListener<ElementEvents> = (data) => {
+        this.source.trigger('elementEvent', {data});
     };
 
     removeElement(elementId: string): void {
@@ -146,8 +146,8 @@ export class Graph {
         this.source.trigger('changeCells', {updateAll: false, changedLinks: [link]});
     }
 
-    private onLinkEvent: AnyListener<LinkEvents> = (data, key) => {
-        this.source.trigger('linkEvent', {key, data});
+    private onLinkEvent: AnyListener<LinkEvents> = (data) => {
+        this.source.trigger('linkEvent', {data});
     };
 
     removeLink(linkId: string, options?: { silent?: boolean }) {
@@ -205,8 +205,8 @@ export class Graph {
         this.linkTypes.set(linkType.id, linkType);
     }
 
-    private onLinkTypeEvent: AnyListener<RichLinkTypeEvents> = (data, key) => {
-        this.source.trigger('linkTypeEvent', {key, data});
+    private onLinkTypeEvent: AnyListener<RichLinkTypeEvents> = (data) => {
+        this.source.trigger('linkTypeEvent', {data});
     };
 
     getProperty(propertyId: PropertyTypeIri): RichProperty | undefined {
@@ -238,8 +238,8 @@ export class Graph {
         this.classesById.set(classModel.id, classModel);
     }
 
-    private onClassEvent: AnyListener<RichElementTypeEvents> = (data, key) => {
-        this.source.trigger('classEvent', {key, data});
+    private onClassEvent: AnyListener<RichElementTypeEvents> = (data) => {
+        this.source.trigger('classEvent', {data});
     };
 }
 

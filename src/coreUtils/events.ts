@@ -1,5 +1,5 @@
-export type Listener<Data, Key extends keyof Data> = (data: Data[Key], key: Key) => void;
-export type AnyListener<Data> = (data: Partial<Data>, key: string) => void;
+export type Listener<Data, Key extends keyof Data> = (data: Data[Key]) => void;
+export type AnyListener<Data> = (data: Partial<Data>) => void;
 export type Unsubscribe = () => void;
 
 export interface PropertyChange<Source, Value> {
@@ -8,7 +8,6 @@ export interface PropertyChange<Source, Value> {
 }
 
 export interface AnyEvent<Data> {
-    readonly key: string;
     readonly data: Partial<Data>;
 }
 
@@ -63,13 +62,13 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
         const listeners = this.listeners.get(eventKey);
         if (listeners) {
             for (const listener of listeners) {
-                listener(data, eventKey);
+                listener(data);
             }
         }
 
         if (this.anyListeners) {
             for (const anyListener of this.anyListeners) {
-                anyListener({[eventKey]: data} as any, eventKey as string);
+                anyListener({[eventKey]: data} as any);
             }
         }
     }
@@ -95,10 +94,10 @@ export class EventObserver {
         events: Events<Data>, eventKey: Key, listener: Listener<Data, Key>
     ) {
         let handled = false;
-        const onceListener: Listener<Data, Key> = (data, key) => {
+        const onceListener: Listener<Data, Key> = (data) => {
             handled = true;
             events.off(eventKey, onceListener);
-            listener(data, key);
+            listener(data);
         };
         events.on(eventKey, onceListener);
         this.onDispose.push(() => {
