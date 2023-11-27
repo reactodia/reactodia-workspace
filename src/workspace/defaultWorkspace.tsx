@@ -13,6 +13,7 @@ import { HaloLink, HaloLinkProps } from '../widgets/haloLink';
 import { InstancesSearch, InstancesSearchProps, InstancesSearchCommands } from '../widgets/instancesSearch';
 import { LinkTypesToolbox, LinkTypesToolboxProps } from '../widgets/linksToolbox';
 import { Navigator, NavigatorProps } from '../widgets/navigator';
+import { Selection, SelectionProps } from '../widgets/selection';
 import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
 
 import { DefaultToolbar, DefaultToolbarProps } from './defaultToolbar';
@@ -36,6 +37,7 @@ export interface DefaultWorkspaceProps {
     dropOnCanvas?: DropOnCanvasProps | null;
     halo?: HaloProps | null;
     haloLink?: HaloLinkProps | null;
+    selection?: SelectionProps | null;
     navigator?: NavigatorProps | null;
     zoomControl?: ZoomControlProps | null;
     toolbar?: DefaultToolbarProps | null;
@@ -51,8 +53,8 @@ export interface DefaultWorkspaceProps {
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
         leftColumn, rightColumn,
-        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, navigator, zoomControl, toolbar,
-        classTree, instancesSearch, linkToolbox,
+        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator, zoomControl,
+        toolbar, classTree, instancesSearch, linkToolbox,
     } = props;
 
     const [connectionsMenuCommands] = React.useState(() =>
@@ -96,6 +98,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                             />
                         )}
                         {haloLink === null ? null : <HaloLink {...haloLink} />}
+                        {selection === null ? null : <Selection {...selection} />}
                         {navigator === null ? null : <Navigator {...navigator} />}
                         {zoomControl === null ? null : <ZoomControl {...zoomControl} />}
                         {toolbar === null ? null : <DefaultToolbar {...toolbar} />}

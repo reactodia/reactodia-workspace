@@ -1,33 +1,65 @@
 import * as React from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
-import { shallowArrayEqual } from './collections';
 import type { Events } from './events';
 
-export function useObservedProperty<E, K extends keyof E, R, Deps extends readonly unknown[]>(
+export type SyncStore = (onChange: () => void) => (() => void);
+
+export function useObservedProperty<E, K extends keyof E, R>(
     events: Events<E>,
     key: K,
-    getSnapshot: () => R,
-    getSnapshotDeps?: (result: R) => Deps,
+    getSnapshot: () => R
 ): R {
-    const subscribe = React.useCallback((onStoreChange: () => void) => {
+    const subscribe = useEventStore(events, key);
+    return useSyncStore(subscribe, getSnapshot);
+}
+
+export function useEventStore<E, K extends keyof E>(events: Events<E>, key: K): SyncStore {
+    return React.useCallback((onStoreChange: () => void) => {
         events.on(key, onStoreChange);
         return () => events.off(key, onStoreChange);
     }, [events, key]);
-    const lastSnapshot = React.useRef<[R, Deps]>();
+}
+
+export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {
+    return React.useCallback<SyncStore>(onChange => {
+        let scheduled: number | undefined;
+        const onFrame = () => {
+            scheduled = undefined;
+            onChange();
+        };
+        const dispose = subscribe(() => {
+            if (scheduled === undefined) {
+                scheduled = requestAnimationFrame(onFrame);
+            }
+        });
+        return () => {
+            if (scheduled !== undefined) {
+                cancelAnimationFrame(scheduled);
+            }
+            dispose();
+        };
+    }, [subscribe]);
+}
+
+export function useSyncStore<R>(
+    subscribe: SyncStore,
+    getSnapshot: () => R,
+    equalResults?: (a: R, b: R) => boolean
+) {
+    const lastSnapshot = React.useRef<[R]>();
     return useSyncExternalStore(
         subscribe,
-        getSnapshotDeps ? (
+        equalResults ? (
             () => {
                 const result = getSnapshot();
-                const deps = getSnapshotDeps(result);
                 if (lastSnapshot.current) {
-                    const [lastResult, lastDeps] = lastSnapshot.current;
-                    if (shallowArrayEqual(lastDeps, deps)) {
+                    const [lastResult] = lastSnapshot.current;
+                    if (equalResults(lastResult, result)) {
                         return lastResult;
                     }
                 }
-                lastSnapshot.current = [result, deps];
+                lastSnapshot.current = [result];
                 return result;
             }
         ) : getSnapshot

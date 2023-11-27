@@ -1,4 +1,5 @@
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
 
 import {
     ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate, LinkMarkerStyle, LinkStyle,
@@ -27,13 +28,14 @@ export interface RenderingStateEvents {
     changeLinkTemplates: { readonly source: RenderingState };
     changeElementSize: PropertyChange<Element, Size | undefined>;
     changeLinkLabelBounds: PropertyChange<Link, Rect | undefined>;
-    updateRoutings: PropertyChange<RenderingState, RoutedLinks>;
+    changeRoutings: PropertyChange<RenderingState, RoutedLinks>;
 }
 
 export enum RenderingLayer {
     Element = 1,
     ElementSize,
     PaperArea,
+    LinkRoutes,
     Link,
     LinkLabel,
     Editor,
@@ -59,6 +61,7 @@ export class RenderingState implements SizeProvider {
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
     private readonly linkTemplates = new Map<LinkTypeIri, FilledLinkTemplate>();
+    private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
 
     constructor(options: RenderingStateOptions) {
@@ -69,24 +72,29 @@ export class RenderingState implements SizeProvider {
             ?? DEFAULT_LINK_TEMPLATE_RESOLVER;
         this.linkRouter = options.linkRouter ?? new DefaultLinkRouter();
 
-        this.listener.listen(this.model.events, 'changeCells', () =>  this.updateRoutings());
+        this.listener.listen(this.model.events, 'changeCells', () =>  this.scheduleUpdateRoutings());
         this.listener.listen(this.model.events, 'linkEvent', ({data}) => {
             if (data.changeVertices) {
-                this.updateRoutings();
+                this.scheduleUpdateRoutings();
             }
         });
         this.listener.listen(this.model.events, 'elementEvent', ({data}) => {
             if (data.changePosition) {
-                this.updateRoutings();
+                this.scheduleUpdateRoutings();
             }
         });
         this.listener.listen(this.model.events, 'linkTypeEvent', ({data}) => {
             if (data.changeVisibility) {
-                this.updateRoutings();
+                this.scheduleUpdateRoutings();
             }
         });
         this.listener.listen(this.events, 'changeElementSize', () => {
-            this.updateRoutings();
+            this.scheduleUpdateRoutings();
+        });
+        this.listener.listen(this.events, 'syncUpdate', ({layer}) => {
+            if (layer === RenderingLayer.LinkRoutes) {
+                this.delayedUpdateRoutings.runSynchronously();
+            }
         });
 
         this.updateRoutings();
@@ -171,7 +179,11 @@ export class RenderingState implements SizeProvider {
         return this.routings.get(linkId);
     }
 
-    private updateRoutings() {
+    private scheduleUpdateRoutings() {
+        this.delayedUpdateRoutings.call(this.updateRoutings);
+    }
+
+    private updateRoutings = () => {
         const previousRoutes = this.routings;
         const computedRoutes = this.linkRouter.route(this.model, this);
         previousRoutes.forEach((previous, linkId) => {
@@ -183,8 +195,8 @@ export class RenderingState implements SizeProvider {
             }
         });
         this.routings = computedRoutes;
-        this.source.trigger('updateRoutings', {source: this, previous: previousRoutes});
-    }
+        this.source.trigger('changeRoutings', {source: this, previous: previousRoutes});
+    };
 }
 
 export interface FilledLinkTemplate {

@@ -51,8 +51,24 @@ export interface Rect {
     readonly height: number;
 }
 export namespace Rect {
+    export function equals(a: Rect, b: Rect): boolean {
+        return (
+            a.x === b.x &&
+            a.y === b.y &&
+            a.width === b.width &&
+            a.height === b.height
+        );
+    }
     export function center({x, y, width, height}: Rect) {
         return {x: x + width / 2, y: y + height / 2};
+    }
+    export function intersects(a: Rect, b: Rect): boolean {
+        return (
+            a.x <= (b.x + b.width) &&
+            a.y <= (b.y + b.height) &&
+            b.x <= (a.x + a.width) &&
+            b.y <= (a.y + a.height)
+        );
     }
 }
 

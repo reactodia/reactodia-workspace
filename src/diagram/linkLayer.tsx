@@ -125,7 +125,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
                 }
             });
         };
-        this.listener.listen(renderingState.events, 'updateRoutings', ({previous}) => {
+        this.listener.listen(renderingState.events, 'changeRoutings', ({previous}) => {
             const newRoutes = renderingState.getRoutings();
             updateChangedRoutes(newRoutes, previous);
             updateChangedRoutes(previous, newRoutes);
