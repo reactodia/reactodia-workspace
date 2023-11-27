@@ -13,8 +13,8 @@ import { WorkspaceContext } from '../workspace/workspaceContext';
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 import {
-    SelectionActionRemove, SelectionActionExpand, SelectionActionResourceAnchor,
-    SelectionActionConnectionsMenu, SelectionActionAddToFilter, SelectionActionEstablishLink,
+    SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
+    SelectionActionConnections, SelectionActionAddToFilter, SelectionActionEstablishLink,
 } from './selectionAction';
 
 export interface HaloProps {
@@ -32,8 +32,8 @@ export interface HaloProps {
      * <>
      *   <SelectionActionRemove />
      *   <SelectionActionExpand />
-     *   <SelectionActionResourceAnchor />
-     *   <SelectionActionConnectionsMenu commands={connectionsMenuCommands} />
+     *   <SelectionActionAnchor />
+     *   <SelectionActionConnections commands={connectionsMenuCommands} />
      *   <SelectionActionAddToFilter commands={instancesSearchCommands} />
      *   <SelectionActionEstablishLink />
      * </>
@@ -142,8 +142,8 @@ class HaloInner extends React.Component<HaloInnerProps> {
                 {children ?? <>
                     <SelectionActionRemove />
                     <SelectionActionExpand />
-                    <SelectionActionResourceAnchor />
-                    <SelectionActionConnectionsMenu commands={connectionsMenuCommands} />
+                    <SelectionActionAnchor />
+                    <SelectionActionConnections commands={connectionsMenuCommands} />
                     <SelectionActionAddToFilter commands={instancesSearchCommands} />
                     <SelectionActionEstablishLink />
                 </>}

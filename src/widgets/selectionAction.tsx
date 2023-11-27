@@ -191,14 +191,14 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
     }, [model.events, elements]);
 }
 
-export interface SelectionActionResourceAnchorProps extends Omit<SelectionActionStyleProps, 'dock'> {
+export interface SelectionActionAnchorProps extends Omit<SelectionActionStyleProps, 'dock'> {
     /**
      * @default "w"
      */
     dock?: DockDirection;
 }
 
-export function SelectionActionResourceAnchor(props: SelectionActionResourceAnchorProps) {
+export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock = 'w', dockRow, dockColumn, className, title} = props;
     const {view, editor} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
@@ -222,7 +222,7 @@ export function SelectionActionResourceAnchor(props: SelectionActionResourceAnch
     );
 }
 
-export interface SelectionActionConnectionsMenuProps extends Omit<SelectionActionStyleProps, 'dock'> {
+export interface SelectionActionConnectionsProps extends Omit<SelectionActionStyleProps, 'dock'> {
     /**
      * @default "e"
      */
@@ -230,7 +230,7 @@ export interface SelectionActionConnectionsMenuProps extends Omit<SelectionActio
     commands?: EventTrigger<ConnectionsMenuCommands>;
 }
 
-export function SelectionActionConnectionsMenu(props: SelectionActionConnectionsMenuProps) {
+export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {dock = 'e', className, title, commands, ...otherProps} = props;
     const {editor, overlayController} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);

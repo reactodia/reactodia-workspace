@@ -10,11 +10,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Generic component for toolbar actions: `ToolbarItem`;
   * Default menu items: `ToolbarActionClearAll`, `ToolbarActionExport` (for PNG, SVG and print);
   * Default panel items: `ToolbarActionUndo`, `ToolbarActionRedo`, `ToolbarActionLayout`;
+- Add `Selection` canvas widget with rectangular element selection to the default workspace;
+- Make `Halo` and `Selection` widgets customizable via action components:
+  * Generic component for element actions: `SelectionAction`;
+  * Specialized actions: `SelectionActionRemove`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
 - Expose SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
+- Add utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
 
 ### Changed
 - **[Breaking]** Rename `CanvasApi.exportPng()` -> `CanvasApi.exportRaster()`.
+- **[Breaking]** Replace `visible` / `showLabel` properties on `RichLinkType` by `visibility` property of string enum type.
+- Optimize link route updates via batching.
+
+### Fixed
+- **[Breaking]** Use synthetic type and label predicates in element query of `SparqlDataProvider`:
+  * Use `urn:reactodia:sparql:{type, label}` instead of `rdf:type` and `rdfs:label` as marker predicates in `SparqlDataProviderSettings.elementInfoQuery` to distinguish them from properties with same predicates;
+- When establishing new link and selecting an existing entity to put on canvas and connect, it should not mark the entity as "new".
+- Re-route links on link type visibility change.
+- perform zoom-to-fit after loading an existing diagram instead of just centering the content.
+- Fix unintended element move when interacting with nested element scrollbar.
+
+### Removed
+- Removed deprecated `Dictionary` type (`Record<string, T>` can be used instead).
+- Remove untyped `key` parameter from event listeners.
 
 ## [0.22.0] - 2023-11-24
 ### Added

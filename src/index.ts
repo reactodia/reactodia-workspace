@@ -97,8 +97,8 @@ export {
     SelectionActionSpinner, SelectionActionSpinnerProps,
     SelectionActionRemove, SelectionActionRemoveProps,
     SelectionActionExpand, SelectionActionExpandProps,
-    SelectionActionResourceAnchor, SelectionActionResourceAnchorProps,
-    SelectionActionConnectionsMenu, SelectionActionConnectionsMenuProps,
+    SelectionActionAnchor, SelectionActionAnchorProps,
+    SelectionActionConnections, SelectionActionConnectionsProps,
     SelectionActionAddToFilter, SelectionActionAddToFilterProps,
     SelectionActionEstablishLink, SelectionActionEstablishLinkProps,
 } from './widgets/selectionAction';
