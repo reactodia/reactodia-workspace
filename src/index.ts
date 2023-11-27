@@ -91,6 +91,17 @@ export {
 } from './widgets/listElementView';
 export { Navigator, NavigatorProps } from './widgets/navigator';
 export { SearchResults, SearchResultProps } from './widgets/searchResults';
+export { Selection, SelectionProps } from './widgets/selection';
+export {
+    SelectionAction, SelectionActionProps, SelectionActionStyleProps,
+    SelectionActionSpinner, SelectionActionSpinnerProps,
+    SelectionActionRemove, SelectionActionRemoveProps,
+    SelectionActionExpand, SelectionActionExpandProps,
+    SelectionActionResourceAnchor, SelectionActionResourceAnchorProps,
+    SelectionActionConnectionsMenu, SelectionActionConnectionsMenuProps,
+    SelectionActionAddToFilter, SelectionActionAddToFilterProps,
+    SelectionActionEstablishLink, SelectionActionEstablishLinkProps,
+} from './widgets/selectionAction';
 export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
 
 export {

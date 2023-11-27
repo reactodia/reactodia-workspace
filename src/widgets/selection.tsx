@@ -16,6 +16,8 @@ import { EditorController, SelectionItem } from '../editor/editorController';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
+import { SelectionActionRemove, SelectionActionExpand } from './selectionAction';
+
 export interface SelectionProps {
     /**
      * @default 5
@@ -25,6 +27,18 @@ export interface SelectionProps {
      * @default 2
      */
     itemMargin?: number;
+    /**
+     * `SelectionAction` items representing available actions on the selected elements.
+     *
+     * **Default**:
+     * ```jsx
+     * <>
+     *   <SelectionActionRemove />
+     *   <SelectionActionExpand />
+     * </>
+     * ```
+     */
+    children?: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-selection';
@@ -151,6 +165,7 @@ function SelectionBox(props: SelectionBoxProps) {
         model, canvas, selectedElements, highlightedBox,
         boxMargin = 5,
         itemMargin = 2,
+        children,
     } = props;
 
     const elementBoundsStore = useElementBoundsStore(model, canvas, selectedElements);
@@ -193,8 +208,12 @@ function SelectionBox(props: SelectionBoxProps) {
                     onPointerDown={moveController.onPointerDown}
                     onPointerMove={moveController.onPointerMove}
                     onPointerUp={moveController.onPointerUp}
-                    onPointerCancel={moveController.onPointerUp}
-                />
+                    onPointerCancel={moveController.onPointerUp}>
+                    {children ?? <>
+                        <SelectionActionRemove />
+                        <SelectionActionExpand />
+                    </>}
+                </div>
             </> : null}
             {highlightedBox ? (
                 <div className={`${CLASS_NAME}__highlightedBox`}

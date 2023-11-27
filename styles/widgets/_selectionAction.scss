@@ -1,0 +1,118 @@
+.reactodia-selection-action {
+  $buttonWidth: 20px;
+  $buttonHeight: 20px;
+  $buttonMargin: 2px;
+
+  position: absolute;
+  background-color: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 0 none;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  pointer-events: auto;
+  width: $buttonWidth;
+  height: $buttonHeight;
+
+  opacity: 0.5;
+  transition: opacity 0.3s;
+  &:hover {
+    opacity: 1;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.2;
+  }
+
+  $totalWidth: $buttonWidth + $buttonMargin;
+  $totalHeight: $buttonHeight + $buttonMargin;
+
+  &--dock-nw {
+    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-n {
+    left: 50%;
+    margin-left: calc(-#{($totalWidth * 0.5)} + var(--reactodia-dock-x) * #{$totalWidth});
+    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-ne {
+    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-e {
+    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    top: 50%;
+    margin-top: calc(-#{($totalHeight * 0.5)} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-se {
+    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-s {
+    left: 50%;
+    margin-left: calc(-#{($totalWidth * 0.5)} + var(--reactodia-dock-x) * #{$totalWidth});
+    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-sw {
+    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &--dock-w {
+    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    top: 50%;
+    margin-top: calc(-#{($totalHeight * 0.5)} + var(--reactodia-dock-y) * #{$totalHeight});
+  }
+
+  &__spinner {
+    position: absolute;
+    width: $buttonWidth;
+    height: $buttonHeight;
+  }
+
+  &__remove {
+    background-image: url("@images/delete.svg");
+  }
+
+  &__delete {
+    background-image: url("@codicons/trash.svg");
+  }
+
+  &__expand {
+    background-image: url("@codicons/chevron-down.svg");
+  }
+
+  &__collapse {
+    background-image: url("@codicons/chevron-up.svg");
+  }
+
+  &__link {
+    background-image: url("@codicons/link.svg");
+  }
+
+  &__navigate-open {
+    background-image: url("@codicons/compass.svg");
+  }
+
+  &__navigate-close {
+    background-image: url("@codicons/error.svg");
+  }
+
+  &__add-to-filter {
+    background-image: url("@images/add-to-filter.svg");
+  }
+
+  &__establish-link {
+    background-image: url("@codicons/plug.svg");
+  }
+}
