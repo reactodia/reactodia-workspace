@@ -179,7 +179,7 @@ export async function calculateLayout(params: {
 
     function internalRecursion(group: string | undefined): CalculatedLayout {
         const elementsToProcess = group
-            ? grouping.get(group)!
+            ? grouping.get(group) ?? []
             : model.elements.filter(el => el.group === undefined);
         const elements = selectedElements
             ? elementsToProcess.filter(el => selectedElements.has(el))
