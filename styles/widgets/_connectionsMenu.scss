@@ -119,6 +119,9 @@
   }
 
   &__links-list-hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    height: 0;
     margin-top: 10px;
     margin-bottom: 10px;
   }

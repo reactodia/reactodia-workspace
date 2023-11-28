@@ -2,33 +2,33 @@
   overflow: hidden;
 
   &__wrap {
-    @extend .reactodia-default-template;
+    @extend .reactodia-classic-template;
     max-width: none;
   }
 
   &__type-line {
-    @extend .reactodia-default-template_type-line;
+    @extend .reactodia-classic-template__type-line;
   }
 
   &__type-line-icon {
-    @extend .reactodia-default-template_type-line__icon;
+    @extend .reactodia-classic-template__type-line-icon;
   }
 
   &__type-line-text-container {
-    @extend .reactodia-default-template_type-line_text-container;
+    @extend .reactodia-classic-template__type-line-text-container;
   }
 
   &__type-line-text {
-    @extend .reactodia-default-template_type-line_text-container__text;
+    @extend .reactodia-classic-template__type-line-text;
   }
 
   &__body {
-    @extend .reactodia-default-template_body;
+    @extend .reactodia-classic-template__body;
     overflow: visible;
   }
 
   &__label {
-    @extend .reactodia-default-template_body__label;
+    @extend .reactodia-classic-template__label;
   }
 
   &__embedded-layer {

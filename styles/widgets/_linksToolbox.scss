@@ -62,7 +62,10 @@
   }
 
   &__links-heading {
-    margin-left: .4em;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 10px 0.4em;
+
     & > span {
       border: black 1px dashed;
       background: rgb(255, 131, 92);

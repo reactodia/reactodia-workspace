@@ -170,10 +170,12 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                 selectedElement.iri
             );
             connectedTo = (
-                <h4 className={`${CLASS_NAME}__links-heading`} style={{display: 'block'}}>
+                <span role='heading'
+                    className={`${CLASS_NAME}__links-heading`}
+                    style={{display: 'block'}}>
                     Connected to{'\u00A0'}
                     <span>{selectedElementLabel}</span>
-                </h4>
+                </span>
             );
         }
 

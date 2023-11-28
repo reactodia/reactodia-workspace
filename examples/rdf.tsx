@@ -2,8 +2,8 @@ import * as React from 'react';
 import * as N3 from 'n3';
 
 import {
-    Workspace, DefaultWorkspace, RdfDataProvider, GroupTemplate, PropertySuggestionHandler, PropertyScore,
-    LinkTemplate, SemanticTypeStyles, OntologyLinkTemplates, delay,
+    Workspace, DefaultWorkspace, RdfDataProvider, PropertySuggestionHandler, PropertyScore,
+    LinkTemplate, ClassicTemplate, GroupTemplate, SemanticTypeStyles, OntologyLinkTemplates, delay,
 } from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
@@ -92,6 +92,8 @@ function RdfExample() {
                         if (types.length === 0) {
                             // use group template only for classes
                             return GroupTemplate;
+                        } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
+                            return ClassicTemplate;
                         }
                         return undefined;
                     },

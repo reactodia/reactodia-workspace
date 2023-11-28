@@ -7,62 +7,82 @@ export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElemen
 }
 
 export class DraggableHandle extends React.Component<DraggableHandleProps> {
-    private holdOriginPage: {
-        x: number;
-        y: number;
+    private holdState: {
+        readonly origin: {
+            pageX: number;
+            pageY: number;
+        };
+        readonly target: HTMLDivElement;
+        readonly pointerId: number;
     } | undefined;
 
     render() {
-        // remove custom handlers from `div` props
-        // tslint:disable-next-line:no-unused-variable
         const {onBeginDragHandle, onDragHandle, onEndDragHandle, ...props} = this.props;
-        return <div {...props} onMouseDown={this.onHandleMouseDown}>
-            {this.props.children}
-        </div>;
+        return (
+            <div {...props} onPointerDown={this.onPointerDown}>
+                {this.props.children}
+            </div>
+        );
     }
 
     componentWillUnmount() {
         this.removeListeners();
     }
 
-    private onHandleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.target !== e.currentTarget) { return; }
-        if (this.holdOriginPage) { return; }
+    private onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (this.holdState || e.target !== e.currentTarget) {
+            return;
+        }
 
-        const LEFT_BUTTON = 0;
-        if (e.button !== LEFT_BUTTON) { return; }
+        if (e.button) {
+            /* Allow drag only using left mouse button or other main pointer type */
+            return;
+        }
 
-        this.holdOriginPage = {
-            x: e.pageX,
-            y: e.pageY,
+        const {pageX, pageY, currentTarget, pointerId} = e;
+        e.preventDefault();
+        this.holdState = {
+            origin: {pageX, pageY},
+            target: currentTarget,
+            pointerId,
         };
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMouseUp);
-        this.props.onBeginDragHandle(e);
+        currentTarget.addEventListener('pointermove', this.onPointerMove);
+        currentTarget.addEventListener('pointerup', this.onPointerUp);
+        currentTarget.addEventListener('pointercancel', this.onPointerUp);
+        currentTarget.setPointerCapture(pointerId);
+
+        const {onBeginDragHandle} = this.props;
+        onBeginDragHandle(e);
     };
 
-    private onMouseMove = (e: MouseEvent) => {
-        if (!this.holdOriginPage) { return; }
+    private onPointerMove = (e: PointerEvent) => {
+        if (!this.holdState) {
+            return;
+        }
         e.preventDefault();
-        this.props.onDragHandle(
+        const {origin} = this.holdState;
+        const {onDragHandle} = this.props;
+        onDragHandle(
             e,
-            e.pageX - this.holdOriginPage.x,
-            e.pageY - this.holdOriginPage.y
+            e.pageX - origin.pageX,
+            e.pageY - origin.pageY
         );
     };
 
-    private onMouseUp = (e: MouseEvent) => {
+    private onPointerUp = (e: PointerEvent) => {
         this.removeListeners();
-        if (this.props.onEndDragHandle) {
-            this.props.onEndDragHandle(e);
-        }
+        const {onEndDragHandle} = this.props;
+        onEndDragHandle?.(e);
     };
 
     private removeListeners() {
-        if (this.holdOriginPage) {
-            this.holdOriginPage = undefined;
-            document.removeEventListener('mousemove', this.onMouseMove);
-            document.removeEventListener('mouseup', this.onMouseUp);
+        if (this.holdState) {
+            const {target, pointerId} = this.holdState;
+            this.holdState = undefined;
+            target.releasePointerCapture(pointerId);
+            target.removeEventListener('pointermove', this.onPointerMove);
+            target.removeEventListener('pointerup', this.onPointerUp);
+            target.removeEventListener('pointercancel', this.onPointerUp);
         }
     }
 }

@@ -1,0 +1,138 @@
+.reactodia-classic-template {
+  max-width: 450px;
+  float: left;
+  border-radius: 12px;
+  border-style: solid;
+  border-width: 1px;
+
+  &__thumbnail {
+    text-align: center;
+  }
+
+  &__thumbnail-image {
+    max-width: 200px;
+  }
+
+  &--expanded &__thumbnail-image {
+    max-width: 350px;
+  }
+
+  &__type-line {
+    padding: 0px 7px;
+    color: white;
+    height: 18px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    display: flex;
+    align-items: baseline;
+    margin-top: -3px;
+  }
+
+  &__type-line-icon {
+    position: inherit !important;
+    margin-right: 4px;
+  }
+  
+  &__type-line-text-container {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 0;
+  }
+
+  &__type-line-text {
+    display: inline;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  &__body {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-top-style: solid;
+    border-top-width: 1px;
+    background: white;
+    padding: 7px 10px 8px 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  &__label {
+    font-size: 19px;
+    font-weight: 100;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0;
+    white-space: nowrap;
+    word-wrap: break-word;
+  }
+
+  &__expander {
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+  }
+
+  &__iri-heading {
+    font-size: 12px;
+    font-weight: 100;
+    margin-right: 15px;
+    color: #b6b6b6;
+  }
+  
+  &__iri-container {
+    font-size: 12px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  
+  &__iri {
+    color: #b6b6b6;
+  }
+
+  &__divider {
+    border: 0;
+    border-top: 1px solid #eee;
+    height: 0;
+    margin: 5px 0px 5px 0px;
+  }
+
+  &__property-table {
+    font-size: 15px;
+    font-weight: 100;
+    margin-bottom: 5px;
+    max-height: 200px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+  
+  &__property-row {
+    white-space: nowrap;
+  }
+  
+  &__property-label {
+    display: inline-block;
+    width: 50%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    vertical-align: top;
+  }
+  
+  &__property-values {
+    display: inline-block;
+    width: 50%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  
+  &__property-value {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: initial;
+    padding-right: 10px;
+  }
+}

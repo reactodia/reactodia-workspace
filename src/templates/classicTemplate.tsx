@@ -1,9 +1,10 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { CanvasContext } from '../diagram/canvasApi';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
-const CLASS_NAME = 'reactodia-default-template';
+const CLASS_NAME = 'reactodia-classic-template';
 
 export class ClassicTemplate extends React.Component<TemplateProps> {
     static contextType = CanvasContext;
@@ -19,45 +20,52 @@ export class ClassicTemplate extends React.Component<TemplateProps> {
 
         const image = data.image ? (
             <div className={`${CLASS_NAME}__thumbnail`}>
-                <img src={data.image} />
+                <img className={`${CLASS_NAME}__thumbnail-image`}
+                    src={data.image}
+                />
             </div>
         ) : undefined;
 
         const expander = isExpanded ? (
             <div>
-                <div className='reactodia-default-template_body_expander'>
-                    <div className='reactodia-default-template_body_expander__iri_label'>
+                <div className={`${CLASS_NAME}__expander`}>
+                    <div className={`${CLASS_NAME}__iri-heading`}>
                         IRI:
                     </div>
-                    <div className='reactodia-default-template_body_expander_iri'>
-                        <a  className='reactodia-default-template_body_expander_iri__link'
-                            href={data.id} title={data.id}>{data.id}
+                    <div className={`${CLASS_NAME}__iri-container`}>
+                        <a className={`${CLASS_NAME}__iri`}
+                            title={data.id}
+                            href={data.id}>
+                            {data.id}
                         </a>
                     </div>
                 </div>
-                <hr className='reactodia-default-template_body_expander__hr'/>
+                <hr className={`${CLASS_NAME}__divider`} />
                 {this.renderPropertyTable(propertyList)}
             </div>
         ) : null;
 
         return (
-            <div className='reactodia-default-template' style={{
-                backgroundColor: color,
-                borderColor: color,
-            }} data-expanded={isExpanded}>
-                <div className='reactodia-default-template_type-line' title={label}>
-                    <div className='reactodia-default-template_type-line__icon' aria-hidden='true'>
+            <div
+                className={classnames(
+                    CLASS_NAME,
+                    isExpanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
+                )}
+                style={{backgroundColor: color, borderColor: color}}
+                data-expanded={isExpanded}>
+                <div className={`${CLASS_NAME}__type-line`} title={label}>
+                    <div className={`${CLASS_NAME}__type-line-icon`} aria-hidden='true'>
                         <img src={iconUrl} />
                     </div>
-                    <div title={typesLabel} className='reactodia-default-template_type-line_text-container'>
-                        <div className='reactodia-default-template_type-line_text-container__text'>
+                    <div title={typesLabel} className={`${CLASS_NAME}__type-line-text-container`}>
+                        <div className={`${CLASS_NAME}__type-line-text`}>
                             {typesLabel}
                         </div>
                     </div>
                 </div>
                 {image}
-                <div className='reactodia-default-template_body' style={{borderColor: color}}>
-                    <span className='reactodia-default-template_body__label' title={label}>
+                <div className={`${CLASS_NAME}__body`} style={{borderColor: color}}>
+                    <span className={`${CLASS_NAME}__label`} title={label}>
                         {label}
                     </span>
                     {expander}
@@ -68,21 +76,21 @@ export class ClassicTemplate extends React.Component<TemplateProps> {
 
     renderPropertyTable(propertyList: ReadonlyArray<FormattedProperty>) {
         if (propertyList.length > 0) {
-            return <div className='reactodia-default-template_body_expander_property-table'>
+            return <div className={`${CLASS_NAME}__property-table`}>
                 {propertyList.map(({propertyId, label, values}) => {
                     const renderedValues = values.map((term, index) => (
-                        <div className='reactodia-default-template_body_expander_property-table_row_key_values__value'
+                        <div className={`${CLASS_NAME}__property-value`}
                             key={index} title={term.value}>
                             {term.value}
                         </div>
                     ));
                     return (
-                        <div key={propertyId} className='reactodia-default-template_body_expander_property-table_row'>
-                            <div title={`${label} (${propertyId})`}
-                                className='reactodia-default-template_body_expander_property-table_row__key'>
+                        <div key={propertyId} className={`${CLASS_NAME}__property-row`}>
+                            <div className={`${CLASS_NAME}__property-label`}
+                                title={`${label} (${propertyId})`}>
                                 {label}
                             </div>
-                            <div className='reactodia-default-template_body_expander_property-table_row_key_values'>
+                            <div className={`${CLASS_NAME}__property-values`}>
                                 {renderedValues}
                             </div>
                         </div>

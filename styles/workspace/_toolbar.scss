@@ -74,6 +74,13 @@ $toolbarHeight: 30px;
     display: flex;
     align-items: center;
 
+    select {
+      color: inherit;
+      margin: 0;
+      font: inherit;
+      line-height: inherit;
+    }
+
     label {
       display: inline-block;
       margin-right: 5px;
