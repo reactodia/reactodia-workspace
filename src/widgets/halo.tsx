@@ -95,6 +95,12 @@ class HaloInner extends React.Component<HaloInnerProps> {
         this.listenToElement(target);
     }
 
+    componentDidUpdate(prevProps: HaloInnerProps) {
+        if (prevProps.target !== this.props.target) {
+            this.listenToElement(this.props.target);
+        }
+    }
+
     componentWillUnmount() {
         this.listenToElement(undefined);
     }
