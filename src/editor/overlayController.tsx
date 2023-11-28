@@ -185,7 +185,6 @@ export class OverlayController {
         operation.then(() => {
             this.setSpinner(undefined);
         }).catch(error => {
-            // tslint:disable-next-line:no-console
             console.error(error);
             this.setSpinner({statusText: 'Unknown error occurred', errorOccurred: true});
         });

@@ -307,7 +307,6 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
                 this.setState({dataState: ProgressState.completed, linksOfElement, countMap});
             }).catch(error => {
                 if (this.currentRequest !== request) { return; }
-                // tslint:disable-next-line:no-console
                 console.error(error);
                 this.setState({dataState: ProgressState.error, linksOfElement: undefined, countMap: {}});
             });

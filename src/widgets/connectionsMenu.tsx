@@ -199,7 +199,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
                 triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadLinks);
             })
             .catch(err => {
-                // tslint:disable-next-line:no-console
                 console.error(err);
                 this.loadingState = ProgressState.error;
                 this.updateAll();
@@ -231,7 +230,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
 
             triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadElements);
         }).catch(err => {
-            // tslint:disable-next-line:no-console
             console.error(err);
             this.loadingState = ProgressState.error;
             this.updateAll();

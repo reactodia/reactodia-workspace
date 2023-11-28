@@ -271,7 +271,6 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             triggerWorkspaceEvent(WorkspaceEventKey.searchQueryItem);
         }).catch(error => {
             if (signal.aborted) { return; }
-            // tslint:disable-next-line:no-console
             console.error(error);
             this.setState({querying: false, error});
         });

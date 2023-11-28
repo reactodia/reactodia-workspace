@@ -93,7 +93,6 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
                     img.src = dataUri;
                 }
             }).catch(err => {
-                // tslint:disable-next-line:no-console
                 console.warn('Failed to export image: ' + img.src, err);
             });
         } else {

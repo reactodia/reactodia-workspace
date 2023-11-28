@@ -18,7 +18,6 @@ export function generate128BitID() {
  * @returns {integer}
  */
 export function hashFnv32a(str: string, seed = 0x811c9dc5): number {
-    /* tslint:disable:no-bitwise */
     let i: number, l: number, hval = seed & 0x7fffffff;
 
     for (i = 0, l = str.length; i < l; i++) {
@@ -26,7 +25,6 @@ export function hashFnv32a(str: string, seed = 0x811c9dc5): number {
         hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
     }
     return hval >>> 0;
-    /* tslint:enable:no-bitwise */
 }
 
 /**

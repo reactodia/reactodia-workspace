@@ -54,6 +54,7 @@ module.exports = {
             'flatTernaryExpressions': true,
             'SwitchCase': 1,
         }],
+        'no-console': ['warn', {'allow': ['warn', 'error']}],
         'no-constant-condition': ['error', {'checkLoops': false}],
         'no-control-regex': 'off',
         'quotes': ['warn', 'single'],

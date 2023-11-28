@@ -275,7 +275,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 return applyFilters({...state, constructibleClasses, refreshingState: ProgressState.completed});
             });
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.error(err);
             this.setState((state): State => applyFilters({...state, refreshingState: ProgressState.error}));
         }

@@ -190,7 +190,6 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 this.setState({canLinkFrom});
             },
             error => {
-                // tslint:disable-next-line: no-console
                 console.error('Error calling canLinkElement:', error);
                 this.setState({canLinkFrom: false});
             }
@@ -217,7 +216,6 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 this.setState({canDropOnCanvas});
             },
             error => {
-                // tslint:disable-next-line: no-console
                 console.error('Error calling canDropOnCanvas:', error);
                 this.setState({canDropOnCanvas: false});
             }

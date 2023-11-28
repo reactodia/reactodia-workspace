@@ -108,7 +108,6 @@ export class AsyncModel extends DiagramModel {
         }).then(() => {
             this.asyncSource.trigger('loadingSuccess', {source: this});
         }).catch(error => {
-            // tslint:disable-next-line:no-console
             console.error(error);
             this.asyncSource.trigger('loadingError', {source: this, error});
             return Promise.reject(error);
@@ -146,7 +145,6 @@ export class AsyncModel extends DiagramModel {
         }).then(() => {
             this.asyncSource.trigger('loadingSuccess', {source: this});
         }).catch(error => {
-            // tslint:disable-next-line:no-console
             console.error(error);
             this.asyncSource.trigger('loadingError', {source: this, error});
             return Promise.reject(error);

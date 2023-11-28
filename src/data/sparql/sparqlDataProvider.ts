@@ -338,7 +338,6 @@ export class SparqlDataProvider implements DataProvider {
             const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
             enrichElementsWithImages(bindings, elements);
         } catch (err) {
-            // tslint:disable-next-line:no-console
             console.error(err);
         }
     }

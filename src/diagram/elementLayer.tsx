@@ -190,7 +190,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     }
 
     private requestRedraw = (element: Element, request: RedrawFlags) => {
-        // tslint:disable:no-bitwise
         const flagsWithForAll = this.redrawBatch.forAll | request;
         if (flagsWithForAll === this.redrawBatch.forAll) {
             // forAll flags already include the request
@@ -199,11 +198,9 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         const existing = this.redrawBatch.requests.get(element.id) || RedrawFlags.None;
         this.redrawBatch.requests.set(element.id, existing | request);
         this.delayedRedraw.call(this.redrawElements);
-        // tslint:enable:no-bitwise
     };
 
     private requestRedrawAll(request: RedrawFlags) {
-        // tslint:disable-next-line:no-bitwise
         this.redrawBatch.forAll |= request;
         this.delayedRedraw.call(this.redrawElements);
     }
@@ -250,7 +247,6 @@ function applyRedrawRequests(
         const elementId = element.id;
         let state = previous.get(elementId);
         if (state) {
-            // tslint:disable:no-bitwise
             const request = (batch.requests.get(elementId) || RedrawFlags.None) | batch.forAll;
             if (request & RedrawFlags.Render) {
                 state = {
@@ -265,7 +261,6 @@ function applyRedrawRequests(
             }
             computed.set(elementId, state);
             batch.requests.delete(elementId);
-            // tslint:enable:no-bitwise
         } else {
             computed.set(element.id, {
                 element,
