@@ -18,7 +18,10 @@ import { EditorController, SelectionItem } from '../editor/editorController';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
-import { SelectionActionRemove, SelectionActionZoomToFit, SelectionActionExpand } from './selectionAction';
+import {
+    SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
+    SelectionActionExpand,
+} from './selectionAction';
 
 export interface SelectionProps {
     /**
@@ -37,6 +40,7 @@ export interface SelectionProps {
      * <>
      *   <SelectionActionRemove dock='ne' dockRow={1} />
      *   <SelectionActionZoomToFit dock='ne' dockRow={2} />
+     *   <SelectionActionLayout dock='ne' dockRow={3} />
      *   <SelectionActionExpand dock='s' />
      * </>
      * ```
@@ -232,6 +236,7 @@ function SelectionBox(props: SelectionBoxProps) {
                     {children ?? <>
                         <SelectionActionRemove dock='ne' dockRow={1} />
                         <SelectionActionZoomToFit dock='ne' dockRow={2} />
+                        <SelectionActionLayout dock='ne' dockRow={3} />
                         <SelectionActionExpand dock='s' />
                     </>}
                 </div>

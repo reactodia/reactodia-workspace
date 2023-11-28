@@ -155,13 +155,14 @@ export class Workspace extends React.Component<WorkspaceProps> {
     }
 
     private onPerformLayout: WorkspacePerformLayout = async params => {
-        const {canvas, layoutFunction, animate, signal} = params;
+        const {canvas, layoutFunction, selectedElements, animate, signal} = params;
         const {model, disposeSignal} = this.workspaceContext;
 
         canvas.renderingState.syncUpdate();
         const calculatedLayout = await calculateLayout({
             layoutFunction,
             model,
+            selectedElements,
             sizeProvider: canvas.renderingState,
             signal: signal ?? disposeSignal,
         });

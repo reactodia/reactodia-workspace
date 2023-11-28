@@ -96,6 +96,8 @@ export {
     SelectionAction, SelectionActionProps, SelectionActionStyleProps,
     SelectionActionSpinner, SelectionActionSpinnerProps,
     SelectionActionRemove, SelectionActionRemoveProps,
+    SelectionActionZoomToFit, SelectionActionZoomToFitProps,
+    SelectionActionLayout, SelectionActionLayoutProps,
     SelectionActionExpand, SelectionActionExpandProps,
     SelectionActionAnchor, SelectionActionAnchorProps,
     SelectionActionConnections, SelectionActionConnectionsProps,

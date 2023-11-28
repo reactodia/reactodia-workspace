@@ -9,6 +9,7 @@ import { CanvasContext } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
+import { layoutForcePadded } from '../diagram/layout';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -144,6 +145,32 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
                 }
                 const fittingBox = getContentFittingBox(elements, links, canvas.renderingState);
                 canvas.zoomToFitRect(fittingBox, {animate: true});
+            }}
+        />
+    );
+}
+
+export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
+
+export function SelectionActionLayout(props: SelectionActionLayoutProps) {
+    const {className, title, ...otherProps} = props;
+    const {editor, performLayout} = React.useContext(WorkspaceContext)!;
+    const {canvas} = React.useContext(CanvasContext)!;
+    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    if (elements.length <= 1) {
+        return null;
+    }
+    return (
+        <SelectionAction {...otherProps}
+            className={classnames(className, `${CLASS_NAME}__layout`)}
+            title={title ?? 'Layout selected elements using force-directed algorithm'}
+            onSelect={() => {
+                performLayout({
+                    canvas,
+                    layoutFunction: layoutForcePadded,
+                    selectedElements: new Set(elements),
+                    animate: true,
+                });
             }}
         />
     );

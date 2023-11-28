@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { CanvasApi } from '../diagram/canvasApi';
+import type { Element } from '../diagram/elements';
 import type { LayoutFunction } from '../diagram/layout';
 import type { DiagramView } from '../diagram/view';
 
@@ -33,6 +34,7 @@ export interface WorkspaceContext {
 export type WorkspacePerformLayout = (params: {
     canvas: CanvasApi;
     layoutFunction: LayoutFunction;
+    selectedElements?: ReadonlySet<Element>;
     animate?: boolean;
     signal?: AbortSignal;
 }) => Promise<void>;

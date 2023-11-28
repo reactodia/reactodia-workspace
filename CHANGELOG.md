@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added `Selection` canvas widget with rectangular element selection to the default workspace;
 - Made `Halo` and `Selection` widgets customizable via action components:
   * Generic component for element actions: `SelectionAction`;
-  * Specialized actions: `SelectionActionRemove`, `SelectionActionZoomToFit`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
+  * Specialized actions: `SelectionActionRemove`, `SelectionActionZoomToFit`, `SelectionActionLayout`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
