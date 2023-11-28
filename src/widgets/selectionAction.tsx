@@ -7,7 +7,8 @@ import { SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore } from '
 
 import { CanvasContext } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
-import { Element } from '../diagram/elements';
+import { Element, Link } from '../diagram/elements';
+import { getContentFittingBox } from '../diagram/geometry';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -93,15 +94,10 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
     );
 }
 
-export interface SelectionActionRemoveProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "ne"
-     */
-    dock?: DockDirection;
-}
+export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
-    const {dock = 'ne', className, title, ...otherProps} = props;
+    const {className, title, ...otherProps} = props;
     const {editor} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     const isNewElement = Boolean(
@@ -110,7 +106,6 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     );
     return (
         <SelectionAction {...otherProps}
-            dock={dock}
             className={classnames(
                 className,
                 isNewElement ? `${CLASS_NAME}__delete` : `${CLASS_NAME}__remove`
@@ -126,15 +121,38 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     );
 }
 
-export interface SelectionActionExpandProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "s"
-     */
-    dock?: DockDirection;
+export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps {}
+
+export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
+    const {className, title, ...otherProps} = props;
+    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {canvas} = React.useContext(CanvasContext)!;
+    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    if (elements.length <= 1) {
+        return null;
+    }
+    return (
+        <SelectionAction {...otherProps}
+            className={classnames(className, `${CLASS_NAME}__zoomToFit`)}
+            title={title ?? 'Zoom to fit selected elements into view'}
+            onSelect={() => {
+                const links = new Set<Link>();
+                for (const element of elements) {
+                    for (const link of model.getElementLinks(element)) {
+                        links.add(link);
+                    }
+                }
+                const fittingBox = getContentFittingBox(elements, links, canvas.renderingState);
+                canvas.zoomToFitRect(fittingBox, {animate: true});
+            }}
+        />
+    );
 }
 
+export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
+
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
-    const {dock = 's', className, title, ...otherProps} = props;
+    const {className, title, ...otherProps} = props;
     const {model, editor} = React.useContext(WorkspaceContext)!;
 
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
@@ -147,7 +165,6 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
 
     return (
         <SelectionAction {...otherProps}
-            dock={dock}
             className={classnames(
                 className,
                 allExpanded ? `${CLASS_NAME}__collapse` : `${CLASS_NAME}__expand`
@@ -191,15 +208,10 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
     }, [model.events, elements]);
 }
 
-export interface SelectionActionAnchorProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "w"
-     */
-    dock?: DockDirection;
-}
+export interface SelectionActionAnchorProps extends SelectionActionStyleProps {}
 
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
-    const {dock = 'w', dockRow, dockColumn, className, title} = props;
+    const {dock, dockRow, dockColumn, className, title} = props;
     const {view, editor} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
@@ -222,16 +234,12 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     );
 }
 
-export interface SelectionActionConnectionsProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "e"
-     */
-    dock?: DockDirection;
+export interface SelectionActionConnectionsProps extends SelectionActionStyleProps {
     commands?: EventTrigger<ConnectionsMenuCommands>;
 }
 
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
-    const {dock = 'e', className, title, commands, ...otherProps} = props;
+    const {className, title, commands, ...otherProps} = props;
     const {editor, overlayController} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!(commands && elements.length === 1)) {
@@ -246,7 +254,6 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     );
     return (
         <SelectionAction {...otherProps}
-            dock={dock}
             className={classnames(
                 className,
                 menuOpened
@@ -265,16 +272,12 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     );
 }
 
-export interface SelectionActionAddToFilterProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "se"
-     */
-    dock?: DockDirection;
+export interface SelectionActionAddToFilterProps extends SelectionActionStyleProps {
     commands?: EventTrigger<InstancesSearchCommands>;
 }
 
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
-    const {dock = 'se', className, title, commands, ...otherProps} = props;
+    const {className, title, commands, ...otherProps} = props;
     const {editor} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!(commands && elements.length === 1)) {
@@ -283,7 +286,6 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     const [target] = elements;
     return (
         <SelectionAction {...otherProps}
-            dock={dock}
             className={classnames(className, `${CLASS_NAME}__add-to-filter`)}
             title={title ?? 'Search for connected elements'}
             onSelect={() => {
@@ -295,15 +297,10 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     );
 }
 
-export interface SelectionActionEstablishLinkProps extends Omit<SelectionActionStyleProps, 'dock'> {
-    /**
-     * @default "sw"
-     */
-    dock?: DockDirection;
-}
+export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {}
 
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
-    const {dock = 'sw', className, title, ...otherProps} = props;
+    const {className, title, ...otherProps} = props;
     const {editor, overlayController} = React.useContext(WorkspaceContext)!;
     const {canvas} = React.useContext(CanvasContext)!;
 
@@ -314,11 +311,16 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
     if (!target) {
         return null;
     } else if (canLink === undefined) {
-        return <SelectionActionSpinner dock={dock} />;
+        const {dock, dockRow, dockColumn} = props;
+        return (
+            <SelectionActionSpinner dock={dock}
+                dockRow={dockRow}
+                dockColumn={dockColumn}
+            />
+        );
     }
     return (
         <SelectionAction {...otherProps}
-            dock={dock}
             className={classnames(
                 className,
                 `${CLASS_NAME}__establish-link`

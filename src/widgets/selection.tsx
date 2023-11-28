@@ -9,14 +9,16 @@ import {
 import { CanvasApi, CanvasContext, CanvasMetrics } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
-import { Rect, SizeProvider, Vector, boundsOf, getContentFittingBox } from '../diagram/geometry';
+import {
+    Rect, SizeProvider, Vector, boundsOf, findElementAtPoint, getContentFittingBox,
+} from '../diagram/geometry';
 import { DiagramModel, GraphStructure } from '../diagram/model';
 
 import { EditorController, SelectionItem } from '../editor/editorController';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
-import { SelectionActionRemove, SelectionActionExpand } from './selectionAction';
+import { SelectionActionRemove, SelectionActionZoomToFit, SelectionActionExpand } from './selectionAction';
 
 export interface SelectionProps {
     /**
@@ -33,8 +35,9 @@ export interface SelectionProps {
      * **Default**:
      * ```jsx
      * <>
-     *   <SelectionActionRemove />
-     *   <SelectionActionExpand />
+     *   <SelectionActionRemove dock='ne' dockRow={1} />
+     *   <SelectionActionZoomToFit dock='ne' dockRow={2} />
+     *   <SelectionActionExpand dock='s' />
      * </>
      * ```
      */
@@ -58,31 +61,41 @@ export function Selection(props: SelectionProps) {
 
     const [highlightedBox, setHighlightedBox] = React.useState<Rect | undefined>();
     React.useEffect(() => {
+        let origin: PageOrigin | undefined;
         const listener = new EventObserver();
-        let moveListener: EventObserver | undefined;
         listener.listen(canvas.events, 'pointerDown', e => {
             if (!e.target && !e.panning && e.sourceEvent.shiftKey) {
                 const {pageX, pageY} = e.sourceEvent;
-                const origin: PageOrigin = {pageX, pageY};
+                origin = {pageX, pageY};
                 setHighlightedBox(makePaperBox(origin, origin, canvas.metrics));
-                listenMove(origin);
+                listenMove();
             }
         });
-        const listenMove = (origin: PageOrigin) => {
+        let moveListener: EventObserver | undefined;
+        const listenMove = () => {
             moveListener?.stopListening();
             moveListener = new EventObserver();
             moveListener.listen(canvas.events, 'pointerMove', e => {
                 const {pageX, pageY} = e.sourceEvent;
-                setHighlightedBox(makePaperBox(origin, {pageX, pageY}, canvas.metrics));
-            });
-            moveListener.listen(canvas.events, 'pointerUp', e => {
-                const {pageX, pageY} = e.sourceEvent;
-                moveListener?.stopListening();
-                const selectionBox = makePaperBox(origin, {pageX, pageY}, canvas.metrics);
-                setHighlightedBox(undefined);
-                applySelection(selectionBox, model, editor, canvas);
+                if (origin) {
+                    setHighlightedBox(makePaperBox(origin, {pageX, pageY}, canvas.metrics));
+                }
             });
         };
+        listener.listen(canvas.events, 'pointerUp', e => {
+            const {pageX, pageY} = e.sourceEvent;
+            moveListener?.stopListening();
+            setHighlightedBox(undefined);
+            if (e.triggerAsClick) {
+                if (e.target instanceof Element) {
+                    toggleSelected(e.target, editor);
+                }
+            } else if (origin) {
+                const selectionBox = makePaperBox(origin, {pageX, pageY}, canvas.metrics);
+                applySelection(selectionBox, model, editor, canvas);
+            }
+            origin = undefined;
+        });
         return () => {
             listener.stopListening();
             moveListener?.stopListening();
@@ -94,6 +107,7 @@ export function Selection(props: SelectionProps) {
             <SelectionBox {...props}
                 model={model}
                 canvas={canvas}
+                editor={editor}
                 selectedElements={selectedElements}
                 highlightedBox={highlightedBox}
             />
@@ -135,6 +149,14 @@ function* findUnselectedElements(
     }
 }
 
+function toggleSelected(element: Element, editor: EditorController): void {
+    const {selection} = editor;
+    const nextSelection = selection.includes(element)
+        ? selection.filter(item => item != element)
+        : [...selection, element];
+    editor.setSelection(nextSelection);
+}
+
 function applySelection(
     selectionBox: Rect,
     graph: GraphStructure,
@@ -156,13 +178,14 @@ function applySelection(
 interface SelectionBoxProps extends SelectionProps {
     model: DiagramModel,
     canvas: CanvasApi,
+    editor: EditorController,
     selectedElements: ReadonlyArray<Element>;
     highlightedBox: Rect | undefined;
 }
 
 function SelectionBox(props: SelectionBoxProps) {
     const {
-        model, canvas, selectedElements, highlightedBox,
+        model, canvas, editor, selectedElements, highlightedBox,
         boxMargin = 5,
         itemMargin = 2,
         children,
@@ -175,6 +198,7 @@ function SelectionBox(props: SelectionBoxProps) {
         () => getContentFittingBox(selectedElements, [], canvas.renderingState),
         Rect.equals
     );
+    const selectedBoxStyle = positionStyleForPaperRect(fittingBox, boxMargin, canvas.metrics);
 
     const highlightedElements = highlightedBox ? Array.from(findUnselectedElements(
         model.elements,
@@ -185,7 +209,7 @@ function SelectionBox(props: SelectionBoxProps) {
 
     const moveControllerRef = React.useRef<StatefulMoveController | undefined>();
     if (!moveControllerRef.current) {
-        moveControllerRef.current = new StatefulMoveController(canvas);
+        moveControllerRef.current = new StatefulMoveController(canvas, editor);
     }
     const moveController = moveControllerRef.current;
     moveController.setElements(selectedElements);
@@ -203,17 +227,23 @@ function SelectionBox(props: SelectionBoxProps) {
                         )}
                     />
                 ))}
+                <div className={`${CLASS_NAME}__selectedActions`}
+                    style={selectedBoxStyle}>
+                    {children ?? <>
+                        <SelectionActionRemove dock='ne' dockRow={1} />
+                        <SelectionActionZoomToFit dock='ne' dockRow={2} />
+                        <SelectionActionExpand dock='s' />
+                    </>}
+                </div>
+                {/* Render box on top of item overlays for correct pointer event handling */}
                 <div className={`${CLASS_NAME}__selectedBox`}
-                    style={positionStyleForPaperRect(fittingBox, boxMargin, canvas.metrics)}
+                    style={selectedBoxStyle}
+                    onClick={moveController.onClick}
                     onPointerDown={moveController.onPointerDown}
                     onPointerMove={moveController.onPointerMove}
                     onPointerUp={moveController.onPointerUp}
-                    onPointerCancel={moveController.onPointerUp}>
-                    {children ?? <>
-                        <SelectionActionRemove />
-                        <SelectionActionExpand />
-                    </>}
-                </div>
+                    onPointerCancel={moveController.onPointerUp}
+                />
             </> : null}
             {highlightedBox ? (
                 <div className={`${CLASS_NAME}__highlightedBox`}
@@ -286,14 +316,33 @@ class StatefulMoveController {
 
     constructor(
         private readonly canvas: CanvasApi,
+        private readonly editor: EditorController
     ) {}
 
     setElements(elements: ReadonlyArray<Element>): void {
         this.elements = elements;
     }
 
+    onClick = (e: React.MouseEvent) => {
+        if (this.isToggleSelectionEvent(e)) {
+            e.preventDefault();
+            const point = this.canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
+            const element = findElementAtPoint(
+                this.editor.model.elements,
+                point,
+                this.canvas.renderingState
+            );
+            if (element) {
+                toggleSelected(element, this.editor);
+            }
+        }
+    };
+
     onPointerDown = (e: React.PointerEvent) => {
         const {canvas, elements} = this;
+        if (this.isToggleSelectionEvent(e)) {
+            return;
+        }
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
         const origin = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
@@ -304,10 +353,14 @@ class StatefulMoveController {
         this.moveState = {origin, positions};
     };
 
+    private isToggleSelectionEvent(e: React.MouseEvent): boolean {
+        return e.shiftKey;
+    }
+
     onPointerMove = (e: React.PointerEvent) => {
         const {canvas, moveState} = this;
-        e.preventDefault();
         if (moveState) {
+            e.preventDefault();
             const {x, y} = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
             const dx = x - moveState.origin.x;
             const dy = y - moveState.origin.y;
@@ -321,7 +374,9 @@ class StatefulMoveController {
     };
 
     onPointerUp = (e: React.PointerEvent) => {
-        e.preventDefault();
-        this.moveState = undefined;
+        if (this.moveState) {
+            e.preventDefault();
+            this.moveState = undefined;
+        }
     };
 }

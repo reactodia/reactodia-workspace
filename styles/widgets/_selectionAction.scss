@@ -27,51 +27,58 @@
     opacity: 0.2;
   }
 
-  $totalWidth: $buttonWidth + $buttonMargin;
-  $totalHeight: $buttonHeight + $buttonMargin;
+  $total-x: $buttonWidth + $buttonMargin;
+  $total-y: $buttonHeight + $buttonMargin;
+  $margin-x: var(--reactodia-dock-margin-x, 0px);
+  $margin-y: var(--reactodia-dock-margin-y, 0px);
+
+  $x-end: calc(-#{$total-x} - #{$margin-x} + var(--reactodia-dock-x) * #{$total-x});
+  $y-end: calc(-#{$total-y} - #{$margin-y} + var(--reactodia-dock-y) * #{$total-y});
+  $x-middle: calc(-#{($total-x * 0.5)} - #{$margin-x} + var(--reactodia-dock-x) * #{$total-x});
+  $y-middle: calc(-#{($total-y * 0.5)} - #{$margin-y} + var(--reactodia-dock-y) * #{$total-y});
 
   &--dock-nw {
-    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
-    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    left: $x-end;
+    top: $y-end;
   }
 
   &--dock-n {
     left: 50%;
-    margin-left: calc(-#{($totalWidth * 0.5)} + var(--reactodia-dock-x) * #{$totalWidth});
-    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    margin-left: $x-middle;
+    top: $y-middle;
   }
 
   &--dock-ne {
-    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
-    top: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    right: $x-end;
+    top: $y-end;
   }
 
   &--dock-e {
-    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    right: $x-end;
     top: 50%;
-    margin-top: calc(-#{($totalHeight * 0.5)} + var(--reactodia-dock-y) * #{$totalHeight});
+    margin-top: $y-middle;
   }
 
   &--dock-se {
-    right: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
-    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    right: $x-end;
+    bottom: $y-end;
   }
 
   &--dock-s {
     left: 50%;
-    margin-left: calc(-#{($totalWidth * 0.5)} + var(--reactodia-dock-x) * #{$totalWidth});
-    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    margin-left: $x-middle;
+    bottom: $y-end;
   }
 
   &--dock-sw {
-    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
-    bottom: calc(-#{$totalHeight} + var(--reactodia-dock-y) * #{$totalHeight});
+    left: $x-end;
+    bottom: $y-end;
   }
 
   &--dock-w {
-    left: calc(-#{$totalWidth} + var(--reactodia-dock-x) * #{$totalWidth});
+    left: $x-end;
     top: 50%;
-    margin-top: calc(-#{($totalHeight * 0.5)} + var(--reactodia-dock-y) * #{$totalHeight});
+    margin-top: $y-middle;
   }
 
   &__spinner {
@@ -86,6 +93,10 @@
 
   &__delete {
     background-image: url("@codicons/trash.svg");
+  }
+
+  &__zoomToFit {
+    background-image: url("@images/zoom-to-fit.svg");
   }
 
   &__expand {

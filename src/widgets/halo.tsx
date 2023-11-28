@@ -30,12 +30,16 @@ export interface HaloProps {
      * **Default**:
      * ```jsx
      * <>
-     *   <SelectionActionRemove />
-     *   <SelectionActionExpand />
-     *   <SelectionActionAnchor />
-     *   <SelectionActionConnections commands={connectionsMenuCommands} />
-     *   <SelectionActionAddToFilter commands={instancesSearchCommands} />
-     *   <SelectionActionEstablishLink />
+     *   <SelectionActionRemove dock='ne' />
+     *   <SelectionActionExpand dock='s' />
+     *   <SelectionActionAnchor dock='w' />
+     *   <SelectionActionConnections dock='e'
+     *       commands={connectionsMenuCommands}
+     *   />
+     *   <SelectionActionAddToFilter dock='se'
+     *       commands={instancesSearchCommands}
+     *   />
+     *   <SelectionActionEstablishLink dock='sw' />
      * </>
      * ```
      */
@@ -140,12 +144,16 @@ class HaloInner extends React.Component<HaloInnerProps> {
         return (
             <div className={CLASS_NAME} style={style}>
                 {children ?? <>
-                    <SelectionActionRemove />
-                    <SelectionActionExpand />
-                    <SelectionActionAnchor />
-                    <SelectionActionConnections commands={connectionsMenuCommands} />
-                    <SelectionActionAddToFilter commands={instancesSearchCommands} />
-                    <SelectionActionEstablishLink />
+                    <SelectionActionRemove dock='ne' />
+                    <SelectionActionExpand dock='s' />
+                    <SelectionActionAnchor dock='w' />
+                    <SelectionActionConnections dock='e'
+                        commands={connectionsMenuCommands}
+                    />
+                    <SelectionActionAddToFilter dock='se'
+                        commands={instancesSearchCommands}
+                    />
+                    <SelectionActionEstablishLink dock='sw' />
                 </>}
             </div>
         );

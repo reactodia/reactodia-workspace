@@ -247,8 +247,8 @@ export function computeGrouping(elements: ReadonlyArray<Element>): Map<string, E
 }
 
 export function getContentFittingBox(
-    elements: ReadonlyArray<Element>,
-    links: ReadonlyArray<Link>,
+    elements: Iterable<Element>,
+    links: Iterable<Link>,
     sizeProvider: SizeProvider
 ): Rect {
     let minX = Infinity, minY = Infinity;

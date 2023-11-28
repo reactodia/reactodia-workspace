@@ -30,7 +30,7 @@
 
   &__zoom-fit-button {
     &::before {
-      @include codicon("symbol-array");
+      @include icon("@images/zoom-to-fit.svg");
     }
   }
 }
