@@ -119,7 +119,8 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
     private renderLinkStateLabels() {
         const {workspace: {model, editor}} = this.props;
 
-        return model.links.map(link => {
+        const rendered: JSX.Element[] = [];
+        for (const link of model.links) {
             let renderedState: JSX.Element | null = null;
             const state = editor.authoringState.links.get(link.data);
             if (state) {
@@ -153,55 +154,63 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
             const renderedErrors = this.renderLinkErrors(link.data);
             if (renderedState || renderedErrors) {
                 const labelPosition = this.getLinkStateLabelPosition(link);
-                if (!labelPosition) {
-                    return null;
-                }
-                const style = {left: labelPosition.x, top: labelPosition.y};
-                return <div className={`${CLASS_NAME}__state-indicator`}
-                    key={link.id}
-                    style={style}>
-                    <div className={`${CLASS_NAME}__state-indicator-container`}>
-                        <div className={`${CLASS_NAME}__state-indicator-body`}>
-                            {renderedState}
-                            {renderedErrors}
+                if (labelPosition) {
+                    const style = {left: labelPosition.x, top: labelPosition.y};
+                    rendered.push(
+                        <div key={link.id}
+                            className={`${CLASS_NAME}__state-indicator`}
+                            style={style}>
+                            <div className={`${CLASS_NAME}__state-indicator-container`}>
+                                <div className={`${CLASS_NAME}__state-indicator-body`}>
+                                    {renderedState}
+                                    {renderedErrors}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>;
-            } else {
-                return null;
+                    );
+                }
             }
-        });
+        }
+
+        return rendered;
     }
 
     private renderLinkStateHighlighting() {
         const {workspace: {model, editor}} = this.props;
-        return model.links.map(link => {
+        const rendered: JSX.Element[] = [];
+        for (const link of model.links) {
             if (editor.temporaryState.links.has(link.data)) {
                 const path = this.calculateLinkPath(link);
-                return (
-                    <path key={link.id} d={path} fill={'none'} stroke={'grey'} strokeWidth={5} strokeOpacity={0.5}
-                        strokeDasharray={'8 8'} />
+                rendered.push(
+                    <path key={link.id}
+                        d={path} fill='none' stroke='grey'
+                        strokeWidth={5} strokeOpacity={0.5} strokeDasharray='8 8'
+                    />
                 );
-            }
-            const event = editor.authoringState.links.get(link.data);
-            const isDeletedLink = AuthoringState.isDeletedLink(editor.authoringState, link.data);
-            const isUncertainLink = AuthoringState.isUncertainLink(editor.authoringState, link.data);
-            if (event || isDeletedLink || isUncertainLink) {
-                const path = this.calculateLinkPath(link);
-                let color: string | undefined;
-                if (isDeletedLink) {
-                    color = 'red';
-                } else if (isUncertainLink) {
-                    color = 'blue';
-                } else if (event && event.type === AuthoringKind.ChangeLink) {
-                    color = event.before ? 'blue' : 'green';
+            } else {
+                const event = editor.authoringState.links.get(link.data);
+                const isDeletedLink = AuthoringState.isDeletedLink(editor.authoringState, link.data);
+                const isUncertainLink = AuthoringState.isUncertainLink(editor.authoringState, link.data);
+                if (event || isDeletedLink || isUncertainLink) {
+                    const path = this.calculateLinkPath(link);
+                    let color: string | undefined;
+                    if (isDeletedLink) {
+                        color = 'red';
+                    } else if (isUncertainLink) {
+                        color = 'blue';
+                    } else if (event && event.type === AuthoringKind.ChangeLink) {
+                        color = event.before ? 'blue' : 'green';
+                    }
+                    rendered.push(
+                        <path key={link.id}
+                            d={path} fill={'none'} stroke={color}
+                            strokeWidth={5} strokeOpacity={0.5}
+                        />
+                    );
                 }
-                return (
-                    <path key={link.id} d={path} fill={'none'} stroke={color} strokeWidth={5} strokeOpacity={0.5} />
-                );
             }
-            return null;
-        });
+        }
+        return rendered;
     }
 
     private getLinkStateLabelPosition(link: Link): Vector {

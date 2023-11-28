@@ -69,6 +69,7 @@ export function Selection(props: SelectionProps) {
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerDown', e => {
             if (!e.target && !e.panning && e.sourceEvent.shiftKey) {
+                e.sourceEvent.preventDefault();
                 const {pageX, pageY} = e.sourceEvent;
                 origin = {pageX, pageY};
                 setHighlightedBox(makePaperBox(origin, origin, canvas.metrics));
