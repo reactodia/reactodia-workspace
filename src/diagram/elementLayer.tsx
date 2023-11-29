@@ -113,10 +113,10 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                         const elementDecorator = view._decorateElement(state.element);
                         if (elementDecorator) {
                             overlaidElement = (
-                                <div key={state.element.id}>
+                                <React.Fragment key={state.element.id}>
                                     {overlaidElement}
                                     {elementDecorator}
-                                </div>
+                                </React.Fragment>
                             );
                         }
                         memoizedElements.set(state, overlaidElement);

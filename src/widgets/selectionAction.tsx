@@ -372,6 +372,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
     const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
     const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
+    const authoringEvent = target ? authoringState.elements.get(target.iri) : undefined;
 
     React.useEffect(() => {
         const cancellation = new AbortController();
@@ -379,8 +380,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             setCanLink(false);
             return;
         }
-        const event = authoringState.elements.get(target.iri);
-        if (event && event.deleted) {
+        if (authoringEvent && authoringEvent.deleted) {
             setCanLink(false);
         } else {
             setCanLink(undefined);
@@ -394,7 +394,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             });
         }
         return () => cancellation.abort();
-    }, [target, authoringState]);
+    }, [target, authoringEvent]);
 
     return canLink;
 }
