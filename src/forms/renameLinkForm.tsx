@@ -5,7 +5,7 @@ import { Link } from '../diagram/elements';
 
 const CLASS_NAME = 'reactodia-edit-form';
 
-export interface EditLinkLabelFormProps {
+export interface RenameLinkFormProps {
     link: Link;
     onFinish: () => void;
 }
@@ -14,17 +14,17 @@ interface State {
     label: string;
 }
 
-export class EditLinkLabelForm extends React.Component<EditLinkLabelFormProps, State> {
+export class RenameLinkForm extends React.Component<RenameLinkFormProps, State> {
     static contextType = CanvasContext;
     declare readonly context: CanvasContext;
 
-    constructor(props: EditLinkLabelFormProps, context: any) {
+    constructor(props: RenameLinkFormProps, context: any) {
         super(props, context);
         const label = this.computeLabel();
         this.state = {label};
     }
 
-    componentDidUpdate(prevProps: EditLinkLabelFormProps) {
+    componentDidUpdate(prevProps: RenameLinkFormProps) {
         if (this.props.link.typeId !== prevProps.link.typeId) {
             const label = this.computeLabel();
             this.setState({label});

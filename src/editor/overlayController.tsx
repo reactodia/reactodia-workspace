@@ -15,8 +15,8 @@ import { Dialog } from '../widgets/dialog';
 
 import { EditEntityForm } from '../forms/editEntityForm';
 import { EditLinkForm } from '../forms/editLinkForm';
-import { EditLinkLabelForm } from '../forms/editLinkLabelForm';
 import { FindOrCreateEntityForm } from '../forms/findOrCreateEntityForm';
+import { RenameLinkForm } from '../forms/renameLinkForm';
 
 import { AsyncModel } from './asyncModel';
 import { AuthoringState } from './authoringState';
@@ -50,8 +50,8 @@ export type KnownDialogType =
     | 'connectionsMenu'
     | 'editEntity'
     | 'editLink'
-    | 'editEntityType'
-    | 'editLinkLabel';
+    | 'findOrCreateEntity'
+    | 'renameLink';
 
 export interface OpenedDialog {
     readonly target: Element | Link;
@@ -313,7 +313,7 @@ export class OverlayController {
         );
         this.showDialog({
             target,
-            dialogType: 'editEntityType',
+            dialogType: 'findOrCreateEntity',
             content,
             caption: 'Establish New Connection',
             onClose: onCancel,
@@ -368,19 +368,19 @@ export class OverlayController {
         });
     }
 
-    showEditLinkLabelForm(link: Link) {
+    showRenameLinkForm(link: Link): void {
         const size = {width: 300, height: 145};
         const onFinish = () => this.hideDialog();
         this.showDialog({
             target: link,
-            dialogType: 'editLinkLabel',
+            dialogType: 'renameLink',
             content: (
-                <EditLinkLabelForm link={link}
+                <RenameLinkForm link={link}
                     onFinish={onFinish}
                 />
             ),
             size,
-            caption: 'Edit Link Label',
+            caption: 'Rename Link',
             offset: {x: 25, y: - size.height / 2},
             calculatePosition: canvas => {
                 const bounds = canvas.renderingState.getLinkLabelBounds(link);

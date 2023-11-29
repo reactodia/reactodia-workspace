@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Made `Halo` and `Selection` widgets customizable via action components:
   * Generic component for element actions: `SelectionAction`;
   * Specialized actions: `SelectionActionRemove`, `SelectionActionZoomToFit`, `SelectionActionLayout`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
+- Made `HaloLink` widget customizable via action components:
+  * Generic component for link actions: `LinkAction`;
+  * Specialized actions: `LinkActionEdit`, `LinkActionDelete`, `LinkActionMoveEndpoint`, `LinkActionRename`;
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
@@ -21,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - **[Breaking]** Renamed `DefaultToolbar` -> `Toolbar` component.
 - **[Breaking]** Renamed `CanvasApi.exportPng()` -> `CanvasApi.exportRaster()`.
+- **[Breaking]** Renamed `OverlayController.showEditLinkLabelForm()` -> `OverlayController.showRenameLinkForm()`.
 - **[Breaking]** Replaced `visible` / `showLabel` properties on `RichLinkType` by `visibility` property of string enum type.
 - Optimized link route updates via batching.
 - Added custom "zoom-to-fit" icon instead of reusing a different one from Codicons.

@@ -78,9 +78,18 @@ export {
 } from './widgets/connectionsMenu';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { Halo, HaloProps } from './widgets/halo';
-export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
-    Dropdown as HamburgerMenu, DropdownProps as HamburgerMenuProps, DropdownItem as HamburgerMenuItem, DropdownItemProps as HamburgerMenuItemProps,
+    HaloLink, HaloLinkProps,
+    LinkAction, LinkActionProps, LinkActionStyleProps,
+    LinkActionContext, useLinkActionContext,
+    LinkActionSpinner, LinkActionSpinnerProps,
+    LinkActionEdit, LinkActionEditProps,
+    LinkActionDelete, LinkActionDeleteProps,
+    LinkActionMoveEndpoint, LinkActionMoveEndpointProps,
+    LinkActionRename, LinkActionRenameProps,
+} from './widgets/haloLink';
+export {
+    Dropdown, DropdownProps, DropdownItem, DropdownItemProps,
 } from './widgets/dropdown';
 export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,

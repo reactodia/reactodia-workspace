@@ -1,11 +1,16 @@
 .reactodia-halo-link {
+  $button-size: var(--reactodia-link-button-size);
+  $button-margin: var(--reactodia-link-button-margin);
 
-  &__button {
-    background: transparent;
-    border: 0 none;
-    cursor: pointer;
-    padding: 0;
+  &__spinner {
     position: absolute;
+  }
+
+  &__action {
+    position: absolute;
+    cursor: pointer;
+    border: 0 none;
+    padding: 0;
     opacity: 0.8;
     outline: none;
     transition: opacity 0.3s;
@@ -20,31 +25,29 @@
     }
   }
 
-  @mixin button {
+  &__button {
     background-color: #ccc;
     background-position: 50%;
     background-repeat: no-repeat;
     background-size: 65%;
-    border-radius: 10px;
-    height: 20px;
-    width: 20px;
+    border-radius: calc(#{$button-size} * 0.5);
+    height: $button-size;
+    width: $button-size;
+  }
+
+  &__endpoint {
+    background: transparent;
   }
 
   &__edit {
-    @include button;
     background-image: url("@codicons/edit.svg");
   }
 
   &__delete {
-    @include button;
     background-image: url("@codicons/trash.svg");
   }
 
-  &__spinner {
-    position: absolute;
-  }
-
-  &__edit-label-button {
+  &__rename {
     background: white url("@codicons/edit.svg") no-repeat;
     background-size: 80%;
     background-position: center;
