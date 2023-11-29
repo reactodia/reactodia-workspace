@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
 ### Added
-- Support customizable `DefaultToolbar` with its actions decomposed into separate components:
+- Support customizable `Toolbar` widget with its actions decomposed into separate components:
   * Generic component for toolbar actions: `ToolbarItem`;
   * Default menu items: `ToolbarActionClearAll`, `ToolbarActionExport` (for PNG, SVG and print);
   * Default panel items: `ToolbarActionUndo`, `ToolbarActionRedo`, `ToolbarActionLayout`;
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
 
 ### Changed
+- **[Breaking]** Renamed `DefaultToolbar` -> `Toolbar` component.
 - **[Breaking]** Renamed `CanvasApi.exportPng()` -> `CanvasApi.exportRaster()`.
 - **[Breaking]** Replaced `visible` / `showLabel` properties on `RichLinkType` by `visibility` property of string enum type.
 - Optimized link route updates via batching.

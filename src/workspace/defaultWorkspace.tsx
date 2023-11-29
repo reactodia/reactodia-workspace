@@ -14,9 +14,9 @@ import { InstancesSearch, InstancesSearchProps, InstancesSearchCommands } from '
 import { LinkTypesToolbox, LinkTypesToolboxProps } from '../widgets/linksToolbox';
 import { Navigator, NavigatorProps } from '../widgets/navigator';
 import { Selection, SelectionProps } from '../widgets/selection';
+import { Toolbar, ToolbarProps } from '../widgets/toolbar';
 import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
 
-import { DefaultToolbar, DefaultToolbarProps } from './defaultToolbar';
 import {
     WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem, WorkspaceLayoutContainerProps,
 } from './workspaceLayout';
@@ -39,8 +39,8 @@ export interface DefaultWorkspaceProps {
     haloLink?: HaloLinkProps | null;
     selection?: SelectionProps | null;
     navigator?: NavigatorProps | null;
+    toolbar?: ToolbarProps | null;
     zoomControl?: ZoomControlProps | null;
-    toolbar?: DefaultToolbarProps | null;
 
     classTree?: ClassTreeProps;
     instancesSearch?: Omit<InstancesSearchProps, 'commands'>;
@@ -100,8 +100,8 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                         {haloLink === null ? null : <HaloLink {...haloLink} />}
                         {selection === null ? null : <Selection {...selection} />}
                         {navigator === null ? null : <Navigator {...navigator} />}
+                        {toolbar === null ? null : <Toolbar {...toolbar} />}
                         {zoomControl === null ? null : <ZoomControl {...zoomControl} />}
-                        {toolbar === null ? null : <DefaultToolbar {...toolbar} />}
                     </Canvas>
                 </WorkspaceLayoutItem>
                 <WorkspaceLayoutColumn defaultSize={275}

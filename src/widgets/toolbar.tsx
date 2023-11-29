@@ -11,11 +11,11 @@ import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
 
-import { Dropdown, DropdownItem, useInsideDropdown } from '../widgets/dropdown';
+import { Dropdown, DropdownItem, useInsideDropdown } from './dropdown';
 
-import { WorkspaceContext } from './workspaceContext';
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
-export interface DefaultToolbarProps {
+export interface ToolbarProps {
     /**
      * Main menu content, in a form of `<ToolbarItem>` elements.
      *
@@ -41,7 +41,7 @@ export interface WorkspaceLanguage {
 
 const CLASS_NAME = 'reactodia-toolbar';
 
-export function DefaultToolbar(props: DefaultToolbarProps) {
+export function Toolbar(props: ToolbarProps) {
     const {menu, children, languages = []} = props;
     const menuContent = menu === null ? null : (
         menu ?? <>
@@ -76,7 +76,7 @@ export function DefaultToolbar(props: DefaultToolbarProps) {
     );
 }
 
-defineCanvasWidget(DefaultToolbar, element => ({element, attachment: 'viewport'}));
+defineCanvasWidget(Toolbar, element => ({element, attachment: 'viewport'}));
 
 export interface ToolbarItemProps {
     className?: string;

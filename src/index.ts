@@ -104,10 +104,8 @@ export {
     SelectionActionAddToFilter, SelectionActionAddToFilterProps,
     SelectionActionEstablishLink, SelectionActionEstablishLinkProps,
 } from './widgets/selectionAction';
-export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
-
 export {
-    DefaultToolbar, DefaultToolbarProps,
+    Toolbar, ToolbarProps,
     ToolbarItem, ToolbarItemProps,
     ToolbarActionSave, ToolbarActionSaveProps,
     ToolbarActionClearAll, ToolbarActionClearAllProps,
@@ -116,7 +114,9 @@ export {
     ToolbarActionRedo, ToolbarActionRedoProps,
     ToolbarActionLayout, ToolbarActionLayoutProps,
     ToolbarLanguageSelector, ToolbarLanguageSelectorProps, WorkspaceLanguage,
-} from './workspace/defaultToolbar';
+} from './widgets/toolbar';
+export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
+
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export { Workspace, WorkspaceProps } from './workspace/workspace';
