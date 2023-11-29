@@ -9,6 +9,7 @@
 
   &__item-error-icon {
     background: red;
+    -webkit-mask: url("@codicons/warning.svg");
     mask: url("@codicons/warning.svg");
     height: 15px;
     width: 17px;

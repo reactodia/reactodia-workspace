@@ -38,7 +38,10 @@
     display: flex;
     align-items: center;
     white-space: nowrap;
+
+    -webkit-user-select: none;
     user-select: none;
+
     > * { flex-shrink: 0; }
   }
 

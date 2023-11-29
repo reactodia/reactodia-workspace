@@ -10,11 +10,13 @@
   vertical-align: middle;
   touch-action: manipulation;
   cursor: pointer;
-  user-select: none;
   background-image: none;
   border: 1px solid transparent;
   text-transform: none;
   transition: background-color 0.3s;
+
+  -webkit-user-select: none;
+  user-select: none;
 
   &[disabled] {
     cursor: not-allowed;

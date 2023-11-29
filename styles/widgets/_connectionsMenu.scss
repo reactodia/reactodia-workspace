@@ -205,8 +205,10 @@
   &__move-to-filter {
     display: flex;
     padding: 5px 10px;
-    user-select: none;
     cursor: pointer;
+
+    -webkit-user-select: none;
+    user-select: none;
   
     &:hover {
       background-color: #e6e6e6;
