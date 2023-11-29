@@ -143,6 +143,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                 {
                     fatLinkTypes ? (
                         <select className='reactodia-form-control'
+                            name='reactodia-link-type-selector-select'
                             value={value}
                             onChange={this.onChangeType}
                             disabled={disabled}>

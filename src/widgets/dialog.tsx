@@ -294,9 +294,17 @@ export class Dialog extends React.Component<DialogProps, State> {
         };
 
         return (
-            <div className={CLASS_NAME} style={style}>
+            <div className={CLASS_NAME}
+                role='dialog'
+                aria-labelledby={caption ? 'reactodia-dialog-caption' : undefined}
+                style={style}>
                 <button className={`${CLASS_NAME}__close-button`} onClick={() => this.props.onClose()} />
-                {caption ? <div className='reactodia-dialog__caption'>{caption}</div> : null}
+                {caption ? (
+                    <div id='reactodia-dialog-caption'
+                        className='reactodia-dialog__caption'>
+                        {caption}
+                    </div>
+                ) : null}
                 {this.props.children}
                 <DraggableHandle
                     className={`${CLASS_NAME}__bottom-handle`}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,7 +13,7 @@
             margin: 0;
             padding: 0;
         }
-        .demoSelector {
+        #reactodia-example-selector {
             position: absolute;
             top: 10px;
             right: 15px;
@@ -22,7 +22,9 @@
         }
     </style>
     <body>
-        <select class="demoSelector" onchange="window.location.href = this.value">
+        <select id="reactodia-example-selector"
+            title="Change active example"
+            onchange="window.location.href = this.value">
             <% for (var key of EXAMPLES) { %>
                 <option value="<%- key %>.html"><%- key %></option>
             <% } %>
@@ -31,7 +33,7 @@
             var pathname = window.location.pathname;
             var separatorIndex = pathname.lastIndexOf('/');
             var page = separatorIndex >= 0 ? pathname.substring(separatorIndex + 1) : pathname;
-            document.querySelector('.demoSelector').value = page || 'index.html';
+            document.getElementById('reactodia-example-selector').value = page || 'index.html';
         </script>
     </body>
 </html>

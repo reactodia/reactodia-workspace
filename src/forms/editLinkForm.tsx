@@ -99,7 +99,10 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
                     />
                     {isValidating ? (
                         <div className={`${CLASS_NAME}__progress`}>
-                            <ProgressBar state={ProgressState.loading} height={10} />
+                            <ProgressBar state='loading'
+                                title='Validating selected link type'
+                                height={10}
+                            />
                         </div>
                     ) : null}
                 </div>

@@ -112,22 +112,31 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         }
 
         return (
-            <div className={`${CLASS_NAME}__properties`}>
+            <div role='list'
+                className={`${CLASS_NAME}__properties`}>
                 {propsAsList.map(({propertyId, label, values}) => {
-                    return <div key={propertyId} className={`${CLASS_NAME}__properties-row`}>
-                        <div className={`${CLASS_NAME}__properties-key`} title={`${label} (${propertyId})`}>
-                            {label}
+                    return (
+                        <div key={propertyId}
+                            role='listitem'
+                            className={`${CLASS_NAME}__properties-row`}>
+                            <div className={`${CLASS_NAME}__properties-key`} title={`${label} (${propertyId})`}>
+                                {label}
+                            </div>
+                            <div className={`${CLASS_NAME}__properties-values`}>
+                                {values.map((term, index) => (
+                                    <div key={index}
+                                        className={`${CLASS_NAME}__properties-value`}
+                                        title={term.value}
+                                        lang={
+                                            term.termType === 'Literal' && term.language
+                                                ? term.language : undefined
+                                        }>
+                                        {term.value}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className={`${CLASS_NAME}__properties-values`}>
-                            {values.map((term, index) => (
-                                <div className={`${CLASS_NAME}__properties-value`}
-                                    key={index}
-                                    title={term.value}>
-                                    {term.value}
-                                </div>
-                            ))}
-                        </div>
-                    </div>;
+                    );
                 })}
             </div>
         );

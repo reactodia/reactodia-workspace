@@ -30,16 +30,19 @@ export class ListElementView extends React.Component<ListElementViewProps> {
         const localizedText = view.formatLabel(model.label, model.id);
         const classesString = model.types.length > 0 ? `\nClasses: ${view.getElementTypeString(model)}` : '';
 
-        return <li className={classNames}
-            draggable={!disabled && Boolean(onDragStart)}
-            title={`${localizedText} ${view.formatIri(model.id)}${classesString}`}
-            style={{background: hcl(h, c, l).toString()}}
-            onClick={this.onClick}
-            onDragStart={onDragStart}>
-            <div className={`${CLASS_NAME}__label`} style={{background: frontColor.toString()}}>
-                {highlightSubstring(localizedText, highlightText)}
-            </div>
-        </li>;
+        return (
+            <li className={classNames}
+                role='option'
+                draggable={!disabled && Boolean(onDragStart)}
+                title={`${localizedText} ${view.formatIri(model.id)}${classesString}`}
+                style={{background: hcl(h, c, l).toString()}}
+                onClick={this.onClick}
+                onDragStart={onDragStart}>
+                <div className={`${CLASS_NAME}__label`} style={{background: frontColor.toString()}}>
+                    {highlightSubstring(localizedText, highlightText)}
+                </div>
+            </li>
+        );
     }
 
     private onClick = (event: React.MouseEvent<any>) => {

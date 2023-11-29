@@ -61,7 +61,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     constructor(props: ClassTreeProps) {
         super(props);
         this.state = {
-            refreshingState: ProgressState.none,
+            refreshingState: 'none',
             roots: [],
             filteredRoots: [],
             requestedSearchText: '',
@@ -90,12 +90,14 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                         <input type='text'
                             className='search-input reactodia-form-control'
                             placeholder='Search for...'
+                            name='reactodia-class-tree-filter'
                             value={this.state.requestedSearchText}
                             onChange={this.onSearchTextChange}
                         />
                         {editor.inAuthoringMode ? (
                             <label className={`${CLASS_NAME}__only-creatable`}>
                                 <input type='checkbox'
+                                    name='reactodia-class-tree-only-constructible'
                                     checked={showOnlyConstructible}
                                     onChange={this.onShowOnlyCreatableChange}
                                 /> Show only constructible
@@ -103,7 +105,9 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                         ) : null}
                     </div>
                 </div>
-                <ProgressBar state={refreshingState} />
+                <ProgressBar state={refreshingState}
+                    title='Loading element type tree'
+                />
                 {this.classTree ? (
                     <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
                         view={view}
@@ -221,15 +225,15 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
         this.setState((state, props) => {
             if (!this.classTree) {
-                return {refreshingState: ProgressState.none};
+                return {refreshingState: 'none'};
             }
 
-            let refreshingState = ProgressState.none;
+            let refreshingState: ProgressState = 'none';
             if (editor.inAuthoringMode) {
                 const newIris = getNewClassIris(state.constructibleClasses, this.classTree);
 
                 if (newIris.size > 0) {
-                    refreshingState = ProgressState.loading;
+                    refreshingState = 'loading';
                     this.queryCreatableTypes(newIris, cancellation.signal);
                 }
             }
@@ -272,11 +276,11 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 typeIris.forEach(type => {
                     constructibleClasses.set(type, result.has(type));
                 });
-                return applyFilters({...state, constructibleClasses, refreshingState: ProgressState.completed});
+                return applyFilters({...state, constructibleClasses, refreshingState: 'completed'});
             });
         } catch (err) {
             console.error(err);
-            this.setState((state): State => applyFilters({...state, refreshingState: ProgressState.error}));
+            this.setState((state): State => applyFilters({...state, refreshingState: 'error'}));
         }
     }
 

@@ -56,17 +56,21 @@ export class Leaf extends React.Component<LeafProps, State> {
 
         const {icon} = view.getTypeStyle([node.model.id]);
 
-        let bodyClass = `${CLASS_NAME}__body`;
-        if (selectedNode && selectedNode.model === node.model) {
-            bodyClass += ` ${CLASS_NAME}__body--selected`;
-        }
+        const selected = Boolean(selectedNode && selectedNode.model === node.model);
+        const bodyClass = classnames(
+            `${CLASS_NAME}__body`,
+            selected ? `${CLASS_NAME}__body--selected` : undefined
+        );
 
         const label = highlightSubstring(
             node.label, searchText, {className: `${CLASS_NAME}__highlighted-term`}
         );
 
         return (
-            <div className={CLASS_NAME} role='tree-item'>
+            <div className={CLASS_NAME}
+                role='treeitem'
+                aria-expanded={expanded}
+                aria-selected={selected}>
                 <div className={`${CLASS_NAME}__row`}>
                     <div className={toggleClass}
                         onClick={this.toggle}
@@ -75,7 +79,10 @@ export class Leaf extends React.Component<LeafProps, State> {
                     <a className={bodyClass} href={node.model.id} onClick={this.onClick}>
                         <div className={`${CLASS_NAME}__icon-container`}>
                             {icon ? (
-                                <img className={`${CLASS_NAME}__icon`} src={icon} />
+                                <img role='presentation'
+                                    className={`${CLASS_NAME}__icon`}
+                                    src={icon}
+                                />
                             ) : (
                                 <div className={node.derived.length === 0
                                     ? `${CLASS_NAME}__default-icon-leaf`
@@ -140,13 +147,14 @@ export class Leaf extends React.Component<LeafProps, State> {
 export interface ForestProps extends CommonProps {
     className?: string;
     nodes: ReadonlyArray<TreeNode>;
+    root?: boolean;
 }
 
 export class Forest extends React.Component<ForestProps> {
     render() {
-        const {nodes, className, ...otherProps} = this.props;
+        const {className, nodes, root, ...otherProps} = this.props;
         return (
-            <div className={className} role='tree'>
+            <div className={className} role={root ? 'tree' : undefined}>
                 {nodes.map(node => (
                     <Leaf key={`node-${node.model.id}`} node={node} {...otherProps} />
                 ))}

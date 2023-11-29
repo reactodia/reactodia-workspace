@@ -42,10 +42,10 @@ export function Dropdown(props: DropdownProps) {
                     className,
                     CLASS_NAME,
                     expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
-                )}
-                title={title}>
+                )}>
                 <button type='button'
                     className={`${CLASS_NAME}__toggle reactodia-btn reactodia-btn-default`}
+                    title={title}
                     onClick={() => setExpanded(value => !value)}
                 />
                 <ul role='menu'

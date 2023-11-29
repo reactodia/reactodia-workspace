@@ -250,7 +250,8 @@ export class Navigator extends React.Component<NavigatorProps, State> {
                     }}
                     onWheel={this.onWheel}
                 />
-                <button className={`${CLASS_NAME}__toggle`}
+                <button type='button'
+                    className={`${CLASS_NAME}__toggle`}
                     title={expanded ? 'Collapse navigator' : 'Expand navigator'}
                     onClick={this.onToggleClick}>
                     <div className={`${CLASS_NAME}__toggle-icon`} />

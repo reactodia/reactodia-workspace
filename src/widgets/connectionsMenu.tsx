@@ -122,7 +122,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
 
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
-    private loadingState = ProgressState.none;
+    private loadingState: ProgressState = 'none';
 
     private links: RichLinkType[] | undefined;
     private countMap: ReadonlyMap<LinkTypeIri, ConnectionCount> | undefined;
@@ -164,12 +164,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     private loadLinks() {
         const {target, workspace: {model, triggerWorkspaceEvent}} = this.props;
 
-        this.loadingState = ProgressState.loading;
+        this.loadingState = 'loading';
         this.links = [];
         this.countMap = new Map();
         model.dataProvider.connectedLinkStats({elementId: target.iri})
             .then(linkTypes => {
-                this.loadingState = ProgressState.completed;
+                this.loadingState = 'completed';
 
                 const countMap = new Map<LinkTypeIri, ConnectionCount>();
                 const links: RichLinkType[] = [];
@@ -200,7 +200,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
             })
             .catch(err => {
                 console.error(err);
-                this.loadingState = ProgressState.error;
+                this.loadingState = 'error';
                 this.updateAll();
             });
         this.updateAll();
@@ -210,7 +210,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
         const {target, workspace: {model, triggerWorkspaceEvent}} = this.props;
         const {link, direction, pageCount} = linkDataChunk;
 
-        this.loadingState = ProgressState.loading;
+        this.loadingState = 'loading';
         this.linkDataChunk = linkDataChunk;
         this.objects = [];
 
@@ -220,7 +220,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
             linkDirection: direction,
             limit: pageCount * LINK_COUNT_PER_PAGE,
         }).then(elements => {
-            this.loadingState = ProgressState.completed;
+            this.loadingState = 'completed';
             const presentOnDiagramIris = new Set(model.elements.map(el => el.iri));
             this.objects = elements.map(linked => ({
                 model: linked.element,
@@ -231,7 +231,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
             triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadElements);
         }).catch(err => {
             console.error(err);
-            this.loadingState = ProgressState.error;
+            this.loadingState = 'error';
             this.updateAll();
         });
     }
@@ -423,11 +423,11 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
                 onMoveToFilter={this.props.onMoveToFilter}
                 view={this.props.view}
                 filterKey={this.state.filterKey}
-                loading={this.props.state === ProgressState.loading}
+                loading={this.props.state === 'loading'}
                 onPressAddSelected={this.props.onPressAddSelected}
             />;
         } else if (this.props.connectionsData && this.state.panel === 'connections') {
-            if (this.props.state === ProgressState.loading) {
+            if (this.props.state === 'loading') {
                 return <label className={`reactodia-label ${CLASS_NAME}__loading`}>Loading...</label>;
             }
 
@@ -490,19 +490,25 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
     render() {
         return (
             <div className={CLASS_NAME}>
-                <label className={`reactodia-label ${CLASS_NAME}__title-label`}>{this.getTitle()}</label>
+                <span id='reactodia-dialog-caption'
+                    className={`reactodia-label ${CLASS_NAME}__title-label`}>
+                    {this.getTitle()}
+                </span>
                 {this.getBreadCrumbs()}
                 <div className={`${CLASS_NAME}__search-line`}>
-                    <input
-                        type='text'
+                    <input type='text'
                         className={`search-input reactodia-form-control ${CLASS_NAME}__search-line-input`}
+                        name='reactodia-connection-menu-filter'
                         value={this.state.filterKey}
                         onChange={this.onChangeFilter}
                         placeholder='Search for...'
                     />
                     {this.renderSortSwitches()}
                 </div>
-                <ProgressBar state={this.props.state} height={10} />
+                <ProgressBar state={this.props.state}
+                    title='Loading element connections'
+                    height={10}
+                />
                 {this.getBody()}
             </div>
         );
@@ -909,6 +915,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             <div className={`${CLASS_NAME}__objects-select-all`}>
                 <label>
                     <input type='checkbox'
+                        name='reactodia-connections-menu-select-all'
                         checked={isAllSelected && nonPresented.length > 0}
                         onChange={this.onSelectAll}
                         disabled={nonPresented.length === 0} />

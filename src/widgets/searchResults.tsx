@@ -39,13 +39,18 @@ export class SearchResults extends React.Component<SearchResultProps> {
 
     render(): React.ReactElement<any> {
         const {items} = this.props;
-        return <ul className={CLASS_NAME}
-            ref={this.onRootMount}
-            tabIndex={-1}
-            onFocus={this.addKeyListener}
-            onBlur={this.removeKeyListener}>
-            {items.map(this.renderResultItem)}
-        </ul>;
+        return (
+            <ul ref={this.onRootMount}
+                className={CLASS_NAME}
+                role='listbox'
+                aria-multiselectable={true}
+                aria-label='Select one or many elements'
+                tabIndex={-1}
+                onFocus={this.addKeyListener}
+                onBlur={this.removeKeyListener}>
+                {items.map(this.renderResultItem)}
+            </ul>
+        );
     }
 
     private onRootMount = (root: HTMLElement | null) => {

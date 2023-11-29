@@ -229,7 +229,9 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                         <span>&nbsp;Switch all</span>
                     </div>
                 </div>
-                <ProgressBar state={dataState} />
+                <ProgressBar state={dataState}
+                    title='Loading connected links for the selected element'
+                />
                 <div className={`${CLASS_NAME}__rest`}>
                     {connectedTo}
                     <div className='reactodia-scrollable'>
@@ -273,7 +275,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
             this.debounceSelection.call(this.updateOnCurrentSelection);
         });
 
-        this.state = {dataState: ProgressState.none};
+        this.state = {dataState: 'none'};
     }
 
     componentDidMount() {
@@ -299,21 +301,21 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         if (selectedElement) {
             const request = {elementId: selectedElement.iri};
             this.currentRequest = request;
-            this.setState({dataState: ProgressState.loading, selectedElement});
+            this.setState({dataState: 'loading', selectedElement});
             editor.model.dataProvider.connectedLinkStats(request).then(linkTypes => {
                 if (this.currentRequest !== request) { return; }
                 const {linksOfElement, countMap} = this.computeStateFromRequestResult(linkTypes);
                 this.subscribeOnLinksEvents(linksOfElement);
-                this.setState({dataState: ProgressState.completed, linksOfElement, countMap});
+                this.setState({dataState: 'completed', linksOfElement, countMap});
             }).catch(error => {
                 if (this.currentRequest !== request) { return; }
                 console.error(error);
-                this.setState({dataState: ProgressState.error, linksOfElement: undefined, countMap: {}});
+                this.setState({dataState: 'error', linksOfElement: undefined, countMap: {}});
             });
         } else {
             this.currentRequest = undefined;
             this.setState({
-                dataState: ProgressState.completed,
+                dataState: 'completed',
                 selectedElement,
                 linksOfElement: undefined,
                 countMap: {},

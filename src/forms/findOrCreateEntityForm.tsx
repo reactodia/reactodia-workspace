@@ -6,7 +6,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
 
-import { ProgressBar, ProgressState } from '../widgets/progressBar';
+import { ProgressBar } from '../widgets/progressBar';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -140,7 +140,10 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     )}
                     {isValidating ? (
                         <div className={`${CLASS_NAME}__progress`}>
-                            <ProgressBar state={ProgressState.loading} height={10} />
+                            <ProgressBar state='loading'
+                                title='Validating selected element and link types'
+                                height={10}
+                            />
                         </div>
                     ) : null}
                 </div>

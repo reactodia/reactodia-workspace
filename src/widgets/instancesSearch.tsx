@@ -97,22 +97,27 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         const ENTER_KEY_CODE = 13;
 
         const className = `${CLASS_NAME} ${this.props.className || ''}`;
-        const progressState = (
-            this.state.querying ? ProgressState.loading :
-            this.state.error ? ProgressState.error :
-            this.state.items ? ProgressState.completed :
-            ProgressState.none
+        const progressState: ProgressState = (
+            this.state.querying ? 'loading' :
+            this.state.error ? 'error':
+            this.state.items ? 'completed' :
+            'none'
         );
 
         const searchTerm = this.state.inputText === undefined
             ? this.state.criteria.text : this.state.inputText;
 
         return <div className={className}>
-            <ProgressBar state={progressState} />
+            <ProgressBar state={progressState}
+                title='Querying for elements'
+            />
             <div className={`${CLASS_NAME}__criteria`}>
                 {this.renderCriteria()}
                 <div className={`${CLASS_NAME}__text-criteria reactodia-input-group`}>
-                    <input type='text' className='reactodia-form-control' placeholder='Search for...'
+                    <input type='text'
+                        className='reactodia-form-control'
+                        placeholder='Search for...'
+                        name='reactodia-instances-search-text'
                         value={searchTerm || ''}
                         onChange={e => this.setState({inputText: e.currentTarget.value})}
                         onKeyUp={e => {

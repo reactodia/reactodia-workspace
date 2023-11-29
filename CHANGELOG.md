@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - **[Breaking]** Replaced `visible` / `showLabel` properties on `RichLinkType` by `visibility` property of string enum type.
 - Optimized link route updates via batching.
 - Added custom "zoom-to-fit" icon instead of reusing a different one from Codicons.
+- Improved accessibility attribute placement (including `role`, `aria-*`, `title`, `name`, etc).
 
 ### Fixed
 - **[Breaking]** Use synthetic type and label predicates in element query of `SparqlDataProvider`:

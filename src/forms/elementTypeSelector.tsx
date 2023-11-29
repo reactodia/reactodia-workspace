@@ -141,7 +141,10 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                 <label>Entity Type</label>
                 {
                     elementTypes ? (
-                        <select className='reactodia-form-control' value={value} onChange={this.onElementTypeChange}>
+                        <select className='reactodia-form-control'
+                            name='reactodia-element-type-selector-select'
+                            value={value}
+                            onChange={this.onElementTypeChange}>
                             <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>Select entity type</option>
                             {
                                 elementTypes.map(this.renderPossibleElementType)
@@ -174,7 +177,8 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                         model={element}
                         disabled={isAlreadyOnDiagram || !hasAppropriateType}
                         selected={element.id === elementValue.value.id}
-                        onClick={(e, model) => this.onSelectExistingItem(model)} />
+                        onClick={(e, model) => this.onSelectExistingItem(model)}
+                    />
                 );
             });
         }
@@ -202,15 +206,19 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
             <div className={`${CLASS_NAME}__form-row ${CLASS_NAME}__element-selector`}>
                 <div className={`${CLASS_NAME}__search`}>
                     <span className={`${CLASS_NAME}__search-icon`} />
-                    <input value={searchString}
-                        onChange={e => this.setState({searchString: (e.target as HTMLInputElement).value})}
-                        className={`reactodia-form-control ${CLASS_NAME}__search-input`}
+                    <input className={`reactodia-form-control ${CLASS_NAME}__search-input`}
                         placeholder='Search for...'
-                        autoFocus />
+                        name='reactodia-element-type-selector-search'
+                        autoFocus
+                        value={searchString}
+                        onChange={e => this.setState({searchString: (e.target as HTMLInputElement).value})}
+                    />
                 </div>
                 {
                     searchString.length > 0 ? (
-                        <div className={`${CLASS_NAME}__existing-elements-list`}>
+                        <div className={`${CLASS_NAME}__existing-elements-list`}
+                            role='listbox'
+                            aria-label='Select an existing element to put on a diagram'>
                             {this.renderExistingElementsList()}
                         </div>
                     ) : (

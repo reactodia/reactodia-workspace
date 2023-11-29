@@ -43,6 +43,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                     {
                         values.map((term, index) => (
                             <input key={index}
+                                name='reactodia-edit-entity-property'
                                 className='reactodia-form-control'
                                 defaultValue={term.value}
                             />
@@ -72,7 +73,11 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <label>
                 Type
-                <input className='reactodia-form-control' value={label} disabled={true} />
+                <input className='reactodia-form-control'
+                    name='reactodia-edit-entity-type'
+                    value={label}
+                    disabled={true}
+                />
             </label>
         );
     }
@@ -95,8 +100,8 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <label>
                 IRI
-                <input
-                    className='reactodia-form-control'
+                <input className='reactodia-form-control'
+                    name='reactodia-edit-entity-iri'
                     defaultValue={elementModel.id}
                     onChange={this.onChangeIri}
                 />
@@ -121,7 +126,11 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <label>
                 Label
-                <input className='reactodia-form-control' value={text} onChange={this.onChangeLabel} />
+                <input className='reactodia-form-control'
+                    name='reactodia-edit-entity-label'
+                    value={text}
+                    onChange={this.onChangeLabel}
+                />
             </label>
         );
     }
@@ -142,11 +151,13 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                     {this.renderProperties()}
                 </div>
                 <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+                    <button type='button'
+                        className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
                         onClick={() => this.props.onApply(this.state.elementModel)}>
                         Apply
                     </button>
-                    <button className='reactodia-btn reactodia-btn-default'
+                    <button type='button'
+                        className='reactodia-btn reactodia-btn-default'
                         onClick={this.props.onCancel}>
                         Cancel
                     </button>
