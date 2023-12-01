@@ -78,22 +78,22 @@ export {
 } from './widgets/connectionsMenu';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { Halo, HaloProps } from './widgets/halo';
-export {
-    HaloLink, HaloLinkProps,
-    LinkAction, LinkActionProps, LinkActionStyleProps,
-    LinkActionContext, useLinkActionContext,
-    LinkActionSpinner, LinkActionSpinnerProps,
-    LinkActionEdit, LinkActionEditProps,
-    LinkActionDelete, LinkActionDeleteProps,
-    LinkActionMoveEndpoint, LinkActionMoveEndpointProps,
-    LinkActionRename, LinkActionRenameProps,
-} from './widgets/haloLink';
+export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
     Dropdown, DropdownProps, DropdownItem, DropdownItemProps,
 } from './widgets/dropdown';
 export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,
 } from './widgets/instancesSearch';
+export {
+    type LinkActionContext, useLinkActionContext,
+    LinkAction, LinkActionProps, LinkActionStyleProps,
+    LinkActionSpinner, LinkActionSpinnerProps,
+    LinkActionEdit, LinkActionEditProps,
+    LinkActionDelete, LinkActionDeleteProps,
+    LinkActionMoveEndpoint, LinkActionMoveEndpointProps,
+    LinkActionRename, LinkActionRenameProps,
+} from './widgets/linkAction';
 export { LinkTypesToolbox, LinkTypesToolboxProps } from './widgets/linksToolbox';
 export {
     ListElementView, ListElementViewProps, highlightSubstring, startDragElements,

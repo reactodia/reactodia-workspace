@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Made `HaloLink` widget customizable via action components:
   * Generic component for link actions: `LinkAction`;
   * Specialized actions: `LinkActionEdit`, `LinkActionDelete`, `LinkActionMoveEndpoint`, `LinkActionRename`;
+- Add selected link highlight to `HaloLink`:
+  * Label highlight -- displayed by default as underline;
+  * Path highlight -- unstyled by default, can be changed via CSS;
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.

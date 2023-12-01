@@ -10,9 +10,12 @@ import { restoreCapturedLinkGeometry } from './commands';
 import {
     LinkStyle, LinkLabelStyle, LinkMarkerStyle, RoutedLink,
 } from './customization';
-import { Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType } from './elements';
 import {
-    Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline, computeGrouping,
+    Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType,
+} from './elements';
+import {
+    Rect, Size, Vector, boundsOf, computeGrouping, computePolyline, computePolylineLength,
+    getPointAlongPolyline, pathFromPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
 import { RenderingState, RenderingLayer, FilledLinkTemplate } from './renderingState';
@@ -355,8 +358,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
             vertices
         );
 
-        const path = 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
-
+        const path = pathFromPolyline(polyline);
         
         const style = template.renderLink(link.data, link.linkState, view.model.factory);
         const pathAttributes = getPathAttributes(link, style);

@@ -212,6 +212,10 @@ export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, locatio
     return foundIndex;
 }
 
+export function pathFromPolyline(polyline: ReadonlyArray<Vector>): string {
+    return 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
+}
+
 export function findElementAtPoint(
     elements: ReadonlyArray<Element>,
     point: Vector,

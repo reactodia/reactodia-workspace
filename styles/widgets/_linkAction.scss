@@ -1,0 +1,69 @@
+.reactodia-link-action {
+  $button-size: var(--reactodia-link-button-size);
+  $button-margin: var(--reactodia-link-button-margin);
+
+  position: absolute;
+  cursor: pointer;
+  border: 0 none;
+  padding: 0;
+  opacity: 0.8;
+  outline: none;
+  transition: opacity 0.3s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &__spinner {
+    position: absolute;
+  }
+
+  &__button {
+    background-color: #ccc;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    background-size: 65%;
+    border-radius: calc(#{$button-size} * 0.5);
+    height: $button-size;
+    width: $button-size;
+  }
+
+  &__endpoint {
+    background: transparent;
+  }
+
+  &__edit {
+    background-image: url("@codicons/edit.svg");
+  }
+
+  &__delete {
+    background-image: url("@codicons/trash.svg");
+  }
+
+  &__rename {
+    background: white url("@codicons/edit.svg") no-repeat;
+    background-size: 80%;
+    background-position: center;
+    filter: #{"invert()"};
+
+    position: absolute;
+    margin-left: 5px;
+    padding: 0;
+    border: 0 none;
+    border-radius: 2px;
+    outline: none;
+    
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}

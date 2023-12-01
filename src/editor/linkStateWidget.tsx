@@ -8,6 +8,7 @@ import { LinkModel } from '../data/model';
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import {
     Vector, boundsOf, computePolyline, getPointAlongPolyline, computePolylineLength,
+    pathFromPolyline,
 } from '../diagram/geometry';
 import { TransformedSvgCanvas } from '../diagram/paper';
 import { RenderingLayer } from '../diagram/renderingState';
@@ -96,7 +97,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
 
     private calculateLinkPath(link: Link) {
         const polyline = this.calculatePolyline(link);
-        return 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
+        return pathFromPolyline(polyline);
     }
 
     private calculatePolyline(link: Link) {
