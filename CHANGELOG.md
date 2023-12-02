@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add selected link highlight to `HaloLink`:
   * Label highlight -- displayed by default as underline;
   * Path highlight -- unstyled by default, can be changed via CSS;
+- Support customizable stroke and fill styles in `Navigator` and improve default colors;
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.

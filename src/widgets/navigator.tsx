@@ -7,7 +7,7 @@ import { EventObserver } from '../coreUtils/events';
 import { CanvasContext } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
-import { boundsOf, getContentFittingBox } from '../diagram/geometry';
+import { Rect, boundsOf, getContentFittingBox } from '../diagram/geometry';
 
 import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
@@ -15,6 +15,10 @@ import {
 import { Vector } from '../diagram/geometry';
 
 export interface NavigatorProps {
+    /**
+     * @default true
+     */
+    expanded?: boolean;
     /**
      * @default 300
      */
@@ -28,9 +32,34 @@ export interface NavigatorProps {
      */
     scalePadding?: number;
     /**
-     * @default true
+     * @default "#F5F5F5"
      */
-    expanded?: boolean;
+    backgroundFill?: string;
+    /**
+     * @default "#F5F5F5"
+     */
+    scrollablePaneFill?: string;
+    /**
+     * @default "#FFFFFF"
+     */
+    viewportFill?: string;
+    /**
+     * @default {color: "#EEEEEE", width: 2}
+     */
+    viewportStroke?: NavigatorStrokeStyle;
+    /**
+     * @default {color: "#EEEEEE", width: 2, dash: [5, 5]}
+     */
+    overflowStroke?: NavigatorStrokeStyle;
+}
+
+export interface NavigatorStrokeStyle {
+    /** @default "transparent" */
+    readonly color?: string;
+    /** @default 1 */
+    readonly width?: number;
+    /** @default [] */
+    readonly dash?: ReadonlyArray<number>;
 }
 
 interface State {
@@ -45,10 +74,23 @@ interface NavigatorTransform {
 
 const CLASS_NAME = 'reactodia-navigator';
 const MIN_SCALE = 0.25;
+
+const DEFAULT_EXPANDED = true;
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 160;
 const DEFAULT_SCALE_PADDING = 0.2;
-const DEFAULT_EXPANDED = true;
+const DEFAULT_BACKGROUND_FILL = '#F5F5F5';
+const DEFAULT_SCROLLABLE_PANE_FILL = '#F5F5F5';
+const DEFAULT_VIEWPORT_FILL = '#FFFFFF';
+const DEFAULT_VIEWPORT_STROKE: NavigatorStrokeStyle = {
+    color: '#EEEEEE',
+    width: 2,
+};
+const DEFAULT_OVERFLOW_STROKE: NavigatorStrokeStyle = {
+    color: '#EEEEEE',
+    width: 2,
+    dash: [5, 5],
+};
 
 export class Navigator extends React.Component<NavigatorProps, State> {
     static contextType = CanvasContext;
@@ -78,7 +120,11 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     }
 
     shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
-        return nextState !== this.state;
+        return !(
+            nextProps.width === this.props.width &&
+            nextProps.height === this.props.height &&
+            nextState === this.state
+        );
     }
 
     componentWillUnmount() {
@@ -94,33 +140,53 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     };
 
     private draw = () => {
-        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
-        const {canvas} = this.context;
+        const {
+            width = DEFAULT_WIDTH,
+            height = DEFAULT_HEIGHT,
+            backgroundFill = DEFAULT_BACKGROUND_FILL,
+            scrollablePaneFill = DEFAULT_SCROLLABLE_PANE_FILL,
+        } = this.props;
+        const {canvas, model} = this.context;
         const pt = canvas.metrics.getTransform();
 
         this.calculateTransform(pt);
 
         const ctx = this.canvas.getContext('2d')!;
-        ctx.fillStyle = '#EEEEEE';
+        ctx.fillStyle = backgroundFill;
         ctx.clearRect(0, 0, width, height);
         ctx.fillRect(0, 0, width, height);
 
+        if (model.elements.length === 0) {
+            // Avoid drawing empty scrollable pane
+            return;
+        }
+
         const paneStart = paneTopLeft(pt);
-        const paneSize = totalPaneSize(pt);
-        const paneEnd = {
-            x: paneStart.x + paneSize.x,
-            y: paneStart.y + paneSize.y,
-        };
+        const paneEnd = Vector.add(paneStart, totalPaneSize(pt));
 
         const start = canvasFromPaneCoords(paneStart, pt, this.transform);
         const end = canvasFromPaneCoords(paneEnd, pt, this.transform);
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = scrollablePaneFill;
         ctx.fillRect(start.x, start.y, end.x - start.x, end.y - start.y);
 
         ctx.save();
 
+        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const viewportStart = canvas.metrics.clientToScrollablePaneCoords(0, 0);
+        const viewportEnd = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
+
+        const {x: x0, y: y0} = canvasFromPaneCoords(viewportStart, pt, this.transform);
+        const {x: x1, y: y1} = canvasFromPaneCoords(viewportEnd, pt, this.transform);
+        const viewportRect: Rect = {
+            x: x0,
+            y: y0,
+            width: x1 - x0,
+            height: y1 - y0,
+        };
+
+        this.fillViewport(ctx, viewportRect);
         this.drawElements(ctx, pt);
-        this.drawViewport(ctx, pt);
+        this.strokeViewport(ctx, viewportRect);
 
         ctx.restore();
     };
@@ -151,45 +217,60 @@ export class Navigator extends React.Component<NavigatorProps, State> {
         return hcl(h, c, l).toString();
     }
 
-    private drawViewport(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
-        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
-        const {canvas} = this.context;
+    private fillViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect): void {
+        const {
+            viewportFill = DEFAULT_VIEWPORT_FILL
+        } = this.props;
 
-        ctx.strokeStyle = '#337ab7';
-        ctx.lineWidth = 2;
+        ctx.fillStyle = viewportFill;
+        ctx.fillRect(
+            viewportRect.x,
+            viewportRect.y,
+            viewportRect.width,
+            viewportRect.height
+        );
+    }
 
-        const {clientWidth, clientHeight} = canvas.metrics.area;
-        const viewportStart = canvas.metrics.clientToScrollablePaneCoords(0, 0);
-        const viewportEnd = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
+    private strokeViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect): void {
+        const {
+            width = DEFAULT_WIDTH,
+            height = DEFAULT_HEIGHT,
+            viewportStroke = DEFAULT_VIEWPORT_STROKE,
+            overflowStroke = DEFAULT_OVERFLOW_STROKE,
+        } = this.props;
 
-        const {x: x1, y: y1} = canvasFromPaneCoords(viewportStart, pt, this.transform);
-        const {x: x2, y: y2} = canvasFromPaneCoords(viewportEnd, pt, this.transform);
+        const {x: x1, y: y1} = viewportRect;
+        const x2 = x1 + viewportRect.width;
+        const y2 = y1 + viewportRect.height;
 
         // draw visible viewport rectangle
+        setCanvasStroke(ctx, viewportStroke);
         ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
         // draw "out of area" viewport borders
         ctx.beginPath();
         if (x1 < 0) {
-            ctx.moveTo(0, y1);
-            ctx.lineTo(0, y2);
+            const startX = ctx.lineWidth;
+            ctx.moveTo(startX, y1);
+            ctx.lineTo(startX, y2);
         }
         if (y1 < 0) {
-            ctx.moveTo(x1, 0);
-            ctx.lineTo(x2, 0);
+            const startY = ctx.lineWidth;
+            ctx.moveTo(x1, startY);
+            ctx.lineTo(x2, startY);
         }
         if (x2 > width) {
-            ctx.moveTo(width, y1);
-            ctx.lineTo(width, y2);
+            const endX = width - ctx.lineWidth;
+            ctx.moveTo(endX, y1);
+            ctx.lineTo(endX, y2);
         }
         if (y2 > height) {
-            ctx.moveTo(x1, height);
-            ctx.lineTo(x2, height);
+            const endY = height - ctx.lineWidth;
+            ctx.moveTo(x1, endY);
+            ctx.lineTo(x2, endY);
         }
 
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#a0d2ff';
-        ctx.setLineDash([5, 5]);
+        setCanvasStroke(ctx, overflowStroke);
         ctx.stroke();
     }
 
@@ -230,8 +311,8 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     private canvasFromPageCoords(pageX: number, pageY: number): Vector {
         const {top, left} = this.canvas.getBoundingClientRect();
         return {
-            x: pageX - left - window.pageXOffset,
-            y: pageY - top - window.pageYOffset,
+            x: pageX - left - window.scrollX,
+            y: pageY - top - window.scrollY,
         };
     }
 
@@ -311,6 +392,13 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 }
 
 defineCanvasWidget(Navigator, element => ({element, attachment: 'viewport'}));
+
+function setCanvasStroke(canvas: CanvasRenderingContext2D, stroke: NavigatorStrokeStyle): void {
+    const {color = 'transparent', width = 1, dash = []} = stroke;
+    canvas.strokeStyle = color;
+    canvas.lineWidth = width;
+    canvas.setLineDash(dash);
+}
 
 function canvasFromPaneCoords(pane: Vector, pt: PaperTransform, nt: NavigatorTransform): Vector {
     return {
