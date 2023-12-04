@@ -285,9 +285,10 @@ export class IndexedDbCachedProvider implements DataProvider {
 
     async connectedLinkStats(params: {
         elementId: ElementIri;
+        inexactCount?: boolean;
         signal?: AbortSignal | undefined;
     }): Promise<LinkCount[]> {
-        const {elementId, signal} = params;
+        const {elementId, inexactCount, signal} = params;
         const db = await this.openDb();
         const result = await fetchSingleWithDbCache(
             db,
@@ -295,7 +296,11 @@ export class IndexedDbCachedProvider implements DataProvider {
             elementId,
             async (key): Promise<ConnectedLinkStatsRecord> => ({
                 elementId: key,
-                stats: await this.baseProvider.connectedLinkStats({elementId: key, signal}),
+                stats: await this.baseProvider.connectedLinkStats({
+                    elementId: key,
+                    inexactCount,
+                    signal
+                }),
             })
         );
         return result.stats;

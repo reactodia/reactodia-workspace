@@ -18,11 +18,6 @@ export interface SparqlDataProviderSettings {
     dataLabelProperty: string;
 
     /**
-     * Full-text search settings.
-     */
-    fullTextSearch: FullTextSearchSettings;
-
-    /**
      * SELECT query to retrieve class tree.
      *
      * Parametrized variables:
@@ -142,14 +137,16 @@ export interface SparqlDataProviderSettings {
     /**
      * SELECT query to retrieve incoming/outgoing link types from specified element with statistics.
      *
+     * If `?direction` binding is returned, it would be possible to avoid statistics query
+     * when `inexactCount` mode is requested.
+     *
      * Parametrized variables:
      *   - `${elementIri}`
      *   - `${linkConfigurations}`
      *
      * Expected bindings:
      *   - `?link`
-     *   - `?label` (optional)
-     *   - `?instcount` (optional)
+     *   - `?direction` (optional) - expected values: `"in"`, `"out"`.
      */
     linkTypesOfQuery: string;
 
@@ -172,7 +169,12 @@ export interface SparqlDataProviderSettings {
     linkTypesStatisticsQuery: string;
 
     /**
-     * when fetching all links from element, we could specify additional filter
+     * SPARQL query pattern to restrict lookup results in case when `refElementLinkId`
+     * is not specified.
+     *
+     * Available bindings:
+     *   - `?link` link type
+     *   - `?direction` link direction, either `"in"` or `"out"`
      */
     filterRefElementLinkPattern: string;
 
@@ -186,22 +188,31 @@ export interface SparqlDataProviderSettings {
     filterTypePattern: string;
 
     /**
-     * how to fetch elements info when fetching data.
+     * SPARQL pattern which describes how to fetch elements info similar to `elementInfoQuery`
+     * but within the lookup query.
+     *
+     * Parametrized variables:
+     *   - `${dataLabelProperty}`
      */
     filterElementInfoPattern: string;
 
     /**
-     * imposes additional filtering on elements within filter
+     * SPARQL query pattern for additional filtering on elements within the lookup query.
      */
     filterAdditionalRestriction: string;
 
     /**
-     * Abstract links configuration - one could abstract a property path as a link on the diagram.
+     * Lookup by text settings.
+     */
+    fullTextSearch: FullTextSearchSettings;
+
+    /**
+     * "Virtual" links configurations to translate a SPARQL pattern as a link.
      */
     linkConfigurations: LinkConfiguration[];
 
     /**
-     * (Experimental) Allows data provider to find links other than specified in `linkConfigurations`
+     * Allows data provider to find links other than specified in `linkConfigurations`
      * when `linkConfigurations` has at least one value set.
      *
      * @default false
@@ -209,12 +220,12 @@ export interface SparqlDataProviderSettings {
     openWorldLinks?: boolean;
 
     /**
-     * Abstract property configuration similar to abstract link configuration. Not type-specific yet.
+     * "Virtual" property configurations to translate a SPARQL pattern as an element property.
      */
     propertyConfigurations: PropertyConfiguration[];
 
     /**
-     * (Experimental) Allows data provider to find element properties other than specified in
+     * Allows data provider to find element properties other than specified in
      * `propertyConfigurations` when `propertyConfigurations` has at least one value set.
      *
      * @default false
@@ -223,9 +234,9 @@ export interface SparqlDataProviderSettings {
 }
 
 /**
- * Full text search settings.
+ * Lookup text search settings.
  * 
- * It is possible to use anything from search extensions of a Triplestore to a regular expressions match.
+ * It is possible to use anything from DB-specific search extensions to a regular expression match.
  */
 export interface FullTextSearchSettings {
     /**
@@ -475,7 +486,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
                 BIND(CONCAT("https://commons.wikimedia.org/w/thumb.php?f=",
                     STRAFTER(STR(?fullImage), "Special:FilePath/"), "&w=200") AS ?image)`,
     linkTypesOfQuery: `
-        SELECT DISTINCT ?link
+        SELECT DISTINCT ?link ?direction
         WHERE {
             \${linkConfigurations}
             ?claim <http://wikiba.se/ontology#directClaim> ?link .
@@ -575,7 +586,7 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     `,
     imageQueryPattern: '{ ?inst ?linkType ?image } UNION { [] ?linkType ?inst. BIND(?inst as ?image) }',
     linkTypesOfQuery: `
-        SELECT DISTINCT ?link
+        SELECT DISTINCT ?link ?direction
         WHERE {
             \${linkConfigurations}
         }

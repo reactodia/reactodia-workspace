@@ -103,6 +103,7 @@ export class CompositeDataProvider implements DataProvider {
 
     connectedLinkStats(params: {
         elementId: ElementIri;
+        inexactCount?: boolean;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
         return this.requestWithMerge(p => p.connectedLinkStats(params), mergeConnectedLinkStats);

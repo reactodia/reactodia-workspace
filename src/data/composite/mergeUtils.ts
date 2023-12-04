@@ -200,6 +200,7 @@ function mergeLinkCount(a: LinkCount, b: LinkCount): LinkCount {
         ...b,
         inCount: a.inCount + b.inCount,
         outCount: a.outCount + b.outCount,
+        inexact: Boolean(a.inexact || b.inexact),
     };
 }
 
