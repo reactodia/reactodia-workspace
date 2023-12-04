@@ -16,7 +16,7 @@ import {
     getElementsInfo,
     getElementTypes,
     getLinksInfo,
-    getLinksTypeIds,
+    getConnectedLinkTypes,
     getFilteredData,
     getLinkStatistics,
     triplesToElementBinding,
@@ -24,8 +24,8 @@ import {
     isDirectProperty,
 } from './responseHandler';
 import {
-    ClassBinding, ElementBinding, LinkBinding, PropertyBinding, FilterBinding,
-    LinkCountBinding, LinkTypeBinding, ElementImageBinding, ElementTypeBinding, SparqlResponse,
+    ClassBinding, ElementBinding, ElementTypeBinding, LinkBinding, PropertyBinding, FilterBinding,
+    LinkCountBinding, LinkTypeBinding, ConnectedLinkTypeBinding, ElementImageBinding, SparqlResponse,
     mapSparqlResponseIntoRdfJs,
 } from './sparqlModels';
 import {
@@ -386,14 +386,17 @@ export class SparqlDataProvider implements DataProvider {
 
     async connectedLinkStats(params: {
         elementId: ElementIri;
+        inexactCount?: boolean;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
-        const {elementId, signal} = params;
+        const {elementId, inexactCount, signal} = params;
         const {defaultPrefix, linkTypesOfQuery, linkTypesStatisticsQuery, filterTypePattern} = this.settings;
+
+        const bindDirection = /\?direction\b/.test(linkTypesOfQuery);
 
         const elementIri = escapeIri(elementId);
         const forAll = this.formatLinkUnion(
-            elementId, undefined, undefined, '?outObject', '?inObject', false
+            elementId, undefined, undefined, '?outObject', '?inObject', bindDirection
         );
         if (forAll.usePredicatePart) {
             forAll.unionParts.push(`{ ${elementIri} ?link ?outObject }`);
@@ -405,8 +408,13 @@ export class SparqlDataProvider implements DataProvider {
             linkConfigurations: forAll.unionParts.join('\nUNION\n'),
         });
 
-        const linkTypeBindings = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-        const linkTypeIds = getLinksTypeIds(linkTypeBindings, this.linkByPredicate, this.openWorldLinks);
+        const linkTypeBindings = await this.executeSparqlSelect<ConnectedLinkTypeBinding>(query, {signal});
+        const hasConnectedDirection = linkTypeBindings.head.vars.includes('direction');
+        const connectedLinkTypes = getConnectedLinkTypes(
+            linkTypeBindings,
+            this.linkByPredicate,
+            this.openWorldLinks
+        );
 
         const navigateElementFilterOut = this.acceptBlankNodes
             ? 'FILTER (IsIri(?outObject) || IsBlank(?outObject))'
@@ -416,13 +424,15 @@ export class SparqlDataProvider implements DataProvider {
             : 'FILTER IsIri(?inObject)';
 
         const foundLinkStats: LinkCount[] = [];
-        await Promise.all(linkTypeIds.map(async linkId => {
-            const linkConfig = this.linkById.get(linkId);
+        await Promise.all(connectedLinkTypes.map(async ({linkType, hasInLink, hasOutLink}) => {
+            const linkConfig = this.linkById.get(linkType);
             let linkConfigurationOut: string;
             let linkConfigurationIn: string;
 
             if (!linkConfig || isDirectLink(linkConfig)) {
-                const predicate = escapeIri(linkConfig && isDirectLink(linkConfig) ? linkConfig.path : linkId);
+                const predicate = escapeIri(
+                    linkConfig && isDirectLink(linkConfig) ? linkConfig.path : linkType
+                );
                 linkConfigurationOut = `${elementIri} ${predicate} ?outObject`;
                 linkConfigurationIn = `?inObject ${predicate} ${elementIri}`;
             } else {
@@ -438,19 +448,27 @@ export class SparqlDataProvider implements DataProvider {
                 linkConfigurationIn += ` { ${restrictionIn} FILTER(?class IN (${commaSeparatedDomains})) }`;
             }
 
-            const statsQuery = defaultPrefix + resolveTemplate(linkTypesStatisticsQuery, {
-                linkId: escapeIri(linkId),
-                elementIri,
-                linkConfigurationOut,
-                linkConfigurationIn,
-                navigateElementFilterOut,
-                navigateElementFilterIn,
-            });
-
-            const bindings = await this.executeSparqlSelect<LinkCountBinding>(statsQuery, {signal});
-            const linkStats = getLinkStatistics(bindings);
-            if (linkStats) {
-                foundLinkStats.push(linkStats);
+            if (!linkTypesStatisticsQuery || (inexactCount && hasConnectedDirection)) {
+                foundLinkStats.push({
+                    id: linkType,
+                    inCount: hasInLink ? 1 : 0,
+                    outCount: hasOutLink ? 1 : 0,
+                    inexact: true,
+                });
+            } else {
+                const statsQuery = defaultPrefix + resolveTemplate(linkTypesStatisticsQuery, {
+                    linkId: escapeIri(linkType),
+                    elementIri,
+                    linkConfigurationOut,
+                    linkConfigurationIn,
+                    navigateElementFilterOut,
+                    navigateElementFilterIn,
+                });
+                const bindings = await this.executeSparqlSelect<LinkCountBinding>(statsQuery, {signal});
+                const linkStats = getLinkStatistics(bindings);
+                if (linkStats) {
+                    foundLinkStats.push(linkStats);
+                }
             }
         }));
         return foundLinkStats;

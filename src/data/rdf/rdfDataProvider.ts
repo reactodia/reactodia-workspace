@@ -348,6 +348,7 @@ export class RdfDataProvider implements DataProvider {
 
     connectedLinkStats(params: {
         elementId: ElementIri;
+        inexactCount?: boolean;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
         const {elementId} = params;

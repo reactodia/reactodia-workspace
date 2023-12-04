@@ -51,6 +51,11 @@ export interface LinkCount {
     readonly id: LinkTypeIri;
     readonly inCount: number;
     readonly outCount: number;
+    /**
+     * If `true`, then `inCount` and `outCount` values might be not exact
+     * in case when the values are non-zero.
+     */
+    readonly inexact?: boolean;
 }
 
 export function isEncodedBlank(iri: string): boolean {

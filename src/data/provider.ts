@@ -5,27 +5,27 @@ import {
 } from './model';
 
 /**
- * Asynchronously provides data for diagram elements, links and other diagram entities.
+ * Asynchronously provides data for the elements, links and other graph entities.
  */
 export interface DataProvider {
     readonly factory: DataFactory;
 
     /**
-     * Returns the structure of the class tree.
+     * Gets the structure and data for all known element types.
      */
     knownElementTypes(params: {
         signal?: AbortSignal;
     }): Promise<ElementTypeGraph>;
 
     /**
-     * Returns link types along with statistics.
+     * Gets the data and statistics for all known link types.
      */
     knownLinkTypes(params: {
         signal?: AbortSignal;
     }): Promise<LinkType[]>;
 
     /**
-     * Class information
+     * Gets the data for the specified element types.
      */
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
@@ -33,7 +33,7 @@ export interface DataProvider {
     }): Promise<Map<ElementTypeIri, ElementType>>;
 
     /**
-     * Data properties information
+     * Gets the data for the specified property types.
      */
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
@@ -41,7 +41,7 @@ export interface DataProvider {
     }): Promise<Map<PropertyTypeIri, PropertyType>>;
 
     /**
-     * Link type information.
+     * Gets the data for the specified link types.
      */
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
@@ -49,7 +49,7 @@ export interface DataProvider {
     }): Promise<Map<LinkTypeIri, LinkType>>;
 
     /**
-     * Getting the elements from the data source on diagram initialization and on navigation events
+     * Gets the data for the specified elements.
      */
     elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
@@ -57,8 +57,7 @@ export interface DataProvider {
     }): Promise<Map<ElementIri, ElementModel>>;
 
     /**
-     * Should return all links between elements.
-     * linkTypeIds is ignored in current sparql providers and is subject to be removed
+     * Get all links between specified elements.
      */
     links(params: {
         elementIds: ReadonlyArray<ElementIri>;
@@ -67,30 +66,39 @@ export interface DataProvider {
     }): Promise<LinkModel[]>;
 
     /**
-     * Get link types of element to build navigation menu
+     * Gets connected link types of an element for exploration.
      */
     connectedLinkStats(params: {
         elementId: ElementIri;
+        /**
+         * Whether to allow to return inexact count of elements connected by
+         * an each link type when result is non-zero.
+         *
+         * @default false
+         */
+        inexactCount?: boolean;
         signal?: AbortSignal;
     }): Promise<LinkCount[]>;
 
     /**
      * Looks up elements with different filters:
-     *  - by type (),
-     * by element and it's connection, by full-text search.
-     * Implementation should implement all possible combinations.
+     *  - by an element type via `elementTypeId`;
+     *  - by a connected element via `refElementId`, `refElementLinkId` and `linkDirection`;
+     *  - by a text lookup via `text`;
+     *
+     * Filters can be combined to produce an intersection of the results.
      */
     lookup(params: LookupParams): Promise<LinkedElement[]>;
 }
 
 export interface LookupParams {
     /**
-     * Filter by element type.
+     * Filter by an element type.
      */
     elementTypeId?: ElementTypeIri;
     
     /**
-     * Filter by full-text search.
+     * Filter by a text lookup.
      */
     text?: string;
 

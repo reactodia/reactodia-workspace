@@ -11,7 +11,7 @@ import { LinkedElement } from '../provider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
 import {
     SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
-    LinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
+    LinkTypeBinding, ConnectedLinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
     isRdfIri, isRdfBlank, isRdfLiteral,
 } from './sparqlModels';
 
@@ -353,26 +353,48 @@ export function getLinksInfo(
     return Array.from(links.values());
 }
 
-export function getLinksTypeIds(
-    response: SparqlResponse<LinkTypeBinding>,
+export interface ConnectedLinkType {
+    linkType: LinkTypeIri;
+    hasInLink?: boolean;
+    hasOutLink?: boolean;
+}
+
+export function getConnectedLinkTypes(
+    response: SparqlResponse<ConnectedLinkTypeBinding>,
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> = EMPTY_MAP,
     openWorldLinks: boolean = true
-): LinkTypeIri[] {
-    const linkTypes: LinkTypeIri[] = [];
+): ConnectedLinkType[] {
+    const linkTypes = new Map<LinkTypeIri, ConnectedLinkType>();
+    const pushLinkType = (linkType: LinkTypeIri, direction: Rdf.Literal | undefined) => {
+        let connectedLink = linkTypes.get(linkType);
+        if (!connectedLink) {
+            connectedLink = {linkType};
+            linkTypes.set(linkType, connectedLink);
+        }
+        if (isRdfLiteral(direction)) {
+            if (direction.value === 'in') {
+                connectedLink.hasInLink = true;
+            } else if (direction.value === 'out') {
+                connectedLink.hasOutLink = true;
+            }
+        }
+    };
     for (const binding of response.results.bindings) {
-        if (!isRdfIri(binding.link)) { continue; }
+        if (!isRdfIri(binding.link)) {
+            continue;
+        }
         const linkConfigs = linkByPredicateType.get(binding.link.value);
         if (linkConfigs && linkConfigs.length > 0) {
             for (const linkConfig of linkConfigs) {
                 const mappedLinkType = isDirectLink(linkConfig)
                     ? linkConfig.id : binding.link.value;
-                linkTypes.push(mappedLinkType as LinkTypeIri);
+                pushLinkType(mappedLinkType as LinkTypeIri, binding.direction);
             }
         } else if (openWorldLinks) {
-            linkTypes.push(binding.link.value as LinkTypeIri);
+            pushLinkType(binding.link.value as LinkTypeIri, binding.direction);
         }
     }
-    return linkTypes;
+    return Array.from(linkTypes.values());
 }
 
 export function getLinkStatistics(response: SparqlResponse<LinkCountBinding>): LinkCount | undefined {

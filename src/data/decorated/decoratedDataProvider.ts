@@ -102,6 +102,7 @@ export class DecoratedDataProvider implements DataProvider {
 
     connectedLinkStats(params: {
         elementId: ElementIri;
+        inexactCount?: boolean;
         signal?: AbortSignal;
     }): Promise<LinkCount[]> {
         return this.decorate('connectedLinkStats', [params]);

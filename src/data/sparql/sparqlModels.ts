@@ -119,6 +119,11 @@ export interface LinkCountBinding {
     outCount: Rdf.Literal;
 }
 
+export interface ConnectedLinkTypeBinding {
+    link: Rdf.NamedNode;
+    direction?: Rdf.Literal;
+}
+
 export interface LinkTypeBinding {
     link: Rdf.NamedNode;
     label?: Rdf.Literal;
