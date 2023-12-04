@@ -98,7 +98,13 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                             />
                         )}
                         {haloLink === null ? null : <HaloLink {...haloLink} />}
-                        {selection === null ? null : <Selection {...selection} />}
+                        {selection === null ? null : (
+                            <Selection {...selection}
+                                connectionsMenuCommands={
+                                    connectionsMenu === null ? undefined : connectionsMenuCommands
+                                }
+                            />
+                        )}
                         {navigator === null ? null : <Navigator {...navigator} />}
                         {toolbar === null ? null : <Toolbar {...toolbar} />}
                         {zoomControl === null ? null : <ZoomControl {...zoomControl} />}

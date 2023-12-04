@@ -57,6 +57,7 @@ export interface OpenedDialog {
     readonly target: Element | Link;
     readonly knownType: KnownDialogType | undefined;
     readonly holdSelection: boolean;
+    readonly onClose: () => void;
 }
 
 export class OverlayController {
@@ -220,6 +221,7 @@ export class OverlayController {
             target,
             knownType: dialogType,
             holdSelection,
+            onClose,
         };
 
         const dialog = (
@@ -241,9 +243,10 @@ export class OverlayController {
 
     hideDialog() {
         if (this._openedDialog) {
-            this.editor.removeTemporaryCells([this._openedDialog.target]);
             const previous = this._openedDialog;
             this._openedDialog = undefined;
+            previous.onClose();
+            this.editor.removeTemporaryCells([previous.target]);
             this.view.setCanvasWidget('dialog', null);
             this.source.trigger('changeOpenedDialog', {source: this, previous});
         }

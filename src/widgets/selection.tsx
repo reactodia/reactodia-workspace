@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
-import { EventObserver } from '../coreUtils/events';
+import { EventObserver, EventTrigger } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore,
 } from '../coreUtils/hooks';
@@ -18,9 +18,10 @@ import { EditorController, SelectionItem } from '../editor/editorController';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
+import type { ConnectionsMenuCommands } from './connectionsMenu';
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
-    SelectionActionExpand,
+    SelectionActionExpand, SelectionActionConnections,
 } from './selectionAction';
 
 export interface SelectionProps {
@@ -32,6 +33,7 @@ export interface SelectionProps {
      * @default 2
      */
     itemMargin?: number;
+    connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
     /**
      * `SelectionAction` items representing available actions on the selected elements.
      *
@@ -193,6 +195,7 @@ function SelectionBox(props: SelectionBoxProps) {
         model, canvas, editor, selectedElements, highlightedBox,
         boxMargin = 5,
         itemMargin = 2,
+        connectionsMenuCommands,
         children,
     } = props;
 
@@ -238,6 +241,10 @@ function SelectionBox(props: SelectionBoxProps) {
                         <SelectionActionRemove dock='ne' dockRow={1} />
                         <SelectionActionZoomToFit dock='ne' dockRow={2} />
                         <SelectionActionLayout dock='ne' dockRow={3} />
+                        <SelectionActionConnections dock='ne'
+                            dockRow={4}
+                            commands={connectionsMenuCommands}
+                        />
                         <SelectionActionExpand dock='s' />
                     </>}
                 </div>
