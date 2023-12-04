@@ -3,7 +3,7 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
-import { ElementModel, LinkModel } from '../data/model';
+import { ElementIri, ElementModel, LinkModel } from '../data/model';
 import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
@@ -90,7 +90,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private beginCreatingLink(params: { source: Element; point: Vector }) {
-        const {workspace: {editor}} = this.props;
+        const {workspace: {model, editor}} = this.props;
         const {source, point} = params;
 
         const temporaryElement = this.createTemporaryElement(point);
@@ -105,7 +105,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             },
         });
         const temporaryLink = editor.createNewLink({link: linkTemplate, temporary: true});
-        const linkType = editor.model.createLinkType(temporaryLink.typeId);
+        const linkType = model.createLinkType(temporaryLink.typeId);
         linkType.setVisibility('withoutLabel');
 
         this.temporaryElement = temporaryElement;
@@ -113,14 +113,14 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private beginMovingLink(target: Link, startingPoint: Vector) {
-        const {mode, workspace: {editor}} = this.props;
+        const {mode, workspace: {model, editor}} = this.props;
 
         if (!(mode === 'moveLinkSource' || mode === 'moveLinkTarget')) {
             throw new Error('Unexpected edit mode for moving link');
         }
 
         this.oldLink = target;
-        editor.model.removeLink(target.id);
+        model.removeLink(target.id);
         const {id, sourceId, targetId, data, vertices, linkState} = target;
 
         const temporaryElement = this.createTemporaryElement(startingPoint);
@@ -144,8 +144,16 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
     private createTemporaryElement(point: Vector) {
         const {workspace: {model}} = this.props;
-        const temporaryElement = model.createTemporaryElement();
+
+        const temporaryElement = new Element({
+            data: Element.placeholderData('' as ElementIri),
+            temporary: true,
+        });
         temporaryElement.setPosition(point);
+
+        const batch = model.history.startBatch();
+        model.addElement(temporaryElement);
+        batch.discard();
 
         return temporaryElement;
     }
@@ -171,7 +179,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     };
 
     private queryCanLinkFrom() {
-        const {workspace: {editor}} = this.props;
+        const {workspace: {model, editor}} = this.props;
 
         if (!editor.metadataApi) {
             this.setState({canLinkFrom: false});
@@ -180,7 +188,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         this.setState({canLinkFrom: undefined});
 
-        const source = editor.model.getElement(this.temporaryLink!.sourceId)!;
+        const source = model.getElement(this.temporaryLink!.sourceId)!;
         mapAbortedToNull(
             editor.metadataApi.canLinkElement(source.data, this.cancellation.signal),
             this.cancellation.signal
@@ -197,7 +205,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private queryCanDropOnCanvas() {
-        const {mode, workspace: {editor}} = this.props;
+        const {mode, workspace: {model, editor}} = this.props;
 
         if (!editor.metadataApi || mode !== 'establishLink') {
             this.setState({canDropOnCanvas: false});
@@ -206,7 +214,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         this.setState({canDropOnCanvas: undefined});
 
-        const source = editor.model.getElement(this.temporaryLink!.sourceId)!;
+        const source = model.getElement(this.temporaryLink!.sourceId)!;
         mapAbortedToNull(
             editor.metadataApi.canDropOnCanvas(source.data, this.cancellation.signal),
             this.cancellation.signal
@@ -223,7 +231,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private queryCanDropOnElement(targetElement: Element | undefined) {
-        const {mode, workspace: {editor}} = this.props;
+        const {mode, workspace: {model, editor}} = this.props;
 
         this.canDropOnElementCancellation.abort();
         this.canDropOnElementCancellation = new AbortController();
@@ -245,11 +253,11 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         let target!: ElementModel;
 
         if (mode === 'establishLink' || mode === 'moveLinkTarget') {
-            source = editor.model.getElement(this.temporaryLink!.sourceId)!.data;
+            source = model.getElement(this.temporaryLink!.sourceId)!.data;
             target = targetElement.data;
         } else if (mode === 'moveLinkSource') {
             source = targetElement.data;
-            target = editor.model.getElement(this.temporaryLink!.targetId)!.data;
+            target = model.getElement(this.temporaryLink!.targetId)!.data;
         }
 
         const signal = this.canDropOnElementCancellation.signal;
@@ -391,7 +399,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     render() {
-        const {workspace: {model, view}, canvas} = this.props;
+        const {workspace: {model}, canvas} = this.props;
         const {waitingForMetadata} = this.state;
 
         if (!this.temporaryLink) {
@@ -408,7 +416,6 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 {this.renderCanDropIndicator()}
                 {waitingForMetadata ? null : (
                     <LinkLayer model={model}
-                        view={view}
                         renderingState={canvas.renderingState}
                         links={[this.temporaryLink]}
                     />

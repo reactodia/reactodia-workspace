@@ -1,22 +1,18 @@
 import * as React from 'react';
 
-import { MetadataApi } from '../data/metadataApi';
 import { ElementModel, LinkModel, sameLink } from '../data/model';
 
-import { EditorController } from '../editor/editorController';
-import { DiagramView } from '../diagram/view';
 import { LinkDirection } from '../diagram/elements';
 
-import { ProgressBar, ProgressState } from '../widgets/progressBar';
+import { ProgressBar } from '../widgets/progressBar';
+
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
 
 const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditLinkFormProps {
-    editor: EditorController;
-    view: DiagramView;
-    metadataApi: MetadataApi | undefined;
     link: LinkModel;
     source: ElementModel;
     target: ElementModel;
@@ -31,10 +27,13 @@ interface State {
 }
 
 export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+    
     private validationCancellation = new AbortController();
 
-    constructor(props: EditLinkFormProps) {
-        super(props);
+    constructor(props: EditLinkFormProps, context: any) {
+        super(props, context);
         this.state = {
             linkValue: {
                 value: {link: props.link, direction: LinkDirection.out},
@@ -63,7 +62,7 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
     }
 
     private validate() {
-        const {editor, link: originalLink} = this.props;
+        const {link: originalLink} = this.props;
         const {linkValue: {value}} = this.state;
         this.setState({isValidating: true});
 
@@ -71,7 +70,7 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
         this.validationCancellation = new AbortController();
         const signal = this.validationCancellation.signal;
 
-        validateLinkType(editor, value.link, originalLink).then(error => {
+        validateLinkType(value.link, originalLink, this.context).then(error => {
             if (signal.aborted) { return; }
             this.setState(({linkValue}) => ({
                 linkValue: {...linkValue, ...error, validated: true},
@@ -81,16 +80,13 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
     }
 
     render() {
-        const {editor, view, metadataApi, source, target} = this.props;
+        const {source, target} = this.props;
         const {linkValue, isValidating} = this.state;
         const isValid = !linkValue.error;
         return (
             <div className={CLASS_NAME}>
                 <div className={`${CLASS_NAME}__body`}>
-                    <LinkTypeSelector editor={editor}
-                        view={view}
-                        metadataApi={metadataApi}
-                        linkValue={linkValue}
+                    <LinkTypeSelector linkValue={linkValue}
                         source={source}
                         target={target}
                         onChange={value => this.setState({

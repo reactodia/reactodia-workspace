@@ -8,7 +8,6 @@ import type { Vector, Rect } from './geometry';
 import type { DiagramModel } from './model';
 import type { PaperTransform } from './paper';
 import type { ToDataURLOptions } from './toSvg';
-import type { DiagramView } from './view';
 
 export interface CanvasApi {
     readonly events: Events<CanvasEvents>;
@@ -141,7 +140,6 @@ export interface CanvasWidgetDescription {
 export interface CanvasContext {
     readonly canvas: CanvasApi;
     readonly model: DiagramModel;
-    readonly view: DiagramView;
 }
 
 export const CanvasContext = React.createContext<CanvasContext | null>(null);

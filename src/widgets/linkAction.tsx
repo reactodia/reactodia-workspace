@@ -6,6 +6,7 @@ import { useEventStore, useFrameDebouncedStore, useSyncStore } from '../coreUtil
 
 import { CanvasContext } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
+import { GraphStructure } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
@@ -83,9 +84,9 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {editor, overlayController} = React.useContext(WorkspaceContext)!;
+    const {model, editor, overlayController} = React.useContext(WorkspaceContext)!;
 
-    const canEdit = useCanEditLink(link, editor);
+    const canEdit = useCanEditLink(link, model, editor);
     const linkIsDeleted = isDeletedLink(editor.authoringState, link);
 
     if (!editor.inAuthoringMode || linkIsDeleted) {
@@ -114,7 +115,11 @@ export function LinkActionEdit(props: LinkActionEditProps) {
     );
 }
 
-function useCanEditLink(link: Link, editor: EditorController): boolean | undefined {
+function useCanEditLink(
+    link: Link,
+    graph: GraphStructure,
+    editor: EditorController
+): boolean | undefined {
     const [canEdit, setCanEdit] = React.useState<boolean | undefined>();
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
@@ -131,8 +136,8 @@ function useCanEditLink(link: Link, editor: EditorController): boolean | undefin
             setCanEdit(false);
         } else {
             setCanEdit(undefined);
-            const source = editor.model.getElement(link.sourceId)!;
-            const target = editor.model.getElement(link.targetId)!;
+            const source = graph.getElement(link.sourceId)!;
+            const target = graph.getElement(link.targetId)!;
             const signal = cancellation.signal;
             mapAbortedToNull(
                 editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),
@@ -153,9 +158,9 @@ export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 export function LinkActionDelete(props: LinkActionDeleteProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = React.useContext(WorkspaceContext)!;
 
-    const canDelete = useCanDeleteLink(link, editor);
+    const canDelete = useCanDeleteLink(link, model, editor);
     const linkIsDeleted = (
         isDeletedByItself(editor.authoringState, link) ||
         isSourceOrTargetDeleted(editor.authoringState, link)
@@ -187,7 +192,11 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
     );
 }
 
-function useCanDeleteLink(link: Link, editor: EditorController): boolean | undefined {
+function useCanDeleteLink(
+    link: Link,
+    graph: GraphStructure,
+    editor: EditorController
+): boolean | undefined {
     const [canDelete, setCanDelete] = React.useState<boolean | undefined>();
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
@@ -204,8 +213,8 @@ function useCanDeleteLink(link: Link, editor: EditorController): boolean | undef
             setCanDelete(false);
         } else {
             setCanDelete(undefined);
-            const source = editor.model.getElement(link.sourceId)!;
-            const target = editor.model.getElement(link.targetId)!;
+            const source = graph.getElement(link.sourceId)!;
+            const target = graph.getElement(link.targetId)!;
             const signal = cancellation.signal;
             mapAbortedToNull(
                 editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),

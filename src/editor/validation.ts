@@ -4,6 +4,8 @@ import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 import { ElementIri, LinkModel, hashLink, sameLink } from '../data/model';
 import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
 
+import { GraphStructure } from '../diagram/model';
+
 import { AuthoringState } from './authoringState';
 import { EditorController } from './editorController';
 
@@ -61,10 +63,9 @@ export namespace ValidationState {
 
 export function changedElementsToValidate(
     previousAuthoring: AuthoringState,
-    editor: EditorController,
-) {
-    const currentAuthoring = editor.authoringState;
-
+    currentAuthoring: AuthoringState,
+    graph: GraphStructure
+): Set<ElementIri> {
     const links = new HashMap<LinkModel, true>(hashLink, sameLink);
     previousAuthoring.links.forEach((e, model) => links.set(model, true));
     currentAuthoring.links.forEach((e, model) => links.set(model, true));
@@ -78,7 +79,7 @@ export function changedElementsToValidate(
         }
     });
 
-    for (const element of editor.model.elements) {
+    for (const element of graph.elements) {
         const current = currentAuthoring.elements.get(element.iri);
         const previous = previousAuthoring.elements.get(element.iri);
         if (current !== previous) {
@@ -86,7 +87,7 @@ export function changedElementsToValidate(
 
             // when we remove element incoming link are removed as well so we should update their sources
             if ((current || previous)!.deleted) {
-                for (const link of editor.model.getElementLinks(element)) {
+                for (const link of graph.getElementLinks(element)) {
                     if (link.data.sourceId !== element.iri) {
                         toValidate.add(link.data.sourceId);
                     }
@@ -101,19 +102,20 @@ export function changedElementsToValidate(
 export function validateElements(
     targets: ReadonlySet<ElementIri>,
     validationApi: ValidationApi,
+    graph: GraphStructure,
     editor: EditorController,
     signal: AbortSignal | undefined
 ) {
     const previousState = editor.validationState;
     const newState = ValidationState.createMutable();
 
-    for (const element of editor.model.elements) {
+    for (const element of graph.elements) {
         if (newState.elements.has(element.iri)) {
             continue;
         }
 
         const outboundLinks: LinkModel[] = [];
-        for (const link of editor.model.getElementLinks(element)) {
+        for (const link of graph.getElementLinks(element)) {
             if (link.sourceId === element.id) {
                 outboundLinks.push(link.data);
             }
@@ -124,7 +126,7 @@ export function validateElements(
                 target: element.data,
                 outboundLinks,
                 state: editor.authoringState,
-                model: editor.model,
+                model: graph,
                 signal,
             };
             const result = mapAbortedToNull(validationApi.validate(event), signal);

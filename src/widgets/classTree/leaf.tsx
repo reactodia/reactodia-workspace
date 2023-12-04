@@ -2,13 +2,13 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { ElementTypeIri } from '../../data/model';
-import { DiagramView } from '../../diagram/view';
+import { WorkspaceContext } from '../../workspace/workspaceContext';
+
 import { highlightSubstring } from '../listElementView';
 
 import { TreeNode } from './treeModel';
 
 interface CommonProps {
-    view: DiagramView;
     searchText?: string;
     selectedNode?: TreeNode;
     onSelect: (node: TreeNode) => void;
@@ -28,8 +28,11 @@ interface State {
 const CLASS_NAME = 'reactodia-class-tree-item';
 
 export class Leaf extends React.Component<LeafProps, State> {
-    constructor(props: LeafProps) {
-        super(props);
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
+    constructor(props: LeafProps, context: any) {
+        super(props, context);
         this.state = {
             expanded: Boolean(this.props.searchText),
         };
@@ -44,8 +47,9 @@ export class Leaf extends React.Component<LeafProps, State> {
     }
 
     render() {
+        const {getElementTypeStyle} = this.context;
         const {node, ...otherProps} = this.props;
-        const {view, selectedNode, searchText, creatableClasses} = otherProps;
+        const {selectedNode, searchText, creatableClasses} = otherProps;
         const {expanded} = this.state;
 
         const toggleClass = (
@@ -54,7 +58,7 @@ export class Leaf extends React.Component<LeafProps, State> {
             `${CLASS_NAME}__toggle-collapsed`
         );
 
-        const {icon} = view.getTypeStyle([node.model.id]);
+        const {icon} = getElementTypeStyle([node.model.id]);
 
         const selected = Boolean(selectedNode && selectedNode.model === node.model);
         const bodyClass = classnames(

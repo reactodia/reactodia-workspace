@@ -1,11 +1,12 @@
-import { EventSource, Events, EventObserver, AnyEvent } from '../coreUtils/events';
+import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
 
 import {
-    ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, isEncodedBlank,
 } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
-import { GenerateID } from '../data/schema';
+import { getUriLocalName } from '../data/utils';
 
+import { LabelLanguageSelector, FormattedProperty } from './customization';
 import {
     Element, ElementEvents, Link, LinkEvents, RichLinkType, RichLinkTypeEvents,
     RichElementType, RichElementTypeEvents, RichProperty,
@@ -14,6 +15,7 @@ import { Graph, CellsChangedEvent } from './graph';
 import { CommandHistory, Command } from './history';
 
 export interface DiagramModelEvents {
+    changeLanguage: PropertyChange<DiagramModel, string>;
     changeCells: CellsChangedEvent;
     changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
@@ -43,19 +45,39 @@ export interface GraphStructure {
     getProperty(propertyTypeIri: PropertyTypeIri): RichProperty | undefined;
 }
 
-/**
- * Model of diagram.
- */
+export interface DiagramModelOptions {
+    history: CommandHistory,
+    selectLabelLanguage?: LabelLanguageSelector;
+}
+
 export class DiagramModel implements GraphStructure {
     protected readonly source = new EventSource<DiagramModelEvents>();
     readonly events: Events<DiagramModelEvents> = this.source;
 
+    private _language = 'en';
+
     protected graph = new Graph();
     protected graphListener = new EventObserver();
 
-    constructor(
-        readonly history: CommandHistory,
-    ) {}
+    readonly history: CommandHistory;
+    readonly locale: LocaleFormatter;
+
+    constructor(options: DiagramModelOptions) {
+        const {history, selectLabelLanguage = defaultSelectLabel} = options;
+        this.history = history;
+        this.locale = new ModelLocalFormatter(this, selectLabelLanguage);
+    }
+
+    get language(): string { return this._language; }
+    setLanguage(value: string) {
+        if (!value) {
+            throw new Error('Cannot set empty language.');
+        }
+        const previous = this._language;
+        if (previous === value) { return; }
+        this._language = value;
+        this.source.trigger('changeLanguage', {source: this, previous});
+    }
 
     get factory(): Rdf.DataFactory {
         return this.getTermFactory();
@@ -235,20 +257,9 @@ export class DiagramModel implements GraphStructure {
         return property;
     }
 
-    triggerChangeGroupContent(group: string, options: { layoutComplete: boolean }) {
+    _triggerChangeGroupContent(group: string, options: { layoutComplete: boolean }) {
         const {layoutComplete} = options;
         this.source.trigger('changeGroupContent', {group, layoutComplete});
-    }
-
-    createTemporaryElement(): Element {
-        const target = new Element({
-            data: Element.placeholderData('' as ElementIri),
-            temporary: true,
-        });
-
-        this.graph.addElement(target);
-
-        return target;
     }
 }
 
@@ -326,4 +337,124 @@ class RemoveLinkCommand implements Command {
         graph.removeLink(link.id);
         return new AddLinkCommand(graph, link);
     }
+}
+
+export interface LocaleFormatter {
+    selectLabel(
+        labels: ReadonlyArray<Rdf.Literal>,
+        language?: string
+    ): Rdf.Literal | undefined;
+
+    formatLabel(
+        labels: ReadonlyArray<Rdf.Literal>,
+        fallbackIri: string,
+        language?: string
+    ): string;
+
+    formatIri(iri: string): string;
+
+    formatElementTypes(
+        types: ReadonlyArray<ElementTypeIri>,
+        language?: string
+    ): string[];
+
+    formatPropertyList(
+        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
+        language?: string
+    ): FormattedProperty[];
+}
+
+class ModelLocalFormatter implements LocaleFormatter {
+    constructor(
+        private readonly model: DiagramModel,
+        private readonly selectLabelLanguage: LabelLanguageSelector
+    ) {}
+
+    selectLabel(
+        labels: ReadonlyArray<Rdf.Literal>,
+        language?: string
+    ): Rdf.Literal | undefined {
+        const targetLanguage = language ?? this.model.language;
+        const {selectLabelLanguage} = this;
+        return selectLabelLanguage(labels, targetLanguage);
+    }
+
+    formatLabel(
+        labels: ReadonlyArray<Rdf.Literal>,
+        fallbackIri: string,
+        language?: string
+    ): string {
+        const label = this.selectLabel(labels, language);
+        return resolveLabel(label, fallbackIri);
+    }
+
+    formatIri(iri: string): string {
+        if (isEncodedBlank(iri)) {
+            return '(blank node)';
+        }
+        return `<${iri}>`;
+    }
+
+    formatElementTypes(
+        types: ReadonlyArray<ElementTypeIri>,
+        language?: string
+    ): string[] {
+        return types.map(typeId => {
+            const type = this.model.createElementType(typeId);
+            return this.formatLabel(type.label, type.id, language);
+        }).sort();
+    }
+
+    formatPropertyList(
+        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
+        language?: string
+    ): FormattedProperty[] {
+        const targetLanguage = language ?? this.model.language;
+        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
+        const propertyList = propertyIris.map((key): FormattedProperty => {
+            const property = this.model.createProperty(key);
+            const label = this.formatLabel(property.label, key);
+            const allValues = properties[key];
+            const localizedValues = allValues.filter(v =>
+                v.termType === 'NamedNode' ||
+                v.language === '' ||
+                v.language === targetLanguage
+            );
+            return {
+                propertyId: key,
+                label,
+                values: localizedValues.length === 0 ? allValues : localizedValues,
+            };
+        });
+        propertyList.sort((a, b) => a.label.localeCompare(b.label));
+        return propertyList;
+    }
+}
+
+function defaultSelectLabel(
+    texts: ReadonlyArray<Rdf.Literal>,
+    language: string
+): Rdf.Literal | undefined {
+    if (texts.length === 0) { return undefined; }
+    let defaultValue: Rdf.Literal | undefined;
+    let englishValue: Rdf.Literal | undefined;
+    for (const text of texts) {
+        if (text.language === language) {
+            return text;
+        } else if (text.language === '') {
+            defaultValue = text;
+        } else if (text.language === 'en') {
+            englishValue = text;
+        }
+    }
+    return (
+        defaultValue !== undefined ? defaultValue :
+        englishValue !== undefined ? englishValue :
+        texts[0]
+    );
+}
+
+function resolveLabel(label: Rdf.Literal | undefined, fallbackIri: string): string {
+    if (label) { return label.value; }
+    return getUriLocalName(fallbackIri) || fallbackIri;
 }

@@ -338,12 +338,12 @@ export interface ToolbarLanguageSelectorProps {
 }
 
 export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
-    const {view} = React.useContext(WorkspaceContext)!;
+    const {model} = React.useContext(WorkspaceContext)!;
     const {languages} = props;
     const currentLanguage = useObservedProperty(
-        view.events,
+        model.events,
         'changeLanguage',
-        () => view.getLanguage()
+        () => model.language
     );
     return languages.length === 0 ? null : (
         <div className={`${CLASS_NAME}__language-selector`}
@@ -351,7 +351,7 @@ export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
             <label htmlFor='reactodia-language-selector' />
             <select id='reactodia-language-selector'
                 value={currentLanguage}
-                onChange={e => view.setLanguage(e.currentTarget.value)}>
+                onChange={e => model.setLanguage(e.currentTarget.value)}>
                 {languages.map(({code, label}) => <option key={code} value={code}>{label}</option>)}
             </select>
         </div>

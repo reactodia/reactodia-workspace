@@ -8,8 +8,8 @@ import { CanvasApi, CanvasContext, CanvasPointerUpEvent } from '../diagram/canva
 import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { calculateLayout, applyLayout, layoutForcePadded } from '../diagram/layout';
+import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
-import { DiagramView, ElementDecoratorResolver } from '../diagram/view';
 
 import { Dialog } from '../widgets/dialog';
 
@@ -27,7 +27,7 @@ import { LinkStateWidget } from './linkStateWidget';
 
 export interface OverlayControllerProps extends OverlayControllerOptions {
     readonly model: AsyncModel;
-    readonly view: DiagramView;
+    readonly view: SharedCanvasState;
     readonly editor: EditorController;
 }
 
@@ -65,7 +65,7 @@ export class OverlayController {
     readonly events: Events<OverlayControllerEvents> = this.source;
 
     private readonly model: AsyncModel;
-    private readonly view: DiagramView;
+    private readonly view: SharedCanvasState;
     private readonly editor: EditorController;
     private readonly options: OverlayControllerOptions;
 
@@ -89,7 +89,13 @@ export class OverlayController {
             });
         });
         this.listener.listen(this.model.events, 'loadingError', ({error}) => {
-            const statusText = error ? error.message : undefined;
+            let statusText: string | undefined;
+            if (error && typeof error === 'object' && 'message' in error) {
+                const message = error.message;
+                if (typeof message === 'string') {
+                    statusText = message;
+                }
+            }
             this.setSpinner({statusText, errorOccurred: true});
         });
         const finishGroupLayout = async (group: string) => {
@@ -103,7 +109,7 @@ export class OverlayController {
                     group,
                 });
                 applyLayout(layout, this.model);
-                this.model.triggerChangeGroupContent(group, {layoutComplete: true});
+                this.model._triggerChangeGroupContent(group, {layoutComplete: true});
             }
         };
         this.listener.listen(this.model.events, 'changeGroupContent', e => {
@@ -272,7 +278,6 @@ export class OverlayController {
         const onCancel = () => this.hideDialog();
         const content = propertyEditor ? propertyEditor({elementData: target.data, onSubmit, onCancel}) : (
             <EditEntityForm
-                view={this.view}
                 entity={modelToEdit}
                 onApply={onSubmit}
                 onCancel={onCancel}
@@ -328,10 +333,7 @@ export class OverlayController {
             this.hideDialog();
         };
         const content = (
-            <EditLinkForm editor={this.editor}
-                view={this.view}
-                metadataApi={this.editor.metadataApi}
-                link={link.data}
+            <EditLinkForm link={link.data}
                 source={source}
                 target={target}
                 onChange={(data: LinkModel) => {

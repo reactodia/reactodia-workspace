@@ -212,7 +212,7 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
 
     render() {
         const {elementId} = this.props;
-        const {canvas, model, view} = this.context;
+        const {canvas, model} = this.context;
         const {paperWidth, paperHeight, offsetX, offsetY} = this.state;
 
         const paperTransform: PaperTransform = {
@@ -228,7 +228,6 @@ export class EmbeddedLayer extends React.Component<EmbeddedLayerProps, State> {
         return (
             <div className='reactodia-embedded-layer' ref={this.onLayerInit}>
                 <Paper model={model}
-                    view={view}
                     renderingState={canvas.renderingState}
                     paperTransform={paperTransform}
                     onPointerDown={this.onPaperPointerDown}

@@ -1,13 +1,14 @@
 import * as React from 'react';
+import classnames from 'classnames';
 import { hcl } from 'd3-color';
 
 import { ElementModel } from '../data/model';
-import { DiagramView } from '../diagram/view';
+
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 export interface ListElementViewProps {
+    element: ElementModel;
     className?: string;
-    view: DiagramView;
-    model: ElementModel;
     highlightText?: string;
     disabled?: boolean;
     selected?: boolean;
@@ -17,41 +18,48 @@ export interface ListElementViewProps {
 
 const CLASS_NAME = 'reactodia-list-element-view';
 
-export class ListElementView extends React.Component<ListElementViewProps> {
-    render() {
-        const {className, view, model, highlightText, disabled, selected, onDragStart} = this.props;
+export function ListElementView(props: ListElementViewProps) {
+    const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
+    const {
+        element, className, highlightText, disabled, selected, onClick, onDragStart,
+    } = props;
 
-        const {h, c, l} = view.getTypeStyle(model.types).color;
-        const frontColor = (selected && !disabled) ? hcl(h, c, l * 1.2) : hcl('white');
+    const {h, c, l} = hcl(getElementTypeStyle(element.types).color);
+    const frontColor = (selected && !disabled) ? hcl(h, c, l * 1.2) : hcl('white');
 
-        let classNames = `${CLASS_NAME}`;
-        classNames += disabled ? ` ${CLASS_NAME}--disabled` : '';
-        classNames += className ? ` ${className}` : '';
-        const localizedText = view.formatLabel(model.label, model.id);
-        const classesString = model.types.length > 0 ? `\nClasses: ${view.getElementTypeString(model)}` : '';
+    const combinedClass = classnames(
+        CLASS_NAME,
+        disabled ? `${CLASS_NAME}--disabled` : undefined,
+        className
+    );
 
-        return (
-            <li className={classNames}
-                role='option'
-                draggable={!disabled && Boolean(onDragStart)}
-                title={`${localizedText} ${view.formatIri(model.id)}${classesString}`}
-                style={{background: hcl(h, c, l).toString()}}
-                onClick={this.onClick}
-                onDragStart={onDragStart}>
-                <div className={`${CLASS_NAME}__label`} style={{background: frontColor.toString()}}>
-                    {highlightSubstring(localizedText, highlightText)}
-                </div>
-            </li>
-        );
+    const localizedText = model.locale.formatLabel(element.label, element.id);
+
+    let typeString = '';
+    if (element.types.length > 0) {
+        typeString = `\nClasses: ${model.locale.formatElementTypes(element.types).join(', ')}`;
     }
 
-    private onClick = (event: React.MouseEvent<any>) => {
-        const {disabled, model, onClick} = this.props;
+    const onItemClick = (event: React.MouseEvent<any>) => {
         if (!disabled && onClick) {
             event.persist();
-            onClick(event, model);
+            onClick(event, element);
         }
     };
+
+    return (
+        <li className={combinedClass}
+            role='option'
+            draggable={!disabled && Boolean(onDragStart)}
+            title={`${localizedText} ${model.locale.formatIri(element.id)}${typeString}`}
+            style={{background: hcl(h, c, l).toString()}}
+            onClick={onItemClick}
+            onDragStart={onDragStart}>
+            <div className={`${CLASS_NAME}__label`} style={{background: frontColor.toString()}}>
+                {highlightSubstring(localizedText, highlightText)}
+            </div>
+        </li>
+    );
 }
 
 export function startDragElements(e: React.DragEvent<unknown>, iris: ReadonlyArray<string>) {

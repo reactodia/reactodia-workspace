@@ -3,15 +3,14 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
-import { MetadataApi } from '../data/metadataApi';
 import { LinkModel, ElementModel, sameLink } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { RichLinkType, LinkDirection } from '../diagram/elements';
-import { DiagramView } from '../diagram/view';
+import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { EditorController } from '../editor/editorController';
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-edit-form';
 
@@ -33,9 +32,6 @@ interface DirectedFatLinkType {
 }
 
 export interface LinkTypeSelectorProps {
-    editor: EditorController;
-    view: DiagramView;
-    metadataApi: MetadataApi | undefined;
     linkValue: LinkValue;
     source: ElementModel;
     target: ElementModel;
@@ -48,11 +44,14 @@ interface State {
 }
 
 export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, State> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
 
-    constructor(props: LinkTypeSelectorProps) {
-        super(props);
+    constructor(props: LinkTypeSelectorProps, context: any) {
+        super(props, context);
         this.state = {
             fatLinkTypes: [],
         };
@@ -78,8 +77,11 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 
     private async fetchPossibleLinkTypes() {
-        const {view, metadataApi, source, target} = this.props;
-        if (!metadataApi) { return; }
+        const {model, editor: {metadataApi}} = this.context;
+        const {source, target} = this.props;
+        if (!metadataApi) {
+            return;
+        }
         const linkTypes = await mapAbortedToNull(
             metadataApi.possibleLinkTypes(source, target, this.cancellation.signal),
             this.cancellation.signal
@@ -87,10 +89,10 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         if (linkTypes === null) { return; }
         const fatLinkTypes: Array<DirectedFatLinkType> = [];
         linkTypes.forEach(({linkTypeIri, direction}) => {
-            const fatLinkType = view.model.createLinkType(linkTypeIri);
+            const fatLinkType = model.createLinkType(linkTypeIri);
             fatLinkTypes.push({fatLinkType, direction});
         });
-        fatLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(view));
+        fatLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model));
         this.setState({fatLinkTypes});
         this.listenToLinkLabels(fatLinkTypes);
     }
@@ -120,10 +122,11 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     private renderPossibleLinkType = (
         {fatLinkType, direction}: { fatLinkType: RichLinkType; direction: LinkDirection }, index: number
     ) => {
-        const {view, linkValue, source, target} = this.props;
-        const label = view.formatLabel(fatLinkType.label, fatLinkType.id);
+        const {model} = this.context;
+        const {source, target} = this.props;
+        const label = model.locale.formatLabel(fatLinkType.label, fatLinkType.id);
         let [sourceLabel, targetLabel] = [source, target].map(element =>
-            view.formatLabel(element.label, element.id)
+            model.locale.formatLabel(element.label, element.id)
         );
         if (direction === LinkDirection.in) {
             [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
@@ -158,10 +161,10 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 }
 
-function makeLinkTypeComparatorByLabelAndDirection(view: DiagramView) {
+function makeLinkTypeComparatorByLabelAndDirection(model: DiagramModel) {
     return (a: DirectedFatLinkType, b: DirectedFatLinkType) => {
-        const labelA = view.formatLabel(a.fatLinkType.label, a.fatLinkType.id);
-        const labelB = view.formatLabel(b.fatLinkType.label, b.fatLinkType.id);
+        const labelA = model.locale.formatLabel(a.fatLinkType.label, a.fatLinkType.id);
+        const labelB = model.locale.formatLabel(b.fatLinkType.label, b.fatLinkType.id);
         const labelCompareResult = labelA.localeCompare(labelB);
         if (labelCompareResult !== 0) {
             return labelCompareResult;
@@ -177,7 +180,9 @@ function makeLinkTypeComparatorByLabelAndDirection(view: DiagramView) {
 }
 
 export function validateLinkType(
-    editor: EditorController, currentLink: LinkModel, originalLink: LinkModel
+    currentLink: LinkModel,
+    originalLink: LinkModel,
+    {model, editor}: WorkspaceContext
 ): Promise<Pick<LinkValue, 'error' | 'allowChange'>> {
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
         return Promise.resolve({error: 'Required.', allowChange: true});
@@ -185,7 +190,7 @@ export function validateLinkType(
     if (sameLink(currentLink, originalLink)) {
         return Promise.resolve({error: undefined, allowChange: true});
     }
-    const alreadyOnDiagram = editor.model.links.find(({data: {linkTypeId, sourceId, targetId}}) =>
+    const alreadyOnDiagram = model.links.find(({data: {linkTypeId, sourceId, targetId}}) =>
         linkTypeId === currentLink.linkTypeId &&
         sourceId === currentLink.sourceId &&
         targetId === currentLink.targetId &&
@@ -194,7 +199,7 @@ export function validateLinkType(
     if (alreadyOnDiagram) {
         return Promise.resolve({error: 'The link already exists.', allowChange: false});
     }
-    return editor.model.dataProvider.links({
+    return model.dataProvider.links({
         elementIds: [currentLink.sourceId, currentLink.targetId],
         linkTypeIds: [currentLink.linkTypeId],
     }).then((links): Pick<LinkValue, 'error' | 'allowChange'> => {

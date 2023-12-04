@@ -11,8 +11,8 @@ import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 import {
     Element, RichLinkType, RichElementType, RichProperty, Link, LinkTypeVisibility,
 } from '../diagram/elements';
-import { CommandHistory, Command } from '../diagram/history';
-import { DiagramModel, DiagramModelEvents } from '../diagram/model';
+import { Command } from '../diagram/history';
+import { DiagramModel, DiagramModelEvents, DiagramModelOptions } from '../diagram/model';
 
 import { DataFetcher } from './dataFetcher';
 import {
@@ -30,7 +30,7 @@ export interface AsyncModelEvents extends DiagramModelEvents {
     loadingSuccess: { source: AsyncModel };
     loadingError: {
         source: AsyncModel;
-        error: any;
+        error: unknown;
     };
     createLoadedLink: {
         source: AsyncModel;
@@ -39,19 +39,24 @@ export interface AsyncModelEvents extends DiagramModelEvents {
     };
 }
 
+export interface AsyncModelOptions extends DiagramModelOptions {
+    groupBy: ReadonlyArray<GroupBy>;
+}
+
 export class AsyncModel extends DiagramModel {
     declare readonly events: Events<AsyncModelEvents>;
+
+    private readonly groupByProperties: ReadonlyArray<GroupBy>;
 
     private _dataProvider!: DataProvider;
     private fetcher: DataFetcher | undefined;
 
     private linkSettings = new Map<LinkTypeIri, LinkTypeVisibility>();
 
-    constructor(
-        history: CommandHistory,
-        private groupByProperties: ReadonlyArray<GroupBy>,
-    ) {
-        super(history);
+    constructor(options: AsyncModelOptions) {
+        super(options);
+        const {groupBy} = options;
+        this.groupByProperties = groupBy;
     }
 
     private get asyncSource(): EventSource<AsyncModelEvents> {
@@ -356,7 +361,7 @@ export class AsyncModel extends DiagramModel {
         ]);
         this.fetcher!.signal.throwIfAborted();
 
-        this.triggerChangeGroupContent(element.id, {layoutComplete: false});
+        this._triggerChangeGroupContent(element.id, {layoutComplete: false});
     }
 
     private async loadEmbeddedElements(elementIri: ElementIri): Promise<Map<ElementIri, ElementModel>> {

@@ -137,7 +137,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
     }
 
     private renderElementErrors() {
-        const {workspace: {model, view}} = this.props;
+        const {workspace: {model}} = this.props;
         const {validation} = this.state;
         if (!validation) {
             return null;
@@ -145,7 +145,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         const title = validation.errors.map(error => {
             if (error.propertyType) {
                 const {id, label} = model.createProperty(error.propertyType);
-                const source = view.formatLabel(label, id);
+                const source = model.locale.formatLabel(label, id);
                 return `${source}: ${error.message}`;
             } else {
                 return error.message;

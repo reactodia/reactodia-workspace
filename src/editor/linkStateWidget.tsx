@@ -59,18 +59,18 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
     }
 
     private listenEvents() {
-        const {workspace: {view, editor}, canvas} = this.props;
-        this.listener.listen(editor.model.events, 'elementEvent',  ({data}) => {
+        const {workspace: {model, editor}, canvas} = this.props;
+        this.listener.listen(model.events, 'elementEvent',  ({data}) => {
             if (data.changePosition) {
                 this.scheduleUpdate();
             }
         });
-        this.listener.listen(editor.model.events, 'linkEvent', ({data}) => {
+        this.listener.listen(model.events, 'linkEvent', ({data}) => {
             if (data.changeVertices) {
                 this.scheduleUpdate();
             }
         });
-        this.listener.listen(editor.model.events, 'changeCells', this.scheduleUpdate);
+        this.listener.listen(model.events, 'changeCells', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeAuthoringState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeTemporaryState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeValidationState', this.scheduleUpdate);

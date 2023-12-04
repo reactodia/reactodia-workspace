@@ -4,14 +4,14 @@ import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri } from '../data/model';
-import { DiagramView } from '../diagram/view';
+
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'reactodia-search-results';
 
 export interface SearchResultProps {
-    view: DiagramView;
     items: ReadonlyArray<ElementModel>;
     selection: ReadonlySet<ElementIri>;
     onSelectionChanged: (newSelection: ReadonlySet<ElementIri>) => void;
@@ -25,6 +25,9 @@ const enum Direction { Up, Down }
 const DEFAULT_USE_DRAG_AND_DROP = true;
 
 export class SearchResults extends React.Component<SearchResultProps> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
     private readonly listener = new EventObserver();
     private readonly delayedChangeCells = new Debouncer();
 
@@ -32,10 +35,6 @@ export class SearchResults extends React.Component<SearchResultProps> {
 
     private startSelection = 0;
     private endSelection = 0;
-
-    constructor(props: SearchResultProps) {
-        super(props);
-    }
 
     render(): React.ReactElement<any> {
         const {items} = this.props;
@@ -61,10 +60,8 @@ export class SearchResults extends React.Component<SearchResultProps> {
         const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
         const canBeSelected = this.canBeSelected(model);
         return (
-            <ListElementView
-                key={model.id}
-                model={model}
-                view={this.props.view}
+            <ListElementView key={model.id}
+                element={model}
                 highlightText={this.props.highlightText}
                 disabled={!canBeSelected}
                 selected={this.props.selection.has(model.id)}
@@ -83,12 +80,14 @@ export class SearchResults extends React.Component<SearchResultProps> {
     };
 
     componentDidMount() {
-        this.listener.listen(this.props.view.model.events, 'changeCells', () => {
+        const {model} = this.context;
+        this.listener.listen(model.events, 'changeCells', () => {
             this.delayedChangeCells.call(this.onChangeCells);
         });
     }
 
     private onChangeCells = () => {
+        const {model} = this.context;
         const {items, selection} = this.props;
         if (selection.size === 0) {
             if (items.length > 0) {
@@ -97,7 +96,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
             }
         } else {
             const newSelection = new Set(selection);
-            for (const element of this.props.view.model.elements) {
+            for (const element of model.elements) {
                 if (element.group === undefined && selection.has(element.iri)) {
                     newSelection.delete(element.iri);
                 }
@@ -227,10 +226,11 @@ export class SearchResults extends React.Component<SearchResultProps> {
         return startIndex;
     }
 
-    private canBeSelected(model: ElementModel) {
-        const {view, useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
-        const alreadyOnDiagram = view.model.elements.findIndex(
-            element => element.iri === model.id && element.group === undefined
+    private canBeSelected(item: ElementModel) {
+        const {model} = this.context;
+        const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
+        const alreadyOnDiagram = model.elements.findIndex(
+            element => element.iri === item.id && element.group === undefined
         ) >= 0;
         return !useDragAndDrop || !alreadyOnDiagram;
     }

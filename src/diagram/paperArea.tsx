@@ -21,13 +21,11 @@ import { CommandBatch } from './history';
 import { Paper, PaperTransform } from './paper';
 import { RenderingState, RenderingLayer } from './renderingState';
 import {
-    ToSVGOptions, ToDataURLOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
+    ToSVGOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
 } from './toSvg';
-import { DiagramView } from './view';
 
 export interface PaperAreaProps {
     model: DiagramModel;
-    view: DiagramView;
     renderingState: RenderingState;
     zoomOptions?: ZoomOptions;
     hideScrollBars?: boolean;
@@ -159,7 +157,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.canvasContext = {
             canvas: this,
             model: props.model,
-            view: props.view,
         };
     }
 
@@ -168,7 +165,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     render() {
-        const {model, view, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
+        const {model, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
         const paperTransform = this.metrics.getTransform();
 
         const className = classnames(
@@ -185,7 +182,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                         ref={this.onAreaMount}
                         onPointerDown={this.onAreaPointerDown}>
                         <Paper model={model}
-                            view={view}
                             renderingState={renderingState}
                             paperTransform={paperTransform}
                             svgCanvasRef={this.svgCanvasRef}
@@ -236,7 +232,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     componentDidMount() {
         this.adjustPaper(() => this.centerTo());
 
-        const {model, view, renderingState} = this.props;
+        const {model, renderingState} = this.props;
         const delayedAdjust = () => this.delayedPaperAdjust.call(this.adjustPaper);
         this.listener.listen(model.events, 'changeCells', delayedAdjust);
         this.listener.listen(model.events, 'elementEvent', ({data}) => {
@@ -254,10 +250,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             if (layer !== RenderingLayer.PaperArea) { return; }
             this.delayedPaperAdjust.runSynchronously();
         });
-        this.listener.listen(view.events, 'changeCanvasWidgets', () => {
+        this.listener.listen(renderingState.shared.events, 'changeWidgets', () => {
             this.forceUpdate();
         });
-        this.listener.listen(view.events, 'findCanvas', e => {
+        this.listener.listen(renderingState.shared.events, 'findCanvas', e => {
             e.canvases.push(this);
         });
 
@@ -294,7 +290,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private *getAllWidgets(): IterableIterator<CanvasWidgetDescription> {
-        const {view, children} = this.props;
+        const {renderingState, children} = this.props;
         for (const element of React.Children.toArray(children)) {
             if (React.isValidElement(element)) {
                 const widget = extractCanvasWidget(element);
@@ -305,7 +301,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 }
             }
         }
-        yield* view.canvasWidgets.values();
+        yield* renderingState.shared.widgets.values();
     }
 
     private onWidgetsPointerDown = (e: React.PointerEvent) => {
@@ -773,7 +769,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private onDragDrop = (e: DragEvent) => {
-        const {view} = this.props;
+        const {renderingState} = this.props;
         const {x, y} = clientCoordsFor(this.area, e);
         const position = this.metrics.clientToPaperCoords(x, y);
         const event: CanvasDropEvent = {
@@ -781,7 +777,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             sourceEvent: e,
             position,
         };
-        if (view.tryHandleDropOnPaper(event)) {
+        if (renderingState.shared.tryHandleDropOnPaper(event)) {
             /* skip trigger -- already handled */
         } else {
             this.source.trigger('drop', event);

@@ -43,12 +43,17 @@ export {
 export { EmbeddedLayer } from './diagram/embeddedLayer';
 export * from './diagram/geometry';
 export * from './diagram/history';
-export { DiagramModel, DiagramModelEvents } from './diagram/model';
-export * from './diagram/paper';
-export * from './diagram/paperArea';
+export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
+export {
+    PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
+} from './diagram/paper';
+export { ZoomOptions } from './diagram/paperArea';
 export { type RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
-export * from './diagram/spinner';
-export * from './diagram/view';
+export {
+    type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter, ElementDecoratorResolver,
+    FindCanvasEvent, IriClickEvent, IriClickIntent,
+} from './diagram/sharedCanvasState';
+export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
 export * from './editor/asyncModel';
 export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
@@ -130,7 +135,7 @@ export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWork
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export { Workspace, WorkspaceProps } from './workspace/workspace';
 export {
-    WorkspaceContext, WorkspacePerformLayout, WorkspaceEventHandler, WorkspaceEventKey,
+    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspace/workspaceContext';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';

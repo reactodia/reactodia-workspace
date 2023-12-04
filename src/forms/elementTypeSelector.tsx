@@ -3,18 +3,21 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
-import { MetadataApi } from '../data/metadataApi';
 import { ElementModel, ElementTypeIri } from '../data/model';
 
+import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
-import { DiagramView } from '../diagram/view';
-
-import { EditorController } from '../editor/editorController';
 
 import { createRequest } from '../widgets/instancesSearch';
 import { ListElementView } from '../widgets/listElementView';
 
-const CLASS_NAME = 'reactodia-edit-form';
+import { WorkspaceContext } from '../workspace/workspaceContext';
+
+export interface ElementTypeSelectorProps {
+    source: ElementModel;
+    elementValue: ElementValue;
+    onChange: (state: Pick<ElementValue, 'value' | 'isNew' | 'loading'>) => void;
+}
 
 export interface ElementValue {
     value: ElementModel;
@@ -25,15 +28,6 @@ export interface ElementValue {
     allowChange: boolean;
 }
 
-export interface ElementTypeSelectorProps {
-    editor: EditorController;
-    view: DiagramView;
-    metadataApi: MetadataApi | undefined;
-    source: ElementModel;
-    elementValue: ElementValue;
-    onChange: (state: Pick<ElementValue, 'value' | 'isNew' | 'loading'>) => void;
-}
-
 interface State {
     elementTypes?: ReadonlyArray<ElementTypeIri>;
     searchString: string;
@@ -41,13 +35,18 @@ interface State {
     existingElements: ReadonlyArray<ElementModel>;
 }
 
+const CLASS_NAME = 'reactodia-edit-form';
+
 export class ElementTypeSelector extends React.Component<ElementTypeSelectorProps, State> {
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
     private readonly cancellation = new AbortController();
     private filterCancellation = new AbortController();
     private loadingItemCancellation = new AbortController();
 
-    constructor(props: ElementTypeSelectorProps) {
-        super(props);
+    constructor(props: ElementTypeSelectorProps, context: any) {
+        super(props, context);
         this.state = {searchString: '', existingElements: []};
     }
 
@@ -69,19 +68,22 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     private async fetchPossibleElementTypes() {
-        const {view, metadataApi, source} = this.props;
-        if (!metadataApi) { return; }
+        const {model, editor: {metadataApi}} = this.context;
+        const {source} = this.props;
+        if (!metadataApi) {
+            return;
+        }
         const elementTypes = await mapAbortedToNull(
             metadataApi.typesOfElementsDraggedFrom(source, this.cancellation.signal),
             this.cancellation.signal
         );
         if (elementTypes === null) { return; }
-        elementTypes.sort(makeElementTypeComparatorByLabel(view));
+        elementTypes.sort(makeElementTypeComparatorByLabel(model));
         this.setState({elementTypes});
     }
 
     private searchExistingElements() {
-        const {editor, view} = this.props;
+        const {model} = this.context;
         const {searchString} = this.state;
         this.setState({existingElements: []});
         if (searchString.length > 0) {
@@ -92,7 +94,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
             const signal = this.filterCancellation.signal;
 
             const request = createRequest({text: searchString});
-            editor.model.dataProvider.lookup(request).then(elements => {
+            model.dataProvider.lookup(request).then(elements => {
                 if (signal.aborted) { return; }
                 const existingElements = elements.map(linked => linked.element);
                 this.setState({existingElements, isLoading: false});
@@ -107,7 +109,8 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        const {onChange, metadataApi} = this.props;
+        const {editor: {metadataApi}} = this.context;
+        const {onChange} = this.props;
         const classId = (e.target as HTMLSelectElement).value as ElementTypeIri;
         const elementModel = await mapAbortedToNull(
             metadataApi!.generateNewElement([classId], signal),
@@ -123,9 +126,9 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     };
 
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
-        const {view} = this.props;
-        const type = view.model.createElementType(elementType);
-        const label = view.formatLabel(type.label, type.id);
+        const {model} = this.context;
+        const type = model.createElementType(elementType);
+        const label = model.locale.formatLabel(type.label, type.id);
         return <option key={elementType} value={elementType}>{label}</option>;
     };
 
@@ -158,7 +161,8 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     private renderExistingElementsList() {
-        const {view, editor, elementValue} = this.props;
+        const {model, editor} = this.context;
+        const {elementValue} = this.props;
         const {elementTypes, isLoading, existingElements} = this.state;
         if (isLoading) {
             return <HtmlSpinner width={20} height={20} />;
@@ -166,15 +170,14 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         if (existingElements.length > 0) {
             return existingElements.map(element => {
                 const isAlreadyOnDiagram = !editor.temporaryState.elements.has(element.id) && Boolean(
-                    editor.model.elements.find(({iri, group}) => iri === element.id && group === undefined)
+                    model.elements.find(({iri, group}) => iri === element.id && group === undefined)
                 );
                 const hasAppropriateType = Boolean(
                     elementTypes && elementTypes.find(type => element.types.indexOf(type) >= 0)
                 );
                 return (
                     <ListElementView key={element.id}
-                        view={view}
-                        model={element}
+                        element={element}
                         disabled={isAlreadyOnDiagram || !hasAppropriateType}
                         selected={element.id === elementValue.value.id}
                         onClick={(e, model) => this.onSelectExistingItem(model)}
@@ -185,18 +188,19 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         return <span>No results</span>;
     }
 
-    private async onSelectExistingItem(model: ElementModel) {
-        const {editor, onChange} = this.props;
+    private async onSelectExistingItem(data: ElementModel) {
+        const {model} = this.context;
+        const {onChange} = this.props;
 
         this.loadingItemCancellation.abort();
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        onChange({value: model, isNew: false, loading: true});
-        const result = await editor.model.dataProvider.elements({elementIds: [model.id]});
+        onChange({value: data, isNew: false, loading: true});
+        const result = await model.dataProvider.elements({elementIds: [data.id]});
         if (signal.aborted) { return; }
 
-        const loadedModel = result.get(model.id)!;
+        const loadedModel = result.get(data.id)!;
         onChange({value: loadedModel, isNew: false, loading: false});
     }
 
@@ -235,12 +239,12 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 }
 
-function makeElementTypeComparatorByLabel(view: DiagramView) {
+function makeElementTypeComparatorByLabel(model: DiagramModel) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
-        const typeA = view.model.createElementType(a);
-        const typeB = view.model.createElementType(b);
-        const labelA = view.formatLabel(typeA.label, typeA.id);
-        const labelB = view.formatLabel(typeB.label, typeB.id);
+        const typeA = model.createElementType(a);
+        const typeB = model.createElementType(b);
+        const labelA = model.locale.formatLabel(typeA.label, typeA.id);
+        const labelB = model.locale.formatLabel(typeB.label, typeB.id);
         return labelA.localeCompare(labelB);
     };
 }

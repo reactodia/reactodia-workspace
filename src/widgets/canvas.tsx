@@ -31,6 +31,7 @@ export function Canvas(props: CanvasProps) {
 
     const [renderingState] = React.useState(() => new RenderingState({
         model,
+        shared: view,
         elementTemplateResolver,
         linkTemplateResolver,
         linkRouter,
@@ -39,7 +40,6 @@ export function Canvas(props: CanvasProps) {
     return (
         <div className={CLASS_NAME}>
             <PaperArea model={model}
-                view={view}
                 renderingState={renderingState}
                 zoomOptions={zoomOptions}
                 hideScrollBars={!showScrollbars}

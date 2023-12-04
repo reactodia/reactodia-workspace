@@ -11,8 +11,8 @@ import { DataProvider } from '../../data/provider';
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
 import { Element, RichElementType } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
+import { DiagramModel } from '../../diagram/model';
 import { HtmlSpinner } from '../../diagram/spinner';
-import { DiagramView } from '../../diagram/view';
 
 import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
@@ -72,7 +72,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     render() {
-        const {view, editor} = this.context;
+        const {editor} = this.context;
         const {
             refreshingState, requestedSearchText, appliedSearchText, filteredRoots, selectedNode, constructibleClasses,
             showOnlyConstructible
@@ -110,7 +110,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 />
                 {this.classTree ? (
                     <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
-                        view={view}
                         nodes={filteredRoots}
                         searchText={searchText}
                         selectedNode={selectedNode}
@@ -129,12 +128,12 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     componentDidMount() {
-        const {view, editor} = this.context;
-        this.listener.listen(view.events, 'changeLanguage', () => this.refreshClassTree());
-        this.listener.listen(editor.model.events, 'loadingStart', () => {
+        const {model} = this.context;
+        this.listener.listen(model.events, 'changeLanguage', () => this.refreshClassTree());
+        this.listener.listen(model.events, 'loadingStart', () => {
             this.initClassTree();
         });
-        this.listener.listen(editor.model.events, 'classEvent', ({data}) => {
+        this.listener.listen(model.events, 'classEvent', ({data}) => {
             if (data.changeLabel || data.changeCount) {
                 this.delayedClassUpdate.call(this.refreshClassTree);
             }
@@ -219,7 +218,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
     private refreshClassTree = () => {
         const cancellation = new AbortController();
-        const {view, editor} = this.context;
+        const {model, editor} = this.context;
         this.refreshOperation.abort();
         this.refreshOperation = cancellation;
 
@@ -238,7 +237,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 }
             }
 
-            const roots = createRoots(this.classTree, view);
+            const roots = createRoots(this.classTree, model);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     };
@@ -395,14 +394,14 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
 function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
-    view: DiagramView
+    model: DiagramModel
 ): TreeNode[] {
-    const mapClass = (model: ClassTreeItem): TreeNode => {
-        const richClass = view.model.createElementType(model.id);
+    const mapClass = (item: ClassTreeItem): TreeNode => {
+        const richClass = model.createElementType(item.id);
         return {
             model: richClass,
-            label: view.formatLabel(richClass.label, richClass.id),
-            derived: model.children.map(mapClass),
+            label: model.locale.formatLabel(richClass.label, richClass.id),
+            derived: item.children.map(mapClass),
         };
     };
     return classTree.map(mapClass);

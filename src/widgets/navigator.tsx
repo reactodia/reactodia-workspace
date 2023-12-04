@@ -1,18 +1,16 @@
 import * as React from 'react';
-import { hcl } from 'd3-color';
 
 import { Debouncer } from '../coreUtils/scheduler';
 import { EventObserver } from '../coreUtils/events';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
-import { Rect, boundsOf, getContentFittingBox } from '../diagram/geometry';
-
+import { Rect, Vector, boundsOf, getContentFittingBox } from '../diagram/geometry';
 import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
-import { Vector } from '../diagram/geometry';
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 export interface NavigatorProps {
     /**
@@ -62,6 +60,22 @@ export interface NavigatorStrokeStyle {
     readonly dash?: ReadonlyArray<number>;
 }
 
+export function Navigator(props: NavigatorProps) {
+    const {canvas} = React.useContext(CanvasContext)!;
+    const workspace = React.useContext(WorkspaceContext)!;
+    return (
+        <NavigatorInner {...props}
+            canvas={canvas}
+            workspace={workspace}
+        />
+    );
+}
+
+interface NavigatorInnerProps extends NavigatorProps {
+    canvas: CanvasApi;
+    workspace: WorkspaceContext;
+}
+
 interface State {
     expanded: boolean;
 }
@@ -92,10 +106,7 @@ const DEFAULT_OVERFLOW_STROKE: NavigatorStrokeStyle = {
     dash: [5, 5],
 };
 
-export class Navigator extends React.Component<NavigatorProps, State> {
-    static contextType = CanvasContext;
-    declare readonly context: CanvasContext;
-
+class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     private readonly delayedRedraw = new Debouncer();
     private readonly listener = new EventObserver();
     private canvas!: HTMLCanvasElement;
@@ -103,20 +114,21 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     private transform!: NavigatorTransform;
     private isDraggingViewport = false;
 
-    constructor(props: NavigatorProps, context: any) {
-        super(props, context);
+    constructor(props: NavigatorInnerProps) {
+        super(props);
         const {expanded = DEFAULT_EXPANDED} = this.props;
         this.state = {expanded};
     }
 
     componentDidMount() {
-        const {canvas, model, view} = this.context;
-        this.listener.listen(view.events, 'changeHighlight', this.scheduleRedraw);
+        const {canvas, workspace: {model}} = this.props;
+        const {renderingState} = canvas;
         this.listener.listen(model.events, 'changeCells', this.scheduleRedraw);
         this.listener.listen(model.events, 'elementEvent', this.scheduleRedraw);
         this.listener.listen(canvas.events, 'pointerMove', this.scheduleRedraw);
         this.listener.listen(canvas.events, 'scroll', this.scheduleRedraw);
-        this.listener.listen(canvas.renderingState.events, 'changeElementSize', this.scheduleRedraw);
+        this.listener.listen(renderingState.shared.events, 'changeHighlight', this.scheduleRedraw);
+        this.listener.listen(renderingState.events, 'changeElementSize', this.scheduleRedraw);
     }
 
     shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
@@ -141,12 +153,13 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
     private draw = () => {
         const {
+            canvas,
+            workspace: {model},
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
             backgroundFill = DEFAULT_BACKGROUND_FILL,
             scrollablePaneFill = DEFAULT_SCROLLABLE_PANE_FILL,
         } = this.props;
-        const {canvas, model} = this.context;
         const pt = canvas.metrics.getTransform();
 
         this.calculateTransform(pt);
@@ -192,7 +205,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     };
 
     private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
-        const {canvas, model} = this.context;
+        const {canvas, workspace: {model}} = this.props;
         model.elements.forEach(element => {
             const {x, y, width, height} = boundsOf(element, canvas.renderingState);
             ctx.fillStyle = this.chooseElementColor(element);
@@ -208,13 +221,14 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     }
 
     private chooseElementColor(element: Element): string {
-        const {view} = this.context;
-        const isBlurred = view.highlighter && !view.highlighter(element);
+        const {canvas, workspace: {getElementTypeStyle}} = this.props;
+        const {highlighter} = canvas.renderingState.shared;
+        const isBlurred = highlighter && !highlighter(element);
         if (isBlurred) {
             return 'lightgray';
         }
-        const {color: {h, c, l}} = view.getTypeStyle(element.data.types);
-        return hcl(h, c, l).toString();
+        const {color} = getElementTypeStyle(element.data.types);
+        return color;
     }
 
     private fillViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect): void {
@@ -276,11 +290,12 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
     private calculateTransform(pt: PaperTransform) {
         const {
+            canvas,
+            workspace: {model},
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
             scalePadding = DEFAULT_SCALE_PADDING,
         } = this.props;
-        const {canvas, model} = this.context;
 
         const box = getContentFittingBox(model.elements, model.links, canvas.renderingState);
         const displayPadding: Vector = {
@@ -364,7 +379,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
     private onDragViewport = (e: MouseEvent | React.MouseEvent) => {
         e.preventDefault();
         if (this.isDraggingViewport) {
-            const {canvas} = this.context;
+            const {canvas} = this.props;
             const canvasCoords = this.canvasFromPageCoords(e.pageX, e.pageY);
             const paperTransform = canvas.metrics.getTransform();
             const paperCoords = paperFromCanvasCoords(canvasCoords, paperTransform, this.transform);
@@ -378,7 +393,7 @@ export class Navigator extends React.Component<NavigatorProps, State> {
 
     private onWheel = (e: React.WheelEvent) => {
         e.preventDefault();
-        const {canvas} = this.context;
+        const {canvas} = this.props;
         const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
         canvas.zoomBy(-delta * 0.1);
     };

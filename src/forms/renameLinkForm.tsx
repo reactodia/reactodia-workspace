@@ -33,15 +33,15 @@ export class RenameLinkForm extends React.Component<RenameLinkFormProps, State> 
 
     private computeLabel(): string {
         const {link} = this.props;
-        const {canvas, model, view} = this.context;
+        const {canvas, model} = this.context;
 
         const linkType = model.getLinkType(link.typeId)!;
         const template = canvas.renderingState.createLinkTemplate(linkType);
         const {label = {}} = template.renderLink(link.data, link.linkState, model.factory);
 
         return (label.label && label.label.length > 0)
-            ? view.selectLabel(label.label)!.value
-            : view.formatLabel(linkType.label, linkType.id);
+            ? model.locale.selectLabel(label.label)!.value
+            : model.locale.formatLabel(linkType.label, linkType.id);
     }
 
     render() {

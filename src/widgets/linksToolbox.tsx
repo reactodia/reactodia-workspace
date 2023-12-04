@@ -8,7 +8,7 @@ import { LinkCount } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { Element, RichLinkType, LinkTypeVisibility } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
-import { DiagramView } from '../diagram/view';
+import { DiagramModel } from '../diagram/model';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -17,7 +17,7 @@ import { highlightSubstring } from './listElementView';
 import { ProgressBar, ProgressState } from './progressBar';
 
 interface LinkInToolBoxProps {
-    view: DiagramView;
+    model: DiagramModel;
     link: RichLinkType;
     count: number;
     onPressFilter?: (type: RichLinkType) => void;
@@ -34,7 +34,7 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     };
 
     private changeState(state: LinkTypeVisibility) {
-        const history = this.props.view.model.history;
+        const history = this.props.model.history;
         changeLinkTypeState(history, state, [this.props.link]);
     }
 
@@ -43,8 +43,8 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     }
 
     private getText() {
-        const {link: linkType, view, filterKey} = this.props;
-        const fullText = view.formatLabel(linkType.label, linkType.id);
+        const {link: linkType, model, filterKey} = this.props;
+        const fullText = model.locale.formatLabel(linkType.label, linkType.id);
         return highlightSubstring(fullText, filterKey);
     }
 
@@ -99,7 +99,7 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
 }
 
 interface LinkTypesToolboxViewProps {
-    view: DiagramView;
+    model: DiagramModel;
     links: ReadonlyArray<RichLinkType> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
     selectedElement: Element | undefined;
@@ -114,9 +114,9 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
     }
 
     private compareLinks = (a: RichLinkType, b: RichLinkType) => {
-        const {view} = this.props;
-        const aText = view.formatLabel(a.label, a.id);
-        const bText = view.formatLabel(b.label, b.id);
+        const {model} = this.props;
+        const aText = model.locale.formatLabel(a.label, a.id);
+        const bText = model.locale.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
@@ -129,10 +129,10 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
     };
 
     private getLinks() {
-        const {view, links = []} = this.props;
+        const {model, links = []} = this.props;
         return links
             .filter(linkType => {
-                const text = view.formatLabel(linkType.label, linkType.id).toLowerCase();
+                const text = model.locale.formatLabel(linkType.label, linkType.id).toLowerCase();
                 return !this.state.filterKey || text.indexOf(this.state.filterKey.toLowerCase()) >= 0;
             })
             .sort(this.compareLinks);
@@ -144,7 +144,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
         for (const link of links) {
             views.push(
                 <LinkInToolBox key={link.id}
-                    view={this.props.view}
+                    model={this.props.model}
                     link={link}
                     onPressFilter={this.props.filterCallback}
                     count={countMap[link.id] || 0}
@@ -157,15 +157,15 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
     }
 
     render() {
-        const {view, dataState, selectedElement} = this.props;
-        const history = view.model.history;
+        const {model, dataState, selectedElement} = this.props;
+        const history = model.history;
 
         const links = this.getLinks();
         const views = this.getViews(links);
 
         let connectedTo: JSX.Element | null = null;
         if (selectedElement) {
-            const selectedElementLabel = view.formatLabel(
+            const selectedElementLabel = model.locale.formatLabel(
                 selectedElement.data.label,
                 selectedElement.iri
             );
@@ -267,10 +267,10 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     constructor(props: LinkTypesToolboxProps, context: any) {
         super(props, context);
 
-        const {model, view, editor} = this.context;
+        const {model, editor} = this.context;
 
-        this.listener.listen(view.events, 'changeLanguage', this.updateOnCurrentSelection);
         this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
+        this.listener.listen(model.events, 'changeLanguage', this.updateOnCurrentSelection);
         this.listener.listen(editor.events, 'changeSelection', () => {
             this.debounceSelection.call(this.updateOnCurrentSelection);
         });
@@ -297,12 +297,12 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     };
 
     private requestLinksOf(selectedElement: Element) {
-        const {editor} = this.context;
+        const {model} = this.context;
         if (selectedElement) {
             const request = {elementId: selectedElement.iri};
             this.currentRequest = request;
             this.setState({dataState: 'loading', selectedElement});
-            editor.model.dataProvider.connectedLinkStats(request).then(linkTypes => {
+            model.dataProvider.connectedLinkStats(request).then(linkTypes => {
                 if (this.currentRequest !== request) { return; }
                 const {linksOfElement, countMap} = this.computeStateFromRequestResult(linkTypes);
                 this.subscribeOnLinksEvents(linksOfElement);
@@ -354,15 +354,17 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 
     render() {
         const {instancesSearchCommands} = this.props;
-        const {view} = this.context;
+        const {model} = this.context;
         const {selectedElement, dataState, linksOfElement, countMap} = this.state;
-        return <LinkTypesToolboxView view={view}
-            dataState={dataState}
-            links={linksOfElement}
-            countMap={countMap}
-            filterCallback={instancesSearchCommands ? this.onAddToFilter : undefined}
-            selectedElement={selectedElement}
-        />;
+        return (
+            <LinkTypesToolboxView model={model}
+                dataState={dataState}
+                links={linksOfElement}
+                countMap={countMap}
+                filterCallback={instancesSearchCommands ? this.onAddToFilter : undefined}
+                selectedElement={selectedElement}
+            />
+        );
     }
 
     private onAddToFilter = (linkType: RichLinkType) => {

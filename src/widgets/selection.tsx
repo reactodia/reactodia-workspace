@@ -214,7 +214,7 @@ function SelectionBox(props: SelectionBoxProps) {
 
     const moveControllerRef = React.useRef<StatefulMoveController | undefined>();
     if (!moveControllerRef.current) {
-        moveControllerRef.current = new StatefulMoveController(canvas, editor);
+        moveControllerRef.current = new StatefulMoveController(canvas, model, editor);
     }
     const moveController = moveControllerRef.current;
     moveController.setElements(selectedElements);
@@ -322,6 +322,7 @@ class StatefulMoveController {
 
     constructor(
         private readonly canvas: CanvasApi,
+        private readonly model: DiagramModel,
         private readonly editor: EditorController
     ) {}
 
@@ -334,7 +335,7 @@ class StatefulMoveController {
             e.preventDefault();
             const point = this.canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
             const element = findElementAtPoint(
-                this.editor.model.elements,
+                this.model.elements,
                 point,
                 this.canvas.renderingState
             );

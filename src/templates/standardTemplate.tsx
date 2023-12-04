@@ -35,15 +35,18 @@ const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
 
 class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> {
     render() {
-        const {data, color, isExpanded, workspace: {view, editor}} = this.props;
+        const {data, isExpanded, workspace: {model, editor, getElementTypeStyle}} = this.props;
+        const {color, icon} = getElementTypeStyle(data.types);
 
         const isNewElement = AuthoringState.isNewElement(editor.authoringState, data.id);
         const leftStripeColor = isNewElement ? 'white' : color;
         const pinnedPropertyKeys = this.findPinnedProperties() ?? {};
 
-        const typesLabel = data.types.length > 0 ? view.getElementTypeString(data) : 'Thing';
+        const typesLabel = data.types.length > 0
+            ? model.locale.formatElementTypes(data.types).join(', ')
+            : 'Thing';
         const label = this.formatLabel();
-        const propertyList = view.formatPropertyList(data.properties);
+        const propertyList = model.locale.formatPropertyList(data.properties);
         const pinnedProperties = propertyList.filter(p => Boolean(
             Object.prototype.hasOwnProperty.call(pinnedPropertyKeys, p.propertyId) &&
             pinnedPropertyKeys[p.propertyId]
@@ -54,7 +57,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                 <div className={`${CLASS_NAME}__main`} style={{backgroundColor: leftStripeColor, borderColor: color}}>
                     <div className={`${CLASS_NAME}__body`} style={{borderLeftColor: color}}>
                         <div className={`${CLASS_NAME}__body-horizontal`}>
-                            {this.renderThumbnail(typesLabel)}
+                            {this.renderThumbnail(typesLabel, color, icon)}
                             <div className={`${CLASS_NAME}__body-content`}>
                                 <div title={typesLabel} className={`${CLASS_NAME}__type`}>
                                     <div className={`${CLASS_NAME}__type-value`}>{typesLabel}</div>
@@ -71,7 +74,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                 </div>
                 {isExpanded ? (
                     <div className={`${CLASS_NAME}__dropdown`} style={{borderColor: color}}>
-                        {this.renderPhoto()}
+                        {this.renderImage(color)}
                         <div className={`${CLASS_NAME}__dropdown-content`}>
                             {this.renderIri()}
                             {this.renderProperties(propertyList)}
@@ -85,16 +88,16 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
     }
 
     private formatLabel(): string {
-        const {data, workspace: {view}} = this.props;
+        const {data, workspace: {model}} = this.props;
         const foafName = Object.prototype.hasOwnProperty.call(data.properties, FOAF_NAME)
             ? data.properties[FOAF_NAME] : undefined;
         if (foafName) {
             const literals = foafName.filter((v): v is Rdf.Literal => v.termType === 'Literal');
             if (literals.length > 0) {
-                return view.formatLabel(literals, data.id);
+                return model.locale.formatLabel(literals, data.id);
             }
         }
-        return view.formatLabel(data.label, data.id);
+        return model.locale.formatLabel(data.label, data.id);
     }
 
     private findPinnedProperties(): PinnedProperties | undefined {
@@ -142,8 +145,8 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         );
     }
 
-    private renderPhoto() {
-        const {data, color} = this.props;
+    private renderImage(color: string) {
+        const {data} = this.props;
 
         if (!data.image) { return null; }
 
@@ -178,8 +181,8 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         );
     }
 
-    private renderThumbnail(typesLabel: string) {
-        const {data, color, iconUrl} = this.props;
+    private renderThumbnail(typesLabel: string, color: string, iconUrl: string | undefined) {
+        const {data} = this.props;
 
         if (data.image) {
             return (

@@ -38,7 +38,7 @@ export class EditorController {
     private readonly source = new EventSource<EditorEvents>();
     readonly events: Events<EditorEvents> = this.source;
 
-    readonly model: AsyncModel;
+    private readonly model: AsyncModel;
     private readonly options: EditorOptions;
 
     private _metadataApi: MetadataApi | undefined;
@@ -67,10 +67,15 @@ export class EditorController {
         });
         this.listener.listen(this.events, 'changeAuthoringState', e => {
             if (this.options.validationApi) {
-                const changedElements = changedElementsToValidate(e.previous, this);
+                const changedElements = changedElementsToValidate(
+                    e.previous,
+                    this.authoringState,
+                    this.model
+                );
                 validateElements(
                     changedElements,
                     this.options.validationApi,
+                    this.model,
                     this,
                     this.cancellation.signal
                 );

@@ -11,7 +11,7 @@ import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { RichLinkType, Element } from '../diagram/elements';
 import { placeElementsAround } from '../diagram/layout';
-import { DiagramView } from '../diagram/view';
+import { DiagramModel } from '../diagram/model';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
 
@@ -142,8 +142,8 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     private updateAll = () => this.forceUpdate();
 
     componentDidMount() {
-        const {workspace: {view}} = this.props;
-        this.handler.listen(view.events, 'changeLanguage', this.updateAll);
+        const {workspace: {model}} = this.props;
+        this.handler.listen(model.events, 'changeLanguage', this.updateAll);
 
         this.loadLinks();
     }
@@ -248,11 +248,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     };
 
     private onAddElements = (elementIris: ElementIri[], linkType: RichLinkType | undefined) => {
-        const {target, workspace: {model, view, triggerWorkspaceEvent}, canvas} = this.props;
+        const {target, workspace: {model, triggerWorkspaceEvent}, canvas} = this.props;
         const batch = model.history.startBatch('Add connected elements');
 
         const elements = elementIris.map(iri => model.createElement(iri));
-        view.syncUpdateAllCanvases();
+        canvas.renderingState.syncUpdate();
 
         placeElementsAround({
             elements,
@@ -310,7 +310,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
     };
 
     render() {
-        const {target, suggestProperties, instancesSearchCommands, workspace: {view}} = this.props;
+        const {target, suggestProperties, instancesSearchCommands, workspace: {model}} = this.props;
 
         const connectionsData: ConnectionsData = {
             links: this.links ?? [],
@@ -331,7 +331,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps> {
                 connectionsData={connectionsData}
                 objectsData={objectsData}
                 state={this.loadingState}
-                view={view}
+                model={model}
                 allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                 onExpandLink={this.onExpandLink}
                 onPressAddSelected={this.addSelectedElements}
@@ -348,7 +348,7 @@ interface MenuMarkupProps {
     connectionsData: ConnectionsData;
     objectsData?: ObjectsData;
 
-    view: DiagramView;
+    model: DiagramModel;
     state: ProgressState;
     allRelatedLink: RichLinkType;
 
@@ -401,7 +401,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
     private getBreadCrumbs() {
         if (this.props.objectsData && this.state.panel === 'objects') {
             const {link, direction} = this.props.objectsData.linkDataChunk;
-            const localizedText = this.props.view.formatLabel(link.label, link.id);
+            const localizedText = this.props.model.locale.formatLabel(link.label, link.id);
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
@@ -421,7 +421,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
             return <ObjectsPanel
                 data={this.props.objectsData}
                 onMoveToFilter={this.props.onMoveToFilter}
-                view={this.props.view}
+                model={this.props.model}
                 filterKey={this.state.filterKey}
                 loading={this.props.state === 'loading'}
                 onPressAddSelected={this.props.onPressAddSelected}
@@ -435,7 +435,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
                 <ConnectionsList
                     id={this.props.target.id}
                     data={this.props.connectionsData}
-                    view={this.props.view}
+                    model={this.props.model}
                     filterKey={this.state.filterKey}
                     allRelatedLink={this.props.allRelatedLink}
                     onExpandLink={this.onExpandLink}
@@ -518,7 +518,7 @@ class MenuMarkup extends React.Component<MenuMarkupProps, MenuMarkupState> {
 interface ConnectionsListProps {
     id: string;
     data: ConnectionsData;
-    view: DiagramView;
+    model: DiagramModel;
     filterKey: string;
 
     allRelatedLink: RichLinkType;
@@ -563,9 +563,9 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private tryUpdateScores() {
-        const {propertySuggestionCall, filterKey, sortMode, id, data, view} = this.props;
+        const {propertySuggestionCall, filterKey, sortMode, id, data, model} = this.props;
         if (propertySuggestionCall && (filterKey || sortMode === 'smart')) {
-            const lang = view.getLanguage();
+            const lang = model.language;
             const token = filterKey.trim();
             const properties = data.links.map(l => l.id);
 
@@ -589,17 +589,17 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private compareLinks = (a: RichLinkType, b: RichLinkType) => {
-        const {view} = this.props;
-        const aText = view.formatLabel(a.label, a.id);
-        const bText = view.formatLabel(b.label, b.id);
+        const {model} = this.props;
+        const aText = model.locale.formatLabel(a.label, a.id);
+        const bText = model.locale.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
     private compareLinksByWeight = (a: RichLinkType, b: RichLinkType) => {
-        const {view} = this.props;
+        const {model} = this.props;
         const {scores} = this.state;
-        const aText = view.formatLabel(a.label, a.id);
-        const bText = view.formatLabel(b.label, b.id);
+        const aText = model.locale.formatLabel(a.label, a.id);
+        const bText = model.locale.formatLabel(b.label, b.id);
 
         const aWeight = scores.has(a.id) ? scores.get(a.id)!.score : 0;
         const bWeight = scores.has(b.id) ? scores.get(b.id)!.score : 0;
@@ -612,10 +612,10 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     };
 
     private getLinks() {
-        const {view, data, filterKey} = this.props;
+        const {model, data, filterKey} = this.props;
         return (data.links || [])
             .filter(link => {
-                const text = view.formatLabel(link.label, link.id).toLowerCase();
+                const text = model.locale.formatLabel(link.label, link.id).toLowerCase();
                 return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
             })
             .sort(this.compareLinks);
@@ -633,7 +633,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private getViews = (links: RichLinkType[], notSure?: boolean) => {
-        const {view, data} = this.props;
+        const {model, data} = this.props;
         const {scores} = this.state;
         const countMap = data.countMap ?? {};
 
@@ -655,7 +655,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
                     key={`${direction}-${link.id}-${postfix}`}
                     link={link}
                     onExpandLink={this.props.onExpandLink}
-                    view={view}
+                    model={model}
                     count={count}
                     direction={direction}
                     filterKey={notSure ? '' : this.props.filterKey}
@@ -676,7 +676,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     };
 
     render() {
-        const {view, allRelatedLink} = this.props;
+        const {model, allRelatedLink} = this.props;
         const isSmartMode = this.isSmartMode();
 
         const links = isSmartMode ? [] : this.getLinks();
@@ -697,7 +697,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
                         key={allRelatedLink.id}
                         link={allRelatedLink}
                         onExpandLink={this.props.onExpandLink}
-                        view={view}
+                        model={model}
                         count={allRelatedElements.inCount + allRelatedElements.outCount}
                         onMoveToFilter={this.props.onMoveToFilter}
                     />,
@@ -732,7 +732,7 @@ interface LinkInPopupMenuProps {
     link: RichLinkType;
     count: number;
     direction?: 'in' | 'out';
-    view: DiagramView;
+    model: DiagramModel;
     filterKey?: string;
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
@@ -767,8 +767,8 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
     };
 
     render() {
-        const {view, link, filterKey, direction, count, probability = 0} = this.props;
-        const fullText = view.formatLabel(link.label, link.id);
+        const {model, link, filterKey, direction, count, probability = 0} = this.props;
+        const fullText = model.locale.formatLabel(link.label, link.id);
         const probabilityPercent = Math.round(probability * 100);
         const textLine = highlightSubstring(
             fullText + (probabilityPercent > 0 ? ' (' + probabilityPercent + '%)' : ''),
@@ -782,7 +782,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
         return (
             <li data-linktypeid={link.id}
                 className={`${CLASS_NAME}__link`}
-                title={`${directionName} of "${fullText}" ${view.formatIri(link.id)}`}
+                title={`${directionName} of "${fullText}" ${model.locale.formatIri(link.id)}`}
                 onClick={() => this.onExpandLink(count, direction)}>
                 {direction === 'in' || direction === 'out' ? (
                     <div className={`${CLASS_NAME}__link-direction`}>
@@ -810,7 +810,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
 interface ObjectsPanelProps {
     data: ObjectsData;
     loading?: boolean;
-    view: DiagramView;
+    model: DiagramModel;
     filterKey?: string;
     onPressAddSelected: (selectedObjects: ElementOnDiagram[]) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
@@ -860,7 +860,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         }
         const filterKey = this.props.filterKey.toLowerCase();
         return this.props.data.objects.filter(element => {
-            const text = this.props.view.formatLabel(
+            const text = this.props.model.locale.formatLabel(
                 element.model.label, element.model.id
             ).toLowerCase();
             return text && text.indexOf(filterKey) >= 0;
@@ -929,7 +929,6 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
-                        view={this.props.view}
                         items={this.getItems(objects)}
                         selection={this.state.selection}
                         onSelectionChanged={this.updateSelection}

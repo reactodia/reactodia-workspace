@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { DiagramView } from '../diagram/view';
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
+
+import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-edit-form';
 
 export interface EditEntityFormProps {
-    view: DiagramView;
     entity: ElementModel;
     onApply: (entity: ElementModel) => void;
     onCancel: () => void;
@@ -18,8 +18,11 @@ interface State {
 }
 
 export class EditEntityForm extends React.Component<EditEntityFormProps, State> {
-    constructor(props: EditEntityFormProps) {
-        super(props);
+    static contextType = WorkspaceContext;
+    declare readonly context: WorkspaceContext;
+
+    constructor(props: EditEntityFormProps, context: any) {
+        super(props, context);
         this.state = {elementModel: props.entity};
     }
 
@@ -33,9 +36,9 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         key: PropertyTypeIri,
         values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
     ) {
-        const {view} = this.props;
-        const richProperty = view.model.getProperty(key)!;
-        const label = view.formatLabel(richProperty.label, key);
+        const {model} = this.context;
+        const richProperty = model.getProperty(key)!;
+        const label = model.locale.formatLabel(richProperty.label, key);
         return (
             <div key={key} className={`${CLASS_NAME}__form-row`}>
                 <label>
@@ -67,9 +70,9 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     }
 
     private renderType() {
-        const {view} = this.props;
+        const {model} = this.context;
         const {elementModel} = this.state;
-        const label = view.getElementTypeString(elementModel);
+        const label = model.locale.formatElementTypes(elementModel.types).join(', ');
         return (
             <label>
                 Type
@@ -110,9 +113,9 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     }
 
     private onChangeLabel = (e: React.FormEvent<HTMLInputElement>) => {
-        const {view} = this.props;
+        const {model} = this.context;
         const target = (e.target as HTMLInputElement);
-        const labels = target.value.length > 0 ? [view.model.factory.literal(target.value)] : [];
+        const labels = target.value.length > 0 ? [model.factory.literal(target.value)] : [];
         this.setState({elementModel: {
             ...this.state.elementModel,
             label: labels,
@@ -120,8 +123,8 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     };
 
     private renderLabel() {
-        const {view} = this.props;
-        const label = view.selectLabel(this.state.elementModel.label);
+        const {model} = this.context;
+        const label = model.locale.selectLabel(this.state.elementModel.label);
         const text = label ? label.value : '';
         return (
             <label>

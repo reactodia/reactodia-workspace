@@ -19,11 +19,9 @@ import {
 } from './geometry';
 import { DiagramModel } from './model';
 import { RenderingState, RenderingLayer, FilledLinkTemplate } from './renderingState';
-import { DiagramView } from './view';
 
 export interface LinkLayerProps {
     model: DiagramModel;
-    view: DiagramView;
     renderingState: RenderingState;
     links: ReadonlyArray<DiagramLink>;
     group?: string;
@@ -68,15 +66,14 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     }
 
     componentDidMount() {
-        const {model, view, renderingState} = this.props;
+        const {model, renderingState} = this.props;
 
         const scheduleUpdateElementLinks = (element: DiagramElement) => {
             for (const link of model.getElementLinks(element)) {
                 this.scheduleUpdateLink(link.id);
             }
         };
-        this.listener.listen(view.events, 'changeLanguage', this.scheduleUpdateAll);
-        this.listener.listen(view.events, 'changeHighlight', this.scheduleUpdateAll);
+        this.listener.listen(model.events, 'changeLanguage', this.scheduleUpdateAll);
         this.listener.listen(model.events, 'changeCells', e => {
             if (e.updateAll) {
                 this.scheduleUpdateAll();
@@ -111,10 +108,11 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
             const linkTypeEvent = data.changeLabel || data.changeVisibility;
             if (!linkTypeEvent) { return; }
             const linkTypeId = linkTypeEvent.source.id;
-            for (const link of view.model.links.filter(link => link.typeId === linkTypeId)) {
+            for (const link of model.links.filter(link => link.typeId === linkTypeId)) {
                 this.scheduleUpdateLink(link.id);
             }
         });
+        this.listener.listen(renderingState.shared.events, 'changeHighlight', this.scheduleUpdateAll);
         this.listener.listen(renderingState.events, 'changeElementSize', e => {
             scheduleUpdateElementLinks(e.source);
         });
@@ -226,17 +224,17 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     };
 
     private getLinks() {
-        const {view, links, group} = this.props;
+        const {model, links, group} = this.props;
 
         if (!group) { return links; }
 
-        const grouping = computeGrouping(view.model.elements);
+        const grouping = computeGrouping(model.elements);
         const nestedElements = computeDeepNestedElements(grouping, group);
 
         return links.filter(link => {
             const {sourceId, targetId} = link;
-            const source = view.model.getElement(sourceId);
-            const target = view.model.getElement(targetId);
+            const source = model.getElement(sourceId);
+            const target = model.getElement(targetId);
             if (!source || !target) {
                 return false;
             }
@@ -248,7 +246,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     }
 
     render() {
-        const {view, renderingState} = this.props;
+        const {model, renderingState} = this.props;
         const {memoizedLinks} = this;
 
         const shouldUpdate = this.popShouldUpdatePredicate();
@@ -268,7 +266,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
                             <LinkView key={link.id}
                                 link={link}
                                 route={renderingState.getRouting(link.id)}
-                                view={view}
+                                model={model}
                                 renderingState={renderingState}
                                 scheduleLabelMeasure={this.scheduleLabelMeasure}
                             />
@@ -301,7 +299,7 @@ function computeDeepNestedElements(grouping: Map<string, DiagramElement[]>, grou
 
 interface LinkViewProps {
     link: DiagramLink;
-    view: DiagramView;
+    model: DiagramModel;
     renderingState: RenderingState;
     route?: RoutedLink;
     scheduleLabelMeasure: ScheduleLabelMeasure;
@@ -335,17 +333,17 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     }
 
     static makeStateFromProps(props: LinkViewProps): LinkViewState {
-        const {view, renderingState} = props;
-        const linkType = view.model.getLinkType(props.link.typeId)!;
+        const {model, renderingState} = props;
+        const linkType = model.getLinkType(props.link.typeId)!;
         const template = renderingState.createLinkTemplate(linkType);
         return {linkType, template};
     }
 
     render() {
-        const {link, route, view, renderingState} = this.props;
+        const {link, route, model, renderingState} = this.props;
         const {linkType: {index: typeIndex, visibility}, template} = this.state;
-        const source = view.model.getElement(link.sourceId);
-        const target = view.model.getElement(link.targetId);
+        const source = model.getElement(link.sourceId);
+        const target = model.getElement(link.targetId);
         if (!(source && target && visibility !== 'hidden')) {
             return null;
         }
@@ -360,10 +358,11 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
 
         const path = pathFromPolyline(polyline);
         
-        const style = template.renderLink(link.data, link.linkState, view.model.factory);
+        const style = template.renderLink(link.data, link.linkState, model.factory);
         const pathAttributes = getPathAttributes(link, style);
 
-        const isBlurred = view.highlighter && !view.highlighter(link);
+        const {highlighter} = renderingState.shared;
+        const isBlurred = highlighter && !highlighter(link);
         const className = `${LINK_CLASS} ${isBlurred ? `${LINK_CLASS}--blurred` : ''}`;
         return (
             <g className={className} data-link-id={link.id} data-source-id={source.id} data-target-id={target.id}>
@@ -410,7 +409,7 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     }
 
     private onRemoveLinkVertex = (vertex: LinkVertex) => {
-        const model = this.props.view.model;
+        const {model} = this.props;
         model.history.registerToUndo(
             restoreCapturedLinkGeometry(vertex.link)
         );
@@ -418,9 +417,9 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     };
 
     private renderLabels(polyline: ReadonlyArray<Vector>, style: LinkStyle) {
-        const {link, route, view, scheduleLabelMeasure} = this.props;
+        const {link, route, model, scheduleLabelMeasure} = this.props;
 
-        const labels = computeLinkLabels(link.data, style, view);
+        const labels = computeLinkLabels(link.data, style, model);
 
         let textAnchor: 'start' | 'middle' | 'end' = 'middle';
         if (route && route.labelTextAnchor) {
@@ -453,18 +452,19 @@ class LinkView extends React.Component<LinkViewProps, LinkViewState> {
     }
 }
 
-function computeLinkLabels(data: LinkModel, style: LinkStyle, view: DiagramView) {
+function computeLinkLabels(data: LinkModel, style: LinkStyle, model: DiagramModel) {
     const labelStyle = style.label ?? {};
 
     let text: Rdf.Literal;
     let title: string | undefined = labelStyle.title;
     if (labelStyle.label && labelStyle.label.length > 0) {
-        text = view.selectLabel(labelStyle.label)!;
+        text = model.locale.selectLabel(labelStyle.label)!;
     } else {
-        const type = view.model.getLinkType(data.linkTypeId)!;
-        text = view.selectLabel(type.label) || view.model.factory.literal(view.formatLabel([], type.id));
+        const type = model.getLinkType(data.linkTypeId)!;
+        text = model.locale.selectLabel(type.label)
+            ?? model.factory.literal(model.locale.formatLabel([], type.id));
         if (title === undefined) {
-            title = `${text.value} ${view.formatIri(data.linkTypeId)}`;
+            title = `${text.value} ${model.locale.formatIri(data.linkTypeId)}`;
         }
     }
 
@@ -481,7 +481,7 @@ function computeLinkLabels(data: LinkModel, style: LinkStyle, view: DiagramView)
 
     if (style.properties) {
         for (const property of style.properties) {
-            const label = view.selectLabel(property.label ?? []);
+            const label = model.locale.selectLabel(property.label ?? []);
             if (!label) {
                 continue;
             }

@@ -75,7 +75,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         }
 
         if (target) {
-            const {view} = this.context;
+            const {model} = this.context;
 
             if (target instanceof Element) {
                 this.listenToElement(target);
@@ -83,7 +83,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                 this.listenToLink(target);
             }
 
-            this.handler.listen(view.events, 'changeLanguage', this.updateAll);
+            this.handler.listen(model.events, 'changeLanguage', this.updateAll);
 
             this.unsubscribeFromTarget = () => { this.handler.stopListening(); };
         }

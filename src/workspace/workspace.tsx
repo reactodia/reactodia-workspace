@@ -1,23 +1,25 @@
 import * as React from 'react';
+import { hcl } from 'd3-color';
 
 import { EventObserver } from '../coreUtils/events';
 
+import { ElementTypeIri } from '../data/model';
 import { MetadataApi } from '../data/metadataApi';
 import { ValidationApi } from '../data/validationApi';
+import { hashFnv32a } from '../data/utils';
 
-import type { CanvasApi } from '../diagram/canvasApi';
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
-import { TypeStyleResolver } from '../diagram/customization';
+import { TypeStyleResolver, LabelLanguageSelector } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import { calculateLayout, applyLayout } from '../diagram/layout';
-import { DiagramView, IriClickEvent, LabelLanguageSelector } from '../diagram/view';
+import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { AsyncModel, GroupBy } from '../editor/asyncModel';
 import { EditorController } from '../editor/editorController';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
 import {
-    WorkspaceContext, WorkspacePerformLayout, WorkspaceEventHandler, WorkspaceEventKey,
+    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
 
 export interface WorkspaceProps {
@@ -46,10 +48,15 @@ export interface WorkspaceProps {
 }
 
 const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
+const TYPE_STYLE_COLOR_SEED = 0x0BADBEEF;
 
 export class Workspace extends React.Component<WorkspaceProps> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
+
+    private readonly resolveTypeStyle: TypeStyleResolver;
+    private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
 
     private readonly workspaceContext: WorkspaceContext;
 
@@ -68,13 +75,13 @@ export class Workspace extends React.Component<WorkspaceProps> {
             onWorkspaceEvent = () => {},
         } = this.props;
 
-        const model = new AsyncModel(history, groupBy);
-        const view = new DiagramView({
-            model,
-            typeStyleResolver,
-            selectLabelLanguage,
-        });
-        view.setLanguage(defaultLanguage);
+        this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
+        this.cachedTypeStyles = new WeakMap();
+
+        const model = new AsyncModel({history, selectLabelLanguage, groupBy});
+        model.setLanguage(defaultLanguage);
+
+        const view = new SharedCanvasState();
 
         const editor = new EditorController({
             model,
@@ -95,6 +102,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             editor,
             overlayController,
             disposeSignal: this.cancellation.signal,
+            getElementTypeStyle: this.getElementTypeStyle,
             performLayout: this.onPerformLayout,
             triggerWorkspaceEvent: onWorkspaceEvent,
         };
@@ -154,7 +162,25 @@ export class Workspace extends React.Component<WorkspaceProps> {
         overlayController.dispose();
     }
 
-    private onPerformLayout: WorkspacePerformLayout = async params => {
+    private getElementTypeStyle: WorkspaceContext['getElementTypeStyle'] = types => {
+        let processedStyle = this.cachedTypeStyles.get(types);
+        if (!processedStyle) {
+            const customStyle = this.resolveTypeStyle(types);
+            const icon = customStyle ? customStyle.icon : undefined;
+            let color: string;
+            if (customStyle && customStyle.color) {
+                color = hcl(customStyle.color).toString();
+            } else {
+                const hue = getHueFromClasses(types, TYPE_STYLE_COLOR_SEED);
+                color = hcl(hue, 40, 75).toString();
+            }
+            processedStyle = {icon, color};
+            this.cachedTypeStyles.set(types, processedStyle);
+        }
+        return processedStyle;
+    };
+
+    private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
         const {canvas, layoutFunction, selectedElements, animate, signal} = params;
         const {model, disposeSignal} = this.workspaceContext;
 
@@ -189,4 +215,13 @@ export class Workspace extends React.Component<WorkspaceProps> {
             canvas.zoomToFit();
         }
     };
+}
+
+function getHueFromClasses(classes: ReadonlyArray<ElementTypeIri>, seed?: number): number {
+    let hash = seed;
+    for (const name of classes) {
+        hash = hashFnv32a(name, hash);
+    }
+    const MAX_INT32 = 0x7fffffff;
+    return 360 * ((hash === undefined ? 0 : hash) / MAX_INT32);
 }

@@ -15,9 +15,11 @@ import { Element, Link, LinkTemplateState, RichLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
+import { SharedCanvasState } from './sharedCanvasState';
 
 export interface RenderingStateOptions {
     model: DiagramModel;
+    shared: SharedCanvasState;
     elementTemplateResolver?: ElementTemplateResolver;
     linkTemplateResolver?: LinkTemplateResolver;
     linkRouter?: LinkRouter;
@@ -64,8 +66,11 @@ export class RenderingState implements SizeProvider {
     private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
 
+    readonly shared: SharedCanvasState;
+
     constructor(options: RenderingStateOptions) {
         this.model = options.model;
+        this.shared = options.shared;
         this.resolveElementTemplate = options.elementTemplateResolver
             ?? DEFAULT_ELEMENT_TEMPLATE_RESOLVER;
         this.resolveLinkTemplate = options.linkTemplateResolver

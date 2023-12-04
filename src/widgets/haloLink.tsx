@@ -10,7 +10,7 @@ import {
     Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
     pathFromPolyline,
 } from '../diagram/geometry';
-import type { GraphStructure } from '../diagram/model';
+import type { DiagramModel, GraphStructure } from '../diagram/model';
 import { TransformedSvgCanvas } from '../diagram/paper';
 import type { RenderingState } from '../diagram/renderingState';
 
@@ -51,9 +51,8 @@ export interface HaloLinkProps {
 }
 
 export function HaloLink(props: HaloLinkProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const workspace = React.useContext(WorkspaceContext)!;
-    const {editor} = workspace;
+    const {canvas, model} = React.useContext(CanvasContext)!;
+    const {editor} = React.useContext(WorkspaceContext)!;
 
     const selectionStore = useEventStore(editor.events, 'changeSelection');
     const selection = useSyncStore(selectionStore, () => editor.selection);
@@ -64,8 +63,8 @@ export function HaloLink(props: HaloLinkProps) {
             return (
                 <HaloLinkInner {...props}
                     target={target}
+                    model={model}
                     canvas={canvas}
-                    workspace={workspace}
                 />
             );
         }
@@ -77,8 +76,8 @@ defineCanvasWidget(HaloLink, element => ({element, attachment: 'overElements'}))
 
 interface HaloLinkInnerProps extends HaloLinkProps {
     target: Link;
+    model: DiagramModel;
     canvas: CanvasApi;
-    workspace: WorkspaceContext;
 }
 
 interface State {
@@ -107,8 +106,8 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     static makeActionContext(props: HaloLinkInnerProps): HaloLinkActionContext | null {
         const {
             target,
+            model,
             canvas,
-            workspace: {model},
             buttonSize = DEFAULT_BUTTON_SIZE,
             buttonMargin = DEFAULT_BUTTON_MARGIN,
         } = props;
@@ -172,7 +171,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     }
 
     private listenToTarget(link: Link | undefined) {
-        const {canvas, workspace: {model}} = this.props;
+        const {model, canvas} = this.props;
 
         this.targetListener.stopListening();
         if (link) {

@@ -68,9 +68,9 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
     componentDidMount() {
         const {commands} = this.props;
-        const {view, triggerWorkspaceEvent} = this.context;
+        const {model, triggerWorkspaceEvent} = this.context;
 
-        this.listener.listen(view.events, 'changeLanguage', () => this.forceUpdate());
+        this.listener.listen(model.events, 'changeLanguage', () => this.forceUpdate());
         this.listener.listen(commands, 'setCriteria', ({criteria}) => {
             triggerWorkspaceEvent(WorkspaceEventKey.searchUpdateCriteria);
             this.setState({criteria, inputText: undefined});
@@ -92,8 +92,6 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     render() {
-        const {view} = this.context;
-
         const ENTER_KEY_CODE = 13;
 
         const className = `${CLASS_NAME} ${this.props.className || ''}`;
@@ -139,7 +137,6 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div className={`${CLASS_NAME}__rest reactodia-scrollable`} key={this.state.resultId}>
                 <SearchResults
-                    view={view}
                     items={this.state.items ?? []}
                     highlightText={this.state.criteria.text}
                     selection={this.state.selection}
@@ -163,13 +160,13 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     };
 
     private renderCriteria(): React.ReactElement<any> {
-        const {view} = this.context;
+        const {model} = this.context;
         const {criteria} = this.state;
         const criterions: React.ReactElement<any>[] = [];
 
         if (criteria.elementType) {
             const classInfo = criteria.elementType;
-            const classLabel = view.formatLabel(classInfo.label, classInfo.id);
+            const classLabel = model.locale.formatLabel(classInfo.label, classInfo.id);
             criterions.push(<div key='hasType' className={`${CLASS_NAME}__criterion`}>
                 {this.renderRemoveCriterionButtons(() => this.setState({
                     criteria: {...criteria, elementType: undefined},
@@ -179,10 +176,10 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             </div>);
         } else if (criteria.refElement) {
             const element = criteria.refElement;
-            const elementLabel = view.formatLabel(element.data.label, element.iri);
+            const elementLabel = model.locale.formatLabel(element.data.label, element.iri);
 
             const linkType = criteria.refElementLink;
-            const linkTypeLabel = linkType ? view.formatLabel(linkType.label, linkType.id) : undefined;
+            const linkTypeLabel = linkType ? model.locale.formatLabel(linkType.label, linkType.id) : undefined;
 
             criterions.push(<div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
                 {this.renderRemoveCriterionButtons(() => this.setState({

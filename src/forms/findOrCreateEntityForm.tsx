@@ -67,7 +67,6 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     private validate() {
-        const {editor} = this.context;
         const {originalLink} = this.props;
         const {elementValue, linkValue} = this.state;
         this.setState({isValidating: true});
@@ -77,7 +76,9 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         const signal = this.validationCancellation.signal;
 
         const validateElement = validateElementType(elementValue.value);
-        const validateLink = validateLinkType(editor, linkValue.value.link, originalLink.data);
+        const validateLink = validateLinkType(
+            linkValue.value.link, originalLink.data, this.context
+        );
         Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
             if (signal.aborted) { return; }
             this.setState({isValidating: false});
@@ -89,17 +90,13 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     render() {
-        const {editor, view} = this.context;
         const {source, originalLink} = this.props;
         const {elementValue, linkValue, isValidating} = this.state;
         const isValid = !elementValue.error && !linkValue.error;
         return (
             <div className={CLASS_NAME}>
                 <div className={`${CLASS_NAME}__body`}>
-                    <ElementTypeSelector editor={editor}
-                        view={view}
-                        metadataApi={editor.metadataApi}
-                        source={source.data}
+                    <ElementTypeSelector source={source.data}
                         elementValue={elementValue}
                         onChange={newState => {
                             this.setElementOrLink({
@@ -126,10 +123,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                             <HtmlSpinner width={20} height={20} />&nbsp;Loading entity...
                         </div>
                     ) : (
-                        <LinkTypeSelector editor={editor}
-                            view={view}
-                            metadataApi={editor.metadataApi}
-                            linkValue={linkValue}
+                        <LinkTypeSelector linkValue={linkValue}
                             source={source.data}
                             target={elementValue.value}
                             onChange={value => this.setElementOrLink({

@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
 
 ### Changed
+- **[Breaking]** Split `DiagramView` type:
+  * Removed public `model` property to get `DiagramModel` (accessible via both canvas or workspace context);
+  * Moved `language` property with setter and corresponding event into `DiagramModel`;
+  * Moved locale formatting methods under `DiagramModel.locale.*`;
+  * Moved `getTypeStyle()` into `WorkspaceContext` as `getElementTypeStyle()`;
+  * Renamed `DiagramView` -> `SharedCanvasState` and move under `RenderingState.shared`;
 - **[Breaking]** Renamed `DefaultToolbar` -> `Toolbar` component.
 - **[Breaking]** Renamed `CanvasApi.exportPng()` -> `CanvasApi.exportRaster()`.
 - **[Breaking]** Renamed `OverlayController.showEditLinkLabelForm()` -> `OverlayController.showRenameLinkForm()`.
@@ -45,13 +51,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed deprecated `Dictionary` type (`Record<string, T>` can be used instead).
 - Removed untyped `key` parameter from event listeners.
+- Made private `EditorController.model` property (accessible via workspace context).
 
 ## [0.22.0] - 2023-11-24
 ### Added
 - Support resources represented by blank nodes in `RdfDataProvider` when `acceptBlankNodes` is enabled.
 - Support native scroll and pan in `PaperArea` (e.g. using mouse wheel or touchpad scrolling).
 - Support touch input: native pan scroll and custom pinch zoom:
-  * Add new coordination conversions to `CanvasMetrics`: `paperToPageCoords()` and `scrollablePaneToClientCoords()`;
+  * Add new coordinate conversions to `CanvasMetrics`: `paperToPageCoords()` and `scrollablePaneToClientCoords()`;
   * Add `Vector.{add, subtract, scale}` functions;
 - Create dropdown menu to improve toolbar UI, make it more compact.
 

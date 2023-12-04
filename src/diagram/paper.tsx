@@ -7,11 +7,9 @@ import { Vector } from './geometry';
 import { LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
 import { RenderingState } from './renderingState';
-import { DiagramView } from './view';
 
 export interface PaperProps {
     model: DiagramModel;
-    view: DiagramView;
     renderingState: RenderingState;
     paperTransform: PaperTransform;
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
@@ -28,7 +26,7 @@ const CLASS_NAME = 'reactodia-paper';
 export class Paper extends Component<PaperProps> {
     render() {
         const {
-            model, view, renderingState, group, paperTransform, svgCanvasRef,
+            model, renderingState, group, paperTransform, svgCanvasRef,
             linkLayerWidgets, elementLayerWidgets,
         } = this.props;
         const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
@@ -65,7 +63,6 @@ export class Paper extends Component<PaperProps> {
                         renderingState={renderingState}
                     />
                     <LinkLayer model={model}
-                        view={view}
                         renderingState={renderingState}
                         links={model.links}
                         group={group}
@@ -73,7 +70,6 @@ export class Paper extends Component<PaperProps> {
                 </TransformedSvgCanvas>
                 {linkLayerWidgets}
                 <ElementLayer model={model}
-                    view={view}
                     renderingState={renderingState}
                     group={group}
                     style={htmlTransformStyle}

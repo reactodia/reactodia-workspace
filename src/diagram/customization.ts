@@ -7,6 +7,15 @@ import type { ElementTemplateState, Link, LinkTemplateState } from './elements';
 import type { SizeProvider } from './geometry';
 import type { GraphStructure } from './model';
 
+export type LabelLanguageSelector =
+    (labels: ReadonlyArray<Rdf.Literal>, language: string) => Rdf.Literal | undefined;
+
+export interface FormattedProperty {
+    readonly propertyId: PropertyTypeIri;
+    readonly label: string;
+    readonly values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+}
+
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
 export type ElementTemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
 export type LinkTemplateResolver = (linkType: string) => LinkTemplate | undefined;
@@ -21,16 +30,8 @@ export type ElementTemplate = React.ComponentType<TemplateProps>;
 export interface TemplateProps {
     readonly elementId: string;
     readonly data: ElementModel;
-    readonly color: string;
-    readonly iconUrl?: string;
     readonly isExpanded: boolean;
     readonly elementState?: ElementTemplateState;
-}
-
-export interface FormattedProperty {
-    readonly propertyId: PropertyTypeIri;
-    readonly label: string;
-    readonly values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
 }
 
 export interface LinkTemplate {

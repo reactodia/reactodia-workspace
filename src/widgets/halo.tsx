@@ -48,8 +48,7 @@ export interface HaloProps {
 
 export function Halo(props: HaloProps) {
     const {canvas} = React.useContext(CanvasContext)!;
-    const workspace = React.useContext(WorkspaceContext)!;
-    const {editor} = workspace;
+    const {editor} = React.useContext(WorkspaceContext)!;
 
     const selection = useObservedProperty(
         editor.events,
@@ -64,7 +63,6 @@ export function Halo(props: HaloProps) {
                 <HaloInner {...props}
                     target={target}
                     canvas={canvas}
-                    workspace={workspace}
                 />
             );
         }
@@ -77,7 +75,6 @@ defineCanvasWidget(Halo, element => ({element, attachment: 'overElements'}));
 interface HaloInnerProps extends HaloProps {
     readonly target: Element;
     readonly canvas: CanvasApi;
-    readonly workspace: WorkspaceContext;
 }
 
 const CLASS_NAME = 'reactodia-halo';
