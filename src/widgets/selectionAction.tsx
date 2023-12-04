@@ -269,14 +269,12 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     const {className, title, commands, ...otherProps} = props;
     const {editor, overlayController} = React.useContext(WorkspaceContext)!;
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
-    if (!(commands && elements.length === 1)) {
+    if (!commands) {
         return null;
     }
-    const [target] = elements;
     const {openedDialog} = overlayController;
     const menuOpened = Boolean(
         openedDialog &&
-        openedDialog.target === target &&
         openedDialog.knownType === 'connectionsMenu'
     );
     return (
@@ -292,7 +290,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
                 if (menuOpened) {
                     overlayController.hideDialog();
                 } else {
-                    commands.trigger('show', {target});
+                    commands.trigger('show', {targets: elements});
                 }
             }}
         />
