@@ -5,6 +5,7 @@ import type * as Rdf from '../data/rdf/rdfModel';
 import { isEncodedBlank } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
+import { useObservedElementData } from '../diagram/keyedObserver';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
@@ -15,8 +16,11 @@ import { WorkspaceContext } from '../workspace/workspaceContext';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 export function StandardTemplate(props: TemplateProps) {
+    const {elementId, data, isExpanded} = props;
+    useObservedElementData(data);
+
     const workspace = React.useContext(WorkspaceContext)!;
-    const entityContext = useAuthoredEntity(props.elementId, props.data, props.isExpanded);
+    const entityContext = useAuthoredEntity(elementId, data, isExpanded);
     return (
         <StandardTemplateInner {...props}
             workspace={workspace}

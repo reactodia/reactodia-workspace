@@ -2,12 +2,8 @@ import * as React from 'react';
 import { findDOMNode } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
-import {
-    KeyedObserver, observeElementTypes, observeProperties,
-} from '../coreUtils/keyedObserver';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { ElementTypeIri, PropertyTypeIri } from '../data/model';
 import { TemplateProps } from './customization';
 
 import { setElementExpanded } from './commands';
@@ -102,7 +98,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                                 state={state}
                                 model={model}
                                 renderingState={renderingState}
-                                onInvalidate={this.requestRedraw}
                                 onResize={this.requestSizeUpdate}
                             />
                         );
@@ -281,21 +276,11 @@ interface OverlaidElementProps {
     state: ElementState;
     model: DiagramModel;
     renderingState: RenderingState;
-    onInvalidate: (model: Element, request: RedrawFlags) => void;
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 
 class OverlaidElement extends React.Component<OverlaidElementProps> {
     private readonly listener = new EventObserver();
-    private disposed = false;
-
-    private typesObserver!: KeyedObserver<ElementTypeIri>;
-    private propertiesObserver!: KeyedObserver<PropertyTypeIri>;
-
-    private rerenderTemplate = () => {
-        if (this.disposed) { return; }
-        this.props.onInvalidate(this.props.state.element, RedrawFlags.RecomputeTemplate);
-    };
 
     render(): React.ReactElement<any> {
         const {state: {element, blurred}} = this.props;
@@ -376,20 +361,10 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
             const element = findDOMNode(this) as HTMLElement;
             if (element) { element.focus(); }
         });
-        this.typesObserver = observeElementTypes(
-            model, 'changeLabel', this.rerenderTemplate
-        );
-        this.propertiesObserver = observeProperties(
-            model, 'changeLabel', this.rerenderTemplate
-        );
-        this.observeTypes();
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.typesObserver.stopListening();
-        this.propertiesObserver.stopListening();
-        this.disposed = true;
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
@@ -397,16 +372,10 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     }
 
     componentDidUpdate() {
-        this.observeTypes();
+        const {state, onResize} = this.props;
         // TODO: replace findDOMNode() usage by accessing a ref
         // eslint-disable-next-line react/no-find-dom-node
-        this.props.onResize(this.props.state.element, findDOMNode(this) as HTMLDivElement);
-    }
-
-    private observeTypes() {
-        const {state: {element}} = this.props;
-        this.typesObserver.observe(element.data.types);
-        this.propertiesObserver.observe(Object.keys(element.data.properties) as PropertyTypeIri[]);
+        onResize(state.element, findDOMNode(this) as HTMLDivElement);
     }
 }
 

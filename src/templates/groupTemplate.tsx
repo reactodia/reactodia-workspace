@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { TemplateProps } from '../diagram/customization';
 import { EmbeddedLayer } from '../diagram/embeddedLayer';
+import { useObservedElementData } from '../diagram/keyedObserver';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -9,6 +10,8 @@ const CLASS = 'reactodia-group-template';
 
 export function GroupTemplate(props: TemplateProps) {
     const {elementId, data, isExpanded} = props;
+    useObservedElementData(data);
+
     const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
     const {color, icon} = getElementTypeStyle(data.types);
 

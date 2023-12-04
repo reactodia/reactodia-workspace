@@ -5,7 +5,6 @@ export * from './coreUtils/collections';
 export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
 export { useObservedProperty } from './coreUtils/hooks';
-export * from './coreUtils/keyedObserver';
 export {
     CalculatedLayout, LayoutNode, LayoutLink, LayoutFunction, calculateLayout, applyLayout,
     colaForceLayout, colaRemoveOverlaps, layoutForcePadded, layoutPaddedWith,
@@ -43,6 +42,7 @@ export {
 export { EmbeddedLayer } from './diagram/embeddedLayer';
 export * from './diagram/geometry';
 export * from './diagram/history';
+export * from './diagram/keyedObserver';
 export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
 export {
     PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,

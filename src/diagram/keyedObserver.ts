@@ -1,9 +1,12 @@
-import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
+import * as React from 'react';
 
-import { RichElementTypeEvents, RichLinkTypeEvents, RichPropertyEvents } from '../diagram/elements';
-import { DiagramModel } from '../diagram/model';
+import { ElementTypeIri, PropertyTypeIri, ElementModel } from '../data/model';
 
-import { Unsubscribe, Listener } from './events';
+import { CanvasContext } from './canvasApi';
+import { RichElementTypeEvents, RichPropertyEvents } from './elements';
+import { DiagramModel } from './model';
+
+import { Unsubscribe, Listener } from '../coreUtils/events';
 
 export class KeyedObserver<Key extends string> {
     private observedKeys = new Map<string, Unsubscribe>();
@@ -41,6 +44,43 @@ export class KeyedObserver<Key extends string> {
     }
 }
 
+export function useObservedElementData(data: ElementModel): void {
+    const {model} = React.useContext(CanvasContext)!;
+
+    interface ObservedState {
+        readonly typeObserver: KeyedObserver<ElementTypeIri>;
+        readonly propertyObserver: KeyedObserver<PropertyTypeIri>;
+    }
+    const observedStateRef = React.useRef<ObservedState | undefined>();
+    const [, setVersion] = React.useState(0);
+
+    React.useEffect(() => {
+        let observedState = observedStateRef.current;
+        if (!observedState) {
+            const updateVersion = () => setVersion(version => version + 1);
+            const typeObserver = observeElementTypes(
+                model, 'changeLabel', updateVersion
+            );
+            const propertyObserver = observeProperties(
+                model, 'changeLabel', updateVersion
+            );
+            observedState = {typeObserver, propertyObserver};
+        }
+        observedState.typeObserver.observe(data.types);
+        observedState.propertyObserver.observe(Object.keys(data.properties) as PropertyTypeIri[]);
+    }, [data.types, data.properties]);
+
+    React.useEffect(() => {
+        return () => {
+            const observedState = observedStateRef.current;
+            if (observedState) {
+                observedState.typeObserver.stopListening();
+                observedState.propertyObserver.stopListening();
+            }
+        };
+    }, []);
+}
+
 export function observeElementTypes<Event extends keyof RichElementTypeEvents>(
     model: DiagramModel, event: Event, listener: Listener<RichElementTypeEvents, Event>
 ) {
@@ -62,19 +102,6 @@ export function observeProperties<Event extends keyof RichPropertyEvents>(
         if (property) {
             property.events.on(event, listener);
             return () => property.events.off(event, listener);
-        }
-        return undefined;
-    });
-}
-
-export function observeLinkTypes<Event extends keyof RichLinkTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<RichLinkTypeEvents, Event>
-) {
-    return new KeyedObserver<LinkTypeIri>(key => {
-        const type = model.createLinkType(key);
-        if (type) {
-            type.events.on(event, listener);
-            return () => type.events.off(event, listener);
         }
         return undefined;
     });

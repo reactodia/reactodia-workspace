@@ -2,12 +2,15 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { useObservedElementData } from '../diagram/keyedObserver';
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
 
 export function ClassicTemplate(props: TemplateProps) {
     const {data, isExpanded} = props;
+    useObservedElementData(data);
+
     const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
     const {color, icon} = getElementTypeStyle(data.types);
 
