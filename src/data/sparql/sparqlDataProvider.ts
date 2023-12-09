@@ -399,8 +399,12 @@ export class SparqlDataProvider implements DataProvider {
             elementId, undefined, undefined, '?outObject', '?inObject', bindDirection
         );
         if (forAll.usePredicatePart) {
-            forAll.unionParts.push(`{ ${elementIri} ?link ?outObject }`);
-            forAll.unionParts.push(`{ ?inObject ?link ${elementIri} }`);
+            forAll.unionParts.push(
+                `{ ${elementIri} ?link ?outObject ${bindDirection ? 'BIND("out" AS ?direction)' : ''} }`
+            );
+            forAll.unionParts.push(
+                `{ ?inObject ?link ${elementIri} ${bindDirection ? 'BIND("in" AS ?direction)' : ''} }`
+            );
         }
 
         const query = defaultPrefix + resolveTemplate(linkTypesOfQuery, {
