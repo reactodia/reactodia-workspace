@@ -422,21 +422,6 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
     schemaLabelProperty: 'rdfs:label',
     dataLabelProperty: 'rdfs:label',
 
-    fullTextSearch: {
-        prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>' + '\n',
-        queryPattern: `
-              ?inst rdfs:label ?searchLabel.
-              SERVICE bds:search {
-                     ?searchLabel bds:search "\${text}*" ;
-                                  bds:minRelevance '0.5' ;
-                                  bds:matchAllTerms 'true' .
-              }
-              BIND(IF(STRLEN(?strInst) > 33,
-                            0-<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(?strInst, 33)),
-                            -10000) as ?score)
-            `,
-    },
-
     classTreeQuery: `
         SELECT distinct ?class ?label ?parent WHERE {
             ?class rdfs:label ?label.
@@ -526,7 +511,24 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
                 BIND (coalesce(?foundClass, owl:Thing) as ?class)
                 OPTIONAL {?inst rdfs:label ?label}
 `,
-
+    fullTextSearch: {
+        prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>\n',
+        queryPattern: `
+            SERVICE wikibase:mwapi {
+                bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                    wikibase:api "EntitySearch";
+                    mwapi:search "\${text}";
+                    mwapi:language "en".
+                ?inst wikibase:apiOutputItem mwapi:item.
+                ?num wikibase:apiOrdinal true.
+            }
+            BIND(IF(
+                STRLEN(STR(?inst)) > 33,
+                0-<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(STR(?inst), 33)),
+                -10000
+            ) as ?score)
+        `,
+    },
 };
 
 export const WikidataSettings: SparqlDataProviderSettings = {...RdfSettings, ...WikidataSettingsOverride};

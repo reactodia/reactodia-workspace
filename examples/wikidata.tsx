@@ -15,14 +15,20 @@ function WikidataExample() {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
-        const sparqlProvider = new SparqlDataProvider({
-            endpointUrl: WIKIDATA_ENDPOINT || '/wikidata',
-            imagePropertyUris: [
-                'http://www.wikidata.org/prop/direct/P18',
-                'http://www.wikidata.org/prop/direct/P154',
-            ],
-            queryMethod: WIKIDATA_ENDPOINT ? 'GET' : 'POST',
-        }, WikidataSettings);
+        const sparqlProvider = new SparqlDataProvider(
+            {
+                endpointUrl: WIKIDATA_ENDPOINT || '/wikidata',
+                imagePropertyUris: [
+                    'http://www.wikidata.org/prop/direct/P18',
+                    'http://www.wikidata.org/prop/direct/P154',
+                ],
+                queryMethod: WIKIDATA_ENDPOINT ? 'GET' : 'POST',
+            },
+            {
+                ...WikidataSettings,
+                // Public Wikidata endpoint is too overloaded for the connection statistics
+                linkTypesStatisticsQuery: '',
+            });
 
         const dataProvider = new IndexedDbCachedProvider({
             baseProvider: sparqlProvider,
