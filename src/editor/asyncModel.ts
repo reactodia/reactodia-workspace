@@ -111,6 +111,7 @@ export class AsyncModel extends DiagramModel {
                 signal,
             });
         }).then(() => {
+            this.history.reset();
             this.asyncSource.trigger('loadingSuccess', {source: this});
         }).catch(error => {
             console.error(error);
@@ -148,6 +149,7 @@ export class AsyncModel extends DiagramModel {
                 ? this.requestLinksOfType() : Promise.resolve();
             return Promise.all([loadingModels, requestingLinks]);
         }).then(() => {
+            this.history.reset();
             this.asyncSource.trigger('loadingSuccess', {source: this});
         }).catch(error => {
             console.error(error);
@@ -218,6 +220,8 @@ export class AsyncModel extends DiagramModel {
         const elementIrisToRequestData: ElementIri[] = [];
         const usedLinkTypes = new Set<LinkTypeIri>();
 
+        const batch = this.history.startBatch('Import layout');
+
         for (const layoutElement of layoutData.elements) {
             const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
             const template = preloadedElements?.get(iri);
@@ -255,6 +259,7 @@ export class AsyncModel extends DiagramModel {
             }
         }
 
+        batch.store();
         this.subscribeGraph();
         const requestingModels = this.requestElementData(elementIrisToRequestData);
 

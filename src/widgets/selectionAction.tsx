@@ -42,7 +42,8 @@ const CLASS_NAME = 'reactodia-selection-action';
 
 export function SelectionAction(props: SelectionActionProps) {
     const {
-        dock, dockRow, dockColumn, className, title, disabled, onSelect, onMouseDown,
+        dock, dockRow, dockColumn, className, title, disabled,
+        onSelect, onMouseDown, children,
     } = props;
     return (
         <button type='button'
@@ -51,8 +52,9 @@ export function SelectionAction(props: SelectionActionProps) {
             title={title}
             disabled={disabled}
             onClick={onSelect}
-            onMouseDown={onMouseDown}
-        />
+            onMouseDown={onMouseDown}>
+            {children}
+        </button>
     );
 }
 

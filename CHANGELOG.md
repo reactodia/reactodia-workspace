@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Latest]
 ### Added
 - Support customizable `Toolbar` widget with its actions decomposed into separate components:
-  * Generic component for toolbar actions: `ToolbarItem`;
+  * Generic component for toolbar actions: `ToolbarAction`;
   * Default menu items: `ToolbarActionClearAll`, `ToolbarActionExport` (for PNG, SVG and print);
-  * Default panel items: `ToolbarActionUndo`, `ToolbarActionRedo`, `ToolbarActionLayout`;
+  * Default panel items: `ToolbarActionUndo`, `ToolbarActionRedo`, `ToolbarActionLayout`, `ToolbarLanguageSelector`;
+  * Additional specialized actions: `ToolbarActionOpen`, `ToolbarActionSave`;
 - Added `Selection` canvas widget with rectangular element selection to the default workspace;
 - Made `Halo` and `Selection` widgets customizable via action components:
   * Generic component for element actions: `SelectionAction`;
@@ -47,6 +48,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Re-route links on link type visibility change.
 - Perform zoom-to-fit after loading an existing diagram instead of just centering the content.
 - Fixed unintended element move when interacting with nested element scrollbar.
+- Reset history after creating a new diagram or importing existing layout.
 
 ### Removed
 - Removed deprecated `Dictionary` type (`Record<string, T>` can be used instead).

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {
-    Workspace, DefaultWorkspace, ToolbarItem, SparqlDataProvider, IndexedDbCachedProvider,
+    Workspace, DefaultWorkspace, ToolbarAction, SparqlDataProvider, IndexedDbCachedProvider,
     WikidataSettings,
 } from '../src/index';
 
@@ -55,7 +55,8 @@ function WikidataExample() {
                 toolbar={{
                     menu: <>
                         <ExampleToolbarMenu />
-                        <ToolbarItem
+                        <ToolbarAction
+                            title='Clear locally-cached data previously fetched from Wikidata'
                             onSelect={() => {
                                 const {model: {dataProvider}} = workspaceRef.current!.getContext();
                                 if (dataProvider instanceof IndexedDbCachedProvider) {
@@ -63,7 +64,7 @@ function WikidataExample() {
                                 }
                             }}>
                             Clear Wikidata cache
-                        </ToolbarItem>
+                        </ToolbarAction>
                     </>,
                     languages: [
                         {code: 'de', label: 'Deutsch'},

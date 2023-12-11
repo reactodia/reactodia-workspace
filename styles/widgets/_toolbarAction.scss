@@ -1,21 +1,12 @@
-@import "../mixin/icons";
-
 $toolbarHeight: 30px;
 
-.reactodia-toolbar {
-  position: absolute;
-  left: 10px;
-  top: 10px;
-
-  /* Make transparent toolbar parts "click-through"
-    while keeping buttons clickable */
-  pointer-events: none;
-  > * {
-    pointer-events: auto;
+.reactodia-toolbar-action {
+  &__open {
+    @include codicon-button("folder-opened");
   }
 
-  &__menu {
-    margin-right: 5px;
+  &__open-input {
+    display: none;
   }
 
   &__save {

@@ -1,0 +1,18 @@
+@import "../mixin/icons";
+
+.reactodia-toolbar {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+
+  /* Make transparent toolbar parts "click-through"
+    while keeping buttons clickable */
+  pointer-events: none;
+  > * {
+    pointer-events: auto;
+  }
+
+  &__menu {
+    margin-right: 5px;
+  }
+}
