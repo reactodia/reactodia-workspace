@@ -28,8 +28,8 @@ module.exports = {
   )),
   output: {
     path: path.join(__dirname, 'dist/examples'),
-    filename: '[name].bundle.js',
-    chunkFilename: '[id].chunk.js',
+    filename: '[name].[contenthash].bundle.js',
+    chunkFilename: '[id].[contenthash].chunk.js',
     publicPath: '',
     clean: true,
   },

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.23.0] - 2023-12-11
 ### Added
 - Support customizable `Toolbar` widget with its actions decomposed into separate components:
   * Generic component for toolbar actions: `ToolbarAction`;
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Made `Halo` and `Selection` widgets customizable via action components:
   * Generic component for element actions: `SelectionAction`;
   * Specialized actions: `SelectionActionRemove`, `SelectionActionZoomToFit`, `SelectionActionLayout`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
+- Support multi-navigation using `SelectionActionConnections` when multiple elements are selected;
 - Made `HaloLink` widget customizable via action components:
   * Generic component for link actions: `LinkAction`;
   * Specialized actions: `LinkActionEdit`, `LinkActionDelete`, `LinkActionMoveEndpoint`, `LinkActionRename`;
@@ -25,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
+- Add `inexactCount` parameter to `DataProvider.connectedLinkStats()` to allow to avoid computing full connected link type statistics where only existence of a link type is enough.
 
 ### Changed
 - **[Breaking]** Split `DiagramView` type:
@@ -49,6 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Perform zoom-to-fit after loading an existing diagram instead of just centering the content.
 - Fixed unintended element move when interacting with nested element scrollbar.
 - Reset history after creating a new diagram or importing existing layout.
+- Fix text lookup query to use public full-text search service for `WikidataSettings`;
 
 ### Removed
 - Removed deprecated `Dictionary` type (`Record<string, T>` can be used instead).
@@ -125,7 +130,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.12.2...v0.20.0
