@@ -15,6 +15,7 @@ import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
@@ -843,7 +844,9 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
                         {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
                     </div>
                 ) : null}
-                <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
+                <WithFetchStatus type='linkType' target={link.id}>
+                    <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
+                </WithFetchStatus>
                 {count === 'some' ? null : (
                     <span className={`reactodia-badge ${CLASS_NAME}__link-count`}>
                         {count <= LINK_COUNT_PER_PAGE ? count : '100+'}

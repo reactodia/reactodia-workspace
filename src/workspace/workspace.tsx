@@ -18,6 +18,8 @@ import { AsyncModel, GroupBy } from '../editor/asyncModel';
 import { EditorController } from '../editor/editorController';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
+import { StandardTemplate } from '../templates/standardTemplate';
+
 import {
     WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
@@ -81,7 +83,9 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const model = new AsyncModel({history, selectLabelLanguage, groupBy});
         model.setLanguage(defaultLanguage);
 
-        const view = new SharedCanvasState();
+        const view = new SharedCanvasState({
+            defaultElementTemplate: StandardTemplate,
+        });
 
         const editor = new EditorController({
             model,

@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { WithFetchStatus } from '../editor/withFetchStatus';
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
@@ -64,9 +65,11 @@ export function ClassicTemplate(props: TemplateProps) {
             </div>
             {image}
             <div className={`${CLASS_NAME}__body`} style={{borderColor: color}}>
-                <span className={`${CLASS_NAME}__label`} title={label}>
-                    {label}
-                </span>
+                <WithFetchStatus type='element' target={data.id}>
+                    <span className={`${CLASS_NAME}__label`} title={label}>
+                        {label}
+                    </span>
+                </WithFetchStatus>
                 {expander}
             </div>
         </div>
@@ -85,10 +88,12 @@ function renderPropertyTable(propertyList: ReadonlyArray<FormattedProperty>) {
                 ));
                 return (
                     <div key={propertyId} className={`${CLASS_NAME}__property-row`}>
-                        <div className={`${CLASS_NAME}__property-label`}
-                            title={`${label} (${propertyId})`}>
-                            {label}
-                        </div>
+                        <WithFetchStatus type='propertyType' target={propertyId}>
+                            <div className={`${CLASS_NAME}__property-label`}
+                                title={`${label} (${propertyId})`}>
+                                {label}
+                            </div>
+                        </WithFetchStatus>
                         <div className={`${CLASS_NAME}__property-values`}>
                             {renderedValues}
                         </div>

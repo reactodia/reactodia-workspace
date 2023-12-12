@@ -3,6 +3,8 @@ import * as React from 'react';
 import { TemplateProps } from '../diagram/customization';
 import { EmbeddedLayer } from '../diagram/embeddedLayer';
 
+import { WithFetchStatus } from '../editor/withFetchStatus';
+
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS = 'reactodia-group-template';
@@ -33,9 +35,11 @@ export function GroupTemplate(props: TemplateProps) {
                     </div>
                 </div>
                 <div className={`${CLASS}__body`} style={{borderColor: color}}>
-                    <span className={`${CLASS}__label`} title={label}>
-                        {label}
-                    </span>
+                    <WithFetchStatus type='element' target={data.id}>
+                        <span className={`${CLASS}__label`} title={label}>
+                            {label}
+                        </span>
+                    </WithFetchStatus>
                     {
                         isExpanded ? (
                             <div className={`${CLASS}__embedded-layer`}>

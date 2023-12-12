@@ -5,6 +5,7 @@ import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils
 import type {
     CanvasApi, CanvasDropEvent, CanvasWidgetDescription, CanvasWidgetAttachment,
 } from './canvasApi';
+import type { ElementTemplate } from './customization';
 import { Element, Link } from './elements';
 
 export interface SharedCanvasStateEvents {
@@ -37,6 +38,10 @@ export type CellHighlighter = (item: Element | Link) => boolean;
 
 export type ElementDecoratorResolver = (element: Element) => React.ReactNode | undefined;
 
+export interface SharedCanvasStateOptions {
+    defaultElementTemplate: ElementTemplate;
+}
+
 export class SharedCanvasState {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<SharedCanvasStateEvents>();
@@ -49,8 +54,12 @@ export class SharedCanvasState {
     private _highlighter: CellHighlighter | undefined;
     private _elementDecorator: ElementDecoratorResolver | undefined;
 
-    constructor() {
+    readonly defaultElementTemplate: ElementTemplate;
+
+    constructor(options: SharedCanvasStateOptions) {
+        const {defaultElementTemplate} = options;
         this._canvasWidgets = new Map();
+        this.defaultElementTemplate = defaultElementTemplate;
     }
 
     dispose() {

@@ -58,11 +58,17 @@ export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 export * from './editor/asyncModel';
 export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
 export * from './editor/authoringState';
+export {
+    ChangeOperationsEvent, FetchOperation, FetchOperationFail,
+    FetchOperationElement, FetchOperationLink, FetchOperationElementType,
+    FetchOperationLinkType, FetchOperationPropertyType,
+} from './editor/dataFetcher';
 export { EditorOptions, EditorEvents, EditorController } from './editor/editorController';
 export {
     OverlayController, OverlayControllerEvents, PropertyEditor, PropertyEditorOptions,
 } from './editor/overlayController';
 export { ValidationState, ElementValidation, LinkValidation } from './editor/validation';
+export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
 export {
     LayoutData, SerializedDiagram, LinkTypeOptions,

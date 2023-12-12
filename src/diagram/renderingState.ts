@@ -9,8 +9,6 @@ import {
 import { ElementTypeIri, LinkModel, LinkTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
-import { StandardTemplate } from '../templates/standardTemplate';
-
 import { Element, Link, LinkTemplateState, RichLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
@@ -156,7 +154,7 @@ export class RenderingState implements SizeProvider {
     }
 
     getElementTemplate(types: ReadonlyArray<ElementTypeIri>): ElementTemplate {
-        return this.resolveElementTemplate(types) ?? StandardTemplate;
+        return this.resolveElementTemplate(types) ?? this.shared.defaultElementTemplate;
     }
 
     getLinkTemplates(): ReadonlyMap<LinkTypeIri, FilledLinkTemplate> {

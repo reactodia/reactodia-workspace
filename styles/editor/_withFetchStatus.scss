@@ -1,0 +1,18 @@
+.reactodia-fetch-status {
+  &--loading {
+    animation: reactodia-loading-pulse 2s linear infinite;
+  }
+
+  &--error {
+    &::before {
+      content: '⚠ ';
+      color: rgba(255, 0, 0, 0.5);
+    }
+  }
+}
+
+@keyframes reactodia-loading-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}

@@ -10,6 +10,8 @@ import { Element, RichLinkType, LinkTypeVisibility } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
+import { WithFetchStatus } from '../editor/withFetchStatus';
+
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import type { InstancesSearchCommands } from './instancesSearch';
@@ -82,7 +84,9 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
                         onClick={() => this.changeState('visible')}>
                     </button>
                 </span>
-                <div className={`${CLASS_NAME}__link-title`}>{this.getText()}</div>
+                <WithFetchStatus type='linkType' target={this.props.link.id}>
+                    <div className={`${CLASS_NAME}__link-title`}>{this.getText()}</div>
+                </WithFetchStatus>
                 {this.props.count === 0 ? null : (
                     <span className={classnames(`${CLASS_NAME}__count-badge`, 'reactodia-badge')}>
                         {this.props.count}

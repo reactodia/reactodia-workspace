@@ -14,7 +14,7 @@ import {
 import { Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents, DiagramModelOptions } from '../diagram/model';
 
-import { DataFetcher } from './dataFetcher';
+import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
     LayoutData, LinkTypeOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
     makeLayoutData, makeSerializedDiagram, 
@@ -32,6 +32,7 @@ export interface AsyncModelEvents extends DiagramModelEvents {
         source: AsyncModel;
         error: unknown;
     };
+    changeOperations: ChangeOperationsEvent;
     createLoadedLink: {
         source: AsyncModel;
         model: LinkModel;
@@ -50,6 +51,7 @@ export class AsyncModel extends DiagramModel {
 
     private _dataProvider!: DataProvider;
     private fetcher: DataFetcher | undefined;
+    private readonly EMPTY_OPERATIONS: ReadonlyArray<FetchOperation> = [];
 
     private linkSettings = new Map<LinkTypeIri, LinkTypeVisibility>();
 
@@ -67,6 +69,10 @@ export class AsyncModel extends DiagramModel {
 
     protected getTermFactory(): DataFactory {
         return this._dataProvider.factory;
+    }
+
+    get operations(): ReadonlyArray<FetchOperation> {
+        return this.fetcher ? this.fetcher.operations : this.EMPTY_OPERATIONS;
     }
 
     resetGraph(): void {
@@ -92,6 +98,9 @@ export class AsyncModel extends DiagramModel {
     private setDataProvider(dataProvider: DataProvider) {
         this._dataProvider = dataProvider;
         this.fetcher = new DataFetcher(this.graph, dataProvider);
+        this.graphListener.listen(this.fetcher.events, 'changeOperations', e => {
+            this.asyncSource.trigger('changeOperations', e);
+        });
     }
 
     createNewDiagram(params: {
@@ -285,11 +294,14 @@ export class AsyncModel extends DiagramModel {
         return this.fetcher!.fetchElementData(elementIris);
     }
 
-    requestLinksOfType(linkTypeIds?: LinkTypeIri[]): Promise<void> {
-        return this.dataProvider.links({
-            elementIds: this.graph.getElements().map(element => element.iri),
-            linkTypeIds,
-        }).then(links => this.onLinkInfoLoaded(links));
+    requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
+        const elementIris = this.graph.getElements().map(element => element.iri);
+        if (elementIris.length === 0) {
+            return Promise.resolve();
+        }
+        return this.fetcher!
+            .fetchLinks(elementIris, linkTypeIds)
+            .then(links => this.onLinkInfoLoaded(links));
     }
 
     createElementType(elementTypeIri: ElementTypeIri): RichElementType {

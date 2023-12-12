@@ -9,6 +9,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
 import { AuthoringState } from '../editor/authoringState';
+import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -60,9 +61,13 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                             {this.renderThumbnail(typesLabel, color, icon)}
                             <div className={`${CLASS_NAME}__body-content`}>
                                 <div title={typesLabel} className={`${CLASS_NAME}__type`}>
-                                    <div className={`${CLASS_NAME}__type-value`}>{typesLabel}</div>
+                                    <div className={`${CLASS_NAME}__type-value`}>
+                                        {this.renderTypes()}
+                                    </div>
                                 </div>
-                                <div className={`${CLASS_NAME}__label`} title={label}>{label}</div>
+                                <WithFetchStatus type='element' target={data.id}>
+                                    <div className={`${CLASS_NAME}__label`} title={label}>{label}</div>
+                                </WithFetchStatus>
                             </div>
                         </div>
                         {pinnedProperties.length > 0 ? (
@@ -100,6 +105,25 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         return model.locale.formatLabel(data.label, data.id);
     }
 
+    private renderTypes() {
+        const {data, workspace: {model}} = this.props;
+        if (data.types.length === 0) {
+            return 'Thing';
+        }
+        return data.types.map((typeIri, index) => {
+            const type = model.getElementType(typeIri);
+            const label = model.locale.formatLabel(type ? type.label : [], typeIri);
+            return (
+                <React.Fragment key={typeIri}>
+                    {index === 0 ? null : ','}
+                    <WithFetchStatus type='elementType' target={typeIri}>
+                        <span>{label}</span>
+                    </WithFetchStatus>
+                </React.Fragment>
+            );
+        });
+    }
+
     private findPinnedProperties(): PinnedProperties | undefined {
         const {isExpanded, elementState} = this.props;
         if (isExpanded || !elementState) {
@@ -122,9 +146,12 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
                         <div key={propertyId}
                             role='listitem'
                             className={`${CLASS_NAME}__properties-row`}>
-                            <div className={`${CLASS_NAME}__properties-key`} title={`${label} (${propertyId})`}>
-                                {label}
-                            </div>
+                            <WithFetchStatus type='propertyType' target={propertyId}>
+                                <div className={`${CLASS_NAME}__properties-key`}
+                                    title={`${label} (${propertyId})`}>
+                                    {label}
+                                </div>
+                            </WithFetchStatus>
                             <div className={`${CLASS_NAME}__properties-values`}>
                                 {values.map((term, index) => (
                                     <div key={index}
