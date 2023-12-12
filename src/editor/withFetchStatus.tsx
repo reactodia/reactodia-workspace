@@ -67,13 +67,17 @@ export function WithFetchStatus<T extends ListenableOperationTypes>(props: WithF
         return () => model.events.off('changeOperations', listener);
     }, [type, target]);
 
-    return React.cloneElement(children, {
-        className: classnames(children.props.className, (
-            status === Status.Loading ? `${CLASS_NAME}--loading` :
-            status === Status.Error ? `${CLASS_NAME}--error` :
-            undefined
-        )),
-    });
+    if (status === Status.None) {
+        return children;
+    } else {
+        return React.cloneElement(children, {
+            className: classnames(children.props.className, (
+                status === Status.Loading ? `${CLASS_NAME}--loading` :
+                status === Status.Error ? `${CLASS_NAME}--error` :
+                undefined
+            )),
+        });
+    }
 }
 
 function isOperationMatch(

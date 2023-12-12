@@ -5,6 +5,8 @@ import { CanvasContext } from '../diagram/canvasApi';
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkVertices } from '../diagram/linkLayer';
 
+import { WithFetchStatus } from '../editor/withFetchStatus';
+
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
         d: 'M0,0 L0,8 L9,4 z',
@@ -52,7 +54,11 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 textClass={textClass}
                 rectClass={backgroundClass}
                 title={`${label} ${model.locale.formatIri(linkType.id)}`}
-                content={label}
+                content={renamedLabel ? label : (
+                    <WithFetchStatus type='linkType' target={linkType.id}>
+                        <tspan>{label}</tspan>
+                    </WithFetchStatus>
+                )}
             />
             {prependLabels}
             {properties.map((property, index) => (
@@ -64,7 +70,12 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     textClass={textClass}
                     rectClass={backgroundClass}
                     title={`${property.label} ${model.locale.formatIri(property.propertyId)}`}
-                    content={`${property.label}: ${property.values.join(', ')}`}
+                    content={<>
+                        <WithFetchStatus type='propertyType' target={property.propertyId}>
+                            <span>{property.label}</span>
+                        </WithFetchStatus>
+                        {property.values.join(', ')}
+                    </>}
                 />
             ))}
         </>;
