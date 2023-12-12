@@ -23,7 +23,7 @@ export {
 } from './data/schema';
 export * from './data/composite/composite';
 export {
-    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, randomDelayProviderDecorator,
+    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, makeDelayProviderDecorator,
 } from './data/decorated/decoratedDataProvider';
 export {
     IndexedDbCachedProvider, IndexedDbCachedProviderOptions,

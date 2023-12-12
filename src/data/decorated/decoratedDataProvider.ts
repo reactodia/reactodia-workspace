@@ -46,8 +46,8 @@ export class DecoratedDataProvider implements DataProvider {
         method: T,
         params: Parameters<DataProvider[T]>
     ): ReturnType<DataProvider[T]> {
-        const body: (...args: any[]) => any = this[method];
-        const bound = body.bind(this);
+        const body: (...args: any[]) => any = this.baseProvider[method];
+        const bound = body.bind(this.baseProvider);
         const {decorator} = this;
         return decorator(method, params[0], bound) as ReturnType<DataProvider[T]>;
     }
@@ -113,16 +113,23 @@ export class DecoratedDataProvider implements DataProvider {
     }
 }
 
-export function randomDelayProviderDecorator<P extends { signal?: AbortSignal }, R>(
-    method: DecoratedMethodName,
-    params: P,
-    body: (params: P) => Promise<R>
-): Promise<R> {
-    const MEAN_DELAY = 200;
-    // simulate exponential distribution
-    const delayMs = -Math.log(Math.random()) * MEAN_DELAY;
-    return raceAbortSignal(delay(delayMs), params.signal)
-        .then(() => body(params));
+export function makeDelayProviderDecorator(
+    meanDelay: number,
+    distribution: 'constant' | 'linear' | 'exponential'
+) {
+    return <P extends { signal?: AbortSignal }, R>(
+        method: DecoratedMethodName,
+        params: P,
+        body: (params: P) => Promise<R>
+    ): Promise<R> => {
+        const delayMs = (
+            distribution === 'linear' ? Math.random() * meanDelay * 2 :
+            distribution === 'exponential' ?  -Math.log(Math.random()) * meanDelay :
+            meanDelay
+        );
+        return raceAbortSignal(delay(delayMs), params.signal)
+            .then(() => body(params));
+    };
 }
 
 function delay(timeoutMs: number): Promise<void> {
