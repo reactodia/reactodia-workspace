@@ -36,12 +36,11 @@ export class RenameLinkForm extends React.Component<RenameLinkFormProps, State> 
         const {canvas, model} = this.context;
 
         const linkType = model.getLinkType(link.typeId)!;
-        const template = canvas.renderingState.createLinkTemplate(linkType);
-        const {label = {}} = template.renderLink(link.data, link.linkState, model.factory);
+        const {editableLabel} = canvas.renderingState.createLinkTemplate(linkType);
+        const label = editableLabel!.getLabel(link)
+            ?? model.locale.formatLabel(linkType.label, linkType.id);
 
-        return (label.label && label.label.length > 0)
-            ? model.locale.selectLabel(label.label)!.value
-            : model.locale.formatLabel(linkType.label, linkType.id);
+        return label;
     }
 
     render() {
@@ -75,8 +74,8 @@ export class RenameLinkForm extends React.Component<RenameLinkFormProps, State> 
         const {label} = this.state;
 
         const linkType = model.getLinkType(link.typeId)!;
-        const template = canvas.renderingState.createLinkTemplate(linkType);
-        template.setLinkLabel?.(link, label);
+        const {editableLabel} = canvas.renderingState.createLinkTemplate(linkType);
+        editableLabel!.setLabel(link, label);
 
         onFinish();
     };

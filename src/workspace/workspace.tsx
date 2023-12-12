@@ -18,6 +18,7 @@ import { AsyncModel, GroupBy } from '../editor/asyncModel';
 import { EditorController } from '../editor/editorController';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
+import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
 
 import {
@@ -85,6 +86,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const view = new SharedCanvasState({
             defaultElementTemplate: StandardTemplate,
+            defaultLinkTemplate: DefaultLinkTemplate,
         });
 
         const editor = new EditorController({

@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import type { ElementModel, LinkModel, PropertyTypeIri } from '../data/model';
+import type { ElementModel, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { ElementTemplateState, Link, LinkTemplateState } from './elements';
-import type { SizeProvider } from './geometry';
-import type { GraphStructure } from './model';
+import type { ElementTemplateState, Link, RichLinkType } from './elements';
+import type { SizeProvider, Vector } from './geometry';
+import type { DiagramModel, GraphStructure } from './model';
 
 export type LabelLanguageSelector =
     (labels: ReadonlyArray<Rdf.Literal>, language: string) => Rdf.Literal | undefined;
@@ -37,25 +37,33 @@ export interface TemplateProps {
 export interface LinkTemplate {
     markerSource?: LinkMarkerStyle;
     markerTarget?: LinkMarkerStyle;
-    renderLink?(
-        data: LinkModel,
-        state: LinkTemplateState | undefined,
-        factory: Rdf.DataFactory
-    ): LinkStyle;
-    setLinkLabel?: (link: Link, label: string) => void;
+    renderLink(props: LinkTemplateProps): React.ReactNode;
+    editableLabel?: EditableLinkLabel;
 }
 
-export interface LinkStyle {
-    readonly connection?: {
-        /** @default "none" */
-        readonly fill?: string;
-        /** @default "black" */
-        readonly stroke?: string;
-        readonly strokeWidth?: number;
-        readonly strokeDasharray?: string;
-    };
-    readonly label?: LinkLabelStyle;
-    readonly properties?: ReadonlyArray<LinkLabelStyle>;
+export interface EditableLinkLabel {
+    getLabel(link: Link): string | undefined;
+    setLabel(link: Link, label: string): void;
+}
+
+export interface LinkMarkerStyle {
+    readonly d?: string;
+    readonly width?: number;
+    readonly height?: number;
+    readonly fill?: string;
+    readonly stroke?: string;
+    readonly strokeWidth?: string;
+}
+
+export interface LinkTemplateProps {
+    link: Link;
+    linkType: RichLinkType;
+    className: string;
+    path: string;
+    pathProps?: React.SVGAttributes<SVGPathElement>;
+    getPathPosition: (offset: number) => Vector;
+    route?: RoutedLink;
+    editableLabel?: EditableLinkLabel;
 }
 
 export interface LinkRouter {
@@ -73,44 +81,4 @@ export interface RoutedLink {
 export interface Vertex {
     readonly x: number;
     readonly y: number;
-}
-
-export interface LinkMarkerStyle {
-    readonly d?: string;
-    readonly width?: number;
-    readonly height?: number;
-    readonly fill?: string;
-    readonly stroke?: string;
-    readonly strokeWidth?: string;
-}
-
-export interface LinkLabelStyle {
-    /** @default 0.5 */
-    readonly position?: number;
-    readonly label?: ReadonlyArray<Rdf.Literal>;
-    readonly title?: string;
-    readonly background?: {
-        /** @default "white" */
-        readonly fill?: string;
-        /** @default "none" */
-        readonly stroke?: string;
-        /** @default 0 */
-        readonly strokeWidth?: number;
-    };
-    readonly text?: {
-        /** @default "black" */
-        readonly fill?: string;
-        /** @default "none" */
-        readonly stroke?: string;
-        /** @default 0 */
-        readonly strokeWidth?: number;
-        /** @default '"Helvetica Neue", "Helvetica", "Arial", sans-serif' */
-        readonly fontFamily?: React.CSSProperties['fontFamily'];
-        /** @default "inherit" */
-        readonly fontSize?: React.CSSProperties['fontSize'];
-        /** @default "normal" */
-        readonly fontStyle?: React.CSSProperties['fontStyle'];
-        /** @default "bold" */
-        readonly fontWeight?: React.CSSProperties['fontWeight'];
-    };
 }

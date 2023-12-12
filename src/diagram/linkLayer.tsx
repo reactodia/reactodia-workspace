@@ -1,15 +1,11 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { LinkModel } from '../data/model';
-import type * as Rdf from '../data/rdf/rdfModel';
-
 import { restoreCapturedLinkGeometry } from './commands';
-import {
-    LinkStyle, LinkLabelStyle, LinkMarkerStyle, RoutedLink,
-} from './customization';
+import { LinkMarkerStyle, RoutedLink } from './customization';
 import {
     Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType,
 } from './elements';
@@ -18,7 +14,8 @@ import {
     getPointAlongPolyline, pathFromPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
-import { RenderingState, RenderingLayer, FilledLinkTemplate } from './renderingState';
+import { RenderingState, RenderingLayer } from './renderingState';
+import { CanvasContext } from './canvasApi';
 
 export interface LinkLayerProps {
     model: DiagramModel;
@@ -52,6 +49,8 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
+    private providedContext: LinkLayerContext;
+
     private updateState = UpdateRequest.Partial;
     /** List of link IDs to update at the next flush event */
     private scheduledToUpdate = new Set<string>();
@@ -63,6 +62,9 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
 
     constructor(props: LinkLayerProps) {
         super(props);
+        this.providedContext = {
+            scheduleLabelMeasure: this.scheduleLabelMeasure,
+        };
     }
 
     componentDidMount() {
@@ -258,27 +260,32 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         }
 
         return (
-            <g className={CLASS_NAME}>
-                {links.map(link => {
-                    let linkView = memoizedLinks.get(link);
-                    if (!linkView) {
-                        linkView = (
-                            <LinkView key={link.id}
-                                link={link}
-                                route={renderingState.getRouting(link.id)}
-                                model={model}
-                                renderingState={renderingState}
-                                scheduleLabelMeasure={this.scheduleLabelMeasure}
-                            />
-                        );
-                        memoizedLinks.set(link, linkView);
-                    }
-                    return linkView;
-                })}
-            </g>
+            <LinkLayerContext.Provider value={this.providedContext}>
+                <g className={CLASS_NAME}>
+                    {links.map(link => {
+                        let linkView = memoizedLinks.get(link);
+                        if (!linkView) {
+                            linkView = (
+                                <LinkView key={link.id}
+                                    link={link}
+                                    model={model}
+                                    renderingState={renderingState}
+                                />
+                            );
+                            memoizedLinks.set(link, linkView);
+                        }
+                        return linkView;
+                    })}
+                </g>
+            </LinkLayerContext.Provider>
         );
     }
 }
+
+interface LinkLayerContext {
+    scheduleLabelMeasure: ScheduleLabelMeasure;
+}
+const LinkLayerContext = React.createContext<LinkLayerContext | null>(null);
 
 function computeDeepNestedElements(grouping: Map<string, DiagramElement[]>, groupId: string): { [id: string]: true } {
     const deepChildren: { [elementId: string]: true } = {};
@@ -301,265 +308,103 @@ interface LinkViewProps {
     link: DiagramLink;
     model: DiagramModel;
     renderingState: RenderingState;
-    route?: RoutedLink;
-    scheduleLabelMeasure: ScheduleLabelMeasure;
 }
 
 const LINK_CLASS = 'reactodia-link';
-const LABEL_GROUPING_PRECISION = 100;
-// temporary, cleared-before-render map to hold line numbers for labels
-// grouped on the same link offset
-const TEMPORARY_LABEL_LINES = new Map<number, number>();
 
-interface LinkViewState {
-    readonly linkType: RichLinkType;
-    readonly template: FilledLinkTemplate;
-}
+function LinkView(props: LinkViewProps) {
+    const {link, model, renderingState} = props;
 
-class LinkView extends React.Component<LinkViewProps, LinkViewState> {
-    constructor(props: LinkViewProps) {
-        super(props);
-        this.state = LinkView.makeStateFromProps(this.props);
+    const linkType = model.getLinkType(link.typeId)!;
+    const template = React.useMemo(
+        () => renderingState.createLinkTemplate(linkType),
+        [linkType]
+    );
+
+    const source = model.getElement(link.sourceId);
+    const target = model.getElement(link.targetId);
+    const {visibility} = linkType;
+    if (!(source && target && visibility !== 'hidden')) {
+        return null;
     }
 
-    static getDerivedStateFromProps(
-        props: LinkViewProps,
-        state: LinkViewState | undefined
-    ): LinkViewState | null {
-        if (state && state.linkType.id === props.link.typeId) {
-            return null;
-        }
-        return LinkView.makeStateFromProps(props);
-    }
+    const route = renderingState.getRouting(link.id);
+    const verticesDefinedByUser = link.vertices;
+    const vertices = route ? route.vertices : verticesDefinedByUser;
+    const polyline = computePolyline(
+        boundsOf(source, renderingState),
+        boundsOf(target, renderingState),
+        vertices
+    );
 
-    static makeStateFromProps(props: LinkViewProps): LinkViewState {
-        const {model, renderingState} = props;
-        const linkType = model.getLinkType(props.link.typeId)!;
-        const template = renderingState.createLinkTemplate(linkType);
-        return {linkType, template};
-    }
+    const path = pathFromPolyline(polyline);
 
-    render() {
-        const {link, route, model, renderingState} = this.props;
-        const {linkType: {index: typeIndex, visibility}, template} = this.state;
-        const source = model.getElement(link.sourceId);
-        const target = model.getElement(link.targetId);
-        if (!(source && target && visibility !== 'hidden')) {
-            return null;
-        }
-
-        const verticesDefinedByUser = link.vertices;
-        const vertices = route ? route.vertices : verticesDefinedByUser;
-        const polyline = computePolyline(
-            boundsOf(source, renderingState),
-            boundsOf(target, renderingState),
-            vertices
-        );
-
-        const path = pathFromPolyline(polyline);
-        
-        const style = template.renderLink(link.data, link.linkState, model.factory);
-        const pathAttributes = getPathAttributes(link, style);
-
-        const {highlighter} = renderingState.shared;
-        const isBlurred = highlighter && !highlighter(link);
-        const className = `${LINK_CLASS} ${isBlurred ? `${LINK_CLASS}--blurred` : ''}`;
-        return (
-            <g className={className} data-link-id={link.id} data-source-id={source.id} data-target-id={target.id}>
-                <path className={`${LINK_CLASS}__connection`} d={path} {...pathAttributes}
-                    markerStart={`url(#${linkMarkerKey(typeIndex!, true)})`}
-                    markerEnd={`url(#${linkMarkerKey(typeIndex!, false)})`} />
-                <path className={`${LINK_CLASS}__wrap`} d={path} />
-                {visibility === 'visible' ? this.renderLabels(polyline, style) : undefined}
-                {this.renderVertices(verticesDefinedByUser, pathAttributes.stroke)}
-            </g>
-        );
-    }
-
-    private renderVertices(vertices: ReadonlyArray<Vector>, fill: string | undefined) {
-        if (vertices.length === 0) {
-            return null;
-        }
-        const {link} = this.props;
-        const elements: React.ReactElement[] = [];
-
-        const vertexClass = `${LINK_CLASS}__vertex`;
-        const vertexRadius = 10;
-
-        let index = 0;
-        for (const {x, y} of vertices) {
-            elements.push(
-                <circle key={index * 2}
-                    data-vertex={index} className={vertexClass}
-                    cx={x} cy={y} r={vertexRadius} fill={fill} />
-            );
-            elements.push(
-                <VertexTools key={index * 2 + 1}
-                    model={link}
-                    vertexIndex={index}
-                    vertexRadius={vertexRadius}
-                    x={x} y={y}
-                    onRemove={this.onRemoveLinkVertex}
-                />
-            );
-            index++;
-        }
-
-        return <g className={`${LINK_CLASS}__vertices`}>{elements}</g>;
-    }
-
-    private onRemoveLinkVertex = (vertex: LinkVertex) => {
-        const {model} = this.props;
-        model.history.registerToUndo(
-            restoreCapturedLinkGeometry(vertex.link)
-        );
-        vertex.remove();
+    const polylineLength = computePolylineLength(polyline);
+    const getPathPosition = (offset: number) => {
+        return getPointAlongPolyline(polyline, polylineLength * offset);
     };
 
-    private renderLabels(polyline: ReadonlyArray<Vector>, style: LinkStyle) {
-        const {link, route, model, scheduleLabelMeasure} = this.props;
-
-        const labels = computeLinkLabels(link.data, style, model);
-
-        let textAnchor: 'start' | 'middle' | 'end' = 'middle';
-        if (route && route.labelTextAnchor) {
-            textAnchor = route.labelTextAnchor;
-        }
-
-        const polylineLength = computePolylineLength(polyline);
-        TEMPORARY_LABEL_LINES.clear();
-
-        return (
-            <>
-                {labels.map((label, index) => {
-                    const {x, y} = getPointAlongPolyline(polyline, polylineLength * label.offset);
-                    const groupKey = Math.round(label.offset * LABEL_GROUPING_PRECISION) / LABEL_GROUPING_PRECISION;
-                    const line = TEMPORARY_LABEL_LINES.get(groupKey) || 0;
-                    TEMPORARY_LABEL_LINES.set(groupKey, line + 1);
-                    return (
-                        <LinkLabel key={index}
-                            x={x} y={y}
-                            line={line}
-                            label={label}
-                            textAnchor={textAnchor}
-                            owner={index === 0 ? link : undefined}
-                            scheduleMeasure={scheduleLabelMeasure}
-                        />
-                    );
-                })}
-            </>
-        );
-    }
-}
-
-function computeLinkLabels(data: LinkModel, style: LinkStyle, model: DiagramModel) {
-    const labelStyle = style.label ?? {};
-
-    let text: Rdf.Literal;
-    let title: string | undefined = labelStyle.title;
-    if (labelStyle.label && labelStyle.label.length > 0) {
-        text = model.locale.selectLabel(labelStyle.label)!;
-    } else {
-        const type = model.getLinkType(data.linkTypeId)!;
-        text = model.locale.selectLabel(type.label)
-            ?? model.factory.literal(model.locale.formatLabel([], type.id));
-        if (title === undefined) {
-            title = `${text.value} ${model.locale.formatIri(data.linkTypeId)}`;
-        }
-    }
-
-    const labels: LabelAttributes[] = [];
-    labels.push({
-        offset: labelStyle.position || 0.5,
-        text,
-        title,
-        attributes: {
-            text: getLabelTextAttributes(labelStyle),
-            rect: getLabelBackgroundAttributes(labelStyle),
-        },
+    const {highlighter} = renderingState.shared;
+    const isBlurred = highlighter && !highlighter(link);
+    const className = `${LINK_CLASS} ${isBlurred ? `${LINK_CLASS}--blurred` : ''}`;
+    
+    const renderedLink = template.renderLink({
+        link,
+        linkType,
+        className,
+        path,
+        getPathPosition,
+        route,
+        editableLabel: template.editableLabel,
     });
-
-    if (style.properties) {
-        for (const property of style.properties) {
-            const label = model.locale.selectLabel(property.label ?? []);
-            if (!label) {
-                continue;
-            }
-            labels.push({
-                offset: property.position || 0.5,
-                text: label,
-                title: property.title,
-                attributes: {
-                    text: getLabelTextAttributes(property),
-                    rect: getLabelBackgroundAttributes(property),
-                },
-            });
-        }
-    }
-
-    return labels;
+    return renderedLink;
 }
 
-function getPathAttributes(model: DiagramLink, style: LinkStyle): React.SVGAttributes<SVGPathElement> {
-    const connectionAttributes: LinkStyle['connection'] = style.connection ?? {};
-    const defaultStrokeDasharray = model.layoutOnly ? '5,5' : undefined;
-    const {
-        fill = 'none',
-        stroke = 'black',
-        strokeWidth,
-        strokeDasharray = defaultStrokeDasharray,
-    } = connectionAttributes;
-    return {fill, stroke, strokeWidth, strokeDasharray};
+export interface LinkPathProps {
+    linkType: RichLinkType;
+    path: string;
+    pathProps?: React.SVGAttributes<SVGPathElement>;
 }
 
-function getLabelTextAttributes(label: LinkLabelStyle): React.CSSProperties {
-    const {
-        fill = 'black',
-        stroke = 'none',
-        strokeWidth = 0,
-        fontFamily = '"Helvetica Neue", "Helvetica", "Arial", sans-serif',
-        fontSize = 'inherit',
-        fontStyle,
-        fontWeight = 'bold',
-    } = label.text ?? {};
-    return {
-        fill,
-        stroke,
-        strokeWidth,
-        fontFamily,
-        fontSize,
-        fontStyle,
-        fontWeight,
-    };
+const LINK_PATH_CLASS = 'reactodia-link-path';
+
+export function LinkPath(props: LinkPathProps) {
+    const {linkType, path, pathProps} = props;
+    const typeIndex = linkType.index!;
+    return <>
+        <path {...pathProps}
+            className={classnames(LINK_PATH_CLASS, pathProps?.className)}
+            d={path}
+            markerStart={`url(#${linkMarkerKey(typeIndex, true)})`}
+            markerEnd={`url(#${linkMarkerKey(typeIndex, false)})`}
+        />
+        <path className={`${LINK_PATH_CLASS}__wrap`} d={path} />
+    </>;
 }
 
-function getLabelBackgroundAttributes(label: LinkLabelStyle): React.CSSProperties {
-    const {
-        fill = 'white',
-        stroke = 'none',
-        strokeWidth = 0,
-    } = label.background ?? {};
-    return {fill, stroke, strokeWidth};
-}
+export interface LinkLabelProps {
+    link: DiagramLink;
+    primary?: boolean;
 
-interface LabelAttributes {
-    offset: number;
-    text: Rdf.Literal;
+    position: Vector;
+    /**
+     * @default 0
+     */
+    line?: number;
+
+    className?: string;
+    /**
+     * @default "middle"
+     */
+    textAnchor?: 'start' | 'middle' | 'end';
+    rectClass?: string;
+    rectStyle?: React.CSSProperties;
+    textClass?: string;
+    textStyle?: React.CSSProperties;
+
     title?: string;
-    attributes: {
-        text: React.CSSProperties;
-        rect: React.CSSProperties;
-    };
-}
-
-interface LinkLabelProps {
-    x: number;
-    y: number;
-    line: number;
-    label: LabelAttributes;
-    textAnchor: 'start' | 'middle' | 'end';
-    owner: DiagramLink | undefined;
-    scheduleMeasure: ScheduleLabelMeasure;
+    content?: React.ReactNode;
+    children?: React.ReactNode;
 }
 
 interface LinkLabelState {
@@ -567,9 +412,14 @@ interface LinkLabelState {
     readonly height: number;
 }
 
+const LINK_LABEL_CLASS = 'reactodia-link-label';
 const GROUPED_LABEL_MARGIN = 2;
+const DEFAULT_TEXT_ANCHOR = 'middle';
 
-class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
+export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
+    static contextType = LinkLayerContext;
+    declare readonly context: LinkLayerContext;
+
     private text: SVGTextElement | undefined | null;
     private shouldUpdateBounds = true;
 
@@ -579,11 +429,15 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implemen
     }
 
     get owner(): DiagramLink | undefined {
-        return this.props.owner;
+        const {link, primary} = this.props;
+        return primary ? link : undefined;
     }
 
     render() {
-        const {x, y, label, line, textAnchor} = this.props;
+        const {
+            primary, position: {x, y}, line = 0, className, textAnchor = DEFAULT_TEXT_ANCHOR,
+            rectClass, rectStyle, textClass, textStyle, title, content, children,
+        } = this.props;
         const {width, height} = this.state;
         const {x: rectX, y: rectY} = this.computeBounds({width, height});
 
@@ -593,19 +447,26 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implemen
         const dy = '0.6ex';
 
         return (
-            <g className={`${LINK_CLASS}__label`}
-                style={transform ? {transform} : undefined}>
-                {label.title ? <title>{label.title}</title> : undefined}
+            <g style={transform ? {transform} : undefined}
+                className={classnames(
+                    LINK_LABEL_CLASS,
+                    primary ? `${LINK_LABEL_CLASS}--primary` : undefined,
+                    className
+                )}>
+                {title ? <title>{title}</title> : undefined}
                 <rect x={rectX} y={rectY}
                     width={width} height={height}
-                    style={label.attributes.rect}
+                    className={rectClass}
+                    style={rectStyle}
                 />
                 <text ref={this.onTextMount}
                     x={x} y={y} dy={dy}
                     textAnchor={textAnchor}
-                    style={label.attributes.text}>
-                    {label.text.value}
+                    className={textClass}
+                    style={textStyle}>
+                    {content}
                 </text>
+                {children}
             </g>
         );
     }
@@ -625,7 +486,7 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implemen
     }
 
     computeBounds({width, height}: Size): Rect {
-        const {x, y, textAnchor} = this.props;
+        const {position: {x, y}, textAnchor = DEFAULT_TEXT_ANCHOR} = this.props;
 
         let xOffset = 0;
         if (textAnchor === 'middle') {
@@ -651,8 +512,8 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implemen
     }
 
     componentWillUnmount() {
-        const {scheduleMeasure} = this.props;
-        scheduleMeasure(this, true);
+        const {scheduleLabelMeasure} = this.context;
+        scheduleLabelMeasure(this, true);
     }
 
     UNSAFE_componentWillReceiveProps(nextProps: LinkLabelProps) {
@@ -666,25 +527,85 @@ class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implemen
     private tryRecomputeBounds(props: LinkLabelProps) {
         if (this.text && this.shouldUpdateBounds) {
             this.shouldUpdateBounds = false;
-            const {scheduleMeasure} = this.props;
-            scheduleMeasure(this, false);
+            const {scheduleLabelMeasure} = this.context;
+            scheduleLabelMeasure(this, false);
         }
     }
 }
 
+export interface LinkVerticesProps {
+    linkId: string;
+    vertices: ReadonlyArray<Vector>;
+    className?: string;
+    /**
+     * @default 10
+     */
+    vertexRadius?: number;
+    fill?: string;
+}
+
+const LINK_VERTICES_CLASS = 'reactodia-link-vertices';
+
+export function LinkVertices(props: LinkVerticesProps) {
+    const {linkId, vertices, className, vertexRadius = 10, fill} = props;
+    const {model} = React.useContext(CanvasContext)!;
+
+    if (vertices.length === 0) {
+        return null;
+    }
+
+    const vertexClass = classnames(`${LINK_VERTICES_CLASS}__vertex`, className);
+
+    const onRemoveLinkVertex = (vertexIndex: number) => {
+        const link = model.getLink(linkId);
+        if (!link) {
+            return;
+        }
+        const vertex = new LinkVertex(link, vertexIndex);
+        model.history.registerToUndo(
+            restoreCapturedLinkGeometry(vertex.link)
+        );
+        vertex.remove();
+    };
+
+    const elements: React.ReactElement[] = [];
+    for (let i = 0; i < vertices.length; i++) {
+        const {x, y} = vertices[i];
+        const key = elements.length;
+        elements.push(
+            <circle key={key}
+                data-vertex={i}
+                className={vertexClass}
+                cx={x} cy={y}
+                r={vertexRadius}
+                fill={fill}
+            />
+        );
+        elements.push(
+            <VertexTools key={key + 1}
+                vertexIndex={i}
+                vertexRadius={vertexRadius}
+                x={x} y={y}
+                onRemove={onRemoveLinkVertex}
+            />
+        );
+    }
+
+    return <g className={LINK_VERTICES_CLASS}>{elements}</g>;
+}
+
 class VertexTools extends React.Component<{
-    model: DiagramLink;
     vertexIndex: number;
     vertexRadius: number;
     x: number;
     y: number;
-    onRemove: (vertex: LinkVertex) => void;
+    onRemove: (vertexIndex: number) => void;
 }> {
     render() {
         const {vertexRadius, x, y} = this.props;
         const transform = `translate(${x + 2 * vertexRadius},${y - 2 * vertexRadius})scale(${vertexRadius})`;
         return (
-            <g className={`${LINK_CLASS}__vertex-tools`}
+            <g className={`${LINK_VERTICES_CLASS}__handle`}
                 transform={transform}
                 onPointerDown={this.onRemoveVertex}>
                 <title>Remove vertex</title>
@@ -698,8 +619,8 @@ class VertexTools extends React.Component<{
         if (e.button !== 0 /* left button */) { return; }
         e.preventDefault();
         e.stopPropagation();
-        const {onRemove, model, vertexIndex} = this.props;
-        onRemove(new LinkVertex(model, vertexIndex));
+        const {onRemove, vertexIndex} = this.props;
+        onRemove(vertexIndex);
     };
 }
 

@@ -2,14 +2,13 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 import { Debouncer } from '../coreUtils/scheduler';
 
 import {
-    ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate, LinkMarkerStyle, LinkStyle,
+    ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate,
     LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
 
-import { ElementTypeIri, LinkModel, LinkTypeIri } from '../data/model';
-import * as Rdf from '../data/rdf/rdfModel';
+import { ElementTypeIri, LinkTypeIri } from '../data/model';
 
-import { Element, Link, LinkTemplateState, RichLinkType } from './elements';
+import { Element, Link, RichLinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
@@ -60,7 +59,7 @@ export class RenderingState implements SizeProvider {
     private readonly elementSizes = new WeakMap<Element, Size>();
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
-    private readonly linkTemplates = new Map<LinkTypeIri, FilledLinkTemplate>();
+    private readonly linkTemplates = new Map<LinkTypeIri, LinkTemplate>();
     private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
 
@@ -157,18 +156,18 @@ export class RenderingState implements SizeProvider {
         return this.resolveElementTemplate(types) ?? this.shared.defaultElementTemplate;
     }
 
-    getLinkTemplates(): ReadonlyMap<LinkTypeIri, FilledLinkTemplate> {
+    getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate> {
         return this.linkTemplates;
     }
 
-    createLinkTemplate(linkType: RichLinkType): FilledLinkTemplate {
+    createLinkTemplate(linkType: RichLinkType): LinkTemplate {
         const existingTemplate = this.linkTemplates.get(linkType.id);
         if (existingTemplate) {
             return existingTemplate;
         }
 
-        const rawTemplate = this.resolveLinkTemplate(linkType.id);
-        const template = fillLinkTemplateDefaults(rawTemplate ?? {});
+        const template = this.resolveLinkTemplate(linkType.id)
+            ?? this.shared.defaultLinkTemplate;
         this.linkTemplates.set(linkType.id, template);
         this.source.trigger('changeLinkTemplates', {source: this});
         return template;
@@ -199,37 +198,6 @@ export class RenderingState implements SizeProvider {
         });
         this.routings = computedRoutes;
         this.source.trigger('changeRoutings', {source: this, previous: previousRoutes});
-    };
-}
-
-export interface FilledLinkTemplate {
-    readonly markerSource?: LinkMarkerStyle;
-    readonly markerTarget: LinkMarkerStyle;
-    readonly renderLink: (
-        data: LinkModel,
-        state: LinkTemplateState | undefined,
-        factory: Rdf.DataFactory
-    ) => LinkStyle;
-    readonly setLinkLabel?: (link: Link, label: string) => void;
-}
-
-function fillLinkTemplateDefaults(template: LinkTemplate): FilledLinkTemplate {
-    const {
-        markerSource,
-        markerTarget = {},
-        renderLink = (): LinkStyle => ({}),
-        setLinkLabel,
-    } = template;
-    return {
-        markerSource,
-        markerTarget: {
-            d: markerTarget.d ?? 'M0,0 L0,8 L9,4 z',
-            width: markerTarget.width ?? 9,
-            height: markerTarget.height ?? 8,
-            fill: markerTarget.fill ?? 'black',
-        },
-        renderLink,
-        setLinkLabel,
     };
 }
 

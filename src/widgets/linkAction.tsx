@@ -300,7 +300,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     }
 
     const template = canvas.renderingState.createLinkTemplate(linkType);
-    if (!template.setLinkLabel || !labelBounds) {
+    if (!template.editableLabel || !labelBounds) {
         return null;
     }
 

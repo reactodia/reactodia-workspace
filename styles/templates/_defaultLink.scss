@@ -1,0 +1,21 @@
+.reactodia-default-link {
+  &__label-text {
+    fill: black;
+    stroke: none;
+    stroke-width: 0;
+    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    font-size: inherit;
+    font-weight: bold;
+  }
+
+  &--renamed &__label-text {
+    font-style: italic;
+    font-weight: normal;
+  }
+
+  &__label-background {
+    fill: white;
+    stroke: none;
+    stroke-width: 0;
+  }
+}

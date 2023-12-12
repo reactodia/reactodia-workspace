@@ -1,9 +1,14 @@
 import * as React from 'react';
+import classnames from 'classnames';
 import * as N3 from 'n3';
 
-import { Workspace, DefaultWorkspace, RdfDataProvider, LinkTemplate, LinkStyle } from '../src/index';
+import {
+    Workspace, DefaultWorkspace, RdfDataProvider, LinkTemplate, DefaultLinkPathTemplate,
+} from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
+
+import './styleCustomization.css';
 
 const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
 const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
@@ -25,15 +30,11 @@ const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
         width: 20,
         height: 12,
     },
-    renderLink: (): LinkStyle => ({
-        connection: {
-            stroke: '#3c4260',
-            strokeWidth: 2,
-        },
-        label: {
-            text: {fill: '#3c4260'},
-        },
-    }),
+    renderLink: props => (
+        <DefaultLinkPathTemplate {...props}
+            className={classnames(props.className, 'custom-diagram-link')}
+        />
+    ),
 };
 
 function StyleCustomizationExample() {

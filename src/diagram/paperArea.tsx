@@ -814,7 +814,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             preserveDimensions: true,
             convertImagesToDataUris: true,
             removeByCssSelectors: [
-                '.reactodia-link__vertex-tools',
+                '.reactodia-link-vertices__handle',
                 ...removeByCssSelectors
             ],
             watermarkSvg: this.props.watermarkSvg,

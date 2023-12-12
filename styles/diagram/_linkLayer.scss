@@ -1,4 +1,10 @@
 .reactodia-link {
+  &--blurred {
+    opacity: 0.5;
+  }
+}
+
+.reactodia-link-path {
   &__wrap {
     stroke-width: 12px;
     stroke-linejoin: round;
@@ -6,18 +12,20 @@
     stroke: transparent;
     fill: none;
   }
-  &:hover &__wrap {
+  .reactodia-link:hover &__wrap {
     stroke: rgba(140, 140, 140, 0.44);
   }
+}
 
+.reactodia-link-vertices {
   &__vertex {
     cursor: all-scroll;
   }
-  &:not(:hover) &__vertex {
+  .reactodia-link:not(:hover) &__vertex {
     fill: transparent;
   }
 
-  &__vertex-tools {
+  &__handle {
     opacity: 0;
     cursor: pointer;
     > circle { fill: gray; }
@@ -26,11 +34,7 @@
       > circle { fill: black; }
     }
   }
-  &:hover &__vertex-tools {
+  .reactodia-link:hover &__handle {
     opacity: 0.8;
-  }
-
-  &--blurred {
-    opacity: 0.5;
   }
 }

@@ -43,6 +43,11 @@ export {
 export { EmbeddedLayer } from './diagram/embeddedLayer';
 export * from './diagram/geometry';
 export * from './diagram/history';
+export {
+    LinkPath, LinkPathProps,
+    LinkLabel, LinkLabelProps,
+    LinkVertices, LinkVerticesProps,
+} from './diagram/linkLayer';
 export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
 export {
     PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
@@ -76,6 +81,9 @@ export {
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate } from './templates/classicTemplate';
+export {
+    DefaultLinkTemplate, DefaultLinkPathTemplate, DefaultLinkPathTemplateProps,
+} from './templates/defaultLinkTemplate';
 export { GroupTemplate } from './templates/groupTemplate';
 export { StandardTemplate } from './templates/standardTemplate';
 export { SemanticTypeStyles } from './templates/typeStyles';

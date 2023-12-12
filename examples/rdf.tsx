@@ -3,44 +3,14 @@ import * as N3 from 'n3';
 
 import {
     Workspace, DefaultWorkspace, RdfDataProvider, PropertySuggestionHandler, PropertyScore,
-    LinkTemplate, ClassicTemplate, GroupTemplate, SemanticTypeStyles, OntologyLinkTemplates, delay,
+    ClassicTemplate, GroupTemplate, SemanticTypeStyles, OntologyLinkTemplates,
+    DefaultLinkTemplate, DefaultLinkPathTemplate, EditableLinkLabel, delay,
 } from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl');
-
-const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
-const EDITABLE_LINK_TEMPLATE: LinkTemplate = {
-    renderLink: (data, state, factory) => {
-        let editedLabel: string | undefined;
-        if (
-            state &&
-            Object.prototype.hasOwnProperty.call(state, CUSTOM_LINK_LABEL_IRI)
-        ) {
-            const customLabel = state[CUSTOM_LINK_LABEL_IRI];
-            if (typeof customLabel === 'string') {
-                editedLabel = customLabel;
-            }
-        }
-        return {
-            label: editedLabel === undefined ? undefined : {
-                label: [factory.literal(editedLabel)],
-                text: {
-                    fontStyle: 'italic',
-                    fontWeight: 'normal',
-                },
-            },
-        };
-    },
-    setLinkLabel: (link, label) => {
-        link.setLinkState({
-            ...link.linkState,
-            [CUSTOM_LINK_LABEL_IRI]: label.length === 0 ? undefined : label,
-        });
-    },
-};
 
 function RdfExample() {
     const workspaceRef = React.useRef<Workspace | null>(null);
@@ -99,7 +69,10 @@ function RdfExample() {
                     },
                     linkTemplateResolver: type => {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
-                            return EDITABLE_LINK_TEMPLATE;
+                            return {
+                                ...DefaultLinkTemplate,
+                                editableLabel: EDITABLE_LINK_LABEL,
+                            };
                         }
                         return OntologyLinkTemplates(type); 
                     },
@@ -112,5 +85,28 @@ function RdfExample() {
         </Workspace>
     );
 }
+
+const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
+const EDITABLE_LINK_LABEL: EditableLinkLabel = {
+    getLabel: link => {
+        const {linkState} = link;
+        if (
+            linkState &&
+            Object.prototype.hasOwnProperty.call(linkState, CUSTOM_LINK_LABEL_IRI)
+        ) {
+            const customLabel = linkState[CUSTOM_LINK_LABEL_IRI];
+            if (typeof customLabel === 'string') {
+                return customLabel;
+            }
+        }
+        return undefined;
+    },
+    setLabel: (link, label) => {
+        link.setLinkState({
+            ...link.linkState,
+            [CUSTOM_LINK_LABEL_IRI]: label.length === 0 ? undefined : label,
+        });
+    },
+};
 
 mountOnLoad(<RdfExample />);

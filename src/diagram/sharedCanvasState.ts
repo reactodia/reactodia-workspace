@@ -5,7 +5,7 @@ import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils
 import type {
     CanvasApi, CanvasDropEvent, CanvasWidgetDescription, CanvasWidgetAttachment,
 } from './canvasApi';
-import type { ElementTemplate } from './customization';
+import type { ElementTemplate, LinkTemplate } from './customization';
 import { Element, Link } from './elements';
 
 export interface SharedCanvasStateEvents {
@@ -40,6 +40,7 @@ export type ElementDecoratorResolver = (element: Element) => React.ReactNode | u
 
 export interface SharedCanvasStateOptions {
     defaultElementTemplate: ElementTemplate;
+    defaultLinkTemplate: LinkTemplate;
 }
 
 export class SharedCanvasState {
@@ -55,11 +56,13 @@ export class SharedCanvasState {
     private _elementDecorator: ElementDecoratorResolver | undefined;
 
     readonly defaultElementTemplate: ElementTemplate;
+    readonly defaultLinkTemplate: LinkTemplate;
 
     constructor(options: SharedCanvasStateOptions) {
-        const {defaultElementTemplate} = options;
+        const {defaultElementTemplate, defaultLinkTemplate} = options;
         this._canvasWidgets = new Map();
         this.defaultElementTemplate = defaultElementTemplate;
+        this.defaultLinkTemplate = defaultLinkTemplate;
     }
 
     dispose() {
