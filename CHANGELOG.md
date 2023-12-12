@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Fixed
+- Fix `SelectionActionEstablishLink` being displayed when authoring mode is not active.
 
 ## [0.23.0] - 2023-12-11
 ### Added
@@ -17,14 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Made `Halo` and `Selection` widgets customizable via action components:
   * Generic component for element actions: `SelectionAction`;
   * Specialized actions: `SelectionActionRemove`, `SelectionActionZoomToFit`, `SelectionActionLayout`, `SelectionActionExpand`, `SelectionActionConnections`, `SelectionActionAddToFilter`, `SelectionActionAnchor`, `SelectionActionEstablishLink`;
-- Support multi-navigation using `SelectionActionConnections` when multiple elements are selected;
+- Support multi-navigation using `SelectionActionConnections` when multiple elements are selected.
 - Made `HaloLink` widget customizable via action components:
   * Generic component for link actions: `LinkAction`;
   * Specialized actions: `LinkActionEdit`, `LinkActionDelete`, `LinkActionMoveEndpoint`, `LinkActionRename`;
 - Add selected link highlight to `HaloLink`:
   * Label highlight -- displayed by default as underline;
   * Path highlight -- unstyled by default, can be changed via CSS;
-- Support customizable stroke and fill styles in `Navigator` and improve default colors;
+- Support customizable stroke and fill styles in `Navigator` and improve default colors.
 - Exposed SVG and raster image export options in corresponding `CanvasApi` methods.
 - Support for graceful close and clearing the cache in `IndexedDbCachedProvider`. 
 - Added utility hooks for debounced event subscription: `useEventStore()`, `useFrameDebouncedStore()`, `useSyncStore()`.
@@ -53,7 +55,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Perform zoom-to-fit after loading an existing diagram instead of just centering the content.
 - Fixed unintended element move when interacting with nested element scrollbar.
 - Reset history after creating a new diagram or importing existing layout.
-- Fix text lookup query to use public full-text search service for `WikidataSettings`;
+- Fix text lookup query to use public full-text search service for `WikidataSettings`.
 
 ### Removed
 - Removed deprecated `Dictionary` type (`Record<string, T>` can be used instead).

@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
-import { SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore } from '../coreUtils/hooks';
+import { SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore } from '../coreUtils/hooks';
 
 import { CanvasContext } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -331,11 +331,15 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
     const {editor, overlayController} = React.useContext(WorkspaceContext)!;
     const {canvas} = React.useContext(CanvasContext)!;
 
+    const inAuthoringMode = useObservedProperty(
+        editor.events, 'changeMode', () => editor.inAuthoringMode
+    );
+
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     const target = elements.length === 1 ? elements[0] : undefined;
     const canLink = useCanEstablishLink(editor, target);
 
-    if (!target) {
+    if (!(target && inAuthoringMode)) {
         return null;
     } else if (canLink === undefined) {
         const {dock, dockRow, dockColumn} = props;
