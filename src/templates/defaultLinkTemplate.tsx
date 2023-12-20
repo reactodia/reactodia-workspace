@@ -20,6 +20,8 @@ export const DefaultLinkTemplate: LinkTemplate = {
 const CLASS_NAME = 'reactodia-default-link';
 
 export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
+    className?: string;
+    pathProps?: React.SVGAttributes<SVGPathElement>;
     prependLabels?: React.ReactNode;
     /**
      * @default 1
@@ -83,9 +85,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
 
     const stroke = pathProps?.stroke ?? 'black';
     return (
-        <g data-link-id={link.id}
-            data-source-id={link.sourceId}
-            data-target-id={link.targetId}
+        <g
             className={classnames(
                 CLASS_NAME,
                 renamedLabel ? `${CLASS_NAME}--renamed` : undefined,

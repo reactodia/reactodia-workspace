@@ -32,7 +32,7 @@ const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
     },
     renderLink: props => (
         <DefaultLinkPathTemplate {...props}
-            className={classnames(props.className, 'custom-diagram-link')}
+            className='custom-diagram-link'
         />
     ),
 };

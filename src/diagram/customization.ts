@@ -5,7 +5,7 @@ import type * as Rdf from '../data/rdf/rdfModel';
 
 import type { ElementTemplateState, Link, RichLinkType } from './elements';
 import type { SizeProvider, Vector } from './geometry';
-import type { DiagramModel, GraphStructure } from './model';
+import type { GraphStructure } from './model';
 
 export type LabelLanguageSelector =
     (labels: ReadonlyArray<Rdf.Literal>, language: string) => Rdf.Literal | undefined;
@@ -58,9 +58,7 @@ export interface LinkMarkerStyle {
 export interface LinkTemplateProps {
     link: Link;
     linkType: RichLinkType;
-    className: string;
     path: string;
-    pathProps?: React.SVGAttributes<SVGPathElement>;
     getPathPosition: (offset: number) => Vector;
     route?: RoutedLink;
     editableLabel?: EditableLinkLabel;

@@ -7,7 +7,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import {
-    Element as DiagramElement, Link as DiagramLink, LinkVertex, linkMarkerKey, RichLinkType,
+    Element, Link, LinkVertex, linkMarkerKey, RichLinkType,
 } from './elements';
 import {
     Rect, Size, Vector, boundsOf, computeGrouping, computePolyline, computePolylineLength,
@@ -20,7 +20,7 @@ import { CanvasContext } from './canvasApi';
 export interface LinkLayerProps {
     model: DiagramModel;
     renderingState: RenderingState;
-    links: ReadonlyArray<DiagramLink>;
+    links: ReadonlyArray<Link>;
     group?: string;
 }
 
@@ -37,7 +37,7 @@ type ScheduleLabelMeasure = (
 ) => void;
 
 interface MeasurableLabel {
-    readonly owner: DiagramLink | undefined;
+    readonly owner: Link | undefined;
     measureSize(): Size | undefined;
     applySize({width, height}: Size): void;
     computeBounds({width, height}: Size): Rect;
@@ -58,7 +58,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     private labelMeasureRequests = new Set<MeasurableLabel>();
     private delayedMeasureLabels = new Debouncer();
 
-    private readonly memoizedLinks = new WeakMap<DiagramLink, JSX.Element>();
+    private readonly memoizedLinks = new WeakMap<Link, JSX.Element>();
 
     constructor(props: LinkLayerProps) {
         super(props);
@@ -70,7 +70,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     componentDidMount() {
         const {model, renderingState} = this.props;
 
-        const scheduleUpdateElementLinks = (element: DiagramElement) => {
+        const scheduleUpdateElementLinks = (element: Element) => {
             for (const link of model.getElementLinks(element)) {
                 this.scheduleUpdateLink(link.id);
             }
@@ -171,7 +171,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         this.delayedUpdate.call(this.performUpdate);
     }
 
-    private popShouldUpdatePredicate(): (model: DiagramLink) => boolean {
+    private popShouldUpdatePredicate(): (model: Link) => boolean {
         const {updateState, scheduledToUpdate} = this;
         this.scheduledToUpdate = new Set<string>();
         this.updateState = UpdateRequest.Partial;
@@ -287,7 +287,7 @@ interface LinkLayerContext {
 }
 const LinkLayerContext = React.createContext<LinkLayerContext | null>(null);
 
-function computeDeepNestedElements(grouping: Map<string, DiagramElement[]>, groupId: string): { [id: string]: true } {
+function computeDeepNestedElements(grouping: Map<string, Element[]>, groupId: string): { [id: string]: true } {
     const deepChildren: { [elementId: string]: true } = {};
 
     function collectNestedItems(parentId: string) {
@@ -305,7 +305,7 @@ function computeDeepNestedElements(grouping: Map<string, DiagramElement[]>, grou
 }
 
 interface LinkViewProps {
-    link: DiagramLink;
+    link: Link;
     model: DiagramModel;
     renderingState: RenderingState;
 }
@@ -346,18 +346,23 @@ function LinkView(props: LinkViewProps) {
 
     const {highlighter} = renderingState.shared;
     const isBlurred = highlighter && !highlighter(link);
-    const className = `${LINK_CLASS} ${isBlurred ? `${LINK_CLASS}--blurred` : ''}`;
     
     const renderedLink = template.renderLink({
         link,
         linkType,
-        className,
         path,
         getPathPosition,
         route,
         editableLabel: template.editableLabel,
     });
-    return renderedLink;
+    return (
+        <g data-link-id={link.id}
+            data-source-id={link.sourceId}
+            data-target-id={link.targetId}
+            className={classnames(LINK_CLASS, isBlurred ? `${LINK_CLASS}--blurred` : undefined)}>
+            {renderedLink}
+        </g>
+    );
 }
 
 export interface LinkPathProps {
@@ -383,7 +388,7 @@ export function LinkPath(props: LinkPathProps) {
 }
 
 export interface LinkLabelProps {
-    link: DiagramLink;
+    link: Link;
     primary?: boolean;
 
     position: Vector;
@@ -428,7 +433,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         this.state = {width: 0, height: 0};
     }
 
-    get owner(): DiagramLink | undefined {
+    get owner(): Link | undefined {
         const {link, primary} = this.props;
         return primary ? link : undefined;
     }

@@ -129,6 +129,9 @@ export class RenderingState implements SizeProvider {
         }
     }
 
+    /**
+     * Returns bounds for link primary label in paper coordinates.
+     */
     getLinkLabelBounds(link: Link): Rect | undefined {
         return this.linkLabelBounds.get(link);
     }
