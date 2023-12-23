@@ -37,6 +37,11 @@ interface State {
     showOnlyConstructible: boolean;
 }
 
+interface FetchedClassGraph {
+    readonly dataProvider: DataProvider;
+    readonly graph: ElementTypeGraph;
+}
+
 interface ClassTreeItem extends ElementType {
     children: ReadonlyArray<ClassTreeItem>;
 }
@@ -51,8 +56,8 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     private readonly listener = new EventObserver();
     private readonly delayedClassUpdate = new Debouncer();
     private readonly delayedSearch = new Debouncer(200 /* ms */);
+    private fetchedGraph: FetchedClassGraph | undefined;
     private classTree: ReadonlyArray<ClassTreeItem> | undefined;
-    private dataProvider: DataProvider | undefined;
 
     private loadClassesOperation = new AbortController();
     private refreshOperation = new AbortController();
@@ -151,24 +156,32 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private async initClassTree() {
-        if (this.dataProvider !== this.context.model.dataProvider) {
-            this.dataProvider = this.context.model.dataProvider;
+        if (this.fetchedGraph && this.fetchedGraph.dataProvider === this.context.model.dataProvider) {
+            this.createElementTypesIfNeeded(this.fetchedGraph.graph);
+            this.refreshClassTree();
+        } else if (this.context.model.dataProvider) {
+            const dataProvider = this.context.model.dataProvider;
             this.classTree = undefined;
 
             const cancellation = new AbortController();
             this.loadClassesOperation.abort();
             this.loadClassesOperation = cancellation;
 
-            const classTree = await mapAbortedToNull(
-                this.dataProvider.knownElementTypes({signal: cancellation.signal}),
+            const classGraph = await mapAbortedToNull(
+                dataProvider.knownElementTypes({signal: cancellation.signal}),
                 cancellation.signal
             );
-            if (classTree === null) {
+            if (classGraph === null) {
                 return;
             }
-            this.setClassTree(classTree);
+
+            this.fetchedGraph = {dataProvider, graph: classGraph};
+            this.classTree = constructTree(classGraph);
+            this.createElementTypesIfNeeded(classGraph);
+            this.refreshClassTree();
+        } else {
+            this.refreshClassTree();
         }
-        this.refreshClassTree();
     }
 
     private onSearchTextChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -242,11 +255,8 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         });
     };
 
-    private setClassTree(graph: ElementTypeGraph) {
+    private createElementTypesIfNeeded(graph: ElementTypeGraph) {
         const {model} = this.context;
-
-        this.classTree = constructTree(graph);
-
         for (const typeModel of graph.elementTypes) {
             const existing = model.getElementType(typeModel.id);
             if (!existing) {
@@ -255,8 +265,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
                 model.addElementType(richType);
             }
         }
-
-        this.refreshClassTree();
     }
 
     private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
@@ -396,15 +404,21 @@ function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
     model: DiagramModel
 ): TreeNode[] {
-    const mapClass = (item: ClassTreeItem): TreeNode => {
-        const richClass = model.createElementType(item.id);
-        return {
-            model: richClass,
-            label: model.locale.formatLabel(richClass.label, richClass.id),
-            derived: item.children.map(mapClass),
-        };
+    const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
+        const nodes: TreeNode[] = [];
+        for (const item of children) {
+            const richClass = model.getElementType(item.id);
+            if (richClass) {
+                nodes.push({
+                    model: richClass,
+                    label: model.locale.formatLabel(richClass.label, richClass.id),
+                    derived: mapChildren(item.children),
+                });
+            }
+        }
+        return nodes;
     };
-    return classTree.map(mapClass);
+    return mapChildren(classTree);
 }
 
 function getNewClassIris(
