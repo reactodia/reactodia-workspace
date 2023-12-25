@@ -183,6 +183,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     private scheduleLabelMeasure: ScheduleLabelMeasure = (label, clear) => {
         if (label.owner && clear) {
             const {renderingState} = this.props;
+            this.labelMeasureRequests.delete(label);
             renderingState.setLinkLabelBounds(label.owner, undefined);
         } else {
             this.labelMeasureRequests.add(label);
@@ -477,7 +478,10 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
     }
 
     measureSize(): Size | undefined {
-        const {width, height} = this.text!.getBBox();
+        if (!this.text) {
+            return undefined;
+        }
+        const {width, height} = this.text.getBBox();
         return {width, height};
     }
 
