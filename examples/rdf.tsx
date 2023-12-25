@@ -1,26 +1,23 @@
 import * as React from 'react';
 import * as N3 from 'n3';
 
-import {
-    Workspace, DefaultWorkspace, RdfDataProvider, PropertySuggestionHandler, PropertyScore,
-    ClassicTemplate, GroupTemplate, SemanticTypeStyles, OntologyLinkTemplates,
-    DefaultLinkTemplate, DefaultLinkPathTemplate, EditableLinkLabel, delay,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const TURTLE_DATA = require('./resources/orgOntology.ttl');
+const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
 function RdfExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
 
+    const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     React.useEffect(() => {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
-        const dataProvider = new RdfDataProvider();
-        dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
+        const dataProvider = new Reactodia.RdfDataProvider();
+        dataProvider.addGraph(new N3.Parser().parse(turtleData));
     
         const diagram = tryLoadLayoutFromLocalStorage();
         model.importLayout({
@@ -30,64 +27,67 @@ function RdfExample() {
             signal: cancellation.signal,
         });
         return () => cancellation.abort();
-    }, []);
+    }, [turtleData]);
 
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
     const [validationApi] = React.useState(() => new ExampleValidationApi());
-    const suggestProperties = React.useCallback<PropertySuggestionHandler>(params => {
+    const suggestProperties = React.useCallback<Reactodia.PropertySuggestionHandler>(params => {
         let maxLength = 0;
         for (const iri of params.properties) {
             maxLength = Math.max(maxLength, iri.length);
         }
-        const scores = params.properties.map((p): PropertyScore => ({
+        const scores = params.properties.map((p): Reactodia.PropertyScore => ({
             propertyIri: p,
             score: 1 - p.length / maxLength,
         }));
-        return delay(300).then(() => scores);
+        return Reactodia.delay(300).then(() => scores);
     }, []);
 
     return (
-        <Workspace
+        <Reactodia.Workspace
             ref={workspaceRef}
             metadataApi={metadataApi}
             validationApi={validationApi}
-            typeStyleResolver={SemanticTypeStyles}
+            typeStyleResolver={Reactodia.SemanticTypeStyles}
             groupBy={[
                 {linkType: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', linkDirection: 'in'},
             ]}
             onIriClick={({iri}) => window.open(iri)}>
-            <DefaultWorkspace
+            <Reactodia.DefaultWorkspace
                 canvas={{
                     elementTemplateResolver: types => {
                         if (types.length === 0) {
                             // use group template only for classes
-                            return GroupTemplate;
+                            return Reactodia.GroupTemplate;
                         } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                            return ClassicTemplate;
+                            return Reactodia.ClassicTemplate;
                         }
                         return undefined;
                     },
                     linkTemplateResolver: type => {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return {
-                                ...DefaultLinkTemplate,
+                                ...Reactodia.DefaultLinkTemplate,
                                 editableLabel: EDITABLE_LINK_LABEL,
                             };
                         }
-                        return OntologyLinkTemplates(type); 
+                        return Reactodia.OntologyLinkTemplates(type); 
                     },
                 }}
                 connectionsMenu={{suggestProperties}}
                 toolbar={{
-                    menu: <ExampleToolbarMenu />
+                    menu: <>
+                        <ToolbarActionOpenTurtleGraph onOpen={setTurtleData} />
+                        <ExampleToolbarMenu />
+                    </>
                 }}
             />
-        </Workspace>
+        </Reactodia.Workspace>
     );
 }
 
 const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
-const EDITABLE_LINK_LABEL: EditableLinkLabel = {
+const EDITABLE_LINK_LABEL: Reactodia.EditableLinkLabel = {
     getLabel: link => {
         const {linkState} = link;
         if (
@@ -108,5 +108,23 @@ const EDITABLE_LINK_LABEL: EditableLinkLabel = {
         });
     },
 };
+
+interface ToolbarActionOpenTurtleGraphProps {
+    onOpen: (turtleText: string) => void;
+}
+
+function ToolbarActionOpenTurtleGraph(props: ToolbarActionOpenTurtleGraphProps) {
+    const {onOpen} = props;
+    return (
+        <Reactodia.ToolbarActionOpen
+            fileAccept='.ttl'
+            onSelect={async file => {
+                const turtleText = await file.text();
+                onOpen(turtleText);
+            }}>
+            Load RDF (Turtle) data
+        </Reactodia.ToolbarActionOpen>
+    );
+}
 
 mountOnLoad(<RdfExample />);

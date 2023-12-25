@@ -27,6 +27,7 @@ export function ExampleToolbarMenu() {
     return (
         <>
             <ToolbarActionOpen
+                fileAccept='.json'
                 onSelect={async file => {
                     const preloadedElements = new Map<ElementIri, ElementModel>();
                     for (const element of model.elements) {
@@ -45,7 +46,7 @@ export function ExampleToolbarMenu() {
                         alert('Failed to load specified file with a diagram layout.');
                     }
                 }}>
-                Open from file
+                Open diagram from file
             </ToolbarActionOpen>
             <ToolbarActionSave mode='layout'
                 onSelect={() => {
@@ -55,7 +56,7 @@ export function ExampleToolbarMenu() {
                     const timestamp = new Date().toISOString().replaceAll(/[Z\s:-]/g, '');
                     saveAs(blob, `reactodia-diagram-${timestamp}.json`);
                 }}>
-                Save to file
+                Save diagram to file
             </ToolbarActionSave>
             <ToolbarActionSave mode='layout'
                 onSelect={() => {
@@ -63,7 +64,7 @@ export function ExampleToolbarMenu() {
                     window.location.hash = saveLayoutToLocalStorage(diagram);
                     window.location.reload();
                 }}>
-                Save to local storage
+                Save diagram to local storage
             </ToolbarActionSave>
             {editor.inAuthoringMode ? (
                 <ToolbarActionSave mode='authoring'

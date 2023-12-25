@@ -52,12 +52,13 @@ export function ToolbarAction(props: ToolbarActionProps) {
 }
 
 export interface ToolbarActionOpenProps extends ToolbarActionStyleProps {
+    fileAccept?: string;
     onSelect: (file: File) => void;
     children?: React.ReactNode;
 }
 
 export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
-    const {className, onSelect, children, ...otherProps} = props;
+    const {className, fileAccept, onSelect, children, ...otherProps} = props;
     const inputRef = React.useRef<HTMLInputElement | null>(null);
     return (
         <>
@@ -71,6 +72,7 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
             <input ref={inputRef}
                 type='file'
                 className={`${CLASS_NAME}__open-input`}
+                accept={fileAccept}
                 onChange={e => {
                     if (e.currentTarget.files) {
                         const file = e.currentTarget.files[0];
