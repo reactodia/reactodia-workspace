@@ -74,9 +74,9 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     title={`${property.label} ${model.locale.formatIri(property.propertyId)}`}
                     content={<>
                         <WithFetchStatus type='propertyType' target={property.propertyId}>
-                            <span>{property.label}</span>
+                            <tspan>{property.label}:&nbsp;</tspan>
                         </WithFetchStatus>
-                        {property.values.join(', ')}
+                        {property.values.map(v => v.value).join(', ')}
                     </>}
                 />
             ))}
