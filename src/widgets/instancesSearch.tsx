@@ -71,6 +71,11 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         const {model, triggerWorkspaceEvent} = this.context;
 
         this.listener.listen(model.events, 'changeLanguage', () => this.forceUpdate());
+        this.listener.listen(model.events, 'loadingStart', () => {
+            // Clear results when loading a new diagram
+            // (potentially with a different data provider)
+            this.setState({criteria: {}, inputText: undefined});
+        });
         this.listener.listen(commands, 'setCriteria', ({criteria}) => {
             triggerWorkspaceEvent(WorkspaceEventKey.searchUpdateCriteria);
             this.setState({criteria, inputText: undefined});
