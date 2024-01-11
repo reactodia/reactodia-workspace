@@ -10,19 +10,6 @@
 
 .reactodia-overlaid-element,
 .reactodia-exported-element {
-  // set defaults for all inherited properties
-  box-sizing: border-box;
-  color: black;
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size: 14px;
-  line-height: 1.42857143;
-
   // http://stackoverflow.com/questions/6664460/line-height-affects-images
   img { vertical-align: middle; }
-}
-
-.reactodia-exported-element {
-  *, *:before, *:after {
-    box-sizing: inherit;
-  }
 }

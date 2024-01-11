@@ -1,3 +1,5 @@
+@import "../mixin/defaults";
+
 .reactodia-paper-area {
   flex: auto;
   width: 0;
@@ -68,4 +70,12 @@
 .reactodia-exported-watermark {
   opacity: 0.3;
   transition: opacity 0.3s;
+}
+
+.reactodia-exported-canvas {
+  @include inheritable-defaults;
+
+  *, *:before, *:after {
+    box-sizing: inherit;
+  }
 }

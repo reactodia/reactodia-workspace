@@ -185,6 +185,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
 
     const viewport = findViewport()!;
     viewport.removeAttribute('transform');
+    viewport.setAttribute('class', 'reactodia-exported-canvas');
 
     const imageBounds: { [path: string]: Bounds } = {};
 

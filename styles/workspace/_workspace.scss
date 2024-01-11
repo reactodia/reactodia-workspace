@@ -1,15 +1,11 @@
+@import "../mixin/defaults";
+
 .reactodia-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
 
-  /* Defaults for inheritable properties */
-  box-sizing: border-box;
-  white-space: initial;
-  color: #333;
-  font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  font-size: 14px;
-  line-height: 1.42857;
+  @include inheritable-defaults;
 
   *, *:before, *:after {
     box-sizing: inherit;
