@@ -4,7 +4,7 @@ import { LinkRouter, LinkTemplateResolver, ElementTemplateResolver } from '../di
 import { PaperArea, ZoomOptions } from '../diagram/paperArea';
 import { RenderingState } from '../diagram/renderingState';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 export interface CanvasProps {
     elementTemplateResolver?: ElementTemplateResolver;
@@ -23,7 +23,7 @@ export interface CanvasProps {
 const CLASS_NAME = 'reactodia-canvas';
 
 export function Canvas(props: CanvasProps) {
-    const {model, view} = React.useContext(WorkspaceContext)!;
+    const {model, view} = useWorkspace();
     const {
         elementTemplateResolver, linkTemplateResolver, linkRouter,
         showScrollbars, zoomOptions, watermarkSvg, watermarkUrl, children,

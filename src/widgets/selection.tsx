@@ -6,7 +6,7 @@ import {
     SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore,
 } from '../coreUtils/hooks';
 
-import { CanvasApi, CanvasContext, CanvasMetrics } from '../diagram/canvasApi';
+import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
 import {
@@ -16,7 +16,7 @@ import { DiagramModel, GraphStructure } from '../diagram/model';
 
 import { EditorController, SelectionItem } from '../editor/editorController';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import {
@@ -53,8 +53,8 @@ export interface SelectionProps {
 const CLASS_NAME = 'reactodia-selection';
 
 export function Selection(props: SelectionProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const {model, editor} = useWorkspace();
 
     const subscribeSelection = useEventStore(editor.events, 'changeSelection');
     const selectedElements = useSyncStore(

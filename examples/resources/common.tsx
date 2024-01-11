@@ -3,8 +3,9 @@ import * as ReactDOM from 'react-dom';
 import { saveAs } from 'file-saver';
 
 import {
-    ElementIri, ElementModel, SerializedDiagram, WorkspaceContext,
+    ElementIri, ElementModel, SerializedDiagram,
     ToolbarActionOpen, ToolbarActionSave, ToolbarActionClearAll, ToolbarActionExport,
+    useWorkspace,
 } from '../../src/index';
 
 function onPageLoad(callback: (container: HTMLDivElement) => void) {
@@ -23,7 +24,7 @@ export function mountOnLoad(node: React.ReactElement): void {
 }
 
 export function ExampleToolbarMenu() {
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = useWorkspace();
     return (
         <>
             <ToolbarActionOpen
@@ -70,6 +71,7 @@ export function ExampleToolbarMenu() {
                 <ToolbarActionSave mode='authoring'
                     onSelect={() => {
                         const state = editor.authoringState;
+                        // eslint-disable-next-line no-console
                         console.log('Authoring state:', state);
                         alert('Please check browser console for result');
                     }}>

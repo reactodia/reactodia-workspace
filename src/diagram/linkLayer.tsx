@@ -15,7 +15,7 @@ import {
 } from './geometry';
 import { DiagramModel } from './model';
 import { RenderingState, RenderingLayer } from './renderingState';
-import { CanvasContext } from './canvasApi';
+import { useCanvas } from './canvasApi';
 
 export interface LinkLayerProps {
     model: DiagramModel;
@@ -557,7 +557,7 @@ const LINK_VERTICES_CLASS = 'reactodia-link-vertices';
 
 export function LinkVertices(props: LinkVerticesProps) {
     const {linkId, vertices, className, vertexRadius = 10, fill} = props;
-    const {model} = React.useContext(CanvasContext)!;
+    const {model} = useCanvas();
 
     if (vertices.length === 0) {
         return null;

@@ -4,7 +4,7 @@ import { hcl } from 'd3-color';
 
 import { ElementModel } from '../data/model';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 export interface ListElementViewProps {
     element: ElementModel;
@@ -19,7 +19,7 @@ export interface ListElementViewProps {
 const CLASS_NAME = 'reactodia-list-element-view';
 
 export function ListElementView(props: ListElementViewProps) {
-    const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
+    const {model, getElementTypeStyle} = useWorkspace();
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;

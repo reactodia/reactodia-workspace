@@ -5,7 +5,7 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
 import { SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore } from '../coreUtils/hooks';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
@@ -16,7 +16,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 import { AuthoringState } from '../editor/authoringState';
 import type { EditorController } from '../editor/editorController';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
@@ -101,7 +101,7 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
-    const {editor} = React.useContext(WorkspaceContext)!;
+    const {editor} = useWorkspace();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     const isNewElement = Boolean(
         elements.length === 1 &&
@@ -128,8 +128,8 @@ export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps
 
 export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {model, editor} = useWorkspace();
+    const {canvas} = useCanvas();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
@@ -156,8 +156,8 @@ export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {className, title, ...otherProps} = props;
-    const {editor, performLayout} = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {editor, performLayout} = useWorkspace();
+    const {canvas} = useCanvas();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
@@ -182,7 +182,7 @@ export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = useWorkspace();
 
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
@@ -241,7 +241,7 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {}
 
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title} = props;
-    const {view, editor} = React.useContext(WorkspaceContext)!;
+    const {view, editor} = useWorkspace();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
         return null;
@@ -269,7 +269,7 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {editor, overlayController} = React.useContext(WorkspaceContext)!;
+    const {editor, overlayController} = useWorkspace();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!commands) {
         return null;
@@ -305,7 +305,7 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
 
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {editor} = React.useContext(WorkspaceContext)!;
+    const {editor} = useWorkspace();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!(commands && elements.length === 1)) {
         return null;
@@ -328,8 +328,8 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
-    const {editor, overlayController} = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {editor, overlayController} = useWorkspace();
+    const {canvas} = useCanvas();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode

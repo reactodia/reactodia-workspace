@@ -6,7 +6,7 @@ import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 import { ElementModel, ElementIri, LinkTypeIri } from '../data/model';
 import { generate128BitID } from '../data/utils';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { RichLinkType, Element } from '../diagram/elements';
@@ -20,7 +20,7 @@ import { WithFetchStatus } from '../editor/withFetchStatus';
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
 
-import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
+import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 import { highlightSubstring } from './listElementView';
 import { SearchResults } from './searchResults';
@@ -55,8 +55,8 @@ export interface PropertyScore {
 export function ConnectionsMenu(props: ConnectionsMenuProps) {
     const {commands} = props;
 
-    const workspace = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const workspace = useWorkspace();
+    const {canvas} = useCanvas();
 
     React.useEffect(() => {
         const listener = new EventObserver();

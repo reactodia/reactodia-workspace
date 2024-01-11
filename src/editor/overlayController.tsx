@@ -4,7 +4,7 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 
 import { ElementModel, LinkModel } from '../data/model';
 
-import { CanvasApi, CanvasContext, CanvasPointerUpEvent } from '../diagram/canvasApi';
+import { CanvasApi, CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { calculateLayout, applyLayout, layoutForcePadded } from '../diagram/layout';
@@ -403,7 +403,7 @@ export class OverlayController {
 
 function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
     const {spinnerProps} = props;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {canvas} = useCanvas();
     const {clientWidth, clientHeight} = canvas.metrics.area;
     const x = spinnerProps.statusText ? clientWidth / 3 : clientHeight / 2;
     const position = {x, y: clientHeight / 2};
@@ -420,7 +420,7 @@ function CanvasOverlayHandler(props: {
     onCanvasPointerUp: (event: CanvasPointerUpEvent) => void;
 }) {
     const {onCanvasPointerUp} = props;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {canvas} = useCanvas();
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerUp', onCanvasPointerUp);

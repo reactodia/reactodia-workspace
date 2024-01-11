@@ -5,7 +5,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 
 import { LinkModel } from '../data/model';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import {
     Vector, boundsOf, computePolyline, getPointAlongPolyline, computePolylineLength,
     pathFromPolyline,
@@ -15,7 +15,7 @@ import { RenderingLayer } from '../diagram/renderingState';
 import { Link } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { AuthoringKind, AuthoringState } from './authoringState';
 import { LinkValidation, ElementValidation } from './validation';
@@ -28,8 +28,8 @@ export interface LinkStateWidgetProps {
 }
 
 export function LinkStateWidget(props: LinkStateWidgetProps) {
-    const workspace = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const workspace = useWorkspace();
+    const {canvas} = useCanvas();
     return (
         <LinkStateWidgetInner {...props}
             workspace={workspace}

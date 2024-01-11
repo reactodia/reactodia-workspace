@@ -46,3 +46,11 @@ export interface ProcessedTypeStyle {
 }
 
 export const WorkspaceContext = React.createContext<WorkspaceContext | null>(null);
+
+export function useWorkspace(): WorkspaceContext {
+    const context = React.useContext(WorkspaceContext);
+    if (!context) {
+        throw new Error('Missing Reactodia workspace context');
+    }
+    return context;
+}

@@ -3,13 +3,13 @@ import classnames from 'classnames';
 
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 import { WithFetchStatus } from '../editor/withFetchStatus';
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
 
 export function ClassicTemplate(props: TemplateProps) {
     const {data, isExpanded} = props;
-    const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
+    const {model, getElementTypeStyle} = useWorkspace();
     const {color, icon} = getElementTypeStyle(data.types);
 
     const typesLabel = data.types.length > 0

@@ -5,7 +5,7 @@ import { useObservedProperty } from '../coreUtils/hooks';
 
 import { ElementModel } from '../data/model';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 export interface AuthoredEntityContext {
     editedIri?: string;
@@ -27,7 +27,7 @@ export function useAuthoredEntity(
     data: ElementModel,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const {model, editor, overlayController} = React.useContext(WorkspaceContext)!;
+    const {model, editor, overlayController} = useWorkspace();
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
 

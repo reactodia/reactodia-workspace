@@ -4,20 +4,20 @@ import { EventObserver } from '../coreUtils/events';
 
 import { ElementIri } from '../data/model';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { type CanvasContext, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
 import { Vector, boundsOf } from '../diagram/geometry';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
 
-import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
+import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 export interface DropOnCanvasProps {}
 
 export function DropOnCanvas(props: DropOnCanvasProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const {model, editor, triggerWorkspaceEvent} = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const {model, editor, triggerWorkspaceEvent} = useWorkspace();
 
     React.useEffect(() => {
         const listener = new EventObserver();

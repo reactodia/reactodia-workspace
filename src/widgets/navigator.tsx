@@ -3,14 +3,14 @@ import * as React from 'react';
 import { Debouncer } from '../coreUtils/scheduler';
 import { EventObserver } from '../coreUtils/events';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
 import { Rect, Vector, boundsOf, getContentFittingBox } from '../diagram/geometry';
 import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 export interface NavigatorProps {
     /**
@@ -61,8 +61,8 @@ export interface NavigatorStrokeStyle {
 }
 
 export function Navigator(props: NavigatorProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const workspace = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const workspace = useWorkspace();
     return (
         <NavigatorInner {...props}
             canvas={canvas}

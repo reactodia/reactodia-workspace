@@ -5,13 +5,13 @@ import { EmbeddedLayer } from '../diagram/embeddedLayer';
 
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS = 'reactodia-group-template';
 
 export function GroupTemplate(props: TemplateProps) {
     const {elementId, data, isExpanded} = props;
-    const {model, getElementTypeStyle} = React.useContext(WorkspaceContext)!;
+    const {model, getElementTypeStyle} = useWorkspace();
     const {color, icon} = getElementTypeStyle(data.types);
 
     const typesLabel = data.types.length > 0

@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import { ChangeOperationsEvent, FetchOperation, FetchOperationFail } from './dataFetcher';
 
@@ -33,7 +33,7 @@ const CLASS_NAME = 'reactodia-fetch-status';
 export function WithFetchStatus<T extends ListenableOperationTypes>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;
 
-    const {model} = React.useContext(WorkspaceContext)!;
+    const {model} = useWorkspace();
 
     const [status, setStatus] = React.useState<Status>(Status.None);
 

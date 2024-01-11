@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { useCanvas } from '../diagram/canvasApi';
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkVertices } from '../diagram/linkLayer';
 
@@ -36,7 +36,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         prependLabels = null,
         propertyLabelStartLine = 1,
     } = props;
-    const {model} = React.useContext(CanvasContext)!;
+    const {model} = useCanvas();
 
     const renamedLabel = editableLabel?.getLabel(link);
     let labelContent: JSX.Element | null = null;

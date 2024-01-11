@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
 export interface ZoomControlProps {}
@@ -9,7 +9,7 @@ export interface ZoomControlProps {}
 const CLASS_NAME = 'reactodia-zoom-control';
 
 export function ZoomControl(props: ZoomControlProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {canvas} = useCanvas();
     return (
         <div className={CLASS_NAME}>
             <button type='button'

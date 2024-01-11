@@ -3,7 +3,7 @@ import * as React from 'react';
 import { EventObserver } from '../coreUtils/events';
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Link } from '../diagram/elements';
 import {
@@ -14,7 +14,7 @@ import type { DiagramModel, GraphStructure } from '../diagram/model';
 import { TransformedSvgCanvas } from '../diagram/paper';
 import type { RenderingState } from '../diagram/renderingState';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import {
     LinkActionContext, LinkActionMoveEndpoint, LinkActionEdit, LinkActionDelete, LinkActionRename,
@@ -51,8 +51,8 @@ export interface HaloLinkProps {
 }
 
 export function HaloLink(props: HaloLinkProps) {
-    const {canvas, model} = React.useContext(CanvasContext)!;
-    const {editor} = React.useContext(WorkspaceContext)!;
+    const {canvas, model} = useCanvas();
+    const {editor} = useWorkspace();
 
     const selectionStore = useEventStore(editor.events, 'changeSelection');
     const selection = useSyncStore(selectionStore, () => editor.selection);

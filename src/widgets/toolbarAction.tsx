@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 
 import { useObservedProperty } from '../coreUtils/hooks';
 
-import { CanvasContext, ExportRasterOptions } from '../diagram/canvasApi';
+import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
 import { layoutForcePadded } from '../diagram/layout';
 import { dataURLToBlob } from '../diagram/toSvg';
 
@@ -12,7 +12,7 @@ import { AuthoringState } from '../editor/authoringState';
 
 import { DropdownItem, useInsideDropdown } from './dropdown';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-toolbar-action';
 
@@ -92,7 +92,7 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
 
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     const {className, mode, onSelect, children, ...otherProps} = props;
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = useWorkspace();
     const hasLayoutChanges = useObservedProperty(
         model.history.events,
         'historyChanged',
@@ -125,7 +125,7 @@ export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
 
 export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = useWorkspace();
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__clear-all`)}
@@ -160,7 +160,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
     const {
         className, title, kind, fileName = 'diagram', rasterOptions, ...otherProps
     } = props;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const {canvas} = useCanvas();
     if (kind === 'exportRaster') {
         return (
             <ToolbarAction {...otherProps}
@@ -217,7 +217,7 @@ export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'd
 
 export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
     const {className, title, ...otherProps} = props;
-    const {model: {history}} = React.useContext(CanvasContext)!;
+    const {model: {history}} = useCanvas();
     const insideDropdown = useInsideDropdown();
     const undoCommand = useObservedProperty(
         history.events,
@@ -247,7 +247,7 @@ export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'd
 
 export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
     const {className, title, ...otherProps} = props;
-    const {model: {history}} = React.useContext(CanvasContext)!;
+    const {model: {history}} = useCanvas();
     const insideDropdown = useInsideDropdown();
     const redoCommand = useObservedProperty(
         history.events,
@@ -277,8 +277,8 @@ export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 
 
 export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     const {className, title, ...otherProps} = props;
-    const {performLayout} = React.useContext(WorkspaceContext)!;
-    const {model, canvas} = React.useContext(CanvasContext)!;
+    const {performLayout} = useWorkspace();
+    const {model, canvas} = useCanvas();
     const elementCount = useObservedProperty(
         model.events,
         'changeCells',
@@ -313,7 +313,7 @@ export interface WorkspaceLanguage {
 
 export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
     const {className, title, languages} = props;
-    const {model} = React.useContext(WorkspaceContext)!;
+    const {model} = useCanvas();
     const currentLanguage = useObservedProperty(
         model.events,
         'changeLanguage',

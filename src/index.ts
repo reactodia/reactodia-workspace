@@ -150,7 +150,7 @@ export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWork
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export { Workspace, WorkspaceProps } from './workspace/workspace';
 export {
-    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
+    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';

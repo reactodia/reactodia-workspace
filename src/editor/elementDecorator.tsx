@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { EventObserver } from '../coreUtils/events';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { Element } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { ElementChange } from './authoringState';
 import { ElementValidation, LinkValidation } from './validation';
@@ -18,8 +18,8 @@ export interface ElementDecoratorProps {
 }
 
 export function ElementDecorator(props: ElementDecoratorProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const workspace = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const workspace = useWorkspace();
     return (
         <ElementDecoratorInner {...props}
             canvas={canvas}

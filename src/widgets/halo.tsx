@@ -3,12 +3,12 @@ import * as React from 'react';
 import { AnyListener, EventObserver, EventTrigger } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
 
-import { CanvasContext, CanvasApi } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element, ElementEvents } from '../diagram/elements';
 import { boundsOf } from '../diagram/geometry';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
@@ -47,8 +47,8 @@ export interface HaloProps {
 }
 
 export function Halo(props: HaloProps) {
-    const {canvas} = React.useContext(CanvasContext)!;
-    const {editor} = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const {editor} = useWorkspace();
 
     const selection = useObservedProperty(
         editor.events,

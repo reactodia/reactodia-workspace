@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { useEventStore, useFrameDebouncedStore, useSyncStore } from '../coreUtils/hooks';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { useCanvas } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
 import { GraphStructure } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
@@ -12,7 +12,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 import { AuthoringState } from '../editor/authoringState';
 import { EditorController } from '../editor/editorController';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 export interface LinkActionContext {
     readonly link: Link;
@@ -84,7 +84,7 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor, overlayController} = React.useContext(WorkspaceContext)!;
+    const {model, editor, overlayController} = useWorkspace();
 
     const canEdit = useCanEditLink(link, model, editor);
     const linkIsDeleted = isDeletedLink(editor.authoringState, link);
@@ -158,7 +158,7 @@ export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 export function LinkActionDelete(props: LinkActionDeleteProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor} = React.useContext(WorkspaceContext)!;
+    const {model, editor} = useWorkspace();
 
     const canDelete = useCanDeleteLink(link, model, editor);
     const linkIsDeleted = (
@@ -235,8 +235,8 @@ export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 
 export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
-    const {canvas} = React.useContext(CanvasContext)!;
-    const {editor, overlayController} = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const {editor, overlayController} = useWorkspace();
 
     if (!editor.inAuthoringMode) {
         return null;
@@ -285,8 +285,8 @@ export interface LinkActionRenameProps {
 export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
-    const {canvas} = React.useContext(CanvasContext)!;
-    const {model, overlayController} = React.useContext(WorkspaceContext)!;
+    const {canvas} = useCanvas();
+    const {model, overlayController} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(

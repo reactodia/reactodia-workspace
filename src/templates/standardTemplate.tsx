@@ -11,12 +11,12 @@ import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEnti
 import { AuthoringState } from '../editor/authoringState';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 export function StandardTemplate(props: TemplateProps) {
-    const workspace = React.useContext(WorkspaceContext)!;
+    const workspace = useWorkspace();
     const entityContext = useAuthoredEntity(props.elementId, props.data, props.isExpanded);
     return (
         <StandardTemplateInner {...props}

@@ -6,14 +6,14 @@ import { EventObserver } from '../coreUtils/events';
 import { ElementIri, ElementModel, LinkModel } from '../data/model';
 import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkDirection } from '../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../diagram/linkLayer';
 import { TransformedSvgCanvas } from '../diagram/paper';
 import { Spinner } from '../diagram/spinner';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { TemporaryState } from './authoringState';
 
@@ -27,8 +27,8 @@ export interface EditLayerProps {
 }
 
 export function EditLayer(props: EditLayerProps) {
-    const workspace = React.useContext(WorkspaceContext)!;
-    const {canvas} = React.useContext(CanvasContext)!;
+    const workspace = useWorkspace();
+    const {canvas} = useCanvas();
     return (
         <EditLayerInner {...props}
             workspace={workspace}
