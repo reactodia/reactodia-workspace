@@ -14,10 +14,19 @@ function RdfExample() {
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     React.useEffect(() => {
         const cancellation = new AbortController();
-        const {model} = workspaceRef.current!.getContext();
+        const {model, overlayController} = workspaceRef.current!.getContext();
 
         const dataProvider = new Reactodia.RdfDataProvider();
-        dataProvider.addGraph(new N3.Parser().parse(turtleData));
+        try {
+            dataProvider.addGraph(new N3.Parser().parse(turtleData));
+        } catch (err) {
+            overlayController.setSpinner({
+                errorOccurred: true,
+                statusText: 'Error parsing RDF graph data',
+            });
+            console.error('Error parsing RDF graph data', err);
+            return;
+        }
     
         const diagram = tryLoadLayoutFromLocalStorage();
         model.importLayout({

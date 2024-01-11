@@ -1,9 +1,7 @@
 import * as React from 'react';
 import * as N3 from 'n3';
 
-import {
-    Workspace, DefaultWorkspace, RdfDataProvider, ElementTypeIri, layoutForcePadded,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { mountOnLoad } from './resources/common';
 
@@ -12,7 +10,7 @@ const GRAPH_DATA =
     'master/examples/resources/orgOntology.ttl';
 
 function BasicExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
 
     React.useEffect(() => {
         const controller = new AbortController();
@@ -25,12 +23,12 @@ function BasicExample() {
         // Fetch graph data to use as underlying data source
         const response = await fetch(GRAPH_DATA, {signal});
         const graphData = new N3.Parser().parse(await response.text());
-        const dataProvider = new RdfDataProvider({acceptBlankNodes: false});
+        const dataProvider = new Reactodia.RdfDataProvider({acceptBlankNodes: false});
         dataProvider.addGraph(graphData);
 
         // Create empty diagram and put owl:Class entities with links between them
         await model.createNewDiagram({dataProvider, signal});
-        const elementTypeId = 'http://www.w3.org/2002/07/owl#Class' as ElementTypeIri;
+        const elementTypeId = 'http://www.w3.org/2002/07/owl#Class' as Reactodia.ElementTypeIri;
         for (const {element} of await dataProvider.lookup({elementTypeId})) {
             model.createElement(element);
         }
@@ -38,13 +36,13 @@ function BasicExample() {
 
         // Layout elements on canvas
         const canvas = view.findAnyCanvas()!;
-        await performLayout({canvas, layoutFunction: layoutForcePadded, signal});
+        await performLayout({canvas, layoutFunction: Reactodia.layoutForcePadded, signal});
     }
 
     return (
-        <Workspace ref={workspaceRef}>
-            <DefaultWorkspace />
-        </Workspace>
+        <Reactodia.Workspace ref={workspaceRef}>
+            <Reactodia.DefaultWorkspace />
+        </Reactodia.Workspace>
     );
 }
 
