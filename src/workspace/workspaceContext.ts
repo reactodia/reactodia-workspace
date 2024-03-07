@@ -19,8 +19,15 @@ export interface WorkspaceContext {
     readonly disposeSignal: AbortSignal;
     readonly getElementTypeStyle: (types: ReadonlyArray<ElementTypeIri>) => ProcessedTypeStyle;
     readonly performLayout: (params: {
-        canvas: CanvasApi;
-        layoutFunction: LayoutFunction;
+        /**
+         * Target canvas to get element sizes from and perform layout on.
+         *
+         * If not specified, uses the result from `SharedCanvasState.findAnyCanvas()`.
+         * It is recommended to provide this value if possible for consistent
+         * multi-canvas support.
+         */
+        canvas?: CanvasApi;
+        layoutFunction?: LayoutFunction;
         selectedElements?: ReadonlySet<Element>;
         animate?: boolean;
         signal?: AbortSignal;

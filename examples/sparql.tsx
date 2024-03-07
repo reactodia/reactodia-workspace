@@ -1,25 +1,27 @@
 import * as React from 'react';
-import {
-    Workspace, SparqlDataProvider, OwlStatsSettings, DefaultWorkspace,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
 function SparqlExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     React.useEffect(() => {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
         const diagram = tryLoadLayoutFromLocalStorage();
-        const dataProvider = new SparqlDataProvider({
+        const dataProvider = new Reactodia.SparqlDataProvider({
             endpointUrl: '/sparql',
             imagePropertyUris: [
                 'http://collection.britishmuseum.org/id/ontology/PX_has_main_representation',
                 'http://xmlns.com/foaf/0.1/img',
             ]
-        }, OwlStatsSettings);
+        }, Reactodia.OwlStatsSettings);
 
         model.importLayout({
             diagram,
@@ -32,10 +34,11 @@ function SparqlExample() {
     }, []);
 
     return (
-        <Workspace
+        <Reactodia.Workspace
             ref={workspaceRef}
+            defaultLayout={defaultLayout}
             onIriClick={({iri}) => window.open(iri)}>
-            <DefaultWorkspace
+            <Reactodia.DefaultWorkspace
                 toolbar={{
                     menu: <ExampleToolbarMenu />,
                     languages: [
@@ -51,7 +54,7 @@ function SparqlExample() {
                     ],
                 }}
             />
-        </Workspace>
+        </Reactodia.Workspace>
     );
 }
 

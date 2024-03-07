@@ -3,15 +3,19 @@ const path = require('path');
 /**
  * @type {import('webpack').Configuration}
  */
-module.exports = {
+const mainConfig = {
   mode: 'none',
-  entry: './src/index',
+  entry: {
+    'reactodia-workspace': './src/index',
+    'worker-protocol': './src/worker-protocol',
+    'default-layouts.worker': './src/default-layouts.worker',
+  },
   output: {
-    filename: 'reactodia-workspace.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
     library: {
       type: 'module',
-    }
+    },
   },
   experiments: {
     outputModule: true,
@@ -52,3 +56,34 @@ module.exports = {
     'webcola',
   ],
 };
+
+/**
+ * @type {import('webpack').Configuration}
+ */
+const workerConfig = {
+  mode: 'none',
+  target: 'webworker',
+  entry: {
+    'worker-protocol': './src/worker-protocol',
+    'default-layouts.worker': './src/default-layouts.worker',
+  },
+  output: {
+    ...mainConfig.output,
+    chunkFormat: 'module',
+  },
+  experiments: mainConfig.experiments,
+  resolve: {
+    extensions: mainConfig.resolve.extensions,
+  },
+  module: {
+    rules: [
+      {
+        test: /\.([cm]?ts|tsx)$/,
+        loader: 'ts-loader',
+      }
+    ],
+  },
+  externals: mainConfig.externals,
+};
+
+module.exports = [mainConfig, workerConfig];

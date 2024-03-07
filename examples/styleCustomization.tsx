@@ -1,10 +1,7 @@
 import * as React from 'react';
-import classnames from 'classnames';
 import * as N3 from 'n3';
 
-import {
-    Workspace, DefaultWorkspace, RdfDataProvider, LinkTemplate, DefaultLinkPathTemplate,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
@@ -15,7 +12,7 @@ const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl');
 
-const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
+const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
     markerSource: {
         fill: '#4b4a67',
         stroke: '#4b4a67',
@@ -31,20 +28,24 @@ const CUSTOM_LINK_TEMPLATE: LinkTemplate = {
         height: 12,
     },
     renderLink: props => (
-        <DefaultLinkPathTemplate {...props}
+        <Reactodia.DefaultLinkPathTemplate {...props}
             className='custom-diagram-link'
         />
     ),
 };
 
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
 function StyleCustomizationExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     React.useEffect(() => {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
-        const dataProvider = new RdfDataProvider();
+        const dataProvider = new Reactodia.RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
 
         const diagram = tryLoadLayoutFromLocalStorage();
@@ -59,8 +60,9 @@ function StyleCustomizationExample() {
     }, []);
 
     return (
-        <Workspace
+        <Reactodia.Workspace
             ref={workspaceRef}
+            defaultLayout={defaultLayout}
             typeStyleResolver={types => {
                 if (types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1) {
                     return {icon: CERTIFICATE_ICON};
@@ -75,7 +77,7 @@ function StyleCustomizationExample() {
                 }
             }}
             onIriClick={({iri}) => window.open(iri)}>
-            <DefaultWorkspace
+            <Reactodia.DefaultWorkspace
                 canvas={{
                     linkTemplateResolver: type => CUSTOM_LINK_TEMPLATE,
                 }}
@@ -83,7 +85,7 @@ function StyleCustomizationExample() {
                     menu: <ExampleToolbarMenu />,
                 }}
             />
-        </Workspace>
+        </Reactodia.Workspace>
     );
 }
 

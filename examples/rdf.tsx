@@ -8,8 +8,12 @@ import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from '
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
 function RdfExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     React.useEffect(() => {
@@ -55,6 +59,7 @@ function RdfExample() {
     return (
         <Reactodia.Workspace
             ref={workspaceRef}
+            defaultLayout={defaultLayout}
             metadataApi={metadataApi}
             validationApi={validationApi}
             typeStyleResolver={Reactodia.SemanticTypeStyles}

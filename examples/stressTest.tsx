@@ -1,19 +1,21 @@
 import * as React from 'react';
 
-import {
-    Workspace, DefaultWorkspace, Rdf, RdfDataProvider, ElementIri, Element,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-function TurtleGraphExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
+function StressTestExample() {
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     React.useEffect(() => {
         const cancellation = new AbortController();
         const {model, view} = workspaceRef.current!.getContext();
 
-        const dataProvider = new RdfDataProvider();
+        const dataProvider = new Reactodia.RdfDataProvider();
         const [graphData, nodes] = createLayout(500, 2, dataProvider.factory);
         dataProvider.addGraph(graphData);
     
@@ -35,7 +37,7 @@ function TurtleGraphExample() {
                     const nodeId = nodes[i];
                     const x = (i % rowCount) * estimatedWidth;
                     const y = Math.floor(i / rowCount) * estimatedHeight;
-                    model.addElement(new Element({
+                    model.addElement(new Reactodia.Element({
                         id: `n:${i}`,
                         data: {
                             id: nodeId,
@@ -64,8 +66,9 @@ function TurtleGraphExample() {
     }, []);
 
     return (
-        <Workspace ref={workspaceRef}>
-            <DefaultWorkspace
+        <Reactodia.Workspace ref={workspaceRef}
+            defaultLayout={defaultLayout}>
+            <Reactodia.DefaultWorkspace
                 leftColumn={{defaultCollapsed: true}}
                 toolbar={{
                     menu: <ExampleToolbarMenu />,
@@ -74,24 +77,26 @@ function TurtleGraphExample() {
                     expanded: false,
                 }}
             />
-        </Workspace>
+        </Reactodia.Workspace>
     );
 }
 
 function createLayout(
     nodeCount: number,
     edgesPerNode: number,
-    factory: Rdf.DataFactory
-): [Rdf.Quad[], ElementIri[]] {
+    factory: Reactodia.Rdf.DataFactory
+): [Reactodia.Rdf.Quad[], Reactodia.ElementIri[]] {
     const rdfType = factory.namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
     const rdfsLabel = factory.namedNode('http://www.w3.org/2000/01/rdf-schema#label');
     const nodeType = factory.namedNode('urn:test:Node');
     const linkType = factory.namedNode('urn:test:link');
 
-    const makeNodeIri = (n: number) => factory.namedNode(`urn:test:n:${n}` as ElementIri);
+    const makeNodeIri = (n: number) => factory.namedNode(
+        `urn:test:n:${n}` as Reactodia.ElementIri
+    );
 
-    const elementIris: ElementIri[] = [];
-    const quads: Rdf.Quad[] = [];
+    const elementIris: Reactodia.ElementIri[] = [];
+    const quads: Reactodia.Rdf.Quad[] = [];
     for (let i = 0; i < nodeCount; i++) {
         const iri = makeNodeIri(i);
         elementIris.push(iri.value);
@@ -111,4 +116,4 @@ function createLayout(
     return [quads, elementIris];
 }
 
-mountOnLoad(<TurtleGraphExample />);
+mountOnLoad(<StressTestExample />);

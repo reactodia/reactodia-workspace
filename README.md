@@ -19,11 +19,8 @@ npm install --save @reactodia/workspace
 
 ```ts
 import * as React from 'react';
+import * as Reactodia from '@reactodia/workspace';
 import * as N3 from 'n3';
-
-import {
-    Workspace, DefaultWorkspace, RdfDataProvider, ElementTypeIri, layoutForcePadded,
-} from '@reactodia/workspace';
 
 const GRAPH_DATA =
     'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
@@ -39,7 +36,7 @@ function BasicExample() {
     }, []);
 
     async function loadGraphData(signal: AbortSignal) {
-        const {model, view, performLayout} = workspaceRef.current!.getContext();
+        const {model, performLayout} = workspaceRef.current!.getContext();
         // Fetch graph data to use as underlying data source
         const response = await fetch(GRAPH_DATA, {signal});
         const graphData = new N3.Parser().parse(await response.text());
@@ -55,8 +52,7 @@ function BasicExample() {
         await model.requestLinksOfType();
 
         // Layout elements on canvas
-        const canvas = view.findAnyCanvas()!;
-        await performLayout({canvas, layoutFunction: layoutForcePadded, signal});
+        await performLayout({signal});
     }
 
     return (

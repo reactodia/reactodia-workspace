@@ -7,7 +7,7 @@ import { ElementModel, LinkModel } from '../data/model';
 import { CanvasApi, CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
-import { calculateLayout, applyLayout, layoutForcePadded } from '../diagram/layout';
+import { calculateLayout, applyLayout } from '../diagram/layout';
 import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
@@ -104,7 +104,7 @@ export class OverlayController {
             if (canvas) {
                 canvas.renderingState.syncUpdate();
                 const layout = await calculateLayout({
-                    layoutFunction: layoutForcePadded,
+                    layoutFunction: this.view.defaultLayout,
                     model: this.model,
                     sizeProvider: canvas.renderingState,
                     group,
