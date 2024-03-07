@@ -1,6 +1,6 @@
 require('../styles/main.scss');
 
-export { mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
+export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
 export * from './coreUtils/collections';
 export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
