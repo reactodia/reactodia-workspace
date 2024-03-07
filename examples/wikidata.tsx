@@ -1,21 +1,22 @@
 import * as React from 'react';
-import {
-    Workspace, DefaultWorkspace, ToolbarAction, SparqlDataProvider, IndexedDbCachedProvider,
-    WikidataSettings,
-} from '../src/index';
+import * as Reactodia from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 declare const WIKIDATA_ENDPOINT: string | undefined;
 
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
 function WikidataExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     React.useEffect(() => {
         const cancellation = new AbortController();
         const {model} = workspaceRef.current!.getContext();
 
-        const sparqlProvider = new SparqlDataProvider(
+        const sparqlProvider = new Reactodia.SparqlDataProvider(
             {
                 endpointUrl: WIKIDATA_ENDPOINT || '/wikidata',
                 imagePropertyUris: [
@@ -25,12 +26,12 @@ function WikidataExample() {
                 queryMethod: WIKIDATA_ENDPOINT ? 'GET' : 'POST',
             },
             {
-                ...WikidataSettings,
+                ...Reactodia.WikidataSettings,
                 // Public Wikidata endpoint is too overloaded for the connection statistics
                 linkTypesStatisticsQuery: '',
             });
 
-        const dataProvider = new IndexedDbCachedProvider({
+        const dataProvider = new Reactodia.IndexedDbCachedProvider({
             baseProvider: sparqlProvider,
             dbName: 'reactodia-wikidata-cache',
             closeSignal: cancellation.signal,
@@ -48,23 +49,24 @@ function WikidataExample() {
     }, []);
 
     return (
-        <Workspace
+        <Reactodia.Workspace
             ref={workspaceRef}
+            defaultLayout={defaultLayout}
             onIriClick={({iri}) => window.open(iri)}>
-            <DefaultWorkspace
+            <Reactodia.DefaultWorkspace
                 toolbar={{
                     menu: <>
                         <ExampleToolbarMenu />
-                        <ToolbarAction
+                        <Reactodia.ToolbarAction
                             title='Clear locally-cached data previously fetched from Wikidata'
                             onSelect={() => {
                                 const {model: {dataProvider}} = workspaceRef.current!.getContext();
-                                if (dataProvider instanceof IndexedDbCachedProvider) {
+                                if (dataProvider instanceof Reactodia.IndexedDbCachedProvider) {
                                     dataProvider.clearCache();
                                 }
                             }}>
                             Clear Wikidata cache
-                        </ToolbarAction>
+                        </Reactodia.ToolbarAction>
                     </>,
                     languages: [
                         {code: 'de', label: 'Deutsch'},
@@ -79,7 +81,7 @@ function WikidataExample() {
                     ],
                 }}
             />
-        </Workspace>
+        </Reactodia.Workspace>
     );
 }
 

@@ -9,7 +9,6 @@ import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
-import { layoutForcePadded } from '../diagram/layout';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -169,7 +168,6 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
             onSelect={() => {
                 performLayout({
                     canvas,
-                    layoutFunction: layoutForcePadded,
                     selectedElements: new Set(elements),
                     animate: true,
                 });

@@ -6,12 +6,19 @@ export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
 export { useObservedProperty } from './coreUtils/hooks';
 export * from './coreUtils/keyedObserver';
+export { WorkerDefinition as RegisteredWorker, defineWorker, useWorker } from './coreUtils/workers';
 export {
-    CalculatedLayout, LayoutNode, LayoutLink, LayoutFunction, calculateLayout, applyLayout,
-    colaForceLayout, colaRemoveOverlaps, layoutForcePadded, layoutPaddedWith,
-    layoutBiasFreePaddedWith, uniformGrid, calculateAveragePosition, placeElementsAround,
-    translateToPositiveQuadrant, getContentFittingBoxForLayout,
+    CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink, LayoutFunction,
+    calculateLayout, applyLayout, uniformGrid, calculateAveragePosition,
+    placeElementsAround, translateToPositiveQuadrant,
 } from './diagram/layout';
+export { DefaultLayouts, defineDefaultLayouts } from './diagram/layoutDefault';
+export {
+    DefaultLayoutOptions, blockingDefaultLayout,
+    ColaForceLayoutOptions, colaForceLayout,
+    ColaFlowLayoutOptions, colaFlowLayout,
+    colaRemoveOverlaps, layoutPadded, layoutPaddedBiasFree, getContentFittingBoxForLayout,
+} from './diagram/layoutShared';
 export * from './coreUtils/scheduler';
 
 export * from './data/model';

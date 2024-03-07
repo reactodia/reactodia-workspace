@@ -5,7 +5,6 @@ import { saveAs } from 'file-saver';
 import { useObservedProperty } from '../coreUtils/hooks';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
-import { layoutForcePadded } from '../diagram/layout';
 import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
@@ -292,7 +291,6 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
             onSelect={() => {
                 performLayout({
                     canvas,
-                    layoutFunction: layoutForcePadded,
                     animate: true,
                 });
             }}>

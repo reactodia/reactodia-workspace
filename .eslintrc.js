@@ -24,7 +24,7 @@ module.exports = {
             'env': {
                 'node': true
             },
-            'files': ['*.config.js'],
+            'files': ['*.config.js', 'webpackServe.js'],
             'rules': {
                 'indent': ['warn', 2, {
                     'flatTernaryExpressions': true,

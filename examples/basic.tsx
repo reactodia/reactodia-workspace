@@ -9,8 +9,12 @@ const GRAPH_DATA =
     'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
     'master/examples/resources/orgOntology.ttl';
 
+const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+
 function BasicExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
+
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     React.useEffect(() => {
         const controller = new AbortController();
@@ -19,7 +23,7 @@ function BasicExample() {
     }, []);
 
     async function loadGraphData(signal: AbortSignal) {
-        const {model, view, performLayout} = workspaceRef.current!.getContext();
+        const {model, performLayout} = workspaceRef.current!.getContext();
         // Fetch graph data to use as underlying data source
         const response = await fetch(GRAPH_DATA, {signal});
         const graphData = new N3.Parser().parse(await response.text());
@@ -35,12 +39,12 @@ function BasicExample() {
         await model.requestLinksOfType();
 
         // Layout elements on canvas
-        const canvas = view.findAnyCanvas()!;
-        await performLayout({canvas, layoutFunction: Reactodia.layoutForcePadded, signal});
+        await performLayout({signal});
     }
 
     return (
-        <Reactodia.Workspace ref={workspaceRef}>
+        <Reactodia.Workspace ref={workspaceRef}
+            defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace />
         </Reactodia.Workspace>
     );

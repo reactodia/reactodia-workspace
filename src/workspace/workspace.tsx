@@ -11,7 +11,8 @@ import { hashFnv32a } from '../data/utils';
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, LabelLanguageSelector } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
-import { calculateLayout, applyLayout } from '../diagram/layout';
+import { LayoutFunction, calculateLayout, applyLayout } from '../diagram/layout';
+import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { AsyncModel, GroupBy } from '../editor/asyncModel';
@@ -43,6 +44,12 @@ export interface WorkspaceProps {
      * Initial selected language.
      */
     defaultLanguage?: string;
+    /**
+     * Default function to compute diagram layout.
+     *
+     * If not provided, uses synchronous fallback to `layoutForcePadded()`.
+     */
+    defaultLayout?: LayoutFunction;
 
     onIriClick?: (event: IriClickEvent) => void;
     onWorkspaceEvent?: WorkspaceEventHandler;
@@ -75,6 +82,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
+            defaultLayout,
             onWorkspaceEvent = () => {},
         } = this.props;
 
@@ -87,6 +95,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const view = new SharedCanvasState({
             defaultElementTemplate: StandardTemplate,
             defaultLinkTemplate: DefaultLinkTemplate,
+            defaultLayout: defaultLayout ?? blockingDefaultLayout,
         });
 
         const editor = new EditorController({
@@ -112,6 +121,14 @@ export class Workspace extends React.Component<WorkspaceProps> {
             performLayout: this.onPerformLayout,
             triggerWorkspaceEvent: onWorkspaceEvent,
         };
+
+        if (!defaultLayout) {
+            console.warn(
+                'Reactodia.Workspace: "defaultLayout" prop is not provided, using synchronous fallback ' +
+                'which may freeze the execution for large diagrams. It is recommended to use ' +
+                'layout worker via Reactodia.defineDefaultLayouts() and Reactodia.useWorker().'
+            );
+        }
     }
 
     getContext(): WorkspaceContext {
@@ -187,12 +204,17 @@ export class Workspace extends React.Component<WorkspaceProps> {
     };
 
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
-        const {canvas, layoutFunction, selectedElements, animate, signal} = params;
-        const {model, disposeSignal} = this.workspaceContext;
+        const {canvas: targetCanvas, layoutFunction, selectedElements, animate, signal} = params;
+        const {model, view, disposeSignal} = this.workspaceContext;
+
+        const canvas = targetCanvas ?? view.findAnyCanvas();
+        if (!canvas) {
+            throw new Error('Failed to find any canvas to perform layout');
+        }
 
         canvas.renderingState.syncUpdate();
         const calculatedLayout = await calculateLayout({
-            layoutFunction,
+            layoutFunction: layoutFunction ?? view.defaultLayout,
             model,
             selectedElements,
             sizeProvider: canvas.renderingState,

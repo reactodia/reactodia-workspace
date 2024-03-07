@@ -7,6 +7,7 @@ import type {
 } from './canvasApi';
 import type { ElementTemplate, LinkTemplate } from './customization';
 import { Element, Link } from './elements';
+import type { LayoutFunction } from './layout';
 
 export interface SharedCanvasStateEvents {
     changeHighlight: PropertyChange<
@@ -41,6 +42,7 @@ export type ElementDecoratorResolver = (element: Element) => React.ReactNode | u
 export interface SharedCanvasStateOptions {
     defaultElementTemplate: ElementTemplate;
     defaultLinkTemplate: LinkTemplate;
+    defaultLayout: LayoutFunction;
 }
 
 export class SharedCanvasState {
@@ -57,12 +59,14 @@ export class SharedCanvasState {
 
     readonly defaultElementTemplate: ElementTemplate;
     readonly defaultLinkTemplate: LinkTemplate;
+    readonly defaultLayout: LayoutFunction;
 
     constructor(options: SharedCanvasStateOptions) {
-        const {defaultElementTemplate, defaultLinkTemplate} = options;
+        const {defaultElementTemplate, defaultLinkTemplate, defaultLayout} = options;
         this._canvasWidgets = new Map();
         this.defaultElementTemplate = defaultElementTemplate;
         this.defaultLinkTemplate = defaultLinkTemplate;
+        this.defaultLayout = defaultLayout;
     }
 
     dispose() {
