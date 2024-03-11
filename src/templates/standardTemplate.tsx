@@ -115,7 +115,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
             const label = model.locale.formatLabel(type ? type.label : [], typeIri);
             return (
                 <React.Fragment key={typeIri}>
-                    {index === 0 ? null : ','}
+                    {index === 0 ? null : ', '}
                     <WithFetchStatus type='elementType' target={typeIri}>
                         <span>{label}</span>
                     </WithFetchStatus>
