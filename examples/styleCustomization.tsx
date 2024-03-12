@@ -5,8 +5,6 @@ import * as Reactodia from '../src/index';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-import './styleCustomization.css';
-
 const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
 const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
 
@@ -29,7 +27,10 @@ const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
     },
     renderLink: props => (
         <Reactodia.DefaultLinkPathTemplate {...props}
-            className='custom-diagram-link'
+            pathProps={{stroke: '#3c4260', strokeWidth: 2}}
+            primaryLabelProps={{
+                textStyle: {fill: '#3c4260'},
+            }}
         />
     ),
 };
