@@ -5,8 +5,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Track and display fetching state for the graph data:
+  * Expose `AsyncModel.operations` property and `AsyncModel.changeOperations` event to track active fetch operation;
+  * Add `WithFetchStatus` component to decorate other component with
+fetch status on element or element/link/property type;
+  * Update default templates to use `WithFetchStatus`;
+- Support React component lifecycle for Link templates:
+  * **[Breaking]** `LinkTemplate.render()` drastically changed to act as "render function" which returns React elements;
+  * **[Breaking]** Changed `LinkTemplate.setLinkLabel()` into `EditableLinkLabel` object on the link template;
+  * Expose `LinkPath`, `LinkLabel` and `LinkVertices` components as building blocks for custom link templates;
+  * Extract existing link rendering into `DefaultLinkTemplate` and `DefaultLinkPathTemplate`;
+- Support computing graph layout using web workers:
+  * Make default diagram layout algorithm configurable via `defaultLayout` prop on `Workspace`;
+  * Rename `layoutForcePadded` default layout function to `blockingDefaultLayout`;
+  * Make `layoutFunction` and `canvas` parameters of WorkspaceContext.performLayout() optional;
+  * Add `defineWorker()` and `useWorker()` to register and use shared ref-counted workers;
+  * Export `worker-protocol` sub-module to ease creation of transparent worker proxies;
+  * Export `default-layouts.worker` sub-module with default layout algorithms to be imported as a worker script;
+  * **[Breaking]** Change `LayoutFunction` to be a pure function from `LayoutGraph` and `LayoutState` into `LayoutState`;
+  * **[Breaking]** Change `layoutPaddedWith()` / `layoutBiasFreePaddedWith()` to allow async usage as `layoutPadded()` / `layoutPaddedBiasFree()`;
+- Add `useWorkspace()` and `useCanvas()` hooks to access workspace and canvas context with proper error handling:
+  * Getting these context objects directly via `useContext(WorkspaceContext)` and `useContext(CanvasContext)` is deprecated and will be subject to removal in the future release;
+- Support `accept` attribute for HTML file input in `ToolbarActionOpen`.
+
+### Changed
+- **[Breaking]** Make random-delay data provider decorator configurable and expose its factory under new name `makeDelayProviderDecorator()`.
+
 ### Fixed
+- Fix reloading/re-fetching class tree when importing a diagram with same data provider.
 - Fix `SelectionActionEstablishLink` being displayed when authoring mode is not active.
+- Fix missing inheritable CSS defaults for links in the exported diagrams.
+- Fix shrinking buttons for link types in `ConnectionsMenu`.
+- Clear `InstancesSearch` results when loading a diagram.
 
 ## [0.23.0] - 2023-12-11
 ### Added
