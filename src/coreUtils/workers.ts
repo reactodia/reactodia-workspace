@@ -65,9 +65,15 @@ interface LazyWorkerProxyInitialState {
     readonly constructorArgs: unknown[];
 }
 
+interface LazyWorkerProxyConnectingState {
+    readonly type: 'connecting';
+    readonly request: Promise<readonly [WorkerConnection, AbortSignal]>;
+    readonly controller: AbortController;
+}
+
 interface LazyWorkerProxyConnectedState {
     readonly type: 'connected';
-    readonly connection: Promise<readonly [WorkerConnection, AbortSignal]>;
+    readonly connection: WorkerConnection;
     readonly controller: AbortController;
 }
 
@@ -82,6 +88,7 @@ class LazyWorkerProxy<T> {
 
     private connectionState:
         | LazyWorkerProxyInitialState
+        | LazyWorkerProxyConnectingState
         | LazyWorkerProxyConnectedState
         | LazyWorkerProxyDisposedState;
     private readonly methods = new Map<string, LazyWorkerProxyMethod>();
@@ -118,22 +125,32 @@ class LazyWorkerProxy<T> {
     private async ensureConnection(): Promise<readonly [WorkerConnection, AbortSignal]> {
         switch (this.connectionState.type) {
             case 'initial': {
-                const {workerUrl, constructorArgs} = this.connectionState;
+                const initialState = this.connectionState;
                 const controller = new AbortController();
-                const connection = (async () => {
-                    controller.signal.throwIfAborted();
-                    const rawConnection = new WorkerConnection(new Worker(workerUrl));
-                    await rawConnection.call('constructor', constructorArgs, {
-                        signal: controller.signal,
+                const request = this.connect(initialState, controller.signal)
+                    .then(result => {
+                        const [connection, signal] = result;
+                        if (signal.aborted) {
+                            connection.dispose();
+                        }
+                        signal.throwIfAborted();
+                        this.connectionState = {
+                            type: 'connected',
+                            connection,
+                            controller,
+                        };
+                        return result;
                     });
-                    return [rawConnection, controller.signal] as const;
-                })();
-                this.connectionState = {type: 'connected', connection, controller};
-                return connection;
+                this.connectionState = {type: 'connecting', request, controller};
+                return request;
+            }
+            case 'connecting': {
+                const {request} = this.connectionState;
+                return request;
             }
             case 'connected': {
-                const {connection} = this.connectionState;
-                return connection;
+                const {connection, controller} = this.connectionState;
+                return Promise.resolve([connection, controller.signal] as const);
             }
             case 'disposed': {
                 throw new Error('LazyWorkerProxy was disposed');
@@ -141,19 +158,31 @@ class LazyWorkerProxy<T> {
         }
     }
 
+    private async connect(
+        state: LazyWorkerProxyInitialState,
+        signal: AbortSignal
+    ): Promise<readonly [WorkerConnection, AbortSignal]> {
+        signal.throwIfAborted();
+        const rawConnection = new WorkerConnection(new Worker(state.workerUrl));
+        await rawConnection.call('constructor', state.constructorArgs, {signal});
+        return [rawConnection, signal] as const;
+    }
+
     dispose() {
         switch (this.connectionState.type) {
-            case 'initial': {
-                this.connectionState = {type: 'disposed'};
+            case 'connecting': {
+                const {controller} = this.connectionState;
+                controller.abort();
                 break;
             }
             case 'connected': {
-                const {controller} = this.connectionState;
+                const {connection, controller} = this.connectionState;
                 controller.abort();
-                this.connectionState = {type: 'disposed'};
+                connection.dispose();
                 break;
             }
         }
+        this.connectionState = {type: 'disposed'};
     }
 }
 
