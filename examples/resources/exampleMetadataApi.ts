@@ -1,7 +1,7 @@
 import {
     ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkDirection,
     MetadataApi, ValidationApi, ValidationEvent, ElementError, LinkError, DirectedLinkType, Rdf,
-} from '../../src/index';
+} from '../../src/workspace';
 
 const OWL_PREFIX = 'http://www.w3.org/2002/07/owl#';
 const RDFS_PREFIX = 'http://www.w3.org/2000/01/rdf-schema#';

@@ -21,7 +21,9 @@ const WORKER_CONSTRUCT = Symbol('Reactodia.RegisteredWorker.construct');
 const WORKER_STATE = Symbol('Reactodia.RegisteredWorker.state');
 
 export interface WorkerDefinition<T> {
+    /** @hidden */
     readonly [WORKER_CONSTRUCT]: () => RefCountedWorkerState<T>;
+    /** @hidden */
     [WORKER_STATE]: RefCountedWorkerState<T> | undefined;
 }
 

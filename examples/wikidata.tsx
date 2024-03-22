@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as Reactodia from '../src/index';
+import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 

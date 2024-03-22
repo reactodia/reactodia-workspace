@@ -73,10 +73,26 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-middleware": "^7.0.0"
   },
-  "main": "dist/reactodia-workspace.js",
-  "typings": "dist/typings/index.d.ts",
+  "main": "dist/workspace.js",
+  "typings": "dist/typings/workspace.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/workspace.js",
+      "types": "./dist/typings/workspace.d.ts"
+    },
+    "./default-layouts.worker": {
+      "import": "./dist/default-layouts.worker.js",
+      "types": "./dist/typings/default-layouts.worker.d.ts"
+    },
+    "./worker-protocol": {
+      "import": "./dist/worker-protocol.js",
+      "types": "./dist/typings/worker-protocol.d.ts"
+    }
+  },
   "files": [
-    "dist/reactodia-workspace.js",
+    "dist/default-layouts.worker.js",
+    "dist/worker-protocol.js",
+    "dist/workspace.js",
     "dist/typings",
     "images",
     "src",

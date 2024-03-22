@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as N3 from 'n3';
 
-import * as Reactodia from '../src/index';
+import * as Reactodia from '../src/workspace';
 
 import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';

@@ -257,6 +257,7 @@ export class DiagramModel implements GraphStructure {
         return property;
     }
 
+    /** @hidden */
     _triggerChangeGroupContent(group: string, options: { layoutComplete: boolean }) {
         const {layoutComplete} = options;
         this.source.trigger('changeGroupContent', {group, layoutComplete});

@@ -139,10 +139,12 @@ export class SharedCanvasState {
         this.source.trigger('changeHighlight', {source: this, previous});
     }
 
+    /** @hidden */
     _setElementDecorator(decorator: ElementDecoratorResolver | undefined) {
         this._elementDecorator = decorator;
     }
 
+    /** @hidden */
     _decorateElement(element: Element): React.ReactNode | undefined {
         return this._elementDecorator?.(element);
     }

@@ -6,7 +6,7 @@ import {
     ElementIri, ElementModel, SerializedDiagram,
     ToolbarActionOpen, ToolbarActionSave, ToolbarActionClearAll, ToolbarActionExport,
     useWorkspace,
-} from '../../src/index';
+} from '../../src/workspace';
 
 function onPageLoad(callback: (container: HTMLDivElement) => void) {
     document.addEventListener('DOMContentLoaded', () => {

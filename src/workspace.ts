@@ -6,7 +6,7 @@ export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
 export { useObservedProperty } from './coreUtils/hooks';
 export * from './coreUtils/keyedObserver';
-export { WorkerDefinition as RegisteredWorker, defineWorker, useWorker } from './coreUtils/workers';
+export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export {
     CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink, LayoutFunction,
     calculateLayout, applyLayout, uniformGrid, calculateAveragePosition,
@@ -42,6 +42,7 @@ export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
+export { defineCanvasWidget } from './diagram/canvasWidget';
 export { RestoreGeometry, setElementExpanded, setElementData, setLinkData } from './diagram/commands';
 export * from './diagram/customization';
 export {

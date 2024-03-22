@@ -18,21 +18,23 @@ export interface WorkspaceContext {
     readonly overlayController: OverlayController;
     readonly disposeSignal: AbortSignal;
     readonly getElementTypeStyle: (types: ReadonlyArray<ElementTypeIri>) => ProcessedTypeStyle;
-    readonly performLayout: (params: {
-        /**
-         * Target canvas to get element sizes from and perform layout on.
-         *
-         * If not specified, uses the result from `SharedCanvasState.findAnyCanvas()`.
-         * It is recommended to provide this value if possible for consistent
-         * multi-canvas support.
-         */
-        canvas?: CanvasApi;
-        layoutFunction?: LayoutFunction;
-        selectedElements?: ReadonlySet<Element>;
-        animate?: boolean;
-        signal?: AbortSignal;
-    }) => Promise<void>;
+    readonly performLayout: (params: WorkspacePerformLayoutParams) => Promise<void>;
     readonly triggerWorkspaceEvent: WorkspaceEventHandler;
+}
+
+export interface WorkspacePerformLayoutParams {
+    /**
+     * Target canvas to get element sizes from and perform layout on.
+     *
+     * If not specified, uses the result from `SharedCanvasState.findAnyCanvas()`.
+     * It is recommended to provide this value if possible for consistent
+     * multi-canvas support.
+     */
+    canvas?: CanvasApi;
+    layoutFunction?: LayoutFunction;
+    selectedElements?: ReadonlySet<Element>;
+    animate?: boolean;
+    signal?: AbortSignal;
 }
 
 export type WorkspaceEventHandler = (key: WorkspaceEventKey) => void;

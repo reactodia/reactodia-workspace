@@ -6,7 +6,7 @@ const path = require('path');
 const mainConfig = {
   mode: 'none',
   entry: {
-    'reactodia-workspace': './src/index',
+    'workspace': './src/workspace',
     'worker-protocol': './src/worker-protocol',
     'default-layouts.worker': './src/default-layouts.worker',
   },
