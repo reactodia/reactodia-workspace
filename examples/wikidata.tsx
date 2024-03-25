@@ -5,7 +5,7 @@ import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from '
 
 declare const WIKIDATA_ENDPOINT: string | undefined;
 
-const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function WikidataExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);

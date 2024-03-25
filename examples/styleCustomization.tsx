@@ -35,7 +35,7 @@ const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
     ),
 };
 
-const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function StyleCustomizationExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);

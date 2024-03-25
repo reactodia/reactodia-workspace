@@ -9,7 +9,7 @@ const GRAPH_DATA =
     'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
     'master/examples/resources/orgOntology.ttl';
 
-const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function BasicExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);

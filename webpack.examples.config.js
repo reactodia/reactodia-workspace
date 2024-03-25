@@ -115,7 +115,7 @@ module.exports = (env, argv) => {
     mode: 'development',
     target: 'webworker',
     entry: {
-      'default-layouts.worker': path.join(__dirname, 'src', 'default-layouts.worker'),
+      'layout.worker': path.join(__dirname, 'src', 'layout.worker'),
     },
     output: {
       path: path.join(__dirname, 'dist/examples'),

@@ -77,20 +77,20 @@
   "typings": "dist/typings/workspace.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/workspace.js",
-      "types": "./dist/typings/workspace.d.ts"
+      "types": "./dist/typings/workspace.d.ts",
+      "import": "./dist/workspace.js"
     },
-    "./default-layouts.worker": {
-      "import": "./dist/default-layouts.worker.js",
-      "types": "./dist/typings/default-layouts.worker.d.ts"
+    "./layout.worker": {
+      "types": "./dist/typings/layout.worker.d.ts",
+      "default": "./dist/layout.worker.js"
     },
     "./worker-protocol": {
-      "import": "./dist/worker-protocol.js",
-      "types": "./dist/typings/worker-protocol.d.ts"
+      "types": "./dist/typings/worker-protocol.d.ts",
+      "import": "./dist/worker-protocol.js"
     }
   },
   "files": [
-    "dist/default-layouts.worker.js",
+    "dist/layout.worker.js",
     "dist/worker-protocol.js",
     "dist/workspace.js",
     "dist/typings",

@@ -1,9 +1,9 @@
-import type { DefaultLayouts } from '../default-layouts.worker';
+import type { DefaultLayouts } from '../layout.worker';
 
 import { WorkerDefinition, defineWorker } from '../coreUtils/workers';
 
-export function defineDefaultLayouts(workerUrl: string): WorkerDefinition<DefaultLayouts> {
-    return defineWorker<typeof DefaultLayouts>(workerUrl, []);
+export function defineLayoutWorker(workerFactory: () => Worker): WorkerDefinition<DefaultLayouts> {
+    return defineWorker<typeof DefaultLayouts>(workerFactory, []);
 }
 
 export type { DefaultLayouts };

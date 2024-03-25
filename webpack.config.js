@@ -7,8 +7,6 @@ const mainConfig = {
   mode: 'none',
   entry: {
     'workspace': './src/workspace',
-    'worker-protocol': './src/worker-protocol',
-    'default-layouts.worker': './src/default-layouts.worker',
   },
   output: {
     filename: '[name].js',
@@ -65,7 +63,7 @@ const workerConfig = {
   target: 'webworker',
   entry: {
     'worker-protocol': './src/worker-protocol',
-    'default-layouts.worker': './src/default-layouts.worker',
+    'layout.worker': './src/layout.worker',
   },
   output: {
     ...mainConfig.output,

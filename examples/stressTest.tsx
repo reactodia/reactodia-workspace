@@ -4,7 +4,7 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function StressTestExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);

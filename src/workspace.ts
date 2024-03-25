@@ -12,7 +12,7 @@ export {
     calculateLayout, applyLayout, uniformGrid, calculateAveragePosition,
     placeElementsAround, translateToPositiveQuadrant,
 } from './diagram/layout';
-export { DefaultLayouts, defineDefaultLayouts } from './diagram/layoutDefault';
+export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
     DefaultLayoutOptions, blockingDefaultLayout,
     ColaForceLayoutOptions, colaForceLayout,

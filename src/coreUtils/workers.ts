@@ -3,13 +3,13 @@ import * as React from 'react';
 import type { WorkerCall, WorkerCallSuccess, WorkerCallError, WorkerConstructor } from '../worker-protocol';
 
 export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
-    workerUrl: string,
+    workerFactory: () => Worker,
     constructorArgs: ConstructorParameters<T>
 ): WorkerDefinition<InstanceType<T>> {
     return {
         [WORKER_CONSTRUCT]: () => {
             return {
-                instance: new LazyWorkerProxy(workerUrl, constructorArgs),
+                instance: new LazyWorkerProxy(workerFactory, constructorArgs),
                 refCount: 0,
             };
         },
@@ -17,8 +17,8 @@ export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
     };
 }
 
-const WORKER_CONSTRUCT = Symbol('Reactodia.RegisteredWorker.construct');
-const WORKER_STATE = Symbol('Reactodia.RegisteredWorker.state');
+const WORKER_CONSTRUCT = Symbol('WorkerDefinition.construct');
+const WORKER_STATE = Symbol('WorkerDefinition.state');
 
 export interface WorkerDefinition<T> {
     /** @hidden */
@@ -46,8 +46,7 @@ export function useWorker<T>(worker: WorkerDefinition<T>): T {
             if (exitState) {
                 exitState.refCount--;
                 if (exitState.refCount <= 0) {
-                    exitState.instance.dispose();
-                    worker[WORKER_STATE] = undefined;
+                    exitState.instance.disconnect();
                 }
             }
         };
@@ -63,8 +62,7 @@ export function useWorker<T>(worker: WorkerDefinition<T>): T {
 
 interface LazyWorkerProxyInitialState {
     readonly type: 'initial';
-    readonly workerUrl: string;
-    readonly constructorArgs: unknown[];
+    
 }
 
 interface LazyWorkerProxyConnectingState {
@@ -79,10 +77,6 @@ interface LazyWorkerProxyConnectedState {
     readonly controller: AbortController;
 }
 
-interface LazyWorkerProxyDisposedState {
-    readonly type: 'disposed';
-}
-
 type LazyWorkerProxyMethod = (...args: unknown[]) => Promise<unknown>;
 
 class LazyWorkerProxy<T> {
@@ -91,14 +85,16 @@ class LazyWorkerProxy<T> {
     private connectionState:
         | LazyWorkerProxyInitialState
         | LazyWorkerProxyConnectingState
-        | LazyWorkerProxyConnectedState
-        | LazyWorkerProxyDisposedState;
+        | LazyWorkerProxyConnectedState;
     private readonly methods = new Map<string, LazyWorkerProxyMethod>();
 
     readonly proxy: T;
 
-    constructor(workerUrl: string, constructorArgs: unknown[]) {
-        this.connectionState = {type: 'initial', workerUrl, constructorArgs};
+    constructor(
+        private readonly workerFactory: () => Worker,
+        private readonly constructorArgs: unknown[]
+    ) {
+        this.connectionState = {type: 'initial'};
         const proxyTarget = {
             [LazyWorkerProxy.PROXY_OWNER]: this,
         };
@@ -154,9 +150,6 @@ class LazyWorkerProxy<T> {
                 const {connection, controller} = this.connectionState;
                 return Promise.resolve([connection, controller.signal] as const);
             }
-            case 'disposed': {
-                throw new Error('LazyWorkerProxy was disposed');
-            }
         }
     }
 
@@ -165,12 +158,13 @@ class LazyWorkerProxy<T> {
         signal: AbortSignal
     ): Promise<readonly [WorkerConnection, AbortSignal]> {
         signal.throwIfAborted();
-        const rawConnection = new WorkerConnection(new Worker(state.workerUrl));
-        await rawConnection.call('constructor', state.constructorArgs, {signal});
+        const {workerFactory, constructorArgs} = this;
+        const rawConnection = new WorkerConnection(workerFactory());
+        await rawConnection.call('constructor', constructorArgs, {signal});
         return [rawConnection, signal] as const;
     }
 
-    dispose() {
+    disconnect() {
         switch (this.connectionState.type) {
             case 'connecting': {
                 const {controller} = this.connectionState;
@@ -184,7 +178,7 @@ class LazyWorkerProxy<T> {
                 break;
             }
         }
-        this.connectionState = {type: 'disposed'};
+        this.connectionState = {type: 'initial'};
     }
 }
 
@@ -196,6 +190,7 @@ class WorkerConnection {
     constructor(worker: Worker) {
         this.worker = worker;
         this.worker.addEventListener('message', this.onMessage);
+        this.worker.addEventListener('error', this.onError);
     }
 
     call(
@@ -217,6 +212,8 @@ class WorkerConnection {
         const message = e.data as ResponseMessage;
         const request = this.requests.get(message.id);
         if (request) {
+            this.requests.delete(message.id);
+
             switch (message.type) {
                 case 'success': {
                     request.resolve(message.result);
@@ -236,8 +233,17 @@ class WorkerConnection {
         }
     };
 
+    private onError = (e: ErrorEvent) => {
+        const activeRequests = Array.from(this.requests.values());
+        this.requests.clear();
+        for (const request of activeRequests) {
+            request.reject(e);
+        }
+    };
+
     dispose() {
         this.worker.removeEventListener('message', this.onMessage);
+        this.worker.removeEventListener('error', this.onError);
         this.worker.terminate();
     }
 

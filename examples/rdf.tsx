@@ -8,7 +8,7 @@ import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from '
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
-const Layouts = Reactodia.defineDefaultLayouts('default-layouts.worker.js');
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function RdfExample() {
     const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
