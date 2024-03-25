@@ -26,6 +26,7 @@ export interface DiagramModelEvents {
         readonly group: string;
         readonly layoutComplete: boolean;
     };
+    discardGraph: { readonly source: DiagramModel };
 }
 
 export interface GraphStructure {
@@ -114,15 +115,16 @@ export class DiagramModel implements GraphStructure {
         return this.getElement(link.targetId);
     }
 
-    resetGraph() {
+    protected resetGraph() {
         if (this.graphListener) {
             this.graphListener.stopListening();
             this.graphListener = new EventObserver();
         }
         this.graph = new Graph();
+        this.source.trigger('discardGraph', {source: this});
     }
 
-    subscribeGraph() {
+    protected subscribeGraph() {
         this.graphListener.listen(this.graph.events, 'changeCells', e => {
             this.source.trigger('changeCells', e);
         });

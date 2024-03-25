@@ -90,6 +90,16 @@ export class RenderingState implements SizeProvider {
                 this.scheduleUpdateRoutings();
             }
         });
+        this.listener.listen(this.model.events, 'discardGraph', () => {
+            this.linkTemplates.clear();
+
+            const routings = this.routings;
+            this.routings = new Map();
+            this.delayedUpdateRoutings.dispose();
+
+            this.source.trigger('changeLinkTemplates', {source: this});
+            this.source.trigger('changeRoutings', {source: this, previous: routings});
+        });
         this.listener.listen(this.events, 'changeElementSize', () => {
             this.scheduleUpdateRoutings();
         });
@@ -104,6 +114,7 @@ export class RenderingState implements SizeProvider {
 
     dispose() {
         this.listener.stopListening();
+        this.delayedUpdateRoutings.dispose();
     }
 
     syncUpdate() {

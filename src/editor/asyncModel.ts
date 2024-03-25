@@ -1,9 +1,11 @@
+import { AbortScope } from '../coreUtils/async';
 import { EventSource, Events } from '../coreUtils/events';
 
 import {
     ElementModel, LinkModel, LinkType,
     ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
 } from '../data/model';
+import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
 import { DataFactory } from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
@@ -49,9 +51,9 @@ export class AsyncModel extends DiagramModel {
 
     private readonly groupByProperties: ReadonlyArray<GroupBy>;
 
-    private _dataProvider!: DataProvider;
-    private fetcher: DataFetcher | undefined;
-    private readonly EMPTY_OPERATIONS: ReadonlyArray<FetchOperation> = [];
+    private loadingScope: AbortScope | undefined;
+    private _dataProvider: DataProvider;
+    private fetcher: DataFetcher;
 
     private linkSettings = new Map<LinkTypeIri, LinkTypeVisibility>();
 
@@ -59,6 +61,8 @@ export class AsyncModel extends DiagramModel {
         super(options);
         const {groupBy} = options;
         this.groupByProperties = groupBy;
+        this._dataProvider = new EmptyDataProvider();
+        this.fetcher = new DataFetcher(this.graph, this._dataProvider);
     }
 
     private get asyncSource(): EventSource<AsyncModelEvents> {
@@ -72,22 +76,23 @@ export class AsyncModel extends DiagramModel {
     }
 
     get operations(): ReadonlyArray<FetchOperation> {
-        return this.fetcher ? this.fetcher.operations : this.EMPTY_OPERATIONS;
+        return this.fetcher.operations;
     }
 
-    resetGraph(): void {
+    protected override resetGraph(): void {
         super.resetGraph();
-        this.fetcher?.dispose();
+        this.loadingScope?.abort();
+        this.fetcher.dispose();
         this.linkSettings.clear();
     }
 
-    subscribeGraph() {
+    protected override subscribeGraph() {
         super.subscribeGraph();
         this.graphListener.listen(this.events, 'elementEvent', e => {
             if (e.data.requestedGroupContent) {
                 this.loadGroupContent(e.data.requestedGroupContent.source)
                     .catch(err => {
-                        if (!this.fetcher!.signal.aborted) {
+                        if (!this.fetcher.signal.aborted) {
                             throw new Error('Error loading group content', {cause: err});
                         }
                     });
@@ -103,68 +108,85 @@ export class AsyncModel extends DiagramModel {
         });
     }
 
-    createNewDiagram(params: {
+    async createNewDiagram(params: {
         dataProvider: DataProvider;
         signal?: AbortSignal;
     }): Promise<void> {
         const {dataProvider, signal} = params;
-        this.resetGraph();
-        this.setDataProvider(dataProvider);
-        this.asyncSource.trigger('loadingStart', {source: this});
-
-        return this.dataProvider.knownLinkTypes({signal}).then(linkTypes => {
-            const allLinkTypes = this.initLinkTypes(linkTypes);
-            return this.loadAndRenderLayout({
-                allLinkTypes,
-                markLinksAsLayoutOnly: false,
-                signal,
-            });
-        }).then(() => {
-            this.history.reset();
-            this.asyncSource.trigger('loadingSuccess', {source: this});
-        }).catch(error => {
-            console.error(error);
-            this.asyncSource.trigger('loadingError', {source: this, error});
-            return Promise.reject(error);
-        });
+        return this.importLayout({dataProvider, signal});
     }
 
-    importLayout(params: {
+    async importLayout(params: {
         dataProvider: DataProvider;
+        diagram?: SerializedDiagram;
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         validateLinks?: boolean;
-        diagram?: SerializedDiagram;
         hideUnusedLinkTypes?: boolean;
         signal?: AbortSignal;
     }): Promise<void> {
-        const {dataProvider, signal} = params;
+        const {
+            dataProvider,
+            diagram = emptyDiagram(),
+            preloadedElements,
+            validateLinks = false,
+            hideUnusedLinkTypes = false,
+            signal: parentSignal,
+        } = params;
         this.resetGraph();
         this.setDataProvider(dataProvider);
-        this.asyncSource.trigger('loadingStart', {source: this});
 
-        return this.dataProvider.knownLinkTypes({signal}).then(linkTypes => {
-            const allLinkTypes = this.initLinkTypes(linkTypes);
-            const diagram = params.diagram ? params.diagram : emptyDiagram();
+        this.loadingScope = new AbortScope(parentSignal);
+        this.asyncSource.trigger('loadingStart', {source: this});
+        const signal = this.loadingScope.signal;
+
+        try {
+            const linkTypes = await this.dataProvider.knownLinkTypes({signal});
+            this.initLinkTypes(linkTypes);
+            signal.throwIfAborted();
+
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
-            const loadingModels = this.loadAndRenderLayout({
+
+            this.createGraphElements({
                 layoutData: diagram.layoutData,
-                preloadedElements: params.preloadedElements,
-                markLinksAsLayoutOnly: params.validateLinks || false,
-                allLinkTypes,
-                hideUnusedLinkTypes: params.hideUnusedLinkTypes,
-                signal,
+                preloadedElements,
+                markLinksAsLayoutOnly: validateLinks,
             });
+
+            if (hideUnusedLinkTypes) {
+                this.hideUnusedLinkTypes();
+            }
+
+            this.subscribeGraph();
+
+            const elementIrisToRequestData = this.graph.getElements()
+                .filter(element => !(preloadedElements && preloadedElements.has(element.iri)))
+                .map(element => element.iri);
+
+            const requestingModels = this.requestElementData(elementIrisToRequestData);
             const requestingLinks = params.validateLinks
                 ? this.requestLinksOfType() : Promise.resolve();
-            return Promise.all([loadingModels, requestingLinks]);
-        }).then(() => {
+
+            await Promise.all([requestingModels, requestingLinks]);
+
             this.history.reset();
             this.asyncSource.trigger('loadingSuccess', {source: this});
-        }).catch(error => {
-            console.error(error);
+        } catch (error) {
             this.asyncSource.trigger('loadingError', {source: this, error});
-            return Promise.reject(error);
-        });
+            throw new Error('Reactodia: failed to import a layout', {cause: error});
+        } finally {
+            this.loadingScope?.abort();
+            this.loadingScope = undefined;
+        }
+    }
+
+    discardLayout(): void {
+        this.linkSettings.clear();
+        this.resetGraph();
+        this.setDataProvider(new EmptyDataProvider());
+        this.asyncSource.trigger('loadingStart', {source: this});
+        this.subscribeGraph();
+        this.history.reset();
+        this.asyncSource.trigger('loadingSuccess', {source: this});
     }
 
     exportLayout(): SerializedDiagram {
@@ -211,19 +233,15 @@ export class AsyncModel extends DiagramModel {
         }
     }
 
-    private loadAndRenderLayout(params: {
+    private createGraphElements(params: {
         layoutData?: LayoutData;
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         markLinksAsLayoutOnly: boolean;
-        allLinkTypes: ReadonlyArray<RichLinkType>;
-        hideUnusedLinkTypes?: boolean;
-        signal?: AbortSignal;
-    }): Promise<void> {
+    }): void {
         const {
             layoutData = emptyLayoutData(),
             preloadedElements,
             markLinksAsLayoutOnly,
-            hideUnusedLinkTypes,
         } = params;
 
         const elementIrisToRequestData: ElementIri[] = [];
@@ -269,21 +287,15 @@ export class AsyncModel extends DiagramModel {
         }
 
         batch.store();
-        this.subscribeGraph();
-        const requestingModels = this.requestElementData(elementIrisToRequestData);
-
-        if (hideUnusedLinkTypes && params.allLinkTypes) {
-            this.hideUnusedLinkTypes(params.allLinkTypes, usedLinkTypes);
-        }
-
-        return requestingModels;
     }
 
-    private hideUnusedLinkTypes(
-        allTypes: ReadonlyArray<RichLinkType>,
-        usedTypes: ReadonlySet<LinkTypeIri>
-    ) {
-        for (const linkType of allTypes) {
+    private hideUnusedLinkTypes() {
+        const usedTypes = new Set<LinkTypeIri>();
+        for (const link of this.graph.getLinks()) {
+            usedTypes.add(link.typeId);
+        }
+
+        for (const linkType of this.graph.getLinkTypes()) {
             if (!usedTypes.has(linkType.id)) {
                 linkType.setVisibility('hidden');
             }
@@ -291,7 +303,7 @@ export class AsyncModel extends DiagramModel {
     }
 
     requestElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {
-        return this.fetcher!.fetchElementData(elementIris);
+        return this.fetcher.fetchElementData(elementIris);
     }
 
     requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
@@ -299,22 +311,22 @@ export class AsyncModel extends DiagramModel {
         if (elementIris.length === 0) {
             return Promise.resolve();
         }
-        return this.fetcher!
+        return this.fetcher
             .fetchLinks(elementIris, linkTypeIds)
             .then(links => this.onLinkInfoLoaded(links));
     }
 
-    createElementType(elementTypeIri: ElementTypeIri): RichElementType {
+    override createElementType(elementTypeIri: ElementTypeIri): RichElementType {
         const existing = super.getElementType(elementTypeIri);
         if (existing) {
             return existing;
         }
         const classModel = super.createElementType(elementTypeIri);
-        this.fetcher!.fetchElementType(classModel);
+        this.fetcher.fetchElementType(classModel);
         return classModel;
     }
 
-    createLinkType(linkTypeId: LinkTypeIri): RichLinkType {
+    override createLinkType(linkTypeId: LinkTypeIri): RichLinkType {
         if (this.graph.getLinkType(linkTypeId)) {
             return super.createLinkType(linkTypeId);
         }
@@ -323,16 +335,16 @@ export class AsyncModel extends DiagramModel {
         if (visibility) {
             linkType.setVisibility(visibility);
         }
-        this.fetcher!.fetchLinkType(linkType);
+        this.fetcher.fetchLinkType(linkType);
         return linkType;
     }
 
-    createProperty(propertyIri: PropertyTypeIri): RichProperty {
+    override createProperty(propertyIri: PropertyTypeIri): RichProperty {
         if (this.graph.getProperty(propertyIri)) {
             return super.createProperty(propertyIri);
         }
         const property = super.createProperty(propertyIri);
-        this.fetcher!.fetchPropertyType(property);
+        this.fetcher.fetchPropertyType(property);
         return property;
     }
 
@@ -376,7 +388,7 @@ export class AsyncModel extends DiagramModel {
             this.requestElementData(Array.from(models.keys())),
             this.requestLinksOfType(),
         ]);
-        this.fetcher!.signal.throwIfAborted();
+        this.fetcher.signal.throwIfAborted();
 
         this._triggerChangeGroupContent(element.id, {layoutComplete: false});
     }
@@ -387,7 +399,7 @@ export class AsyncModel extends DiagramModel {
                 refElementId: elementIri,
                 refElementLinkId: groupBy.linkType as LinkTypeIri,
                 linkDirection: groupBy.linkDirection,
-                signal: this.fetcher!.signal,
+                signal: this.fetcher.signal,
             })
         );
         const results = await Promise.all(elements);
