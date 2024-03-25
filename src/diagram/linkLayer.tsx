@@ -644,19 +644,24 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
 
     render() {
         const {model, renderingState} = this.props;
+        const defaultTemplate = renderingState.shared.defaultLinkTemplate;
+
         const markers: Array<React.ReactElement<LinkMarkerProps>> = [];
 
-        renderingState.getLinkTemplates().forEach((template, linkTypeId) => {
+        for (const [linkTypeId, template] of renderingState.getLinkTemplates()) {
             const type = model.getLinkType(linkTypeId);
-            if (!type) { return; }
+            if (!type) {
+                continue;
+            }
 
             const typeIndex = type.index!;
             if (template.markerSource) {
                 markers.push(
                     <LinkMarker key={typeIndex * 2}
                         linkTypeIndex={typeIndex}
-                        style={template.markerSource}
                         isStartMarker={true}
+                        style={template.markerSource}
+                        defaultStyle={defaultTemplate.markerSource}
                     />
                 );
             }
@@ -664,12 +669,13 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
                 markers.push(
                     <LinkMarker key={typeIndex * 2 + 1}
                         linkTypeIndex={typeIndex}
-                        style={template.markerTarget}
                         isStartMarker={false}
+                        style={template.markerTarget}
+                        defaultStyle={defaultTemplate.markerTarget}
                     />
                 );
             }
-        });
+        }
 
         return <defs>{markers}</defs>;
     }
@@ -699,6 +705,7 @@ interface LinkMarkerProps {
     linkTypeIndex: number;
     isStartMarker: boolean;
     style: LinkMarkerStyle;
+    defaultStyle: LinkMarkerStyle | undefined;
 }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -717,23 +724,28 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
             return;
         }
 
-        const {linkTypeIndex, isStartMarker, style} = this.props;
-        if (!(style.d !== undefined && style.width !== undefined && style.height !== undefined)) {
+        const {linkTypeIndex, isStartMarker, style, defaultStyle} = this.props;
+        const {
+            d = defaultStyle?.d,
+            width = defaultStyle?.width,
+            height = defaultStyle?.height,
+        } = style;
+        if (!(d !== undefined && width !== undefined && height !== undefined)) {
             return;
         }
 
         marker.setAttribute('id', linkMarkerKey(linkTypeIndex, isStartMarker));
-        marker.setAttribute('markerWidth', style.width.toString());
-        marker.setAttribute('markerHeight', style.height.toString());
+        marker.setAttribute('markerWidth', String(width));
+        marker.setAttribute('markerHeight', String(height));
         marker.setAttribute('orient', 'auto');
 
-        const xOffset = isStartMarker ? 0 : (style.width - 1);
-        marker.setAttribute('refX', xOffset.toString());
-        marker.setAttribute('refY', (style.height / 2).toString());
+        const xOffset = isStartMarker ? 0 : (width - 1);
+        marker.setAttribute('refX', String(xOffset));
+        marker.setAttribute('refY', String(height / 2));
         marker.setAttribute('markerUnits', 'userSpaceOnUse');
 
         const path = document.createElementNS(SVG_NAMESPACE, 'path');
-        path.setAttribute('d', style.d);
+        path.setAttribute('d', d);
         if (style.fill !== undefined) { path.setAttribute('fill', style.fill); }
         if (style.stroke !== undefined) { path.setAttribute('stroke', style.stroke); }
         if (style.strokeWidth !== undefined) { path.setAttribute('stroke-width', style.strokeWidth); }
