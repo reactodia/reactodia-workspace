@@ -12,18 +12,10 @@ const GRAPH_DATA =
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function BasicExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const controller = new AbortController();
-        loadGraphData(controller.signal);
-        return () => controller.abort();
-    }, []);
-
-    async function loadGraphData(signal: AbortSignal) {
-        const {model, performLayout} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model, performLayout} = context;
         // Fetch graph data to use as underlying data source
         const response = await fetch(GRAPH_DATA, {signal});
         const graphData = new N3.Parser().parse(await response.text());
@@ -40,10 +32,10 @@ function BasicExample() {
 
         // Layout elements on canvas
         await performLayout({signal});
-    }
+    }, []);
 
     return (
-        <Reactodia.Workspace ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace />
         </Reactodia.Workspace>

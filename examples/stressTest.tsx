@@ -7,66 +7,60 @@ import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from '
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function StressTestExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        const {model, view} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model, view} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         const [graphData, nodes] = createLayout(500, 2, dataProvider.factory);
         dataProvider.addGraph(graphData);
-    
-        const diagram = tryLoadLayoutFromLocalStorage();
-        if (diagram) {
-            model.importLayout({
-                diagram,
-                dataProvider,
-                validateLinks: true,
-                signal: cancellation.signal,
-            });
-        } else {
-            model.createNewDiagram({dataProvider}).then(async () => {
-                const rowCount = Math.floor(Math.sqrt(nodes.length));
-                const estimatedWidth = 200;
-                const estimatedHeight = 100;
-                const batch = model.history.startBatch();
-                for (let i = 0; i < nodes.length; i++) {
-                    const nodeId = nodes[i];
-                    const x = (i % rowCount) * estimatedWidth;
-                    const y = Math.floor(i / rowCount) * estimatedHeight;
-                    model.addElement(new Reactodia.Element({
-                        id: `n:${i}`,
-                        data: {
-                            id: nodeId,
-                            types: [],
-                            label: [],
-                            properties: {},
-                        },
-                        position: {x, y},
-                    }));
-                }
-                batch.store();
-                await Promise.all([
-                    model.requestElementData(nodes),
-                    model.requestLinksOfType(),
-                ]);
-                model.history.reset();
 
-                const canvas = view.findAnyCanvas();
-                if (canvas) {
-                    canvas.renderingState.syncUpdate();
-                    canvas.zoomToFit();
-                }
-            });
+        const diagram = tryLoadLayoutFromLocalStorage();
+        await model.importLayout({
+            diagram,
+            dataProvider,
+            validateLinks: Boolean(diagram),
+            signal,
+        });
+
+        if (!diagram) {
+            const rowCount = Math.floor(Math.sqrt(nodes.length));
+            const estimatedWidth = 200;
+            const estimatedHeight = 100;
+            const batch = model.history.startBatch();
+            for (let i = 0; i < nodes.length; i++) {
+                const nodeId = nodes[i];
+                const x = (i % rowCount) * estimatedWidth;
+                const y = Math.floor(i / rowCount) * estimatedHeight;
+                model.addElement(new Reactodia.Element({
+                    id: `n:${i}`,
+                    data: {
+                        id: nodeId,
+                        types: [],
+                        label: [],
+                        properties: {},
+                    },
+                    position: {x, y},
+                }));
+            }
+            batch.store();
+            await Promise.all([
+                model.requestElementData(nodes),
+                model.requestLinksOfType(),
+            ]);
+            model.history.reset();
+
+            const canvas = view.findAnyCanvas();
+            if (canvas) {
+                canvas.renderingState.syncUpdate();
+                canvas.zoomToFit();
+            }
         }
-        return () => cancellation.abort();
     }, []);
 
     return (
-        <Reactodia.Workspace ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace
                 leftColumn={{defaultCollapsed: true}}

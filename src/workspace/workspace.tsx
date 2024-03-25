@@ -253,3 +253,67 @@ function getHueFromClasses(classes: ReadonlyArray<ElementTypeIri>, seed?: number
     const MAX_INT32 = 0x7fffffff;
     return 360 * ((hash === undefined ? 0 : hash) / MAX_INT32);
 }
+
+export interface LoadedWorkspace {
+    readonly getContext: () => WorkspaceContext;
+    readonly onMount: (workspace: Workspace | null) => void;
+}
+
+export function useLoadedWorkspace(
+    onLoad: (context: WorkspaceContext, signal: AbortSignal) => Promise<void>,
+    deps: unknown[]
+): LoadedWorkspace {
+    const [context, setContext] = React.useState<WorkspaceContext>();
+
+    interface State {
+        latestOnLoad: typeof onLoad;
+        context: WorkspaceContext | undefined;
+        loadedWorkspace: LoadedWorkspace;
+    }
+
+    const stateRef = React.useRef<State>();
+    if (stateRef.current) {
+        stateRef.current.latestOnLoad = onLoad;
+    } else {
+        const state: State = {
+            latestOnLoad: onLoad,
+            context: undefined,
+            loadedWorkspace: {
+                getContext: () => {
+                    if (!state.context) {
+                        throw new Error('Cannot get Reactodia Workspace context: it is not mounted yet');
+                    }
+                    return state.context;
+                },
+                onMount: workspace => {
+                    const context = workspace?.getContext();
+                    state.context = context;
+                    setContext(context);
+                },
+            }
+        };
+        stateRef.current = state;
+    }
+
+    React.useEffect(() => {
+        if (context) {
+            const latestOnLoad = stateRef.current!.latestOnLoad;
+
+            const controller = new AbortController();
+            latestOnLoad(context, controller.signal).catch(err => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+                context.overlayController.setSpinner({ errorOccurred: true });
+                console.error('Error loading Reactodia workspace', err);
+            });
+
+            return () => {
+                controller.abort();
+                context.model.discardLayout();
+            };
+        }
+    }, [context, ...deps]);
+
+    return stateRef.current.loadedWorkspace;
+}

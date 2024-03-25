@@ -11,14 +11,11 @@ const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function RdfExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        const {model, overlayController} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model, overlayController} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
@@ -37,9 +34,8 @@ function RdfExample() {
             diagram,
             dataProvider,
             validateLinks: true,
-            signal: cancellation.signal,
+            signal,
         });
-        return () => cancellation.abort();
     }, [turtleData]);
 
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
@@ -57,8 +53,7 @@ function RdfExample() {
     }, []);
 
     return (
-        <Reactodia.Workspace
-            ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
             metadataApi={metadataApi}
             validationApi={validationApi}

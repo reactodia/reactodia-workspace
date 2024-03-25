@@ -6,13 +6,10 @@ import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from '
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function SparqlExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        const {model} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model} = context;
 
         const diagram = tryLoadLayoutFromLocalStorage();
         const dataProvider = new Reactodia.SparqlDataProvider({
@@ -27,15 +24,12 @@ function SparqlExample() {
             diagram,
             dataProvider: dataProvider,
             validateLinks: true,
-            signal: cancellation.signal,
+            signal,
         });
-
-        return () => cancellation.abort();
     }, []);
 
     return (
-        <Reactodia.Workspace
-            ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace

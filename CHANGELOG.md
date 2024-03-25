@@ -8,8 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 - Track and display fetching state for the graph data:
   * Expose `AsyncModel.operations` property and `AsyncModel.changeOperations` event to track active fetch operation;
-  * Add `WithFetchStatus` component to decorate other component with
-fetch status on element or element/link/property type;
+  * Add `WithFetchStatus` component to decorate other component with fetch status on element or element/link/property type;
   * Update default templates to use `WithFetchStatus`;
 - Support React component lifecycle for Link templates:
   * **[Breaking]** `LinkTemplate.render()` drastically changed to act as "render function" which returns React elements;
@@ -22,7 +21,7 @@ fetch status on element or element/link/property type;
   * Make `layoutFunction` and `canvas` parameters of WorkspaceContext.performLayout() optional;
   * Add `defineWorker()` and `useWorker()` to register and use shared ref-counted workers;
   * Export `worker-protocol` sub-module to ease creation of transparent worker proxies;
-  * Export `default-layouts.worker` sub-module with default layout algorithms to be imported as a worker script;
+  * Export `layout.worker` sub-module (and `defineLayoutWorker()` helper) with default layout algorithms to be imported as a worker script;
   * **[Breaking]** Change `LayoutFunction` to be a pure function from `LayoutGraph` and `LayoutState` into `LayoutState`;
   * **[Breaking]** Change `layoutPaddedWith()` / `layoutBiasFreePaddedWith()` to allow async usage as `layoutPadded()` / `layoutPaddedBiasFree()`;
 - Add `useWorkspace()` and `useCanvas()` hooks to access workspace and canvas context with proper error handling:
@@ -33,6 +32,9 @@ fetch status on element or element/link/property type;
 - **[Breaking]** Make random-delay data provider decorator configurable and expose its factory under new name `makeDelayProviderDecorator()`.
 
 ### Fixed
+- Support React 18 `<StrictMode>` workspace loading:
+  * Add `DiagramModel.discardLayout()` to be used for correct `useEffect()` cleanup;
+  * Add `useLoadedWorkspace()` hook for easier and correct by default asynchronous workspace loading;
 - Fix reloading/re-fetching class tree when importing a diagram with same data provider.
 - Fix `SelectionActionEstablishLink` being displayed when authoring mode is not active.
 - Fix missing inheritable CSS defaults for links in the exported diagrams.

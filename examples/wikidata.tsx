@@ -8,13 +8,10 @@ declare const WIKIDATA_ENDPOINT: string | undefined;
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function WikidataExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        const {model} = workspaceRef.current!.getContext();
+    const {onMount, getContext} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model} = context;
 
         const sparqlProvider = new Reactodia.SparqlDataProvider(
             {
@@ -34,23 +31,20 @@ function WikidataExample() {
         const dataProvider = new Reactodia.IndexedDbCachedProvider({
             baseProvider: sparqlProvider,
             dbName: 'reactodia-wikidata-cache',
-            closeSignal: cancellation.signal,
+            closeSignal: signal,
         });
 
         const diagram = tryLoadLayoutFromLocalStorage();
-        model.importLayout({
+        await model.importLayout({
             diagram,
             dataProvider,
             validateLinks: true,
-            signal: cancellation.signal,
+            signal,
         });
-
-        return () => cancellation.abort();
     }, []);
 
     return (
-        <Reactodia.Workspace
-            ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
@@ -60,7 +54,7 @@ function WikidataExample() {
                         <Reactodia.ToolbarAction
                             title='Clear locally-cached data previously fetched from Wikidata'
                             onSelect={() => {
-                                const {model: {dataProvider}} = workspaceRef.current!.getContext();
+                                const {model: {dataProvider}} = getContext();
                                 if (dataProvider instanceof Reactodia.IndexedDbCachedProvider) {
                                     dataProvider.clearCache();
                                 }

@@ -38,31 +38,25 @@ const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function StyleCustomizationExample() {
-    const workspaceRef = React.useRef<Reactodia.Workspace | null>(null);
-
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        const {model} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+        const {model} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
 
         const diagram = tryLoadLayoutFromLocalStorage();
-        model.importLayout({
+        await model.importLayout({
             diagram,
             dataProvider: dataProvider,
             validateLinks: true,
-            signal: cancellation.signal,
+            signal,
         });
-
-        return () => cancellation.abort();
     }, []);
 
     return (
-        <Reactodia.Workspace
-            ref={workspaceRef}
+        <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
             typeStyleResolver={types => {
                 if (types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1) {
