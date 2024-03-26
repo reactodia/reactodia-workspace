@@ -9,7 +9,7 @@ import { generate128BitID } from '../data/utils';
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { RichLinkType, Element } from '../diagram/elements';
+import { LinkType, Element } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
@@ -64,7 +64,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             if (targets.length === 0) {
                 return;
             }
-            const {model, overlayController} = workspace;
+            const {model, overlay} = workspace;
 
             const virtualTarget = targets.length > 1
                 ? new VirtualTarget(targets, model, canvas)
@@ -72,10 +72,10 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             const placeTarget = virtualTarget ? virtualTarget.target : targets[0];
             const onClose = () => {
                 virtualTarget?.remove();
-                overlayController.hideDialog();
+                overlay.hideDialog();
             };
 
-            overlayController.showDialog({
+            overlay.showDialog({
                 target: placeTarget,
                 dialogType: 'connectionsMenu',
                 content: (
@@ -178,7 +178,7 @@ interface MenuState {
 type SortMode = 'alphabet' | 'smart';
 
 interface ConnectionsData {
-    readonly links: ReadonlyArray<RichLinkType>;
+    readonly links: ReadonlyArray<LinkType>;
     readonly counts: ReadonlyMap<LinkTypeIri, ConnectionCount>;
 }
 
@@ -199,7 +199,7 @@ interface LinkDataChunk {
      * (i.e. should be re-rendered).
      */
     readonly chunkId: string;
-    readonly link: RichLinkType;
+    readonly link: LinkType;
     readonly direction?: 'in' | 'out';
     readonly expectedCount: number | 'some';
     readonly pageCount: number;
@@ -214,7 +214,7 @@ const CLASS_NAME = 'reactodia-connections-menu';
 const LINK_COUNT_PER_PAGE = 100;
 
 class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, MenuState> {
-    private readonly ALL_RELATED_ELEMENTS_LINK: RichLinkType;
+    private readonly ALL_RELATED_ELEMENTS_LINK: LinkType;
 
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
@@ -222,7 +222,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
         const {workspace: {model}} = this.props;
-        this.ALL_RELATED_ELEMENTS_LINK = new RichLinkType({
+        this.ALL_RELATED_ELEMENTS_LINK = new LinkType({
             id: 'urn:reactodia:allLinks' as LinkTypeIri,
             label: [model.factory.literal('All')],
         });
@@ -502,7 +502,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         onClose();
     };
 
-    private placeElements(elementIris: ElementIri[], linkType: RichLinkType | undefined) {
+    private placeElements(elementIris: ElementIri[], linkType: LinkType | undefined) {
         const {placeTarget, workspace: {model, triggerWorkspaceEvent}, canvas} = this.props;
         const batch = model.history.startBatch('Add connected elements');
 
@@ -601,7 +601,7 @@ interface ConnectionsListProps {
     model: DiagramModel;
     filterKey: string;
 
-    allRelatedLink: RichLinkType;
+    allRelatedLink: LinkType;
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
 
@@ -668,14 +668,14 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         return this.props.sortMode === 'smart' && !this.props.filterKey;
     }
 
-    private compareLinks = (a: RichLinkType, b: RichLinkType) => {
+    private compareLinks = (a: LinkType, b: LinkType) => {
         const {model} = this.props;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
-    private compareLinksByWeight = (a: RichLinkType, b: RichLinkType) => {
+    private compareLinksByWeight = (a: LinkType, b: LinkType) => {
         const {model} = this.props;
         const {scores} = this.state;
         const aText = model.locale.formatLabel(a.label, a.id);
@@ -712,12 +712,12 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
             .sort(this.compareLinksByWeight);
     }
 
-    private getViews = (links: RichLinkType[], notSure?: boolean) => {
+    private getViews = (links: LinkType[], notSure?: boolean) => {
         const {model, data} = this.props;
         const {scores} = this.state;
 
         const views: JSX.Element[] = [];
-        const addView = (link: RichLinkType, direction: 'in' | 'out') => {
+        const addView = (link: LinkType, direction: 'in' | 'out') => {
             const {inCount, outCount, inexact} = data.counts.get(link.id) ?? {
                 inCount: 0,
                 outCount: 0,
@@ -809,7 +809,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 }
 
 interface LinkInPopupMenuProps {
-    link: RichLinkType;
+    link: LinkType;
     count: number | 'some';
     direction?: 'in' | 'out';
     model: DiagramModel;

@@ -52,20 +52,20 @@ export class ExampleMetadataApi implements MetadataApi {
     ): Promise<DirectedLinkType[]> {
         function mapLinkTypes(
             types: LinkTypeIri[],
-            direction: LinkDirection = LinkDirection.out
+            direction: LinkDirection = 'out'
         ): DirectedLinkType[] {
             return types.map(linkTypeIri => ({linkTypeIri, direction}));
         }
 
         await delay(SIMULATED_DELAY, ct);
         if (hasType(source, owl.class) && hasType(target, owl.class)) {
-            return mapLinkTypes([rdfs.subClassOf]).concat(mapLinkTypes([rdfs.subClassOf], LinkDirection.in));
+            return mapLinkTypes([rdfs.subClassOf]).concat(mapLinkTypes([rdfs.subClassOf], 'in'));
         } else if (hasType(source, owl.objectProperty) && hasType(target, owl.class)) {
             return mapLinkTypes([owl.domain, owl.range]);
         } else if (hasType(target, owl.objectProperty) && hasType(source, owl.class)) {
-            return mapLinkTypes([owl.domain, owl.range], LinkDirection.in);
+            return mapLinkTypes([owl.domain, owl.range], 'in');
         } else if (hasType(source, owl.objectProperty) && hasType(target, owl.objectProperty)) {
-            return mapLinkTypes([rdfs.subPropertyOf]).concat(mapLinkTypes([rdfs.subPropertyOf], LinkDirection.in));
+            return mapLinkTypes([rdfs.subPropertyOf]).concat(mapLinkTypes([rdfs.subPropertyOf], 'in'));
         } else {
             return [];
         }

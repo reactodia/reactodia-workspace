@@ -1,6 +1,6 @@
 import { HashMap, ReadonlyHashMap, HashSet, ReadonlyHashSet } from '../coreUtils/hashMap';
 
-import { ElementModel, LinkModel, ElementIri, sameLink, hashLink } from '../data/model';
+import { ElementModel, LinkModel, ElementIri, equalLinks, hashLink } from '../data/model';
 
 export interface AuthoringState {
     readonly elements: ReadonlyMap<ElementIri, ElementChange>;
@@ -37,7 +37,7 @@ interface MutableAuthoringState extends AuthoringState {
 export namespace AuthoringState {
     export const empty: AuthoringState = {
         elements: new Map<ElementIri, ElementChange>(),
-        links: new HashMap<LinkModel, LinkChange>(hashLink, sameLink),
+        links: new HashMap<LinkModel, LinkChange>(hashLink, equalLinks),
     };
 
     export function isEmpty(state: AuthoringState) {
@@ -135,7 +135,7 @@ export namespace AuthoringState {
     }
 
     export function changeLink(state: AuthoringState, before: LinkModel, after: LinkModel): AuthoringState {
-        if (!sameLink(before, after)) {
+        if (!equalLinks(before, after)) {
             throw new Error('Cannot move link to another element or change its type');
         }
         const newState = clone(state);
@@ -245,7 +245,7 @@ export interface TemporaryState {
 export namespace TemporaryState {
     export const empty: TemporaryState = {
         elements: new Set<ElementIri>(),
-        links: new HashSet<LinkModel>(hashLink, sameLink),
+        links: new HashSet<LinkModel>(hashLink, equalLinks),
     };
 
     export function addElement(state: TemporaryState, element: ElementModel): TemporaryState {

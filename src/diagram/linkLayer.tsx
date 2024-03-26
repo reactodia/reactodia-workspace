@@ -7,7 +7,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import {
-    Element, Link, LinkVertex, linkMarkerKey, RichLinkType,
+    Element, Link, LinkVertex, linkMarkerKey, LinkType,
 } from './elements';
 import {
     Rect, Size, Vector, boundsOf, computeGrouping, computePolyline, computePolylineLength,
@@ -367,7 +367,7 @@ function LinkView(props: LinkViewProps) {
 }
 
 export interface LinkPathProps {
-    linkType: RichLinkType;
+    linkType: LinkType;
     path: string;
     pathProps?: React.SVGAttributes<SVGPathElement>;
 }

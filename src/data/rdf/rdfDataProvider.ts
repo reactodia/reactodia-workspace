@@ -1,11 +1,11 @@
 import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge, LinkedElement,
     hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import { DataProvider, LookupParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams } from '../provider';
 
 import { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
@@ -170,7 +170,7 @@ export class RdfDataProvider implements DataProvider {
                 }
             }
         }
-        const elementTypes: ElementType[] = [];
+        const elementTypes: ElementTypeModel[] = [];
         const excluded = new Set<ElementTypeIri>();
         for (const [typeId, count] of typeCounts) {
             const typeIri = this.decodeTerm(typeId);
@@ -196,7 +196,7 @@ export class RdfDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<LinkTypeModel[]> {
         const linkCounts = this.computeLinkCounts();
         for (const baseType of this.linkTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
@@ -208,7 +208,7 @@ export class RdfDataProvider implements DataProvider {
                 }
             }
         }
-        const models = new Map<LinkTypeIri, LinkType>();
+        const models = new Map<LinkTypeIri, LinkTypeModel>();
         for (const [linkTypeId, count] of linkCounts) {
             const linkTypeIri = this.decodeTerm(linkTypeId);
             const label = this.labelPredicate
@@ -225,16 +225,16 @@ export class RdfDataProvider implements DataProvider {
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         const {classIds} = params;
-        const models = new Map<ElementTypeIri, ElementType>();
+        const models = new Map<ElementTypeIri, ElementTypeModel>();
         for (const classId of classIds) {
             const classIri = this.decodeTerm(classId);
             let instanceCount = 0;
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, classIri)) {
                 instanceCount++;
             }
-            const model: ElementType = {
+            const model: ElementTypeModel = {
                 id: classId,
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, classIri, this.labelPredicate)
@@ -249,12 +249,12 @@ export class RdfDataProvider implements DataProvider {
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         const {propertyIds} = params;
-        const models = new Map<PropertyTypeIri, PropertyType>();
+        const models = new Map<PropertyTypeIri, PropertyTypeModel>();
         for (const propertyId of propertyIds) {
             const propertyIri = this.decodeTerm(propertyId);
-            const model: PropertyType = {
+            const model: PropertyTypeModel = {
                 id: propertyId,
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, propertyIri, this.labelPredicate)
@@ -268,13 +268,13 @@ export class RdfDataProvider implements DataProvider {
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds} = params;        
         const linkCounts = this.computeLinkCounts(linkTypeIds);
-        const models = new Map<LinkTypeIri, LinkType>();
+        const models = new Map<LinkTypeIri, LinkTypeModel>();
         for (const linkTypeId of linkTypeIds) {
             const linkTypeIri = this.decodeTerm(linkTypeId);
-            const model: LinkType = {
+            const model: LinkTypeModel = {
                 id: linkTypeId,
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, linkTypeIri, this.labelPredicate)

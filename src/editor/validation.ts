@@ -1,7 +1,7 @@
 import { mapAbortedToNull } from '../coreUtils/async';
 import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 
-import { ElementIri, LinkModel, hashLink, sameLink } from '../data/model';
+import { ElementIri, LinkModel, hashLink, equalLinks } from '../data/model';
 import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
 
 import { GraphStructure } from '../diagram/model';
@@ -32,7 +32,7 @@ export namespace ValidationState {
     export function createMutable() {
         return {
             elements: new Map<ElementIri, ElementValidation>(),
-            links: new HashMap<LinkModel, LinkValidation>(hashLink, sameLink),
+            links: new HashMap<LinkModel, LinkValidation>(hashLink, equalLinks),
         };
     }
 
@@ -66,7 +66,7 @@ export function changedElementsToValidate(
     currentAuthoring: AuthoringState,
     graph: GraphStructure
 ): Set<ElementIri> {
-    const links = new HashMap<LinkModel, true>(hashLink, sameLink);
+    const links = new HashMap<LinkModel, true>(hashLink, equalLinks);
     previousAuthoring.links.forEach((e, model) => links.set(model, true));
     currentAuthoring.links.forEach((e, model) => links.set(model, true));
 
@@ -173,7 +173,7 @@ async function processValidationResult(
     }
 
     const elementErrors: ElementError[] = [];
-    const linkErrors = new HashMap<LinkModel, LinkError[]>(hashLink, sameLink);
+    const linkErrors = new HashMap<LinkModel, LinkError[]>(hashLink, equalLinks);
     e.outboundLinks.forEach(link => linkErrors.set(link, []));
 
     for (const error of allErrors) {

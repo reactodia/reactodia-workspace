@@ -61,6 +61,7 @@ export class SharedCanvasState {
     readonly defaultLinkTemplate: LinkTemplate;
     readonly defaultLayout: LayoutFunction;
 
+    /** @hidden */
     constructor(options: SharedCanvasStateOptions) {
         const {defaultElementTemplate, defaultLinkTemplate, defaultLayout} = options;
         this._canvasWidgets = new Map();
@@ -69,6 +70,7 @@ export class SharedCanvasState {
         this.defaultLayout = defaultLayout;
     }
 
+    /** @hidden */
     dispose() {
         if (this.disposed) { return; }
         this.source.trigger('dispose', {source: this});

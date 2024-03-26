@@ -46,7 +46,7 @@ export { defineCanvasWidget } from './diagram/canvasWidget';
 export { RestoreGeometry, setElementExpanded, setElementData, setLinkData } from './diagram/commands';
 export * from './diagram/customization';
 export {
-    Element, ElementEvents, ElementTemplateState, Link, LinkEvents, LinkTemplateState, LinkVertex, Cell, LinkDirection
+    Element, ElementEvents, ElementTemplateState, Link, LinkEvents, LinkTemplateState, LinkVertex, Cell,
 } from './diagram/elements';
 export { EmbeddedLayer } from './diagram/embeddedLayer';
 export * from './diagram/geometry';
@@ -84,8 +84,8 @@ export { ValidationState, ElementValidation, LinkValidation } from './editor/val
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
 export {
-    LayoutData, SerializedDiagram, LinkTypeOptions,
-    makeSerializedDiagram, makeLayoutData,
+    SerializedLayout, SerializedDiagram, SerializedLinkOptions,
+    makeSerializedDiagram, makeSerializedLayout,
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate } from './templates/classicTemplate';
@@ -126,6 +126,7 @@ export {
     ListElementView, ListElementViewProps, highlightSubstring, startDragElements,
 } from './widgets/listElementView';
 export { Navigator, NavigatorProps } from './widgets/navigator';
+export { ProgressBar, ProgressBarProps } from './widgets/progressBar';
 export { SearchResults, SearchResultProps } from './widgets/searchResults';
 export { Selection, SelectionProps } from './widgets/selection';
 export {

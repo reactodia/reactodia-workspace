@@ -104,7 +104,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         });
         editor.setMetadataApi(metadataApi);
 
-        const overlayController = new OverlayController({
+        const overlay = new OverlayController({
             model,
             view,
             editor,
@@ -115,7 +115,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             model,
             view,
             editor,
-            overlayController,
+            overlay,
             disposeSignal: this.cancellation.signal,
             getElementTypeStyle: this.getElementTypeStyle,
             performLayout: this.onPerformLayout,
@@ -146,7 +146,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     componentDidMount() {
         const {onWorkspaceEvent} = this.props;
-        const {model, view, editor, overlayController} = this.workspaceContext;
+        const {model, view, editor, overlay} = this.workspaceContext;
 
         this.listener.listen(model.events, 'loadingSuccess', () => {
             for (const canvas of view.findAllCanvases()) {
@@ -163,7 +163,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             this.listener.listen(editor.events, 'changeSelection', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorChangeSelection)
             );
-            this.listener.listen(overlayController.events, 'changeOpenedDialog', () =>
+            this.listener.listen(overlay.events, 'changeOpenedDialog', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorToggleDialog)
             );
         }
@@ -179,10 +179,10 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     componentWillUnmount() {
         this.listener.stopListening();
-        const {view, editor, overlayController} = this.workspaceContext;
+        const {view, editor, overlay} = this.workspaceContext;
         view.dispose();
         editor.dispose();
-        overlayController.dispose();
+        overlay.dispose();
     }
 
     private getElementTypeStyle: WorkspaceContext['getElementTypeStyle'] = types => {
@@ -304,7 +304,7 @@ export function useLoadedWorkspace(
                 if (controller.signal.aborted) {
                     return;
                 }
-                context.overlayController.setSpinner({ errorOccurred: true });
+                context.overlay.setSpinner({ errorOccurred: true });
                 console.error('Error loading Reactodia workspace', err);
             });
 

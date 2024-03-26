@@ -3,13 +3,31 @@ import { shallowArrayEqual } from '../coreUtils/collections';
 import { hashFnv32a } from '../data/utils';
 import * as Rdf from './rdf/rdfModel';
 
+/**
+ * Nominal (branded) type for element IRI, i.e. unique ID string.
+ */
 export type ElementIri = string & { readonly elementBrand: void };
+/**
+ * Nominal (branded) type for element type IRI, i.e. unique ID string.
+ */
 export type ElementTypeIri = string & { readonly classBrand: void };
+/**
+ * Nominal (branded) type for link type IRI, i.e. unique ID string.
+ */
 export type LinkTypeIri = string & { readonly linkTypeBrand: void };
+/**
+ * Nominal (branded) type for property type IRI, i.e. unique ID string.
+ */
 export type PropertyTypeIri = string & { readonly propertyTypeBrand: void };
 
+export type LinkDirection = 'in' | 'out';
+
+/**
+ * Describes a graph of element types (nodes) and "subtype of" relations
+ * between them (edges).
+ */
 export interface ElementTypeGraph {
-    readonly elementTypes: ReadonlyArray<ElementType>;
+    readonly elementTypes: ReadonlyArray<ElementTypeModel>;
     readonly subtypeOf: ReadonlyArray<SubtypeEdge>;
 }
 
@@ -30,19 +48,19 @@ export interface LinkModel {
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
-export interface ElementType {
+export interface ElementTypeModel {
     readonly id: ElementTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
     readonly count?: number;
 }
 
-export interface LinkType {
+export interface LinkTypeModel {
     readonly id: LinkTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
     readonly count?: number;
 }
 
-export interface PropertyType {
+export interface PropertyTypeModel {
     readonly id: PropertyTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
 }
@@ -56,6 +74,16 @@ export interface LinkCount {
      * in case when the values are non-zero.
      */
     readonly inexact?: boolean;
+}
+
+/**
+ * Describes an element with information on which link types and directions
+ * are used to connect it to other elements.
+ */
+export interface LinkedElement {
+    readonly element: ElementModel;
+    readonly inLinks: ReadonlySet<LinkTypeIri>;
+    readonly outLinks: ReadonlySet<LinkTypeIri>;
 }
 
 export function isEncodedBlank(iri: string): boolean {
@@ -75,7 +103,7 @@ export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
     return aFrom === bFrom && aTo === bTo;
 }
 
-export function sameLink(left: LinkModel, right: LinkModel) {
+export function equalLinks(left: LinkModel, right: LinkModel) {
     return (
         left.linkTypeId === right.linkTypeId &&
         left.sourceId === right.sourceId &&
@@ -91,17 +119,17 @@ export function hashLink(link: LinkModel): number {
     return hash;
 }
 
-export function sameElement(a: ElementModel, b: ElementModel): boolean {
+export function equalElements(a: ElementModel, b: ElementModel): boolean {
     return (
         a.id === b.id &&
         shallowArrayEqual(a.types, b.types) &&
-        termArrayEqual(a.label, b.label) &&
+        equalTermArrays(a.label, b.label) &&
         a.image === b.image &&
-        propertiesEqual(a.properties, b.properties)
+        equalProperties(a.properties, b.properties)
     );
 }
 
-function termArrayEqual(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>): boolean {
+function equalTermArrays(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>): boolean {
     if (a.length !== b.length) { return false; }
     for (let i = 0; i < a.length; i++) {
         if (!Rdf.equalTerms(a[i], b[i])) {
@@ -111,7 +139,7 @@ function termArrayEqual(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>):
     return true;
 }
 
-function propertiesEqual(
+function equalProperties(
     a: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
     b: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> }
 ) {
@@ -122,7 +150,7 @@ function propertiesEqual(
             }
             const aValues = a[key];
             const bValues = b[key];
-            if (!termArrayEqual(aValues, bValues)) {
+            if (!equalTermArrays(aValues, bValues)) {
                 return false;
             }
         }

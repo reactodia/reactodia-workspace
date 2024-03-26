@@ -30,6 +30,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - **[Breaking]** Make random-delay data provider decorator configurable and expose its factory under new name `makeDelayProviderDecorator()`.
+- **[Breaking]** Rename some functions and properties for consistency and documentation:
+  * `WorkspaceContext.overlayController` -> `overlay`;
+  * `sameLink()` -> `equalLinks()`;
+  * `ElementType` -> `ElementTypeModel` and `RichElementType` -> `ElementType`;
+  * `LinkType` -> `LinkTypeModel` and `RichLinkType` -> `LinkType`;
+  * `PropertyType` -> `PropertyTypeModel` and `RichProperty` -> `PropertyType`;
+  * `DiagramModelEvents.classEvent` -> `elementTypeEvent`;
+  * `DiagramModel.{getProperty, createProperty}` -> `{getPropertyType, createPropertyType}`;
+  * `LinkTypeOptions` -> `SerializedLinkOptions`;
+  * `{LayoutData, LayoutElement, LayoutLink}` -> `{SerializedLayout, SerializedLayoutElement, SerializedLayoutLink}`;
+  * `makeLayoutData()` -> `makeSerializedLayout()`;
 
 ### Fixed
 - Support React 18 `<StrictMode>` workspace loading:

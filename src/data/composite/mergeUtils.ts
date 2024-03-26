@@ -2,11 +2,10 @@ import { HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount,
-    PropertyTypeIri, PropertyType, ElementIri, ElementTypeIri, LinkTypeIri,
-    hashLink, sameLink, hashSubtypeEdge, equalSubtypeEdges,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount,
+    PropertyTypeIri, PropertyTypeModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement,
+    hashLink, equalLinks, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import type { LinkedElement } from '../provider';
 import type { DataProviderDefinition } from './composite';
 
 const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
@@ -14,7 +13,7 @@ const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
 export type CompositeResponse<T> = readonly [T, DataProviderDefinition];
 
 export function mergeKnownElementTypes(composite: CompositeResponse<ElementTypeGraph>[]): ElementTypeGraph {
-    const classes = new Map<ElementTypeIri, ElementType>();
+    const classes = new Map<ElementTypeIri, ElementTypeModel>();
     const edges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
 
     for (const [response] of composite) {
@@ -33,8 +32,8 @@ export function mergeKnownElementTypes(composite: CompositeResponse<ElementTypeG
     };
 }
 
-export function mergeKnownLinkTypes(responses: CompositeResponse<LinkType[]>[]): LinkType[] {
-    const result = new Map<LinkTypeIri, LinkType>();
+export function mergeKnownLinkTypes(responses: CompositeResponse<LinkTypeModel[]>[]): LinkTypeModel[] {
+    const result = new Map<LinkTypeIri, LinkTypeModel>();
     for (const [response] of responses) {
         for (const model of response) {
             const existing = result.get(model.id);
@@ -45,12 +44,12 @@ export function mergeKnownLinkTypes(responses: CompositeResponse<LinkType[]>[]):
 }
 
 export function mergePropertyTypes(
-    responses: CompositeResponse<Map<PropertyTypeIri, PropertyType>>[],
-): Map<PropertyTypeIri, PropertyType> {
+    responses: CompositeResponse<Map<PropertyTypeIri, PropertyTypeModel>>[],
+): Map<PropertyTypeIri, PropertyTypeModel> {
     return mergeMapResponses(responses, mergePropertyModel);
 }
 
-function mergePropertyModel(a: PropertyType, b: PropertyType): PropertyType {
+function mergePropertyModel(a: PropertyTypeModel, b: PropertyTypeModel): PropertyTypeModel {
     return {
         ...a,
         ...b,
@@ -59,18 +58,18 @@ function mergePropertyModel(a: PropertyType, b: PropertyType): PropertyType {
 }
 
 export function mergeElementTypes(
-    responses: CompositeResponse<Map<ElementTypeIri, ElementType>>[]
-): Map<ElementTypeIri, ElementType> {
+    responses: CompositeResponse<Map<ElementTypeIri, ElementTypeModel>>[]
+): Map<ElementTypeIri, ElementTypeModel> {
     return mergeMapResponses(responses, mergeClassModel);
 }
 
 export function mergeLinkTypes(
-    responses: CompositeResponse<Map<LinkTypeIri, LinkType>>[]
-): Map<LinkTypeIri, LinkType> {
+    responses: CompositeResponse<Map<LinkTypeIri, LinkTypeModel>>[]
+): Map<LinkTypeIri, LinkTypeModel> {
     return mergeMapResponses(responses, mergeLinkType);
 }
 
-function mergeLinkType(a: LinkType, b: LinkType): LinkType {
+function mergeLinkType(a: LinkTypeModel, b: LinkTypeModel): LinkTypeModel {
     return {
         ...a,
         ...b,
@@ -170,7 +169,7 @@ function mergeProperties(
 }
 
 export function mergeLinksInfo(responses: CompositeResponse<LinkModel[]>[]): LinkModel[] {
-    const resultSet = new HashSet(hashLink, sameLink);
+    const resultSet = new HashSet(hashLink, equalLinks);
     const result: LinkModel[] = [];
     for (const [response] of responses) {
         for (const link of response) {
@@ -263,7 +262,7 @@ function addUniqueTerms<T extends Rdf.Term>(
     }
 }
 
-function mergeClassModel(a: ElementType, b: ElementType): ElementType {
+function mergeClassModel(a: ElementTypeModel, b: ElementTypeModel): ElementTypeModel {
     return {
         ...a,
         ...b,

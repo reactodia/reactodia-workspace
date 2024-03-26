@@ -1,8 +1,6 @@
 import * as React from 'react';
 
-import { ElementModel, LinkModel, sameLink } from '../data/model';
-
-import { LinkDirection } from '../diagram/elements';
+import { ElementModel, LinkModel, equalLinks } from '../data/model';
 
 import { ProgressBar } from '../widgets/progressBar';
 
@@ -36,7 +34,7 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
         super(props, context);
         this.state = {
             linkValue: {
-                value: {link: props.link, direction: LinkDirection.out},
+                value: {link: props.link, direction: 'out'},
                 validated: true,
                 allowChange: true,
             },
@@ -49,7 +47,7 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
 
     componentDidUpdate(prevProps: EditLinkFormProps, prevState: State) {
         const {linkValue} = this.state;
-        if (!sameLink(linkValue.value.link, prevState.linkValue.value.link)) {
+        if (!equalLinks(linkValue.value.link, prevState.linkValue.value.link)) {
             this.validate();
         }
         if (linkValue !== prevState.linkValue && linkValue.validated && linkValue.allowChange) {

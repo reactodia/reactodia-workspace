@@ -104,12 +104,17 @@ export interface CanvasAreaMetrics {
 export interface ViewportOptions {
     /**
      * True if operation should be animated.
-     * If duration is not provided assumes default one.
+     *
+     * If duration is provided and greater than zero then defaults to `true`,
+     * otherwise it is set to `false`.
      */
     animate?: boolean;
     /**
      * Animation duration in milliseconds.
+     *
      * Implicitly sets `animate: true` if greater than zero.
+     *
+     * @default 500
      */
     duration?: number;
 }
@@ -142,6 +147,7 @@ export interface CanvasContext {
     readonly model: DiagramModel;
 }
 
+/** @hidden */
 export const CanvasContext = React.createContext<CanvasContext | null>(null);
 
 export function useCanvas(): CanvasContext {

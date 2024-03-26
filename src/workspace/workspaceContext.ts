@@ -15,7 +15,7 @@ export interface WorkspaceContext {
     readonly model: AsyncModel;
     readonly view: SharedCanvasState;
     readonly editor: EditorController;
-    readonly overlayController: OverlayController;
+    readonly overlay: OverlayController;
     readonly disposeSignal: AbortSignal;
     readonly getElementTypeStyle: (types: ReadonlyArray<ElementTypeIri>) => ProcessedTypeStyle;
     readonly performLayout: (params: WorkspacePerformLayoutParams) => Promise<void>;
@@ -31,9 +31,25 @@ export interface WorkspacePerformLayoutParams {
      * multi-canvas support.
      */
     canvas?: CanvasApi;
+    /**
+     * Layout function to use when computing element positions.
+     *
+     * Default is defined by `WorkspaceProps.defaultLayout`.
+     */
     layoutFunction?: LayoutFunction;
+    /**
+     * Restrict the layout application to the subset of graph elements.
+     */
     selectedElements?: ReadonlySet<Element>;
+    /**
+     * Whether moving elements to final layout positions should be animated.
+     *
+     * @default false
+     */
     animate?: boolean;
+    /**
+     * Signal to cancel computing and applying the layout.
+     */
     signal?: AbortSignal;
 }
 
@@ -54,6 +70,7 @@ export interface ProcessedTypeStyle {
     readonly icon: string | undefined;
 }
 
+/** @hidden */
 export const WorkspaceContext = React.createContext<WorkspaceContext | null>(null);
 
 export function useWorkspace(): WorkspaceContext {

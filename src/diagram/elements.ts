@@ -10,11 +10,6 @@ import { Vector, isPolylineEqual } from './geometry';
 
 export type Cell = Element | Link | LinkVertex;
 
-export enum LinkDirection {
-    in = 'in',
-    out = 'out',
-}
-
 export interface ElementEvents {
     changeData: PropertyChange<Element, ElementModel>;
     changePosition: PropertyChange<Element, Vector>;
@@ -143,7 +138,7 @@ export interface ElementTemplateState {
 
 export interface AddToFilterRequest {
     element: Element;
-    linkType?: RichLinkType;
+    linkType?: LinkType;
     direction?: 'in' | 'out';
 }
 
@@ -245,14 +240,14 @@ export function makeLinkWithDirection(original: Link, data: LinkModel): Link {
     return new Link({sourceId, targetId, data});
 }
 
-export interface RichElementTypeEvents {
-    changeLabel: PropertyChange<RichElementType, ReadonlyArray<Rdf.Literal>>;
-    changeCount: PropertyChange<RichElementType, number | undefined>;
+export interface ElementTypeEvents {
+    changeLabel: PropertyChange<ElementType, ReadonlyArray<Rdf.Literal>>;
+    changeCount: PropertyChange<ElementType, number | undefined>;
 }
 
-export class RichElementType {
-    private readonly source = new EventSource<RichElementTypeEvents>();
-    readonly events: Events<RichElementTypeEvents> = this.source;
+export class ElementType {
+    private readonly source = new EventSource<ElementTypeEvents>();
+    readonly events: Events<ElementTypeEvents> = this.source;
 
     readonly id: ElementTypeIri;
 
@@ -287,13 +282,13 @@ export class RichElementType {
     }
 }
 
-export interface RichPropertyEvents {
-    changeLabel: PropertyChange<RichProperty, ReadonlyArray<Rdf.Literal>>;
+export interface PropertyTypeEvents {
+    changeLabel: PropertyChange<PropertyType, ReadonlyArray<Rdf.Literal>>;
 }
 
-export class RichProperty {
-    private readonly source = new EventSource<RichPropertyEvents>();
-    readonly events: Events<RichPropertyEvents> = this.source;
+export class PropertyType {
+    private readonly source = new EventSource<PropertyTypeEvents>();
+    readonly events: Events<PropertyTypeEvents> = this.source;
 
     readonly id: PropertyTypeIri;
 
@@ -317,24 +312,23 @@ export class RichProperty {
     }
 }
 
-export interface RichLinkTypeEvents {
-    changeLabel: PropertyChange<RichLinkType, ReadonlyArray<Rdf.Literal>>;
-    changeIsNew: PropertyChange<RichLinkType, boolean>;
-    changeVisibility: PropertyChange<RichLinkType, LinkTypeVisibility>;
+export interface LinkTypeEvents {
+    changeLabel: PropertyChange<LinkType, ReadonlyArray<Rdf.Literal>>;
+    changeIsNew: PropertyChange<LinkType, boolean>;
+    changeVisibility: PropertyChange<LinkType, LinkTypeVisibility>;
 }
 
 export type LinkTypeVisibility = 'hidden' | 'withoutLabel' | 'visible';
 
-export class RichLinkType {
-    private readonly source = new EventSource<RichLinkTypeEvents>();
-    readonly events: Events<RichLinkTypeEvents> = this.source;
+export class LinkType {
+    private readonly source = new EventSource<LinkTypeEvents>();
+    readonly events: Events<LinkTypeEvents> = this.source;
 
     readonly id: LinkTypeIri;
 
     private _index: number | undefined;
 
     private _label: ReadonlyArray<Rdf.Literal>;
-    private _isNew = false;
 
     private _visibility: LinkTypeVisibility = 'visible';
 

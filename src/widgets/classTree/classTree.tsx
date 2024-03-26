@@ -5,11 +5,11 @@ import { getOrCreateSetInMap } from '../../coreUtils/collections';
 import { Debouncer } from '../../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
 
-import { ElementTypeIri, ElementType, ElementTypeGraph, SubtypeEdge } from '../../data/model';
+import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/provider';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
-import { Element, RichElementType } from '../../diagram/elements';
+import { Element, ElementType } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
 import { DiagramModel } from '../../diagram/model';
 import { HtmlSpinner } from '../../diagram/spinner';
@@ -42,7 +42,7 @@ interface FetchedClassGraph {
     readonly graph: ElementTypeGraph;
 }
 
-interface ClassTreeItem extends ElementType {
+interface ClassTreeItem extends ElementTypeModel {
     children: ReadonlyArray<ClassTreeItem>;
 }
 
@@ -138,7 +138,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         this.listener.listen(model.events, 'loadingStart', () => {
             this.initClassTree();
         });
-        this.listener.listen(model.events, 'classEvent', ({data}) => {
+        this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
             if (data.changeLabel || data.changeCount) {
                 this.delayedClassUpdate.call(this.refreshClassTree);
             }
@@ -261,7 +261,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             const existing = model.getElementType(typeModel.id);
             if (!existing) {
                 const {id, label, count} = typeModel;
-                const richType = new RichElementType({id, label, count});
+                const richType = new ElementType({id, label, count});
                 model.addElementType(richType);
             }
         }
@@ -292,7 +292,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private async createInstanceAt(classId: ElementTypeIri, dropEvent?: CanvasDropEvent) {
-        const {model, view, editor, overlayController} = this.context;
+        const {model, view, editor, overlay} = this.context;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
@@ -325,12 +325,12 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
         batch.store();
         editor.setSelection([element]);
-        overlayController.showEditEntityForm(element);
+        overlay.showEditEntityForm(element);
     }
 }
 
 function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
-    interface MutableClassItem extends ElementType {
+    interface MutableClassItem extends ElementTypeModel {
         children: MutableClassItem[];
     }
 

@@ -2,11 +2,11 @@ import * as N3 from 'n3';
 
 import { getOrCreateArrayInMap } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, LookupParams, LinkedElement } from '../provider';
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
 } from '../model';
+import { DataProvider, LookupParams } from '../provider';
 import {
     enrichElementsWithImages,
     getClassTree,
@@ -32,7 +32,7 @@ import {
     SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
 } from './sparqlDataProviderSettings';
 
-export type QueryFunction = (params: {
+export type SparqlQueryFunction = (params: {
     url: string;
     body?: string;
     headers: { [header: string]: string };
@@ -54,13 +54,37 @@ export interface SparqlDataProviderOptions {
      */
     endpointUrl: string;
 
-    // there are two options for fetching images: specify imagePropertyUris
-    // to use as image properties or specify a function to fetch image URLs
+    /**
+     * Query method for SPARQL queries to use:
+     *  - `GET` - more compatible, may have issues with large request URLs;
+     *  - `POST` - less compatible, better on large data sets.
+     *
+     * @default "GET"
+     */
+    queryMethod?: 'GET' | 'POST';
 
     /**
-     * properties to use as image URLs
+     * Custom function to send SPARQL requests.
+     *
+     * By default, a global [fetch()](https://developer.mozilla.org/en-US/docs/Web/API/fetch)
+     * is used with the following options:
+     * ```js
+     * {
+     *     ...params,
+     *     credentials: 'same-origin',
+     *     mode: 'cors',
+     *     cache: 'default',
+     * }
+     * ```
      */
-    imagePropertyUris?: string[];
+    queryFunction?: SparqlQueryFunction;
+
+    /**
+     * Element property type IRIs to use to get image URLs for elements.
+     *
+     * If needed, image URL extraction can be customized via `prepareImages`.
+     */
+    imagePropertyUris?: ReadonlyArray<string>;
 
     /**
      * Allows to extract/fetch image URLs externally instead of using `imagePropertyUris` option.
@@ -78,27 +102,13 @@ export interface SparqlDataProviderOptions {
         resources: Set<string>,
         signal: AbortSignal | undefined
     ) => Promise<Map<string, Rdf.Literal[]>>;
-
-    /**
-     * Query method for SPARQL queries to use:
-     *  - `GET` - more compatible, may have issues with large request URLs;
-     *  - `POST` - less compatible, better on large data sets.
-     *
-     * @default "GET"
-     */
-    queryMethod?: 'GET' | 'POST';
-
-    /*
-     * function to send sparql requests
-     */
-    queryFunction?: QueryFunction;
 }
 
 export class SparqlDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
     private readonly options: SparqlDataProviderOptions;
     private readonly settings: SparqlDataProviderSettings;
-    private readonly queryFunction: QueryFunction;
+    private readonly queryFunction: SparqlQueryFunction;
     private readonly acceptBlankNodes = false;
 
     private linkByPredicate = new Map<string, LinkConfiguration[]>();
@@ -162,11 +172,11 @@ export class SparqlDataProvider implements DataProvider {
     async propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         const {propertyIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, propertyInfoQuery} = this.settings;
 
-        let properties: Map<PropertyTypeIri, PropertyType>;
+        let properties: Map<PropertyTypeIri, PropertyTypeModel>;
         if (propertyInfoQuery) {
             const ids = propertyIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
@@ -176,7 +186,7 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
             properties = getPropertyInfo(result);
         } else {
-            properties = new Map<PropertyTypeIri, PropertyType>();
+            properties = new Map<PropertyTypeIri, PropertyTypeModel>();
             for (const id of propertyIds) {
                 properties.set(id, {id, label: []});
             }
@@ -192,11 +202,11 @@ export class SparqlDataProvider implements DataProvider {
     async elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         const {classIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, classInfoQuery} = this.settings;
 
-        let classes: Map<ElementTypeIri, ElementType>;
+        let classes: Map<ElementTypeIri, ElementTypeModel>;
         if (classInfoQuery) {
             const ids = classIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(classInfoQuery, {
@@ -206,7 +216,7 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
             classes = getClassInfo(result);
         } else {
-            classes = new Map<ElementTypeIri, ElementType>();
+            classes = new Map<ElementTypeIri, ElementTypeModel>();
             for (const classId of classIds) {
                 classes.set(classId, {id: classId, label: []});
             }
@@ -222,11 +232,11 @@ export class SparqlDataProvider implements DataProvider {
     async linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, linkTypesInfoQuery} = this.settings;
 
-        let linkTypes: Map<LinkTypeIri, LinkType>;
+        let linkTypes: Map<LinkTypeIri, LinkTypeModel>;
         if (linkTypesInfoQuery) {
             const ids = linkTypeIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
             const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
@@ -236,7 +246,7 @@ export class SparqlDataProvider implements DataProvider {
             const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
             linkTypes = getLinkTypes(result);
         } else {
-            linkTypes = new Map<LinkTypeIri, LinkType>();
+            linkTypes = new Map<LinkTypeIri, LinkTypeModel>();
             for (const typeId of linkTypeIds) {
                 linkTypes.set(typeId, {id: typeId, label: []});
             }
@@ -251,7 +261,7 @@ export class SparqlDataProvider implements DataProvider {
 
     async knownLinkTypes(params: {
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<LinkTypeModel[]> {
         const {signal} = params;
         const {defaultPrefix, schemaLabelProperty, linkTypesQuery, linkTypesPattern} = this.settings;
         if (!linkTypesQuery) {
@@ -320,7 +330,7 @@ export class SparqlDataProvider implements DataProvider {
 
     private async attachImages(
         elements: Map<ElementIri, ElementModel>,
-        types: string[],
+        types: ReadonlyArray<string>,
         signal: AbortSignal | undefined
     ): Promise<void> {
         const ids = Array.from(elements.keys(), id => ` ( ${escapeIri(id)} )`).join(' ');
@@ -827,7 +837,7 @@ async function executeSparqlQuery<Binding>(
     endpoint: string,
     query: string,
     method: 'GET' | 'POST',
-    queryFunction: QueryFunction,
+    queryFunction: SparqlQueryFunction,
     factory: Rdf.DataFactory,
     signal: AbortSignal | undefined
 ): Promise<SparqlResponse<Binding>> {
@@ -868,7 +878,7 @@ async function executeSparqlConstruct(
     endpoint: string,
     query: string,
     method: 'GET' | 'POST',
-    queryFunction: QueryFunction,
+    queryFunction: SparqlQueryFunction,
     signal: AbortSignal | undefined
 ): Promise<Rdf.Quad[]> {
     let internalQuery: Promise<Response>;

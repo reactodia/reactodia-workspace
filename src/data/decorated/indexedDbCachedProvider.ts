@@ -1,9 +1,10 @@
 import * as Rdf from '../rdf/rdfModel';
 import {
-    ElementTypeGraph, LinkType, ElementTypeIri, ElementType, PropertyTypeIri,
-    PropertyType, LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount,
+    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
+    PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount,
+    LinkedElement,
 } from '../model';
-import { DataProvider, LookupParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams } from '../provider';
 
 export interface IndexedDbCachedProviderOptions {
     readonly baseProvider: DataProvider;
@@ -35,7 +36,7 @@ interface KnownElementTypesRecord {
 const KNOWN_LINK_TYPES_KEY = 'knownLinkTypes';
 interface KnownLinkTypesRecord {
     readonly id: typeof KNOWN_LINK_TYPES_KEY;
-    readonly value: LinkType[];
+    readonly value: LinkTypeModel[];
 }
 
 interface ConnectedLinkStatsRecord {
@@ -194,7 +195,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.value;
     }
 
-    async knownLinkTypes(params: { signal?: AbortSignal | undefined; }): Promise<LinkType[]> {
+    async knownLinkTypes(params: { signal?: AbortSignal | undefined; }): Promise<LinkTypeModel[]> {
         const db = await this.openDb();
         const result = await fetchSingleWithDbCache(
             db,
@@ -212,7 +213,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     async elementTypes(params: {
         classIds: readonly ElementTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         const {classIds, signal} = params;
         const db = await this.openDb();
         const result = await fetchManyWithDbCache(
@@ -228,7 +229,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     async propertyTypes(params: {
         propertyIds: readonly PropertyTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         const {propertyIds, signal} = params;
         const db = await this.openDb();
         const result = await fetchManyWithDbCache(
@@ -244,7 +245,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     async linkTypes(params: {
         linkTypeIds: readonly LinkTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds, signal} = params;
         const db = await this.openDb();
         const result = await fetchManyWithDbCache(

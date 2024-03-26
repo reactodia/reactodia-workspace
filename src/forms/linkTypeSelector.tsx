@@ -3,10 +3,10 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
-import { LinkModel, ElementModel, sameLink } from '../data/model';
+import { ElementModel, LinkModel, LinkDirection, equalLinks } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { RichLinkType, LinkDirection } from '../diagram/elements';
+import { LinkType } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -27,7 +27,7 @@ export interface LinkValue {
 }
 
 interface DirectedFatLinkType {
-    fatLinkType: RichLinkType;
+    fatLinkType: LinkType;
     direction: LinkDirection;
 }
 
@@ -97,7 +97,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         this.listenToLinkLabels(fatLinkTypes);
     }
 
-    private listenToLinkLabels(fatLinkTypes: Array<{ fatLinkType: RichLinkType; direction: LinkDirection }>) {
+    private listenToLinkLabels(fatLinkTypes: Array<{ fatLinkType: LinkType; direction: LinkDirection }>) {
         fatLinkTypes.forEach(({fatLinkType}) =>
             this.listener.listen(fatLinkType.events, 'changeLabel', this.updateAll)
         );
@@ -120,7 +120,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     };
 
     private renderPossibleLinkType = (
-        {fatLinkType, direction}: { fatLinkType: RichLinkType; direction: LinkDirection }, index: number
+        {fatLinkType, direction}: { fatLinkType: LinkType; direction: LinkDirection }, index: number
     ) => {
         const {model} = this.context;
         const {source, target} = this.props;
@@ -128,7 +128,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         let [sourceLabel, targetLabel] = [source, target].map(element =>
             model.locale.formatLabel(element.label, element.id)
         );
-        if (direction === LinkDirection.in) {
+        if (direction === 'in') {
             [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
         }
         return <option key={index} value={index}>{label} [{sourceLabel} &rarr; {targetLabel}]</option>;
@@ -169,10 +169,10 @@ function makeLinkTypeComparatorByLabelAndDirection(model: DiagramModel) {
         if (labelCompareResult !== 0) {
             return labelCompareResult;
         }
-        if (a.direction === LinkDirection.out && b.direction === LinkDirection.in) {
+        if (a.direction === 'out' && b.direction === 'in') {
             return -1;
         }
-        if (a.direction === LinkDirection.in && b.direction === LinkDirection.out) {
+        if (a.direction === 'in' && b.direction === 'out') {
             return 1;
         }
         return 0;
@@ -187,7 +187,7 @@ export function validateLinkType(
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
         return Promise.resolve({error: 'Required.', allowChange: true});
     }
-    if (sameLink(currentLink, originalLink)) {
+    if (equalLinks(currentLink, originalLink)) {
         return Promise.resolve({error: undefined, allowChange: true});
     }
     const alreadyOnDiagram = model.links.find(({data: {linkTypeId, sourceId, targetId}}) =>
@@ -203,7 +203,7 @@ export function validateLinkType(
         elementIds: [currentLink.sourceId, currentLink.targetId],
         linkTypeIds: [currentLink.linkTypeId],
     }).then((links): Pick<LinkValue, 'error' | 'allowChange'> => {
-        const alreadyExists = links.some(link => sameLink(link, currentLink));
+        const alreadyExists = links.some(link => equalLinks(link, currentLink));
         return alreadyExists
             ? {error: 'The link already exists.', allowChange: false}
             : {error: undefined, allowChange: true};

@@ -3,9 +3,9 @@ import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
 
-import { ElementModel, ElementIri } from '../data/model';
-import { LookupParams, LinkedElement } from '../data/provider';
-import { Element as DiagramElement, RichLinkType, RichElementType } from '../diagram/elements';
+import { ElementModel, ElementIri, LinkedElement } from '../data/model';
+import { LookupParams } from '../data/provider';
+import { Element as DiagramElement, LinkType, ElementType } from '../diagram/elements';
 
 import { ProgressBar, ProgressState } from '../widgets/progressBar';
 
@@ -27,9 +27,9 @@ export interface InstancesSearchCommands {
 
 export interface SearchCriteria {
     readonly text?: string;
-    readonly elementType?: RichElementType;
+    readonly elementType?: ElementType;
     readonly refElement?: DiagramElement;
-    readonly refElementLink?: RichLinkType;
+    readonly refElementLink?: LinkType;
     readonly linkDirection?: 'in' | 'out';
 }
 

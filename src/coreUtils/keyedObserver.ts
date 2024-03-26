@@ -1,6 +1,6 @@
 import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 
-import { RichElementTypeEvents, RichLinkTypeEvents, RichPropertyEvents } from '../diagram/elements';
+import { ElementTypeEvents, LinkTypeEvents, PropertyTypeEvents } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 
 import { Unsubscribe, Listener } from './events';
@@ -41,8 +41,8 @@ export class KeyedObserver<Key extends string> {
     }
 }
 
-export function observeElementTypes<Event extends keyof RichElementTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<RichElementTypeEvents, Event>
+export function observeElementTypes<Event extends keyof ElementTypeEvents>(
+    model: DiagramModel, event: Event, listener: Listener<ElementTypeEvents, Event>
 ) {
     return new KeyedObserver<ElementTypeIri>(key => {
         const type = model.getElementType(key);
@@ -54,11 +54,11 @@ export function observeElementTypes<Event extends keyof RichElementTypeEvents>(
     });
 }
 
-export function observeProperties<Event extends keyof RichPropertyEvents>(
-    model: DiagramModel, event: Event, listener: Listener<RichPropertyEvents, Event>
+export function observeProperties<Event extends keyof PropertyTypeEvents>(
+    model: DiagramModel, event: Event, listener: Listener<PropertyTypeEvents, Event>
 ) {
     return new KeyedObserver<PropertyTypeIri>(key => {
-        const property = model.getProperty(key);
+        const property = model.getPropertyType(key);
         if (property) {
             property.events.on(event, listener);
             return () => property.events.off(event, listener);
@@ -67,8 +67,8 @@ export function observeProperties<Event extends keyof RichPropertyEvents>(
     });
 }
 
-export function observeLinkTypes<Event extends keyof RichLinkTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<RichLinkTypeEvents, Event>
+export function observeLinkTypes<Event extends keyof LinkTypeEvents>(
+    model: DiagramModel, event: Event, listener: Listener<LinkTypeEvents, Event>
 ) {
     return new KeyedObserver<LinkTypeIri>(key => {
         const type = model.createLinkType(key);

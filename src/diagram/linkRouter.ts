@@ -1,4 +1,4 @@
-import type { LinkRouter, RoutedLinks, Vertex } from './customization';
+import type { LinkRouter, RoutedLinks } from './customization';
 
 import type { GraphStructure } from './model';
 import type { Link } from './elements';
@@ -49,7 +49,7 @@ export class DefaultLinkRouter implements LinkRouter {
             const {sourceId, targetId} = sibling;
             if (sourceId === targetId) {
                 const offset = this.gap * (index + 1);
-                const vertices: Vertex[] = [
+                const vertices: Vector[] = [
                     {x: x - offset, y: y + height / 2},
                     {x: x - offset, y: y - offset},
                     {x: x + width / 2, y: y - offset},

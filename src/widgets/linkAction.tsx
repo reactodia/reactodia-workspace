@@ -84,7 +84,7 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor, overlayController} = useWorkspace();
+    const {model, editor, overlay} = useWorkspace();
 
     const canEdit = useCanEditLink(link, model, editor);
     const linkIsDeleted = isDeletedLink(editor.authoringState, link);
@@ -110,7 +110,7 @@ export function LinkActionEdit(props: LinkActionEditProps) {
                 canEdit ? 'Edit link' : 'Editing is unavailable for the selected link'
             )}
             disabled={!canEdit}
-            onSelect={() => overlayController.showEditLinkForm(link)}
+            onSelect={() => overlay.showEditLinkForm(link)}
         />
     );
 }
@@ -236,7 +236,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {editor, overlayController} = useWorkspace();
+    const {editor, overlay} = useWorkspace();
 
     if (!editor.inAuthoringMode) {
         return null;
@@ -257,7 +257,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             disabled={!isDeletedLink(editor.authoringState, link)}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                overlayController.startEditing({
+                overlay.startEditing({
                     target: link,
                     mode: dockSide === 'source' ? 'moveLinkSource' : 'moveLinkTarget',
                     point,
@@ -286,7 +286,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {model, overlayController} = useWorkspace();
+    const {model, overlay} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -317,7 +317,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
         <button className={classnames(className, `${CLASS_NAME}__rename`)}
             style={style}
             title={title ?? 'Rename link'}
-            onClick={() => overlayController.showRenameLinkForm(link)}
+            onClick={() => overlay.showRenameLinkForm(link)}
         />
     );
 }

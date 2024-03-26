@@ -8,8 +8,8 @@ import { getUriLocalName } from '../data/utils';
 
 import { LabelLanguageSelector, FormattedProperty } from './customization';
 import {
-    Element, ElementEvents, Link, LinkEvents, RichLinkType, RichLinkTypeEvents,
-    RichElementType, RichElementTypeEvents, RichProperty,
+    Element, ElementEvents, Link, LinkEvents, LinkType, LinkTypeEvents,
+    ElementType, ElementTypeEvents, PropertyType, PropertyTypeEvents,
 } from './elements';
 import { Graph, CellsChangedEvent } from './graph';
 import { CommandHistory, Command } from './history';
@@ -20,8 +20,9 @@ export interface DiagramModelEvents {
     changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    linkTypeEvent: AnyEvent<RichLinkTypeEvents>;
-    classEvent: AnyEvent<RichElementTypeEvents>;
+    elementTypeEvent: AnyEvent<ElementTypeEvents>;
+    linkTypeEvent: AnyEvent<LinkTypeEvents>;
+    propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
     changeGroupContent: {
         readonly group: string;
         readonly layoutComplete: boolean;
@@ -41,9 +42,9 @@ export interface GraphStructure {
     sourceOf(link: Link): Element | undefined;
     targetOf(link: Link): Element | undefined;
 
-    getElementType(elementTypeIri: ElementTypeIri): RichElementType | undefined;
-    getLinkType(linkTypeIri: LinkTypeIri): RichLinkType | undefined;
-    getProperty(propertyTypeIri: PropertyTypeIri): RichProperty | undefined;
+    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
+    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
+    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
 }
 
 export interface DiagramModelOptions {
@@ -70,7 +71,7 @@ export class DiagramModel implements GraphStructure {
     }
 
     get language(): string { return this._language; }
-    setLanguage(value: string) {
+    setLanguage(value: string): void {
         if (!value) {
             throw new Error('Cannot set empty language.');
         }
@@ -107,15 +108,15 @@ export class DiagramModel implements GraphStructure {
         return this.graph.findLink(linkTypeId, sourceId, targetId);
     }
 
-    sourceOf(link: Link) {
+    sourceOf(link: Link): Element | undefined {
         return this.getElement(link.sourceId);
     }
 
-    targetOf(link: Link) {
+    targetOf(link: Link): Element | undefined {
         return this.getElement(link.targetId);
     }
 
-    protected resetGraph() {
+    protected resetGraph(): void {
         if (this.graphListener) {
             this.graphListener.stopListening();
             this.graphListener = new EventObserver();
@@ -124,7 +125,7 @@ export class DiagramModel implements GraphStructure {
         this.source.trigger('discardGraph', {source: this});
     }
 
-    protected subscribeGraph() {
+    protected subscribeGraph(): void {
         this.graphListener.listen(this.graph.events, 'changeCells', e => {
             this.source.trigger('changeCells', e);
         });
@@ -134,17 +135,20 @@ export class DiagramModel implements GraphStructure {
         this.graphListener.listen(this.graph.events, 'linkEvent', e => {
             this.source.trigger('linkEvent', e);
         });
+        this.graphListener.listen(this.graph.events, 'elementTypeEvent', e => {
+            this.source.trigger('elementTypeEvent', e);
+        });
         this.graphListener.listen(this.graph.events, 'linkTypeEvent', e => {
             this.source.trigger('linkTypeEvent', e);
         });
-        this.graphListener.listen(this.graph.events, 'classEvent', e => {
-            this.source.trigger('classEvent', e);
+        this.graphListener.listen(this.graph.events, 'propertyTypeEvent', e => {
+            this.source.trigger('propertyTypeEvent', e);
         });
 
         this.source.trigger('changeCells', {updateAll: true});
     }
 
-    reorderElements(compare: (a: Element, b: Element) => number) {
+    reorderElements(compare: (a: Element, b: Element) => number): void {
         this.graph.reorderElements(compare);
         this.source.trigger('changeCellOrder', {source: this});
     }
@@ -174,7 +178,7 @@ export class DiagramModel implements GraphStructure {
         );
     }
 
-    removeElement(elementId: string) {
+    removeElement(elementId: string): void {
         const element = this.getElement(elementId);
         if (element) {
             this.history.execute(
@@ -206,56 +210,56 @@ export class DiagramModel implements GraphStructure {
         this.history.execute(new AddLinkCommand(this.graph, link));
     }
 
-    removeLink(linkId: string) {
+    removeLink(linkId: string): void {
         const link = this.graph.getLink(linkId);
         if (link) {
             this.history.execute(new RemoveLinkCommand(this.graph, link));
         }
     }
 
-    getElementType(elementTypeIri: ElementTypeIri): RichElementType | undefined {
-        return this.graph.getClass(elementTypeIri);
+    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined {
+        return this.graph.getElementType(elementTypeIri);
     }
 
-    createElementType(elementTypeIri: ElementTypeIri): RichElementType {
-        const existing = this.graph.getClass(elementTypeIri);
+    createElementType(elementTypeIri: ElementTypeIri): ElementType {
+        const existing = this.graph.getElementType(elementTypeIri);
         if (existing) {
             return existing;
         }
-        const classModel = new RichElementType({id: elementTypeIri});
+        const classModel = new ElementType({id: elementTypeIri});
         this.addElementType(classModel);
         return classModel;
     }
 
-    addElementType(model: RichElementType) {
-        this.graph.addClass(model);
+    addElementType(model: ElementType): void {
+        this.graph.addElementType(model);
     }
 
-    getLinkType(linkTypeIri: LinkTypeIri): RichLinkType | undefined {
+    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined {
         return this.graph.getLinkType(linkTypeIri);
     }
 
-    createLinkType(linkTypeIri: LinkTypeIri): RichLinkType {
+    createLinkType(linkTypeIri: LinkTypeIri): LinkType {
         const existing = this.graph.getLinkType(linkTypeIri);
         if (existing) {
             return existing;
         }
-        const linkType = new RichLinkType({id: linkTypeIri});
+        const linkType = new LinkType({id: linkTypeIri});
         this.graph.addLinkType(linkType);
         return linkType;
     }
 
-    getProperty(propertyTypeIri: PropertyTypeIri): RichProperty | undefined {
-        return this.graph.getProperty(propertyTypeIri);
+    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined {
+        return this.graph.getPropertyType(propertyTypeIri);
     }
 
-    createProperty(propertyIri: PropertyTypeIri): RichProperty {
-        const existing = this.graph.getProperty(propertyIri);
+    createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
+        const existing = this.graph.getPropertyType(propertyIri);
         if (existing) {
             return existing;
         }
-        const property = new RichProperty({id: propertyIri});
-        this.graph.addProperty(property);
+        const property = new PropertyType({id: propertyIri});
+        this.graph.addPropertyType(property);
         return property;
     }
 
@@ -415,7 +419,7 @@ class ModelLocalFormatter implements LocaleFormatter {
         const targetLanguage = language ?? this.model.language;
         const propertyIris = Object.keys(properties) as PropertyTypeIri[];
         const propertyList = propertyIris.map((key): FormattedProperty => {
-            const property = this.model.createProperty(key);
+            const property = this.model.createPropertyType(key);
             const label = this.formatLabel(property.label, key);
             const allValues = properties[key];
             const localizedValues = allValues.filter(v =>

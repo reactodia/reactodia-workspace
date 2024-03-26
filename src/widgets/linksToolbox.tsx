@@ -6,7 +6,7 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 
 import { LinkCount } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { Element, RichLinkType, LinkTypeVisibility } from '../diagram/elements';
+import { Element, LinkType, LinkTypeVisibility } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
@@ -20,9 +20,9 @@ import { ProgressBar, ProgressState } from './progressBar';
 
 interface LinkInToolBoxProps {
     model: DiagramModel;
-    link: RichLinkType;
+    link: LinkType;
     count: number;
-    onPressFilter?: (type: RichLinkType) => void;
+    onPressFilter?: (type: LinkType) => void;
     filterKey?: string;
 }
 
@@ -104,11 +104,11 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
 
 interface LinkTypesToolboxViewProps {
     model: DiagramModel;
-    links: ReadonlyArray<RichLinkType> | undefined;
+    links: ReadonlyArray<LinkType> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
     selectedElement: Element | undefined;
     dataState: ProgressState;
-    filterCallback: ((type: RichLinkType) => void) | undefined;
+    filterCallback: ((type: LinkType) => void) | undefined;
 }
 
 class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { filterKey: string }> {
@@ -117,7 +117,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
         this.state = {filterKey: ''};
     }
 
-    private compareLinks = (a: RichLinkType, b: RichLinkType) => {
+    private compareLinks = (a: LinkType, b: LinkType) => {
         const {model} = this.props;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
@@ -142,7 +142,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
             .sort(this.compareLinks);
     }
 
-    private getViews(links: RichLinkType[]) {
+    private getViews(links: LinkType[]) {
         const countMap = this.props.countMap || {};
         const views: React.ReactElement<any>[] = [];
         for (const link of links) {
@@ -254,7 +254,7 @@ export interface LinkTypesToolboxProps {
 interface LinkTypesToolboxState {
     readonly dataState: ProgressState;
     readonly selectedElement?: Element;
-    readonly linksOfElement?: ReadonlyArray<RichLinkType>;
+    readonly linksOfElement?: ReadonlyArray<LinkType>;
     readonly countMap?: { readonly [linkTypeId: string]: number };
 }
 
@@ -330,7 +330,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     private computeStateFromRequestResult(linkTypes: ReadonlyArray<LinkCount>) {
         const {model} = this.context;
 
-        const linksOfElement: RichLinkType[] = [];
+        const linksOfElement: LinkType[] = [];
         const countMap: { [linkTypeId: string]: number } = {};
 
         for (const linkType of linkTypes) {
@@ -342,7 +342,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         return {linksOfElement, countMap};
     }
 
-    private subscribeOnLinksEvents(linksOfElement: RichLinkType[]) {
+    private subscribeOnLinksEvents(linksOfElement: LinkType[]) {
         this.linkListener.stopListening();
 
         const listener = this.linkListener;
@@ -371,7 +371,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         );
     }
 
-    private onAddToFilter = (linkType: RichLinkType) => {
+    private onAddToFilter = (linkType: LinkType) => {
         const {instancesSearchCommands} = this.props;
         const {selectedElement} = this.state;
         instancesSearchCommands?.trigger('setCriteria', {
@@ -383,7 +383,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     };
 }
 
-function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<RichLinkType>) {
+function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<LinkType>) {
     const batch = history.startBatch('Change link types visibility');
     for (const linkType of links) {
         history.execute(changeLinkTypeVisibility(linkType, state));

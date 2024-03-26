@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { setElementData } from '../diagram/commands';
-import { Element, Link, LinkDirection, makeLinkWithDirection } from '../diagram/elements';
+import { Element, Link, makeLinkWithDirection } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
@@ -51,7 +51,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 allowChange: true,
             },
             linkValue: {
-                value: {link: originalLink.data, direction: LinkDirection.out},
+                value: {link: originalLink.data, direction: 'out'},
                 validated: true,
                 allowChange: true,
             },
@@ -111,7 +111,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                                 linkValue: {
                                     value: {
                                         link: {...originalLink.data, targetId: newState.value.id},
-                                        direction: LinkDirection.out,
+                                        direction: 'out',
                                     },
                                     validated: false,
                                     allowChange: false,

@@ -74,6 +74,7 @@ export class OverlayController {
 
     private _openedDialog: OpenedDialog | undefined;
 
+    /** @hidden */
     constructor(props: OverlayControllerProps) {
         const {model, view, editor, ...options} = props;
         this.model = model;
@@ -144,6 +145,7 @@ export class OverlayController {
         return this._openedDialog;
     }
 
+    /** @hidden */
     dispose() {
         this.listener.stopListening();
     }

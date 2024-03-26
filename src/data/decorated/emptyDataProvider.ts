@@ -1,8 +1,8 @@
 import {
-    ElementTypeGraph, LinkType, ElementTypeIri, ElementType, PropertyTypeIri, PropertyType,
-    LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount,
+    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri, PropertyTypeModel,
+    LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount, LinkedElement,
 } from '../model';
-import { DataProvider, LinkedElement, LookupParams } from '../provider';
+import { DataProvider, LookupParams } from '../provider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
 export class EmptyDataProvider implements DataProvider {
@@ -21,29 +21,29 @@ export class EmptyDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal | undefined;
-    }): Promise<LinkType[]> {
+    }): Promise<LinkTypeModel[]> {
         return Promise.resolve([]);
     }
 
     elementTypes(params: {
         classIds: readonly ElementTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
-        return Promise.resolve(new Map<ElementTypeIri, ElementType>());
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
+        return Promise.resolve(new Map<ElementTypeIri, ElementTypeModel>());
     }
 
     propertyTypes(params: {
         propertyIds: readonly PropertyTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
-        return Promise.resolve(new Map<PropertyTypeIri, PropertyType>());
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
+        return Promise.resolve(new Map<PropertyTypeIri, PropertyTypeModel>());
     }
 
     linkTypes(params: {
         linkTypeIds: readonly LinkTypeIri[];
         signal?: AbortSignal | undefined;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
-        return Promise.resolve(new Map<LinkTypeIri, LinkType>());
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
+        return Promise.resolve(new Map<LinkTypeIri, LinkTypeModel>());
     }
 
     elements(params: {

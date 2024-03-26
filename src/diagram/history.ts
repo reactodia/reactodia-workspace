@@ -67,7 +67,7 @@ class CompoundCommand {
 }
 
 export interface CommandHistoryEvents {
-    historyChanged: { hasChanges: boolean };
+    historyChanged: { readonly hasChanges: boolean };
 }
 
 export interface CommandHistory {

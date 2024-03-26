@@ -1,13 +1,16 @@
 import type { DataFactory } from './rdf/rdfModel';
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
 } from './model';
 
 /**
  * Asynchronously provides data for the elements, links and other graph entities.
  */
 export interface DataProvider {
+    /**
+     * Returns a factory to create RDF terms from a diagram model as necessary.
+     */
     readonly factory: DataFactory;
 
     /**
@@ -22,7 +25,7 @@ export interface DataProvider {
      */
     knownLinkTypes(params: {
         signal?: AbortSignal;
-    }): Promise<LinkType[]>;
+    }): Promise<LinkTypeModel[]>;
 
     /**
      * Gets the data for the specified element types.
@@ -30,7 +33,7 @@ export interface DataProvider {
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<ElementTypeIri, ElementType>>;
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>>;
 
     /**
      * Gets the data for the specified property types.
@@ -38,7 +41,7 @@ export interface DataProvider {
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<PropertyTypeIri, PropertyType>>;
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>>;
 
     /**
      * Gets the data for the specified link types.
@@ -46,7 +49,7 @@ export interface DataProvider {
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<LinkTypeIri, LinkType>>;
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>>;
 
     /**
      * Gets the data for the specified elements.
@@ -134,10 +137,4 @@ export interface LookupParams {
      * Abort signal to cancel the async operation.
      */
     signal?: AbortSignal;
-}
-
-export interface LinkedElement {
-    readonly element: ElementModel;
-    readonly inLinks: ReadonlySet<LinkTypeIri>;
-    readonly outLinks: ReadonlySet<LinkTypeIri>;
 }

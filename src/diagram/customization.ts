@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { ElementModel, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { ElementTemplateState, Link, RichLinkType } from './elements';
+import type { ElementTemplateState, Link, LinkType } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
 
@@ -57,7 +57,7 @@ export interface LinkMarkerStyle {
 
 export interface LinkTemplateProps {
     link: Link;
-    linkType: RichLinkType;
+    linkType: LinkType;
     path: string;
     getPathPosition: (offset: number) => Vector;
     route?: RoutedLink;
@@ -72,11 +72,6 @@ export type RoutedLinks = Map<string, RoutedLink>;
 
 export interface RoutedLink {
     readonly linkId: string;
-    readonly vertices: ReadonlyArray<Vertex>;
+    readonly vertices: ReadonlyArray<Vector>;
     readonly labelTextAnchor?: 'start' | 'middle' | 'end';
-}
-
-export interface Vertex {
-    readonly x: number;
-    readonly y: number;
 }

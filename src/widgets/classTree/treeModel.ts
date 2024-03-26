@@ -1,7 +1,7 @@
-import { RichElementType } from '../../diagram/elements';
+import { ElementType } from '../../diagram/elements';
 
 export interface TreeNode {
-    model: RichElementType;
+    model: ElementType;
     label: string;
     derived: ReadonlyArray<TreeNode>;
 }

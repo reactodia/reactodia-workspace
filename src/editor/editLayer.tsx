@@ -7,7 +7,7 @@ import { ElementIri, ElementModel, LinkModel } from '../data/model';
 import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { Element, Link, LinkDirection } from '../diagram/elements';
+import { Element, Link } from '../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../diagram/linkLayer';
 import { TransformedSvgCanvas } from '../diagram/paper';
@@ -280,7 +280,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
-        const {mode, canvas, workspace: {model, editor, overlayController}} = this.props;
+        const {mode, canvas, workspace: {model, editor, overlay}} = this.props;
 
         try {
             const {targetElement, canLinkFrom, canDropOnCanvas, canDropOnElement} = this.state;
@@ -323,11 +323,11 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 if (targetElement) {
                     const focusedLink = modifiedLink || this.oldLink;
                     editor.setSelection([focusedLink!]);
-                    overlayController.showEditLinkForm(focusedLink!);
+                    overlay.showEditLinkForm(focusedLink!);
                 } else if (createdTarget && modifiedLink) {
                     editor.setSelection([createdTarget]);
                     const source = model.getElement(modifiedLink.sourceId)!;
-                    overlayController.showFindOrCreateEntityForm({
+                    overlay.showFindOrCreateEntityForm({
                         link: modifiedLink,
                         source,
                         target: createdTarget,
@@ -361,7 +361,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             this.cancellation.signal
         );
         if (linkTypes === null) { return undefined; }
-        const placeholder = {linkTypeIri: PLACEHOLDER_LINK_TYPE, direction: LinkDirection.out};
+        const placeholder = {linkTypeIri: PLACEHOLDER_LINK_TYPE, direction: 'out'};
         const {linkTypeIri: typeId, direction} = linkTypes.length === 1 ? linkTypes[0] : placeholder;
         let data: LinkModel = {
             linkTypeId: typeId,
@@ -371,7 +371,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         };
         let [sourceId, targetId] = [source.id, target.id];
         // switches source and target if the direction equals 'in'
-        if (direction === LinkDirection.in) {
+        if (direction === 'in') {
             data = {
                 ...data,
                 sourceId: target.iri,

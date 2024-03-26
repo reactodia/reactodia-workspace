@@ -1,10 +1,10 @@
-import { raceAbortSignal } from '../../coreUtils/async';
+import { delay } from '../../coreUtils/async';
 
 import type * as Rdf from '../rdf/rdfModel';
-import { DataProvider, LookupParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams } from '../provider';
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyType,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel, LinkedElement,
 } from '../model';
 
 export interface DecoratedDataProviderOptions {
@@ -60,28 +60,28 @@ export class DecoratedDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<LinkTypeModel[]> {
         return this.decorate('knownLinkTypes', [params]);
     }
 
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         return this.decorate('elementTypes', [params]);
     }
 
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         return this.decorate('propertyTypes', [params]);
     }
 
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         return this.decorate('linkTypes', [params]);
     }
 
@@ -127,13 +127,7 @@ export function makeDelayProviderDecorator(
             distribution === 'exponential' ?  -Math.log(Math.random()) * meanDelay :
             meanDelay
         );
-        return raceAbortSignal(delay(delayMs), params.signal)
+        return delay(delayMs, {signal: params.signal})
             .then(() => body(params));
     };
-}
-
-function delay(timeoutMs: number): Promise<void> {
-    return new Promise<void>(resolve => {
-        setTimeout(() => resolve(undefined), timeoutMs);
-    });
 }

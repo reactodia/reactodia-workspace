@@ -1,8 +1,8 @@
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, LookupParams, LinkedElement } from '../provider';
+import { DataProvider, LookupParams } from '../provider';
 import {
-    ElementType, ElementTypeGraph, LinkType, ElementModel, LinkModel, LinkCount, PropertyType,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
 } from '../model';
 import {
     CompositeResponse,
@@ -27,7 +27,7 @@ export interface DataProviderDefinition {
 }
 
 export class CompositeDataProvider implements DataProvider {
-    public providers: ReadonlyArray<DataProviderDefinition>;
+    readonly providers: ReadonlyArray<DataProviderDefinition>;
 
     constructor(options: CompositeDataProviderOptions) {
         const {providers} = options;
@@ -61,28 +61,28 @@ export class CompositeDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal;
-    }): Promise<LinkType[]> {
+    }): Promise<LinkTypeModel[]> {
         return this.requestWithMerge(p => p.knownLinkTypes(params), mergeKnownLinkTypes);
     }
 
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<ElementTypeIri, ElementType>> {
+    }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         return this.requestWithMerge(p => p.elementTypes(params), mergeElementTypes);
     }
 
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<PropertyTypeIri, PropertyType>> {
+    }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         return this.requestWithMerge(p => p.propertyTypes(params), mergePropertyTypes);
     }
 
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
-    }): Promise<Map<LinkTypeIri, LinkType>> {
+    }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         return this.requestWithMerge(p => p.linkTypes(params), mergeLinkTypes);
     }
 

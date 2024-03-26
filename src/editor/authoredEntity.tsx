@@ -27,7 +27,7 @@ export function useAuthoredEntity(
     data: ElementModel,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const {model, editor, overlayController} = useWorkspace();
+    const {model, editor, overlay} = useWorkspace();
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
 
@@ -72,7 +72,7 @@ export function useAuthoredEntity(
         onEdit: () => {
             const element = model.getElement(elementId);
             if (element) {
-                overlayController.showEditEntityForm(element);
+                overlay.showEditEntityForm(element);
             }
         },
         onDelete: () => {

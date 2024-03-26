@@ -267,12 +267,12 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {editor, overlayController} = useWorkspace();
+    const {editor, overlay} = useWorkspace();
     const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!commands) {
         return null;
     }
-    const {openedDialog} = overlayController;
+    const {openedDialog} = overlay;
     const menuOpened = Boolean(
         openedDialog &&
         openedDialog.knownType === 'connectionsMenu'
@@ -288,7 +288,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
             title={title ?? 'Navigate to connected elements'}
             onSelect={() => {
                 if (menuOpened) {
-                    overlayController.hideDialog();
+                    overlay.hideDialog();
                 } else {
                     commands.trigger('show', {targets: elements});
                 }
@@ -326,7 +326,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
-    const {editor, overlayController} = useWorkspace();
+    const {editor, overlay} = useWorkspace();
     const {canvas} = useCanvas();
 
     const inAuthoringMode = useObservedProperty(
@@ -362,7 +362,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                overlayController.startEditing({target, mode: 'establishLink', point});
+                overlay.startEditing({target, mode: 'establishLink', point});
             }}
         />
     );

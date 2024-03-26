@@ -4,53 +4,51 @@ import { EventSource, Events, AnyEvent, AnyListener } from '../coreUtils/events'
 import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 
 import {
-    Element as DiagramElement, ElementEvents,
-    Link as DiagramLink, LinkEvents,
-    RichLinkType, RichLinkTypeEvents,
-    RichElementType, RichElementTypeEvents,
-    RichProperty,
+    Element, ElementEvents, Link, LinkEvents, LinkType, LinkTypeEvents,
+    ElementType, ElementTypeEvents, PropertyType, PropertyTypeEvents,
 } from './elements';
 
 export interface GraphEvents {
     changeCells: CellsChangedEvent;
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    linkTypeEvent: AnyEvent<RichLinkTypeEvents>;
-    classEvent: AnyEvent<RichElementTypeEvents>;
+    elementTypeEvent: AnyEvent<ElementTypeEvents>;
+    linkTypeEvent: AnyEvent<LinkTypeEvents>;
+    propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
 }
 
 export interface CellsChangedEvent {
     readonly updateAll: boolean;
-    readonly changedElement?: DiagramElement;
-    readonly changedLinks?: ReadonlyArray<DiagramLink>;
+    readonly changedElement?: Element;
+    readonly changedLinks?: ReadonlyArray<Link>;
 }
 
 export class Graph {
     private readonly source = new EventSource<GraphEvents>();
     readonly events: Events<GraphEvents> = this.source;
 
-    private readonly elements = new OrderedMap<DiagramElement>();
-    private readonly links = new OrderedMap<DiagramLink>();
-    private readonly elementLinks = new WeakMap<DiagramElement, DiagramLink[]>();
+    private readonly elements = new OrderedMap<Element>();
+    private readonly links = new OrderedMap<Link>();
+    private readonly elementLinks = new WeakMap<Element, Link[]>();
 
-    private readonly classesById = new Map<ElementTypeIri, RichElementType>();
-    private readonly propertiesById = new Map<PropertyTypeIri, RichProperty>();
+    private readonly classesById = new Map<ElementTypeIri, ElementType>();
+    private readonly propertiesById = new Map<PropertyTypeIri, PropertyType>();
 
-    private linkTypes = new Map<LinkTypeIri, RichLinkType>();
+    private linkTypes = new Map<LinkTypeIri, LinkType>();
     private static nextLinkTypeIndex = 0;
 
     getElements() { return this.elements.items; }
     getLinks() { return this.links.items; }
 
-    getLink(linkId: string): DiagramLink | undefined {
+    getLink(linkId: string): Link | undefined {
         return this.links.get(linkId);
     }
 
-    getElementLinks(element: DiagramElement): ReadonlyArray<DiagramLink> {
+    getElementLinks(element: Element): ReadonlyArray<Link> {
         return this.elementLinks.get(element) ?? [];
     }
 
-    findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): DiagramLink | undefined {
+    findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined {
         const source = this.getElement(sourceId);
         if (!source) { return undefined; }
         const links = this.elementLinks.get(source);
@@ -60,23 +58,23 @@ export class Graph {
         }
     }
 
-    sourceOf(link: DiagramLink) {
+    sourceOf(link: Link) {
         return this.getElement(link.sourceId);
     }
 
-    targetOf(link: DiagramLink) {
+    targetOf(link: Link) {
         return this.getElement(link.targetId);
     }
 
-    reorderElements(compare: (a: DiagramElement, b: DiagramElement) => number) {
+    reorderElements(compare: (a: Element, b: Element) => number) {
         this.elements.reorder(compare);
     }
 
-    getElement(elementId: string): DiagramElement | undefined {
+    getElement(elementId: string): Element | undefined {
         return this.elements.get(elementId);
     }
 
-    addElement(element: DiagramElement): void {
+    addElement(element: Element): void {
         if (this.getElement(element.id)) {
             throw new Error(`Element '${element.id}' already exists.`);
         }
@@ -104,25 +102,25 @@ export class Graph {
         }
     }
 
-    addLink(link: DiagramLink): void {
+    addLink(link: Link): void {
         if (this.getLink(link.id)) {
-            throw new Error(`Link '${link.id}' already exists.`);
+            throw new Error(`Link already exists: ${link.id}`);
         }
         const linkType = this.getLinkType(link.typeId);
         if (!linkType) {
-            throw new Error(`Link type '${link.typeId}' not found.`);
+            throw new Error(`Link type not found: ${link.typeId}`);
         }
         this.registerLink(link);
     }
 
-    private registerLink(link: DiagramLink) {
+    private registerLink(link: Link) {
         const source = this.sourceOf(link);
         if (!source) {
-            throw new Error(`Link source '${link.sourceId}' not found`);
+            throw new Error(`Link source not found: ${link.sourceId}`);
         }
         const target = this.targetOf(link);
         if (!target) {
-            throw new Error(`Link source '${link.targetId}' not found`);
+            throw new Error(`Link target not found: ${link.targetId}`);
         }
 
         let sourceLinks = this.elementLinks.get(source);
@@ -186,64 +184,69 @@ export class Graph {
         }
     }
 
-    getLinkTypes(): RichLinkType[] {
-        const result: RichLinkType[] = [];
+    getLinkTypes(): LinkType[] {
+        const result: LinkType[] = [];
         this.linkTypes.forEach(type => result.push(type));
         return result;
     }
 
-    getLinkType(linkTypeId: LinkTypeIri): RichLinkType | undefined {
+    getLinkType(linkTypeId: LinkTypeIri): LinkType | undefined {
         return this.linkTypes.get(linkTypeId);
     }
 
-    addLinkType(linkType: RichLinkType): void {
+    addLinkType(linkType: LinkType): void {
         if (this.getLinkType(linkType.id)) {
-            throw new Error(`Link type '${linkType.id}' already exists.`);
+            throw new Error(`Link type already exists: ${linkType.id}`);
         }
         linkType.setIndex(Graph.nextLinkTypeIndex++);
         linkType.events.onAny(this.onLinkTypeEvent);
         this.linkTypes.set(linkType.id, linkType);
     }
 
-    private onLinkTypeEvent: AnyListener<RichLinkTypeEvents> = (data) => {
+    private onLinkTypeEvent: AnyListener<LinkTypeEvents> = (data) => {
         this.source.trigger('linkTypeEvent', {data});
     };
 
-    getProperty(propertyId: PropertyTypeIri): RichProperty | undefined {
+    getPropertyType(propertyId: PropertyTypeIri): PropertyType | undefined {
         return this.propertiesById.get(propertyId);
     }
 
-    addProperty(property: RichProperty): void {
-        if (this.getProperty(property.id)) {
-            throw new Error(`Property '${property.id}' already exists.`);
+    addPropertyType(propertyType: PropertyType): void {
+        if (this.getPropertyType(propertyType.id)) {
+            throw new Error(`Property type already exists: ${propertyType.id}`);
         }
-        this.propertiesById.set(property.id, property);
+        propertyType.events.onAny(this.onPropertyTypeEvent);
+        this.propertiesById.set(propertyType.id, propertyType);
     }
 
-    getClass(classId: ElementTypeIri): RichElementType | undefined {
-        return this.classesById.get(classId);
+    private onPropertyTypeEvent: AnyListener<PropertyTypeEvents> = (data) => {
+        this.source.trigger('propertyTypeEvent', {data});
+    };
+
+    getElementType(elementTypeId: ElementTypeIri): ElementType | undefined {
+        return this.classesById.get(elementTypeId);
     }
 
-    getClasses(): RichElementType[] {
-        const classes: RichElementType[] = [];
+    getElementTypes(): ElementType[] {
+        const classes: ElementType[] = [];
         this.classesById.forEach(richClass => classes.push(richClass));
         return classes;
     }
 
-    addClass(classModel: RichElementType): void {
-        if (this.getClass(classModel.id)) {
-            throw new Error(`Class '${classModel.id}' already exists.`);
+    addElementType(elementType: ElementType): void {
+        if (this.getElementType(elementType.id)) {
+            throw new Error(`Element type already exists: ${elementType.id}`);
         }
-        classModel.events.onAny(this.onClassEvent);
-        this.classesById.set(classModel.id, classModel);
+        elementType.events.onAny(this.onElementTypeEvent);
+        this.classesById.set(elementType.id, elementType);
     }
 
-    private onClassEvent: AnyListener<RichElementTypeEvents> = (data) => {
-        this.source.trigger('classEvent', {data});
+    private onElementTypeEvent: AnyListener<ElementTypeEvents> = (data) => {
+        this.source.trigger('elementTypeEvent', {data});
     };
 }
 
-function removeLinkFrom(links: DiagramLink[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
+function removeLinkFrom(links: Link[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
     if (!links) { return; }
     while (true) {
         const index = findLinkIndex(links, linkTypeId, sourceId, targetId);
@@ -252,7 +255,7 @@ function removeLinkFrom(links: DiagramLink[], linkTypeId: LinkTypeIri, sourceId:
     }
 }
 
-function findLinkIndex(haystack: DiagramLink[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
+function findLinkIndex(haystack: Link[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
     for (let i = 0; i < haystack.length; i++) {
         const link = haystack[i];
         if (link.sourceId === sourceId &&

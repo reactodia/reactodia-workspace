@@ -7,24 +7,24 @@ import { Vector } from '../diagram/geometry';
 export interface SerializedDiagram {
     '@context': any;
     '@type': 'Diagram';
-    layoutData: LayoutData;
-    linkTypeOptions?: ReadonlyArray<LinkTypeOptions>;
+    layoutData: SerializedLayout;
+    linkTypeOptions?: ReadonlyArray<SerializedLinkOptions>;
 }
 
-export interface LinkTypeOptions {
+export interface SerializedLinkOptions {
     '@type': 'LinkTypeOptions';
     property: LinkTypeIri;
     visible: boolean;
     showLabel?: boolean;
 }
 
-export interface LayoutData {
+export interface SerializedLayout {
     '@type': 'Layout';
-    elements: ReadonlyArray<LayoutElement>;
-    links: ReadonlyArray<LayoutLink>;
+    elements: ReadonlyArray<SerializedLayoutElement>;
+    links: ReadonlyArray<SerializedLayoutLink>;
 }
 
-export interface LayoutElement {
+export interface SerializedLayoutElement {
     '@type': 'Element';
     '@id': string;
     iri: ElementIri;
@@ -35,7 +35,7 @@ export interface LayoutElement {
     elementState?: ElementTemplateState;
 }
 
-export interface LayoutLink {
+export interface SerializedLayoutLink {
     '@type': 'Link';
     '@id': string;
     property: LinkTypeIri;
@@ -54,13 +54,13 @@ export function emptyDiagram(): SerializedDiagram {
     };
 }
 
-export function emptyLayoutData(): LayoutData {
+export function emptyLayoutData(): SerializedLayout {
     return {'@type': 'Layout', elements: [], links: []};
 }
 
 export function makeSerializedDiagram(params: {
-    layoutData?: LayoutData;
-    linkTypeOptions?: ReadonlyArray<LinkTypeOptions>;
+    layoutData?: SerializedLayout;
+    linkTypeOptions?: ReadonlyArray<SerializedLinkOptions>;
 }): SerializedDiagram {
     const diagram: SerializedDiagram = {
         ...emptyDiagram(),
@@ -73,11 +73,11 @@ export function makeSerializedDiagram(params: {
     return diagram;
 }
 
-export function makeLayoutData(
+export function makeSerializedLayout(
     modelElements: ReadonlyArray<Element>,
     modelLinks: ReadonlyArray<Link>,
-): LayoutData {
-    const elements = modelElements.map((element): LayoutElement => ({
+): SerializedLayout {
+    const elements = modelElements.map((element): SerializedLayoutElement => ({
         '@type': 'Element',
         '@id': element.id,
         iri: element.iri,
@@ -86,7 +86,7 @@ export function makeLayoutData(
         group: element.group,
         elementState: element.elementState,
     }));
-    const links = modelLinks.map((link): LayoutLink => ({
+    const links = modelLinks.map((link): SerializedLayoutLink => ({
         '@type': 'Link',
         '@id': link.id,
         property: link.typeId,

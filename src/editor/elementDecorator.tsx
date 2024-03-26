@@ -144,7 +144,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         }
         const title = validation.errors.map(error => {
             if (error.propertyType) {
-                const {id, label} = model.createProperty(error.propertyType);
+                const {id, label} = model.createPropertyType(error.propertyType);
                 const source = model.locale.formatLabel(label, id);
                 return `${source}: ${error.message}`;
             } else {

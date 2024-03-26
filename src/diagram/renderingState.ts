@@ -8,7 +8,7 @@ import {
 
 import { ElementTypeIri, LinkTypeIri } from '../data/model';
 
-import { Element, Link, RichLinkType } from './elements';
+import { Element, Link, LinkType } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
@@ -65,6 +65,7 @@ export class RenderingState implements SizeProvider {
 
     readonly shared: SharedCanvasState;
 
+    /** @hidden */
     constructor(options: RenderingStateOptions) {
         this.model = options.model;
         this.shared = options.shared;
@@ -112,6 +113,7 @@ export class RenderingState implements SizeProvider {
         this.updateRoutings();
     }
 
+    /** @hidden */
     dispose() {
         this.listener.stopListening();
         this.delayedUpdateRoutings.dispose();
@@ -174,7 +176,7 @@ export class RenderingState implements SizeProvider {
         return this.linkTemplates;
     }
 
-    createLinkTemplate(linkType: RichLinkType): LinkTemplate {
+    createLinkTemplate(linkType: LinkType): LinkTemplate {
         const existingTemplate = this.linkTemplates.get(linkType.id);
         if (existingTemplate) {
             return existingTemplate;

@@ -1,7 +1,7 @@
-import { ElementModel, ElementIri, LinkModel, sameLink } from '../data/model';
+import { ElementModel, ElementIri, LinkModel, equalLinks } from '../data/model';
 
 import type { CanvasApi } from './canvasApi';
-import type { Element, Link, RichLinkType, LinkTypeVisibility } from './elements';
+import type { Element, Link, LinkType, LinkTypeVisibility } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
@@ -79,7 +79,7 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
 }
 
 export function changeLinkTypeVisibility(
-    linkType: RichLinkType,
+    linkType: LinkType,
     visibility: LinkTypeVisibility
 ): Command {
     return Command.create('Change link type visibility', () => {
@@ -124,12 +124,12 @@ function updateLinksToReferByNewIri(model: DiagramModel, element: Element, oldIr
 }
 
 export function setLinkData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
-    if (!sameLink(oldData, newData)) {
+    if (!equalLinks(oldData, newData)) {
         throw new Error('Cannot change typeId, sourceId or targetId when changing link data');
     }
     return Command.create('Set link data', () => {
         for (const link of model.links) {
-            if (sameLink(link.data, oldData)) {
+            if (equalLinks(link.data, oldData)) {
                 link.setData(newData);
             }
         }

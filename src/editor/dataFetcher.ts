@@ -2,12 +2,12 @@ import { Events, EventSource, PropertyChange } from '../coreUtils/events';
 import { BufferingQueue } from '../coreUtils/scheduler';
 
 import {
-    ElementModel, ElementType, LinkModel, LinkType, PropertyType,
+    ElementModel, ElementTypeModel, LinkModel, LinkTypeModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { DataProvider } from '../data/provider';
 
-import { RichElementType, RichLinkType, RichProperty } from '../diagram/elements';
+import { ElementType, LinkType, PropertyType } from '../diagram/elements';
 import { Graph } from '../diagram/graph';
 
 export interface DataFetcherEvents {
@@ -180,13 +180,13 @@ export class DataFetcher {
         return task;
     }
 
-    fetchElementType(model: RichElementType): void {
+    fetchElementType(model: ElementType): void {
         this.classQueue.push(model.id);
     }
 
-    private onElementTypesLoaded = (elementTypes: Map<ElementTypeIri, ElementType>) => {
+    private onElementTypesLoaded = (elementTypes: Map<ElementTypeIri, ElementTypeModel>) => {
         for (const {id, label, count} of elementTypes.values()) {
-            const model = this.graph.getClass(id);
+            const model = this.graph.getElementType(id);
             if (!model) { continue; }
             model.setLabel(label);
             if (typeof count === 'number') {
@@ -195,11 +195,11 @@ export class DataFetcher {
         }
     };
 
-    fetchLinkType(linkType: RichLinkType): void {
+    fetchLinkType(linkType: LinkType): void {
         this.linkTypeQueue.push(linkType.id);
     }
 
-    private onLinkTypesLoaded = (linkTypes: Map<LinkTypeIri, LinkType>) => {
+    private onLinkTypesLoaded = (linkTypes: Map<LinkTypeIri, LinkTypeModel>) => {
         for (const {id, label} of linkTypes.values()) {
             const model = this.graph.getLinkType(id);
             if (!model) { continue; }
@@ -207,13 +207,13 @@ export class DataFetcher {
         }
     };
 
-    fetchPropertyType(propertyType: RichProperty): void {
+    fetchPropertyType(propertyType: PropertyType): void {
         this.propertyTypeQueue.push(propertyType.id);
     }
 
-    private onPropertyTypesLoaded = (propertyTypes: Map<PropertyTypeIri, PropertyType>) => {
+    private onPropertyTypesLoaded = (propertyTypes: Map<PropertyTypeIri, PropertyTypeModel>) => {
         for (const {id, label} of propertyTypes.values()) {
-            const targetProperty = this.graph.getProperty(id);
+            const targetProperty = this.graph.getPropertyType(id);
             if (targetProperty) {
                 targetProperty.setLabel(label);
             }

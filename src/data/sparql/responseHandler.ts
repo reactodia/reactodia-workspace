@@ -3,11 +3,10 @@ import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkType, ElementType, ElementTypeGraph, ElementModel, LinkModel, PropertyType, LinkCount,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
-    hashSubtypeEdge, equalSubtypeEdges, sameLink, hashLink
+    LinkTypeModel, ElementTypeModel, ElementTypeGraph, ElementModel, LinkModel, PropertyTypeModel, LinkCount,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
+    hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
 } from '../model';
-import { LinkedElement } from '../provider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
 import {
     SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
@@ -77,7 +76,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
 
 export function getClassInfo(
     response: SparqlResponse<ClassBinding>
-): Map<ElementTypeIri, ElementType> {
+): Map<ElementTypeIri, ElementTypeModel> {
     const classes = new Map<ElementTypeIri, MutableClassModel>();
     for (const binding of response.results.bindings) {
         if (!binding.class) { continue; }
@@ -112,7 +111,7 @@ interface MutablePropertyModel {
 
 export function getPropertyInfo(
     response: SparqlResponse<PropertyBinding>
-): Map<PropertyTypeIri, PropertyType> {
+): Map<PropertyTypeIri, PropertyTypeModel> {
     const models = new Map<PropertyTypeIri, MutablePropertyModel>();
 
     for (const binding of response.results.bindings) {
@@ -138,7 +137,7 @@ interface MutableLinkType {
 
 export function getLinkTypes(
     response: SparqlResponse<LinkTypeBinding>
-): Map<LinkTypeIri, LinkType> {
+): Map<LinkTypeIri, LinkTypeModel> {
     const linkTypes = new Map<LinkTypeIri, MutableLinkType>();
 
     for (const binding of response.results.bindings) {
@@ -316,7 +315,7 @@ export function getLinksInfo(
     openWorldLinks: boolean = true
 ): LinkModel[] {
     const sparqlLinks = response.results.bindings;
-    const links = new HashMap<LinkModel, MutableLinkModel>(hashLink, sameLink);
+    const links = new HashMap<LinkModel, MutableLinkModel>(hashLink, equalLinks);
 
     for (const binding of sparqlLinks) {
         const model: MutableLinkModel = {

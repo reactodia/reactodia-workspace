@@ -3,7 +3,7 @@ import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils
 
 import { MetadataApi } from '../data/metadataApi';
 import { ValidationApi } from '../data/validationApi';
-import { ElementModel, LinkModel, ElementIri, sameLink } from '../data/model';
+import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
 
 import { setElementData, setLinkData } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
@@ -49,6 +49,7 @@ export class EditorController {
 
     private readonly cancellation = new AbortController();
 
+    /** @hidden */
     constructor(props: EditorProps) {
         const {model, ...options} = props;
         this.model = model;
@@ -93,6 +94,7 @@ export class EditorController {
         });
     }
 
+    /** @hidden */
     dispose() {
         this.listener.stopListening();
         this.cancellation.abort();
@@ -306,7 +308,7 @@ export class EditorController {
             this.model.createLinks(base.data);
         }
 
-        const links = this.model.links.filter(link => sameLink(link.data, base.data));
+        const links = this.model.links.filter(link => equalLinks(link.data, base.data));
         if (links.length > 0) {
             if (temporary) {
                 this.setTemporaryState(
@@ -328,7 +330,7 @@ export class EditorController {
 
     changeLink(oldData: LinkModel, newData: LinkModel) {
         const batch = this.model.history.startBatch('Change link');
-        if (sameLink(oldData, newData)) {
+        if (equalLinks(oldData, newData)) {
             this.model.history.execute(setLinkData(this.model, oldData, newData));
             this.setAuthoringState(
                 AuthoringState.changeLink(this._authoringState, oldData, newData)
@@ -340,7 +342,7 @@ export class EditorController {
 
             if (AuthoringState.isNewLink(this._authoringState, oldData)) {
                 this.model.links
-                    .filter(link => sameLink(link.data, oldData))
+                    .filter(link => equalLinks(link.data, oldData))
                     .forEach(link => this.model.removeLink(link.id));
             }
             this.model.createLinks(newData);
@@ -378,7 +380,7 @@ export class EditorController {
         const newState = AuthoringState.deleteLink(state, model);
         if (AuthoringState.isNewLink(state, model)) {
             this.model.links
-                .filter(({data}) => sameLink(data, model))
+                .filter(({data}) => equalLinks(data, model))
                 .forEach(link => this.model.removeLink(link.id));
         }
         this.setAuthoringState(newState);
@@ -458,7 +460,7 @@ export class EditorController {
                 );
             } else {
                 this.model.links
-                    .filter(({data}) => sameLink(data, event.after))
+                    .filter(({data}) => equalLinks(data, event.after))
                     .forEach(link => this.model.removeLink(link.id));
             }
         }

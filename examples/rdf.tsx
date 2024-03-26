@@ -15,13 +15,13 @@ function RdfExample() {
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
-        const {model, overlayController} = context;
+        const {model, overlay} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
             dataProvider.addGraph(new N3.Parser().parse(turtleData));
         } catch (err) {
-            overlayController.setSpinner({
+            overlay.setSpinner({
                 errorOccurred: true,
                 statusText: 'Error parsing RDF graph data',
             });

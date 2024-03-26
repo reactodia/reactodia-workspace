@@ -2,7 +2,7 @@ import { AbortScope } from '../coreUtils/async';
 import { EventSource, Events } from '../coreUtils/events';
 
 import {
-    ElementModel, LinkModel, LinkType,
+    ElementModel, LinkModel, LinkTypeModel,
     ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
@@ -11,15 +11,15 @@ import { DataFactory } from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import {
-    Element, RichLinkType, RichElementType, RichProperty, Link, LinkTypeVisibility,
+    Element, LinkType, ElementType, PropertyType, Link, LinkTypeVisibility,
 } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents, DiagramModelOptions } from '../diagram/model';
 
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
-    LayoutData, LinkTypeOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
-    makeLayoutData, makeSerializedDiagram, 
+    SerializedLayout, SerializedLinkOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
+    makeSerializedLayout, makeSerializedDiagram, 
 } from './serializedDiagram';
 
 export interface GroupBy {
@@ -190,14 +190,14 @@ export class AsyncModel extends DiagramModel {
     }
 
     exportLayout(): SerializedDiagram {
-        const layoutData = makeLayoutData(this.graph.getElements(), this.graph.getLinks());
+        const layoutData = makeSerializedLayout(this.graph.getElements(), this.graph.getLinks());
         const linkTypeOptions = this.graph.getLinkTypes()
             // do not serialize default link type options
             .filter(linkType => (
                 linkType.visibility !== 'visible' &&
                 linkType.id !== PLACEHOLDER_LINK_TYPE
             ))
-            .map(({id, visibility}): LinkTypeOptions => ({
+            .map(({id, visibility}): SerializedLinkOptions => ({
                 '@type': 'LinkTypeOptions',
                 property: id,
                 visible: visibility !== 'hidden',
@@ -206,17 +206,17 @@ export class AsyncModel extends DiagramModel {
         return makeSerializedDiagram({layoutData, linkTypeOptions});
     }
 
-    private initLinkTypes(linkTypes: LinkType[]): RichLinkType[] {
-        const types: RichLinkType[] = [];
+    private initLinkTypes(linkTypes: LinkTypeModel[]): LinkType[] {
+        const types: LinkType[] = [];
         for (const {id, label} of linkTypes) {
-            const linkType = new RichLinkType({id, label});
+            const linkType = new LinkType({id, label});
             this.graph.addLinkType(linkType);
             types.push(linkType);
         }
         return types;
     }
 
-    private setLinkSettings(settings: ReadonlyArray<LinkTypeOptions>) {
+    private setLinkSettings(settings: ReadonlyArray<SerializedLinkOptions>) {
         for (const setting of settings) {
             const {visible = true, showLabel = true} = setting;
             const linkTypeId = setting.property as LinkTypeIri;
@@ -234,7 +234,7 @@ export class AsyncModel extends DiagramModel {
     }
 
     private createGraphElements(params: {
-        layoutData?: LayoutData;
+        layoutData?: SerializedLayout;
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         markLinksAsLayoutOnly: boolean;
     }): void {
@@ -316,7 +316,7 @@ export class AsyncModel extends DiagramModel {
             .then(links => this.onLinkInfoLoaded(links));
     }
 
-    override createElementType(elementTypeIri: ElementTypeIri): RichElementType {
+    override createElementType(elementTypeIri: ElementTypeIri): ElementType {
         const existing = super.getElementType(elementTypeIri);
         if (existing) {
             return existing;
@@ -326,7 +326,7 @@ export class AsyncModel extends DiagramModel {
         return classModel;
     }
 
-    override createLinkType(linkTypeId: LinkTypeIri): RichLinkType {
+    override createLinkType(linkTypeId: LinkTypeIri): LinkType {
         if (this.graph.getLinkType(linkTypeId)) {
             return super.createLinkType(linkTypeId);
         }
@@ -339,11 +339,11 @@ export class AsyncModel extends DiagramModel {
         return linkType;
     }
 
-    override createProperty(propertyIri: PropertyTypeIri): RichProperty {
-        if (this.graph.getProperty(propertyIri)) {
-            return super.createProperty(propertyIri);
+    override createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
+        if (this.graph.getPropertyType(propertyIri)) {
+            return super.createPropertyType(propertyIri);
         }
-        const property = super.createProperty(propertyIri);
+        const property = super.createPropertyType(propertyIri);
         this.fetcher.fetchPropertyType(property);
         return property;
     }
