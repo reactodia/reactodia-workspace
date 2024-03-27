@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.24.0] - 2024-03-27
 ### Added
 - Track and display fetching state for the graph data:
   * Expose `AsyncModel.operations` property and `AsyncModel.changeOperations` event to track active fetch operation;
@@ -177,7 +179,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.20.0...v0.21.0
