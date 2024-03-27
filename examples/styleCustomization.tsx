@@ -40,7 +40,7 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function StyleCustomizationExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+    const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();

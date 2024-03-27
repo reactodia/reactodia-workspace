@@ -254,13 +254,18 @@ function getHueFromClasses(classes: ReadonlyArray<ElementTypeIri>, seed?: number
     return 360 * ((hash === undefined ? 0 : hash) / MAX_INT32);
 }
 
+export interface LoadedWorkspaceParams {
+    readonly context: WorkspaceContext;
+    readonly signal: AbortSignal;
+}
+
 export interface LoadedWorkspace {
     readonly getContext: () => WorkspaceContext;
     readonly onMount: (workspace: Workspace | null) => void;
 }
 
 export function useLoadedWorkspace(
-    onLoad: (context: WorkspaceContext, signal: AbortSignal) => Promise<void>,
+    onLoad: (params: LoadedWorkspaceParams) => Promise<void>,
     deps: unknown[]
 ): LoadedWorkspace {
     const [context, setContext] = React.useState<WorkspaceContext>();
@@ -300,13 +305,19 @@ export function useLoadedWorkspace(
             const latestOnLoad = stateRef.current!.latestOnLoad;
 
             const controller = new AbortController();
-            latestOnLoad(context, controller.signal).catch(err => {
-                if (controller.signal.aborted) {
-                    return;
+            (async () => {
+                const task = context.overlay._startTask();
+                try {
+                    await latestOnLoad({context, signal: controller.signal});
+                } catch (err) {
+                    if (!controller.signal.aborted) {
+                        task.setError(err);
+                        console.error('Reactodia: failed to load a workspace', err);
+                    }
+                } finally {
+                    task.end();
                 }
-                context.overlay.setSpinner({ errorOccurred: true });
-                console.error('Error loading Reactodia workspace', err);
-            });
+            })();
 
             return () => {
                 controller.abort();

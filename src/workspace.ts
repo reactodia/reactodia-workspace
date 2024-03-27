@@ -157,7 +157,9 @@ export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
 
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
-export { Workspace, WorkspaceProps, useLoadedWorkspace } from './workspace/workspace';
+export {
+    Workspace, WorkspaceProps, LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
+} from './workspace/workspace';
 export {
     WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';

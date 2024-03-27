@@ -26,26 +26,25 @@ const GRAPH_DATA =
     'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
     'master/examples/resources/orgOntology.ttl';
 
+// Use background Web Worker to compute graph layout
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
+  new URL('@reactodia/workspace/layout.worker', import.meta.url)
+));
+
 function BasicExample() {
-    const workspaceRef = React.useRef<Workspace | null>(null);
+    const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    React.useEffect(() => {
-        const controller = new AbortController();
-        loadGraphData(controller.signal);
-        return () => controller.abort();
-    }, []);
-
-    async function loadGraphData(signal: AbortSignal) {
-        const {model, performLayout} = workspaceRef.current!.getContext();
+    const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
+        const {model, performLayout} = context;
         // Fetch graph data to use as underlying data source
         const response = await fetch(GRAPH_DATA, {signal});
         const graphData = new N3.Parser().parse(await response.text());
-        const dataProvider = new RdfDataProvider({acceptBlankNodes: false});
+        const dataProvider = new Reactodia.RdfDataProvider({acceptBlankNodes: false});
         dataProvider.addGraph(graphData);
 
         // Create empty diagram and put owl:Class entities with links between them
         await model.createNewDiagram({dataProvider, signal});
-        const elementTypeId = 'http://www.w3.org/2002/07/owl#Class' as ElementTypeIri;
+        const elementTypeId = 'http://www.w3.org/2002/07/owl#Class' as Reactodia.ElementTypeIri;
         for (const {element} of await dataProvider.lookup({elementTypeId})) {
             model.createElement(element);
         }
@@ -53,12 +52,13 @@ function BasicExample() {
 
         // Layout elements on canvas
         await performLayout({signal});
-    }
+    }, []);
 
     return (
-        <Workspace ref={workspaceRef}>
-            <DefaultWorkspace />
-        </Workspace>
+        <Reactodia.Workspace ref={onMount}
+            defaultLayout={defaultLayout}>
+            <Reactodia.DefaultWorkspace />
+        </Reactodia.Workspace>
     );
 }
 ```

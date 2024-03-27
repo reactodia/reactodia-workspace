@@ -10,7 +10,7 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function WikidataExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const {onMount, getContext} = Reactodia.useLoadedWorkspace(async (context, signal) => {
+    const {onMount, getContext} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model} = context;
 
         const sparqlProvider = new Reactodia.SparqlDataProvider(

@@ -82,23 +82,11 @@ export class OverlayController {
         this.editor = editor;
         this.options = options;
 
-        this.listener.listen(this.model.events, 'loadingStart', () => this.setSpinner({}));
         this.listener.listen(this.model.events, 'loadingSuccess', () => {
-            this.setSpinner(undefined);
             this.view.setCanvasWidget('states', {
                 element: <LinkStateWidget />,
                 attachment: 'overLinks',
             });
-        });
-        this.listener.listen(this.model.events, 'loadingError', ({error}) => {
-            let statusText: string | undefined;
-            if (error && typeof error === 'object' && 'message' in error) {
-                const message = error.message;
-                if (typeof message === 'string') {
-                    statusText = message;
-                }
-            }
-            this.setSpinner({statusText, errorOccurred: true});
         });
         const finishGroupLayout = async (group: string) => {
             const canvas = this.view.findAnyCanvas();
@@ -182,7 +170,35 @@ export class OverlayController {
         );
     }
 
-    setSpinner(props: SpinnerProps | undefined) {
+    /** @hidden */
+    _startTask(): OverlayTask {
+        let hasError = false;
+        let error: unknown;
+
+        this.setSpinner({});
+        return {
+            setError: (taskError: unknown) => {
+                hasError = true;
+                error = taskError;
+            },
+            end: () => {
+                if (hasError) {
+                    let statusText: string | undefined;
+                    if (error && typeof error === 'object' && 'message' in error) {
+                        const message = error.message;
+                        if (typeof message === 'string') {
+                            statusText = message;
+                        }
+                    }
+                    this.setSpinner({statusText, errorOccurred: true});
+                } else {
+                    this.setSpinner(undefined);
+                }
+            },
+        };
+    }
+
+    private setSpinner(props: SpinnerProps | undefined) {
         this.view.setCanvasWidget('loadingWidget', props ? {
             element: <LoadingWidget spinnerProps={props} />,
             attachment: 'viewport',
@@ -401,6 +417,11 @@ export class OverlayController {
             onClose: onFinish,
         });
     }
+}
+
+interface OverlayTask {
+    setError(error: unknown): void;
+    end(): void;
 }
 
 function LoadingWidget(props: { spinnerProps: SpinnerProps }) {

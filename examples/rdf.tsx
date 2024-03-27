@@ -14,19 +14,14 @@ function RdfExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
-    const {onMount} = Reactodia.useLoadedWorkspace(async (context, signal) => {
-        const {model, overlay} = context;
+    const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
+        const {model} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
             dataProvider.addGraph(new N3.Parser().parse(turtleData));
         } catch (err) {
-            overlay.setSpinner({
-                errorOccurred: true,
-                statusText: 'Error parsing RDF graph data',
-            });
-            console.error('Error parsing RDF graph data', err);
-            return;
+            throw new Error('Error parsing RDF graph data', {cause: err});
         }
     
         const diagram = tryLoadLayoutFromLocalStorage();
