@@ -1,6 +1,6 @@
 # Reactodia Workspace [![npm version](https://badge.fury.io/js/@reactodia%2Fworkspace.svg)](https://badge.fury.io/js/@reactodia%2Fworkspace)
 
-[Changelog](https://github.com/reactodia/reactodia-workspace/blob/master/CHANGELOG.md) | [Interactive examples](https://reactodia.github.io/workspace/rdf.html)
+[Documentation](https://reactodia.github.io/) | [Changelog](https://github.com/reactodia/reactodia-workspace/blob/master/CHANGELOG.md) | [Interactive demos](https://reactodia.github.io/docs/category/examples)
 
 `@reactodia/workspace` is a TypeScript library that allows to explore, visualize and make changes to the data in the form of an interactive graph based on underlying data sources.
 
