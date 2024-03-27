@@ -32,6 +32,7 @@ export * from './data/composite/composite';
 export {
     DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, makeDelayProviderDecorator,
 } from './data/decorated/decoratedDataProvider';
+export { EmptyDataProvider } from './data/decorated/emptyDataProvider';
 export {
     IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
 } from './data/decorated/indexedDbCachedProvider';
