@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Add `DiagramModel.discardLayout()` to be used for correct `useEffect()` cleanup;
   * Add `useLoadedWorkspace()` hook for easier and correct by default asynchronous workspace loading;
 - Fix reloading/re-fetching class tree when importing a diagram with same data provider.
+- Fix elements lagging behind when moving `Selection` box.
 - Fix `SelectionActionEstablishLink` being displayed when authoring mode is not active.
 - Fix missing inheritable CSS defaults for links in the exported diagrams.
 - Fix shrinking buttons for link types in `ConnectionsMenu`.

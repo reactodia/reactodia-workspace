@@ -384,6 +384,7 @@ class StatefulMoveController {
                     y: position.y + dy,
                 });
             }
+            canvas.renderingState.syncUpdate();
         }
     };
 
