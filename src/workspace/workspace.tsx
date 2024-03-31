@@ -27,20 +27,40 @@ import {
 } from './workspaceContext';
 
 export interface WorkspaceProps {
+    /**
+     * Overrides default command history implementation.
+     *
+     * By default, it uses `InMemoryHistory` instance.
+     */
     history?: CommandHistory;
     /**
+     * Allows to customize how colors and icons are assigned to elements based
+     * on its types.
+     *
+     * By default, the colors are assigned deterministically based on total
+     * hash of type strings.
+     */
+    typeStyleResolver?: TypeStyleResolver;
+    /**
+     * Provides a strategy to visually edit graph data.
+     * 
      * If provided, switches editor into "authoring mode".
      */
     metadataApi?: MetadataApi;
-    validationApi?: ValidationApi;
-    propertyEditor?: PropertyEditor;
-    typeStyleResolver?: TypeStyleResolver;
     /**
-     * Overrides label selection based on target language.
+     * Provides a strategy to validate changes to the graph data in "authoring mode".
+     */
+    validationApi?: ValidationApi;
+    /**
+     * Overrides default property editor for elements and links in "authoring mode".
+     */
+    propertyEditor?: PropertyEditor;
+    /**
+     * Overrides how a single label gets selected from multiple of them based on target language.
      */
     selectLabelLanguage?: LabelLanguageSelector;
     /**
-     * Initial selected language.
+     * Initial language to display the graph data with.
      */
     defaultLanguage?: string;
     /**
@@ -262,6 +282,12 @@ export interface LoadedWorkspace {
     readonly onMount: (workspace: Workspace | null) => void;
 }
 
+/**
+ * Hook to perform asynchronous initialization of the workspace.
+ *
+ * This function could be used to setup data provider, fetch initial data
+ * or import existing diagram layout.
+ */
 export function useLoadedWorkspace(
     onLoad: (params: LoadedWorkspaceParams) => Promise<void>,
     deps: unknown[]
