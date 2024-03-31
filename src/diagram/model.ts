@@ -23,10 +23,6 @@ export interface DiagramModelEvents {
     elementTypeEvent: AnyEvent<ElementTypeEvents>;
     linkTypeEvent: AnyEvent<LinkTypeEvents>;
     propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
-    changeGroupContent: {
-        readonly group: string;
-        readonly layoutComplete: boolean;
-    };
     discardGraph: { readonly source: DiagramModel };
 }
 
@@ -153,11 +149,11 @@ export class DiagramModel implements GraphStructure {
         this.source.trigger('changeCellOrder', {source: this});
     }
 
-    createElement(elementIriOrModel: ElementIri | ElementModel, group?: string): Element {
+    createElement(elementIriOrModel: ElementIri | ElementModel): Element {
         const elementIri = typeof elementIriOrModel === 'string'
             ? elementIriOrModel : (elementIriOrModel as ElementModel).id;
 
-        const elements = this.elements.filter(el => el.iri === elementIri && el.group === group);
+        const elements = this.elements.filter(el => el.iri === elementIri);
         if (elements.length > 0) {
             // usually there should be only one element
             return elements[0];
@@ -167,7 +163,7 @@ export class DiagramModel implements GraphStructure {
             ? Element.placeholderData(elementIri)
             : elementIriOrModel as ElementModel;
         data = {...data, id: data.id};
-        const element = new Element({data, group});
+        const element = new Element({data});
         this.addElement(element);
         return element;
     }
@@ -261,12 +257,6 @@ export class DiagramModel implements GraphStructure {
         const property = new PropertyType({id: propertyIri});
         this.graph.addPropertyType(property);
         return property;
-    }
-
-    /** @hidden */
-    _triggerChangeGroupContent(group: string, options: { layoutComplete: boolean }) {
-        const {layoutComplete} = options;
-        this.source.trigger('changeGroupContent', {group, layoutComplete});
     }
 }
 

@@ -19,7 +19,6 @@ import { SharedCanvasState, IriClickIntent } from './sharedCanvasState';
 export interface ElementLayerProps {
     model: DiagramModel;
     renderingState: RenderingState;
-    group?: string;
     style: React.CSSProperties;
 }
 
@@ -66,12 +65,11 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
 
     constructor(props: ElementLayerProps) {
         super(props);
-        const {model, renderingState, group} = this.props;
+        const {model, renderingState} = this.props;
         this.state = {
             elementStates: applyRedrawRequests(
                 model,
                 renderingState.shared,
-                group,
                 this.redrawBatch,
                 new Map<string, ElementState>()
             )
@@ -162,20 +160,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         });
     }
 
-    componentDidUpdate(prevProps: ElementLayerProps) {
-        if (this.props.group !== prevProps.group) {
-            this.setState((state, props): State => ({
-                elementStates: applyRedrawRequests(
-                    props.model,
-                    props.renderingState.shared,
-                    props.group,
-                    this.redrawBatch,
-                    state.elementStates
-                )
-            }));
-        }
-    }
-
     componentWillUnmount() {
         this.listener.stopListening();
         this.delayedRedraw.dispose();
@@ -203,7 +187,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             elementStates: applyRedrawRequests(
                 props.model,
                 props.renderingState.shared,
-                props.group,
                 this.redrawBatch,
                 state.elementStates
             )
@@ -229,7 +212,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
 function applyRedrawRequests(
     model: DiagramModel,
     view: SharedCanvasState,
-    targetGroup: string | undefined,
     batch: RedrawBatch,
     previous: ReadonlyMap<string, ElementState>,
 ): ReadonlyMap<string, ElementState> {
@@ -238,7 +220,6 @@ function applyRedrawRequests(
     }
     const computed = new Map<string, ElementState>();
     for (const element of model.elements) {
-        if (element.group !== targetGroup) { continue; }
         const elementId = element.id;
         let state = previous.get(elementId);
         if (state) {

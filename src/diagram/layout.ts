@@ -3,7 +3,7 @@ import type { ElementTypeIri } from '../data/model';
 import { RestoreGeometry } from './commands';
 import type { Element } from './elements';
 import {
-    Rect, Size, SizeProvider, Vector, boundsOf, computeGrouping, getContentFittingBox,
+    Rect, Size, SizeProvider, Vector, boundsOf, getContentFittingBox,
 } from './geometry';
 import { DiagramModel } from './model';
 
@@ -29,7 +29,6 @@ export interface LayoutState {
 export type LayoutFunction = (graph: LayoutGraph, state: LayoutState) => Promise<LayoutState>;
 
 export interface CalculatedLayout {
-    group?: string;
     positions: Map<string, Vector>;
     sizes: Map<string, Size>;
     nestedLayouts: CalculatedLayout[];
@@ -40,7 +39,6 @@ export async function calculateLayout(params: {
     model: DiagramModel;
     sizeProvider: SizeProvider;
     fixedElements?: ReadonlySet<Element>;
-    group?: string;
     selectedElements?: ReadonlySet<Element>;
     signal?: AbortSignal;
 }): Promise<CalculatedLayout> {    
@@ -54,82 +52,59 @@ export async function calculateLayout(params: {
         };
     }
 
-    const grouping = computeGrouping(model.elements);
-
-    async function calculateLayoutForGroup(group: string | undefined): Promise<CalculatedLayout> {
-        const elementsToProcess = group
-            ? grouping.get(group) ?? []
-            : model.elements.filter(el => el.group === undefined);
-        const elements = selectedElements
-            ? elementsToProcess.filter(el => selectedElements.has(el))
-            : elementsToProcess;
-
-        const nestedLayoutTasks: Array<Promise<CalculatedLayout>> = [];
-        for (const element of elements) {
-            if (grouping.has(element.id)) {
-                nestedLayoutTasks.push(calculateLayoutForGroup(element.id));
-            }
-        }
-
-        const nestedLayouts = await Promise.all(nestedLayoutTasks);
-
-        const nodes: { [id: string]: LayoutNode } = Object.create(null);
-        const bounds: { [id: string]: Rect } = Object.create(null);
-
-        for (const element of elements) {
-            nodes[element.id] = {
-                types: element.data.types,
-                fixed: fixedElements?.has(element),
-            };
-            bounds[element.id] = boundsOf(element, sizeProvider);
-        }
-
-        const links: LayoutLink[] = [];
-
-        for (const link of model.links) {
-            if (Object.hasOwn(nodes, link.sourceId) && Object.hasOwn(nodes, link.targetId)) {
-                links.push({
-                    source: link.sourceId,
-                    target: link.targetId,
-                });
-            }
-        }
-
-        const state = await layoutFunction({nodes, links}, {bounds});
-
-        const positions = new Map<string, Vector>();
-        const sizes = new Map<string, Size>();
-        for (const [id, {x, y, width, height}] of Object.entries(state.bounds)) {
-            positions.set(id, {x, y});
-            sizes.set(id, {width, height});
-        }
-
-        return {
-            positions,
-            sizes,
-            group,
-            nestedLayouts,
-        };
+    let elements = model.elements;
+    if (selectedElements) {
+        elements = elements.filter(el => selectedElements.has(el));
     }
 
-    return await calculateLayoutForGroup(params.group);
+    const nodes: { [id: string]: LayoutNode } = Object.create(null);
+    const bounds: { [id: string]: Rect } = Object.create(null);
+
+    for (const element of elements) {
+        nodes[element.id] = {
+            types: element.data.types,
+            fixed: fixedElements?.has(element),
+        };
+        bounds[element.id] = boundsOf(element, sizeProvider);
+    }
+
+    const links: LayoutLink[] = [];
+
+    for (const link of model.links) {
+        if (Object.hasOwn(nodes, link.sourceId) && Object.hasOwn(nodes, link.targetId)) {
+            links.push({
+                source: link.sourceId,
+                target: link.targetId,
+            });
+        }
+    }
+
+    const state = await layoutFunction({nodes, links}, {bounds});
+
+    const positions = new Map<string, Vector>();
+    const sizes = new Map<string, Size>();
+    for (const [id, {x, y, width, height}] of Object.entries(state.bounds)) {
+        positions.set(id, {x, y});
+        sizes.set(id, {width, height});
+    }
+
+    return {
+        positions,
+        sizes,
+        nestedLayouts: [],
+    };
 }
 
 export function applyLayout(
     layout: CalculatedLayout,
     model: DiagramModel
 ): void {
-    const {positions, sizes, group, nestedLayouts} = layout;
+    const {positions, sizes, nestedLayouts} = layout;
     const sizeProvider = new StaticSizeProvider(sizes);
 
     const elements = model.elements.filter(({id}) => positions.has(id));
     for (const nestedLayout of nestedLayouts) {
         applyLayout(nestedLayout, model);
-    }
-
-    if (group) {
-        const offset: Vector = getContentFittingBox(elements, [], sizeProvider);
-        translateToPositiveQuadrant(positions, offset);
     }
 
     const averagePosition = calculateAveragePosition(elements, sizeProvider);

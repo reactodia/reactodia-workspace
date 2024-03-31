@@ -53,17 +53,11 @@ function RdfExample() {
             metadataApi={metadataApi}
             validationApi={validationApi}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
-            groupBy={[
-                {linkType: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', linkDirection: 'in'},
-            ]}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
                 canvas={{
                     elementTemplateResolver: types => {
-                        if (types.length === 0) {
-                            // use group template only for classes
-                            return Reactodia.GroupTemplate;
-                        } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
+                        if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
                             return Reactodia.ClassicTemplate;
                         }
                         return undefined;

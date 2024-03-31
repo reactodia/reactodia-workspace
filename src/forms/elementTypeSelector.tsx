@@ -170,7 +170,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         if (existingElements.length > 0) {
             return existingElements.map(element => {
                 const isAlreadyOnDiagram = !editor.temporaryState.elements.has(element.id) && Boolean(
-                    model.elements.find(({iri, group}) => iri === element.id && group === undefined)
+                    model.elements.find(({iri}) => iri === element.id)
                 );
                 const hasAppropriateType = Boolean(
                     elementTypes && elementTypes.find(type => element.types.indexOf(type) >= 0)

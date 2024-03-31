@@ -97,7 +97,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
         } else {
             const newSelection = new Set(selection);
             for (const element of model.elements) {
-                if (element.group === undefined && selection.has(element.iri)) {
+                if (selection.has(element.iri)) {
                     newSelection.delete(element.iri);
                 }
             }
@@ -230,7 +230,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
         const {model} = this.context;
         const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
         const alreadyOnDiagram = model.elements.findIndex(
-            element => element.iri === item.id && element.group === undefined
+            element => element.iri === item.id
         ) >= 0;
         return !useDragAndDrop || !alreadyOnDiagram;
     }

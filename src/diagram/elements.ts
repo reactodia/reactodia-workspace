@@ -18,7 +18,6 @@ export interface ElementEvents {
     changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
     requestedFocus: { source: Element };
     requestedRedraw: { source: Element };
-    requestedGroupContent: { source: Element };
 }
 
 export class Element {
@@ -30,7 +29,6 @@ export class Element {
     private _data: ElementModel;
     private _position: Vector;
     private _expanded: boolean;
-    private _group: string | undefined;
     private _elementState: ElementTemplateState | undefined;
     private _temporary: boolean;
 
@@ -39,7 +37,6 @@ export class Element {
         data: ElementModel;
         position?: Vector;
         expanded?: boolean;
-        group?: string;
         elementState?: ElementTemplateState;
         temporary?: boolean;
     }) {
@@ -48,7 +45,6 @@ export class Element {
             data,
             position = {x: 0, y: 0},
             expanded = false,
-            group,
             elementState,
             temporary = false,
         } = props;
@@ -57,7 +53,6 @@ export class Element {
         this._data = data;
         this._position = position;
         this._expanded = expanded;
-        this._group = group;
         this._elementState = elementState;
         this._temporary = temporary;
     }
@@ -101,14 +96,6 @@ export class Element {
         this.source.trigger('changeExpanded', {source: this, previous});
     }
 
-    get group(): string | undefined { return this._group; }
-    setGroup(value: string | undefined) {
-        const previous = this._group;
-        if (previous === value) { return; }
-        this._group = value;
-        this.source.trigger('changeGroup', {source: this, previous});
-    }
-
     get elementState(): ElementTemplateState | undefined { return this._elementState; }
     setElementState(value: ElementTemplateState | undefined) {
         const previous = this._elementState;
@@ -125,10 +112,6 @@ export class Element {
 
     redraw() {
         this.source.trigger('requestedRedraw', {source: this});
-    }
-
-    requestGroupContent() {
-        this.source.trigger('requestedGroupContent', {source: this});
     }
 }
 

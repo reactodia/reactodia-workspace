@@ -83,7 +83,6 @@ export function makeSerializedLayout(
         iri: element.iri,
         position: element.position,
         isExpanded: element.isExpanded,
-        group: element.group,
         elementState: element.elementState,
     }));
     const links = modelLinks.map((link): SerializedLayoutLink => ({

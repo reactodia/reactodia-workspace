@@ -49,7 +49,6 @@ export * from './diagram/customization';
 export {
     Element, ElementEvents, ElementTemplateState, Link, LinkEvents, LinkTemplateState, LinkVertex, Cell,
 } from './diagram/elements';
-export { EmbeddedLayer } from './diagram/embeddedLayer';
 export * from './diagram/geometry';
 export * from './diagram/history';
 export {
@@ -93,7 +92,6 @@ export { ClassicTemplate } from './templates/classicTemplate';
 export {
     DefaultLinkTemplate, DefaultLinkPathTemplate, DefaultLinkPathTemplateProps,
 } from './templates/defaultLinkTemplate';
-export { GroupTemplate } from './templates/groupTemplate';
 export { StandardTemplate } from './templates/standardTemplate';
 export { SemanticTypeStyles } from './templates/typeStyles';
 export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';

@@ -234,22 +234,6 @@ export function findElementAtPoint(
     return undefined;
 }
 
-export function computeGrouping(elements: ReadonlyArray<Element>): Map<string, Element[]> {
-    const grouping = new Map<string, Element[]>();
-    for (const element of elements) {
-        const group = element.group;
-        if (typeof group === 'string') {
-            let children = grouping.get(group);
-            if (!children) {
-                children = [];
-                grouping.set(group, children);
-            }
-            children.push(element);
-        }
-    }
-    return grouping;
-}
-
 export function getContentFittingBox(
     elements: Iterable<Element>,
     links: Iterable<Link>,

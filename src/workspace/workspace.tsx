@@ -15,7 +15,7 @@ import { LayoutFunction, calculateLayout, applyLayout } from '../diagram/layout'
 import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
-import { AsyncModel, GroupBy } from '../editor/asyncModel';
+import { AsyncModel } from '../editor/asyncModel';
 import { EditorController } from '../editor/editorController';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
@@ -35,7 +35,6 @@ export interface WorkspaceProps {
     validationApi?: ValidationApi;
     propertyEditor?: PropertyEditor;
     typeStyleResolver?: TypeStyleResolver;
-    groupBy?: ReadonlyArray<GroupBy>;
     /**
      * Overrides label selection based on target language.
      */
@@ -78,7 +77,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
             metadataApi,
             validationApi,
             propertyEditor,
-            groupBy = [],
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
@@ -89,7 +87,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
 
-        const model = new AsyncModel({history, selectLabelLanguage, groupBy});
+        const model = new AsyncModel({history, selectLabelLanguage});
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({

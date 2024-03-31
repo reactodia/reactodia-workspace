@@ -16,7 +16,6 @@ export interface PaperProps {
     onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     onScrollCapture?: (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => void;
-    group?: string;
     linkLayerWidgets?: React.ReactElement<any>;
     elementLayerWidgets?: React.ReactElement<any>;
 }
@@ -26,7 +25,7 @@ const CLASS_NAME = 'reactodia-paper';
 export class Paper extends Component<PaperProps> {
     render() {
         const {
-            model, renderingState, group, paperTransform, svgCanvasRef,
+            model, renderingState, paperTransform, svgCanvasRef,
             linkLayerWidgets, elementLayerWidgets,
         } = this.props;
         const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
@@ -65,13 +64,11 @@ export class Paper extends Component<PaperProps> {
                     <LinkLayer model={model}
                         renderingState={renderingState}
                         links={model.links}
-                        group={group}
                     />
                 </TransformedSvgCanvas>
                 {linkLayerWidgets}
                 <ElementLayer model={model}
                     renderingState={renderingState}
-                    group={group}
                     style={htmlTransformStyle}
                 />
                 {elementLayerWidgets}

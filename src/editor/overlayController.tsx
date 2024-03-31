@@ -7,7 +7,6 @@ import { ElementModel, LinkModel } from '../data/model';
 import { CanvasApi, CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
-import { calculateLayout, applyLayout } from '../diagram/layout';
 import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
@@ -87,25 +86,6 @@ export class OverlayController {
                 element: <LinkStateWidget />,
                 attachment: 'overLinks',
             });
-        });
-        const finishGroupLayout = async (group: string) => {
-            const canvas = this.view.findAnyCanvas();
-            if (canvas) {
-                canvas.renderingState.syncUpdate();
-                const layout = await calculateLayout({
-                    layoutFunction: this.view.defaultLayout,
-                    model: this.model,
-                    sizeProvider: canvas.renderingState,
-                    group,
-                });
-                applyLayout(layout, this.model);
-                this.model._triggerChangeGroupContent(group, {layoutComplete: true});
-            }
-        };
-        this.listener.listen(this.model.events, 'changeGroupContent', e => {
-            if (!e.layoutComplete) {
-                finishGroupLayout(e.group);
-            }
         });
         this.listener.listen(this.editor.events, 'changeSelection', () => {
             const target = this.editor.selection.length === 1 ? this.editor.selection[0] : undefined;

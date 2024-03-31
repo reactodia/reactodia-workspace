@@ -29,6 +29,7 @@
     "test": "npm run build && npm run build-examples",
     "typings": "tsc --project tsconfig.base.json --declaration --emitDeclarationOnly --outDir dist/typings",
     "lint": "eslint --ext .jx,.jsx,.ts,.tsx src/ examples/",
+    "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
   "dependencies": {

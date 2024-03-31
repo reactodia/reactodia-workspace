@@ -22,11 +22,6 @@ import {
     makeSerializedLayout, makeSerializedDiagram, 
 } from './serializedDiagram';
 
-export interface GroupBy {
-    linkType: string;
-    linkDirection: 'in' | 'out';
-}
-
 export interface AsyncModelEvents extends DiagramModelEvents {
     loadingStart: { source: AsyncModel };
     loadingSuccess: { source: AsyncModel };
@@ -42,14 +37,10 @@ export interface AsyncModelEvents extends DiagramModelEvents {
     };
 }
 
-export interface AsyncModelOptions extends DiagramModelOptions {
-    groupBy: ReadonlyArray<GroupBy>;
-}
+export interface AsyncModelOptions extends DiagramModelOptions {}
 
 export class AsyncModel extends DiagramModel {
     declare readonly events: Events<AsyncModelEvents>;
-
-    private readonly groupByProperties: ReadonlyArray<GroupBy>;
 
     private loadingScope: AbortScope | undefined;
     private _dataProvider: DataProvider;
@@ -59,8 +50,6 @@ export class AsyncModel extends DiagramModel {
 
     constructor(options: AsyncModelOptions) {
         super(options);
-        const {groupBy} = options;
-        this.groupByProperties = groupBy;
         this._dataProvider = new EmptyDataProvider();
         this.fetcher = new DataFetcher(this.graph, this._dataProvider);
     }
@@ -88,16 +77,6 @@ export class AsyncModel extends DiagramModel {
 
     protected override subscribeGraph() {
         super.subscribeGraph();
-        this.graphListener.listen(this.events, 'elementEvent', e => {
-            if (e.data.requestedGroupContent) {
-                this.loadGroupContent(e.data.requestedGroupContent.source)
-                    .catch(err => {
-                        if (!this.fetcher.signal.aborted) {
-                            throw new Error('Error loading group content', {cause: err});
-                        }
-                    });
-            }
-        });
     }
 
     private setDataProvider(dataProvider: DataProvider) {
@@ -250,10 +229,10 @@ export class AsyncModel extends DiagramModel {
         const batch = this.history.startBatch('Import layout');
 
         for (const layoutElement of layoutData.elements) {
-            const {'@id': id, iri, position, isExpanded, group, elementState} = layoutElement;
+            const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
             const template = preloadedElements?.get(iri);
             const data = template ?? Element.placeholderData(iri);
-            const element = new Element({id, data, position, expanded: isExpanded, group, elementState});
+            const element = new Element({id, data, position, expanded: isExpanded, elementState});
             this.graph.addElement(element);
             if (!template) {
                 elementIrisToRequestData.push(element.iri);
@@ -374,42 +353,6 @@ export class AsyncModel extends DiagramModel {
             }
         }
         batch.store();
-    }
-
-    private async loadGroupContent(element: Element): Promise<void> {
-        const models = await this.loadEmbeddedElements(element.iri);
-        const batch = this.history.startBatch();
-        for (const model of models.values()) {
-            this.createElement(model, element.id);
-        }
-        batch.discard();
-
-        await Promise.all([
-            this.requestElementData(Array.from(models.keys())),
-            this.requestLinksOfType(),
-        ]);
-        this.fetcher.signal.throwIfAborted();
-
-        this._triggerChangeGroupContent(element.id, {layoutComplete: false});
-    }
-
-    private async loadEmbeddedElements(elementIri: ElementIri): Promise<Map<ElementIri, ElementModel>> {
-        const elements = this.groupByProperties.map(groupBy =>
-            this.dataProvider.lookup({
-                refElementId: elementIri,
-                refElementLinkId: groupBy.linkType as LinkTypeIri,
-                linkDirection: groupBy.linkDirection,
-                signal: this.fetcher.signal,
-            })
-        );
-        const results = await Promise.all(elements);
-        const nestedModels = new Map<ElementIri, ElementModel>();
-        for (const result of results) {
-            for (const {element} of result) {
-                nestedModels.set(element.id, element);
-            }
-        }
-        return nestedModels;
     }
 }
 

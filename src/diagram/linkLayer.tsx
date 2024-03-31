@@ -10,7 +10,7 @@ import {
     Element, Link, LinkVertex, linkMarkerKey, LinkType,
 } from './elements';
 import {
-    Rect, Size, Vector, boundsOf, computeGrouping, computePolyline, computePolylineLength,
+    Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength,
     getPointAlongPolyline, pathFromPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
@@ -21,7 +21,6 @@ export interface LinkLayerProps {
     model: DiagramModel;
     renderingState: RenderingState;
     links: ReadonlyArray<Link>;
-    group?: string;
 }
 
 enum UpdateRequest {
@@ -226,34 +225,11 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         this.forceUpdate();
     };
 
-    private getLinks() {
-        const {model, links, group} = this.props;
-
-        if (!group) { return links; }
-
-        const grouping = computeGrouping(model.elements);
-        const nestedElements = computeDeepNestedElements(grouping, group);
-
-        return links.filter(link => {
-            const {sourceId, targetId} = link;
-            const source = model.getElement(sourceId);
-            const target = model.getElement(targetId);
-            if (!source || !target) {
-                return false;
-            }
-            return Boolean(
-                source.group && nestedElements[source.group] ||
-                target.group && nestedElements[target.group]
-            );
-        });
-    }
-
     render() {
-        const {model, renderingState} = this.props;
+        const {model, links, renderingState} = this.props;
         const {memoizedLinks} = this;
 
         const shouldUpdate = this.popShouldUpdatePredicate();
-        const links = this.getLinks();
         for (const link of links) {
             if (shouldUpdate(link)) {
                 memoizedLinks.delete(link);
@@ -287,23 +263,6 @@ interface LinkLayerContext {
     scheduleLabelMeasure: ScheduleLabelMeasure;
 }
 const LinkLayerContext = React.createContext<LinkLayerContext | null>(null);
-
-function computeDeepNestedElements(grouping: Map<string, Element[]>, groupId: string): { [id: string]: true } {
-    const deepChildren: { [elementId: string]: true } = {};
-
-    function collectNestedItems(parentId: string) {
-        deepChildren[parentId] = true;
-        const children = grouping.get(parentId);
-        if (!children) { return; }
-        for (const element of children) {
-            if (element.group !== parentId) { continue; }
-            collectNestedItems(element.id);
-        }
-    }
-
-    collectNestedItems(groupId);
-    return deepChildren;
-}
 
 interface LinkViewProps {
     link: Link;
