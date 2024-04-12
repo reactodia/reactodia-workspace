@@ -2,18 +2,27 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { EntityElement } from '../editor/dataElements';
+import { useObservedElement } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
 
 export function ClassicTemplate(props: TemplateProps) {
-    const {data, isExpanded} = props;
+    const {element, isExpanded} = props;
     const {model, getElementTypeStyle} = useWorkspace();
+    useObservedElement(element);
+
+    if (!(element instanceof EntityElement)) {
+        return null;
+    }
+
+    const data = element.data;
     const {color, icon} = getElementTypeStyle(data.types);
 
-    const typesLabel = data.types.length > 0
-        ? model.locale.formatElementTypes(data.types).join(', ')
+    const typesLabel = element.types.length > 0
+        ? model.locale.formatElementTypes(element.types).join(', ')
         : 'Thing';
     const label = model.locale.formatLabel(data.label, data.id);
     const propertyList = model.locale.formatPropertyList(data.properties);

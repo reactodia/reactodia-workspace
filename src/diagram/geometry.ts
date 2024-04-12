@@ -225,7 +225,10 @@ export function findElementAtPoint(
         const element = elements[i];
         const {x, y, width, height} = boundsOf(element, sizeProvider);
 
-        if (element.temporary) { continue; }
+        if (width === 0 && height === 0) {
+            // Skip void and other zero-sized elements
+            continue;
+        }
 
         if (point.x >= x && point.x <= x + width && point.y >= y && point.y <= y + height) {
             return element;

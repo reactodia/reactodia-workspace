@@ -164,7 +164,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     componentDidMount() {
         const {onWorkspaceEvent} = this.props;
-        const {model, view, editor, overlay} = this.workspaceContext;
+        const {model, view, overlay} = this.workspaceContext;
 
         this.listener.listen(model.events, 'loadingSuccess', () => {
             for (const canvas of view.findAllCanvases()) {
@@ -178,7 +178,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         });
 
         if (onWorkspaceEvent) {
-            this.listener.listen(editor.events, 'changeSelection', () =>
+            this.listener.listen(model.events, 'changeSelection', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorChangeSelection)
             );
             this.listener.listen(overlay.events, 'changeOpenedDialog', () =>

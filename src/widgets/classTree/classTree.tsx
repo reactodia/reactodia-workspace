@@ -304,7 +304,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             return;
         }
 
-        const element = editor.createNewEntity({elementModel});
+        const element = editor.createEntity(elementModel);
         let createAt: [CanvasApi, Vector] | undefined;
 
         if (dropEvent) {
@@ -324,7 +324,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         }
 
         batch.store();
-        editor.setSelection([element]);
+        model.setSelection([element]);
         overlay.showEditEntityForm(element);
     }
 }

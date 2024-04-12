@@ -8,6 +8,8 @@ import { ElementModel, ElementTypeIri } from '../data/model';
 import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
+import { EntityElement } from '../editor/dataElements';
+
 import { createRequest } from '../widgets/instancesSearch';
 import { ListElementView } from '../widgets/listElementView';
 
@@ -170,7 +172,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         if (existingElements.length > 0) {
             return existingElements.map(element => {
                 const isAlreadyOnDiagram = !editor.temporaryState.elements.has(element.id) && Boolean(
-                    model.elements.find(({iri}) => iri === element.id)
+                    model.elements.find((el) => el instanceof EntityElement && el.iri === element.id)
                 );
                 const hasAppropriateType = Boolean(
                     elementTypes && elementTypes.find(type => element.types.indexOf(type) >= 0)

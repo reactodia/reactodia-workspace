@@ -7,7 +7,7 @@ import { ElementIri, ElementModel, LinkModel } from '../data/model';
 import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { Element, Link } from '../diagram/elements';
+import { Element, VoidElement } from '../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../diagram/linkLayer';
 import { TransformedSvgCanvas } from '../diagram/paper';
@@ -16,14 +16,25 @@ import { Spinner } from '../diagram/spinner';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { TemporaryState } from './authoringState';
-
-export type EditLayerMode = 'establishLink' | 'moveLinkSource' | 'moveLinkTarget';
+import { EntityElement, RelationLink } from './dataElements';
 
 export interface EditLayerProps {
-    mode: EditLayerMode;
-    target: Element | Link;
-    point: { x: number; y: number };
+    operation: DragEditOperation;
     onFinishEditing: () => void;
+}
+
+export type DragEditOperation = DragEditConnect | DragEditMoveEndpoint;
+
+export interface DragEditConnect {
+    readonly mode: 'connect';
+    readonly source: EntityElement;
+    readonly point: Vector;
+}
+
+export interface DragEditMoveEndpoint {
+    readonly mode: 'moveSource' | 'moveTarget';
+    readonly link: RelationLink;
+    readonly point: Vector;
 }
 
 export function EditLayer(props: EditLayerProps) {
@@ -56,9 +67,9 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
     private canDropOnElementCancellation = new AbortController();
 
-    private temporaryLink: Link | undefined;
-    private temporaryElement: Element | undefined;
-    private oldLink: Link | undefined;
+    private temporaryLink: RelationLink | undefined;
+    private temporaryElement: VoidElement | undefined;
+    private oldLink: RelationLink | undefined;
 
     constructor(props: EditLayerInnerProps) {
         super(props);
@@ -66,13 +77,20 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     componentDidMount() {
-        const {mode, target, point} = this.props;
-        if (mode === 'establishLink') {
-            this.beginCreatingLink({source: target as Element, point});
-        } else if (mode === 'moveLinkSource' || mode === 'moveLinkTarget') {
-            this.beginMovingLink(target as Link, point);
-        } else {
-            throw new Error(`Unknown edit mode: "${mode as string}"`);
+        const {operation} = this.props;
+        switch (operation.mode) {
+            case 'connect': {
+                this.beginCreatingLink(operation);
+                break;
+            }
+            case 'moveSource':
+            case 'moveTarget': {
+                this.beginMovingLink(operation);
+                break;
+            }
+            default: {
+                throw new Error(`Unknown edit mode: "${(operation as DragEditOperation).mode}"`);
+            }
         }
         this.forceUpdate();
         this.queryCanLinkFrom();
@@ -89,22 +107,22 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         document.removeEventListener('mouseup', this.onMouseUp);
     }
 
-    private beginCreatingLink(params: { source: Element; point: Vector }) {
+    private beginCreatingLink(operation: DragEditConnect) {
         const {workspace: {model, editor}} = this.props;
-        const {source, point} = params;
+        const {source, point} = operation;
 
         const temporaryElement = this.createTemporaryElement(point);
-        const linkTemplate = new Link({
+        const linkTemplate = new RelationLink({
             sourceId: source.id,
             targetId: temporaryElement.id,
             data: {
                 linkTypeId: PLACEHOLDER_LINK_TYPE,
                 sourceId: source.iri,
-                targetId: temporaryElement.iri,
+                targetId: '' as ElementIri,
                 properties: {},
             },
         });
-        const temporaryLink = editor.createNewLink({link: linkTemplate, temporary: true});
+        const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
         const linkType = model.createLinkType(temporaryLink.typeId);
         linkType.setVisibility('withoutLabel');
 
@@ -112,31 +130,28 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         this.temporaryLink = temporaryLink;
     }
 
-    private beginMovingLink(target: Link, startingPoint: Vector) {
-        const {mode, workspace: {model, editor}} = this.props;
+    private beginMovingLink(operation: DragEditMoveEndpoint) {
+        const {workspace: {model, editor}} = this.props;
+        const {mode, link, point} = operation;
 
-        if (!(mode === 'moveLinkSource' || mode === 'moveLinkTarget')) {
-            throw new Error('Unexpected edit mode for moving link');
-        }
+        this.oldLink = link;
+        model.removeLink(link.id);
+        const {sourceId, targetId, data, vertices, linkState} = link;
 
-        this.oldLink = target;
-        model.removeLink(target.id);
-        const {id, sourceId, targetId, data, vertices, linkState} = target;
-
-        const temporaryElement = this.createTemporaryElement(startingPoint);
-        const linkTemplate = new Link({
+        const temporaryElement = this.createTemporaryElement(point);
+        const linkTemplate = new RelationLink({
             id: GenerateID.forLink(),
-            sourceId: mode === 'moveLinkSource' ? temporaryElement.id : sourceId,
-            targetId: mode === 'moveLinkTarget' ? temporaryElement.id : targetId,
+            sourceId: mode === 'moveSource' ? temporaryElement.id : sourceId,
+            targetId: mode === 'moveTarget' ? temporaryElement.id : targetId,
             data: {
                 ...data,
-                sourceId: mode === 'moveLinkSource' ? temporaryElement.iri : data.sourceId,
-                targetId: mode === 'moveLinkTarget' ? temporaryElement.iri : data.targetId,
+                sourceId: mode === 'moveSource' ? ('' as ElementIri) : data.sourceId,
+                targetId: mode === 'moveTarget' ? ('' as ElementIri) : data.targetId,
             },
             vertices,
             linkState,
         });
-        const temporaryLink = editor.createNewLink({link: linkTemplate, temporary: true});
+        const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
 
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;
@@ -145,10 +160,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     private createTemporaryElement(point: Vector) {
         const {workspace: {model}} = this.props;
 
-        const temporaryElement = new Element({
-            data: Element.placeholderData('' as ElementIri),
-            temporary: true,
-        });
+        const temporaryElement = new VoidElement({});
         temporaryElement.setPosition(point);
 
         const batch = model.history.startBatch();
@@ -188,7 +200,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         this.setState({canLinkFrom: undefined});
 
-        const source = model.getElement(this.temporaryLink!.sourceId)!;
+        const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
         mapAbortedToNull(
             editor.metadataApi.canLinkElement(source.data, this.cancellation.signal),
             this.cancellation.signal
@@ -205,16 +217,16 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private queryCanDropOnCanvas() {
-        const {mode, workspace: {model, editor}} = this.props;
+        const {operation, workspace: {model, editor}} = this.props;
 
-        if (!editor.metadataApi || mode !== 'establishLink') {
+        if (!editor.metadataApi || operation.mode !== 'connect') {
             this.setState({canDropOnCanvas: false});
             return;
         }
 
         this.setState({canDropOnCanvas: undefined});
 
-        const source = model.getElement(this.temporaryLink!.sourceId)!;
+        const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
         mapAbortedToNull(
             editor.metadataApi.canDropOnCanvas(source.data, this.cancellation.signal),
             this.cancellation.signal
@@ -231,12 +243,12 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     }
 
     private queryCanDropOnElement(targetElement: Element | undefined) {
-        const {mode, workspace: {model, editor}} = this.props;
+        const {operation, workspace: {model, editor}} = this.props;
 
         this.canDropOnElementCancellation.abort();
         this.canDropOnElementCancellation = new AbortController();
 
-        if (!(editor.metadataApi && targetElement)) {
+        if (!(editor.metadataApi && targetElement instanceof EntityElement)) {
             this.setState({canDropOnElement: false});
             return;
         }
@@ -249,15 +261,20 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         this.setState({canDropOnElement: undefined});
 
-        let source!: ElementModel;
-        let target!: ElementModel;
-
-        if (mode === 'establishLink' || mode === 'moveLinkTarget') {
-            source = model.getElement(this.temporaryLink!.sourceId)!.data;
-            target = targetElement.data;
-        } else if (mode === 'moveLinkSource') {
-            source = targetElement.data;
-            target = model.getElement(this.temporaryLink!.targetId)!.data;
+        let source: ElementModel;
+        let target: ElementModel;
+        switch (operation.mode) {
+            case 'connect':
+            case 'moveTarget': {
+                source = (model.getElement(this.temporaryLink!.sourceId) as EntityElement).data;
+                target = targetElement.data;
+                break;
+            }
+            case 'moveSource': {
+                source = targetElement.data;
+                target = (model.getElement(this.temporaryLink!.targetId) as EntityElement).data;
+                break;
+            }
         }
 
         const signal = this.canDropOnElementCancellation.signal;
@@ -280,7 +297,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
-        const {mode, canvas, workspace: {model, editor, overlay}} = this.props;
+        const {operation, canvas, workspace: {model, editor, overlay}} = this.props;
 
         try {
             const {targetElement, canLinkFrom, canDropOnCanvas, canDropOnElement} = this.state;
@@ -291,28 +308,34 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
             const canDrop = targetElement ? canDropOnElement : canDropOnCanvas;
             if (canLinkFrom && canDrop) {
-                let modifiedLink: Link | undefined;
-                let createdTarget: Element | undefined = targetElement;
+                let modifiedLink: RelationLink | undefined;
+                let createdTarget = targetElement as EntityElement | undefined;
 
-                switch (mode) {
-                    case 'establishLink': {
+                switch (operation.mode) {
+                    case 'connect': {
                         if (!createdTarget) {
-                            const source = model.getElement(this.temporaryLink!.sourceId)!;
+                            const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
                             createdTarget = await this.createNewElement(source.data);
                             createdTarget.setPosition(selectedPosition);
                             canvas.renderingState.syncUpdate();
                             setElementCenterAtPoint(createdTarget, selectedPosition, canvas.renderingState);
                         }
-                        const sourceElement = model.getElement(this.temporaryLink!.sourceId)!;
+                        const sourceElement = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
                         modifiedLink = await this.createNewLink(sourceElement, createdTarget);
                         break;
                     }
-                    case 'moveLinkSource': {
-                        modifiedLink = editor.moveLinkSource({link: this.oldLink!, newSource: targetElement!});
+                    case 'moveSource': {
+                        modifiedLink = editor.moveRelationSource({
+                            link: this.oldLink!,
+                            newSource: targetElement as EntityElement,
+                        });
                         break;
                     }
-                    case 'moveLinkTarget': {
-                        modifiedLink = editor.moveLinkTarget({link: this.oldLink!, newTarget: targetElement!});
+                    case 'moveTarget': {
+                        modifiedLink = editor.moveRelationTarget({
+                            link: this.oldLink!,
+                            newTarget: targetElement as EntityElement,
+                        });
                         break;
                     }
                     default: {
@@ -322,11 +345,11 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
                 if (targetElement) {
                     const focusedLink = modifiedLink || this.oldLink;
-                    editor.setSelection([focusedLink!]);
+                    model.setSelection([focusedLink!]);
                     overlay.showEditLinkForm(focusedLink!);
                 } else if (createdTarget && modifiedLink) {
-                    editor.setSelection([createdTarget]);
-                    const source = model.getElement(modifiedLink.sourceId)!;
+                    model.setSelection([createdTarget]);
+                    const source = model.getElement(modifiedLink.sourceId) as EntityElement;
                     overlay.showFindOrCreateEntityForm({
                         link: modifiedLink,
                         source,
@@ -340,7 +363,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         }
     }
 
-    private async createNewElement(source: ElementModel): Promise<Element> {
+    private async createNewElement(source: ElementModel): Promise<EntityElement> {
         const {workspace: {editor}} = this.props;
         if (!editor.metadataApi) {
             throw new Error('Cannot create new element without MetadataApi');
@@ -348,10 +371,10 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         const elementTypes = await editor.metadataApi.typesOfElementsDraggedFrom(source, this.cancellation.signal);
         const classId = elementTypes.length === 1 ? elementTypes[0] : PLACEHOLDER_ELEMENT_TYPE;
         const elementModel = await editor.metadataApi.generateNewElement([classId], this.cancellation.signal);
-        return editor.createNewEntity({elementModel, temporary: true});
+        return editor.createEntity(elementModel, {temporary: true});
     }
 
-    private async createNewLink(source: Element, target: Element): Promise<Link | undefined> {
+    private async createNewLink(source: EntityElement, target: EntityElement): Promise<RelationLink | undefined> {
         const {workspace: {model, editor}} = this.props;
         if (!editor.metadataApi) {
             return undefined;
@@ -379,9 +402,10 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             };
             [sourceId, targetId] = [targetId, sourceId];
         }
-        const link = new Link({sourceId, targetId, data});
+        const link = new RelationLink({sourceId, targetId, data});
         const existingLink = model.findLink(link.typeId, link.sourceId, link.targetId);
-        return existingLink || editor.createNewLink({link, temporary: true});
+        return existingLink instanceof RelationLink
+            ? existingLink : editor.createRelation(link, {temporary: true});
     }
 
     private cleanupAndFinish() {

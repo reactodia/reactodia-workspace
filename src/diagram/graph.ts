@@ -30,6 +30,7 @@ export class Graph {
     private readonly elements = new OrderedMap<Element>();
     private readonly links = new OrderedMap<Link>();
     private readonly elementLinks = new WeakMap<Element, Link[]>();
+    private readonly EMPTY_LINKS: Link[] = [];
 
     private readonly classesById = new Map<ElementTypeIri, ElementType>();
     private readonly propertiesById = new Map<PropertyTypeIri, PropertyType>();
@@ -48,13 +49,26 @@ export class Graph {
         return this.elementLinks.get(element) ?? [];
     }
 
-    findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined {
+    *iterateLinks(sourceId: string, targetId: string, linkTypeId?: LinkTypeIri): Iterable<Link> {
         const source = this.getElement(sourceId);
-        if (!source) { return undefined; }
-        const links = this.elementLinks.get(source);
-        if (links) {
-            const index = findLinkIndex(links, linkTypeId, sourceId, targetId);
-            return index >= 0 ? links[index] : undefined;
+        const target = this.getElement(targetId);
+        if (!(source && target)) {
+            return;
+        }
+        const sourceLinks = this.elementLinks.get(source) ?? this.EMPTY_LINKS;
+        const targetLinks = this.elementLinks.get(target) ?? this.EMPTY_LINKS;
+        if (sourceLinks.length <= targetLinks.length) {
+            for (const link of sourceLinks) {
+                if (link.targetId === targetId && (!linkTypeId || link.typeId === linkTypeId)) {
+                    yield link;
+                }
+            }
+        } else {
+            for (const link of targetLinks) {
+                if (link.sourceId === sourceId && (!linkTypeId || link.typeId === linkTypeId)) {
+                    yield link;
+                }
+            }
         }
     }
 
@@ -151,32 +165,31 @@ export class Graph {
     removeLink(linkId: string, options?: { silent?: boolean }) {
         const link = this.links.delete(linkId);
         if (link) {
-            const {typeId, sourceId, targetId} = link;
             link.events.offAny(this.onLinkEvent);
-            this.removeLinkReferences(typeId, sourceId, targetId);
+            this.removeLinkReferences(link);
             if (!(options && options.silent)) {
                 this.source.trigger('changeCells', {updateAll: false, changedLinks: [link]});
             }
         }
     }
 
-    private removeLinkReferences(linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
-        const source = this.getElement(sourceId);
+    private removeLinkReferences(link: Link): void {
+        const source = this.getElement(link.sourceId);
         if (source) {
             const sourceLinks = this.elementLinks.get(source);
             if (sourceLinks) {
-                removeLinkFrom(sourceLinks, linkTypeId, sourceId, targetId);
+                removeLinkFrom(sourceLinks, link);
                 if (sourceLinks.length === 0) {
                     this.elementLinks.delete(source);
                 }
             }
         }
 
-        const target = this.getElement(targetId);
+        const target = this.getElement(link.targetId);
         if (target) {
             const targetLinks = this.elementLinks.get(target);
             if (targetLinks) {
-                removeLinkFrom(targetLinks, linkTypeId, sourceId, targetId);
+                removeLinkFrom(targetLinks, link);
                 if (targetLinks.length === 0) {
                     this.elementLinks.delete(target);
                 }
@@ -246,16 +259,14 @@ export class Graph {
     };
 }
 
-function removeLinkFrom(links: Link[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
-    if (!links) { return; }
-    while (true) {
-        const index = findLinkIndex(links, linkTypeId, sourceId, targetId);
-        if (index < 0) { break; }
+function removeLinkFrom(links: Link[], link: Link): void {
+    const index = links.indexOf(link);
+    if (index >= 0) {
         links.splice(index, 1);
     }
 }
 
-function findLinkIndex(haystack: Link[], linkTypeId: LinkTypeIri, sourceId: string, targetId: string) {
+function findLinkIndex(haystack: Link[], linkTypeId: LinkTypeIri | null, sourceId: string, targetId: string) {
     for (let i = 0; i < haystack.length; i++) {
         const link = haystack[i];
         if (link.sourceId === sourceId &&

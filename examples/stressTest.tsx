@@ -33,14 +33,9 @@ function StressTestExample() {
                 const nodeId = nodes[i];
                 const x = (i % rowCount) * estimatedWidth;
                 const y = Math.floor(i / rowCount) * estimatedHeight;
-                model.addElement(new Reactodia.Element({
+                model.addElement(new Reactodia.EntityElement({
                     id: `n:${i}`,
-                    data: {
-                        id: nodeId,
-                        types: [],
-                        label: [],
-                        properties: {},
-                    },
+                    data: Reactodia.EntityElement.placeholderData(nodeId),
                     position: {x, y},
                 }));
             }
