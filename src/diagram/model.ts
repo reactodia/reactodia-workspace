@@ -1,3 +1,4 @@
+import { makeMoveComparator, MoveDirection } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
 
 import {
@@ -16,6 +17,7 @@ import { CommandHistory, Command } from './history';
 
 export interface DiagramModelEvents {
     changeLanguage: PropertyChange<DiagramModel, string>;
+    changeSelection: PropertyChange<DiagramModel, ReadonlyArray<Element | Link>>;
     changeCells: CellsChangedEvent;
     changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
@@ -53,6 +55,7 @@ export class DiagramModel implements GraphStructure {
     readonly events: Events<DiagramModelEvents> = this.source;
 
     private _language = 'en';
+    private _selection: ReadonlyArray<Element | Link> = [];
 
     protected graph = new Graph();
     protected graphListener = new EventObserver();
@@ -75,6 +78,19 @@ export class DiagramModel implements GraphStructure {
         if (previous === value) { return; }
         this._language = value;
         this.source.trigger('changeLanguage', {source: this, previous});
+    }
+
+    get selection() { return this._selection; }
+    setSelection(value: ReadonlyArray<Element | Link>) {
+        const previous = this._selection;
+        if (previous === value) { return; }
+
+        // Bring selected elements to front before new selection is observed
+        const selectedElements = value.filter((cell): cell is Element => cell instanceof Element);
+        this.bringElements(selectedElements, 'front');
+
+        this._selection = value;
+        this.source.trigger('changeSelection', {source: this, previous});
     }
 
     get factory(): Rdf.DataFactory {
@@ -101,7 +117,10 @@ export class DiagramModel implements GraphStructure {
     }
 
     findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined {
-        return this.graph.findLink(linkTypeId, sourceId, targetId);
+        for (const link of this.graph.iterateLinks(sourceId, targetId, linkTypeId)) {
+            return link;
+        }
+        return undefined;
     }
 
     sourceOf(link: Link): Element | undefined {
@@ -118,12 +137,13 @@ export class DiagramModel implements GraphStructure {
             this.graphListener = new EventObserver();
         }
         this.graph = new Graph();
+        this._selection = [];
         this.source.trigger('discardGraph', {source: this});
     }
 
     protected subscribeGraph(): void {
         this.graphListener.listen(this.graph.events, 'changeCells', e => {
-            this.source.trigger('changeCells', e);
+            this.triggerChangeCells(e);
         });
         this.graphListener.listen(this.graph.events, 'elementEvent', e => {
             this.source.trigger('elementEvent', e);
@@ -141,7 +161,22 @@ export class DiagramModel implements GraphStructure {
             this.source.trigger('propertyTypeEvent', e);
         });
 
-        this.source.trigger('changeCells', {updateAll: true});
+        this.triggerChangeCells({updateAll: true});
+    }
+
+    private triggerChangeCells(e: CellsChangedEvent): void {
+        if (this.selection.length > 0) {
+            const newSelection = this.selection.filter(item =>
+                item instanceof Element ? this.getElement(item.id) :
+                item instanceof Link ? this.getLink(item.id) :
+                false
+            );
+            if (newSelection.length < this.selection.length) {
+                this.setSelection(newSelection);
+            }
+        }
+
+        this.source.trigger('changeCells', e);
     }
 
     reorderElements(compare: (a: Element, b: Element) => number): void {
@@ -149,23 +184,15 @@ export class DiagramModel implements GraphStructure {
         this.source.trigger('changeCellOrder', {source: this});
     }
 
-    createElement(elementIriOrModel: ElementIri | ElementModel): Element {
-        const elementIri = typeof elementIriOrModel === 'string'
-            ? elementIriOrModel : (elementIriOrModel as ElementModel).id;
-
-        const elements = this.elements.filter(el => el.iri === elementIri);
-        if (elements.length > 0) {
-            // usually there should be only one element
-            return elements[0];
+    bringElements(targets: ReadonlyArray<Element>, to: 'front' | 'back') {
+        if (targets.length === 0) {
+            return;
         }
-
-        let data = typeof elementIriOrModel === 'string'
-            ? Element.placeholderData(elementIri)
-            : elementIriOrModel as ElementModel;
-        data = {...data, id: data.id};
-        const element = new Element({data});
-        this.addElement(element);
-        return element;
+        this.reorderElements(makeMoveComparator(
+            this.elements,
+            targets,
+            to === 'front' ? MoveDirection.ToEnd : MoveDirection.ToStart,
+        ));
     }
 
     addElement(element: Element): void {
@@ -183,25 +210,7 @@ export class DiagramModel implements GraphStructure {
         }
     }
 
-    createLink(link: Link): Link {
-        const {typeId, sourceId, targetId, data} = link;
-        const existingLink = this.findLink(typeId, sourceId, targetId);
-        if (existingLink) {
-            if (link.data) {
-                existingLink.setLayoutOnly(false);
-                existingLink.setData(data);
-            }
-            return existingLink;
-        }
-
-        this.addLink(link);
-        return link;
-    }
-
     addLink(link: Link): void {
-        if (link.data.linkTypeId !== link.typeId) {
-            throw new Error('link.data.linkTypeId must match link.typeId');
-        }
         this.createLinkType(link.typeId);
         this.history.execute(new AddLinkCommand(this.graph, link));
     }
@@ -275,7 +284,7 @@ class AddElementCommand implements Command {
         const {graph, element, connectedLinks} = this;
         graph.addElement(element);
         for (const link of connectedLinks) {
-            const existing = graph.getLink(link.id) || graph.findLink(link.typeId, link.sourceId, link.targetId);
+            const existing = graph.getLink(link.id);
             if (!existing) {
                 graph.addLink(link);
             }

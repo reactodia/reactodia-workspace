@@ -8,14 +8,15 @@ import {
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
 import { DataFactory } from '../data/rdf/rdfModel';
-import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { PLACEHOLDER_LINK_TYPE, TemplateProperties } from '../data/schema';
 
 import {
-    Element, LinkType, ElementType, PropertyType, Link, LinkTypeVisibility,
+    LinkType, ElementType, PropertyType, LinkTypeVisibility,
 } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { DiagramModel, DiagramModelEvents, DiagramModelOptions } from '../diagram/model';
 
+import { EntityElement, RelationLink } from './dataElements';
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
     SerializedLayout, SerializedLinkOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
@@ -138,7 +139,9 @@ export class AsyncModel extends DiagramModel {
             this.subscribeGraph();
 
             const elementIrisToRequestData = this.graph.getElements()
-                .filter(element => !(preloadedElements && preloadedElements.has(element.iri)))
+                .filter((el): el is EntityElement =>
+                    el instanceof EntityElement && !(preloadedElements && preloadedElements.has(el.iri))
+                )
                 .map(element => element.iri);
 
             const requestingModels = this.requestElementData(elementIrisToRequestData);
@@ -230,12 +233,14 @@ export class AsyncModel extends DiagramModel {
 
         for (const layoutElement of layoutData.elements) {
             const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
-            const template = preloadedElements?.get(iri);
-            const data = template ?? Element.placeholderData(iri);
-            const element = new Element({id, data, position, expanded: isExpanded, elementState});
-            this.graph.addElement(element);
-            if (!template) {
-                elementIrisToRequestData.push(element.iri);
+            if (iri) {
+                const template = preloadedElements?.get(iri);
+                const data = template ?? EntityElement.placeholderData(iri);
+                const element = new EntityElement({id, data, position, expanded: isExpanded, elementState});
+                this.graph.addElement(element);
+                if (!template) {
+                    elementIrisToRequestData.push(element.iri);
+                }
             }
         }
 
@@ -245,14 +250,14 @@ export class AsyncModel extends DiagramModel {
             usedLinkTypes.add(linkType.id);
             const sourceElement = this.graph.getElement(source['@id']);
             const targetElement = this.graph.getElement(target['@id']);
-            if (sourceElement && targetElement) {
+            if (sourceElement instanceof EntityElement && targetElement instanceof EntityElement) {
                 const data: LinkModel = {
                     linkTypeId: property,
                     sourceId: sourceElement.iri,
                     targetId: targetElement.iri,
                     properties: {},
                 };
-                const link = new Link({
+                const link = new RelationLink({
                     id,
                     sourceId: sourceElement.id,
                     targetId: targetElement.id,
@@ -260,7 +265,12 @@ export class AsyncModel extends DiagramModel {
                     vertices,
                     linkState,
                 });
-                link.setLayoutOnly(markLinksAsLayoutOnly);
+                if (markLinksAsLayoutOnly) {
+                    link.setLinkState({
+                        ...link.linkState,
+                        [TemplateProperties.LayoutOnly]: true,
+                    });
+                }
                 this.addLink(link);
             }
         }
@@ -286,13 +296,55 @@ export class AsyncModel extends DiagramModel {
     }
 
     requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
-        const elementIris = this.graph.getElements().map(element => element.iri);
+        const elementIris = this.graph.getElements().filter(EntityElement.is).map(el => el.iri);
         if (elementIris.length === 0) {
             return Promise.resolve();
         }
         return this.fetcher
             .fetchLinks(elementIris, linkTypeIds)
             .then(links => this.onLinkInfoLoaded(links));
+    }
+
+    createElement(elementIriOrModel: ElementIri | ElementModel): EntityElement {
+        const elementIri = typeof elementIriOrModel === 'string'
+            ? elementIriOrModel : (elementIriOrModel as ElementModel).id;
+
+        const elements = this.elements.filter((el): el is EntityElement =>
+            el instanceof EntityElement && el.iri === elementIri
+        );
+        if (elements.length > 0) {
+            // usually there should be only one element
+            return elements[0];
+        }
+
+        let data = typeof elementIriOrModel === 'string'
+            ? EntityElement.placeholderData(elementIri)
+            : elementIriOrModel as ElementModel;
+        data = {...data, id: data.id};
+        const element = new EntityElement({data});
+        this.addElement(element);
+        return element;
+    }
+
+    createLink(link: RelationLink): RelationLink {
+        const {typeId, sourceId, targetId, data} = link;
+        const existingLink = this.findLink(typeId, sourceId, targetId);
+        if (existingLink instanceof RelationLink) {
+            const {
+                [TemplateProperties.LayoutOnly]: layoutOnly,
+                ...withoutLayoutOnly
+            } = existingLink.linkState ?? {};
+
+            if (layoutOnly) {
+                existingLink.setLinkState(withoutLayoutOnly);
+            }
+
+            existingLink.setData(data);
+            return existingLink;
+        }
+
+        this.addLink(link);
+        return link;
     }
 
     override createElementType(elementTypeIri: ElementTypeIri): ElementType {
@@ -344,12 +396,16 @@ export class AsyncModel extends DiagramModel {
     }
 
     createLinks(data: LinkModel) {
-        const sources = this.graph.getElements().filter(el => el.iri === data.sourceId);
-        const targets = this.graph.getElements().filter(el => el.iri === data.targetId);
+        const sources = this.graph.getElements().filter(el =>
+            el instanceof EntityElement && el.iri === data.sourceId
+        );
+        const targets = this.graph.getElements().filter(el =>
+            el instanceof EntityElement && el.iri === data.targetId
+        );
         const batch = this.history.startBatch('Create links');
         for (const source of sources) {
             for (const target of targets) {
-                this.createLink(new Link({sourceId: source.id, targetId: target.id, data}));
+                this.createLink(new RelationLink({sourceId: source.id, targetId: target.id, data}));
             }
         }
         batch.store();

@@ -5,7 +5,7 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 import { ElementModel, LinkModel } from '../data/model';
 
 import { CanvasApi, CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
-import { Element, Link, LinkVertex, makeLinkWithDirection } from '../diagram/elements';
+import { Element, Link, LinkVertex } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
@@ -19,8 +19,9 @@ import { RenameLinkForm } from '../forms/renameLinkForm';
 
 import { AsyncModel } from './asyncModel';
 import { AuthoringState } from './authoringState';
+import { EntityElement, RelationLink } from './dataElements';
 import { EditorController } from './editorController';
-import { EditLayer, EditLayerMode } from './editLayer';
+import { EditLayer, DragEditOperation } from './editLayer';
 import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
@@ -87,8 +88,8 @@ export class OverlayController {
                 attachment: 'overLinks',
             });
         });
-        this.listener.listen(this.editor.events, 'changeSelection', () => {
-            const target = this.editor.selection.length === 1 ? this.editor.selection[0] : undefined;
+        this.listener.listen(this.model.events, 'changeSelection', () => {
+            const target = this.model.selection.length === 1 ? this.model.selection[0] : undefined;
             if (this.openedDialog && this.openedDialog.target !== target) {
                 this.hideDialog();
             }
@@ -98,11 +99,16 @@ export class OverlayController {
             element: <CanvasOverlayHandler onCanvasPointerUp={this.onAnyCanvasPointerUp} />,
             attachment: 'viewport',
         });
-        this.authoringStateDecorator = (element: Element) => (
-            <ElementDecorator target={element}
-                position={element.position}
-            />
-        );
+        this.authoringStateDecorator = (element: Element) => {
+            if (element instanceof EntityElement) {
+                return (
+                    <ElementDecorator target={element}
+                        position={element.position}
+                    />
+                );
+            }
+            return undefined;
+        };
         this.listener.listen(this.editor.events, 'changeMode', () => {
             this.updateElementDecorator();
         });
@@ -129,14 +135,14 @@ export class OverlayController {
         }
 
         if (target instanceof Element) {
-            this.editor.setSelection([target]);
+            this.model.setSelection([target]);
             target.focus();
         } else if (target instanceof Link) {
-            this.editor.setSelection([target]);
+            this.model.setSelection([target]);
         } else if (target instanceof LinkVertex) {
-            this.editor.setSelection([target.link]);
+            this.model.setSelection([target.link]);
         } else if (!target && triggerAsClick) {
-            this.editor.setSelection([]);
+            this.model.setSelection([]);
             this.hideDialog();
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
@@ -250,26 +256,23 @@ export class OverlayController {
         }
     }
 
-    startEditing(params: { target: Element | Link; mode: EditLayerMode; point: Vector }) {
-        const {target, mode, point} = params;
+    startEditing(operation: DragEditOperation): void {
         const onFinishEditing = () => {
             this.view.setCanvasWidget('editLayer', null);
         };
         const editLayer = (
-            <EditLayer mode={mode}
-                target={target}
-                point={point}
+            <EditLayer operation={operation}
                 onFinishEditing={onFinishEditing}
             />
         );
         this.view.setCanvasWidget('editLayer', {element: editLayer, attachment: 'overElements'});
     }
 
-    showEditEntityForm(target: Element) {
+    showEditEntityForm(target: EntityElement): void {
         const {propertyEditor} = this.options;
         const onSubmit = (newData: ElementModel) => {
             this.hideDialog();
-            this.editor.changeEntityData(target.data.id, newData);
+            this.editor.changeEntity(target.data.id, newData);
         };
         let modelToEdit = target.data;
         const event = this.editor.authoringState.elements.get(target.data.id);
@@ -293,12 +296,13 @@ export class OverlayController {
         });
     }
 
-    showFindOrCreateEntityForm({link, source, target, targetIsNew}: {
-        link: Link;
-        source: Element;
-        target: Element;
+    showFindOrCreateEntityForm(params: {
+        link: RelationLink;
+        source: EntityElement;
+        target: EntityElement;
         targetIsNew: boolean;
-    }) {
+    }): void {
+        const {link, source, target, targetIsNew} = params;
         const onCancel = () => {
             this.editor.removeAllTemporaryCells();
             this.hideDialog();
@@ -326,9 +330,9 @@ export class OverlayController {
         });
     }
 
-    showEditLinkForm(link: Link) {
-        const source = this.model.getElement(link.sourceId)!.data;
-        const target = this.model.getElement(link.targetId)!.data;
+    showEditLinkForm(link: RelationLink): void {
+        const source = (this.model.getElement(link.sourceId) as EntityElement).data;
+        const target = (this.model.getElement(link.targetId) as EntityElement).data;
         const onCancel = () => {
             this.editor.removeTemporaryCells([link]);
             this.hideDialog();
@@ -340,19 +344,19 @@ export class OverlayController {
                 onChange={(data: LinkModel) => {
                     if (this.editor.temporaryState.links.has(link.data)) {
                         this.editor.removeTemporaryCells([link]);
-                        const newLink = makeLinkWithDirection(link, data);
+                        const newLink = link.withDirection(data);
                         this.showEditLinkForm(
-                            this.editor.createNewLink({link: newLink, temporary: true})
+                            this.editor.createRelation(newLink, {temporary: true})
                         );
                     }
                 }}
                 onApply={(data: LinkModel) => {
                     if (this.editor.temporaryState.links.has(link.data)) {
                         this.editor.removeTemporaryCells([link]);
-                        const newLink = makeLinkWithDirection(link, data);
-                        this.editor.createNewLink({link: newLink});
+                        const newLink = link.withDirection(data);
+                        this.editor.createRelation(newLink);
                     } else {
-                        this.editor.changeLink(link.data, data);
+                        this.editor.changeRelation(link.data, data);
                     }
                     this.hideDialog();
                 }}

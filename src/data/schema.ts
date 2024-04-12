@@ -14,4 +14,5 @@ export namespace GenerateID {
 export namespace TemplateProperties {
     export const PinnedProperties = 'urn:reactodia:pinnedProperties';
     export const CustomLabel = 'urn:reactodia:customLabel';
+    export const LayoutOnly = 'urn:reactodia:layoutOnly';
 }

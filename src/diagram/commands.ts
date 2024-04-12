@@ -1,5 +1,3 @@
-import { ElementModel, ElementIri, LinkModel, equalLinks } from '../data/model';
-
 import type { CanvasApi } from './canvasApi';
 import type { Element, Link, LinkType, LinkTypeVisibility } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
@@ -86,54 +84,6 @@ export function changeLinkTypeVisibility(
         const previous = linkType.visibility;
         linkType.setVisibility(visibility);
         return changeLinkTypeVisibility(linkType, previous);
-    });
-}
-
-export function setElementData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
-    const command = Command.create('Set element data', () => {
-        const previous = new Map<Element, ElementModel>();
-        for (const element of model.elements.filter(el => el.iri === target)) {
-            const previousIri = element.iri;
-            previous.set(element, element.data);
-            element.setData(data);
-            updateLinksToReferByNewIri(model, element, previousIri, data.id);
-        }
-        return Command.create('Revert element data', () => {
-            for (const [element, previousData] of previous) {
-                const newIri = element.iri;
-                element.setData(previousData);
-                updateLinksToReferByNewIri(model, element, newIri, previousData.id);
-            }
-            return command;
-        });
-    });
-    return command;
-}
-
-function updateLinksToReferByNewIri(model: DiagramModel, element: Element, oldIri: ElementIri, newIri: ElementIri) {
-    for (const link of model.getElementLinks(element)) {
-        let data = link.data;
-        if (data.sourceId === oldIri) {
-            data = {...data, sourceId: newIri};
-        }
-        if (data.targetId === oldIri) {
-            data = {...data, targetId: newIri};
-        }
-        link.setData(data);
-    }
-}
-
-export function setLinkData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
-    if (!equalLinks(oldData, newData)) {
-        throw new Error('Cannot change typeId, sourceId or targetId when changing link data');
-    }
-    return Command.create('Set link data', () => {
-        for (const link of model.links) {
-            if (equalLinks(link.data, oldData)) {
-                link.setData(newData);
-            }
-        }
-        return setLinkData(model, newData, oldData);
     });
 }
 

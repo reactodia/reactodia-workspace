@@ -8,15 +8,11 @@ import {
 
 import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
-import { Element } from '../diagram/elements';
+import { Element, Link } from '../diagram/elements';
 import {
     Rect, SizeProvider, Vector, boundsOf, findElementAtPoint, getContentFittingBox,
 } from '../diagram/geometry';
-import { DiagramModel, GraphStructure } from '../diagram/model';
-
-import { EditorController, SelectionItem } from '../editor/editorController';
-
-import { useWorkspace } from '../workspace/workspaceContext';
+import { DiagramModel } from '../diagram/model';
 
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import {
@@ -53,13 +49,12 @@ export interface SelectionProps {
 const CLASS_NAME = 'reactodia-selection';
 
 export function Selection(props: SelectionProps) {
-    const {canvas} = useCanvas();
-    const {model, editor} = useWorkspace();
+    const {model, canvas} = useCanvas();
 
-    const subscribeSelection = useEventStore(editor.events, 'changeSelection');
+    const subscribeSelection = useEventStore(model.events, 'changeSelection');
     const selectedElements = useSyncStore(
         subscribeSelection,
-        () => editor.selection.filter(
+        () => model.selection.filter(
             (cell): cell is Element => cell instanceof Element
         ),
         shallowArrayEqual
@@ -95,11 +90,11 @@ export function Selection(props: SelectionProps) {
             setHighlightedBox(undefined);
             if (e.triggerAsClick) {
                 if (e.target instanceof Element) {
-                    toggleSelected(e.target, editor);
+                    toggleSelected(e.target, model);
                 }
             } else if (origin) {
                 const selectionBox = makePaperBox(origin, {pageX, pageY}, canvas.metrics);
-                applySelection(selectionBox, model, editor, canvas);
+                applySelection(selectionBox, model, canvas);
             }
             origin = undefined;
         });
@@ -114,7 +109,6 @@ export function Selection(props: SelectionProps) {
             <SelectionBox {...props}
                 model={model}
                 canvas={canvas}
-                editor={editor}
                 selectedElements={selectedElements}
                 highlightedBox={highlightedBox}
             />
@@ -145,7 +139,7 @@ function makePaperBox(start: PageOrigin, end: PageOrigin, metrics: CanvasMetrics
 function* findUnselectedElements(
     elements: ReadonlyArray<Element>,
     selectionBox: Rect,
-    alreadySelected: ReadonlySet<Element | SelectionItem>,
+    alreadySelected: ReadonlySet<Element | Link>,
     sizeProvider: SizeProvider
 ): IterableIterator<Element> {
     for (const element of elements) {
@@ -156,43 +150,41 @@ function* findUnselectedElements(
     }
 }
 
-function toggleSelected(element: Element, editor: EditorController): void {
-    const {selection} = editor;
+function toggleSelected(element: Element, model: DiagramModel): void {
+    const {selection} = model;
     const nextSelection = selection.includes(element)
         ? selection.filter(item => item != element)
         : [...selection, element];
-    editor.setSelection(nextSelection);
+    model.setSelection(nextSelection);
 }
 
 function applySelection(
     selectionBox: Rect,
-    graph: GraphStructure,
-    editor: EditorController,
+    model: DiagramModel,
     canvas: CanvasApi
 ): void {
-    const selection = new Set(editor.selection);
+    const selection = new Set(model.selection);
     const newlySelected = Array.from(findUnselectedElements(
-        graph.elements,
+        model.elements,
         selectionBox,
         selection,
         canvas.renderingState
     ));
     if (newlySelected.length > 0) {
-        editor.setSelection([...editor.selection, ...newlySelected]);
+        model.setSelection([...model.selection, ...newlySelected]);
     }
 }
 
 interface SelectionBoxProps extends SelectionProps {
-    model: DiagramModel,
-    canvas: CanvasApi,
-    editor: EditorController,
+    model: DiagramModel;
+    canvas: CanvasApi;
     selectedElements: ReadonlyArray<Element>;
     highlightedBox: Rect | undefined;
 }
 
 function SelectionBox(props: SelectionBoxProps) {
     const {
-        model, canvas, editor, selectedElements, highlightedBox,
+        model, canvas, selectedElements, highlightedBox,
         boxMargin = 5,
         itemMargin = 2,
         connectionsMenuCommands,
@@ -217,7 +209,7 @@ function SelectionBox(props: SelectionBoxProps) {
 
     const moveControllerRef = React.useRef<StatefulMoveController | undefined>();
     if (!moveControllerRef.current) {
-        moveControllerRef.current = new StatefulMoveController(canvas, model, editor);
+        moveControllerRef.current = new StatefulMoveController(canvas, model);
     }
     const moveController = moveControllerRef.current;
     moveController.setElements(selectedElements);
@@ -329,8 +321,7 @@ class StatefulMoveController {
 
     constructor(
         private readonly canvas: CanvasApi,
-        private readonly model: DiagramModel,
-        private readonly editor: EditorController
+        private readonly model: DiagramModel
     ) {}
 
     setElements(elements: ReadonlyArray<Element>): void {
@@ -347,7 +338,7 @@ class StatefulMoveController {
                 this.canvas.renderingState
             );
             if (element) {
-                toggleSelected(element, this.editor);
+                toggleSelected(element, this.model);
             }
         }
     };

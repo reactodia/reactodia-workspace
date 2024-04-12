@@ -2,13 +2,15 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import type * as Rdf from '../data/rdf/rdfModel';
-import { isEncodedBlank } from '../data/model';
+import { ElementModel, isEncodedBlank } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
 import { AuthoringState } from '../editor/authoringState';
+import { EntityElement } from '../editor/dataElements';
+import { useObservedElement } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
@@ -16,10 +18,18 @@ import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceConte
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 
 export function StandardTemplate(props: TemplateProps) {
+    const {element, isExpanded} = props;
+
     const workspace = useWorkspace();
-    const entityContext = useAuthoredEntity(props.elementId, props.data, props.isExpanded);
+    const entityContext = useAuthoredEntity(element, isExpanded);
+    useObservedElement(element);
+
+    if (!(element instanceof EntityElement)) {
+        return null;
+    }
     return (
         <StandardTemplateInner {...props}
+            data={element.data}
             workspace={workspace}
             entityContext={entityContext}
         />
@@ -27,6 +37,7 @@ export function StandardTemplate(props: TemplateProps) {
 }
 
 interface StandardTemplateInnerProps extends TemplateProps {
+    data: ElementModel;
     workspace: WorkspaceContext;
     entityContext: AuthoredEntityContext;
 }

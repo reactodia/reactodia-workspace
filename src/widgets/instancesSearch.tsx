@@ -5,12 +5,13 @@ import { EventObserver, Events } from '../coreUtils/events';
 
 import { ElementModel, ElementIri, LinkedElement } from '../data/model';
 import { LookupParams } from '../data/provider';
-import { Element as DiagramElement, LinkType, ElementType } from '../diagram/elements';
+import { LinkType, ElementType } from '../diagram/elements';
 
-import { ProgressBar, ProgressState } from '../widgets/progressBar';
+import { EntityElement } from '../editor/dataElements';
 
 import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
 
+import { ProgressBar, ProgressState } from './progressBar';
 import { SearchResults } from './searchResults';
 
 const DIRECTION_IN_ICON = require('@images/direction-in.svg');
@@ -28,7 +29,7 @@ export interface InstancesSearchCommands {
 export interface SearchCriteria {
     readonly text?: string;
     readonly elementType?: ElementType;
-    readonly refElement?: DiagramElement;
+    readonly refElement?: EntityElement;
     readonly refElementLink?: LinkType;
     readonly linkDirection?: 'in' | 'out';
 }

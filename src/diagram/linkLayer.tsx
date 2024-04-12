@@ -96,10 +96,9 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         });
         this.listener.listen(model.events, 'linkEvent', ({data}) => {
             const linkEvent = (
-                data.changeData ||
-                data.changeLayoutOnly ||
                 data.changeVertices ||
-                data.changeLinkState
+                data.changeLinkState ||
+                data.requestedRedraw
             );
             if (linkEvent) {
                 this.scheduleUpdateLink(linkEvent.source.id);

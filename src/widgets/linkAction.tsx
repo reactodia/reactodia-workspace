@@ -10,6 +10,7 @@ import { GraphStructure } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
+import { EntityElement, RelationLink } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -89,7 +90,7 @@ export function LinkActionEdit(props: LinkActionEditProps) {
     const canEdit = useCanEditLink(link, model, editor);
     const linkIsDeleted = isDeletedLink(editor.authoringState, link);
 
-    if (!editor.inAuthoringMode || linkIsDeleted) {
+    if (!(editor.inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
         return null;
     } else if (canEdit === undefined) {
         const {dockSide, dockIndex} = props;
@@ -128,7 +129,7 @@ function useCanEditLink(
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!editor.metadataApi) {
+        if (!(editor.metadataApi && link instanceof RelationLink)) {
             setCanEdit(false);
             return;
         }
@@ -136,8 +137,8 @@ function useCanEditLink(
             setCanEdit(false);
         } else {
             setCanEdit(undefined);
-            const source = graph.getElement(link.sourceId)!;
-            const target = graph.getElement(link.targetId)!;
+            const source = graph.getElement(link.sourceId) as EntityElement;
+            const target = graph.getElement(link.targetId) as EntityElement;
             const signal = cancellation.signal;
             mapAbortedToNull(
                 editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),
@@ -166,7 +167,7 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
         isSourceOrTargetDeleted(editor.authoringState, link)
     );
 
-    if (!editor.inAuthoringMode || linkIsDeleted) {
+    if (!(editor.inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
         return null;
     } else if (canDelete === undefined) {
         const {dockSide, dockIndex} = props;
@@ -187,7 +188,7 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
                 canDelete ? 'Delete link' : 'Deletion is unavailable for the selected link'
             )}
             disabled={!canDelete}
-            onSelect={() => editor.deleteLink(link.data)}
+            onSelect={() => editor.deleteRelation(link.data)}
         />
     );
 }
@@ -205,7 +206,7 @@ function useCanDeleteLink(
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!editor.metadataApi) {
+        if (!(editor.metadataApi && link instanceof RelationLink)) {
             setCanDelete(false);
             return;
         }
@@ -213,8 +214,8 @@ function useCanDeleteLink(
             setCanDelete(false);
         } else {
             setCanDelete(undefined);
-            const source = graph.getElement(link.sourceId)!;
-            const target = graph.getElement(link.targetId)!;
+            const source = graph.getElement(link.sourceId) as EntityElement;
+            const target = graph.getElement(link.targetId) as EntityElement;
             const signal = cancellation.signal;
             mapAbortedToNull(
                 editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),
@@ -238,7 +239,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {canvas} = useCanvas();
     const {editor, overlay} = useWorkspace();
 
-    if (!editor.inAuthoringMode) {
+    if (!(editor.inAuthoringMode && link instanceof RelationLink)) {
         return null;
     }
 
@@ -258,8 +259,8 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 overlay.startEditing({
-                    target: link,
-                    mode: dockSide === 'source' ? 'moveLinkSource' : 'moveLinkTarget',
+                    mode: dockSide === 'source' ? 'moveSource' : 'moveTarget',
+                    link,
                     point,
                 });
             }}>
@@ -326,16 +327,23 @@ function isDeletedLink(state: AuthoringState, link: Link) {
     return isDeletedByItself(state, link) || isSourceOrTargetDeleted(state, link);
 }
 
-function isDeletedByItself(state: AuthoringState, link: Link) {
+function isDeletedByItself(state: AuthoringState, link: Link): boolean {
+    if (!(link instanceof RelationLink)) {
+        return false;
+    }
     const event = state.links.get(link.data);
-    return event && event.deleted;
+    return event?.deleted || false;
 }
 
-function isSourceOrTargetDeleted(state: AuthoringState, link: Link) {
+function isSourceOrTargetDeleted(state: AuthoringState, link: Link): boolean {
+    if (!(link instanceof RelationLink)) {
+        return false;
+    }
     const sourceEvent = state.elements.get(link.data.sourceId);
     const targetEvent = state.elements.get(link.data.targetId);
     return (
-        sourceEvent && sourceEvent.deleted ||
-        targetEvent && targetEvent.deleted
+        sourceEvent?.deleted ||
+        targetEvent?.deleted ||
+        false
     );
 }

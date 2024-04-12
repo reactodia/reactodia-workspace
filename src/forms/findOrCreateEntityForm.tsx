@@ -1,10 +1,9 @@
 import * as React from 'react';
 
-import { setElementData } from '../diagram/commands';
-import { Element, Link, makeLinkWithDirection } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
+import { EntityElement, RelationLink, setElementData } from '../editor/dataElements';
 
 import { ProgressBar } from '../widgets/progressBar';
 
@@ -16,10 +15,10 @@ import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelecto
 const CLASS_NAME = 'reactodia-edit-form';
 
 export interface FindOrCreateEntityFormProps {
-    source: Element;
-    target: Element;
+    source: EntityElement;
+    target: EntityElement;
     initialTargetIsNew: boolean;
-    originalLink: Link;
+    originalLink: RelationLink;
     onAfterApply: () => void;
     onCancel: () => void;
 }
@@ -34,7 +33,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     static contextType = WorkspaceContext;
     declare readonly context: WorkspaceContext;
 
-    private link: Link;
+    private link: RelationLink;
 
     private validationCancellation = new AbortController();
 
@@ -189,19 +188,16 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             }
             if (linkValue && linkValue.validated && linkValue.allowChange) {
                 editor.removeTemporaryCells([this.link]);
-                const newLink = makeLinkWithDirection(
-                    new Link({
-                        sourceId: source.id,
-                        targetId: target.id,
-                        data: {
-                            ...linkValue.value.link,
-                            sourceId: source.iri,
-                            targetId: target.iri,
-                        }
-                    }),
-                    linkValue.value.link
-                );
-                this.link = editor.createNewLink({link: newLink, temporary: true});
+                const newLink = new RelationLink({
+                    sourceId: source.id,
+                    targetId: target.id,
+                    data: {
+                        ...linkValue.value.link,
+                        sourceId: source.iri,
+                        targetId: target.iri,
+                    }
+                }).withDirection(linkValue.value.link);
+                this.link = editor.createRelation(newLink, {temporary: true});
             }
         });
     }
@@ -234,19 +230,16 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             model.requestLinksOfType();
         }
 
-        const newLink = makeLinkWithDirection(
-            new Link({
-                sourceId: source.id,
-                targetId: target.id,
-                data: {
-                    ...link.data,
-                    sourceId: source.iri,
-                    targetId: target.iri,
-                }
-            }),
-            linkValue.value.link
-        );
-        editor.createNewLink({link: newLink});
+        const newLink = new RelationLink({
+            sourceId: source.id,
+            targetId: target.id,
+            data: {
+                ...link.data,
+                sourceId: source.iri,
+                targetId: target.iri,
+            }
+        }).withDirection(linkValue.value.link);
+        editor.createRelation(newLink);
 
         batch.store();
 

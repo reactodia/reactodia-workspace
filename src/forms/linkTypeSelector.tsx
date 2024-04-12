@@ -10,6 +10,8 @@ import { LinkType } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
+import { RelationLink } from '../editor/dataElements';
+
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-edit-form';
@@ -190,10 +192,11 @@ export function validateLinkType(
     if (equalLinks(currentLink, originalLink)) {
         return Promise.resolve({error: undefined, allowChange: true});
     }
-    const alreadyOnDiagram = model.links.find(({data: {linkTypeId, sourceId, targetId}}) =>
-        linkTypeId === currentLink.linkTypeId &&
-        sourceId === currentLink.sourceId &&
-        targetId === currentLink.targetId &&
+    const alreadyOnDiagram = model.links.find(link =>
+        link instanceof RelationLink &&
+        link.data.linkTypeId === currentLink.linkTypeId &&
+        link.data.sourceId === currentLink.sourceId &&
+        link.data.targetId === currentLink.targetId &&
         !editor.temporaryState.links.has(currentLink)
     );
     if (alreadyOnDiagram) {

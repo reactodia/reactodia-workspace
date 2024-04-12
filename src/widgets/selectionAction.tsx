@@ -13,6 +13,7 @@ import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
+import { EntityElement } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -100,10 +101,11 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
-    const {editor} = useWorkspace();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {model, editor} = useWorkspace();
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const isNewElement = Boolean(
         elements.length === 1 &&
+        elements[0] instanceof EntityElement &&
         AuthoringState.isNewElement(editor.authoringState, elements[0].iri)
     );
     return (
@@ -127,9 +129,8 @@ export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps
 
 export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
-    const {canvas} = useCanvas();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {model, canvas} = useCanvas();
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
     }
@@ -155,9 +156,9 @@ export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {className, title, ...otherProps} = props;
-    const {editor, performLayout} = useWorkspace();
-    const {canvas} = useCanvas();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {performLayout} = useWorkspace();
+    const {model, canvas} = useCanvas();
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
     }
@@ -180,9 +181,9 @@ export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
+    const {model} = useWorkspace();
 
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
     const debouncedExpandedStore = useFrameDebouncedStore(elementExpandedStore);
     const allExpanded = useSyncStore(
@@ -239,12 +240,15 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {}
 
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title} = props;
-    const {view, editor} = useWorkspace();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {model, canvas} = useCanvas();
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
         return null;
     }
     const [target] = elements;
+    if (!(target instanceof EntityElement)) {
+        return null;
+    }
     return (
         <a role='button'
             className={classnames(
@@ -256,7 +260,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
             style={getDockStyle(dockRow, dockColumn)}
             href={target.iri}
             title={title ?? 'Jump to resource'}
-            onClick={e => view.onIriClick(target.iri, target, 'jumpToEntity', e)}
+            onClick={e => canvas.renderingState.shared.onIriClick(target.iri, target, 'jumpToEntity', e)}
         />
     );
 }
@@ -267,8 +271,8 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {editor, overlay} = useWorkspace();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {model, overlay} = useWorkspace();
+    const elements = model.selection.filter((cell): cell is EntityElement => cell instanceof EntityElement);
     if (!commands) {
         return null;
     }
@@ -303,12 +307,15 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
 
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {editor} = useWorkspace();
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const {model} = useCanvas();
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!(commands && elements.length === 1)) {
         return null;
     }
     const [target] = elements;
+    if (!(target instanceof EntityElement)) {
+        return null;
+    }
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__add-to-filter`)}
@@ -327,17 +334,17 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
     const {editor, overlay} = useWorkspace();
-    const {canvas} = useCanvas();
+    const {model, canvas} = useCanvas();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
     );
 
-    const elements = editor.selection.filter((cell): cell is Element => cell instanceof Element);
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const target = elements.length === 1 ? elements[0] : undefined;
     const canLink = useCanEstablishLink(editor, target);
 
-    if (!(target && inAuthoringMode)) {
+    if (!(target instanceof EntityElement && inAuthoringMode)) {
         return null;
     } else if (canLink === undefined) {
         const {dock, dockRow, dockColumn} = props;
@@ -362,7 +369,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                overlay.startEditing({target, mode: 'establishLink', point});
+                overlay.startEditing({mode: 'connect', source: target, point});
             }}
         />
     );
@@ -374,11 +381,12 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
     const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
     const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
-    const authoringEvent = target ? authoringState.elements.get(target.iri) : undefined;
+    const authoringEvent = target instanceof EntityElement
+        ? authoringState.elements.get(target.iri) : undefined;
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!(editor.metadataApi && target)) {
+        if (!(editor.metadataApi && target instanceof EntityElement)) {
             setCanLink(false);
             return;
         }

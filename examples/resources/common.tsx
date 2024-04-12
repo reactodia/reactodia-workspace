@@ -2,11 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { saveAs } from 'file-saver';
 
-import {
-    ElementIri, ElementModel, SerializedDiagram,
-    ToolbarActionOpen, ToolbarActionSave, ToolbarActionClearAll, ToolbarActionExport,
-    useWorkspace,
-} from '../../src/workspace';
+import * as Reactodia from '../../src/workspace';
 
 function onPageLoad(callback: (container: HTMLDivElement) => void) {
     document.addEventListener('DOMContentLoaded', () => {
@@ -24,14 +20,14 @@ export function mountOnLoad(node: React.ReactElement): void {
 }
 
 export function ExampleToolbarMenu() {
-    const {model, editor} = useWorkspace();
+    const {model, editor} = Reactodia.useWorkspace();
     return (
         <>
-            <ToolbarActionOpen
+            <Reactodia.ToolbarActionOpen
                 fileAccept='.json'
                 onSelect={async file => {
-                    const preloadedElements = new Map<ElementIri, ElementModel>();
-                    for (const element of model.elements) {
+                    const preloadedElements = new Map<Reactodia.ElementIri, Reactodia.ElementModel>();
+                    for (const element of model.elements.filter(Reactodia.EntityElement.is)) {
                         preloadedElements.set(element.iri, element.data);
                     }
 
@@ -48,8 +44,8 @@ export function ExampleToolbarMenu() {
                     }
                 }}>
                 Open diagram from file
-            </ToolbarActionOpen>
-            <ToolbarActionSave mode='layout'
+            </Reactodia.ToolbarActionOpen>
+            <Reactodia.ToolbarActionSave mode='layout'
                 onSelect={() => {
                     const diagramLayout = model.exportLayout();
                     const layoutString = JSON.stringify(diagramLayout);
@@ -58,17 +54,17 @@ export function ExampleToolbarMenu() {
                     saveAs(blob, `reactodia-diagram-${timestamp}.json`);
                 }}>
                 Save diagram to file
-            </ToolbarActionSave>
-            <ToolbarActionSave mode='layout'
+            </Reactodia.ToolbarActionSave>
+            <Reactodia.ToolbarActionSave mode='layout'
                 onSelect={() => {
                     const diagram = model.exportLayout();
                     window.location.hash = saveLayoutToLocalStorage(diagram);
                     window.location.reload();
                 }}>
                 Save diagram to local storage
-            </ToolbarActionSave>
+            </Reactodia.ToolbarActionSave>
             {editor.inAuthoringMode ? (
-                <ToolbarActionSave mode='authoring'
+                <Reactodia.ToolbarActionSave mode='authoring'
                     onSelect={() => {
                         const state = editor.authoringState;
                         // eslint-disable-next-line no-console
@@ -76,17 +72,17 @@ export function ExampleToolbarMenu() {
                         alert('Please check browser console for result');
                     }}>
                     Persist changes to data
-                </ToolbarActionSave>
+                </Reactodia.ToolbarActionSave>
             ) : null}
-            <ToolbarActionClearAll />
-            <ToolbarActionExport kind='exportRaster' />
-            <ToolbarActionExport kind='exportSvg' />
-            <ToolbarActionExport kind='print' />
+            <Reactodia.ToolbarActionClearAll />
+            <Reactodia.ToolbarActionExport kind='exportRaster' />
+            <Reactodia.ToolbarActionExport kind='exportSvg' />
+            <Reactodia.ToolbarActionExport kind='print' />
         </>
     );
 }
 
-export function tryLoadLayoutFromLocalStorage(): SerializedDiagram | undefined {
+export function tryLoadLayoutFromLocalStorage(): Reactodia.SerializedDiagram | undefined {
     if (window.location.hash.length > 1) {
         try {
             const key = window.location.hash.substring(1);
@@ -100,7 +96,7 @@ export function tryLoadLayoutFromLocalStorage(): SerializedDiagram | undefined {
     return undefined;
 }
 
-function saveLayoutToLocalStorage(diagram: SerializedDiagram): string {
+function saveLayoutToLocalStorage(diagram: Reactodia.SerializedDiagram): string {
     const randomKey = Math.floor((1 + Math.random()) * 0x10000000000)
         .toString(16).substring(1);
     localStorage.setItem(randomKey, JSON.stringify(diagram));

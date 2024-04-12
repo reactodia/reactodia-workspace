@@ -9,12 +9,13 @@ import { generate128BitID } from '../data/utils';
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { LinkType, Element } from '../diagram/elements';
+import { Element, VoidElement, LinkType } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
@@ -34,7 +35,7 @@ export interface ConnectionsMenuProps {
 
 export interface ConnectionsMenuCommands {
     show: {
-        readonly targets: ReadonlyArray<Element>;
+        readonly targets: ReadonlyArray<EntityElement>;
         readonly openAll?: boolean;
     };
 }
@@ -101,7 +102,7 @@ defineCanvasWidget(ConnectionsMenu, element => ({element, attachment: 'viewport'
 class VirtualTarget {
     private readonly model: DiagramModel;
 
-    readonly target: Element;
+    readonly target: VoidElement;
 
     constructor(
         elements: ReadonlyArray<Element>,
@@ -109,10 +110,7 @@ class VirtualTarget {
         canvas: CanvasApi
     ) {
         this.model = model;
-        const target = new Element({
-            data: Element.placeholderData('' as ElementIri),
-            temporary: true,
-        });
+        const target = new VoidElement({});
         this.target = target;
 
         const elementSet = new Set(elements);
@@ -160,7 +158,7 @@ class VirtualTarget {
 
 interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
     placeTarget: Element;
-    targets: ReadonlyArray<Element>;
+    targets: ReadonlyArray<EntityElement>;
     onClose: () => void;
     workspace: WorkspaceContext;
     canvas: CanvasApi;
@@ -349,7 +347,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
 
-        const presentOnDiagramIris = new Set(model.elements.map(el => el.iri));
+        const presentOnDiagramIris = new Set(
+            model.elements.filter(EntityElement.is).map(el => el.iri)
+        );
         const elements = Array.from(loadedElements.values(), element => ({
             model: element,
             presentOnDiagram: presentOnDiagramIris.has(element.id),
@@ -542,10 +542,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                 criteria: {refElement: singleTarget},
             });
         } else {
-            const selectedElement = model.getElement(singleTarget.id)!;
             instancesSearchCommands?.trigger('setCriteria', {
                 criteria: {
-                    refElement: selectedElement,
+                    refElement: singleTarget,
                     refElementLink: link,
                     linkDirection: direction,
                 },

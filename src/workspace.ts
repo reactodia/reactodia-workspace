@@ -5,7 +5,7 @@ export * from './coreUtils/collections';
 export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
 export { useObservedProperty } from './coreUtils/hooks';
-export * from './coreUtils/keyedObserver';
+export { KeyedObserver } from './coreUtils/keyedObserver';
 export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export {
     CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink, LayoutFunction,
@@ -44,10 +44,12 @@ export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
 export { defineCanvasWidget } from './diagram/canvasWidget';
-export { RestoreGeometry, setElementExpanded, setElementData, setLinkData } from './diagram/commands';
+export { RestoreGeometry, setElementExpanded } from './diagram/commands';
 export * from './diagram/customization';
 export {
-    Element, ElementEvents, ElementTemplateState, Link, LinkEvents, LinkTemplateState, LinkVertex, Cell,
+    Element, ElementEvents, ElementTemplateState,
+    Link, LinkEvents, LinkTemplateState, LinkVertex,
+    Cell, VoidElement,
 } from './diagram/elements';
 export * from './diagram/geometry';
 export * from './diagram/history';
@@ -72,11 +74,18 @@ export * from './editor/asyncModel';
 export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
 export * from './editor/authoringState';
 export {
+    EntityElement, EntityElementEvents, EntityElementProps,
+    RelationLink, RelationLinkEvents, RelationLinkProps,
+    setElementData, setLinkData,
+} from './editor/dataElements';
+export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,
     FetchOperationElement, FetchOperationLink, FetchOperationElementType,
     FetchOperationLinkType, FetchOperationPropertyType,
 } from './editor/dataFetcher';
 export { EditorOptions, EditorEvents, EditorController } from './editor/editorController';
+export { DragEditOperation, DragEditConnect, DragEditMoveEndpoint } from './editor/editLayer';
+export { useObservedElement } from './editor/observedElement';
 export {
     OverlayController, OverlayControllerEvents, PropertyEditor, PropertyEditorOptions,
 } from './editor/overlayController';

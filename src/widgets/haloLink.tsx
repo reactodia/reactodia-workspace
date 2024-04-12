@@ -52,13 +52,12 @@ export interface HaloLinkProps {
 
 export function HaloLink(props: HaloLinkProps) {
     const {canvas, model} = useCanvas();
-    const {editor} = useWorkspace();
 
-    const selectionStore = useEventStore(editor.events, 'changeSelection');
-    const selection = useSyncStore(selectionStore, () => editor.selection);
+    const selectionStore = useEventStore(model.events, 'changeSelection');
+    const selection = useSyncStore(selectionStore, () => model.selection);
 
     if (selection.length === 1) {
-        const [target] = editor.selection;
+        const [target] = model.selection;
         if (target instanceof Link) {
             return (
                 <HaloLinkInner {...props}

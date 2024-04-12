@@ -3,17 +3,17 @@ import * as React from 'react';
 import { EventObserver } from '../coreUtils/events';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { Element } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { ElementChange } from './authoringState';
+import { EntityElement } from './dataElements';
 import { ElementValidation, LinkValidation } from './validation';
 
 export interface ElementDecoratorProps {
-    target: Element;
+    target: EntityElement;
     position: Vector;
 }
 

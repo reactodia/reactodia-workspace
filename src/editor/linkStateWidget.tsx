@@ -18,6 +18,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { AuthoringKind, AuthoringState } from './authoringState';
+import { RelationLink } from './dataElements';
 import { LinkValidation, ElementValidation } from './validation';
 
 export interface LinkStateWidgetProps {
@@ -122,6 +123,10 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
 
         const rendered: JSX.Element[] = [];
         for (const link of model.links) {
+            if (!(link instanceof RelationLink)) {
+                continue;
+            }
+
             let renderedState: JSX.Element | null = null;
             const state = editor.authoringState.links.get(link.data);
             if (state) {
@@ -180,6 +185,10 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
         const {workspace: {model, editor}} = this.props;
         const rendered: JSX.Element[] = [];
         for (const link of model.links) {
+            if (!(link instanceof RelationLink)) {
+                continue;
+            }
+
             if (editor.temporaryState.links.has(link.data)) {
                 const path = this.calculateLinkPath(link);
                 rendered.push(

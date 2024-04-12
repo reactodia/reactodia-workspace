@@ -62,7 +62,7 @@ export async function calculateLayout(params: {
 
     for (const element of elements) {
         nodes[element.id] = {
-            types: element.data.types,
+            types: element.types,
             fixed: fixedElements?.has(element),
         };
         bounds[element.id] = boundsOf(element, sizeProvider);

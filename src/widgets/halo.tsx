@@ -8,8 +8,6 @@ import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element, ElementEvents } from '../diagram/elements';
 import { boundsOf } from '../diagram/geometry';
 
-import { useWorkspace } from '../workspace/workspaceContext';
-
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 import {
@@ -47,13 +45,12 @@ export interface HaloProps {
 }
 
 export function Halo(props: HaloProps) {
-    const {canvas} = useCanvas();
-    const {editor} = useWorkspace();
+    const {model, canvas} = useCanvas();
 
     const selection = useObservedProperty(
-        editor.events,
+        model.events,
         'changeSelection',
-        () => editor.selection
+        () => model.selection
     );
 
     if (selection.length === 1) {
