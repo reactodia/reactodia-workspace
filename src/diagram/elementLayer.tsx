@@ -2,16 +2,13 @@ import * as React from 'react';
 import { findDOMNode } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
-import {
-    KeyedObserver, observeElementTypes, observeProperties,
-} from '../coreUtils/keyedObserver';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementTypeIri, PropertyTypeIri } from '../data/model';
 import { TemplateProps } from './customization';
 
 import { setElementExpanded } from './commands';
-import { Element } from './elements';
+import { Element, VoidElement } from './elements';
 import { DiagramModel } from './model';
 import { RenderingState, RenderingLayer } from './renderingState';
 import { SharedCanvasState, IriClickIntent } from './sharedCanvasState';
@@ -100,7 +97,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                                 state={state}
                                 model={model}
                                 renderingState={renderingState}
-                                onInvalidate={this.requestRedraw}
                                 onResize={this.requestSizeUpdate}
                             />
                         );
@@ -136,13 +132,25 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             this.requestRedrawAll(RedrawFlags.None);
         });
         this.listener.listen(model.events, 'elementEvent', ({data}) => {
-            const invalidatesTemplate = data.changeData || data.changeExpanded || data.changeElementState;
+            const invalidatesTemplate = data.changeExpanded || data.changeElementState;
             if (invalidatesTemplate) {
                 this.requestRedraw(invalidatesTemplate.source, RedrawFlags.RecomputeTemplate);
             }
-            const invalidatesRender = data.changePosition || data.requestedRedraw;
+            
+            const invalidatesRender = data.changePosition;
             if (invalidatesRender) {
                 this.requestRedraw(invalidatesRender.source, RedrawFlags.Render);
+            }
+
+            if (data.requestedRedraw) {
+                let flags = RedrawFlags.Render;
+                switch (data.requestedRedraw.level) {
+                    case 'template': {
+                        flags = RedrawFlags.RecomputeTemplate;
+                        break;
+                    }
+                }
+                this.requestRedraw(data.requestedRedraw.source, flags);
             }
         });
         this.listener.listen(model.events, 'changeLanguage', () => {
@@ -249,12 +257,12 @@ function applyRedrawRequests(
     return computed;
 }
 
-function computeTemplateProps(model: Element): TemplateProps {
+function computeTemplateProps(element: Element): TemplateProps {
     return {
-        elementId: model.id,
-        data: model.data,
-        isExpanded: model.isExpanded,
-        elementState: model.elementState,
+        elementId: element.id,
+        element,
+        isExpanded: element.isExpanded,
+        elementState: element.elementState,
     };
 }
 
@@ -262,25 +270,15 @@ interface OverlaidElementProps {
     state: ElementState;
     model: DiagramModel;
     renderingState: RenderingState;
-    onInvalidate: (model: Element, request: RedrawFlags) => void;
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 
 class OverlaidElement extends React.Component<OverlaidElementProps> {
     private readonly listener = new EventObserver();
-    private disposed = false;
-
-    private typesObserver!: KeyedObserver<ElementTypeIri>;
-    private propertiesObserver!: KeyedObserver<PropertyTypeIri>;
-
-    private rerenderTemplate = () => {
-        if (this.disposed) { return; }
-        this.props.onInvalidate(this.props.state.element, RedrawFlags.RecomputeTemplate);
-    };
 
     render(): React.ReactElement<any> {
         const {state: {element, blurred}} = this.props;
-        if (element.temporary) {
+        if (element instanceof VoidElement) {
             return <div />;
         }
 
@@ -357,20 +355,10 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
             const element = findDOMNode(this) as HTMLElement;
             if (element) { element.focus(); }
         });
-        this.typesObserver = observeElementTypes(
-            model, 'changeLabel', this.rerenderTemplate
-        );
-        this.propertiesObserver = observeProperties(
-            model, 'changeLabel', this.rerenderTemplate
-        );
-        this.observeTypes();
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.typesObserver.stopListening();
-        this.propertiesObserver.stopListening();
-        this.disposed = true;
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
@@ -378,16 +366,10 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     }
 
     componentDidUpdate() {
-        this.observeTypes();
+        const {state, onResize} = this.props;
         // TODO: replace findDOMNode() usage by accessing a ref
         // eslint-disable-next-line react/no-find-dom-node
-        this.props.onResize(this.props.state.element, findDOMNode(this) as HTMLDivElement);
-    }
-
-    private observeTypes() {
-        const {state: {element}} = this.props;
-        this.typesObserver.observe(element.data.types);
-        this.propertiesObserver.observe(Object.keys(element.data.properties) as PropertyTypeIri[]);
+        onResize(state.element, findDOMNode(this) as HTMLDivElement);
     }
 }
 
@@ -398,14 +380,14 @@ class TemplatedElement extends React.Component<OverlaidElementProps> {
     render() {
         const {state, renderingState} = this.props;
         const {element, templateProps} = state;
-        const templateClass = renderingState.getElementTemplate(element.data.types);
+        const templateClass = renderingState.getElementTemplate(element.types);
         this.cachedTemplateClass = templateClass;
         this.cachedTemplateProps = templateProps;
         return React.createElement(templateClass, templateProps);
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
-        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element.data.types);
+        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element.types);
         return !(
             this.cachedTemplateClass === templateClass &&
             this.cachedTemplateProps === nextProps.state.templateProps

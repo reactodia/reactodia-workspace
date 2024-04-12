@@ -9,12 +9,13 @@ import { generate128BitID } from '../data/utils';
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { LinkType, Element } from '../diagram/elements';
+import { Element, VoidElement, LinkType } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
@@ -34,7 +35,7 @@ export interface ConnectionsMenuProps {
 
 export interface ConnectionsMenuCommands {
     show: {
-        readonly targets: ReadonlyArray<Element>;
+        readonly targets: ReadonlyArray<EntityElement>;
         readonly openAll?: boolean;
     };
 }
@@ -69,12 +70,13 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             const virtualTarget = targets.length > 1
                 ? new VirtualTarget(targets, model, canvas)
                 : undefined;
-            const placeTarget = virtualTarget ? virtualTarget.target : targets[0];
+            
             const onClose = () => {
-                virtualTarget?.remove();
+                virtualTarget?.removeFrom(model);
                 overlay.hideDialog();
             };
 
+            const placeTarget = virtualTarget ?? targets[0];
             overlay.showDialog({
                 target: placeTarget,
                 dialogType: 'connectionsMenu',
@@ -98,27 +100,20 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
 
 defineCanvasWidget(ConnectionsMenu, element => ({element, attachment: 'viewport'}));
 
-class VirtualTarget {
-    private readonly model: DiagramModel;
-
-    readonly target: Element;
+class VirtualTarget extends VoidElement {
+    private readonly listener = new EventObserver();
 
     constructor(
         elements: ReadonlyArray<Element>,
         model: DiagramModel,
         canvas: CanvasApi
     ) {
-        this.model = model;
-        const target = new Element({
-            data: Element.placeholderData('' as ElementIri),
-            temporary: true,
-        });
-        this.target = target;
+        super({});
 
         const elementSet = new Set(elements);
         const updateTargetPosition = () => {
             const {x, y, width, height} = getContentFittingBox(elements, [], canvas.renderingState);
-            target.setPosition({
+            this.setPosition({
                 x: x + width,
                 y: y + height / 2,
             });
@@ -126,33 +121,33 @@ class VirtualTarget {
         updateTargetPosition();
 
         const batch = model.history.startBatch();
-        model.addElement(target);
+        model.addElement(this);
         batch.discard();
     
-        const listener = new EventObserver();
-        listener.listen(model.events, 'changeCells', e => {
-            if (e.changedElement === target || e.updateAll) {
-                if (!model.elements.includes(target)) {
-                    listener.stopListening();
+        this.listener.listen(model.events, 'changeCells', e => {
+            if (e.changedElement === this || e.updateAll) {
+                if (model.getElement(this.id) !== this) {
+                    this.listener.stopListening();
                 }
             }
         });
-        listener.listen(model.events, 'elementEvent', ({data}) => {
+        this.listener.listen(model.events, 'elementEvent', ({data}) => {
             if (data.changePosition && elementSet.has(data.changePosition.source)) {
                 updateTargetPosition();
             }
         });
-        listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+        this.listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
             if (elementSet.has(e.source)) {
                 updateTargetPosition();
             }
         });
     }
 
-    remove(): void {
-        if (this.model.getElement(this.target.id)) {
-            const batch = this.model.history.startBatch();
-            this.model.removeElement(this.target.id);
+    removeFrom(model: DiagramModel): void {
+        this.listener.stopListening();
+        if (model.getElement(this.id) === this) {
+            const batch = model.history.startBatch();
+            model.removeElement(this.id);
             batch.discard();
         }
     }
@@ -160,7 +155,7 @@ class VirtualTarget {
 
 interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
     placeTarget: Element;
-    targets: ReadonlyArray<Element>;
+    targets: ReadonlyArray<EntityElement>;
     onClose: () => void;
     workspace: WorkspaceContext;
     canvas: CanvasApi;
@@ -349,7 +344,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
 
-        const presentOnDiagramIris = new Set(model.elements.map(el => el.iri));
+        const presentOnDiagramIris = new Set(
+            model.elements.filter(EntityElement.is).map(el => el.iri)
+        );
         const elements = Array.from(loadedElements.values(), element => ({
             model: element,
             presentOnDiagram: presentOnDiagramIris.has(element.id),
@@ -542,10 +539,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                 criteria: {refElement: singleTarget},
             });
         } else {
-            const selectedElement = model.getElement(singleTarget.id)!;
             instancesSearchCommands?.trigger('setCriteria', {
                 criteria: {
-                    refElement: selectedElement,
+                    refElement: singleTarget,
                     refElementLink: link,
                     linkDirection: direction,
                 },

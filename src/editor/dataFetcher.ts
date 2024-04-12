@@ -1,4 +1,4 @@
-import { Events, EventSource, PropertyChange } from '../coreUtils/events';
+import { Events, EventSource } from '../coreUtils/events';
 import { BufferingQueue } from '../coreUtils/scheduler';
 
 import {
@@ -9,6 +9,8 @@ import { DataProvider } from '../data/provider';
 
 import { ElementType, LinkType, PropertyType } from '../diagram/elements';
 import { Graph } from '../diagram/graph';
+
+import { EntityElement } from './dataElements';
 
 export interface DataFetcherEvents {
     changeOperations: ChangeOperationsEvent;
@@ -158,9 +160,11 @@ export class DataFetcher {
 
     private onElementInfoLoaded = (elements: Map<ElementIri, ElementModel>) => {
         for (const element of this.graph.getElements()) {
-            const loadedModel = elements.get(element.iri);
-            if (loadedModel) {
-                element.setData(loadedModel);
+            if (element instanceof EntityElement) {
+                const loadedModel = elements.get(element.iri);
+                if (loadedModel) {
+                    element.setData(loadedModel);
+                }
             }
         }
     };

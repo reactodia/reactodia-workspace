@@ -4,12 +4,12 @@ import { EventObserver } from '../coreUtils/events';
 
 import { ElementIri } from '../data/model';
 
-import { type CanvasContext, useCanvas } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
-import { Element } from '../diagram/elements';
 import { Vector, boundsOf } from '../diagram/geometry';
 
-import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { AsyncModel, requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { EntityElement } from '../editor/dataElements';
 
 import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
@@ -17,7 +17,7 @@ export interface DropOnCanvasProps {}
 
 export function DropOnCanvas(props: DropOnCanvasProps) {
     const {canvas} = useCanvas();
-    const {model, editor, triggerWorkspaceEvent} = useWorkspace();
+    const {model, triggerWorkspaceEvent} = useWorkspace();
 
     React.useEffect(() => {
         const listener = new EventObserver();
@@ -27,7 +27,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
             const iris = tryParseDefaultDragAndDropData(e.sourceEvent);
             if (iris.length > 0) {
                 const batch = model.history.startBatch('Drag and drop onto diagram');
-                const placedElements = placeElements({canvas, model}, iris, e.position);
+                const placedElements = placeElements(iris, e.position, canvas, model);
                 const irisToLoad = placedElements.map(elem => elem.iri);
                 batch.history.execute(requestElementData(model, irisToLoad));
                 batch.history.execute(restoreLinksBetweenElements(model));
@@ -37,7 +37,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
                     placedElements[placedElements.length - 1].focus();
                 }
     
-                editor.setSelection(placedElements);
+                model.setSelection(placedElements);
     
                 triggerWorkspaceEvent(WorkspaceEventKey.editorAddElements);
             }
@@ -74,10 +74,11 @@ function tryParseDefaultDragAndDropData(e: DragEvent): ElementIri[] {
 }
 
 function placeElements(
-    {canvas, model}: Pick<CanvasContext, 'canvas' | 'model'>,
     dragged: ReadonlyArray<ElementIri>,
-    position: Vector
-): Element[] {
+    position: Vector,
+    canvas: CanvasApi,
+    model: AsyncModel
+): EntityElement[] {
     const elements = dragged.map(item => model.createElement(item));
     for (const element of elements) {
         // initially anchor element at top left corner to preserve canvas scroll state,

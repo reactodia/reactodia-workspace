@@ -4,6 +4,8 @@ import { DIAGRAM_CONTEXT_URL_V1 } from '../data/schema';
 import { Element, ElementTemplateState, Link, LinkTemplateState } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 
+import { EntityElement } from './dataElements';
+
 export interface SerializedDiagram {
     '@context': any;
     '@type': 'Diagram';
@@ -27,11 +29,10 @@ export interface SerializedLayout {
 export interface SerializedLayoutElement {
     '@type': 'Element';
     '@id': string;
-    iri: ElementIri;
+    iri?: ElementIri;
     position: Vector;
     angle?: number;
     isExpanded?: boolean;
-    group?: string;
     elementState?: ElementTemplateState;
 }
 
@@ -80,7 +81,7 @@ export function makeSerializedLayout(
     const elements = modelElements.map((element): SerializedLayoutElement => ({
         '@type': 'Element',
         '@id': element.id,
-        iri: element.iri,
+        iri: element instanceof EntityElement ? element.iri : undefined,
         position: element.position,
         isExpanded: element.isExpanded,
         elementState: element.elementState,

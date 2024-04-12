@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import type { ElementModel, PropertyTypeIri } from '../data/model';
+import type { PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { ElementTemplateState, Link, LinkType } from './elements';
+import type { Element, ElementTemplateState, Link, LinkType } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
 
@@ -29,7 +29,7 @@ export type ElementTemplate = React.ComponentType<TemplateProps>;
 
 export interface TemplateProps {
     readonly elementId: string;
-    readonly data: ElementModel;
+    readonly element: Element;
     readonly isExpanded: boolean;
     readonly elementState?: ElementTemplateState;
 }

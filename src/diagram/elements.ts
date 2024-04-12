@@ -1,9 +1,7 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import * as Rdf from '../data/rdf/rdfModel';
-import {
-    ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
-} from '../data/model';
+import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
 import { GenerateID } from '../data/schema';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -11,70 +9,58 @@ import { Vector, isPolylineEqual } from './geometry';
 export type Cell = Element | Link | LinkVertex;
 
 export interface ElementEvents {
-    changeData: PropertyChange<Element, ElementModel>;
     changePosition: PropertyChange<Element, Vector>;
     changeExpanded: PropertyChange<Element, boolean>;
-    changeGroup: PropertyChange<Element, string | undefined>;
     changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
     requestedFocus: { source: Element };
-    requestedRedraw: { source: Element };
+    requestedRedraw: {
+        source: Element;
+        /** @default "render" */
+        level?: ElementRedrawLevel;
+    };
 }
 
-export class Element {
-    private readonly source = new EventSource<ElementEvents>();
+export type ElementRedrawLevel = 'render' | 'template';
+
+export interface ElementProps {
+    id?: string;
+    position?: Vector;
+    expanded?: boolean;
+    elementState?: ElementTemplateState;
+}
+
+/**
+ * Abstract base class for diagram elements (nodes).
+ */
+export abstract class Element {
+    protected readonly source = new EventSource<ElementEvents>();
     readonly events: Events<ElementEvents> = this.source;
 
     readonly id: string;
 
-    private _data: ElementModel;
     private _position: Vector;
     private _expanded: boolean;
     private _elementState: ElementTemplateState | undefined;
-    private _temporary: boolean;
 
-    constructor(props: {
-        id?: string;
-        data: ElementModel;
-        position?: Vector;
-        expanded?: boolean;
-        elementState?: ElementTemplateState;
-        temporary?: boolean;
-    }) {
+    constructor(props: ElementProps) {
         const {
             id = GenerateID.forElement(),
-            data,
             position = {x: 0, y: 0},
             expanded = false,
             elementState,
-            temporary = false,
         } = props;
 
         this.id = id;
-        this._data = data;
         this._position = position;
         this._expanded = expanded;
         this._elementState = elementState;
-        this._temporary = temporary;
     }
 
-    static placeholderData(iri: ElementIri): ElementModel {
-        return {
-            id: iri,
-            types: [],
-            label: [],
-            properties: {},
-        };
+    get types(): ReadonlyArray<ElementTypeIri> {
+        return this.getTypes();
     }
 
-    get iri() { return this._data.id; }
-
-    get data() { return this._data; }
-    setData(value: ElementModel) {
-        const previous = this._data;
-        if (previous === value) { return; }
-        this._data = value;
-        this.source.trigger('changeData', {source: this, previous});
-    }
+    protected abstract getTypes(): ReadonlyArray<ElementTypeIri>;
 
     get position(): Vector { return this._position; }
     setPosition(value: Vector) {
@@ -104,14 +90,29 @@ export class Element {
         this.source.trigger('changeElementState', {source: this, previous});
     }
 
-    get temporary(): boolean { return this._temporary; }
-
     focus() {
         this.source.trigger('requestedFocus', {source: this});
     }
 
-    redraw() {
-        this.source.trigger('requestedRedraw', {source: this});
+    redraw(level?: ElementRedrawLevel) {
+        this.source.trigger('requestedRedraw', {source: this, level});
+    }
+}
+
+/**
+ * Diagram element represented by an invisible single point.
+ */
+export class VoidElement extends Element {
+    static readonly TYPE = 'urn:reactodia:VoidElement' as ElementTypeIri;
+
+    private static readonly TYPES = [VoidElement.TYPE];
+
+    constructor(props: Pick<ElementProps, 'id' | 'position'>) {
+        super(props);
+    }
+
+    protected override getTypes(): ReadonlyArray<ElementTypeIri> {
+        return VoidElement.TYPES;
     }
 }
 
@@ -119,21 +120,28 @@ export interface ElementTemplateState {
     [propertyIri: string]: unknown;
 }
 
-export interface AddToFilterRequest {
-    element: Element;
-    linkType?: LinkType;
-    direction?: 'in' | 'out';
-}
-
 export interface LinkEvents {
-    changeData: PropertyChange<Link, LinkModel>;
-    changeLayoutOnly: PropertyChange<Link, boolean>;
     changeVertices: PropertyChange<Link, ReadonlyArray<Vector>>;
     changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
+    requestedRedraw: {
+        source: Link;
+        /** @default "render" */
+        level?: ElementRedrawLevel;
+    };
 }
 
-export class Link {
-    private readonly source = new EventSource<LinkEvents>();
+export type LinkRedrawLevel = 'render' | 'template';
+
+export interface LinkProps {
+    id?: string;
+    sourceId: string;
+    targetId: string;
+    vertices?: ReadonlyArray<Vector>;
+    linkState?: LinkTemplateState;
+}
+
+export abstract class Link {
+    protected readonly source = new EventSource<LinkEvents>();
     readonly events: Events<LinkEvents> = this.source;
 
     readonly id: string;
@@ -141,48 +149,32 @@ export class Link {
     private _sourceId: string;
     private _targetId: string;
 
-    private _data: LinkModel;
-    private _layoutOnly = false;
     private _vertices: ReadonlyArray<Vector>;
 
     private _linkState: LinkTemplateState | undefined;
 
-    constructor(props: {
-        id?: string;
-        sourceId: string;
-        targetId: string;
-        data: LinkModel;
-        vertices?: ReadonlyArray<Vector>;
-        linkState?: LinkTemplateState;
-    }) {
-        const {id = GenerateID.forLink(), sourceId, targetId, data, vertices = [], linkState} = props;
+    constructor(props: LinkProps) {
+        const {
+            id = GenerateID.forLink(),
+            sourceId,
+            targetId,
+            vertices = [],
+            linkState,
+        } = props;
         this.id = id;
         this._sourceId = sourceId;
         this._targetId = targetId;
-        this._data = data;
         this._vertices = vertices;
         this._linkState = linkState;
     }
 
-    get typeId() { return this._data?.linkTypeId; }
     get sourceId(): string { return this._sourceId; }
     get targetId(): string { return this._targetId; }
-
-    get data() { return this._data; }
-    setData(value: LinkModel) {
-        const previous = this._data;
-        if (previous === value) { return; }
-        this._data = value;
-        this.source.trigger('changeData', {source: this, previous});
+    get typeId(): LinkTypeIri {
+        return this.getTypeId();
     }
 
-    get layoutOnly(): boolean { return this._layoutOnly; }
-    setLayoutOnly(value: boolean) {
-        const previous = this._layoutOnly;
-        if (previous === value) { return; }
-        this._layoutOnly = value;
-        this.source.trigger('changeLayoutOnly', {source: this, previous});
-    }
+    protected abstract getTypeId(): LinkTypeIri;
 
     get vertices(): ReadonlyArray<Vector> { return this._vertices; }
     setVertices(value: ReadonlyArray<Vector>) {
@@ -199,6 +191,10 @@ export class Link {
         this._linkState = value;
         this.source.trigger('changeLinkState', {source: this, previous});
     }
+
+    redraw(level?: LinkRedrawLevel) {
+        this.source.trigger('requestedRedraw', {source: this, level});
+    }
 }
 
 export interface LinkTemplateState {
@@ -207,20 +203,6 @@ export interface LinkTemplateState {
 
 export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
     return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
-}
-
-export function makeLinkWithDirection(original: Link, data: LinkModel): Link {
-    if (!(data.sourceId === original.data.sourceId || data.sourceId === original.data.targetId)) {
-        throw new Error('New link source IRI is unrelated to original link');
-    }
-    if (!(data.targetId === original.data.sourceId || data.targetId === original.data.targetId)) {
-        throw new Error('New link target IRI is unrelated to original link');
-    }
-    const sourceId = data.sourceId === original.data.sourceId
-        ? original.sourceId : original.targetId;
-    const targetId = data.targetId === original.data.targetId
-        ? original.targetId : original.sourceId;
-    return new Link({sourceId, targetId, data});
 }
 
 export interface ElementTypeEvents {

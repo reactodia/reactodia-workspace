@@ -7,6 +7,7 @@ import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data
 import { GraphStructure } from '../diagram/model';
 
 import { AuthoringState } from './authoringState';
+import { EntityElement, RelationLink } from './dataElements';
 import { EditorController } from './editorController';
 
 export interface ValidationState {
@@ -80,6 +81,9 @@ export function changedElementsToValidate(
     });
 
     for (const element of graph.elements) {
+        if (!(element instanceof EntityElement)) {
+            continue;
+        }
         const current = currentAuthoring.elements.get(element.iri);
         const previous = previousAuthoring.elements.get(element.iri);
         if (current !== previous) {
@@ -88,7 +92,7 @@ export function changedElementsToValidate(
             // when we remove element incoming link are removed as well so we should update their sources
             if ((current || previous)!.deleted) {
                 for (const link of graph.getElementLinks(element)) {
-                    if (link.data.sourceId !== element.iri) {
+                    if (link instanceof RelationLink && link.data.sourceId !== element.iri) {
                         toValidate.add(link.data.sourceId);
                     }
                 }
@@ -105,18 +109,18 @@ export function validateElements(
     graph: GraphStructure,
     editor: EditorController,
     signal: AbortSignal | undefined
-) {
+): void {
     const previousState = editor.validationState;
     const newState = ValidationState.createMutable();
 
     for (const element of graph.elements) {
-        if (newState.elements.has(element.iri)) {
+        if (!(element instanceof EntityElement) || newState.elements.has(element.iri)) {
             continue;
         }
 
         const outboundLinks: LinkModel[] = [];
         for (const link of graph.getElementLinks(element)) {
-            if (link.sourceId === element.id) {
+            if (link instanceof RelationLink && link.sourceId === element.id) {
                 outboundLinks.push(link.data);
             }
         }

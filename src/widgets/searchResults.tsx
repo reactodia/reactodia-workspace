@@ -5,6 +5,8 @@ import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri } from '../data/model';
 
+import { EntityElement } from '../editor/dataElements';
+
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { ListElementView, startDragElements } from './listElementView';
@@ -97,7 +99,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
         } else {
             const newSelection = new Set(selection);
             for (const element of model.elements) {
-                if (selection.has(element.iri)) {
+                if (element instanceof EntityElement && selection.has(element.iri)) {
                     newSelection.delete(element.iri);
                 }
             }
@@ -229,9 +231,9 @@ export class SearchResults extends React.Component<SearchResultProps> {
     private canBeSelected(item: ElementModel) {
         const {model} = this.context;
         const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
-        const alreadyOnDiagram = model.elements.findIndex(
-            element => element.iri === item.id
-        ) >= 0;
+        const alreadyOnDiagram = model.elements.some(
+            el => el instanceof EntityElement && el.iri === item.id
+        );
         return !useDragAndDrop || !alreadyOnDiagram;
     }
 

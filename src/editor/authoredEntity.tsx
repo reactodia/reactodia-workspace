@@ -3,7 +3,9 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { useObservedProperty } from '../coreUtils/hooks';
 
-import { ElementModel } from '../data/model';
+import { Element } from '../diagram/elements';
+
+import { EntityElement } from '../editor/dataElements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -23,11 +25,11 @@ enum AllowedActions {
 }
 
 export function useAuthoredEntity(
-    elementId: string,
-    data: ElementModel,
+    element: Element,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const {model, editor, overlay} = useWorkspace();
+    const data = element instanceof EntityElement ? element.data : undefined;
+    const {editor, overlay} = useWorkspace();
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
 
@@ -36,11 +38,13 @@ export function useAuthoredEntity(
         'changeAuthoringState',
         () => editor.authoringState
     );
-    const authoringEvent = authoringState.elements.get(data.id);
+    const authoringEvent = data ? authoringState.elements.get(data.id) : undefined;
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (shouldLoad) {
+        if (!data) {
+            setAllowedActions(AllowedActions.None);
+        } else if (shouldLoad) {
             if (!editor.metadataApi || (authoringEvent && authoringEvent.deleted)) {
                 setAllowedActions(AllowedActions.None);
             } else {
@@ -70,13 +74,14 @@ export function useAuthoredEntity(
         canDelete: allowedActions === undefined
             ? undefined : Boolean(allowedActions & AllowedActions.Delete),
         onEdit: () => {
-            const element = model.getElement(elementId);
-            if (element) {
+            if (element instanceof EntityElement) {
                 overlay.showEditEntityForm(element);
             }
         },
         onDelete: () => {
-            editor.deleteEntity(data.id);
+            if (data) {
+                editor.deleteEntity(data.id);
+            }
         },
     };
 }

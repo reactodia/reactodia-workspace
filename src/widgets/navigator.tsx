@@ -227,7 +227,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         if (isBlurred) {
             return 'lightgray';
         }
-        const {color} = getElementTypeStyle(element.data.types);
+        const {color} = getElementTypeStyle(element.types);
         return color;
     }
 

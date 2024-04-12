@@ -5,7 +5,9 @@ import { useCanvas } from '../diagram/canvasApi';
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
+import { RelationLink } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
+import { TemplateProperties } from '../workspace';
 
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
@@ -54,7 +56,9 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         const backgroundClass = `${CLASS_NAME}__label-background`;
 
         const label = renamedLabel ?? model.locale.formatLabel(linkType.label, linkType.id);
-        const properties = model.locale.formatPropertyList(link.data.properties);
+        const properties = model.locale.formatPropertyList(
+            link instanceof RelationLink ? link.data.properties : {}
+        );
 
         labelContent = <>
             <LinkLabel {...primaryLabelProps}
@@ -97,6 +101,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         </>;
     }
 
+    const {linkState} = link;
     const stroke = pathProps?.stroke ?? 'black';
     return (
         <g
@@ -112,7 +117,8 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     ...pathProps,
                     className: classnames(`${CLASS_NAME}__path`, pathProps?.className),
                     stroke,
-                    strokeDasharray: link.layoutOnly ? '5,5' : pathProps?.strokeDasharray,
+                    strokeDasharray: linkState?.[TemplateProperties.LayoutOnly]
+                        ? '5,5' : pathProps?.strokeDasharray,
                 }}
             />
             {labelContent}

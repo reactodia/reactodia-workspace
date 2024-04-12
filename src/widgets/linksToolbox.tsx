@@ -6,10 +6,11 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 
 import { LinkCount } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { Element, LinkType, LinkTypeVisibility } from '../diagram/elements';
+import { LinkType, LinkTypeVisibility } from '../diagram/elements';
 import { CommandHistory } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
+import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
@@ -106,7 +107,7 @@ interface LinkTypesToolboxViewProps {
     model: DiagramModel;
     links: ReadonlyArray<LinkType> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
-    selectedElement: Element | undefined;
+    selectedElement: EntityElement | undefined;
     dataState: ProgressState;
     filterCallback: ((type: LinkType) => void) | undefined;
 }
@@ -253,7 +254,7 @@ export interface LinkTypesToolboxProps {
 
 interface LinkTypesToolboxState {
     readonly dataState: ProgressState;
-    readonly selectedElement?: Element;
+    readonly selectedElement?: EntityElement;
     readonly linksOfElement?: ReadonlyArray<LinkType>;
     readonly countMap?: { readonly [linkTypeId: string]: number };
 }
@@ -271,11 +272,11 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     constructor(props: LinkTypesToolboxProps, context: any) {
         super(props, context);
 
-        const {model, editor} = this.context;
+        const {model} = this.context;
 
         this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
         this.listener.listen(model.events, 'changeLanguage', this.updateOnCurrentSelection);
-        this.listener.listen(editor.events, 'changeSelection', () => {
+        this.listener.listen(model.events, 'changeSelection', () => {
             this.debounceSelection.call(this.updateOnCurrentSelection);
         });
 
@@ -293,14 +294,14 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     }
 
     private updateOnCurrentSelection = () => {
-        const {editor} = this.context;
-        const single = editor.selection.length === 1 ? editor.selection[0] : null;
-        if (single !== this.state.selectedElement && single instanceof Element) {
+        const {model} = this.context;
+        const single = model.selection.length === 1 ? model.selection[0] : null;
+        if (single !== this.state.selectedElement && single instanceof EntityElement) {
             this.requestLinksOf(single);
         }
     };
 
-    private requestLinksOf(selectedElement: Element) {
+    private requestLinksOf(selectedElement: EntityElement) {
         const {model} = this.context;
         if (selectedElement) {
             const request = {elementId: selectedElement.iri};
