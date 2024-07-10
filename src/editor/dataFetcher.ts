@@ -7,10 +7,10 @@ import {
 } from '../data/model';
 import { DataProvider } from '../data/provider';
 
-import { ElementType, LinkType, PropertyType } from '../diagram/elements';
 import { Graph } from '../diagram/graph';
 
-import { EntityElement } from './dataElements';
+import { EntityElement, ElementType, LinkType, PropertyType } from './dataElements';
+import { DataGraph } from './dataGraph';
 
 export interface DataFetcherEvents {
     changeOperations: ChangeOperationsEvent;
@@ -98,6 +98,7 @@ export class DataFetcher {
 
     constructor(
         private graph: Graph,
+        private dataGraph: DataGraph,
         private dataProvider: DataProvider,
     ) {}
 
@@ -190,7 +191,7 @@ export class DataFetcher {
 
     private onElementTypesLoaded = (elementTypes: Map<ElementTypeIri, ElementTypeModel>) => {
         for (const {id, label, count} of elementTypes.values()) {
-            const model = this.graph.getElementType(id);
+            const model = this.dataGraph.getElementType(id);
             if (!model) { continue; }
             model.setLabel(label);
             if (typeof count === 'number') {
@@ -205,7 +206,7 @@ export class DataFetcher {
 
     private onLinkTypesLoaded = (linkTypes: Map<LinkTypeIri, LinkTypeModel>) => {
         for (const {id, label} of linkTypes.values()) {
-            const model = this.graph.getLinkType(id);
+            const model = this.dataGraph.getLinkType(id);
             if (!model) { continue; }
             model.setLabel(label);
         }
@@ -217,7 +218,7 @@ export class DataFetcher {
 
     private onPropertyTypesLoaded = (propertyTypes: Map<PropertyTypeIri, PropertyTypeModel>) => {
         for (const {id, label} of propertyTypes.values()) {
-            const targetProperty = this.graph.getPropertyType(id);
+            const targetProperty = this.dataGraph.getPropertyType(id);
             if (targetProperty) {
                 targetProperty.setLabel(label);
             }

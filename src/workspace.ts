@@ -1,14 +1,15 @@
 require('../styles/main.scss');
 
 export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
-export * from './coreUtils/collections';
+export { makeMoveComparator, shallowArrayEqual } from './coreUtils/collections';
 export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
-export { useObservedProperty } from './coreUtils/hooks';
+export { useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore } from './coreUtils/hooks';
 export { KeyedObserver } from './coreUtils/keyedObserver';
 export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export {
-    CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink, LayoutFunction,
+    CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink,
+    LayoutTypeProvider, LayoutFunction,
     calculateLayout, applyLayout, uniformGrid, calculateAveragePosition,
     placeElementsAround, translateToPositiveQuadrant,
 } from './diagram/layout';
@@ -76,6 +77,9 @@ export * from './editor/authoringState';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
     RelationLink, RelationLinkEvents, RelationLinkProps,
+    ElementType, ElementTypeEvents,
+    LinkType, LinkTypeEvents,
+    PropertyType, PropertyTypeEvents,
     setElementData, setLinkData,
 } from './editor/dataElements';
 export {

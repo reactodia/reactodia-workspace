@@ -58,9 +58,9 @@ export class Leaf extends React.Component<LeafProps, State> {
             `${CLASS_NAME}__toggle-collapsed`
         );
 
-        const {icon} = getElementTypeStyle([node.model.id]);
+        const {icon} = getElementTypeStyle([node.iri]);
 
-        const selected = Boolean(selectedNode && selectedNode.model === node.model);
+        const selected = Boolean(selectedNode && selectedNode.iri === node.iri);
         const bodyClass = classnames(
             `${CLASS_NAME}__body`,
             selected ? `${CLASS_NAME}__body--selected` : undefined
@@ -80,7 +80,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                         onClick={this.toggle}
                         role='button'
                     />
-                    <a className={bodyClass} href={node.model.id} onClick={this.onClick}>
+                    <a className={bodyClass} href={node.iri} onClick={this.onClick}>
                         <div className={`${CLASS_NAME}__icon-container`}>
                             {icon ? (
                                 <img role='presentation'
@@ -95,13 +95,13 @@ export class Leaf extends React.Component<LeafProps, State> {
                             )}
                         </div>
                         <span className={`${CLASS_NAME}__label`}>{label}</span>
-                        {node.model.count ? (
+                        {node.data?.count ? (
                             <span className={`${CLASS_NAME}__count reactodia-badge`}>
-                                {node.model.count}
+                                {node.data.count}
                             </span>
                         ) : null}
                     </a>
-                    {creatableClasses.get(node.model.id) ? (
+                    {creatableClasses.get(node.iri) ? (
                         <div role='button'
                             title={'Click or drag to create new entity of this type'}
                             className={classnames(
@@ -160,7 +160,7 @@ export class Forest extends React.Component<ForestProps> {
         return (
             <div className={className} role={root ? 'tree' : undefined}>
                 {nodes.map(node => (
-                    <Leaf key={`node-${node.model.id}`} node={node} {...otherProps} />
+                    <Leaf key={`node-${node.iri}`} node={node} {...otherProps} />
                 ))}
             </div>
         );

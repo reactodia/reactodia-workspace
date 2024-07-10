@@ -3,7 +3,7 @@ import * as React from 'react';
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { LinkModel } from '../data/model';
+import { LinkKey } from '../data/model';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import {
@@ -239,11 +239,11 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
         }
     }
 
-    private renderLinkErrors(linkModel: LinkModel) {
+    private renderLinkErrors(key: LinkKey) {
         const {workspace: {editor}} = this.props;
         const {validationState} = editor;
 
-        const validation = validationState.links.get(linkModel);
+        const validation = validationState.links.get(key);
         if (!validation) {
             return null;
         }

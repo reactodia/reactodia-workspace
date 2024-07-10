@@ -7,7 +7,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import {
-    Element, Link, LinkVertex, linkMarkerKey, LinkType,
+    Element, Link, LinkVertex, linkMarkerKey,
 } from './elements';
 import {
     Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength,
@@ -104,11 +104,8 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
                 this.scheduleUpdateLink(linkEvent.source.id);
             }
         });
-        this.listener.listen(model.events, 'linkTypeEvent', ({data}) => {
-            const linkTypeEvent = data.changeLabel || data.changeVisibility;
-            if (!linkTypeEvent) { return; }
-            const linkTypeId = linkTypeEvent.source.id;
-            for (const link of model.links.filter(link => link.typeId === linkTypeId)) {
+        this.listener.listen(model.events, 'changeLinkVisibility', e => {
+            for (const link of model.links.filter(link => link.typeId === e.source)) {
                 this.scheduleUpdateLink(link.id);
             }
         });
@@ -274,15 +271,14 @@ const LINK_CLASS = 'reactodia-link';
 function LinkView(props: LinkViewProps) {
     const {link, model, renderingState} = props;
 
-    const linkType = model.getLinkType(link.typeId)!;
     const template = React.useMemo(
-        () => renderingState.createLinkTemplate(linkType),
-        [linkType]
+        () => renderingState.createLinkTemplate(link.typeId),
+        [link.typeId]
     );
 
     const source = model.getElement(link.sourceId);
     const target = model.getElement(link.targetId);
-    const {visibility} = linkType;
+    const visibility = model.getLinkVisibility(link.typeId);
     if (!(source && target && visibility !== 'hidden')) {
         return null;
     }
@@ -308,7 +304,7 @@ function LinkView(props: LinkViewProps) {
     
     const renderedLink = template.renderLink({
         link,
-        linkType,
+        typeIndex: renderingState.ensureLinkTypeIndex(link.typeId),
         path,
         getPathPosition,
         route,
@@ -325,7 +321,7 @@ function LinkView(props: LinkViewProps) {
 }
 
 export interface LinkPathProps {
-    linkType: LinkType;
+    typeIndex: number;
     path: string;
     pathProps?: React.SVGAttributes<SVGPathElement>;
 }
@@ -333,8 +329,7 @@ export interface LinkPathProps {
 const LINK_PATH_CLASS = 'reactodia-link-path';
 
 export function LinkPath(props: LinkPathProps) {
-    const {linkType, path, pathProps} = props;
-    const typeIndex = linkType.index!;
+    const {typeIndex, path, pathProps} = props;
     return <>
         <path {...pathProps}
             className={classnames(LINK_PATH_CLASS, pathProps?.className)}
@@ -592,7 +587,6 @@ class VertexTools extends React.Component<{
 }
 
 export interface LinkMarkersProps {
-    model: DiagramModel;
     renderingState: RenderingState;
 }
 
@@ -601,18 +595,14 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
     private readonly delayedUpdate = new Debouncer();
 
     render() {
-        const {model, renderingState} = this.props;
+        const {renderingState} = this.props;
         const defaultTemplate = renderingState.shared.defaultLinkTemplate;
 
         const markers: Array<React.ReactElement<LinkMarkerProps>> = [];
 
         for (const [linkTypeId, template] of renderingState.getLinkTemplates()) {
-            const type = model.getLinkType(linkTypeId);
-            if (!type) {
-                continue;
-            }
+            const typeIndex = renderingState.ensureLinkTypeIndex(linkTypeId);
 
-            const typeIndex = type.index!;
             if (template.markerSource) {
                 markers.push(
                     <LinkMarker key={typeIndex * 2}
@@ -623,6 +613,7 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
                     />
                 );
             }
+
             if (template.markerTarget) {
                 markers.push(
                     <LinkMarker key={typeIndex * 2 + 1}

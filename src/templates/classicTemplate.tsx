@@ -18,16 +18,17 @@ export function ClassicTemplate(props: TemplateProps) {
         return null;
     }
 
-    const data = element.data;
-    const {color, icon} = getElementTypeStyle(data.types);
+    const {data} = element;
+    const types = data?.types ?? [];
+    const {color, icon} = getElementTypeStyle(types);
 
-    const typesLabel = element.types.length > 0
-        ? model.locale.formatElementTypes(element.types).join(', ')
+    const typesLabel = types.length > 0
+        ? model.locale.formatElementTypes(types).join(', ')
         : 'Thing';
-    const label = model.locale.formatLabel(data.label, data.id);
-    const propertyList = model.locale.formatPropertyList(data.properties);
+    const label = model.locale.formatLabel(data?.label, element.iri);
+    const propertyList = model.locale.formatPropertyList(data?.properties ?? {});
 
-    const image = data.image ? (
+    const image = data?.image ? (
         <div className={`${CLASS_NAME}__thumbnail`}>
             <img className={`${CLASS_NAME}__thumbnail-image`}
                 src={data.image}
@@ -43,9 +44,9 @@ export function ClassicTemplate(props: TemplateProps) {
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
-                        title={data.id}
-                        href={data.id}>
-                        {data.id}
+                        title={element.iri}
+                        href={element.iri}>
+                        {element.iri}
                     </a>
                 </div>
             </div>
@@ -74,7 +75,7 @@ export function ClassicTemplate(props: TemplateProps) {
             </div>
             {image}
             <div className={`${CLASS_NAME}__body`} style={{borderColor: color}}>
-                <WithFetchStatus type='element' target={data.id}>
+                <WithFetchStatus type='element' target={element.iri}>
                     <span className={`${CLASS_NAME}__label`} title={label}>
                         {label}
                     </span>

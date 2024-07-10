@@ -1,5 +1,11 @@
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
-import { ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeIri, equalLinks } from '../data/model';
+
+import {
+    ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeIri, PropertyTypeIri,
+    equalLinks,
+} from '../data/model';
+import * as Rdf from '../data/rdf/rdfModel';
+
 import {
     Element, ElementEvents, ElementProps,
     Link, LinkEvents, LinkProps,
@@ -25,10 +31,6 @@ export class EntityElement extends Element {
         this._data = props.data;
     }
 
-    static is(element: Element): element is EntityElement {
-        return element instanceof EntityElement;
-    }
-
     static placeholderData(iri: ElementIri): ElementModel {
         return {
             id: iri,
@@ -40,10 +42,6 @@ export class EntityElement extends Element {
 
     protected get entitySource(): EventSource<EntityElementEvents> {
         return this.source as EventSource<any>;
-    }
-
-    protected override getTypes(): ReadonlyArray<ElementTypeIri> {
-        return this.data.types;
     }
 
     get iri() { return this._data.id; }
@@ -76,10 +74,6 @@ export class RelationLink extends Link {
         this._data = props.data;
     }
 
-    static is(link: Link): link is RelationLink {
-        return link instanceof RelationLink;
-    }
-
     protected get relationSource(): EventSource<RelationLinkEvents> {
         return this.source as EventSource<any>;
     }
@@ -109,6 +103,108 @@ export class RelationLink extends Link {
         const targetId = data.targetId === this.data.targetId
             ? this.targetId : this.sourceId;
         return new RelationLink({sourceId, targetId, data});
+    }
+}
+
+export interface ElementTypeEvents {
+    changeLabel: PropertyChange<ElementType, ReadonlyArray<Rdf.Literal>>;
+    changeCount: PropertyChange<ElementType, number | undefined>;
+}
+
+export class ElementType {
+    private readonly source = new EventSource<ElementTypeEvents>();
+    readonly events: Events<ElementTypeEvents> = this.source;
+
+    readonly id: ElementTypeIri;
+
+    private _label: ReadonlyArray<Rdf.Literal>;
+    private _count: number | undefined;
+
+    constructor(props: {
+        id: ElementTypeIri;
+        label?: ReadonlyArray<Rdf.Literal>;
+        count?: number;
+    }) {
+        const {id, label = [], count} = props;
+        this.id = id;
+        this._label = label;
+        this._count = count;
+    }
+
+    get label() { return this._label; }
+    setLabel(value: ReadonlyArray<Rdf.Literal>) {
+        const previous = this._label;
+        if (previous === value) { return; }
+        this._label = value;
+        this.source.trigger('changeLabel', {source: this, previous});
+    }
+
+    get count() { return this._count; }
+    setCount(value: number | undefined) {
+        const previous = this._count;
+        if (previous === value) { return; }
+        this._count = value;
+        this.source.trigger('changeCount', {source: this, previous});
+    }
+}
+
+export interface PropertyTypeEvents {
+    changeLabel: PropertyChange<PropertyType, ReadonlyArray<Rdf.Literal>>;
+}
+
+export class PropertyType {
+    private readonly source = new EventSource<PropertyTypeEvents>();
+    readonly events: Events<PropertyTypeEvents> = this.source;
+
+    readonly id: PropertyTypeIri;
+
+    private _label: ReadonlyArray<Rdf.Literal>;
+
+    constructor(props: {
+        id: PropertyTypeIri;
+        label?: ReadonlyArray<Rdf.Literal>;
+    }) {
+        const {id, label = []} = props;
+        this.id = id;
+        this._label = label;
+    }
+
+    get label(): ReadonlyArray<Rdf.Literal> { return this._label; }
+    setLabel(value: ReadonlyArray<Rdf.Literal>) {
+        const previous = this._label;
+        if (previous === value) { return; }
+        this._label = value;
+        this.source.trigger('changeLabel', {source: this, previous});
+    }
+}
+
+export interface LinkTypeEvents {
+    changeLabel: PropertyChange<LinkType, ReadonlyArray<Rdf.Literal>>;
+}
+
+export class LinkType {
+    private readonly source = new EventSource<LinkTypeEvents>();
+    readonly events: Events<LinkTypeEvents> = this.source;
+
+    readonly id: LinkTypeIri;
+
+    private _label: ReadonlyArray<Rdf.Literal>;
+
+    constructor(props: {
+        id: LinkTypeIri;
+        label?: ReadonlyArray<Rdf.Literal>;
+    }) {
+        const {id, label = []} = props;
+        this.id = id;
+        this._label = label;
+    }
+
+    get label() { return this._label; }
+    setLabel(value: ReadonlyArray<Rdf.Literal>) {
+        const previous = this._label;
+        if (previous === value) { return; }
+        this._label = value;
+        this.source.trigger('changeLabel', {source: this, previous});
     }
 }
 

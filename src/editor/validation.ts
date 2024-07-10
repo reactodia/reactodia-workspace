@@ -1,18 +1,17 @@
 import { mapAbortedToNull } from '../coreUtils/async';
 import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 
-import { ElementIri, LinkModel, hashLink, equalLinks } from '../data/model';
+import { ElementIri, LinkKey, LinkModel, hashLink, equalLinks } from '../data/model';
 import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
 
-import { GraphStructure } from '../diagram/model';
-
+import { DataGraphStructure } from './asyncModel';
 import { AuthoringState } from './authoringState';
 import { EntityElement, RelationLink } from './dataElements';
 import { EditorController } from './editorController';
 
 export interface ValidationState {
     readonly elements: ReadonlyMap<ElementIri, ElementValidation>;
-    readonly links: ReadonlyHashMap<LinkModel, LinkValidation>;
+    readonly links: ReadonlyHashMap<LinkKey, LinkValidation>;
 }
 
 export interface ElementValidation {
@@ -33,7 +32,7 @@ export namespace ValidationState {
     export function createMutable() {
         return {
             elements: new Map<ElementIri, ElementValidation>(),
-            links: new HashMap<LinkModel, LinkValidation>(hashLink, equalLinks),
+            links: new HashMap<LinkKey, LinkValidation>(hashLink, equalLinks),
         };
     }
 
@@ -65,9 +64,9 @@ export namespace ValidationState {
 export function changedElementsToValidate(
     previousAuthoring: AuthoringState,
     currentAuthoring: AuthoringState,
-    graph: GraphStructure
+    graph: DataGraphStructure
 ): Set<ElementIri> {
-    const links = new HashMap<LinkModel, true>(hashLink, equalLinks);
+    const links = new HashMap<LinkKey, true>(hashLink, equalLinks);
     previousAuthoring.links.forEach((e, model) => links.set(model, true));
     currentAuthoring.links.forEach((e, model) => links.set(model, true));
 
@@ -106,7 +105,7 @@ export function changedElementsToValidate(
 export function validateElements(
     targets: ReadonlySet<ElementIri>,
     validationApi: ValidationApi,
-    graph: GraphStructure,
+    graph: DataGraphStructure,
     editor: EditorController,
     signal: AbortSignal | undefined
 ): void {
@@ -130,7 +129,7 @@ export function validateElements(
                 target: element.data,
                 outboundLinks,
                 state: editor.authoringState,
-                model: graph,
+                graph,
                 signal,
             };
             const result = mapAbortedToNull(validationApi.validate(event), signal);

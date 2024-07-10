@@ -1,9 +1,10 @@
-import { ElementType } from '../../diagram/elements';
+import { ElementTypeIri, ElementTypeModel } from '../../data/model';
 
 export interface TreeNode {
-    model: ElementType;
-    label: string;
-    derived: ReadonlyArray<TreeNode>;
+    readonly iri: ElementTypeIri
+    readonly data: ElementTypeModel | undefined;
+    readonly label: string;
+    readonly derived: ReadonlyArray<TreeNode>;
 }
 
 export const TreeNode = {

@@ -1,4 +1,4 @@
-import { getOrCreateSetInMap } from '../../coreUtils/collections';
+import { multimapAdd } from '../../coreUtils/collections';
 import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
@@ -295,7 +295,7 @@ export function getElementTypes(
         if (isRdfIri(binding.inst) && isRdfIri(binding.class)) {
             const element = binding.inst.value as ElementIri;
             const type = binding.class.value as ElementTypeIri;
-            getOrCreateSetInMap(types, element).add(type);
+            multimapAdd(types, element, type);
         }
     }
     return types;
@@ -432,7 +432,7 @@ export function getFilteredData(
         enrichElement(model, binding);
 
         if (isRdfIri(binding.classAll)) {
-            getOrCreateSetInMap(resultTypes, iri).add(binding.classAll.value as ElementTypeIri);
+            multimapAdd(resultTypes, iri, binding.classAll.value as ElementTypeIri);
         }
 
         if (!openWorldLinks && binding.link && binding.direction) {
@@ -442,7 +442,7 @@ export function getFilteredData(
                 undefined
             );
             if (predicates) {
-                getOrCreateSetInMap(predicates, model.id).add(binding.link.value);
+                multimapAdd(predicates, model.id, binding.link.value);
             }
         }
     }

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
-import { getOrCreateSetInMap } from '../../coreUtils/collections';
+import { multimapAdd } from '../../coreUtils/collections';
 import { Debouncer } from '../../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
 
@@ -9,10 +9,11 @@ import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from 
 import { DataProvider } from '../../data/provider';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
-import { Element, ElementType } from '../../diagram/elements';
+import { Element } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
-import { DiagramModel } from '../../diagram/model';
 import { HtmlSpinner } from '../../diagram/spinner';
+
+import { AsyncModel } from '../../editor/asyncModel';
 
 import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
@@ -157,7 +158,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
     private async initClassTree() {
         if (this.fetchedGraph && this.fetchedGraph.dataProvider === this.context.model.dataProvider) {
-            this.createElementTypesIfNeeded(this.fetchedGraph.graph);
             this.refreshClassTree();
         } else if (this.context.model.dataProvider) {
             const dataProvider = this.context.model.dataProvider;
@@ -177,7 +177,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
             this.fetchedGraph = {dataProvider, graph: classGraph};
             this.classTree = constructTree(classGraph);
-            this.createElementTypesIfNeeded(classGraph);
             this.refreshClassTree();
         } else {
             this.refreshClassTree();
@@ -213,19 +212,19 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
         const {instancesSearchCommands} = this.props;
         this.setState({selectedNode: node}, () => {
             instancesSearchCommands?.trigger('setCriteria', {
-                criteria: {elementType: node.model},
+                criteria: {elementType: node.iri},
             });
         });
     };
 
     private onCreateInstance = (node: TreeNode) => {
-        this.createInstanceAt(node.model.id);
+        this.createInstanceAt(node.iri);
     };
 
     private onDragCreate = (node: TreeNode) => {
         const {view} = this.context;
         view.setHandlerForNextDropOnPaper(e => {
-            this.createInstanceAt(node.model.id,  e);
+            this.createInstanceAt(node.iri, e);
         });
     };
 
@@ -254,18 +253,6 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     };
-
-    private createElementTypesIfNeeded(graph: ElementTypeGraph) {
-        const {model} = this.context;
-        for (const typeModel of graph.elementTypes) {
-            const existing = model.getElementType(typeModel.id);
-            if (!existing) {
-                const {id, label, count} = typeModel;
-                const richType = new ElementType({id, label, count});
-                model.addElementType(richType);
-            }
-        }
-    }
 
     private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
         const {metadataApi} = this.context.editor;
@@ -347,7 +334,7 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
     const childToParents = new Map<ElementTypeIri, Set<ElementTypeIri>>();
     for (const [childId, parentId] of graph.subtypeOf) {
-        getOrCreateSetInMap(childToParents, childId).add(parentId);
+        multimapAdd(childToParents, childId, parentId);
     }
 
     const edgesToDelete: SubtypeEdge[] = [];
@@ -402,19 +389,18 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
 function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
-    model: DiagramModel
+    model: AsyncModel
 ): TreeNode[] {
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];
         for (const item of children) {
-            const richClass = model.getElementType(item.id);
-            if (richClass) {
-                nodes.push({
-                    model: richClass,
-                    label: model.locale.formatLabel(richClass.label, richClass.id),
-                    derived: mapChildren(item.children),
-                });
-            }
+            const data = model.getElementType(item.id);
+            nodes.push({
+                iri: item.id,
+                data,
+                label: model.locale.formatLabel(data?.label, item.id),
+                derived: mapChildren(item.children),
+            });
         }
         return nodes;
     };
@@ -488,7 +474,7 @@ function filterOnlyCreatable(
 ): ReadonlyArray<TreeNode> {
     function collectOnlyCreatable(acc: TreeNode[], node: TreeNode) {
         const derived = node.derived.reduce(collectOnlyCreatable, []);
-        if (derived.length > 0 || creatableClasses.get(node.model.id)) {
+        if (derived.length > 0 || creatableClasses.get(node.iri)) {
             acc.push(TreeNode.setDerived(node, derived));
         }
         return acc;

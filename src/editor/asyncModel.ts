@@ -1,5 +1,5 @@
 import { AbortScope } from '../coreUtils/async';
-import { EventSource, Events } from '../coreUtils/events';
+import { AnyEvent, EventSource, Events } from '../coreUtils/events';
 
 import {
     ElementModel, LinkModel, LinkTypeModel,
@@ -7,29 +7,40 @@ import {
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
-import { DataFactory } from '../data/rdf/rdfModel';
+import * as Rdf from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE, TemplateProperties } from '../data/schema';
 
-import {
-    LinkType, ElementType, PropertyType, LinkTypeVisibility,
-} from '../diagram/elements';
+import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
+import { Link, LinkTypeVisibility } from '../diagram/elements';
 import { Command } from '../diagram/history';
-import { DiagramModel, DiagramModelEvents, DiagramModelOptions } from '../diagram/model';
+import {
+    DiagramLocaleFormatter, DiagramModel, DiagramModelEvents, DiagramModelOptions,
+    GraphStructure, LocaleFormatter,
+} from '../diagram/model';
 
-import { EntityElement, RelationLink } from './dataElements';
+import {
+    EntityElement, RelationLink, ElementType, ElementTypeEvents,
+    PropertyType, PropertyTypeEvents, LinkType, LinkTypeEvents,
+} from './dataElements';
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
     SerializedLayout, SerializedLinkOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
     makeSerializedLayout, makeSerializedDiagram, 
 } from './serializedDiagram';
+import { DataGraph } from './dataGraph';
 
 export interface AsyncModelEvents extends DiagramModelEvents {
+    elementTypeEvent: AnyEvent<ElementTypeEvents>;
+    linkTypeEvent: AnyEvent<LinkTypeEvents>;
+    propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
+
     loadingStart: { source: AsyncModel };
     loadingSuccess: { source: AsyncModel };
     loadingError: {
         source: AsyncModel;
         error: unknown;
     };
+
     changeOperations: ChangeOperationsEvent;
     createLoadedLink: {
         source: AsyncModel;
@@ -38,30 +49,40 @@ export interface AsyncModelEvents extends DiagramModelEvents {
     };
 }
 
+export interface DataGraphStructure extends GraphStructure {
+    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
+    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
+    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
+}
+
 export interface AsyncModelOptions extends DiagramModelOptions {}
 
-export class AsyncModel extends DiagramModel {
+export class AsyncModel extends DiagramModel implements DataGraphStructure {
     declare readonly events: Events<AsyncModelEvents>;
+    declare readonly locale: EntityLocaleFormatter;
 
+    private dataGraph = new DataGraph();
     private loadingScope: AbortScope | undefined;
     private _dataProvider: DataProvider;
     private fetcher: DataFetcher;
 
-    private linkSettings = new Map<LinkTypeIri, LinkTypeVisibility>();
-
     constructor(options: AsyncModelOptions) {
         super(options);
         this._dataProvider = new EmptyDataProvider();
-        this.fetcher = new DataFetcher(this.graph, this._dataProvider);
+        this.fetcher = new DataFetcher(this.graph, this.dataGraph, this._dataProvider);
+    }
+
+    protected override createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {
+        return new ExtendedLocaleFormatter(this, selectLabelLanguage);
     }
 
     private get asyncSource(): EventSource<AsyncModelEvents> {
         return this.source as EventSource<any>;
-    }
+    }    
 
     get dataProvider() { return this._dataProvider; }
 
-    protected getTermFactory(): DataFactory {
+    protected getTermFactory(): Rdf.DataFactory {
         return this._dataProvider.factory;
     }
 
@@ -70,19 +91,29 @@ export class AsyncModel extends DiagramModel {
     }
 
     protected override resetGraph(): void {
+        this.dataGraph = new DataGraph();
         super.resetGraph();
         this.loadingScope?.abort();
         this.fetcher.dispose();
-        this.linkSettings.clear();
     }
 
     protected override subscribeGraph() {
+        this.graphListener.listen(this.dataGraph.events, 'elementTypeEvent', e => {
+            this.asyncSource.trigger('elementTypeEvent', e);
+        });
+        this.graphListener.listen(this.dataGraph.events, 'linkTypeEvent', e => {
+            this.asyncSource.trigger('linkTypeEvent', e);
+        });
+        this.graphListener.listen(this.dataGraph.events, 'propertyTypeEvent', e => {
+            this.asyncSource.trigger('propertyTypeEvent', e);
+        });
+
         super.subscribeGraph();
     }
 
     private setDataProvider(dataProvider: DataProvider) {
         this._dataProvider = dataProvider;
-        this.fetcher = new DataFetcher(this.graph, dataProvider);
+        this.fetcher = new DataFetcher(this.graph, this.dataGraph, dataProvider);
         this.graphListener.listen(this.fetcher.events, 'changeOperations', e => {
             this.asyncSource.trigger('changeOperations', e);
         });
@@ -121,7 +152,7 @@ export class AsyncModel extends DiagramModel {
 
         try {
             const linkTypes = await this.dataProvider.knownLinkTypes({signal});
-            this.initLinkTypes(linkTypes);
+            const knownLinkTypes = this.initLinkTypes(linkTypes);
             signal.throwIfAborted();
 
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
@@ -133,7 +164,7 @@ export class AsyncModel extends DiagramModel {
             });
 
             if (hideUnusedLinkTypes) {
-                this.hideUnusedLinkTypes();
+                this.hideUnusedLinkTypes(knownLinkTypes);
             }
 
             this.subscribeGraph();
@@ -162,7 +193,6 @@ export class AsyncModel extends DiagramModel {
     }
 
     discardLayout(): void {
-        this.linkSettings.clear();
         this.resetGraph();
         this.setDataProvider(new EmptyDataProvider());
         this.asyncSource.trigger('loadingStart', {source: this});
@@ -173,18 +203,20 @@ export class AsyncModel extends DiagramModel {
 
     exportLayout(): SerializedDiagram {
         const layoutData = makeSerializedLayout(this.graph.getElements(), this.graph.getLinks());
-        const linkTypeOptions = this.graph.getLinkTypes()
+        const knownLinkTypes = new Set(this.graph.getLinks().map(link => link.typeId));
+        const linkTypeOptions: SerializedLinkOptions[] = [];
+        for (const linkTypeIri of knownLinkTypes) {
+            const visibility = this.getLinkVisibility(linkTypeIri);
             // do not serialize default link type options
-            .filter(linkType => (
-                linkType.visibility !== 'visible' &&
-                linkType.id !== PLACEHOLDER_LINK_TYPE
-            ))
-            .map(({id, visibility}): SerializedLinkOptions => ({
-                '@type': 'LinkTypeOptions',
-                property: id,
-                visible: visibility !== 'hidden',
-                showLabel: visibility === 'visible',
-            }));
+            if  (visibility !== 'visible' && linkTypeIri !== PLACEHOLDER_LINK_TYPE) {
+                linkTypeOptions.push({
+                    '@type': 'LinkTypeOptions',
+                    property: linkTypeIri,
+                    visible: visibility !== 'hidden',
+                    showLabel: visibility !== 'withoutLabel',
+                });
+            }
+        }
         return makeSerializedDiagram({layoutData, linkTypeOptions});
     }
 
@@ -192,7 +224,7 @@ export class AsyncModel extends DiagramModel {
         const types: LinkType[] = [];
         for (const {id, label} of linkTypes) {
             const linkType = new LinkType({id, label});
-            this.graph.addLinkType(linkType);
+            this.dataGraph.addLinkType(linkType);
             types.push(linkType);
         }
         return types;
@@ -207,11 +239,7 @@ export class AsyncModel extends DiagramModel {
                 visible && !showLabel ? 'withoutLabel' :
                 'hidden'
             );
-            this.linkSettings.set(linkTypeId, visibility);
-            const linkType = this.getLinkType(linkTypeId);
-            if (linkType) {
-                linkType.setVisibility(visibility);
-            }
+            this.setLinkVisibility(linkTypeId, visibility);
         }
     }
 
@@ -278,15 +306,15 @@ export class AsyncModel extends DiagramModel {
         batch.store();
     }
 
-    private hideUnusedLinkTypes() {
+    private hideUnusedLinkTypes(knownLinkTypes: ReadonlyArray<LinkType>): void {
         const usedTypes = new Set<LinkTypeIri>();
         for (const link of this.graph.getLinks()) {
             usedTypes.add(link.typeId);
         }
 
-        for (const linkType of this.graph.getLinkTypes()) {
+        for (const linkType of knownLinkTypes) {
             if (!usedTypes.has(linkType.id)) {
-                linkType.setVisibility('hidden');
+                this.setLinkVisibility(linkType.id, 'hidden');
             }
         }
     }
@@ -296,7 +324,9 @@ export class AsyncModel extends DiagramModel {
     }
 
     requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
-        const elementIris = this.graph.getElements().filter(EntityElement.is).map(el => el.iri);
+        const elementIris = this.graph.getElements()
+            .filter((el): el is EntityElement => el instanceof EntityElement)
+            .map(el => el.iri);
         if (elementIris.length === 0) {
             return Promise.resolve();
         }
@@ -326,6 +356,11 @@ export class AsyncModel extends DiagramModel {
         return element;
     }
 
+    override addLink(link: Link): void {
+        this.createLinkType(link.typeId);
+        super.addLink(link);
+    }
+
     createLink(link: RelationLink): RelationLink {
         const {typeId, sourceId, targetId, data} = link;
         const existingLink = this.findLink(typeId, sourceId, targetId);
@@ -345,38 +380,6 @@ export class AsyncModel extends DiagramModel {
 
         this.addLink(link);
         return link;
-    }
-
-    override createElementType(elementTypeIri: ElementTypeIri): ElementType {
-        const existing = super.getElementType(elementTypeIri);
-        if (existing) {
-            return existing;
-        }
-        const classModel = super.createElementType(elementTypeIri);
-        this.fetcher.fetchElementType(classModel);
-        return classModel;
-    }
-
-    override createLinkType(linkTypeId: LinkTypeIri): LinkType {
-        if (this.graph.getLinkType(linkTypeId)) {
-            return super.createLinkType(linkTypeId);
-        }
-        const linkType = super.createLinkType(linkTypeId);
-        const visibility = this.linkSettings.get(linkType.id);
-        if (visibility) {
-            linkType.setVisibility(visibility);
-        }
-        this.fetcher.fetchLinkType(linkType);
-        return linkType;
-    }
-
-    override createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
-        if (this.graph.getPropertyType(propertyIri)) {
-            return super.createPropertyType(propertyIri);
-        }
-        const property = super.createPropertyType(propertyIri);
-        this.fetcher.fetchPropertyType(property);
-        return property;
     }
 
     private onLinkInfoLoaded(links: LinkModel[]) {
@@ -409,6 +412,109 @@ export class AsyncModel extends DiagramModel {
             }
         }
         batch.store();
+    }
+
+    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined {
+        return this.dataGraph.getElementType(elementTypeIri);
+    }
+
+    createElementType(elementTypeIri: ElementTypeIri): ElementType {
+        const existing = this.dataGraph.getElementType(elementTypeIri);
+        if (existing) {
+            return existing;
+        }
+        const elementType = new ElementType({id: elementTypeIri});
+        this.dataGraph.addElementType(elementType);
+        this.fetcher.fetchElementType(elementType);
+        return elementType;
+    }
+
+    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined {
+        return this.dataGraph.getLinkType(linkTypeIri);
+    }
+
+    createLinkType(linkTypeIri: LinkTypeIri): LinkType {
+        const existing = this.dataGraph.getLinkType(linkTypeIri);
+        if (existing) {
+            return existing;
+        }
+        const linkType = new LinkType({id: linkTypeIri});
+        this.dataGraph.addLinkType(linkType);
+        this.fetcher.fetchLinkType(linkType);
+        return linkType;
+    }
+
+    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined {
+        return this.dataGraph.getPropertyType(propertyTypeIri);
+    }
+
+    createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
+        const existing = this.dataGraph.getPropertyType(propertyIri);
+        if (existing) {
+            return existing;
+        }
+        const property = new PropertyType({id: propertyIri});
+        this.dataGraph.addPropertyType(property);
+        this.fetcher.fetchPropertyType(property);
+        return property;
+    }
+}
+
+export interface EntityLocaleFormatter extends LocaleFormatter {
+    formatElementTypes(
+        types: ReadonlyArray<ElementTypeIri>,
+        language?: string
+    ): string[];
+
+    formatPropertyList(
+        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
+        language?: string
+    ): FormattedProperty[];
+}
+
+class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLocaleFormatter {
+    declare protected model: AsyncModel;
+
+    constructor(
+        model: AsyncModel,
+        selectLabelLanguage: LabelLanguageSelector
+    ) {
+        super(model, selectLabelLanguage);
+    }
+
+    formatElementTypes(
+        types: ReadonlyArray<ElementTypeIri>,
+        language?: string
+    ): string[] {
+        return types.map(typeId => {
+            const type = this.model.getElementType(typeId);
+            return this.formatLabel(type?.label, typeId, language);
+        }).sort();
+    }
+
+    formatPropertyList(
+        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
+        language?: string
+    ): FormattedProperty[] {
+        const targetLanguage = language ?? this.model.language;
+        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
+        const propertyList = propertyIris.map((key): FormattedProperty => {
+            const property = this.model.getPropertyType(key);
+            const label = this.formatLabel(property?.label, key);
+            const allValues = properties[key];
+            const localizedValues = allValues.filter(v =>
+                v.termType === 'NamedNode' ||
+                v.language === '' ||
+                v.language === targetLanguage
+            );
+            return {
+                propertyId: key,
+                label,
+                values: localizedValues.length === 0 ? allValues : localizedValues,
+            };
+        });
+        propertyList.sort((a, b) => a.label.localeCompare(b.label));
+        return propertyList;
     }
 }
 

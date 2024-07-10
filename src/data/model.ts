@@ -41,6 +41,12 @@ export interface ElementModel {
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
+export interface LinkKey {
+    readonly linkTypeId: LinkTypeIri;
+    readonly sourceId: ElementIri;
+    readonly targetId: ElementIri;
+}
+
 export interface LinkModel {
     readonly linkTypeId: LinkTypeIri;
     readonly sourceId: ElementIri;
@@ -103,7 +109,7 @@ export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
     return aFrom === bFrom && aTo === bTo;
 }
 
-export function equalLinks(left: LinkModel, right: LinkModel) {
+export function equalLinks(left: LinkKey, right: LinkKey) {
     return (
         left.linkTypeId === right.linkTypeId &&
         left.sourceId === right.sourceId &&
@@ -111,7 +117,7 @@ export function equalLinks(left: LinkModel, right: LinkModel) {
     );
 }
 
-export function hashLink(link: LinkModel): number {
+export function hashLink(link: LinkKey): number {
     const {linkTypeId, sourceId, targetId} = link;
     let hash = hashFnv32a(linkTypeId);
     hash = hash * 31 + hashFnv32a(sourceId);

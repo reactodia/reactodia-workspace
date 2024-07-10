@@ -1,4 +1,4 @@
-import type { GraphStructure } from '../diagram/model';
+import type { DataGraphStructure } from '../editor/asyncModel';
 import type { AuthoringState } from '../editor/authoringState';
 
 import type { ElementModel, LinkModel, ElementIri, PropertyTypeIri } from './model';
@@ -19,7 +19,7 @@ export interface LinkError {
 export interface ValidationEvent {
     readonly target: ElementModel;
     readonly outboundLinks: ReadonlyArray<LinkModel>;
-    readonly model: GraphStructure;
+    readonly graph: DataGraphStructure;
     readonly state: AuthoringState;
     readonly signal: AbortSignal | undefined;
 }

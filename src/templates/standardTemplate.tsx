@@ -21,15 +21,16 @@ export function StandardTemplate(props: TemplateProps) {
     const {element, isExpanded} = props;
 
     const workspace = useWorkspace();
+    const data = element instanceof EntityElement ? element.data : undefined;
     const entityContext = useAuthoredEntity(element, isExpanded);
     useObservedElement(element);
 
-    if (!(element instanceof EntityElement)) {
+    if (!data) {
         return null;
     }
     return (
         <StandardTemplateInner {...props}
-            data={element.data}
+            data={data}
             workspace={workspace}
             entityContext={entityContext}
         />
@@ -123,7 +124,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         }
         return data.types.map((typeIri, index) => {
             const type = model.getElementType(typeIri);
-            const label = model.locale.formatLabel(type ? type.label : [], typeIri);
+            const label = model.locale.formatLabel(type?.label, typeIri);
             return (
                 <React.Fragment key={typeIri}>
                     {index === 0 ? null : ', '}

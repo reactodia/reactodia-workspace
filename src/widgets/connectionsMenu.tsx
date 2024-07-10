@@ -3,18 +3,18 @@ import classnames from 'classnames';
 
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 
-import { ElementModel, ElementIri, LinkTypeIri } from '../data/model';
+import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/model';
 import { generate128BitID } from '../data/utils';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { Element, VoidElement, LinkType } from '../diagram/elements';
+import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
-import { requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { AsyncModel, requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
 import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -35,7 +35,7 @@ export interface ConnectionsMenuProps {
 
 export interface ConnectionsMenuCommands {
     show: {
-        readonly targets: ReadonlyArray<EntityElement>;
+        readonly targets: ReadonlyArray<Element>;
         readonly openAll?: boolean;
     };
 }
@@ -44,7 +44,7 @@ export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Pr
 export interface PropertySuggestionParams {
     elementId: string;
     token: string;
-    properties: string[];
+    properties: readonly string[];
     lang: string;
     signal: AbortSignal | undefined;
 }
@@ -77,13 +77,21 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             };
 
             const placeTarget = virtualTarget ?? targets[0];
+
+            const targetIris = new Set<ElementIri>();
+            for (const target of targets) {
+                if (target instanceof EntityElement) {
+                    targetIris.add(target.iri);
+                }
+            }
+
             overlay.showDialog({
                 target: placeTarget,
                 dialogType: 'connectionsMenu',
                 content: (
                     <ConnectionsMenuInner {...props}
                         placeTarget={placeTarget}
-                        targets={targets}
+                        targetIris={Array.from(targetIris)}
                         onClose={onClose}
                         workspace={workspace}
                         canvas={canvas}
@@ -155,7 +163,7 @@ class VirtualTarget extends VoidElement {
 
 interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
     placeTarget: Element;
-    targets: ReadonlyArray<EntityElement>;
+    targetIris: ReadonlyArray<ElementIri>;
     onClose: () => void;
     workspace: WorkspaceContext;
     canvas: CanvasApi;
@@ -173,7 +181,7 @@ interface MenuState {
 type SortMode = 'alphabet' | 'smart';
 
 interface ConnectionsData {
-    readonly links: ReadonlyArray<LinkType>;
+    readonly links: ReadonlyArray<LinkTypeModel>;
     readonly counts: ReadonlyMap<LinkTypeIri, ConnectionCount>;
 }
 
@@ -194,7 +202,7 @@ interface LinkDataChunk {
      * (i.e. should be re-rendered).
      */
     readonly chunkId: string;
-    readonly link: LinkType;
+    readonly linkType: LinkTypeModel;
     readonly direction?: 'in' | 'out';
     readonly expectedCount: number | 'some';
     readonly pageCount: number;
@@ -209,7 +217,7 @@ const CLASS_NAME = 'reactodia-connections-menu';
 const LINK_COUNT_PER_PAGE = 100;
 
 class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, MenuState> {
-    private readonly ALL_RELATED_ELEMENTS_LINK: LinkType;
+    private readonly ALL_RELATED_ELEMENTS_LINK: LinkTypeModel;
 
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
@@ -217,10 +225,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
         const {workspace: {model}} = this.props;
-        this.ALL_RELATED_ELEMENTS_LINK = new LinkType({
+        this.ALL_RELATED_ELEMENTS_LINK = {
             id: 'urn:reactodia:allLinks' as LinkTypeIri,
             label: [model.factory.literal('All')],
-        });
+        };
         this.state = {
             loadingState: 'none',
             filterKey: '',
@@ -244,7 +252,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private async loadLinks() {
-        const {targets, workspace: {model, triggerWorkspaceEvent}} = this.props;
+        const {targetIris, workspace: {model, triggerWorkspaceEvent}} = this.props;
 
         this.setState({
             loadingState: 'loading',
@@ -254,12 +262,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             },
         });
 
-        const requestInexact = targets.length > 1;
+        const requestInexact = targetIris.length > 1;
         const counts = new Map<LinkTypeIri, ConnectionCount>();
         try {
-            await Promise.all(targets.map(target =>
+            await Promise.all(targetIris.map(iri =>
                 model.dataProvider
-                    .connectedLinkStats({elementId: target.iri, inexactCount: requestInexact})
+                    .connectedLinkStats({elementId: iri, inexactCount: requestInexact})
                     .then(linkTypes => {
                         for (const {id: linkTypeId, inCount, outCount, inexact} of linkTypes) {
                             const previous: ConnectionCount = counts.get(linkTypeId)
@@ -305,19 +313,27 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private resubscribeOnLinkTypeEvents() {
+        const {workspace: {model}} = this.props;
         const {connections} = this.state;
         this.linkTypesListener.stopListening();
         if (connections) {
-            for (const linkType of connections.links) {
+            for (const {id: linkTypeIri} of connections.links) {
+                const linkType = model.createLinkType(linkTypeIri);
                 this.linkTypesListener.listen(linkType.events, 'changeLabel', this.updateAll);
-                this.linkTypesListener.listen(linkType.events, 'changeVisibility', this.updateAll);
             }
+
+            const linkTypeIris = new Set(connections.links.map(link => link.id));
+            this.linkTypesListener.listen(model.events, 'changeLinkVisibility', e => {
+                if (linkTypeIris.has(e.source)) {
+                    this.updateAll();
+                }
+            });
         }
     }
 
     private async loadObjects(chunk: LinkDataChunk) {
-        const {targets, workspace: {model, triggerWorkspaceEvent}} = this.props;
-        const {link, direction, pageCount} = chunk;
+        const {targetIris, workspace: {model, triggerWorkspaceEvent}} = this.props;
+        const {linkType, direction, pageCount} = chunk;
 
         this.setState({
             loadingState: 'loading',
@@ -326,10 +342,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
         const loadedElements = new Map<ElementIri, ElementModel>();
         try {
-            await Promise.all(targets.map(target =>
+            await Promise.all(targetIris.map(iri =>
                 model.dataProvider.lookup({
-                    refElementId: target.iri,
-                    refElementLinkId: link === this.ALL_RELATED_ELEMENTS_LINK ? undefined : link.id,
+                    refElementId: iri,
+                    refElementLinkId: linkType.id === this.ALL_RELATED_ELEMENTS_LINK.id
+                        ? undefined : linkType.id,
                     linkDirection: direction,
                     limit: pageCount * LINK_COUNT_PER_PAGE,
                 }).then(linkedElements => {
@@ -344,12 +361,15 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
 
-        const presentOnDiagramIris = new Set(
-            model.elements.filter(EntityElement.is).map(el => el.iri)
-        );
+        const displayedEntities = new Set<ElementIri>();
+        for (const element of model.elements) {
+            if (element instanceof EntityElement) {
+                displayedEntities.add(element.iri);
+            }
+        }
         const elements = Array.from(loadedElements.values(), element => ({
             model: element,
-            presentOnDiagram: presentOnDiagramIris.has(element.id),
+            presentOnDiagram: displayedEntities.has(element.id),
         }));
 
         this.setState({
@@ -407,8 +427,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {workspace: {model}} = this.props;
         const {objects, panel} = this.state;
         if (objects && panel === 'objects') {
-            const {link, direction} = objects.chunk;
-            const localizedText = model.locale.formatLabel(link.label, link.id);
+            const {linkType, direction} = objects.chunk;
+            const {label} = model.getLinkType(linkType.id) ?? linkType;
+            const localizedText = model.locale.formatLabel(label, linkType.id);
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
@@ -428,7 +449,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         this.setState({filterKey: '',  panel: 'objects'});
         const alreadyLoaded = (
             objects &&
-            objects.chunk.link === chunk.link &&
+            objects.chunk.linkType.id === chunk.linkType.id &&
             objects.chunk.direction === chunk.direction
         );
         if (!alreadyLoaded) {
@@ -444,7 +465,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private getBody() {
         const {
-            targets, suggestProperties,instancesSearchCommands, workspace: {model},
+            targetIris, suggestProperties,instancesSearchCommands, workspace: {model},
         } = this.props;
         const {loadingState, objects, connections, filterKey, panel, sortMode} = this.state;
 
@@ -467,14 +488,14 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             }
             return (
                 <ConnectionsList
-                    targets={targets}
+                    targetIris={targetIris}
                     data={connections}
                     model={model}
                     filterKey={filterKey}
                     allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                     onExpandLink={this.onExpandLink}
                     onMoveToFilter={
-                        instancesSearchCommands && targets.length === 1
+                        instancesSearchCommands && targetIris.length === 1
                             ? this.onMoveToFilter
                             : undefined
                     }
@@ -492,14 +513,14 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {objects} = this.state;
 
         const addedElementsIris = selectedObjects.map(item => item.model.id);
-        const linkType = objects ? objects.chunk.link : undefined;
-        const hasChosenLinkType = objects && linkType !== this.ALL_RELATED_ELEMENTS_LINK;
+        const linkTypeId = objects ? objects.chunk.linkType.id : undefined;
+        const hasChosenLinkType = objects && linkTypeId !== this.ALL_RELATED_ELEMENTS_LINK.id;
 
-        this.placeElements(addedElementsIris, hasChosenLinkType ? linkType : undefined);
+        this.placeElements(addedElementsIris, hasChosenLinkType ? linkTypeId : undefined);
         onClose();
     };
 
-    private placeElements(elementIris: ElementIri[], linkType: LinkType | undefined) {
+    private placeElements(elementIris: ElementIri[], linkTypeId: LinkTypeIri | undefined) {
         const {placeTarget, workspace: {model, triggerWorkspaceEvent}, canvas} = this.props;
         const batch = model.history.startBatch('Add connected elements');
 
@@ -514,8 +535,8 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             preferredLinksLength: 300,
         });
 
-        if (linkType && linkType.visibility === 'hidden') {
-            batch.history.execute(changeLinkTypeVisibility(linkType, 'visible'));
+        if (linkTypeId && model.getLinkVisibility(linkTypeId) === 'hidden') {
+            batch.history.execute(changeLinkTypeVisibility(model, linkTypeId, 'visible'));
         }
 
         batch.history.execute(requestElementData(model, elementIris));
@@ -526,23 +547,23 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onMoveToFilter = (linkDataChunk: LinkDataChunk) => {
-        const {targets, instancesSearchCommands, workspace: {model}} = this.props;
-        const {link, direction} = linkDataChunk;
+        const {targetIris, instancesSearchCommands} = this.props;
+        const {linkType, direction} = linkDataChunk;
 
-        const singleTarget = targets.length === 1 ? targets[0] : undefined;
-        if (!singleTarget) {
+        const singleTargetIri = targetIris.length === 1 ? targetIris[0] : undefined;
+        if (!singleTargetIri) {
             return;
         }
         
-        if (link === this.ALL_RELATED_ELEMENTS_LINK) {
+        if (linkType.id === this.ALL_RELATED_ELEMENTS_LINK.id) {
             instancesSearchCommands?.trigger('setCriteria', {
-                criteria: {refElement: singleTarget},
+                criteria: {refElement: singleTargetIri},
             });
         } else {
             instancesSearchCommands?.trigger('setCriteria', {
                 criteria: {
-                    refElement: singleTarget,
-                    refElementLink: link,
+                    refElement: singleTargetIri,
+                    refElementLink: linkType.id,
                     linkDirection: direction,
                 },
             });
@@ -592,12 +613,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 }
 
 interface ConnectionsListProps {
-    targets: ReadonlyArray<Element>;
+    targetIris: ReadonlyArray<ElementIri>;
     data: ConnectionsData;
-    model: DiagramModel;
+    model: AsyncModel;
     filterKey: string;
 
-    allRelatedLink: LinkType;
+    allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
 
@@ -634,22 +655,22 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private tryUpdateScores() {
-        const {propertySuggestionCall, filterKey, sortMode, targets, data, model} = this.props;
+        const {propertySuggestionCall, filterKey, sortMode, targetIris, data, model} = this.props;
         if (
             propertySuggestionCall &&
             (filterKey || sortMode === 'smart') &&
-            targets.length === 1
+            targetIris.length === 1
         ) {
-            const singleTarget = targets[0];
+            const singleTargetIri = targetIris[0];
             const lang = model.language;
             const token = filterKey.trim();
-            const properties = data.links.map(l => l.id);
+            const properties = data.links.map(link => link.id);
 
             this.suggestionCancellation.abort();
             this.suggestionCancellation = new AbortController();
             const signal = this.suggestionCancellation.signal;
     
-            propertySuggestionCall({elementId: singleTarget.id, token, properties, lang, signal})
+            propertySuggestionCall({elementId: singleTargetIri, token, properties, lang, signal})
                 .then(scoreList => {
                     const scores = new Map<LinkTypeIri, PropertyScore>();
                     for (const score of scoreList) {
@@ -664,14 +685,14 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         return this.props.sortMode === 'smart' && !this.props.filterKey;
     }
 
-    private compareLinks = (a: LinkType, b: LinkType) => {
+    private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
         const {model} = this.props;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
-    private compareLinksByWeight = (a: LinkType, b: LinkType) => {
+    private compareLinksByWeight = (a: LinkTypeModel, b: LinkTypeModel) => {
         const {model} = this.props;
         const {scores} = this.state;
         const aText = model.locale.formatLabel(a.label, a.id);
@@ -690,6 +711,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     private getLinks() {
         const {model, data, filterKey} = this.props;
         return (data.links || [])
+            .map(link => model.getLinkType(link.id) ?? link)
             .filter(link => {
                 const text = model.locale.formatLabel(link.label, link.id).toLowerCase();
                 return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
@@ -698,22 +720,23 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private getProbableLinks() {
-        const {data} = this.props;
+        const {model, data} = this.props;
         const {scores} = this.state;
         const isSmartMode = this.isSmartMode();
         return (data.links ?? [])
+            .map(link => model.getLinkType(link.id) ?? link)
             .filter(link => {
                 return scores.has(link.id) && (scores.get(link.id)!.score > 0 || isSmartMode);
             })
             .sort(this.compareLinksByWeight);
     }
 
-    private getViews = (links: LinkType[], notSure?: boolean) => {
+    private getViews = (links: LinkTypeModel[], notSure?: boolean) => {
         const {model, data} = this.props;
         const {scores} = this.state;
 
         const views: JSX.Element[] = [];
-        const addView = (link: LinkType, direction: 'in' | 'out') => {
+        const addView = (link: LinkTypeModel, direction: 'in' | 'out') => {
             const {inCount, outCount, inexact} = data.counts.get(link.id) ?? {
                 inCount: 0,
                 outCount: 0,
@@ -805,7 +828,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 }
 
 interface LinkInPopupMenuProps {
-    link: LinkType;
+    link: LinkTypeModel;
     count: number | 'some';
     direction?: 'in' | 'out';
     model: DiagramModel;
@@ -864,7 +887,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
         const {count, direction} = this.props;
         this.props.onExpandLink({
             chunkId: generate128BitID(),
-            link: this.props.link,
+            linkType: this.props.link,
             direction,
             expectedCount: count,
             pageCount: 1,
@@ -876,7 +899,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
         const {link, count, direction, onMoveToFilter} = this.props;
         onMoveToFilter?.({
             chunkId: generate128BitID(),
-            link,
+            linkType: link,
             direction,
             expectedCount: count,
             pageCount: 1,
