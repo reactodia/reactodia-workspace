@@ -58,9 +58,7 @@ export class Paper extends Component<PaperProps> {
                     className={`${CLASS_NAME}__canvas`}
                     style={{overflow: 'visible'}}
                     paperTransform={paperTransform}>
-                    <LinkMarkers model={model}
-                        renderingState={renderingState}
-                    />
+                    <LinkMarkers renderingState={renderingState} />
                     <LinkLayer model={model}
                         renderingState={renderingState}
                         links={model.links}

@@ -37,8 +37,8 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
     ) {
         const {model} = this.context;
-        const richProperty = model.getPropertyType(key)!;
-        const label = model.locale.formatLabel(richProperty.label, key);
+        const propertyType = model.getPropertyType(key);
+        const label = model.locale.formatLabel(propertyType?.label, key);
         return (
             <div key={key} className={`${CLASS_NAME}__form-row`}>
                 <label>

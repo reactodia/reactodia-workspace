@@ -1,16 +1,13 @@
 import { makeMoveComparator, MoveDirection } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
 
-import {
-    ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, isEncodedBlank,
-} from '../data/model';
+import { LinkTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 import { getUriLocalName } from '../data/utils';
 
-import { LabelLanguageSelector, FormattedProperty } from './customization';
+import { LabelLanguageSelector } from './customization';
 import {
-    Element, ElementEvents, Link, LinkEvents, LinkType, LinkTypeEvents,
-    ElementType, ElementTypeEvents, PropertyType, PropertyTypeEvents,
+    Element, ElementEvents, Link, LinkEvents, LinkTypeVisibility,
 } from './elements';
 import { Graph, CellsChangedEvent } from './graph';
 import { CommandHistory, Command } from './history';
@@ -22,9 +19,7 @@ export interface DiagramModelEvents {
     changeCellOrder: { readonly source: DiagramModel };
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    elementTypeEvent: AnyEvent<ElementTypeEvents>;
-    linkTypeEvent: AnyEvent<LinkTypeEvents>;
-    propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
+    changeLinkVisibility: PropertyChange<LinkTypeIri, LinkTypeVisibility>;
     discardGraph: { readonly source: DiagramModel };
 }
 
@@ -39,10 +34,7 @@ export interface GraphStructure {
     findLink(linkTypeId: LinkTypeIri, sourceId: string, targetId: string): Link | undefined;
     sourceOf(link: Link): Element | undefined;
     targetOf(link: Link): Element | undefined;
-
-    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
-    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
-    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
+    getLinkVisibility(linkTypeId: LinkTypeIri): LinkTypeVisibility;
 }
 
 export interface DiagramModelOptions {
@@ -66,7 +58,11 @@ export class DiagramModel implements GraphStructure {
     constructor(options: DiagramModelOptions) {
         const {history, selectLabelLanguage = defaultSelectLabel} = options;
         this.history = history;
-        this.locale = new ModelLocalFormatter(this, selectLabelLanguage);
+        this.locale = this.createLocale(selectLabelLanguage);
+    }
+
+    protected createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {
+        return new DiagramLocaleFormatter(this, selectLabelLanguage);
     }
 
     get language(): string { return this._language; }
@@ -97,8 +93,13 @@ export class DiagramModel implements GraphStructure {
         return this.getTermFactory();
     }
 
-    get elements() { return this.graph.getElements(); }
-    get links() { return this.graph.getLinks(); }
+    get elements(): ReadonlyArray<Element> {
+        return this.graph.getElements();
+    }
+
+    get links(): ReadonlyArray<Link> {
+        return this.graph.getLinks();
+    }
 
     protected getTermFactory(): Rdf.DataFactory {
         return Rdf.DefaultDataFactory;
@@ -131,6 +132,14 @@ export class DiagramModel implements GraphStructure {
         return this.getElement(link.targetId);
     }
 
+    getLinkVisibility(linkTypeId: LinkTypeIri): LinkTypeVisibility {
+        return this.graph.getLinkVisibility(linkTypeId);
+    }
+
+    setLinkVisibility(linkTypeId: LinkTypeIri, value: LinkTypeVisibility): void {
+        this.graph.setLinkVisibility(linkTypeId, value);
+    }
+
     protected resetGraph(): void {
         if (this.graphListener) {
             this.graphListener.stopListening();
@@ -146,25 +155,19 @@ export class DiagramModel implements GraphStructure {
             this.triggerChangeCells(e);
         });
         this.graphListener.listen(this.graph.events, 'elementEvent', e => {
-            this.source.trigger('elementEvent', e);
+            this.triggerElementEvent(e);
         });
         this.graphListener.listen(this.graph.events, 'linkEvent', e => {
-            this.source.trigger('linkEvent', e);
+            this.triggerLinkEvent(e);
         });
-        this.graphListener.listen(this.graph.events, 'elementTypeEvent', e => {
-            this.source.trigger('elementTypeEvent', e);
-        });
-        this.graphListener.listen(this.graph.events, 'linkTypeEvent', e => {
-            this.source.trigger('linkTypeEvent', e);
-        });
-        this.graphListener.listen(this.graph.events, 'propertyTypeEvent', e => {
-            this.source.trigger('propertyTypeEvent', e);
+        this.graphListener.listen(this.graph.events, 'changeLinkVisibility', e => {
+            this.source.trigger('changeLinkVisibility', e);
         });
 
         this.triggerChangeCells({updateAll: true});
     }
 
-    private triggerChangeCells(e: CellsChangedEvent): void {
+    protected triggerChangeCells(e: CellsChangedEvent): void {
         if (this.selection.length > 0) {
             const newSelection = this.selection.filter(item =>
                 item instanceof Element ? this.getElement(item.id) :
@@ -177,6 +180,14 @@ export class DiagramModel implements GraphStructure {
         }
 
         this.source.trigger('changeCells', e);
+    }
+
+    protected triggerElementEvent(e: AnyEvent<ElementEvents>): void {
+        this.source.trigger('elementEvent', e);
+    }
+
+    protected triggerLinkEvent(e: AnyEvent<LinkEvents>): void {
+        this.source.trigger('linkEvent', e);
     }
 
     reorderElements(compare: (a: Element, b: Element) => number): void {
@@ -211,7 +222,6 @@ export class DiagramModel implements GraphStructure {
     }
 
     addLink(link: Link): void {
-        this.createLinkType(link.typeId);
         this.history.execute(new AddLinkCommand(this.graph, link));
     }
 
@@ -220,52 +230,6 @@ export class DiagramModel implements GraphStructure {
         if (link) {
             this.history.execute(new RemoveLinkCommand(this.graph, link));
         }
-    }
-
-    getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined {
-        return this.graph.getElementType(elementTypeIri);
-    }
-
-    createElementType(elementTypeIri: ElementTypeIri): ElementType {
-        const existing = this.graph.getElementType(elementTypeIri);
-        if (existing) {
-            return existing;
-        }
-        const classModel = new ElementType({id: elementTypeIri});
-        this.addElementType(classModel);
-        return classModel;
-    }
-
-    addElementType(model: ElementType): void {
-        this.graph.addElementType(model);
-    }
-
-    getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined {
-        return this.graph.getLinkType(linkTypeIri);
-    }
-
-    createLinkType(linkTypeIri: LinkTypeIri): LinkType {
-        const existing = this.graph.getLinkType(linkTypeIri);
-        if (existing) {
-            return existing;
-        }
-        const linkType = new LinkType({id: linkTypeIri});
-        this.graph.addLinkType(linkType);
-        return linkType;
-    }
-
-    getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined {
-        return this.graph.getPropertyType(propertyTypeIri);
-    }
-
-    createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
-        const existing = this.graph.getPropertyType(propertyIri);
-        if (existing) {
-            return existing;
-        }
-        const property = new PropertyType({id: propertyIri});
-        this.graph.addPropertyType(property);
-        return property;
     }
 }
 
@@ -352,28 +316,18 @@ export interface LocaleFormatter {
     ): Rdf.Literal | undefined;
 
     formatLabel(
-        labels: ReadonlyArray<Rdf.Literal>,
+        labels: ReadonlyArray<Rdf.Literal> | undefined,
         fallbackIri: string,
         language?: string
     ): string;
 
     formatIri(iri: string): string;
-
-    formatElementTypes(
-        types: ReadonlyArray<ElementTypeIri>,
-        language?: string
-    ): string[];
-
-    formatPropertyList(
-        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
-        language?: string
-    ): FormattedProperty[];
 }
 
-class ModelLocalFormatter implements LocaleFormatter {
+export class DiagramLocaleFormatter implements LocaleFormatter {
     constructor(
-        private readonly model: DiagramModel,
-        private readonly selectLabelLanguage: LabelLanguageSelector
+        protected readonly model: DiagramModel,
+        protected readonly selectLabelLanguage: LabelLanguageSelector
     ) {}
 
     selectLabel(
@@ -386,11 +340,11 @@ class ModelLocalFormatter implements LocaleFormatter {
     }
 
     formatLabel(
-        labels: ReadonlyArray<Rdf.Literal>,
+        labels: ReadonlyArray<Rdf.Literal> | undefined,
         fallbackIri: string,
         language?: string
     ): string {
-        const label = this.selectLabel(labels, language);
+        const label = labels ? this.selectLabel(labels, language) : undefined;
         return resolveLabel(label, fallbackIri);
     }
 
@@ -399,41 +353,6 @@ class ModelLocalFormatter implements LocaleFormatter {
             return '(blank node)';
         }
         return `<${iri}>`;
-    }
-
-    formatElementTypes(
-        types: ReadonlyArray<ElementTypeIri>,
-        language?: string
-    ): string[] {
-        return types.map(typeId => {
-            const type = this.model.createElementType(typeId);
-            return this.formatLabel(type.label, type.id, language);
-        }).sort();
-    }
-
-    formatPropertyList(
-        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
-        language?: string
-    ): FormattedProperty[] {
-        const targetLanguage = language ?? this.model.language;
-        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
-        const propertyList = propertyIris.map((key): FormattedProperty => {
-            const property = this.model.createPropertyType(key);
-            const label = this.formatLabel(property.label, key);
-            const allValues = properties[key];
-            const localizedValues = allValues.filter(v =>
-                v.termType === 'NamedNode' ||
-                v.language === '' ||
-                v.language === targetLanguage
-            );
-            return {
-                propertyId: key,
-                label,
-                values: localizedValues.length === 0 ? allValues : localizedValues,
-            };
-        });
-        propertyList.sort((a, b) => a.label.localeCompare(b.label));
-        return propertyList;
     }
 }
 

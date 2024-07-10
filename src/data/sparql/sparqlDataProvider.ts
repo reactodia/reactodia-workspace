@@ -1,6 +1,6 @@
 import * as N3 from 'n3';
 
-import { getOrCreateArrayInMap } from '../../coreUtils/collections';
+import { multimapArrayAdd } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
@@ -134,14 +134,14 @@ export class SparqlDataProvider implements DataProvider {
         for (const link of settings.linkConfigurations) {
             this.linkById.set(link.id as LinkTypeIri, link);
             const predicate = isDirectLink(link) ? link.path : link.id;
-            getOrCreateArrayInMap(this.linkByPredicate, predicate).push(link);
+            multimapArrayAdd(this.linkByPredicate, predicate, link);
         }
         this.openWorldLinks = settings.linkConfigurations.length === 0 ||
             Boolean(settings.openWorldLinks);
 
         for (const property of settings.propertyConfigurations) {
             const predicate = isDirectProperty(property) ? property.path : property.id;
-            getOrCreateArrayInMap(this.propertyByPredicate, predicate).push(property);
+            multimapArrayAdd(this.propertyByPredicate, predicate, property);
         }
         this.openWorldProperties = settings.propertyConfigurations.length === 0 ||
             Boolean(settings.openWorldProperties);

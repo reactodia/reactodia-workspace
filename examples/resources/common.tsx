@@ -27,8 +27,10 @@ export function ExampleToolbarMenu() {
                 fileAccept='.json'
                 onSelect={async file => {
                     const preloadedElements = new Map<Reactodia.ElementIri, Reactodia.ElementModel>();
-                    for (const element of model.elements.filter(Reactodia.EntityElement.is)) {
-                        preloadedElements.set(element.iri, element.data);
+                    for (const element of model.elements) {
+                        if (element instanceof Reactodia.EntityElement) {
+                            preloadedElements.set(element.iri, element.data);
+                        }
                     }
 
                     const json = await file.text();

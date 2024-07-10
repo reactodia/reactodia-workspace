@@ -46,7 +46,7 @@ export abstract class BatchingScheduler {
 }
 
 export class BufferingQueue<Key extends string> extends BatchingScheduler {
-    private fetchingQueue: { [key: string]: true } = Object.create(null);
+    private queuedItems = new Set<Key>();
 
     constructor(
         private onFetch: (keys: Key[]) => void,
@@ -55,19 +55,24 @@ export class BufferingQueue<Key extends string> extends BatchingScheduler {
         super(waitingTime);
     }
 
-    push(key: Key) {
-        this.fetchingQueue[key] = true;
+    has(key: Key): boolean {
+        return this.queuedItems.has(key);
+    }
+
+    push(key: Key): void {
+        this.queuedItems.add(key);
         this.schedule();
     }
 
-    clear() {
-        this.fetchingQueue = Object.create(null);
+    clear(): void {
+        this.queuedItems.clear();
     }
 
-    protected run() {
-        const {fetchingQueue, onFetch} = this;
-        this.fetchingQueue = Object.create(null);
-        onFetch(Object.keys(fetchingQueue) as Key[]);
+    protected run(): void {
+        const {queuedItems, onFetch} = this;
+        const keys = Array.from(queuedItems);
+        queuedItems.clear();
+        onFetch(keys);
     }
 }
 

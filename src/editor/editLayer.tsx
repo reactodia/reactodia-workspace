@@ -123,8 +123,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             },
         });
         const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
-        const linkType = model.createLinkType(temporaryLink.typeId);
-        linkType.setVisibility('withoutLabel');
+        model.setLinkVisibility(temporaryLink.typeId, 'withoutLabel');
 
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;
@@ -433,9 +432,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         const transform = canvas.metrics.getTransform();
         return (
             <TransformedSvgCanvas paperTransform={transform} style={{overflow: 'visible'}}>
-                <LinkMarkers model={model}
-                    renderingState={canvas.renderingState}
-                />
+                <LinkMarkers renderingState={canvas.renderingState} />
                 {this.renderHighlight()}
                 {this.renderCanDropIndicator()}
                 {waitingForMetadata ? null : (

@@ -12,6 +12,7 @@ import { getContentFittingBox } from '../diagram/geometry';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
+import type { AsyncModel } from '../editor/asyncModel';
 import { AuthoringState } from '../editor/authoringState';
 import { EntityElement } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
@@ -103,20 +104,28 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
     const {model, editor} = useWorkspace();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    const isNewElement = Boolean(
-        elements.length === 1 &&
-        elements[0] instanceof EntityElement &&
-        AuthoringState.isNewElement(editor.authoringState, elements[0].iri)
-    );
+    
+    let newEntities = 0;
+    let totalEntities = 0;
+    for (const element of elements) {
+        if (element instanceof EntityElement) {
+            totalEntities++;
+            if (AuthoringState.isNewElement(editor.authoringState, element.iri)) {
+                newEntities++;
+            }
+        }
+    }
+
+    const singleNewEntity = newEntities === 1 && totalEntities === 1;
     return (
         <SelectionAction {...otherProps}
             className={classnames(
                 className,
-                isNewElement ? `${CLASS_NAME}__delete` : `${CLASS_NAME}__remove`
+                singleNewEntity ? `${CLASS_NAME}__delete` : `${CLASS_NAME}__remove`
             )}
             title={
                 title ? title :
-                isNewElement ? 'Delete new element' :
+                singleNewEntity ? 'Delete new element' :
                 elements.length === 1 ? 'Remove an element from the diagram' :
                 'Remove selected elements from the diagram'
             }
@@ -272,8 +281,16 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
     const {model, overlay} = useWorkspace();
-    const elements = model.selection.filter((cell): cell is EntityElement => cell instanceof EntityElement);
-    if (!commands) {
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+
+    let entityCount = 0;
+    for (const element of elements) {
+        if (element instanceof EntityElement) {
+            entityCount++;
+        }
+    }
+
+    if (!(commands && entityCount > 0)) {
         return null;
     }
     const {openedDialog} = overlay;
@@ -322,7 +339,7 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
             title={title ?? 'Search for connected elements'}
             onSelect={() => {
                 commands.trigger('setCriteria', {
-                    criteria: {refElement: target},
+                    criteria: {refElement: target.iri},
                 });
             }}
         />
@@ -333,8 +350,8 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
-    const {editor, overlay} = useWorkspace();
-    const {model, canvas} = useCanvas();
+    const {model, editor, overlay} = useWorkspace();
+    const {canvas} = useCanvas();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -342,7 +359,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const target = elements.length === 1 ? elements[0] : undefined;
-    const canLink = useCanEstablishLink(editor, target);
+    const canLink = useCanEstablishLink(model, editor, target);
 
     if (!(target instanceof EntityElement && inAuthoringMode)) {
         return null;
@@ -375,8 +392,12 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
     );
 }
 
-function useCanEstablishLink(editor: EditorController, target: Element | undefined) {
+function useCanEstablishLink(model: AsyncModel, editor: EditorController, target: Element | undefined) {
     const [canLink, setCanLink] = React.useState<boolean | undefined>();
+
+    const entityTarget = target instanceof EntityElement ? target : undefined;
+    const loadDataStore = useEventStore(entityTarget?.events, 'changeData');
+    const targetData = useSyncStore(loadDataStore, () => entityTarget?.data);
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
     const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
@@ -386,7 +407,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!(editor.metadataApi && target instanceof EntityElement)) {
+        if (!(editor.metadataApi && targetData)) {
             setCanLink(false);
             return;
         }
@@ -396,7 +417,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             setCanLink(undefined);
             const signal = cancellation.signal;
             mapAbortedToNull(
-                editor.metadataApi.canLinkElement(target.data, signal),
+                editor.metadataApi.canLinkElement(targetData, signal),
                 signal
             ).then(canLink => {
                 if (canLink === null) { return; }
@@ -404,7 +425,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             });
         }
         return () => cancellation.abort();
-    }, [target, authoringEvent]);
+    }, [targetData, authoringEvent]);
 
     return canLink;
 }

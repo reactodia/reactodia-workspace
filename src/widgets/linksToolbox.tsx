@@ -4,12 +4,12 @@ import classnames from 'classnames';
 import { Debouncer } from '../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
 
-import { LinkCount } from '../data/model';
+import { LinkCount, LinkTypeModel } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { LinkType, LinkTypeVisibility } from '../diagram/elements';
-import { CommandHistory } from '../diagram/history';
+import { LinkTypeVisibility } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 
+import { AsyncModel } from '../editor/asyncModel';
 import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -21,9 +21,9 @@ import { ProgressBar, ProgressState } from './progressBar';
 
 interface LinkInToolBoxProps {
     model: DiagramModel;
-    link: LinkType;
+    link: LinkTypeModel;
     count: number;
-    onPressFilter?: (type: LinkType) => void;
+    onPressFilter?: (type: LinkTypeModel) => void;
     filterKey?: string;
 }
 
@@ -37,12 +37,13 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
     };
 
     private changeState(state: LinkTypeVisibility) {
-        const history = this.props.model.history;
-        changeLinkTypeState(history, state, [this.props.link]);
+        const {model, link} = this.props;
+        changeLinkTypeState(model, state, [link]);
     }
 
     private isChecked(stateName: LinkTypeVisibility): boolean {
-        return this.props.link.visibility === stateName;
+        const {model, link} = this.props;
+        return model.getLinkVisibility(link.id) === stateName;
     }
 
     private getText() {
@@ -104,12 +105,12 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
 }
 
 interface LinkTypesToolboxViewProps {
-    model: DiagramModel;
-    links: ReadonlyArray<LinkType> | undefined;
+    model: AsyncModel;
+    links: ReadonlyArray<LinkTypeModel> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
     selectedElement: EntityElement | undefined;
     dataState: ProgressState;
-    filterCallback: ((type: LinkType) => void) | undefined;
+    filterCallback: ((type: LinkTypeModel) => void) | undefined;
 }
 
 class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { filterKey: string }> {
@@ -118,7 +119,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
         this.state = {filterKey: ''};
     }
 
-    private compareLinks = (a: LinkType, b: LinkType) => {
+    private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
         const {model} = this.props;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
@@ -143,7 +144,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
             .sort(this.compareLinks);
     }
 
-    private getViews(links: LinkType[]) {
+    private getViews(links: readonly LinkTypeModel[]) {
         const countMap = this.props.countMap || {};
         const views: React.ReactElement<any>[] = [];
         for (const link of links) {
@@ -163,7 +164,6 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
 
     render() {
         const {model, dataState, selectedElement} = this.props;
-        const history = model.history;
 
         const links = this.getLinks();
         const views = this.getViews(links);
@@ -212,7 +212,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'hidden', links)}>
+                                onClick={() => changeLinkTypeState(model, 'hidden', links)}>
                             </button>
                             <button title='Show only lines for links (without labels)'
                                 className={classnames(
@@ -220,7 +220,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'withoutLabel', links)}>
+                                onClick={() => changeLinkTypeState(model, 'withoutLabel', links)}>
                             </button>
                             <button title='Show links with labels'
                                 className={classnames(
@@ -228,7 +228,7 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(history, 'visible', links)}>
+                                onClick={() => changeLinkTypeState(model, 'visible', links)}>
                             </button>
                         </div>
                         <span>&nbsp;Switch all</span>
@@ -255,7 +255,7 @@ export interface LinkTypesToolboxProps {
 interface LinkTypesToolboxState {
     readonly dataState: ProgressState;
     readonly selectedElement?: EntityElement;
-    readonly linksOfElement?: ReadonlyArray<LinkType>;
+    readonly linksOfElement?: ReadonlyArray<LinkTypeModel>;
     readonly countMap?: { readonly [linkTypeId: string]: number };
 }
 
@@ -265,6 +265,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 
     private readonly listener = new EventObserver();
     private readonly linkListener = new EventObserver();
+    private readonly delayedUpdateAll = new Debouncer();
     private readonly debounceSelection = new Debouncer(50 /* ms */);
 
     private currentRequest: { elementId: string } | undefined;
@@ -287,9 +288,16 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         this.updateOnCurrentSelection();
     }
 
+    componentDidUpdate(prevProps: LinkTypesToolboxProps, prevState: LinkTypesToolboxState): void {
+        if (this.state.linksOfElement !== prevState.linksOfElement) {
+            this.subscribeOnLinksEvents();
+        }
+    }
+
     componentWillUnmount() {
         this.listener.stopListening();
         this.linkListener.stopListening();
+        this.delayedUpdateAll.dispose();
         this.debounceSelection.dispose();
     }
 
@@ -310,7 +318,6 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
             model.dataProvider.connectedLinkStats(request).then(linkTypes => {
                 if (this.currentRequest !== request) { return; }
                 const {linksOfElement, countMap} = this.computeStateFromRequestResult(linkTypes);
-                this.subscribeOnLinksEvents(linksOfElement);
                 this.setState({dataState: 'completed', linksOfElement, countMap});
             }).catch(error => {
                 if (this.currentRequest !== request) { return; }
@@ -331,7 +338,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     private computeStateFromRequestResult(linkTypes: ReadonlyArray<LinkCount>) {
         const {model} = this.context;
 
-        const linksOfElement: LinkType[] = [];
+        const linksOfElement: LinkTypeModel[] = [];
         const countMap: { [linkTypeId: string]: number } = {};
 
         for (const linkType of linkTypes) {
@@ -343,18 +350,28 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         return {linksOfElement, countMap};
     }
 
-    private subscribeOnLinksEvents(linksOfElement: LinkType[]) {
+    private subscribeOnLinksEvents() {
+        const {model} = this.context;
         this.linkListener.stopListening();
 
-        const listener = this.linkListener;
-        for (const link of linksOfElement) {
-            listener.listen(link.events, 'changeLabel', this.onLinkChanged);
-            listener.listen(link.events, 'changeVisibility', this.onLinkChanged);
+        const {linksOfElement} = this.state;
+        if (linksOfElement) {
+            for (const link of linksOfElement) {
+                const linkType = model.createLinkType(link.id);
+                this.linkListener.listen(linkType.events, 'changeLabel', this.onLinkChanged);
+            }
+
+            const linkTypeIris = new Set(linksOfElement.map(link => link.id));
+            this.linkListener.listen(model.events, 'changeLinkVisibility', e => {
+                if (linkTypeIris.has(e.source)) {
+                    this.onLinkChanged();
+                }
+            });
         }
     }
 
     private onLinkChanged = () => {
-        this.forceUpdate();
+        this.delayedUpdateAll.call(() => this.forceUpdate());
     };
 
     render() {
@@ -372,22 +389,28 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         );
     }
 
-    private onAddToFilter = (linkType: LinkType) => {
+    private onAddToFilter = (linkType: LinkTypeModel) => {
         const {instancesSearchCommands} = this.props;
         const {selectedElement} = this.state;
-        instancesSearchCommands?.trigger('setCriteria', {
-            criteria: {
-                refElement: selectedElement,
-                refElementLink: linkType,
-            }
-        });
+        if (selectedElement) {
+            instancesSearchCommands?.trigger('setCriteria', {
+                criteria: {
+                    refElement: selectedElement.iri,
+                    refElementLink: linkType.id,
+                }
+            });
+        }
     };
 }
 
-function changeLinkTypeState(history: CommandHistory, state: LinkTypeVisibility, links: ReadonlyArray<LinkType>) {
-    const batch = history.startBatch('Change link types visibility');
+function changeLinkTypeState(
+    model: DiagramModel,
+    state: LinkTypeVisibility,
+    links: ReadonlyArray<LinkTypeModel>
+): void {
+    const batch = model.history.startBatch('Change link types visibility');
     for (const linkType of links) {
-        history.execute(changeLinkTypeVisibility(linkType, state));
+        model.history.execute(changeLinkTypeVisibility(model, linkType.id, state));
     }
     batch.store();
 }

@@ -19,7 +19,7 @@ export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
                         fontSize: 12,
                         fontWeight: 'lighter',
                     }}
-                    content={props.linkType.id}
+                    content={props.link.typeId}
                 />
             }
             propertyLabelStartLine={2}

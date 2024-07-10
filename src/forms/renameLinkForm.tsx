@@ -1,7 +1,11 @@
 import * as React from 'react';
 
-import { CanvasContext } from '../diagram/canvasApi';
+import { useEventStore, useSyncStore } from '../coreUtils/hooks';
+
+import { useCanvas } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
+
+import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-edit-form';
 
@@ -10,73 +14,51 @@ export interface RenameLinkFormProps {
     onFinish: () => void;
 }
 
-interface State {
-    label: string;
-}
+export function RenameLinkForm(props: RenameLinkFormProps) {
+    const {link, onFinish} = props;
 
-export class RenameLinkForm extends React.Component<RenameLinkFormProps, State> {
-    static contextType = CanvasContext;
-    declare readonly context: CanvasContext;
+    const {canvas} = useCanvas();
+    const {model} = useWorkspace();
 
-    constructor(props: RenameLinkFormProps, context: any) {
-        super(props, context);
-        const label = this.computeLabel();
-        this.state = {label};
-    }
+    const linkType = model.getLinkType(link.typeId);
+    useEventStore(linkType?.events, 'changeLabel');
 
-    componentDidUpdate(prevProps: RenameLinkFormProps) {
-        if (this.props.link.typeId !== prevProps.link.typeId) {
-            const label = this.computeLabel();
-            this.setState({label});
-        }
-    }
+    const [customLabel, setCustomLabel] = React.useState('');
 
-    private computeLabel(): string {
-        const {link} = this.props;
-        const {canvas, model} = this.context;
-
-        const linkType = model.getLinkType(link.typeId)!;
-        const {editableLabel} = canvas.renderingState.createLinkTemplate(linkType);
-        const label = editableLabel!.getLabel(link)
-            ?? model.locale.formatLabel(linkType.label, linkType.id);
-
+    const defaultLabel = React.useMemo(() => {
+        const {editableLabel} = canvas.renderingState.createLinkTemplate(link.typeId);
+        const label = editableLabel?.getLabel(link)
+            ?? model.locale.formatLabel(linkType?.label, link.typeId);
         return label;
-    }
+    }, [link, linkType]);
 
-    render() {
-        const {onFinish} = this.props;
-        const {label} = this.state;
-        return (
-            <div className={CLASS_NAME}>
-                <div className={`${CLASS_NAME}__body`}>
-                    <div className={`${CLASS_NAME}__form-row`}>
-                        <label>Link Label</label>
-                        <input className='reactodia-form-control' value={label}
-                            onChange={e => this.setState({label: (e.target as HTMLInputElement).value})} />
-                    </div>
-                </div>
-                <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
-                        onClick={this.onApply}>
-                        Apply
-                    </button>
-                    <button className='reactodia-btn reactodia-btn-default' onClick={onFinish}>
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    const effectiveLabel = customLabel ? customLabel : defaultLabel;
 
-    private onApply = () => {
-        const {link, onFinish} = this.props;
-        const {canvas, model} = this.context;
-        const {label} = this.state;
-
-        const linkType = model.getLinkType(link.typeId)!;
-        const {editableLabel} = canvas.renderingState.createLinkTemplate(linkType);
-        editableLabel!.setLabel(link, label);
-
+    const onApply = () => {
+        const {editableLabel} = canvas.renderingState.createLinkTemplate(link.typeId);
+        editableLabel!.setLabel(link, effectiveLabel);
         onFinish();
     };
+
+    return (
+        <div className={CLASS_NAME}>
+            <div className={`${CLASS_NAME}__body`}>
+                <div className={`${CLASS_NAME}__form-row`}>
+                    <label>Link Label</label>
+                    <input className='reactodia-form-control'
+                        value={effectiveLabel}
+                        onChange={e => setCustomLabel((e.target as HTMLInputElement).value)} />
+                </div>
+            </div>
+            <div className={`${CLASS_NAME}__controls`}>
+                <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+                    onClick={onApply}>
+                    Apply
+                </button>
+                <button className='reactodia-btn reactodia-btn-default' onClick={onFinish}>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    );
 }

@@ -4,7 +4,6 @@ import { findDOMNode } from 'react-dom';
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { ElementTypeIri, PropertyTypeIri } from '../data/model';
 import { TemplateProps } from './customization';
 
 import { setElementExpanded } from './commands';
@@ -380,14 +379,14 @@ class TemplatedElement extends React.Component<OverlaidElementProps> {
     render() {
         const {state, renderingState} = this.props;
         const {element, templateProps} = state;
-        const templateClass = renderingState.getElementTemplate(element.types);
+        const templateClass = renderingState.getElementTemplate(element);
         this.cachedTemplateClass = templateClass;
         this.cachedTemplateProps = templateProps;
         return React.createElement(templateClass, templateProps);
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
-        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element.types);
+        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element);
         return !(
             this.cachedTemplateClass === templateClass &&
             this.cachedTemplateProps === nextProps.state.templateProps

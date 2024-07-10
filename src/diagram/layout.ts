@@ -1,10 +1,8 @@
-import type { ElementTypeIri } from '../data/model';
+import type { ElementTypeIri, LinkTypeIri } from '../data/model';
 
 import { RestoreGeometry } from './commands';
-import type { Element } from './elements';
-import {
-    Rect, Size, SizeProvider, Vector, boundsOf, getContentFittingBox,
-} from './geometry';
+import type { Element, Link } from './elements';
+import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
 import { DiagramModel } from './model';
 
 export interface LayoutGraph {
@@ -18,6 +16,7 @@ export interface LayoutNode {
 }
 
 export interface LayoutLink {
+    readonly type: LinkTypeIri;
     readonly source: string;
     readonly target: string;
 }
@@ -27,6 +26,11 @@ export interface LayoutState {
 }
 
 export type LayoutFunction = (graph: LayoutGraph, state: LayoutState) => Promise<LayoutState>;
+
+export interface LayoutTypeProvider {
+    readonly getElementTypes?: (element: Element) => readonly ElementTypeIri[];
+    readonly getLinkType?: (link: Link) => LinkTypeIri;
+}
 
 export interface CalculatedLayout {
     positions: Map<string, Vector>;
@@ -38,11 +42,14 @@ export async function calculateLayout(params: {
     layoutFunction: LayoutFunction;
     model: DiagramModel;
     sizeProvider: SizeProvider;
+    typeProvider?: LayoutTypeProvider;
     fixedElements?: ReadonlySet<Element>;
     selectedElements?: ReadonlySet<Element>;
     signal?: AbortSignal;
 }): Promise<CalculatedLayout> {    
-    const {layoutFunction, model, sizeProvider, fixedElements, selectedElements} = params;
+    const {
+        layoutFunction, model, sizeProvider, typeProvider, fixedElements, selectedElements,
+    } = params;
 
     if (selectedElements && selectedElements.size <= 1) {
         return {
@@ -62,7 +69,7 @@ export async function calculateLayout(params: {
 
     for (const element of elements) {
         nodes[element.id] = {
-            types: element.types,
+            types: typeProvider?.getElementTypes?.(element) ?? [],
             fixed: fixedElements?.has(element),
         };
         bounds[element.id] = boundsOf(element, sizeProvider);
@@ -73,6 +80,7 @@ export async function calculateLayout(params: {
     for (const link of model.links) {
         if (Object.hasOwn(nodes, link.sourceId) && Object.hasOwn(nodes, link.targetId)) {
             links.push({
+                type: typeProvider?.getLinkType?.(link) ?? link.typeId,
                 source: link.sourceId,
                 target: link.targetId,
             });

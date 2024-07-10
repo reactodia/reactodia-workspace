@@ -75,48 +75,42 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
 }
 
 export class EventObserver {
-    private unsubscribeByKey = new Map<string, Unsubscribe[]>();
-    private onDispose: Array<Unsubscribe> = [];
+    private onDispose = new Set<Unsubscribe>();
 
     listen<Data, Key extends keyof Data>(
         events: Events<Data>, eventKey: Key, listener: Listener<Data, Key>
     ) {
         events.on(eventKey, listener);
-        this.onDispose.push(() => events.off(eventKey, listener));
+        this.onDispose.add(() => events.off(eventKey, listener));
     }
 
     listenAny<Data>(events: Events<Data>, listener: AnyListener<Data>) {
         events.onAny(listener);
-        this.onDispose.push(() => events.offAny(listener));
+        this.onDispose.add(() => events.offAny(listener));
     }
 
     listenOnce<Data, Key extends keyof Data>(
         events: Events<Data>, eventKey: Key, listener: Listener<Data, Key>
     ) {
-        let handled = false;
+        // eslint-disable-next-line prefer-const
+        let unsubscribe: Unsubscribe;
         const onceListener: Listener<Data, Key> = (data) => {
-            handled = true;
             events.off(eventKey, onceListener);
+            this.onDispose.delete(unsubscribe);
             listener(data);
         };
-        events.on(eventKey, onceListener);
-        this.onDispose.push(() => {
-            if (handled) { return; }
+        unsubscribe = () => {
             events.off(eventKey, onceListener);
-        });
+            this.onDispose.delete(unsubscribe);
+        };
+        events.on(eventKey, onceListener);
+        this.onDispose.add(unsubscribe);
     }
 
     stopListening() {
         for (const unsubscribe of this.onDispose) {
             unsubscribe();
         }
-        this.onDispose.length = 0;
-
-        this.unsubscribeByKey.forEach(unsubscribers => {
-            for (const unsubscribe of unsubscribers) {
-                unsubscribe();
-            }
-        });
-        this.unsubscribeByKey.clear();
+        this.onDispose.clear();
     }
 }

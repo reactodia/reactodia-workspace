@@ -11,6 +11,7 @@ import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { EntityElement } from '../workspace';
 
 export interface NavigatorProps {
     /**
@@ -221,13 +222,14 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     }
 
     private chooseElementColor(element: Element): string {
-        const {canvas, workspace: {getElementTypeStyle}} = this.props;
+        const {canvas, workspace: {model, getElementTypeStyle}} = this.props;
         const {highlighter} = canvas.renderingState.shared;
         const isBlurred = highlighter && !highlighter(element);
         if (isBlurred) {
             return 'lightgray';
         }
-        const {color} = getElementTypeStyle(element.types);
+        const data = element instanceof EntityElement ? element.data : undefined;
+        const {color} = getElementTypeStyle(data?.types ?? []);
         return color;
     }
 

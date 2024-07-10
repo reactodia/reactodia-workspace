@@ -1,13 +1,18 @@
 import * as React from 'react';
 
-import { LinkRouter, LinkTemplateResolver, ElementTemplateResolver } from '../diagram/customization';
+import {
+    LinkRouter, LinkTemplateResolver, ElementTemplate,
+} from '../diagram/customization';
+import { Element } from '../diagram/elements';
 import { PaperArea, ZoomOptions } from '../diagram/paperArea';
 import { RenderingState } from '../diagram/renderingState';
+
+import { EntityElement } from '../editor/dataElements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
 export interface CanvasProps {
-    elementTemplateResolver?: ElementTemplateResolver;
+    elementTemplateResolver?: TypedElementResolver;
     linkTemplateResolver?: LinkTemplateResolver;
     linkRouter?: LinkRouter;
     /**
@@ -19,6 +24,8 @@ export interface CanvasProps {
     watermarkUrl?: string;
     children?: React.ReactNode;
 }
+
+export type TypedElementResolver = (types: readonly string[], element: Element) => ElementTemplate | undefined;
 
 const CLASS_NAME = 'reactodia-canvas';
 
@@ -32,7 +39,12 @@ export function Canvas(props: CanvasProps) {
     const [renderingState] = React.useState(() => new RenderingState({
         model,
         shared: view,
-        elementTemplateResolver,
+        elementTemplateResolver: elementTemplateResolver ? (
+            element => {
+                const data = element instanceof EntityElement ? element.data : undefined;
+                return elementTemplateResolver(data?.types ?? [], element);
+            }
+        ) : undefined,
         linkTemplateResolver,
         linkRouter,
     }));

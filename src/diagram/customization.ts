@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import type { PropertyTypeIri } from '../data/model';
+import type { LinkTypeIri, PropertyTypeIri } from '../data/model';
 import type * as Rdf from '../data/rdf/rdfModel';
 
-import type { Element, ElementTemplateState, Link, LinkType } from './elements';
+import type { Element, ElementTemplateState, Link } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
 
@@ -17,8 +17,8 @@ export interface FormattedProperty {
 }
 
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
-export type ElementTemplateResolver = (types: ReadonlyArray<string>) => ElementTemplate | undefined;
-export type LinkTemplateResolver = (linkType: string) => LinkTemplate | undefined;
+export type ElementTemplateResolver = (element: Element) => ElementTemplate | undefined;
+export type LinkTemplateResolver = (linkTypeId: LinkTypeIri) => LinkTemplate | undefined;
 
 export interface TypeStyle {
     readonly color?: string;
@@ -57,7 +57,7 @@ export interface LinkMarkerStyle {
 
 export interface LinkTemplateProps {
     link: Link;
-    linkType: LinkType;
+    typeIndex: number;
     path: string;
     getPathPosition: (offset: number) => Vector;
     route?: RoutedLink;

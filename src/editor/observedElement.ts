@@ -5,15 +5,16 @@ import { KeyedObserver } from '../coreUtils/keyedObserver';
 
 import { ElementTypeIri, PropertyTypeIri } from '../data/model';
 
-import { useCanvas } from '../diagram/canvasApi';
-import { Element, ElementTypeEvents, PropertyTypeEvents } from '../diagram/elements';
-import { DiagramModel } from '../diagram/model';
+import { Element } from '../diagram/elements';
 
-import { EntityElement } from './dataElements';
+import { useWorkspace } from '../workspace/workspaceContext';
+
+import { AsyncModel } from './asyncModel';
+import { EntityElement, ElementTypeEvents, PropertyTypeEvents } from './dataElements';
 
 export function useObservedElement(element: Element): void {
     const data = element instanceof EntityElement ? element.data : undefined;
-    const {model} = useCanvas();
+    const {model} = useWorkspace();
 
     interface ObservedState {
         readonly typeObserver: KeyedObserver<ElementTypeIri>;
@@ -53,7 +54,7 @@ export function useObservedElement(element: Element): void {
 }
 
 function observeElementTypes<Event extends keyof ElementTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<ElementTypeEvents, Event>
+    model: AsyncModel, event: Event, listener: Listener<ElementTypeEvents, Event>
 ) {
     return new KeyedObserver<ElementTypeIri>(key => {
         const type = model.getElementType(key);
@@ -66,7 +67,7 @@ function observeElementTypes<Event extends keyof ElementTypeEvents>(
 }
 
 function observeProperties<Event extends keyof PropertyTypeEvents>(
-    model: DiagramModel, event: Event, listener: Listener<PropertyTypeEvents, Event>
+    model: AsyncModel, event: Event, listener: Listener<PropertyTypeEvents, Event>
 ) {
     return new KeyedObserver<PropertyTypeIri>(key => {
         const property = model.getPropertyType(key);

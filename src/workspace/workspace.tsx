@@ -11,7 +11,7 @@ import { hashFnv32a } from '../data/utils';
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, LabelLanguageSelector } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
-import { LayoutFunction, calculateLayout, applyLayout } from '../diagram/layout';
+import { LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout } from '../diagram/layout';
 import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
@@ -25,6 +25,7 @@ import { StandardTemplate } from '../templates/standardTemplate';
 import {
     WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
+import { EntityElement } from '../workspace';
 
 export interface WorkspaceProps {
     /**
@@ -87,6 +88,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private readonly resolveTypeStyle: TypeStyleResolver;
     private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
 
+    private readonly layoutTypeProvider: LayoutTypeProvider;
+
     private readonly workspaceContext: WorkspaceContext;
 
     constructor(props: WorkspaceProps) {
@@ -128,6 +131,15 @@ export class Workspace extends React.Component<WorkspaceProps> {
             editor,
             propertyEditor,
         });
+
+        this.layoutTypeProvider = {
+            getElementTypes: element => {
+                if (element instanceof EntityElement) {
+                    return element.data.types;
+                }
+                return [];
+            },
+        };
 
         this.workspaceContext = {
             model,
@@ -236,6 +248,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             model,
             selectedElements,
             sizeProvider: canvas.renderingState,
+            typeProvider: this.layoutTypeProvider,
             signal: signal ?? disposeSignal,
         });
 

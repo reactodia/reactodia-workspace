@@ -1,19 +1,35 @@
-export function getOrCreateArrayInMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+interface BasicMap<K, V> {
+    get(key: K): V | undefined;
+    set(key: K, value: V): unknown;
+    delete(key: K): unknown;
+}
+
+export function multimapArrayAdd<K, V>(map: BasicMap<K, V[]>, key: K, value: V): void {
     let values = map.get(key);
     if (!values) {
         values = [];
         map.set(key, values);
     }
-    return values;
+    values.push(value);
 }
 
-export function getOrCreateSetInMap<K, V>(map: Map<K, Set<V>>, key: K): Set<V> {
-    let values = map.get(key);
-    if (!values) {
-        values = new Set();
-        map.set(key, values);
+export function multimapAdd<K, V>(map: BasicMap<K, Set<V>>, key: K, value: V): void {
+    let itemSet = map.get(key);
+    if (!itemSet) {
+        itemSet = new Set();
+        map.set(key, itemSet);
     }
-    return values;
+    itemSet.add(value);
+}
+
+export function multimapDelete<K, V>(map: BasicMap<K, Set<V>>, key: K, value: V): void {
+    const itemSet = map.get(key);
+    if (itemSet) {
+        itemSet.delete(value);
+        if (itemSet.size === 0) {
+            map.delete(key);
+        }
+    }
 }
 
 export function shallowArrayEqual<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {

@@ -2,9 +2,10 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useCanvas } from '../diagram/canvasApi';
-import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
+import { FormattedProperty, LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
+import { AsyncModel } from '../editor/asyncModel';
 import { RelationLink } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { TemplateProperties } from '../workspace';
@@ -40,25 +41,31 @@ type CustomizedLinkLabelProps = Omit<
 
 export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     const {
-        link, linkType, className, path, pathProps, getPathPosition, route,
+        link, className, path, pathProps, getPathPosition, route,
         editableLabel,
         primaryLabelProps,
         propertyLabelProps,
         propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
-    const {model} = useCanvas();
+    const {model, canvas} = useCanvas();
 
     const renamedLabel = editableLabel?.getLabel(link);
     let labelContent: JSX.Element | null = null;
-    if (linkType.visibility === 'visible') {
+    if (model.getLinkVisibility(link.typeId) === 'visible') {
         const textClass = `${CLASS_NAME}__label-text`;
         const backgroundClass = `${CLASS_NAME}__label-background`;
 
-        const label = renamedLabel ?? model.locale.formatLabel(linkType.label, linkType.id);
-        const properties = model.locale.formatPropertyList(
-            link instanceof RelationLink ? link.data.properties : {}
-        );
+        let label: string;
+        let properties: readonly FormattedProperty[];
+        if ((link instanceof RelationLink && model instanceof AsyncModel)) {
+            const linkType = model.getLinkType(link.typeId);
+            label = renamedLabel ?? model.locale.formatLabel(linkType?.label, link.typeId);
+            properties = model.locale.formatPropertyList(link.data.properties);
+        } else {
+            label = model.locale.formatIri(link.typeId);
+            properties = [];
+        }
 
         labelContent = <>
             <LinkLabel {...primaryLabelProps}
@@ -69,10 +76,10 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 textClass={classnames(textClass, primaryLabelProps?.textClass)}
                 rectClass={classnames(backgroundClass, primaryLabelProps?.rectClass)}
                 title={primaryLabelProps?.title
-                    ?? `${label} ${model.locale.formatIri(linkType.id)}`
+                    ?? `${label} ${model.locale.formatIri(link.typeId)}`
                 }
                 content={renamedLabel ? label : (
-                    <WithFetchStatus type='linkType' target={linkType.id}>
+                    <WithFetchStatus type='linkType' target={link.typeId}>
                         <tspan>{label}</tspan>
                     </WithFetchStatus>
                 )}
@@ -110,7 +117,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
                 className
             )}>
-            <LinkPath linkType={linkType}
+            <LinkPath typeIndex={canvas.renderingState.ensureLinkTypeIndex(link.typeId)}
                 path={path}
                 pathProps={{
                     fill: 'none',

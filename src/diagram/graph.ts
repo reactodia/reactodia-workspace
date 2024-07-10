@@ -1,20 +1,17 @@
 import { OrderedMap } from '../coreUtils/collections';
-import { EventSource, Events, AnyEvent, AnyListener } from '../coreUtils/events';
+import { EventSource, Events, AnyEvent, AnyListener, PropertyChange } from '../coreUtils/events';
 
-import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
+import { LinkTypeIri } from '../data/model';
 
 import {
-    Element, ElementEvents, Link, LinkEvents, LinkType, LinkTypeEvents,
-    ElementType, ElementTypeEvents, PropertyType, PropertyTypeEvents,
+    Element, ElementEvents, Link, LinkEvents, LinkTypeVisibility,
 } from './elements';
 
 export interface GraphEvents {
     changeCells: CellsChangedEvent;
     elementEvent: AnyEvent<ElementEvents>;
     linkEvent: AnyEvent<LinkEvents>;
-    elementTypeEvent: AnyEvent<ElementTypeEvents>;
-    linkTypeEvent: AnyEvent<LinkTypeEvents>;
-    propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
+    changeLinkVisibility: PropertyChange<LinkTypeIri, LinkTypeVisibility>;
 }
 
 export interface CellsChangedEvent {
@@ -32,11 +29,7 @@ export class Graph {
     private readonly elementLinks = new WeakMap<Element, Link[]>();
     private readonly EMPTY_LINKS: Link[] = [];
 
-    private readonly classesById = new Map<ElementTypeIri, ElementType>();
-    private readonly propertiesById = new Map<PropertyTypeIri, PropertyType>();
-
-    private linkTypes = new Map<LinkTypeIri, LinkType>();
-    private static nextLinkTypeIndex = 0;
+    private readonly linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
 
     getElements() { return this.elements.items; }
     getLinks() { return this.links.items; }
@@ -120,14 +113,6 @@ export class Graph {
         if (this.getLink(link.id)) {
             throw new Error(`Link already exists: ${link.id}`);
         }
-        const linkType = this.getLinkType(link.typeId);
-        if (!linkType) {
-            throw new Error(`Link type not found: ${link.typeId}`);
-        }
-        this.registerLink(link);
-    }
-
-    private registerLink(link: Link) {
         const source = this.sourceOf(link);
         if (!source) {
             throw new Error(`Link source not found: ${link.sourceId}`);
@@ -197,66 +182,22 @@ export class Graph {
         }
     }
 
-    getLinkTypes(): LinkType[] {
-        const result: LinkType[] = [];
-        this.linkTypes.forEach(type => result.push(type));
-        return result;
+    get linkVisibility(): ReadonlyMap<LinkTypeIri, LinkTypeVisibility> {
+        return this.linkTypeVisibility;
     }
 
-    getLinkType(linkTypeId: LinkTypeIri): LinkType | undefined {
-        return this.linkTypes.get(linkTypeId);
+    getLinkVisibility(linkTypeId: LinkTypeIri): LinkTypeVisibility {
+        return this.linkTypeVisibility.get(linkTypeId) ?? 'visible';
     }
 
-    addLinkType(linkType: LinkType): void {
-        if (this.getLinkType(linkType.id)) {
-            throw new Error(`Link type already exists: ${linkType.id}`);
+    setLinkVisibility(linkTypeId: LinkTypeIri, value: LinkTypeVisibility): void {
+        const previous = this.getLinkVisibility(linkTypeId);
+        if (value === previous) {
+            return;
         }
-        linkType.setIndex(Graph.nextLinkTypeIndex++);
-        linkType.events.onAny(this.onLinkTypeEvent);
-        this.linkTypes.set(linkType.id, linkType);
+        this.linkTypeVisibility.set(linkTypeId, value);
+        this.source.trigger('changeLinkVisibility', {source: linkTypeId, previous});
     }
-
-    private onLinkTypeEvent: AnyListener<LinkTypeEvents> = (data) => {
-        this.source.trigger('linkTypeEvent', {data});
-    };
-
-    getPropertyType(propertyId: PropertyTypeIri): PropertyType | undefined {
-        return this.propertiesById.get(propertyId);
-    }
-
-    addPropertyType(propertyType: PropertyType): void {
-        if (this.getPropertyType(propertyType.id)) {
-            throw new Error(`Property type already exists: ${propertyType.id}`);
-        }
-        propertyType.events.onAny(this.onPropertyTypeEvent);
-        this.propertiesById.set(propertyType.id, propertyType);
-    }
-
-    private onPropertyTypeEvent: AnyListener<PropertyTypeEvents> = (data) => {
-        this.source.trigger('propertyTypeEvent', {data});
-    };
-
-    getElementType(elementTypeId: ElementTypeIri): ElementType | undefined {
-        return this.classesById.get(elementTypeId);
-    }
-
-    getElementTypes(): ElementType[] {
-        const classes: ElementType[] = [];
-        this.classesById.forEach(richClass => classes.push(richClass));
-        return classes;
-    }
-
-    addElementType(elementType: ElementType): void {
-        if (this.getElementType(elementType.id)) {
-            throw new Error(`Element type already exists: ${elementType.id}`);
-        }
-        elementType.events.onAny(this.onElementTypeEvent);
-        this.classesById.set(elementType.id, elementType);
-    }
-
-    private onElementTypeEvent: AnyListener<ElementTypeEvents> = (data) => {
-        this.source.trigger('elementTypeEvent', {data});
-    };
 }
 
 function removeLinkFrom(links: Link[], link: Link): void {
@@ -264,17 +205,4 @@ function removeLinkFrom(links: Link[], link: Link): void {
     if (index >= 0) {
         links.splice(index, 1);
     }
-}
-
-function findLinkIndex(haystack: Link[], linkTypeId: LinkTypeIri | null, sourceId: string, targetId: string) {
-    for (let i = 0; i < haystack.length; i++) {
-        const link = haystack[i];
-        if (link.sourceId === sourceId &&
-            link.targetId === targetId &&
-            link.typeId === linkTypeId
-        ) {
-            return i;
-        }
-    }
-    return -1;
 }

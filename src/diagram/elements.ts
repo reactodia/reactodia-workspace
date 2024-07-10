@@ -1,7 +1,6 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
-import * as Rdf from '../data/rdf/rdfModel';
-import { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
+import { LinkTypeIri } from '../data/model';
 import { GenerateID } from '../data/schema';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -56,12 +55,6 @@ export abstract class Element {
         this._elementState = elementState;
     }
 
-    get types(): ReadonlyArray<ElementTypeIri> {
-        return this.getTypes();
-    }
-
-    protected abstract getTypes(): ReadonlyArray<ElementTypeIri>;
-
     get position(): Vector { return this._position; }
     setPosition(value: Vector) {
         const previous = this._position;
@@ -103,16 +96,8 @@ export abstract class Element {
  * Diagram element represented by an invisible single point.
  */
 export class VoidElement extends Element {
-    static readonly TYPE = 'urn:reactodia:VoidElement' as ElementTypeIri;
-
-    private static readonly TYPES = [VoidElement.TYPE];
-
     constructor(props: Pick<ElementProps, 'id' | 'position'>) {
         super(props);
-    }
-
-    protected override getTypes(): ReadonlyArray<ElementTypeIri> {
-        return VoidElement.TYPES;
     }
 }
 
@@ -201,138 +186,10 @@ export interface LinkTemplateState {
     [propertyIri: string]: unknown;
 }
 
-export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
-}
-
-export interface ElementTypeEvents {
-    changeLabel: PropertyChange<ElementType, ReadonlyArray<Rdf.Literal>>;
-    changeCount: PropertyChange<ElementType, number | undefined>;
-}
-
-export class ElementType {
-    private readonly source = new EventSource<ElementTypeEvents>();
-    readonly events: Events<ElementTypeEvents> = this.source;
-
-    readonly id: ElementTypeIri;
-
-    private _label: ReadonlyArray<Rdf.Literal>;
-    private _count: number | undefined;
-
-    constructor(props: {
-        id: ElementTypeIri;
-        label?: ReadonlyArray<Rdf.Literal>;
-        count?: number;
-    }) {
-        const {id, label = [], count} = props;
-        this.id = id;
-        this._label = label;
-        this._count = count;
-    }
-
-    get label() { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
-        if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
-    }
-
-    get count() { return this._count; }
-    setCount(value: number | undefined) {
-        const previous = this._count;
-        if (previous === value) { return; }
-        this._count = value;
-        this.source.trigger('changeCount', {source: this, previous});
-    }
-}
-
-export interface PropertyTypeEvents {
-    changeLabel: PropertyChange<PropertyType, ReadonlyArray<Rdf.Literal>>;
-}
-
-export class PropertyType {
-    private readonly source = new EventSource<PropertyTypeEvents>();
-    readonly events: Events<PropertyTypeEvents> = this.source;
-
-    readonly id: PropertyTypeIri;
-
-    private _label: ReadonlyArray<Rdf.Literal>;
-
-    constructor(props: {
-        id: PropertyTypeIri;
-        label?: ReadonlyArray<Rdf.Literal>;
-    }) {
-        const {id, label = []} = props;
-        this.id = id;
-        this._label = label;
-    }
-
-    get label(): ReadonlyArray<Rdf.Literal> { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
-        if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
-    }
-}
-
-export interface LinkTypeEvents {
-    changeLabel: PropertyChange<LinkType, ReadonlyArray<Rdf.Literal>>;
-    changeIsNew: PropertyChange<LinkType, boolean>;
-    changeVisibility: PropertyChange<LinkType, LinkTypeVisibility>;
-}
-
 export type LinkTypeVisibility = 'hidden' | 'withoutLabel' | 'visible';
 
-export class LinkType {
-    private readonly source = new EventSource<LinkTypeEvents>();
-    readonly events: Events<LinkTypeEvents> = this.source;
-
-    readonly id: LinkTypeIri;
-
-    private _index: number | undefined;
-
-    private _label: ReadonlyArray<Rdf.Literal>;
-
-    private _visibility: LinkTypeVisibility = 'visible';
-
-    constructor(props: {
-        id: LinkTypeIri;
-        index?: number;
-        label?: ReadonlyArray<Rdf.Literal>;
-    }) {
-        const {id, index, label = []} = props;
-        this.id = id;
-        this._index = index;
-        this._label = label;
-    }
-
-    get index() { return this._index; }
-    setIndex(value: number) {
-        if (typeof this._index === 'number') {
-            throw new Error('Cannot set index for link type more than once.');
-        }
-        this._index = value;
-    }
-
-    get label() { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
-        if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
-    }
-
-    get visibility() {
-        return this._visibility;
-    }
-    setVisibility(value: LinkTypeVisibility) {
-        const previous = this._visibility;
-        if (previous === value) { return; }
-        this._visibility = value;
-        this.source.trigger('changeVisibility', {source: this, previous});
-    }
+export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
+    return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
 }
 
 export class LinkVertex {

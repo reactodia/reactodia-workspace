@@ -1,10 +1,10 @@
 import { HashMap, ReadonlyHashMap, HashSet, ReadonlyHashSet } from '../coreUtils/hashMap';
 
-import { ElementModel, LinkModel, ElementIri, equalLinks, hashLink } from '../data/model';
+import { ElementModel, ElementIri, LinkKey, LinkModel, equalLinks, hashLink } from '../data/model';
 
 export interface AuthoringState {
     readonly elements: ReadonlyMap<ElementIri, ElementChange>;
-    readonly links: ReadonlyHashMap<LinkModel, LinkChange>;
+    readonly links: ReadonlyHashMap<LinkKey, LinkChange>;
 }
 
 export type AuthoringEvent = ElementChange | LinkChange;
@@ -31,13 +31,13 @@ export interface LinkChange {
 
 interface MutableAuthoringState extends AuthoringState {
     readonly elements: Map<ElementIri, ElementChange>;
-    readonly links: HashMap<LinkModel, LinkChange>;
+    readonly links: HashMap<LinkKey, LinkChange>;
 }
 
 export namespace AuthoringState {
     export const empty: AuthoringState = {
         elements: new Map<ElementIri, ElementChange>(),
-        links: new HashMap<LinkModel, LinkChange>(hashLink, equalLinks),
+        links: new HashMap<LinkKey, LinkChange>(hashLink, equalLinks),
     };
 
     export function isEmpty(state: AuthoringState) {
@@ -217,35 +217,35 @@ export namespace AuthoringState {
         );
     }
 
-    export function isNewLink(state: AuthoringState, linkModel: LinkModel): boolean {
-        const event = state.links.get(linkModel);
+    export function isNewLink(state: AuthoringState, key: LinkKey): boolean {
+        const event = state.links.get(key);
         return Boolean(event && !event.before);
     }
 
-    export function isDeletedLink(state: AuthoringState, linkModel: LinkModel): boolean {
-        const event = state.links.get(linkModel);
+    export function isDeletedLink(state: AuthoringState, key: LinkKey): boolean {
+        const event = state.links.get(key);
         return event && event.deleted ||
-            isDeletedElement(state, linkModel.sourceId) ||
-            isDeletedElement(state, linkModel.targetId);
+            isDeletedElement(state, key.sourceId) ||
+            isDeletedElement(state, key.targetId);
     }
 
-    export function isUncertainLink(state: AuthoringState, linkModel: LinkModel): boolean {
-        return !isDeletedLink(state, linkModel) && (
-            isElementWithModifiedIri(state, linkModel.sourceId) ||
-            isElementWithModifiedIri(state, linkModel.targetId)
+    export function isUncertainLink(state: AuthoringState, key: LinkKey): boolean {
+        return !isDeletedLink(state, key) && (
+            isElementWithModifiedIri(state, key.sourceId) ||
+            isElementWithModifiedIri(state, key.targetId)
         );
     }
 }
 
 export interface TemporaryState {
     readonly elements: ReadonlySet<ElementIri>;
-    readonly links: ReadonlyHashSet<LinkModel>;
+    readonly links: ReadonlyHashSet<LinkKey>;
 }
 
 export namespace TemporaryState {
     export const empty: TemporaryState = {
         elements: new Set<ElementIri>(),
-        links: new HashSet<LinkModel>(hashLink, equalLinks),
+        links: new HashSet<LinkKey>(hashLink, equalLinks),
     };
 
     export function addElement(state: TemporaryState, element: ElementModel): TemporaryState {
@@ -266,7 +266,7 @@ export namespace TemporaryState {
         return {...state, elements};
     }
 
-    export function addLink(state: TemporaryState, link: LinkModel) {
+    export function addLink(state: TemporaryState, link: LinkKey) {
         if (state.links.has(link)) {
             return state;
         }
@@ -274,7 +274,7 @@ export namespace TemporaryState {
         links.add(link);
         return {...state, links};
     }
-    export function deleteLink(state: TemporaryState, link: LinkModel) {
+    export function deleteLink(state: TemporaryState, link: LinkKey) {
         if (!state.links.has(link)) {
             return state;
         }
@@ -284,7 +284,7 @@ export namespace TemporaryState {
     }
 }
 
-export function isLinkConnectedToElement(link: LinkModel, elementIri: ElementIri) {
+export function isLinkConnectedToElement(link: LinkKey, elementIri: ElementIri) {
     return link.sourceId === elementIri || link.targetId === elementIri;
 }
 

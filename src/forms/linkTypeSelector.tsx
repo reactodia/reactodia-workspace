@@ -3,14 +3,13 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
-import { ElementModel, LinkModel, LinkDirection, equalLinks } from '../data/model';
+import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
-import { LinkType } from '../diagram/elements';
-import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { RelationLink } from '../editor/dataElements';
+import type { AsyncModel } from '../editor/asyncModel';
+import { RelationLink, LinkType } from '../editor/dataElements';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -28,9 +27,9 @@ export interface LinkValue {
     allowChange: boolean;
 }
 
-interface DirectedFatLinkType {
-    fatLinkType: LinkType;
-    direction: LinkDirection;
+interface DirectedDataLinkType {
+    readonly iri: LinkTypeIri;
+    readonly direction: LinkDirection;
 }
 
 export interface LinkTypeSelectorProps {
@@ -42,7 +41,7 @@ export interface LinkTypeSelectorProps {
 }
 
 interface State {
-    fatLinkTypes?: ReadonlyArray<DirectedFatLinkType>;
+    dataLinkTypes?: ReadonlyArray<DirectedDataLinkType>;
 }
 
 export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, State> {
@@ -55,7 +54,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     constructor(props: LinkTypeSelectorProps, context: any) {
         super(props, context);
         this.state = {
-            fatLinkTypes: [],
+            dataLinkTypes: [],
         };
     }
 
@@ -68,7 +67,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     componentDidUpdate(prevProps: LinkTypeSelectorProps) {
         const {source, target} = this.props;
         if (prevProps.source !== source || prevProps.target !== target) {
-            this.setState({fatLinkTypes: undefined});
+            this.setState({dataLinkTypes: undefined});
             this.fetchPossibleLinkTypes();
         }
     }
@@ -89,27 +88,26 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             this.cancellation.signal
         );
         if (linkTypes === null) { return; }
-        const fatLinkTypes: Array<DirectedFatLinkType> = [];
+        const dataLinkTypes: DirectedDataLinkType[] = [];
         linkTypes.forEach(({linkTypeIri, direction}) => {
-            const fatLinkType = model.createLinkType(linkTypeIri);
-            fatLinkTypes.push({fatLinkType, direction});
+            dataLinkTypes.push({iri: linkTypeIri, direction});
         });
-        fatLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model));
-        this.setState({fatLinkTypes});
-        this.listenToLinkLabels(fatLinkTypes);
+        dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model));
+        this.setState({dataLinkTypes: dataLinkTypes});
+        this.listenToLinkLabels(dataLinkTypes.map(type => model.createLinkType(type.iri)));
     }
 
-    private listenToLinkLabels(fatLinkTypes: Array<{ fatLinkType: LinkType; direction: LinkDirection }>) {
-        fatLinkTypes.forEach(({fatLinkType}) =>
-            this.listener.listen(fatLinkType.events, 'changeLabel', this.updateAll)
-        );
+    private listenToLinkLabels(linkTypes: ReadonlyArray<LinkType>) {
+        for (const linkType of linkTypes) {
+            this.listener.listen(linkType.events, 'changeLabel', this.updateAll);
+        }
     }
 
     private onChangeType = (e: React.FormEvent<HTMLSelectElement>) => {
         const {link: originalLink, direction: originalDirection} = this.props.linkValue.value;
         const index = parseInt(e.currentTarget.value, 10);
-        const {fatLinkType, direction} = this.state.fatLinkTypes![index];
-        let link: LinkModel = {...originalLink, linkTypeId: fatLinkType.id};
+        const {iri, direction} = this.state.dataLinkTypes![index];
+        let link: LinkModel = {...originalLink, linkTypeId: iri};
         // switches source and target if the direction has changed
         if (originalDirection !== direction) {
             link = {
@@ -122,11 +120,12 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     };
 
     private renderPossibleLinkType = (
-        {fatLinkType, direction}: { fatLinkType: LinkType; direction: LinkDirection }, index: number
+        {iri, direction}: DirectedDataLinkType, index: number
     ) => {
         const {model} = this.context;
         const {source, target} = this.props;
-        const label = model.locale.formatLabel(fatLinkType.label, fatLinkType.id);
+        const data = model.getLinkType(iri);
+        const label = model.locale.formatLabel(data?.label, iri);
         let [sourceLabel, targetLabel] = [source, target].map(element =>
             model.locale.formatLabel(element.label, element.id)
         );
@@ -138,22 +137,22 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     render() {
         const {linkValue, disabled} = this.props;
-        const {fatLinkTypes} = this.state;
-        const value = (fatLinkTypes || []).findIndex(({fatLinkType, direction}) =>
-            fatLinkType.id === linkValue.value.link.linkTypeId && direction === linkValue.value.direction
+        const {dataLinkTypes} = this.state;
+        const value = (dataLinkTypes ?? []).findIndex(({iri, direction}) =>
+            iri === linkValue.value.link.linkTypeId && direction === linkValue.value.direction
         );
         return (
             <div className={`${CLASS_NAME}__control-row`}>
                 <label>Link Type</label>
                 {
-                    fatLinkTypes ? (
+                    dataLinkTypes ? (
                         <select className='reactodia-form-control'
                             name='reactodia-link-type-selector-select'
                             value={value}
                             onChange={this.onChangeType}
                             disabled={disabled}>
                             <option value={-1} disabled={true}>Select link type</option>
-                            {fatLinkTypes.map(this.renderPossibleLinkType)}
+                            {dataLinkTypes.map(this.renderPossibleLinkType)}
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }
@@ -163,10 +162,12 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 }
 
-function makeLinkTypeComparatorByLabelAndDirection(model: DiagramModel) {
-    return (a: DirectedFatLinkType, b: DirectedFatLinkType) => {
-        const labelA = model.locale.formatLabel(a.fatLinkType.label, a.fatLinkType.id);
-        const labelB = model.locale.formatLabel(b.fatLinkType.label, b.fatLinkType.id);
+function makeLinkTypeComparatorByLabelAndDirection(model: AsyncModel) {
+    return (a: DirectedDataLinkType, b: DirectedDataLinkType) => {
+        const aData = model.getLinkType(a.iri);
+        const bData = model.getLinkType(b.iri);
+        const labelA = model.locale.formatLabel(aData?.label, a.iri);
+        const labelB = model.locale.formatLabel(bData?.label, b.iri);
         const labelCompareResult = labelA.localeCompare(labelB);
         if (labelCompareResult !== 0) {
             return labelCompareResult;
@@ -194,9 +195,7 @@ export function validateLinkType(
     }
     const alreadyOnDiagram = model.links.find(link =>
         link instanceof RelationLink &&
-        link.data.linkTypeId === currentLink.linkTypeId &&
-        link.data.sourceId === currentLink.sourceId &&
-        link.data.targetId === currentLink.targetId &&
+        equalLinks(link.data, currentLink) &&
         !editor.temporaryState.links.has(currentLink)
     );
     if (alreadyOnDiagram) {

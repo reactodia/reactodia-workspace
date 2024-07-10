@@ -6,9 +6,9 @@ import {
     LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
 
-import { ElementTypeIri, LinkTypeIri } from '../data/model';
+import { LinkTypeIri } from '../data/model';
 
-import { Element, Link, LinkType } from './elements';
+import { Element, Link } from './elements';
 import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
@@ -59,6 +59,9 @@ export class RenderingState implements SizeProvider {
     private readonly elementSizes = new WeakMap<Element, Size>();
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
+    private readonly linkTypeIndex = new Map<LinkTypeIri, number>();
+    private static nextLinkTypeIndex = 0;
+
     private readonly linkTemplates = new Map<LinkTypeIri, LinkTemplate>();
     private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
@@ -86,10 +89,8 @@ export class RenderingState implements SizeProvider {
                 this.scheduleUpdateRoutings();
             }
         });
-        this.listener.listen(this.model.events, 'linkTypeEvent', ({data}) => {
-            if (data.changeVisibility) {
-                this.scheduleUpdateRoutings();
-            }
+        this.listener.listen(this.model.events, 'changeLinkVisibility', e => {
+            this.scheduleUpdateRoutings();
         });
         this.listener.listen(this.model.events, 'discardGraph', () => {
             this.linkTemplates.clear();
@@ -168,23 +169,32 @@ export class RenderingState implements SizeProvider {
         }
     }
 
-    getElementTemplate(types: ReadonlyArray<ElementTypeIri>): ElementTemplate {
-        return this.resolveElementTemplate(types) ?? this.shared.defaultElementTemplate;
+    getElementTemplate(element: Element): ElementTemplate {
+        return this.resolveElementTemplate(element) ?? this.shared.defaultElementTemplate;
+    }
+
+    ensureLinkTypeIndex(linkTypeId: LinkTypeIri): number {
+        let typeIndex = this.linkTypeIndex.get(linkTypeId);
+        if (typeIndex === undefined) {
+            typeIndex = RenderingState.nextLinkTypeIndex++;
+            this.linkTypeIndex.set(linkTypeId, typeIndex);
+        }
+        return typeIndex;
     }
 
     getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate> {
         return this.linkTemplates;
     }
 
-    createLinkTemplate(linkType: LinkType): LinkTemplate {
-        const existingTemplate = this.linkTemplates.get(linkType.id);
+    createLinkTemplate(linkTypeId: LinkTypeIri): LinkTemplate {
+        const existingTemplate = this.linkTemplates.get(linkTypeId);
         if (existingTemplate) {
             return existingTemplate;
         }
 
-        const template = this.resolveLinkTemplate(linkType.id)
+        const template = this.resolveLinkTemplate(linkTypeId)
             ?? this.shared.defaultLinkTemplate;
-        this.linkTemplates.set(linkType.id, template);
+        this.linkTemplates.set(linkTypeId, template);
         this.source.trigger('changeLinkTemplates', {source: this});
         return template;
     }

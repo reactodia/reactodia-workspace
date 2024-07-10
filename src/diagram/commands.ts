@@ -1,5 +1,7 @@
+import type { LinkTypeIri } from '../data/model';
+
 import type { CanvasApi } from './canvasApi';
-import type { Element, Link, LinkType, LinkTypeVisibility } from './elements';
+import type { Element, Link, LinkTypeVisibility } from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
@@ -77,13 +79,14 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
 }
 
 export function changeLinkTypeVisibility(
-    linkType: LinkType,
+    model: DiagramModel,
+    linkTypeId: LinkTypeIri,
     visibility: LinkTypeVisibility
 ): Command {
     return Command.create('Change link type visibility', () => {
-        const previous = linkType.visibility;
-        linkType.setVisibility(visibility);
-        return changeLinkTypeVisibility(linkType, previous);
+        const previous = model.getLinkVisibility(linkTypeId);
+        model.setLinkVisibility(linkTypeId, visibility);
+        return changeLinkTypeVisibility(model, linkTypeId, previous);
     });
 }
 

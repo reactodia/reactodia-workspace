@@ -2,17 +2,16 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
 
-import { ElementModel, ElementIri, LinkedElement } from '../data/model';
+import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement } from '../data/model';
 import { LookupParams } from '../data/provider';
-import { LinkType, ElementType } from '../diagram/elements';
-
-import { EntityElement } from '../editor/dataElements';
 
 import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
 
 import { ProgressBar, ProgressState } from './progressBar';
 import { SearchResults } from './searchResults';
+import { EntityElement } from '../workspace';
 
 const DIRECTION_IN_ICON = require('@images/direction-in.svg');
 const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
@@ -28,9 +27,9 @@ export interface InstancesSearchCommands {
 
 export interface SearchCriteria {
     readonly text?: string;
-    readonly elementType?: ElementType;
-    readonly refElement?: EntityElement;
-    readonly refElementLink?: LinkType;
+    readonly elementType?: ElementTypeIri;
+    readonly refElement?: ElementIri;
+    readonly refElementLink?: LinkTypeIri;
     readonly linkDirection?: 'in' | 'out';
 }
 
@@ -54,6 +53,8 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     declare readonly context: WorkspaceContext;
 
     private readonly listener = new EventObserver();
+    private readonly criteriaListener = new EventObserver();
+    private readonly delayedUpdateAll = new Debouncer();
 
     private requestCancellation = new AbortController();
     private currentRequest: LookupParams | undefined;
@@ -82,20 +83,58 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             this.setState({criteria, inputText: undefined});
         });
 
+        this.resubscribeToCriteria();
         this.queryItems(false);
     }
 
     componentDidUpdate(prevProps: InstancesSearchProps, prevState: State): void {
         if (this.state.criteria !== prevState.criteria) {
+            this.resubscribeToCriteria();
             this.queryItems(false);
         }
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
+        this.criteriaListener.stopListening();
         this.requestCancellation.abort();
         this.currentRequest = undefined;
     }
+
+    private resubscribeToCriteria() {
+        const {model} = this.context;
+        const {criteria} = this.state;
+        this.criteriaListener.stopListening();
+
+        if (criteria.elementType) {
+            const elementType = model.createElementType(criteria.elementType);
+            if (elementType) {
+                this.criteriaListener.listen(elementType.events, 'changeLabel', this.scheduleUpdateAll);
+            }
+        }
+
+        if (criteria.refElement) {
+            const element = model.elements.find((element): element is EntityElement =>
+                element instanceof EntityElement && element.iri === criteria.refElement
+            );
+            if (element) {
+                this.criteriaListener.listen(element.events, 'changeData', this.scheduleUpdateAll);
+            }
+        }
+
+        if (criteria.refElementLink) {
+            const linkType = model.createLinkType(criteria.refElementLink);
+            if (linkType) {
+                this.criteriaListener.listen(linkType.events, 'changeLabel', this.scheduleUpdateAll);
+            }
+        }
+    }
+
+    private scheduleUpdateAll = () => {
+        this.delayedUpdateAll.call(this.updateAll);
+    };
+
+    private updateAll = () => this.forceUpdate();
 
     render() {
         const ENTER_KEY_CODE = 13;
@@ -171,32 +210,39 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         const criterions: React.ReactElement<any>[] = [];
 
         if (criteria.elementType) {
-            const classInfo = criteria.elementType;
-            const classLabel = model.locale.formatLabel(classInfo.label, classInfo.id);
-            criterions.push(<div key='hasType' className={`${CLASS_NAME}__criterion`}>
-                {this.renderRemoveCriterionButtons(() => this.setState({
-                    criteria: {...criteria, elementType: undefined},
-                }))}
-                Has type <span className={`${CLASS_NAME}__criterion-class`}
-                    title={classInfo.id}>{classLabel}</span>
-            </div>);
+            const classInfo = model.getElementType(criteria.elementType);
+            const classLabel = model.locale.formatLabel(classInfo?.label, criteria.elementType);
+            criterions.push(
+                <div key='hasType' className={`${CLASS_NAME}__criterion`}>
+                    {this.renderRemoveCriterionButtons(() => this.setState({
+                        criteria: {...criteria, elementType: undefined},
+                    }))}
+                    Has type <span className={`${CLASS_NAME}__criterion-class`}
+                        title={criteria.elementType}>{classLabel}</span>
+                </div>
+            );
         } else if (criteria.refElement) {
-            const element = criteria.refElement;
-            const elementLabel = model.locale.formatLabel(element.data.label, element.iri);
+            const element = model.elements.find((element): element is EntityElement =>
+                element instanceof EntityElement && element.iri === criteria.refElement
+            );
+            const elementLabel = model.locale.formatLabel(element?.data.label, criteria.refElement);
 
-            const linkType = criteria.refElementLink;
-            const linkTypeLabel = linkType ? model.locale.formatLabel(linkType.label, linkType.id) : undefined;
+            let linkTypeLabel: string | undefined;
+            if (criteria.refElementLink) {
+                const linkTypeData = model.getLinkType(criteria.refElementLink);
+                linkTypeLabel = model.locale.formatLabel(linkTypeData?.label, criteria.refElementLink);
+            }
 
             criterions.push(<div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
                 {this.renderRemoveCriterionButtons(() => this.setState({
                     criteria: {...criteria, refElement: undefined, refElementLink: undefined},
                 }))}
                 Connected to <span className={`${CLASS_NAME}__criterion-element`}
-                    title={element ? element.iri : undefined}>{elementLabel}</span>
-                {linkType && <span>
+                    title={criteria.refElement}>{elementLabel}</span>
+                {criteria.refElementLink && <span>
                     {' through '}
                     <span className={`${CLASS_NAME}__criterion-link-type`}
-                        title={linkType ? linkType.id : undefined}>{linkTypeLabel}</span>
+                        title={criteria.refElementLink}>{linkTypeLabel}</span>
                     {criteria.linkDirection === 'in' && <span>
                         {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_IN_ICON} />&nbsp;source
                     </span>}
@@ -326,9 +372,9 @@ export function createRequest(criteria: SearchCriteria): LookupParams {
     const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
     return {
         text,
-        elementTypeId: elementType ? elementType.id : undefined,
-        refElementId: refElement ? refElement.iri : undefined,
-        refElementLinkId: refElementLink ? refElementLink.id : undefined,
+        elementTypeId: elementType,
+        refElementId: refElement,
+        refElementLinkId: refElementLink,
         linkDirection,
         limit: ITEMS_PER_PAGE,
     };

@@ -14,10 +14,21 @@ export function useObservedProperty<E, K extends keyof E, R>(
     return useSyncStore(subscribe, getSnapshot);
 }
 
-export function useEventStore<E, K extends keyof E>(events: Events<E>, key: K): SyncStore {
+const NEVER_SYNC_STORE_DISPOSE = (): void => {};
+const NEVER_SYNC_STORE: SyncStore = () => NEVER_SYNC_STORE_DISPOSE;
+
+export function neverSyncStore(): SyncStore {
+    return NEVER_SYNC_STORE;
+}
+
+export function useEventStore<E, K extends keyof E>(events: Events<E> | undefined, key: K): SyncStore {
     return React.useCallback((onStoreChange: () => void) => {
-        events.on(key, onStoreChange);
-        return () => events.off(key, onStoreChange);
+        if (events) {
+            events.on(key, onStoreChange);
+            return () => events.off(key, onStoreChange);
+        } else {
+            return NEVER_SYNC_STORE_DISPOSE;
+        }
     }, [events, key]);
 }
 
