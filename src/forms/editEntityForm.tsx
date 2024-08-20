@@ -38,7 +38,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     ) {
         const {model} = this.context;
         const propertyType = model.getPropertyType(key);
-        const label = model.locale.formatLabel(propertyType?.label, key);
+        const label = model.locale.formatLabel(propertyType?.data?.label, key);
         return (
             <div key={key} className={`${CLASS_NAME}__form-row`}>
                 <label>

@@ -109,7 +109,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         if (criteria.elementType) {
             const elementType = model.createElementType(criteria.elementType);
             if (elementType) {
-                this.criteriaListener.listen(elementType.events, 'changeLabel', this.scheduleUpdateAll);
+                this.criteriaListener.listen(elementType.events, 'changeData', this.scheduleUpdateAll);
             }
         }
 
@@ -125,7 +125,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         if (criteria.refElementLink) {
             const linkType = model.createLinkType(criteria.refElementLink);
             if (linkType) {
-                this.criteriaListener.listen(linkType.events, 'changeLabel', this.scheduleUpdateAll);
+                this.criteriaListener.listen(linkType.events, 'changeData', this.scheduleUpdateAll);
             }
         }
     }
@@ -210,15 +210,18 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
         const criterions: React.ReactElement<any>[] = [];
 
         if (criteria.elementType) {
-            const classInfo = model.getElementType(criteria.elementType);
-            const classLabel = model.locale.formatLabel(classInfo?.label, criteria.elementType);
+            const elementTypeInfo = model.getElementType(criteria.elementType);
+            const elementTypeLabel = model.locale.formatLabel(
+                elementTypeInfo?.data?.label,
+                criteria.elementType
+            );
             criterions.push(
                 <div key='hasType' className={`${CLASS_NAME}__criterion`}>
                     {this.renderRemoveCriterionButtons(() => this.setState({
                         criteria: {...criteria, elementType: undefined},
                     }))}
                     Has type <span className={`${CLASS_NAME}__criterion-class`}
-                        title={criteria.elementType}>{classLabel}</span>
+                        title={criteria.elementType}>{elementTypeLabel}</span>
                 </div>
             );
         } else if (criteria.refElement) {
@@ -230,7 +233,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             let linkTypeLabel: string | undefined;
             if (criteria.refElementLink) {
                 const linkTypeData = model.getLinkType(criteria.refElementLink);
-                linkTypeLabel = model.locale.formatLabel(linkTypeData?.label, criteria.refElementLink);
+                linkTypeLabel = model.locale.formatLabel(linkTypeData?.data?.label, criteria.refElementLink);
             }
 
             criterions.push(<div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>

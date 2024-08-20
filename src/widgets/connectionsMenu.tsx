@@ -288,7 +288,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
         const links = Array.from(
             counts.keys(),
-            linkTypeId => model.createLinkType(linkTypeId)
+            (linkTypeId): LinkTypeModel => model.createLinkType(linkTypeId)?.data ?? {
+                id: linkTypeId,
+                label: [],
+            }
         );
         counts.set(
             this.ALL_RELATED_ELEMENTS_LINK.id,
@@ -319,7 +322,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         if (connections) {
             for (const {id: linkTypeIri} of connections.links) {
                 const linkType = model.createLinkType(linkTypeIri);
-                this.linkTypesListener.listen(linkType.events, 'changeLabel', this.updateAll);
+                this.linkTypesListener.listen(linkType.events, 'changeData', this.updateAll);
             }
 
             const linkTypeIris = new Set(connections.links.map(link => link.id));
@@ -428,7 +431,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {objects, panel} = this.state;
         if (objects && panel === 'objects') {
             const {linkType, direction} = objects.chunk;
-            const {label} = model.getLinkType(linkType.id) ?? linkType;
+            const {label} = model.getLinkType(linkType.id)?.data ?? linkType;
             const localizedText = model.locale.formatLabel(label, linkType.id);
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
@@ -711,7 +714,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     private getLinks() {
         const {model, data, filterKey} = this.props;
         return (data.links || [])
-            .map(link => model.getLinkType(link.id) ?? link)
+            .map(link => model.getLinkType(link.id)?.data ?? link)
             .filter(link => {
                 const text = model.locale.formatLabel(link.label, link.id).toLowerCase();
                 return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
@@ -724,7 +727,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         const {scores} = this.state;
         const isSmartMode = this.isSmartMode();
         return (data.links ?? [])
-            .map(link => model.getLinkType(link.id) ?? link)
+            .map(link => model.getLinkType(link.id)?.data ?? link)
             .filter(link => {
                 return scores.has(link.id) && (scores.get(link.id)!.score > 0 || isSmartMode);
             })

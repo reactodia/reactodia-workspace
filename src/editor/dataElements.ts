@@ -1,10 +1,9 @@
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
 
 import {
-    ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeIri, PropertyTypeIri,
-    equalLinks,
+    ElementIri, ElementModel, ElementTypeIri, ElementTypeModel, LinkModel, LinkTypeIri, LinkTypeModel,
+    PropertyTypeIri, PropertyTypeModel, equalLinks,
 } from '../data/model';
-import * as Rdf from '../data/rdf/rdfModel';
 
 import {
     Element, ElementEvents, ElementProps,
@@ -107,8 +106,7 @@ export class RelationLink extends Link {
 }
 
 export interface ElementTypeEvents {
-    changeLabel: PropertyChange<ElementType, ReadonlyArray<Rdf.Literal>>;
-    changeCount: PropertyChange<ElementType, number | undefined>;
+    changeData: PropertyChange<ElementType, ElementTypeModel | undefined>;
 }
 
 export class ElementType {
@@ -117,39 +115,34 @@ export class ElementType {
 
     readonly id: ElementTypeIri;
 
-    private _label: ReadonlyArray<Rdf.Literal>;
-    private _count: number | undefined;
+    private _data: ElementTypeModel | undefined;
 
     constructor(props: {
         id: ElementTypeIri;
-        label?: ReadonlyArray<Rdf.Literal>;
-        count?: number;
+        data?: ElementTypeModel;
     }) {
-        const {id, label = [], count} = props;
+        const {id, data} = props;
         this.id = id;
-        this._label = label;
-        this._count = count;
+        this.setData(data);
     }
 
-    get label() { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
-        if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
+    get data(): ElementTypeModel | undefined {
+        return this._data;
     }
 
-    get count() { return this._count; }
-    setCount(value: number | undefined) {
-        const previous = this._count;
+    setData(value: ElementTypeModel | undefined): void {
+        if (value && value.id !== this.id) {
+            throw new Error('ElementTypeModel.id does not match ElementType.id');
+        }
+        const previous = this._data;
         if (previous === value) { return; }
-        this._count = value;
-        this.source.trigger('changeCount', {source: this, previous});
+        this._data = value;
+        this.source.trigger('changeData', {source: this, previous});
     }
 }
 
 export interface PropertyTypeEvents {
-    changeLabel: PropertyChange<PropertyType, ReadonlyArray<Rdf.Literal>>;
+    changeData: PropertyChange<PropertyType, PropertyTypeModel | undefined>;
 }
 
 export class PropertyType {
@@ -158,28 +151,34 @@ export class PropertyType {
 
     readonly id: PropertyTypeIri;
 
-    private _label: ReadonlyArray<Rdf.Literal>;
+    private _data: PropertyTypeModel | undefined;
 
     constructor(props: {
         id: PropertyTypeIri;
-        label?: ReadonlyArray<Rdf.Literal>;
+        data?: PropertyTypeModel;
     }) {
-        const {id, label = []} = props;
+        const {id, data} = props;
         this.id = id;
-        this._label = label;
+        this.setData(data);
     }
 
-    get label(): ReadonlyArray<Rdf.Literal> { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
+    get data(): PropertyTypeModel | undefined {
+        return this._data;
+    }
+
+    setData(value: PropertyTypeModel | undefined): void {
+        if (value && value.id !== this.id) {
+            throw new Error('PropertyTypeModel.id does not match PropertyType.id');
+        }
+        const previous = this._data;
         if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
+        this._data = value;
+        this.source.trigger('changeData', {source: this, previous});
     }
 }
 
 export interface LinkTypeEvents {
-    changeLabel: PropertyChange<LinkType, ReadonlyArray<Rdf.Literal>>;
+    changeData: PropertyChange<LinkType, LinkTypeModel | undefined>;
 }
 
 export class LinkType {
@@ -188,23 +187,29 @@ export class LinkType {
 
     readonly id: LinkTypeIri;
 
-    private _label: ReadonlyArray<Rdf.Literal>;
+    private _data: LinkTypeModel | undefined;
 
     constructor(props: {
         id: LinkTypeIri;
-        label?: ReadonlyArray<Rdf.Literal>;
+        data?: LinkTypeModel | undefined;
     }) {
-        const {id, label = []} = props;
+        const {id, data} = props;
         this.id = id;
-        this._label = label;
+        this.setData(data);
     }
 
-    get label() { return this._label; }
-    setLabel(value: ReadonlyArray<Rdf.Literal>) {
-        const previous = this._label;
+    get data(): LinkTypeModel | undefined {
+        return this._data;
+    }
+
+    setData(value: LinkTypeModel | undefined): void {
+        if (value && value.id !== this.id) {
+            throw new Error('LinkTypeModel.id does not match LinkType.id');
+        }
+        const previous = this._data;
         if (previous === value) { return; }
-        this._label = value;
-        this.source.trigger('changeLabel', {source: this, previous});
+        this._data = value;
+        this.source.trigger('changeData', {source: this, previous});
     }
 }
 

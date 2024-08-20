@@ -65,7 +65,7 @@ export class DataFetcher {
 
     private _operations: ReadonlyArray<FetchOperation> = [];
 
-    private classQueue = new BufferingQueue<ElementTypeIri>(classIds => {
+    private elementTypeQueue = new BufferingQueue<ElementTypeIri>(classIds => {
         const operation: FetchOperationElementType = {
             type: 'elementType',
             targets: new Set(classIds),
@@ -186,16 +186,14 @@ export class DataFetcher {
     }
 
     fetchElementType(model: ElementType): void {
-        this.classQueue.push(model.id);
+        this.elementTypeQueue.push(model.id);
     }
 
     private onElementTypesLoaded = (elementTypes: Map<ElementTypeIri, ElementTypeModel>) => {
-        for (const {id, label, count} of elementTypes.values()) {
-            const model = this.dataGraph.getElementType(id);
-            if (!model) { continue; }
-            model.setLabel(label);
-            if (typeof count === 'number') {
-                model.setCount(count);
+        for (const data of elementTypes.values()) {
+            const model = this.dataGraph.getElementType(data.id);
+            if (model) {
+                model.setData(data);
             }
         }
     };
@@ -205,10 +203,11 @@ export class DataFetcher {
     }
 
     private onLinkTypesLoaded = (linkTypes: Map<LinkTypeIri, LinkTypeModel>) => {
-        for (const {id, label} of linkTypes.values()) {
-            const model = this.dataGraph.getLinkType(id);
-            if (!model) { continue; }
-            model.setLabel(label);
+        for (const data of linkTypes.values()) {
+            const model = this.dataGraph.getLinkType(data.id);
+            if (model) {
+                model.setData(data);
+            }
         }
     };
 
@@ -217,10 +216,10 @@ export class DataFetcher {
     }
 
     private onPropertyTypesLoaded = (propertyTypes: Map<PropertyTypeIri, PropertyTypeModel>) => {
-        for (const {id, label} of propertyTypes.values()) {
-            const targetProperty = this.dataGraph.getPropertyType(id);
-            if (targetProperty) {
-                targetProperty.setLabel(label);
+        for (const data of propertyTypes.values()) {
+            const model = this.dataGraph.getPropertyType(data.id);
+            if (model) {
+                model.setData(data);
             }
         }
     };

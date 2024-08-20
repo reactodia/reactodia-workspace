@@ -60,7 +60,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         let properties: readonly FormattedProperty[];
         if ((link instanceof RelationLink && model instanceof AsyncModel)) {
             const linkType = model.getLinkType(link.typeId);
-            label = renamedLabel ?? model.locale.formatLabel(linkType?.label, link.typeId);
+            label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
             properties = model.locale.formatPropertyList(link.data.properties);
         } else {
             label = model.locale.formatIri(link.typeId);

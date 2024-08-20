@@ -222,8 +222,8 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
 
     private initLinkTypes(linkTypes: LinkTypeModel[]): LinkType[] {
         const types: LinkType[] = [];
-        for (const {id, label} of linkTypes) {
-            const linkType = new LinkType({id, label});
+        for (const data of linkTypes) {
+            const linkType = new LinkType({id: data.id, data});
             this.dataGraph.addLinkType(linkType);
             types.push(linkType);
         }
@@ -488,7 +488,7 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLo
     ): string[] {
         return types.map(typeId => {
             const type = this.model.getElementType(typeId);
-            return this.formatLabel(type?.label, typeId, language);
+            return this.formatLabel(type?.data?.label, typeId, language);
         }).sort();
     }
 
@@ -500,7 +500,7 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLo
         const propertyIris = Object.keys(properties) as PropertyTypeIri[];
         const propertyList = propertyIris.map((key): FormattedProperty => {
             const property = this.model.getPropertyType(key);
-            const label = this.formatLabel(property?.label, key);
+            const label = this.formatLabel(property?.data?.label, key);
             const allValues = properties[key];
             const localizedValues = allValues.filter(v =>
                 v.termType === 'NamedNode' ||

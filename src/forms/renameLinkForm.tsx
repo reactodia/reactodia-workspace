@@ -21,16 +21,17 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
     const {model} = useWorkspace();
 
     const linkType = model.getLinkType(link.typeId);
-    useEventStore(linkType?.events, 'changeLabel');
+    const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
+    const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
 
     const [customLabel, setCustomLabel] = React.useState('');
 
     const defaultLabel = React.useMemo(() => {
         const {editableLabel} = canvas.renderingState.createLinkTemplate(link.typeId);
         const label = editableLabel?.getLabel(link)
-            ?? model.locale.formatLabel(linkType?.label, link.typeId);
+            ?? model.locale.formatLabel(linkTypeLabel, link.typeId);
         return label;
-    }, [link, linkType]);
+    }, [link, linkTypeLabel]);
 
     const effectiveLabel = customLabel ? customLabel : defaultLabel;
 

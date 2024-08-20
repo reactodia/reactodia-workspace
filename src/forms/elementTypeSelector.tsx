@@ -59,7 +59,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         this.fetchPossibleElementTypes();
         this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
             const {elementTypes} = this.state;
-            const changeEvent = data.changeLabel;
+            const changeEvent = data.changeData;
             if (changeEvent && elementTypes && elementTypes.includes(changeEvent.source.id)) {
                 this.forceUpdate();
             }
@@ -141,7 +141,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
         const {model} = this.context;
         const type = model.getElementType(elementType);
-        const label = model.locale.formatLabel(type?.label, elementType);
+        const label = model.locale.formatLabel(type?.data?.label, elementType);
         return <option key={elementType} value={elementType}>{label}</option>;
     };
 
@@ -256,8 +256,8 @@ function makeElementTypeComparatorByLabel(model: AsyncModel) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
         const typeA = model.getElementType(a);
         const typeB = model.getElementType(b);
-        const labelA = model.locale.formatLabel(typeA?.label, a);
-        const labelB = model.locale.formatLabel(typeB?.label, b);
+        const labelA = model.locale.formatLabel(typeA?.data?.label, a);
+        const labelB = model.locale.formatLabel(typeB?.data?.label, b);
         return labelA.localeCompare(labelB);
     };
 }
