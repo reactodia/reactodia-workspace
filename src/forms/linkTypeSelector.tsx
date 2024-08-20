@@ -99,7 +99,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     private listenToLinkLabels(linkTypes: ReadonlyArray<LinkType>) {
         for (const linkType of linkTypes) {
-            this.listener.listen(linkType.events, 'changeLabel', this.updateAll);
+            this.listener.listen(linkType.events, 'changeData', this.updateAll);
         }
     }
 
@@ -125,7 +125,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         const {model} = this.context;
         const {source, target} = this.props;
         const data = model.getLinkType(iri);
-        const label = model.locale.formatLabel(data?.label, iri);
+        const label = model.locale.formatLabel(data?.data?.label, iri);
         let [sourceLabel, targetLabel] = [source, target].map(element =>
             model.locale.formatLabel(element.label, element.id)
         );
@@ -166,8 +166,8 @@ function makeLinkTypeComparatorByLabelAndDirection(model: AsyncModel) {
     return (a: DirectedDataLinkType, b: DirectedDataLinkType) => {
         const aData = model.getLinkType(a.iri);
         const bData = model.getLinkType(b.iri);
-        const labelA = model.locale.formatLabel(aData?.label, a.iri);
-        const labelB = model.locale.formatLabel(bData?.label, b.iri);
+        const labelA = model.locale.formatLabel(aData?.data?.label, a.iri);
+        const labelB = model.locale.formatLabel(bData?.data?.label, b.iri);
         const labelCompareResult = labelA.localeCompare(labelB);
         if (labelCompareResult !== 0) {
             return labelCompareResult;

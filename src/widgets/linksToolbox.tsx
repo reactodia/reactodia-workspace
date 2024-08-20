@@ -342,7 +342,10 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         const countMap: { [linkTypeId: string]: number } = {};
 
         for (const linkType of linkTypes) {
-            const type = model.createLinkType(linkType.id);
+            const type: LinkTypeModel = model.createLinkType(linkType.id).data ?? {
+                id: linkType.id,
+                label: [],
+            };
             linksOfElement.push(type);
             countMap[linkType.id] = linkType.inCount + linkType.outCount;
         }
@@ -358,7 +361,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         if (linksOfElement) {
             for (const link of linksOfElement) {
                 const linkType = model.createLinkType(link.id);
-                this.linkListener.listen(linkType.events, 'changeLabel', this.onLinkChanged);
+                this.linkListener.listen(linkType.events, 'changeData', this.onLinkChanged);
             }
 
             const linkTypeIris = new Set(linksOfElement.map(link => link.id));

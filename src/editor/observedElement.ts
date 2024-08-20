@@ -31,10 +31,10 @@ export function useObservedElement(element: Element): void {
         if (!observedState) {
             const updateVersion = () => setVersion(version => version + 1);
             const typeObserver = observeElementTypes(
-                model, 'changeLabel', updateVersion
+                model, 'changeData', updateVersion
             );
             const propertyObserver = observeProperties(
-                model, 'changeLabel', updateVersion
+                model, 'changeData', updateVersion
             );
             observedState = {typeObserver, propertyObserver};
         }

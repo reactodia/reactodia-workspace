@@ -140,7 +140,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
             this.initClassTree();
         });
         this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
-            if (data.changeLabel || data.changeCount) {
+            if (data.changeData) {
                 this.delayedClassUpdate.call(this.refreshClassTree);
             }
         });
@@ -394,7 +394,7 @@ function createRoots(
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];
         for (const item of children) {
-            const data = model.getElementType(item.id);
+            const data = model.getElementType(item.id)?.data;
             nodes.push({
                 iri: item.id,
                 data,

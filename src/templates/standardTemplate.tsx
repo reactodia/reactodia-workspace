@@ -124,7 +124,7 @@ class StandardTemplateInner extends React.Component<StandardTemplateInnerProps> 
         }
         return data.types.map((typeIri, index) => {
             const type = model.getElementType(typeIri);
-            const label = model.locale.formatLabel(type?.label, typeIri);
+            const label = model.locale.formatLabel(type?.data?.label, typeIri);
             return (
                 <React.Fragment key={typeIri}>
                     {index === 0 ? null : ', '}
