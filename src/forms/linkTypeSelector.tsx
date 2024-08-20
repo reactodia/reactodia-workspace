@@ -8,7 +8,7 @@ import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
-import type { AsyncModel } from '../editor/asyncModel';
+import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { RelationLink, LinkType } from '../editor/dataElements';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
@@ -162,7 +162,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 }
 
-function makeLinkTypeComparatorByLabelAndDirection(model: AsyncModel) {
+function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel) {
     return (a: DirectedDataLinkType, b: DirectedDataLinkType) => {
         const aData = model.getLinkType(a.iri);
         const bData = model.getLinkType(b.iri);

@@ -9,7 +9,7 @@ import { Element } from '../diagram/elements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { AsyncModel } from './asyncModel';
+import { DataDiagramModel } from './dataDiagramModel';
 import { EntityElement, ElementTypeEvents, PropertyTypeEvents } from './dataElements';
 
 export function useObservedElement(element: Element): void {
@@ -54,7 +54,7 @@ export function useObservedElement(element: Element): void {
 }
 
 function observeElementTypes<Event extends keyof ElementTypeEvents>(
-    model: AsyncModel, event: Event, listener: Listener<ElementTypeEvents, Event>
+    model: DataDiagramModel, event: Event, listener: Listener<ElementTypeEvents, Event>
 ) {
     return new KeyedObserver<ElementTypeIri>(key => {
         const type = model.getElementType(key);
@@ -67,7 +67,7 @@ function observeElementTypes<Event extends keyof ElementTypeEvents>(
 }
 
 function observeProperties<Event extends keyof PropertyTypeEvents>(
-    model: AsyncModel, event: Event, listener: Listener<PropertyTypeEvents, Event>
+    model: DataDiagramModel, event: Event, listener: Listener<PropertyTypeEvents, Event>
 ) {
     return new KeyedObserver<PropertyTypeIri>(key => {
         const property = model.getPropertyType(key);

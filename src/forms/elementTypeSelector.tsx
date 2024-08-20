@@ -8,7 +8,7 @@ import { ElementModel, ElementTypeIri } from '../data/model';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
-import type { AsyncModel } from '../editor/asyncModel';
+import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 
 import { createRequest } from '../widgets/instancesSearch';
@@ -252,7 +252,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 }
 
-function makeElementTypeComparatorByLabel(model: AsyncModel) {
+function makeElementTypeComparatorByLabel(model: DataDiagramModel) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
         const typeA = model.getElementType(a);
         const typeB = model.getElementType(b);

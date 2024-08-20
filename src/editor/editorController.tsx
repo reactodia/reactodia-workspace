@@ -8,15 +8,15 @@ import { Element, Link } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
 
-import { AsyncModel } from './asyncModel';
 import {
     AuthoringState, AuthoringKind, AuthoringEvent, TemporaryState,
 } from './authoringState';
+import { DataDiagramModel } from './dataDiagramModel';
 import { EntityElement, RelationLink, setElementData, setLinkData } from './dataElements';
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
 export interface EditorProps extends EditorOptions {
-    readonly model: AsyncModel;
+    readonly model: DataDiagramModel;
 }
 
 export interface EditorOptions {
@@ -35,7 +35,7 @@ export class EditorController {
     private readonly source = new EventSource<EditorEvents>();
     readonly events: Events<EditorEvents> = this.source;
 
-    private readonly model: AsyncModel;
+    private readonly model: DataDiagramModel;
     private readonly options: EditorOptions;
 
     private _metadataApi: MetadataApi | undefined;

@@ -12,8 +12,8 @@ import { getContentFittingBox } from '../diagram/geometry';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import type { AsyncModel } from '../editor/asyncModel';
 import { AuthoringState } from '../editor/authoringState';
+import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 
@@ -392,7 +392,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
     );
 }
 
-function useCanEstablishLink(model: AsyncModel, editor: EditorController, target: Element | undefined) {
+function useCanEstablishLink(model: DataDiagramModel, editor: EditorController, target: Element | undefined) {
     const [canLink, setCanLink] = React.useState<boolean | undefined>();
 
     const entityTarget = target instanceof EntityElement ? target : undefined;

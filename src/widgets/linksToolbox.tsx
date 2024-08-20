@@ -9,7 +9,7 @@ import { changeLinkTypeVisibility } from '../diagram/commands';
 import { LinkTypeVisibility } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
 
-import { AsyncModel } from '../editor/asyncModel';
+import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -105,7 +105,7 @@ class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
 }
 
 interface LinkTypesToolboxViewProps {
-    model: AsyncModel;
+    model: DataDiagramModel;
     links: ReadonlyArray<LinkTypeModel> | undefined;
     countMap: { readonly [linkTypeId: string]: number } | undefined;
     selectedElement: EntityElement | undefined;

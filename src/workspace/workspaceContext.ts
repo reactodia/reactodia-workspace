@@ -7,12 +7,12 @@ import type { Element } from '../diagram/elements';
 import type { LayoutFunction } from '../diagram/layout';
 import type { SharedCanvasState } from '../diagram/sharedCanvasState';
 
-import type { AsyncModel } from '../editor/asyncModel';
+import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import type { EditorController } from '../editor/editorController';
 import type { OverlayController } from '../editor/overlayController';
 
 export interface WorkspaceContext {
-    readonly model: AsyncModel;
+    readonly model: DataDiagramModel;
     readonly view: SharedCanvasState;
     readonly editor: EditorController;
     readonly overlay: OverlayController;

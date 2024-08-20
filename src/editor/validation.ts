@@ -4,8 +4,8 @@ import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 import { ElementIri, LinkKey, LinkModel, hashLink, equalLinks } from '../data/model';
 import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
 
-import { DataGraphStructure } from './asyncModel';
 import { AuthoringState } from './authoringState';
+import { DataGraphStructure } from './dataDiagramModel';
 import { EntityElement, RelationLink } from './dataElements';
 import { EditorController } from './editorController';
 
