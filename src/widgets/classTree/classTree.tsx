@@ -13,7 +13,7 @@ import { Element } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import { AsyncModel } from '../../editor/asyncModel';
+import { DataDiagramModel } from '../../editor/dataDiagramModel';
 
 import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
@@ -389,7 +389,7 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
 function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
-    model: AsyncModel
+    model: DataDiagramModel
 ): TreeNode[] {
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];

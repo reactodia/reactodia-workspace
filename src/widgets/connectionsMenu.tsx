@@ -14,7 +14,7 @@ import { getContentFittingBox } from '../diagram/geometry';
 import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
-import { AsyncModel, requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -618,7 +618,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 interface ConnectionsListProps {
     targetIris: ReadonlyArray<ElementIri>;
     data: ConnectionsData;
-    model: AsyncModel;
+    model: DataDiagramModel;
     filterKey: string;
 
     allRelatedLink: LinkTypeModel;

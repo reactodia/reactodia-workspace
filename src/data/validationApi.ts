@@ -1,5 +1,5 @@
-import type { DataGraphStructure } from '../editor/asyncModel';
 import type { AuthoringState } from '../editor/authoringState';
+import type { DataGraphStructure } from '../editor/dataDiagramModel';
 
 import type { ElementModel, LinkModel, ElementIri, PropertyTypeIri } from './model';
 

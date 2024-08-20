@@ -5,7 +5,7 @@ import { useCanvas } from '../diagram/canvasApi';
 import { FormattedProperty, LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
-import { AsyncModel } from '../editor/asyncModel';
+import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { RelationLink } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { TemplateProperties } from '../workspace';
@@ -58,7 +58,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
 
         let label: string;
         let properties: readonly FormattedProperty[];
-        if ((link instanceof RelationLink && model instanceof AsyncModel)) {
+        if ((link instanceof RelationLink && model instanceof DataDiagramModel)) {
             const linkType = model.getLinkType(link.typeId);
             label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
             properties = model.locale.formatPropertyList(link.data.properties);

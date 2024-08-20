@@ -71,9 +71,9 @@ export {
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
-export * from './editor/asyncModel';
 export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
 export * from './editor/authoringState';
+export * from './editor/dataDiagramModel';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
     RelationLink, RelationLinkEvents, RelationLinkProps,

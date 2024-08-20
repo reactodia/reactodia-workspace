@@ -15,7 +15,7 @@ import { LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout } from
 import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
-import { AsyncModel } from '../editor/asyncModel';
+import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EditorController } from '../editor/editorController';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
@@ -110,7 +110,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
 
-        const model = new AsyncModel({history, selectLabelLanguage});
+        const model = new DataDiagramModel({history, selectLabelLanguage});
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({

@@ -8,7 +8,7 @@ import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Vector, boundsOf } from '../diagram/geometry';
 
-import { AsyncModel, requestElementData, restoreLinksBetweenElements } from '../editor/asyncModel';
+import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 
 import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
@@ -77,7 +77,7 @@ function placeElements(
     dragged: ReadonlyArray<ElementIri>,
     position: Vector,
     canvas: CanvasApi,
-    model: AsyncModel
+    model: DataDiagramModel
 ): EntityElement[] {
     const elements = dragged.map(item => model.createElement(item));
     for (const element of elements) {

@@ -17,8 +17,8 @@ import { EditLinkForm } from '../forms/editLinkForm';
 import { FindOrCreateEntityForm } from '../forms/findOrCreateEntityForm';
 import { RenameLinkForm } from '../forms/renameLinkForm';
 
-import { AsyncModel } from './asyncModel';
 import { AuthoringState } from './authoringState';
+import { DataDiagramModel } from './dataDiagramModel';
 import { EntityElement, RelationLink } from './dataElements';
 import { EditorController } from './editorController';
 import { EditLayer, DragEditOperation } from './editLayer';
@@ -26,7 +26,7 @@ import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
 export interface OverlayControllerProps extends OverlayControllerOptions {
-    readonly model: AsyncModel;
+    readonly model: DataDiagramModel;
     readonly view: SharedCanvasState;
     readonly editor: EditorController;
 }
@@ -65,7 +65,7 @@ export class OverlayController {
     private readonly source = new EventSource<OverlayControllerEvents>();
     readonly events: Events<OverlayControllerEvents> = this.source;
 
-    private readonly model: AsyncModel;
+    private readonly model: DataDiagramModel;
     private readonly view: SharedCanvasState;
     private readonly editor: EditorController;
     private readonly options: OverlayControllerOptions;

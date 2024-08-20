@@ -29,21 +29,21 @@ import {
 } from './serializedDiagram';
 import { DataGraph } from './dataGraph';
 
-export interface AsyncModelEvents extends DiagramModelEvents {
+export interface DataDiagramModelEvents extends DiagramModelEvents {
     elementTypeEvent: AnyEvent<ElementTypeEvents>;
     linkTypeEvent: AnyEvent<LinkTypeEvents>;
     propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
 
-    loadingStart: { source: AsyncModel };
-    loadingSuccess: { source: AsyncModel };
+    loadingStart: { source: DataDiagramModel };
+    loadingSuccess: { source: DataDiagramModel };
     loadingError: {
-        source: AsyncModel;
+        source: DataDiagramModel;
         error: unknown;
     };
 
     changeOperations: ChangeOperationsEvent;
     createLoadedLink: {
-        source: AsyncModel;
+        source: DataDiagramModel;
         model: LinkModel;
         cancel(): void;
     };
@@ -55,10 +55,10 @@ export interface DataGraphStructure extends GraphStructure {
     getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
 }
 
-export interface AsyncModelOptions extends DiagramModelOptions {}
+export interface DataDiagramModelOptions extends DiagramModelOptions {}
 
-export class AsyncModel extends DiagramModel implements DataGraphStructure {
-    declare readonly events: Events<AsyncModelEvents>;
+export class DataDiagramModel extends DiagramModel implements DataGraphStructure {
+    declare readonly events: Events<DataDiagramModelEvents>;
     declare readonly locale: EntityLocaleFormatter;
 
     private dataGraph = new DataGraph();
@@ -66,7 +66,7 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
     private _dataProvider: DataProvider;
     private fetcher: DataFetcher;
 
-    constructor(options: AsyncModelOptions) {
+    constructor(options: DataDiagramModelOptions) {
         super(options);
         this._dataProvider = new EmptyDataProvider();
         this.fetcher = new DataFetcher(this.graph, this.dataGraph, this._dataProvider);
@@ -76,7 +76,7 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
         return new ExtendedLocaleFormatter(this, selectLabelLanguage);
     }
 
-    private get asyncSource(): EventSource<AsyncModelEvents> {
+    private get extendedSource(): EventSource<DataDiagramModelEvents> {
         return this.source as EventSource<any>;
     }    
 
@@ -99,13 +99,13 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
 
     protected override subscribeGraph() {
         this.graphListener.listen(this.dataGraph.events, 'elementTypeEvent', e => {
-            this.asyncSource.trigger('elementTypeEvent', e);
+            this.extendedSource.trigger('elementTypeEvent', e);
         });
         this.graphListener.listen(this.dataGraph.events, 'linkTypeEvent', e => {
-            this.asyncSource.trigger('linkTypeEvent', e);
+            this.extendedSource.trigger('linkTypeEvent', e);
         });
         this.graphListener.listen(this.dataGraph.events, 'propertyTypeEvent', e => {
-            this.asyncSource.trigger('propertyTypeEvent', e);
+            this.extendedSource.trigger('propertyTypeEvent', e);
         });
 
         super.subscribeGraph();
@@ -115,7 +115,7 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
         this._dataProvider = dataProvider;
         this.fetcher = new DataFetcher(this.graph, this.dataGraph, dataProvider);
         this.graphListener.listen(this.fetcher.events, 'changeOperations', e => {
-            this.asyncSource.trigger('changeOperations', e);
+            this.extendedSource.trigger('changeOperations', e);
         });
     }
 
@@ -147,7 +147,7 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
         this.setDataProvider(dataProvider);
 
         this.loadingScope = new AbortScope(parentSignal);
-        this.asyncSource.trigger('loadingStart', {source: this});
+        this.extendedSource.trigger('loadingStart', {source: this});
         const signal = this.loadingScope.signal;
 
         try {
@@ -182,9 +182,9 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
             await Promise.all([requestingModels, requestingLinks]);
 
             this.history.reset();
-            this.asyncSource.trigger('loadingSuccess', {source: this});
+            this.extendedSource.trigger('loadingSuccess', {source: this});
         } catch (error) {
-            this.asyncSource.trigger('loadingError', {source: this, error});
+            this.extendedSource.trigger('loadingError', {source: this, error});
             throw new Error('Reactodia: failed to import a layout', {cause: error});
         } finally {
             this.loadingScope?.abort();
@@ -195,10 +195,10 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
     discardLayout(): void {
         this.resetGraph();
         this.setDataProvider(new EmptyDataProvider());
-        this.asyncSource.trigger('loadingStart', {source: this});
+        this.extendedSource.trigger('loadingStart', {source: this});
         this.subscribeGraph();
         this.history.reset();
-        this.asyncSource.trigger('loadingSuccess', {source: this});
+        this.extendedSource.trigger('loadingSuccess', {source: this});
     }
 
     exportLayout(): SerializedDiagram {
@@ -390,7 +390,7 @@ export class AsyncModel extends DiagramModel implements DataGraphStructure {
         for (const linkModel of links) {
             this.createLinkType(linkModel.linkTypeId);
             allowToCreate = true;
-            this.asyncSource.trigger('createLoadedLink', {source: this, model: linkModel, cancel});
+            this.extendedSource.trigger('createLoadedLink', {source: this, model: linkModel, cancel});
             if (allowToCreate) {
                 this.createLinks(linkModel);
             }
@@ -473,10 +473,10 @@ export interface EntityLocaleFormatter extends LocaleFormatter {
 }
 
 class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLocaleFormatter {
-    declare protected model: AsyncModel;
+    declare protected model: DataDiagramModel;
 
     constructor(
-        model: AsyncModel,
+        model: DataDiagramModel,
         selectLabelLanguage: LabelLanguageSelector
     ) {
         super(model, selectLabelLanguage);
@@ -518,13 +518,13 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLo
     }
 }
 
-export function requestElementData(model: AsyncModel, elementIris: ReadonlyArray<ElementIri>): Command {
+export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
     return Command.effect('Fetch element data', () => {
         model.requestElementData(elementIris);
     });
 }
 
-export function restoreLinksBetweenElements(model: AsyncModel): Command {
+export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
     return Command.effect('Restore links between elements', () => {
         model.requestLinksOfType();
     });
