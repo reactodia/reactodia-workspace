@@ -16,3 +16,7 @@ export namespace TemplateProperties {
     export const CustomLabel = 'urn:reactodia:customLabel';
     export const LayoutOnly = 'urn:reactodia:layoutOnly';
 }
+
+export interface PinnedProperties {
+    readonly [propertyId: string]: boolean;
+}

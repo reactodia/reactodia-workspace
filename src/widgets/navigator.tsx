@@ -12,6 +12,7 @@ import {
 } from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 import { EntityElement } from '../workspace';
+import { EntityGroup } from '../editor/dataElements';
 
 export interface NavigatorProps {
     /**
@@ -222,14 +223,13 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     }
 
     private chooseElementColor(element: Element): string {
-        const {canvas, workspace: {model, getElementTypeStyle}} = this.props;
+        const {canvas, workspace: {getElementStyle}} = this.props;
         const {highlighter} = canvas.renderingState.shared;
         const isBlurred = highlighter && !highlighter(element);
         if (isBlurred) {
             return 'lightgray';
         }
-        const data = element instanceof EntityElement ? element.data : undefined;
-        const {color} = getElementTypeStyle(data?.types ?? []);
+        const {color} = getElementStyle(element);
         return color;
     }
 

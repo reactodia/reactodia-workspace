@@ -17,7 +17,7 @@ import { DiagramModel } from '../diagram/model';
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
-    SelectionActionExpand, SelectionActionConnections,
+    SelectionActionExpand, SelectionActionConnections, SelectionActionGroup,
 } from './selectionAction';
 
 export interface SelectionProps {
@@ -36,9 +36,13 @@ export interface SelectionProps {
      * **Default**:
      * ```jsx
      * <>
-     *   <SelectionActionRemove dock='ne' dockRow={1} />
-     *   <SelectionActionZoomToFit dock='ne' dockRow={2} />
-     *   <SelectionActionLayout dock='ne' dockRow={3} />
+     *   <SelectionActionZoomToFit dock='nw' dockColumn={1} />
+     *   <SelectionActionLayout dock='nw' dockColumn={2} />
+     *   <SelectionActionGroup dock='nw' dockColumn={3} />
+     *   <SelectionActionRemove dock='ne' />
+     *   <SelectionActionConnections dock='e'
+     *       commands={props.connectionsMenuCommands}
+     *   />
      *   <SelectionActionExpand dock='s' />
      * </>
      * ```
@@ -230,11 +234,11 @@ function SelectionBox(props: SelectionBoxProps) {
                 <div className={`${CLASS_NAME}__selectedActions`}
                     style={selectedBoxStyle}>
                     {children ?? <>
-                        <SelectionActionRemove dock='ne' dockRow={1} />
-                        <SelectionActionZoomToFit dock='ne' dockRow={2} />
-                        <SelectionActionLayout dock='ne' dockRow={3} />
-                        <SelectionActionConnections dock='ne'
-                            dockRow={4}
+                        <SelectionActionZoomToFit dock='nw' dockColumn={1} />
+                        <SelectionActionLayout dock='nw' dockColumn={2} />
+                        <SelectionActionGroup dock='nw' dockColumn={3} />
+                        <SelectionActionRemove dock='ne' />
+                        <SelectionActionConnections dock='e'
                             commands={connectionsMenuCommands}
                         />
                         <SelectionActionExpand dock='s' />

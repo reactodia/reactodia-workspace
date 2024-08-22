@@ -127,6 +127,14 @@
     background-image: url("@images/add-to-filter.svg");
   }
 
+  &__group {
+    background-image: url("@codicons/group-by-ref-type.svg");
+  }
+
+  &__ungroup {
+    background-image: url("@codicons/ungroup-by-ref-type.svg");
+  }
+
   &__establish-link {
     background-image: url("@codicons/plug.svg");
   }

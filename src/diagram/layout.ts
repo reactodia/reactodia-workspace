@@ -196,13 +196,17 @@ export function calculateAveragePosition(
 
 export function placeElementsAround(params: {
     elements: ReadonlyArray<Element>;
+    targetElement: Element;
     model: DiagramModel;
     sizeProvider: SizeProvider;
-    preferredLinksLength: number;
-    targetElement: Element;
+    /** @default 300 */
+    preferredLinksLength?: number;
     startAngle?: number;
 }): void {
-    const {elements, model, sizeProvider, targetElement, preferredLinksLength} = params;
+    const {
+        elements, model, sizeProvider, targetElement,
+        preferredLinksLength = 300,
+    } = params;
     const capturedGeometry = RestoreGeometry.capture(model);
 
     const targetElementBounds = boundsOf(targetElement, sizeProvider);

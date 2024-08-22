@@ -15,7 +15,7 @@ import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
-import { EntityElement } from '../editor/dataElements';
+import { EntityElement, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
@@ -80,8 +80,8 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
 
             const targetIris = new Set<ElementIri>();
             for (const target of targets) {
-                if (target instanceof EntityElement) {
-                    targetIris.add(target.iri);
+                for (const entity of iterateEntitiesOf(target)) {
+                    targetIris.add(entity.id);
                 }
             }
 
@@ -535,7 +535,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             model,
             sizeProvider: canvas.renderingState,
             targetElement: placeTarget,
-            preferredLinksLength: 300,
         });
 
         if (linkTypeId && model.getLinkVisibility(linkTypeId) === 'hidden') {

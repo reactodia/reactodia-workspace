@@ -3,17 +3,14 @@ import * as React from 'react';
 import { Listener } from '../coreUtils/events';
 import { KeyedObserver } from '../coreUtils/keyedObserver';
 
-import { ElementTypeIri, PropertyTypeIri } from '../data/model';
-
-import { Element } from '../diagram/elements';
+import { ElementModel, ElementTypeIri, PropertyTypeIri } from '../data/model';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
 import { DataDiagramModel } from './dataDiagramModel';
-import { EntityElement, ElementTypeEvents, PropertyTypeEvents } from './dataElements';
+import { ElementTypeEvents, PropertyTypeEvents } from './dataElements';
 
-export function useObservedElement(element: Element): void {
-    const data = element instanceof EntityElement ? element.data : undefined;
+export function useObservedElement(data: ElementModel | undefined): void {
     const {model} = useWorkspace();
 
     interface ObservedState {

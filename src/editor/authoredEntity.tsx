@@ -3,6 +3,8 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { useObservedProperty } from '../coreUtils/hooks';
 
+import { ElementModel } from '../data/model';
+
 import { Element } from '../diagram/elements';
 
 import { EntityElement } from '../editor/dataElements';
@@ -13,7 +15,7 @@ export interface AuthoredEntityContext {
     editedIri?: string;
     canEdit: boolean | undefined;
     canDelete: boolean | undefined;
-    onEdit: () => void;
+    onEdit: (target: Element) => void;
     onDelete: () => void;
 }
 
@@ -25,10 +27,9 @@ enum AllowedActions {
 }
 
 export function useAuthoredEntity(
-    element: Element,
+    data: ElementModel | undefined,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const data = element instanceof EntityElement ? element.data : undefined;
     const {editor, overlay} = useWorkspace();
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
@@ -73,9 +74,9 @@ export function useAuthoredEntity(
             ? undefined : Boolean(allowedActions & AllowedActions.Edit),
         canDelete: allowedActions === undefined
             ? undefined : Boolean(allowedActions & AllowedActions.Delete),
-        onEdit: () => {
-            if (element instanceof EntityElement) {
-                overlay.showEditEntityForm(element);
+        onEdit: (target: Element) => {
+            if (target instanceof EntityElement) {
+                overlay.showEditEntityForm(target);
             }
         },
         onDelete: () => {

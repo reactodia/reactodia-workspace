@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { findDOMNode } from 'react-dom';
+import { findDOMNode, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
@@ -159,11 +159,13 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
         });
         this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer === RenderingLayer.Element) {
-                this.delayedRedraw.runSynchronously();
-            } else if (layer === RenderingLayer.ElementSize) {
-                this.delayedUpdateSizes.runSynchronously();
-            }
+            flushSync(() => {
+                if (layer === RenderingLayer.Element) {
+                    this.delayedRedraw.runSynchronously();
+                } else if (layer === RenderingLayer.ElementSize) {
+                    this.delayedUpdateSizes.runSynchronously();
+                }
+            });
         });
     }
 

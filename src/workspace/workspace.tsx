@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { hcl } from 'd3-color';
 
+import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver } from '../coreUtils/events';
+import { HashMap } from '../coreUtils/hashMap';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataApi } from '../data/metadataApi';
@@ -16,7 +18,11 @@ import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
+import { EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
+import {
+    groupEntitiesAnimated, ungroupAllEntitiesAnimated, ungroupSomeEntitiesAnimated,
+} from '../editor/elementGrouping';
 import { OverlayController, PropertyEditor } from '../editor/overlayController';
 
 import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
@@ -87,6 +93,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private readonly resolveTypeStyle: TypeStyleResolver;
     private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
+    private readonly cachedGroupStyles: WeakMap<ReadonlyArray<EntityGroupItem>, ProcessedTypeStyle>;
 
     private readonly layoutTypeProvider: LayoutTypeProvider;
 
@@ -109,6 +116,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
+        this.cachedGroupStyles = new WeakMap();
 
         const model = new DataDiagramModel({history, selectLabelLanguage});
         model.setLanguage(defaultLanguage);
@@ -147,8 +155,12 @@ export class Workspace extends React.Component<WorkspaceProps> {
             editor,
             overlay,
             disposeSignal: this.cancellation.signal,
+            getElementStyle: this.getElementStyle,
             getElementTypeStyle: this.getElementTypeStyle,
             performLayout: this.onPerformLayout,
+            group: this.onGroup,
+            ungroupAll: this.onUngroupAll,
+            ungroupSome: this.onUngroupSome,
             triggerWorkspaceEvent: onWorkspaceEvent,
         };
 
@@ -215,6 +227,16 @@ export class Workspace extends React.Component<WorkspaceProps> {
         overlay.dispose();
     }
 
+    private getElementStyle: WorkspaceContext['getElementStyle'] = element => {
+        if (element instanceof EntityElement) {
+            return this.getElementTypeStyle(element.data.types);
+        } else if (element instanceof EntityGroup) {
+            return this.getGroupTypeStyle(element);
+        } else {
+            return this.getElementTypeStyle([]);
+        }
+    };
+
     private getElementTypeStyle: WorkspaceContext['getElementTypeStyle'] = types => {
         let processedStyle = this.cachedTypeStyles.get(types);
         if (!processedStyle) {
@@ -233,8 +255,34 @@ export class Workspace extends React.Component<WorkspaceProps> {
         return processedStyle;
     };
 
+    private getGroupTypeStyle(group: EntityGroup): ProcessedTypeStyle {
+        const {items} = group;
+        let processedStyle = this.cachedGroupStyles.get(items);
+        if (!processedStyle) {
+            // Find the most frequent set of types for items in the group
+            const countPerTypes = new HashMap<ReadonlyArray<ElementTypeIri>, number>(
+                hashTypeIris,
+                shallowArrayEqual
+            );
+            for (const item of items) {
+                countPerTypes.set(item.data.types, (countPerTypes.get(item.data.types) ?? 0) + 1);
+            }
+            let maxCount = 0;
+            let typesAtMax: ReadonlyArray<ElementTypeIri> = [];
+            for (const [types, count] of countPerTypes) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    typesAtMax = types;
+                }
+            }
+            processedStyle = this.getElementTypeStyle(typesAtMax);
+            this.cachedGroupStyles.set(items, processedStyle);
+        }
+        return processedStyle;
+    }
+
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
-        const {canvas: targetCanvas, layoutFunction, selectedElements, animate, signal} = params;
+        const {canvas: targetCanvas, layoutFunction, selectedElements, animate, zoomToFit, signal} = params;
         const {model, view, disposeSignal} = this.workspaceContext;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
@@ -266,23 +314,42 @@ export class Workspace extends React.Component<WorkspaceProps> {
                     applyLayout(calculatedLayout, model);
                     batch.store();
                 }),
-                canvas.zoomToFit({animate: true})
+                zoomToFit ? canvas.zoomToFit({animate: true}) : null,
             ]);
         } else {
             applyLayout(calculatedLayout, model);
             batch.store();
-            canvas.zoomToFit();
+            if (zoomToFit) {
+                canvas.zoomToFit();
+            }
         }
+    };
+
+    private onGroup: WorkspaceContext['group'] = ({elements, canvas}) => {
+        return groupEntitiesAnimated(elements, canvas, this.workspaceContext);
+    };
+
+    private onUngroupAll: WorkspaceContext['ungroupAll'] = ({groups, canvas}) => {
+        return ungroupAllEntitiesAnimated(groups, canvas, this.workspaceContext);
+    };
+
+    private onUngroupSome: WorkspaceContext['ungroupSome'] = ({group, entities, canvas}) => {
+        return ungroupSomeEntitiesAnimated(group, entities, canvas, this.workspaceContext);
     };
 }
 
-function getHueFromClasses(classes: ReadonlyArray<ElementTypeIri>, seed?: number): number {
-    let hash = seed;
-    for (const name of classes) {
-        hash = hashFnv32a(name, hash);
-    }
+function getHueFromClasses(types: ReadonlyArray<ElementTypeIri>, seed?: number): number {
+    const hash = hashTypeIris(types, seed);
     const MAX_INT32 = 0x7fffffff;
     return 360 * ((hash === undefined ? 0 : hash) / MAX_INT32);
+}
+
+function hashTypeIris(types: ReadonlyArray<ElementTypeIri>, seed = 0): number {
+    let hash = seed | 0;
+    for (const name of types) {
+        hash = Math.imul(hash, 31) + (hashFnv32a(name, hash) | 0);
+    }
+    return hash | 0;
 }
 
 export interface LoadedWorkspaceParams {

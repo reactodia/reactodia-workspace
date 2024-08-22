@@ -14,8 +14,9 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement } from '../editor/dataElements';
+import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
+import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -200,6 +201,10 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
         () => elements.every(element => element.isExpanded)
     );
 
+    if (elements.every(element => element instanceof EntityGroup)) {
+        return null;
+    }
+
     return (
         <SelectionAction {...otherProps}
             className={classnames(
@@ -285,7 +290,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
 
     let entityCount = 0;
     for (const element of elements) {
-        if (element instanceof EntityElement) {
+        for (const entity of iterateEntitiesOf(element)) {
             entityCount++;
         }
     }
@@ -341,6 +346,46 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
                 commands.trigger('setCriteria', {
                     criteria: {refElement: target.iri},
                 });
+            }}
+        />
+    );
+}
+
+export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
+
+export function SelectionActionGroup(props: SelectionActionGroupProps) {
+    const {className, title, ...otherProps} = props;
+    const workspace = useWorkspace();
+    const {model} = workspace;
+    const {canvas} = useCanvas();
+
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+
+    const canGroup = elements.length > 0 && elements.every(element => element instanceof EntityElement);
+    const canUngroup = elements.length > 0 && elements.every(element => element instanceof EntityGroup);
+
+    if (elements.length === 0 || elements.length === 1 && canGroup) {
+        return null;
+    }
+
+    return (
+        <SelectionAction {...otherProps}
+            className={classnames(
+                className,
+                canUngroup ? `${CLASS_NAME}__ungroup` : `${CLASS_NAME}__group`
+            )}
+            disabled={!(canGroup || canUngroup)}
+            title={title ?? (
+                canUngroup ? 'Ungroup entities': 'Group entities'
+            )}
+            onMouseDown={async () => {
+                if (canGroup) {
+                    const group = await groupEntitiesAnimated(elements, canvas, workspace);
+                    model.setSelection([group]);
+                } else if (canUngroup) {
+                    const ungrouped = await ungroupAllEntitiesAnimated(elements, canvas, workspace);
+                    model.setSelection(ungrouped);
+                }
             }}
         />
     );
