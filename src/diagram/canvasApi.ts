@@ -127,12 +127,34 @@ export interface ScaleOptions extends ViewportOptions {
     pivot?: Vector;
 }
 
+/**
+ * Options for exporting diagram as SVG image.
+ */
 export interface ExportSvgOptions {
+    /**
+     * CSS selectors to exclude specific DOM elements from the exported diagram.
+     *
+     * By default, any element with `data-reactodia-no-export` is removed.
+     *
+     * @default ["[data-reactodia-no-export]"]
+     */
     removeByCssSelectors?: ReadonlyArray<string>;
-    /** @default false */
+    /**
+     * Whether to prepend XML encoding header to the exported SVG string.
+     *
+     * Prepended header:
+     * ```xml
+     * <?xml version="1.0" encoding="UTF-8"?>
+     * ```
+     *
+     * @default false
+     */
     addXmlHeader?: boolean;
 }
 
+/**
+ * Options for exporting diagram as raster image (e.g. JPEG, PNG, etc).
+ */
 export interface ExportRasterOptions extends ExportSvgOptions, ToDataURLOptions {}
 
 export type CanvasWidgetAttachment = 'viewport' | 'overElements' | 'overLinks';

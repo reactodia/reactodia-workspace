@@ -11,21 +11,22 @@ const CLASS_NAME = 'reactodia-classic-template';
 
 export function ClassicTemplate(props: TemplateProps) {
     const {element, isExpanded} = props;
-    const {model, getElementTypeStyle} = useWorkspace();
-    useObservedElement(element);
+    const data = element instanceof EntityElement ? element.data : undefined;
 
-    if (!(element instanceof EntityElement)) {
+    const {model, getElementTypeStyle} = useWorkspace();
+    useObservedElement(data);
+
+    if (!data) {
         return null;
     }
 
-    const {data} = element;
     const types = data?.types ?? [];
     const {color, icon} = getElementTypeStyle(types);
 
     const typesLabel = types.length > 0
         ? model.locale.formatElementTypes(types).join(', ')
         : 'Thing';
-    const label = model.locale.formatLabel(data?.label, element.iri);
+    const label = model.locale.formatLabel(data?.label, data.id);
     const propertyList = model.locale.formatPropertyList(data?.properties ?? {});
 
     const image = data?.image ? (
@@ -44,9 +45,9 @@ export function ClassicTemplate(props: TemplateProps) {
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
-                        title={element.iri}
-                        href={element.iri}>
-                        {element.iri}
+                        title={data.id}
+                        href={data.id}>
+                        {data.id}
                     </a>
                 </div>
             </div>
@@ -75,7 +76,7 @@ export function ClassicTemplate(props: TemplateProps) {
             </div>
             {image}
             <div className={`${CLASS_NAME}__body`} style={{borderColor: color}}>
-                <WithFetchStatus type='element' target={element.iri}>
+                <WithFetchStatus type='element' target={data.id}>
                     <span className={`${CLASS_NAME}__label`} title={label}>
                         {label}
                     </span>

@@ -1,12 +1,13 @@
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
 
 import {
-    ElementIri, ElementModel, ElementTypeIri, ElementTypeModel, LinkModel, LinkTypeIri, LinkTypeModel,
+    ElementIri, ElementModel, ElementTypeIri, ElementTypeModel,
+    LinkModel, LinkTypeIri, LinkTypeModel,
     PropertyTypeIri, PropertyTypeModel, equalLinks,
 } from '../data/model';
 
 import {
-    Element, ElementEvents, ElementProps,
+    Element, ElementEvents, ElementProps, ElementTemplateState,
     Link, LinkEvents, LinkProps,
 } from '../diagram/elements';
 import { Command } from '../diagram/history';
@@ -52,6 +53,78 @@ export class EntityElement extends Element {
         this._data = value;
         this.entitySource.trigger('changeData', {source: this, previous});
         this.entitySource.trigger('requestedRedraw', {source: this, level: 'template'});
+    }
+}
+
+export interface EntityGroupEvents extends ElementEvents {
+    changeItems: PropertyChange<EntityGroup, ReadonlyArray<EntityGroupItem>>;
+}
+
+export interface EntityGroupProps extends ElementProps {
+    items?: ReadonlyArray<EntityGroupItem>;
+}
+
+export class EntityGroup extends Element {
+    declare readonly events: Events<EntityGroupEvents>;
+
+    private _items: ReadonlyArray<EntityGroupItem>;
+    private _itemIris = new Set<ElementIri>();
+
+    constructor(props: EntityGroupProps) {
+        super(props);
+        this._items = props.items ?? [];
+        this.updateItemIris();
+    }
+
+    protected get entitySource(): EventSource<EntityGroupEvents> {
+        return this.source as EventSource<any>;
+    }
+
+    get items(): ReadonlyArray<EntityGroupItem> {
+        return this._items;
+    }
+
+    setItems(value: ReadonlyArray<EntityGroupItem>): void {
+        const previous = this._items;
+        if (previous === value) { return; }
+        this._items = value;
+        this.updateItemIris();
+        this.entitySource.trigger('changeItems', {source: this, previous});
+        this.entitySource.trigger('requestedRedraw', {source: this, level: 'template'});
+    }
+
+    get itemIris(): ReadonlySet<ElementIri> {
+        return this._itemIris;
+    }
+
+    private updateItemIris(): void {
+        this._itemIris.clear();
+        for (const item of this._items) {
+            this._itemIris.add(item.data.id);
+        }
+    }
+}
+
+export interface EntityGroupItem {
+    readonly data: ElementModel;
+    readonly elementState?: ElementTemplateState | undefined;
+}
+
+export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<EntityGroupItem>): Command {
+    return Command.create('Change group items', () => {
+        const before = group.items;
+        group.setItems(items);
+        return setEntityGroupItems(group, before);
+    });
+}
+
+export function* iterateEntitiesOf(element: Element): Iterable<ElementModel> {
+    if (element instanceof EntityElement) {
+        yield element.data;
+    } else if (element instanceof EntityGroup) {
+        for (const item of element.items) {
+            yield item.data;
+        }
     }
 }
 
@@ -215,20 +288,38 @@ export class LinkType {
 
 export function setElementData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
     const command = Command.create('Set element data', () => {
-        const previous = new Map<EntityElement, ElementModel>();
-        for (const element of model.elements.filter(
-            (el): el is EntityElement => el instanceof EntityElement && el.iri === target)
-        ) {
-            const previousIri = element.iri;
-            previous.set(element, element.data);
-            element.setData(data);
-            updateLinksToReferByNewIri(model, element, previousIri, data.id);
+        const previousIri = target;
+        const newIri = data.id;
+
+        const previousEntities = new Map<EntityElement, ElementModel>();
+        const previousGroups = new Map<EntityGroup, ReadonlyArray<EntityGroupItem>>();
+        
+        for (const element of model.elements) {
+            if (element instanceof EntityElement) {
+                if (element.iri === target) {
+                    previousEntities.set(element, element.data);
+                    element.setData(data);
+                    updateLinksToReferByNewIri(model, element, previousIri, newIri);
+                }
+            } else if (element instanceof EntityGroup) {
+                if (element.itemIris.has(target)) {
+                    previousGroups.set(element, element.items);
+                    const nextItems = element.items.map((item): EntityGroupItem =>
+                        item.data.id === target ? {...item, data} : item
+                    );
+                    element.setItems(nextItems);
+                    updateLinksToReferByNewIri(model, element, previousIri, newIri);
+                }
+            }
         }
         return Command.create('Revert element data', () => {
-            for (const [element, previousData] of previous) {
-                const newIri = element.iri;
+            for (const [element, previousData] of previousEntities) {
                 element.setData(previousData);
-                updateLinksToReferByNewIri(model, element, newIri, previousData.id);
+                updateLinksToReferByNewIri(model, element, newIri, previousIri);
+            }
+            for (const [element, previousItems] of previousGroups) {
+                element.setItems(previousItems);
+                updateLinksToReferByNewIri(model, element, newIri, previousIri);
             }
             return command;
         });
@@ -236,7 +327,7 @@ export function setElementData(model: DiagramModel, target: ElementIri, data: El
     return command;
 }
 
-function updateLinksToReferByNewIri(model: DiagramModel, element: EntityElement, oldIri: ElementIri, newIri: ElementIri) {
+function updateLinksToReferByNewIri(model: DiagramModel, element: Element, oldIri: ElementIri, newIri: ElementIri) {
     for (const link of model.getElementLinks(element)) {
         if (link instanceof RelationLink) {
             let data = link.data;

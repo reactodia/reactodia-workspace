@@ -12,7 +12,10 @@ import {
     AuthoringState, AuthoringKind, AuthoringEvent, TemporaryState,
 } from './authoringState';
 import { DataDiagramModel } from './dataDiagramModel';
-import { EntityElement, RelationLink, setElementData, setLinkData } from './dataElements';
+import {
+    EntityElement, EntityGroup, EntityGroupItem, iterateEntitiesOf, RelationLink,
+    setElementData, setLinkData, setEntityGroupItems,
+} from './dataElements';
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
 export interface EditorProps extends EditorOptions {
@@ -30,6 +33,16 @@ export interface EditorEvents {
     changeTemporaryState: PropertyChange<EditorController, TemporaryState>;
 }
 
+/**
+ * Supports visual data authoring of the graph data (entities and relations).
+ *
+ * This controller:
+ *   - stores authored changes to the graph (`authoringState`);
+ *   - validates graph changes and stores the found issues (`validationState`);
+ *   - exposes methods to create, change or delete entities and relations;
+ *   - provides methods to remove graph elements and links with discarding
+ *     relevant changes at the same time, or discarding changes directly.
+ */
 export class EditorController {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<EditorEvents>();
@@ -159,16 +172,12 @@ export class EditorController {
 
     removeItems(items: ReadonlyArray<Element | Link>) {
         const batch = this.model.history.startBatch();
-        const deletedElementIris = new Set<ElementIri>();
+        const entitiesToDiscard = new Set<ElementIri>();
 
         for (const item of items) {
             if (item instanceof Element) {
-                if (item instanceof EntityElement) {
-                    const event = this.authoringState.elements.get(item.iri);
-                    if (event) {
-                        this.discardChange(event);
-                    }
-                    deletedElementIris.add(item.iri);
+                for (const entity of iterateEntitiesOf(item)) {
+                    entitiesToDiscard.add(entity.id);
                 }
                 this.model.removeElement(item.id);
             } else if (item instanceof Link) {
@@ -178,8 +187,17 @@ export class EditorController {
             }
         }
 
-        if (deletedElementIris.size > 0) {
-            const newState = AuthoringState.deleteNewLinksConnectedToElements(this.authoringState, deletedElementIris);
+        const discardedEntities = new Set<ElementIri>();
+        for (const entityIri of entitiesToDiscard) {
+            const event = this.authoringState.elements.get(entityIri);
+            if (event) {
+                this.discardChange(event);
+            }
+            discardedEntities.add(entityIri);
+        }
+
+        if (discardedEntities.size > 0) {
+            const newState = AuthoringState.deleteNewLinksConnectedToElements(this.authoringState, discardedEntities);
             this.setAuthoringState(newState);
         }
 
@@ -208,10 +226,11 @@ export class EditorController {
 
     changeEntity(targetIri: ElementIri, newData: ElementModel): void {
         const elements = findEntities(this.model, targetIri);
-        if (elements.length === 0) {
+        const oldData = findAnyEntityData(elements, targetIri);
+        if (!oldData) {
             return;
         }
-        const oldData = elements[0].data;
+
         const batch = this.model.history.startBatch('Edit entity');
 
         const newState = AuthoringState.changeElement(this._authoringState, oldData, newData);
@@ -226,12 +245,12 @@ export class EditorController {
     deleteEntity(elementIri: ElementIri): void {
         const state = this.authoringState;
         const elements = findEntities(this.model, elementIri);
-        if (elements.length === 0) {
+        const oldData = findAnyEntityData(elements, elementIri);
+        if (!oldData) {
             return;
         }
 
         const batch = this.model.history.startBatch('Delete entity');
-        const model = elements[0].data;
 
         const event = state.elements.get(elementIri);
         // remove new connected links
@@ -248,7 +267,7 @@ export class EditorController {
         if (event) {
             this.discardChange(event);
         }
-        this.setAuthoringState(AuthoringState.deleteElement(state, model));
+        this.setAuthoringState(AuthoringState.deleteElement(state, oldData));
         batch.store();
     }
 
@@ -411,7 +430,11 @@ export class EditorController {
                 );
             } else {
                 for (const element of findEntities(this.model, event.after.id)) {
-                    this.model.removeElement(element.id);
+                    if (element instanceof EntityElement) {
+                        this.model.removeElement(element.id);
+                    } else if (element instanceof EntityGroup) {
+                        this.discardItemFromGroup(element, event.after.id);
+                    }
                 }
             }
         } else if (event.type === AuthoringKind.ChangeLink) {
@@ -430,12 +453,45 @@ export class EditorController {
         this.setAuthoringState(newState);
         batch.store();
     }
+
+    private discardItemFromGroup(group: EntityGroup, target: ElementIri): void {
+        const nextItems = group.items.filter(item => item.data.id !== target);
+        this.model.history.execute(setEntityGroupItems(group, nextItems));
+
+        const discardedLinks = this.model.getElementLinks(group)
+            .filter(link =>
+                link instanceof RelationLink &&
+                (link.data.sourceId === target || link.data.targetId === target)
+            );
+        for (const link of discardedLinks) {
+            this.model.removeLink(link.id);
+        }
+
+        if (nextItems.length <= 1) {
+            this.model.ungroupAll([group]);
+        }
+    }
 }
 
-function findEntities(graph: GraphStructure, iri: ElementIri): EntityElement[] {
-    return graph.elements.filter(
-        (el): el is EntityElement => el instanceof EntityElement && el.iri === iri
+function findEntities(graph: GraphStructure, iri: ElementIri): Array<EntityElement | EntityGroup> {
+    return graph.elements.filter((el): el is EntityElement | EntityGroup =>
+        el instanceof EntityElement && el.iri === iri ||
+        el instanceof EntityGroup && el.itemIris.has(iri)
     );
+}
+
+function findAnyEntityData(
+    entities: ReadonlyArray<EntityElement | EntityGroup>,
+    target: ElementIri
+): ElementModel | undefined {
+    for (const element of entities) {
+        for (const data of iterateEntitiesOf(element)) {
+            if (data.id === target) {
+                return data;
+            }
+        }
+    }
+    return undefined;
 }
 
 function findRelations(graph: GraphStructure, target: LinkModel): RelationLink[] {

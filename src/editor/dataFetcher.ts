@@ -9,7 +9,9 @@ import { DataProvider } from '../data/provider';
 
 import { Graph } from '../diagram/graph';
 
-import { EntityElement, ElementType, LinkType, PropertyType } from './dataElements';
+import {
+    EntityElement, EntityGroup, EntityGroupItem, ElementType, LinkType, PropertyType,
+} from './dataElements';
 import { DataGraph } from './dataGraph';
 
 export interface DataFetcherEvents {
@@ -165,6 +167,20 @@ export class DataFetcher {
                 const loadedModel = elements.get(element.iri);
                 if (loadedModel) {
                     element.setData(loadedModel);
+                }
+            } else if (element instanceof EntityGroup) {
+                let hasLoadedModel = false;
+                for (const item of element.items) {
+                    if (elements.has(item.data.id)) {
+                        hasLoadedModel = true;
+                    }
+                }
+                if (hasLoadedModel) {
+                    const loadedItems = element.items.map((item): EntityGroupItem => {
+                        const loadedData = elements.get(item.data.id);
+                        return loadedData ? {...item, data: loadedData} : item;
+                    });
+                    element.setItems(loadedItems);
                 }
             }
         }

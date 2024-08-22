@@ -11,7 +11,7 @@ export class DefaultLinkRouter implements LinkRouter {
         const routings: RoutedLinks = new Map();
 
         for (const link of model.links) {
-            if (routings.has(link.id)) {
+            if (routings.has(link.id) || !model.shouldRenderLink(link)) {
                 continue;
             }
             // The cell is a link. Let's find its source and target models.

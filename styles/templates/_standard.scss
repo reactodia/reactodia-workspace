@@ -1,21 +1,39 @@
 @import "../mixin/icons";
 
+$standard-template-background: #fafaf9;
+$standard-new-entity-stripe: white;
+
 .reactodia-standard-template {
   min-width: 180px;
   max-width: 400px;
   float: left;
 
+  &--group {
+    border-radius: 2px;
+    border: 1px solid;
+    border-color: var(--reactodia-standard-group-color);
+    background: $standard-template-background;
+    padding: 4px;
+  }
+
   &__main {
     border-radius: 2px;
     border: 1px solid;
+    border-color: var(--reactodia-standard-entity-color);
+    background-color: var(--reactodia-standard-entity-color);
   }
 
   &__body {
     margin-left: 8px;
     border-radius: 0 2px 2px 0;
     border-left: 1px solid;
+    border-left-color: var(--reactodia-standard-entity-color);
     padding: 3px 0;
-    background: #fafaf9;
+    background: $standard-template-background;
+  }
+
+  &--new &__main {
+    background-color: $standard-new-entity-stripe;
   }
 
   &__body-horizontal {
@@ -31,11 +49,56 @@
     margin-right: 12px;
   }
 
+  &__item {
+    display: flex;
+    border-radius: 2px;
+    border: 0px;
+
+    &:not(:first-child) {
+      margin-top: 4px;
+    }
+  }
+
+  &__item-stripe {
+    width: 6px;
+    background: var(--reactodia-standard-entity-color);
+  }
+
+  &--new &__item-stripe {
+    background: $standard-new-entity-stripe;
+    border: 1px solid var(--reactodia-standard-entity-color);
+  }
+
+  &__item-body {
+    flex: auto;
+    display: flex;
+    padding: 3px;
+    background: #fafaf9;
+  }
+
   &__label {
-    font-size: 19px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  &--standalone &__label {
+    font-size: 19px;
+  }
+
+  &--group &__label {
+    font-size: 15px;
+    flex: auto;
+  }
+
+  &--group &--changed &__label {
+    font-style: italic;
+    color: rgb(0, 153, 255);
+  }
+
+  &--group &--deleted &__label {
+    text-decoration: line-through;
+    color: rgb(255, 59, 59);
   }
 
   &__thumbnail {
@@ -47,6 +110,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    color: var(--reactodia-standard-entity-color);
   }
 
   &__thumbnail-image {
@@ -62,6 +126,7 @@
 
   &__photo {
     border-bottom: 1px solid;
+    border-color: var(--reactodia-standard-entity-color);
   }
 
   &__photo-image {
@@ -124,7 +189,7 @@
     overflow-x: hidden;
   }
 
-  &__propertites-row {
+  &__properties-row {
     white-space: nowrap;
   }
 
@@ -153,14 +218,16 @@
 
   &__pinned-props {
     border-top: 1px solid;
+    border-color: var(--reactodia-standard-entity-color);
     margin: 0 5px;
   }
 
   &__dropdown {
+    border: 1px solid;
+    border-color: var(--reactodia-standard-entity-color);
     border-radius: 2px;
     background-color: white;
     margin-top: 5px;
-    border: 1px solid;
   }
 
   &__dropdown-content {
@@ -187,5 +254,23 @@
 
   &__edit-button {
     @include codicon-button("edit");
+  }
+
+  &__ungroup-one-button {
+    @include codicon-button("chevron-right");
+
+    width: 18px;
+    height: 18px;
+    padding: 0px;
+    align-self: center;
+
+    display: block;
+    opacity: 0;
+    transition: opacity 200ms 0ms;
+  }
+
+  &:hover &__ungroup-one-button,
+  &:focus &__ungroup-one-button {
+    opacity: 1;
   }
 }

@@ -18,7 +18,7 @@ export class RestoreGeometry implements Command {
         return RestoreGeometry.captureElementsAndLinks(model.elements, model.links);
     }
 
-    private static captureElementsAndLinks(
+    static captureElementsAndLinks(
         elements: ReadonlyArray<Element>,
         links: ReadonlyArray<Link>,
     ) {

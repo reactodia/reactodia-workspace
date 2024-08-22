@@ -568,6 +568,7 @@ class VertexTools extends React.Component<{
         const transform = `translate(${x + 2 * vertexRadius},${y - 2 * vertexRadius})scale(${vertexRadius})`;
         return (
             <g className={`${LINK_VERTICES_CLASS}__handle`}
+                data-reactodia-no-export='true'
                 transform={transform}
                 onPointerDown={this.onRemoveVertex}>
                 <title>Remove vertex</title>

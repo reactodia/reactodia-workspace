@@ -4,6 +4,7 @@ import { AnyEvent, EventSource, Events } from '../coreUtils/events';
 import {
     ElementModel, LinkModel, LinkTypeModel,
     ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
+    equalLinks,
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
@@ -12,6 +13,7 @@ import { PLACEHOLDER_LINK_TYPE, TemplateProperties } from '../data/schema';
 
 import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
 import { Link, LinkTypeVisibility } from '../diagram/elements';
+import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
 import {
     DiagramLocaleFormatter, DiagramModel, DiagramModelEvents, DiagramModelOptions,
@@ -19,8 +21,9 @@ import {
 } from '../diagram/model';
 
 import {
-    EntityElement, RelationLink, ElementType, ElementTypeEvents,
+    EntityElement, EntityGroup, EntityGroupItem, RelationLink, ElementType, ElementTypeEvents,
     PropertyType, PropertyTypeEvents, LinkType, LinkTypeEvents,
+    iterateEntitiesOf, setEntityGroupItems,
 } from './dataElements';
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
@@ -88,6 +91,16 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
     get operations(): ReadonlyArray<FetchOperation> {
         return this.fetcher.operations;
+    }
+
+    override shouldRenderLink(link: Link): boolean {
+        // Hide inner links for a group by default
+        if (link.sourceId === link.targetId) {
+            if (this.graph.sourceOf(link) instanceof EntityGroup) {
+                return false;
+            }
+        }
+        return true;
     }
 
     protected override resetGraph(): void {
@@ -169,11 +182,14 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
             this.subscribeGraph();
 
-            const elementIrisToRequestData = this.graph.getElements()
-                .filter((el): el is EntityElement =>
-                    el instanceof EntityElement && !(preloadedElements && preloadedElements.has(el.iri))
-                )
-                .map(element => element.iri);
+            const elementIrisToRequestData: ElementIri[] = [];
+            for (const element of this.graph.getElements()) {
+                for (const entity of iterateEntitiesOf(element)) {
+                    if (!(preloadedElements && preloadedElements.has(entity.id))) {
+                        elementIrisToRequestData.push(entity.id);
+                    }
+                }
+            }
 
             const requestingModels = this.requestElementData(elementIrisToRequestData);
             const requestingLinks = params.validateLinks
@@ -260,29 +276,61 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         const batch = this.history.startBatch('Import layout');
 
         for (const layoutElement of layoutData.elements) {
-            const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
-            if (iri) {
-                const template = preloadedElements?.get(iri);
-                const data = template ?? EntityElement.placeholderData(iri);
-                const element = new EntityElement({id, data, position, expanded: isExpanded, elementState});
-                this.graph.addElement(element);
-                if (!template) {
-                    elementIrisToRequestData.push(element.iri);
+            switch (layoutElement['@type']) {
+                case 'Element': {
+                    const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
+                    if (iri) {
+                        const preloadedData = preloadedElements?.get(iri);
+                        const data = preloadedData ?? EntityElement.placeholderData(iri);
+                        const element = new EntityElement({id, data, position, expanded: isExpanded, elementState});
+                        this.graph.addElement(element);
+                        if (!preloadedData) {
+                            elementIrisToRequestData.push(element.iri);
+                        }
+                    }
+                    break;
+                }
+                case 'Group': {
+                    const {'@id': id, items, position, elementState} = layoutElement;
+                    const groupItems: EntityGroupItem[] = [];
+                    for (const item of items) {
+                        const preloadedData = preloadedElements?.get(item.iri);
+                        groupItems.push({
+                            data: preloadedData ?? EntityElement.placeholderData(item.iri),
+                            elementState: item.elementState,
+                        });
+                        if (!preloadedData) {
+                            elementIrisToRequestData.push(item.iri);
+                        }
+                    }
+                    const group = new EntityGroup({id, items: groupItems, position, elementState});
+                    this.graph.addElement(group);
+                    break;
                 }
             }
+            
         }
 
         for (const layoutLink of layoutData.links) {
             const {'@id': id, property, source, target, vertices, linkState} = layoutLink;
             const linkType = this.createLinkType(property);
             usedLinkTypes.add(linkType.id);
+            
             const sourceElement = this.graph.getElement(source['@id']);
             const targetElement = this.graph.getElement(target['@id']);
-            if (sourceElement instanceof EntityElement && targetElement instanceof EntityElement) {
+
+            const sourceIri = layoutLink.sourceIri ?? (
+                sourceElement instanceof EntityElement ? sourceElement.data.id : undefined
+            );
+            const targetIri = layoutLink.targetIri ?? (
+                targetElement instanceof EntityElement ? targetElement.data.id : undefined
+            );
+
+            if (sourceElement && targetElement && sourceIri && targetIri) {
                 const data: LinkModel = {
                     linkTypeId: property,
-                    sourceId: sourceElement.iri,
-                    targetId: targetElement.iri,
+                    sourceId: sourceIri,
+                    targetId: targetIri,
                     properties: {},
                 };
                 const link = new RelationLink({
@@ -324,9 +372,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
-        const elementIris = this.graph.getElements()
-            .filter((el): el is EntityElement => el instanceof EntityElement)
-            .map(el => el.iri);
+        const elementIris: ElementIri[] = [];
+        for (const element of this.graph.getElements()) {
+            for (const entity of iterateEntitiesOf(element)) {
+                elementIris.push(entity.id);
+            }
+        }
         if (elementIris.length === 0) {
             return Promise.resolve();
         }
@@ -363,21 +414,21 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
     createLink(link: RelationLink): RelationLink {
         const {typeId, sourceId, targetId, data} = link;
-        const existingLink = this.findLink(typeId, sourceId, targetId);
-        if (existingLink instanceof RelationLink) {
-            const {
-                [TemplateProperties.LayoutOnly]: layoutOnly,
-                ...withoutLayoutOnly
-            } = existingLink.linkState ?? {};
-
-            if (layoutOnly) {
-                existingLink.setLinkState(withoutLayoutOnly);
+        for (const existingLink of this.graph.iterateLinks(sourceId, targetId, typeId)) {
+            if (existingLink instanceof RelationLink && equalLinks(existingLink.data, link.data)) {
+                const {
+                    [TemplateProperties.LayoutOnly]: layoutOnly,
+                    ...withoutLayoutOnly
+                } = existingLink.linkState ?? {};
+    
+                if (layoutOnly) {
+                    existingLink.setLinkState(withoutLayoutOnly);
+                }
+    
+                existingLink.setData(data);
+                return existingLink;
             }
-
-            existingLink.setData(data);
-            return existingLink;
         }
-
         this.addLink(link);
         return link;
     }
@@ -398,20 +449,27 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         batch.discard();
     }
 
-    createLinks(data: LinkModel) {
+    createLinks(data: LinkModel): RelationLink[] {
         const sources = this.graph.getElements().filter(el =>
-            el instanceof EntityElement && el.iri === data.sourceId
+            el instanceof EntityElement && el.iri === data.sourceId ||
+            el instanceof EntityGroup && el.itemIris.has(data.sourceId)
         );
         const targets = this.graph.getElements().filter(el =>
-            el instanceof EntityElement && el.iri === data.targetId
+            el instanceof EntityElement && el.iri === data.targetId ||
+            el instanceof EntityGroup && el.itemIris.has(data.targetId)
         );
         const batch = this.history.startBatch('Create links');
+        const links: RelationLink[] = [];
         for (const source of sources) {
             for (const target of targets) {
-                this.createLink(new RelationLink({sourceId: source.id, targetId: target.id, data}));
+                const link = this.createLink(
+                    new RelationLink({sourceId: source.id, targetId: target.id, data})
+                );
+                links.push(link);
             }
         }
         batch.store();
+        return links;
     }
 
     getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined {
@@ -457,6 +515,135 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         this.dataGraph.addPropertyType(property);
         this.fetcher.fetchPropertyType(property);
         return property;
+    }
+
+    group(entities: ReadonlyArray<EntityElement>): EntityGroup {
+        const batch = this.history.startBatch('Group entities');
+
+        const entityIds = new Set<ElementIri>();
+        for (const entity of entities) {
+            entityIds.add(entity.data.id);
+        }
+
+        const items: EntityGroupItem[] = [];
+        const links: Array<Pick<RelationLink, 'data' | 'linkState'>> = [];
+
+        for (const entity of entities) {
+            items.push({
+                data: entity.data,
+                elementState: entity.elementState,
+            });
+
+            for (const link of this.getElementLinks(entity)) {
+                if (link instanceof RelationLink) {
+                    links.push({
+                        data: link.data,
+                        linkState: link.linkState,
+                    });
+                }
+            }
+        }
+
+        // Remove entities only after collecting links for each
+        // otherwise some links might get removed before
+        for (const entity of entities) {
+            this.removeElement(entity.id);
+        }
+        
+        const box = getContentFittingBox(entities, [], {
+            getElementSize: () => undefined,
+        });
+        const group = new EntityGroup({
+            items,
+            position: Rect.center(box),
+        });
+
+        this.addElement(group);
+        for (const {data, linkState} of links) {
+            for (const link of this.createLinks(data)) {
+                link.setLinkState(linkState);
+            }
+        }
+
+        batch.store();
+        return group;
+    }
+
+    ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
+        const batch = this.history.startBatch('Ungroup entities');
+
+        const ungrouped: EntityElement[] = [];
+
+        for (const group of groups) {
+            const links = this.getElementLinks(group)
+                .filter(link => link instanceof RelationLink)
+                .map((link): Pick<RelationLink, 'data' | 'linkState'> => ({
+                    data: link.data,
+                    linkState: link.linkState,
+                }));
+
+            this.removeElement(group.id);
+
+            for (const item of group.items) {
+                const entity = new EntityElement({
+                    data: item.data,
+                    position: group.position,
+                });
+                this.addElement(entity);
+                ungrouped.push(entity);
+            }
+
+            // Restore links only after all elements of a group has been
+            // added to ensure both source and target of a link exists
+            for (const {data, linkState} of links) {
+                for (const link of this.createLinks(data)) {
+                    link.setLinkState(linkState);
+                }
+            }
+        }
+
+        batch.store();
+        return ungrouped;
+    }
+
+    ungroupSome(group: EntityGroup, entities: ReadonlySet<ElementIri>): EntityElement[] {
+        const leftGrouped = group.items.filter(item => !entities.has(item.data.id));
+        if (leftGrouped.length <= 1) {
+            return this.ungroupAll([group]);
+        }
+
+        const batch = this.history.startBatch('Ungroup entities');
+
+        const ungroupedLinks = this.getElementLinks(group)
+            .filter(link => link instanceof RelationLink)
+            .filter(link => entities.has(link.data.sourceId) || entities.has(link.data.targetId));
+        
+        for (const link of ungroupedLinks) {
+            this.removeLink(link.id);
+        }
+
+        const ungroupedElements: EntityElement[] = [];
+        for (const item of group.items) {
+            if (entities.has(item.data.id)) {
+                const entity = new EntityElement({
+                    data: item.data,
+                    position: group.position,
+                });
+                this.addElement(entity);
+                ungroupedElements.push(entity);
+            }
+        }
+
+        batch.history.execute(setEntityGroupItems(group, leftGrouped));
+
+        for (const {data, linkState} of ungroupedLinks) {
+            for (const link of this.createLinks(data)) {
+                link.setLinkState(linkState);
+            }
+        }
+
+        batch.store();
+        return ungroupedElements;
     }
 }
 

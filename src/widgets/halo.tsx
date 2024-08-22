@@ -12,7 +12,8 @@ import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 import {
     SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
-    SelectionActionConnections, SelectionActionAddToFilter, SelectionActionEstablishLink,
+    SelectionActionConnections, SelectionActionAddToFilter, SelectionActionGroup,
+    SelectionActionEstablishLink,
 } from './selectionAction';
 
 export interface HaloProps {
@@ -28,6 +29,7 @@ export interface HaloProps {
      * **Default**:
      * ```jsx
      * <>
+     *   <SelectionActionGroup dock='nw' dockColumn={1} />
      *   <SelectionActionRemove dock='ne' />
      *   <SelectionActionExpand dock='s' />
      *   <SelectionActionAnchor dock='w' />
@@ -144,6 +146,7 @@ class HaloInner extends React.Component<HaloInnerProps> {
         return (
             <div className={CLASS_NAME} style={style}>
                 {children ?? <>
+                    <SelectionActionGroup dock='nw' dockColumn={1} />
                     <SelectionActionRemove dock='ne' />
                     <SelectionActionExpand dock='s' />
                     <SelectionActionAnchor dock='w' />

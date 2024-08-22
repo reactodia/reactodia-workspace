@@ -27,7 +27,8 @@ export * from './data/metadataApi';
 export * from './data/validationApi';
 export * from './data/provider';
 export {
-    TemplateProperties, DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
+    TemplateProperties, PinnedProperties,
+    DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
 } from './data/schema';
 export * from './data/composite/composite';
 export {
@@ -45,7 +46,10 @@ export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
 export { defineCanvasWidget } from './diagram/canvasWidget';
-export { RestoreGeometry, setElementExpanded } from './diagram/commands';
+export {
+    RestoreGeometry, setElementExpanded, changeLinkTypeVisibility,
+    restoreCapturedLinkGeometry, restoreViewport,
+} from './diagram/commands';
 export * from './diagram/customization';
 export {
     Element, ElementEvents, ElementTemplateState,
@@ -76,11 +80,12 @@ export * from './editor/authoringState';
 export * from './editor/dataDiagramModel';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
+    EntityGroup, EntityGroupEvents, EntityGroupProps, EntityGroupItem,
     RelationLink, RelationLinkEvents, RelationLinkProps,
     ElementType, ElementTypeEvents,
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
-    setElementData, setLinkData,
+    iterateEntitiesOf, setElementData, setLinkData, setEntityGroupItems,
 } from './editor/dataElements';
 export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,
@@ -97,7 +102,8 @@ export { ValidationState, ElementValidation, LinkValidation } from './editor/val
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
 export {
-    SerializedLayout, SerializedDiagram, SerializedLinkOptions,
+    SerializedLayout, SerializedDiagram, SerializedLayoutElement, SerializedLayoutGroup,
+    SerializedLayoutGroupItem, SerializedLayoutLink, SerializedLinkOptions,
     makeSerializedDiagram, makeSerializedLayout,
 } from './editor/serializedDiagram';
 
@@ -151,6 +157,7 @@ export {
     SelectionActionAnchor, SelectionActionAnchorProps,
     SelectionActionConnections, SelectionActionConnectionsProps,
     SelectionActionAddToFilter, SelectionActionAddToFilterProps,
+    SelectionActionGroup, SelectionActionGroupProps,
     SelectionActionEstablishLink, SelectionActionEstablishLinkProps,
 } from './widgets/selectionAction';
 export { Toolbar, ToolbarProps } from './widgets/toolbar';
@@ -173,7 +180,9 @@ export {
     Workspace, WorkspaceProps, LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
 } from './workspace/workspace';
 export {
-    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle, useWorkspace,
+    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, WorkspacePerformLayoutParams,
+    WorkspaceGroupParams, WorkspaceUngroupAllParams, WorkspaceUngroupSomeParams,
+    ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';
