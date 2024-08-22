@@ -398,7 +398,10 @@ function createRoots(
             nodes.push({
                 iri: item.id,
                 data,
-                label: model.locale.formatLabel(data?.label, item.id),
+                label: model.locale.formatLabel(
+                    item.label.length === 0 ? data?.label : item.label,
+                    item.id
+                ),
                 derived: mapChildren(item.children),
             });
         }
