@@ -13,8 +13,8 @@ import {
 } from './authoringState';
 import { DataDiagramModel } from './dataDiagramModel';
 import {
-    EntityElement, EntityGroup, EntityGroupItem, iterateEntitiesOf, RelationLink,
-    setElementData, setLinkData, setEntityGroupItems,
+    EntityElement, EntityGroup, RelationLink, iterateEntitiesOf,
+    changeRelationData, changeEntityData, setEntityGroupItems,
 } from './dataElements';
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
@@ -236,7 +236,7 @@ export class EditorController {
         const newState = AuthoringState.changeElement(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
         const event = newState.elements.get(targetIri) || newState.elements.get(newData.id);
-        this.model.history.execute(setElementData(this.model, targetIri, event!.after));
+        this.model.history.execute(changeEntityData(this.model, targetIri, event!.after));
         this.setAuthoringState(newState);
 
         batch.store();
@@ -307,7 +307,7 @@ export class EditorController {
     changeRelation(oldData: LinkModel, newData: LinkModel) {
         const batch = this.model.history.startBatch('Change link');
         if (equalLinks(oldData, newData)) {
-            this.model.history.execute(setLinkData(this.model, oldData, newData));
+            this.model.history.execute(changeRelationData(this.model, oldData, newData));
             this.setAuthoringState(
                 AuthoringState.changeLink(this._authoringState, oldData, newData)
             );
@@ -426,7 +426,7 @@ export class EditorController {
                 /* nothing */
             } else if (event.before) {
                 this.model.history.execute(
-                    setElementData(this.model, event.after.id, event.before)
+                    changeEntityData(this.model, event.after.id, event.before)
                 );
             } else {
                 for (const element of findEntities(this.model, event.after.id)) {
@@ -442,7 +442,7 @@ export class EditorController {
                 /* nothing */
             } else if (event.before) {
                 this.model.history.execute(
-                    setLinkData(this.model, event.after, event.before)
+                    changeRelationData(this.model, event.after, event.before)
                 );
             } else {
                 for (const link of findRelations(this.model, event.after)) {

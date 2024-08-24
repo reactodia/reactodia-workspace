@@ -1,7 +1,9 @@
 import type { LinkTypeIri } from '../data/model';
 
 import type { CanvasApi } from './canvasApi';
-import type { Element, Link, LinkTypeVisibility } from './elements';
+import type {
+    Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility,
+} from './elements';
 import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
@@ -70,11 +72,27 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
     });
 }
 
+export function setElementState(element: Element, state: ElementTemplateState | undefined): Command {
+    return Command.create('Change element state', () => {
+        const previous = element.elementState;
+        element.setElementState(state);
+        return setElementState(element, previous);
+    });
+}
+
 export function setElementExpanded(element: Element, expanded: boolean): Command {
     const title = expanded ? 'Expand element' : 'Collapse element';
     return Command.create(title, () => {
         element.setExpanded(expanded);
         return setElementExpanded(element, !expanded);
+    });
+}
+
+export function setLinkState(link: Link, state: LinkTemplateState | undefined): Command {
+    return Command.create('Change link state', () => {
+        const previous = link.linkState;
+        link.setLinkState(state);
+        return setLinkState(link, previous);
     });
 }
 

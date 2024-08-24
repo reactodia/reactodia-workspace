@@ -2,17 +2,17 @@ import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
 
 import {
-    ElementModel, LinkModel, LinkTypeModel,
-    ElementIri, LinkTypeIri, ElementTypeIri, PropertyTypeIri,
-    equalLinks,
+    ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeModel,
+    LinkTypeIri, PropertyTypeIri, equalLinks,
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
 import * as Rdf from '../data/rdf/rdfModel';
 import { PLACEHOLDER_LINK_TYPE, TemplateProperties } from '../data/schema';
 
+import { setLinkState } from '../diagram/commands';
 import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
-import { Link, LinkTypeVisibility } from '../diagram/elements';
+import { Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
 import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
 import {
@@ -21,9 +21,12 @@ import {
 } from '../diagram/model';
 
 import {
-    EntityElement, EntityGroup, EntityGroupItem, RelationLink, ElementType, ElementTypeEvents,
-    PropertyType, PropertyTypeEvents, LinkType, LinkTypeEvents,
-    iterateEntitiesOf, setEntityGroupItems,
+    EntityElement, EntityGroup, EntityGroupItem,
+    RelationLink, RelationGroup, RelationGroupItem,
+    ElementType, ElementTypeEvents,
+    PropertyType, PropertyTypeEvents,
+    LinkType, LinkTypeEvents,
+    iterateEntitiesOf, setEntityGroupItems, setRelationGroupItems, setRelationLinkData,
 } from './dataElements';
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
@@ -91,16 +94,6 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
     get operations(): ReadonlyArray<FetchOperation> {
         return this.fetcher.operations;
-    }
-
-    override shouldRenderLink(link: Link): boolean {
-        // Hide inner links for a group by default
-        if (link.sourceId === link.targetId) {
-            if (this.graph.sourceOf(link) instanceof EntityGroup) {
-                return false;
-            }
-        }
-        return true;
     }
 
     protected override resetGraph(): void {
@@ -412,27 +405,6 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         super.addLink(link);
     }
 
-    createLink(link: RelationLink): RelationLink {
-        const {typeId, sourceId, targetId, data} = link;
-        for (const existingLink of this.graph.iterateLinks(sourceId, targetId, typeId)) {
-            if (existingLink instanceof RelationLink && equalLinks(existingLink.data, link.data)) {
-                const {
-                    [TemplateProperties.LayoutOnly]: layoutOnly,
-                    ...withoutLayoutOnly
-                } = existingLink.linkState ?? {};
-    
-                if (layoutOnly) {
-                    existingLink.setLinkState(withoutLayoutOnly);
-                }
-    
-                existingLink.setData(data);
-                return existingLink;
-            }
-        }
-        this.addLink(link);
-        return link;
-    }
-
     private onLinkInfoLoaded(links: LinkModel[]) {
         let allowToCreate: boolean;
         const cancel = () => { allowToCreate = false; };
@@ -449,27 +421,79 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         batch.discard();
     }
 
-    createLinks(data: LinkModel): RelationLink[] {
-        const sources = this.graph.getElements().filter(el =>
+    createLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
+        const sources = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
             el instanceof EntityElement && el.iri === data.sourceId ||
             el instanceof EntityGroup && el.itemIris.has(data.sourceId)
         );
-        const targets = this.graph.getElements().filter(el =>
+        const targets = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
             el instanceof EntityElement && el.iri === data.targetId ||
             el instanceof EntityGroup && el.itemIris.has(data.targetId)
         );
         const batch = this.history.startBatch('Create links');
-        const links: RelationLink[] = [];
+        const links: Array<RelationLink | RelationGroup> = [];
         for (const source of sources) {
             for (const target of targets) {
-                const link = this.createLink(
-                    new RelationLink({sourceId: source.id, targetId: target.id, data})
-                );
+                const link = this.createRelation(source, target, data);
                 links.push(link);
             }
         }
         batch.store();
         return links;
+    }
+
+    private createRelation(
+        source: EntityElement | EntityGroup,
+        target: EntityElement | EntityGroup,
+        data: LinkModel
+    ): RelationLink | RelationGroup {
+        const existingLinks = Array.from(this.graph.iterateLinks(source.id, target.id, data.linkTypeId));
+        for (const link of existingLinks) {
+            if (link instanceof RelationLink && equalLinks(link.data, data)) {
+                this.history.execute(setLinkState(link, omitLayoutOnly(link.linkState)));
+                this.history.execute(setRelationLinkData(link, data));
+                return link;
+            } else if (link instanceof RelationGroup && link.itemKeys.has(data)) {
+                const items = link.items.map((item): RelationGroupItem => equalLinks(item.data, data)
+                    ? {...item, data, linkState: omitLayoutOnly(item.linkState)}
+                    : item
+                );
+                this.history.execute(setRelationGroupItems(link, items));
+                return link;
+            }
+        }
+
+        for (const link of existingLinks) {
+            if (link.typeId === link.typeId) {
+                if (link instanceof RelationLink) {
+                    const items: RelationGroupItem[] = [
+                        {data: link.data, linkState: link.linkState},
+                        {data},
+                    ];
+                    const group = new RelationGroup({
+                        sourceId: source.id,
+                        targetId: target.id,
+                        typeId: data.linkTypeId,
+                        items,
+                    });
+                    this.removeLink(link.id);
+                    this.addLink(group);
+                    return group;
+                } if (link instanceof RelationGroup) {
+                    const items: RelationGroupItem[] = [...link.items, {data}];
+                    this.history.execute(setRelationGroupItems(link, items));
+                    return link;
+                }
+            }
+        }
+
+        const link = new RelationLink({
+            sourceId: source.id,
+            targetId: target.id,
+            data,
+        });
+        this.addLink(link);
+        return link;
     }
 
     getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined {
@@ -526,7 +550,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         }
 
         const items: EntityGroupItem[] = [];
-        const links: Array<Pick<RelationLink, 'data' | 'linkState'>> = [];
+        const links = new Set<Link>();
 
         for (const entity of entities) {
             items.push({
@@ -535,13 +559,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             });
 
             for (const link of this.getElementLinks(entity)) {
-                if (link instanceof RelationLink) {
-                    links.push({
-                        data: link.data,
-                        linkState: link.linkState,
-                    });
-                }
+                links.add(link);
             }
+        }
+
+        for (const link of links) {
+            this.removeLink(link.id);
         }
 
         // Remove entities only after collecting links for each
@@ -559,11 +582,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         });
 
         this.addElement(group);
-        for (const {data, linkState} of links) {
-            for (const link of this.createLinks(data)) {
-                link.setLinkState(linkState);
-            }
-        }
+        this.recreateLinks(links);
 
         batch.store();
         return group;
@@ -573,14 +592,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         const batch = this.history.startBatch('Ungroup entities');
 
         const ungrouped: EntityElement[] = [];
+        const links = new Set<Link>();
 
         for (const group of groups) {
-            const links = this.getElementLinks(group)
-                .filter(link => link instanceof RelationLink)
-                .map((link): Pick<RelationLink, 'data' | 'linkState'> => ({
-                    data: link.data,
-                    linkState: link.linkState,
-                }));
+            for (const link of this.getElementLinks(group)) {
+                links.add(link);
+            }
 
             this.removeElement(group.id);
 
@@ -592,15 +609,11 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
                 this.addElement(entity);
                 ungrouped.push(entity);
             }
-
-            // Restore links only after all elements of a group has been
-            // added to ensure both source and target of a link exists
-            for (const {data, linkState} of links) {
-                for (const link of this.createLinks(data)) {
-                    link.setLinkState(linkState);
-                }
-            }
         }
+
+        // Restore links only after all elements of a group has been
+        // added to ensure both source and target of a link exists
+        this.recreateLinks(links);
 
         batch.store();
         return ungrouped;
@@ -614,11 +627,20 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
         const batch = this.history.startBatch('Ungroup entities');
 
-        const ungroupedLinks = this.getElementLinks(group)
-            .filter(link => link instanceof RelationLink)
-            .filter(link => entities.has(link.data.sourceId) || entities.has(link.data.targetId));
-        
-        for (const link of ungroupedLinks) {
+        const links = new Set<Link>();
+        for (const link of this.getElementLinks(group)) {
+            if (link instanceof RelationLink) {
+                if (entities.has(link.data.sourceId) || entities.has(link.data.targetId)) {
+                    links.add(link);
+                }
+            } else if (link instanceof RelationGroup) {
+                if (link.items.some(item => entities.has(item.data.sourceId) || entities.has(item.data.targetId))) {
+                    links.add(link);
+                }
+            }
+        }
+
+        for (const link of links) {
             this.removeLink(link.id);
         }
 
@@ -636,14 +658,26 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
         batch.history.execute(setEntityGroupItems(group, leftGrouped));
 
-        for (const {data, linkState} of ungroupedLinks) {
-            for (const link of this.createLinks(data)) {
-                link.setLinkState(linkState);
-            }
-        }
+        this.recreateLinks(links);
 
         batch.store();
         return ungroupedElements;
+    }
+
+    private recreateLinks(links: ReadonlySet<Link>): void {
+        for (const link of links) {
+            if (link instanceof RelationLink) {
+                for (const created of this.createLinks(link.data)) {
+                    if (created instanceof RelationLink) {
+                        this.history.execute(setLinkState(created, link.linkState));
+                    }
+                }
+            } else if (link instanceof RelationGroup) {
+                for (const {data} of link.items) {
+                    this.createLinks(data);
+                }
+            }
+        }
     }
 }
 
@@ -715,4 +749,15 @@ export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
     return Command.effect('Restore links between elements', () => {
         model.requestLinksOfType();
     });
+}
+
+function omitLayoutOnly(linkState: LinkTemplateState | undefined): LinkTemplateState | undefined {
+    if (linkState && Object.prototype.hasOwnProperty.call(linkState, TemplateProperties.LayoutOnly)) {
+        const {
+            [TemplateProperties.LayoutOnly]: layoutOnly,
+            ...withoutLayoutOnly
+        } = linkState;
+        return withoutLayoutOnly;
+    }
+    return linkState;
 }

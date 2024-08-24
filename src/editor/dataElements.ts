@@ -1,14 +1,17 @@
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
+import { ReadonlyHashSet, HashSet } from '../coreUtils/hashMap';
 
 import {
     ElementIri, ElementModel, ElementTypeIri, ElementTypeModel,
-    LinkModel, LinkTypeIri, LinkTypeModel,
-    PropertyTypeIri, PropertyTypeModel, equalLinks,
+    LinkKey, LinkModel, LinkTypeIri, LinkTypeModel,
+    PropertyTypeIri, PropertyTypeModel,
+    equalLinks, hashLink,
 } from '../data/model';
 
 import {
     Element, ElementEvents, ElementProps, ElementTemplateState,
     Link, LinkEvents, LinkProps,
+    LinkTemplateState,
 } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
@@ -54,6 +57,17 @@ export class EntityElement extends Element {
         this.entitySource.trigger('changeData', {source: this, previous});
         this.entitySource.trigger('requestedRedraw', {source: this, level: 'template'});
     }
+}
+
+export function setEntityElementData(
+    entity: EntityElement,
+    data: ElementModel
+): Command {
+    return Command.create('Set entity element data', () => {
+        const previous = entity.data;
+        entity.setData(data);
+        return setEntityElementData(entity, previous);
+    });
 }
 
 export interface EntityGroupEvents extends ElementEvents {
@@ -111,7 +125,7 @@ export interface EntityGroupItem {
 }
 
 export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<EntityGroupItem>): Command {
-    return Command.create('Change group items', () => {
+    return Command.create('Set entity group items', () => {
         const before = group.items;
         group.setItems(items);
         return setEntityGroupItems(group, before);
@@ -176,6 +190,106 @@ export class RelationLink extends Link {
             ? this.targetId : this.sourceId;
         return new RelationLink({sourceId, targetId, data});
     }
+}
+
+export function setRelationLinkData(
+    relation: RelationLink,
+    data: LinkModel
+): Command {
+    return Command.create('Set relation link data', () => {
+        const previous = relation.data;
+        relation.setData(data);
+        return setRelationLinkData(relation, previous);
+    });
+}
+
+export interface RelationGroupEvents extends LinkEvents {
+    changeItems: PropertyChange<RelationGroup, ReadonlyArray<RelationGroupItem>>;
+}
+
+export interface RelationGroupProps extends LinkProps {
+    typeId: LinkTypeIri;
+    items: ReadonlyArray<RelationGroupItem>;
+}
+
+export class RelationGroup extends Link {
+    declare readonly events: Events<RelationGroupEvents>;
+
+    private readonly _typeId: LinkTypeIri;
+    private _items: ReadonlyArray<RelationGroupItem>;
+
+    private readonly _itemKeys = new HashSet<LinkKey>(hashLink, equalLinks);
+    private readonly _sources = new Set<ElementIri>();
+    private readonly _targets = new Set<ElementIri>();
+
+    constructor(props: RelationGroupProps) {
+        super(props);
+        this._typeId = props.typeId;
+        this._items = props.items ?? [];
+        this.updateItemKeys();
+    }
+
+    protected get relationSource(): EventSource<RelationGroupEvents> {
+        return this.source as EventSource<any>;
+    }
+
+    protected override getTypeId(): LinkTypeIri {
+        return this._typeId;
+    }
+
+    get items(): ReadonlyArray<RelationGroupItem> {
+        return this._items;
+    }
+
+    setItems(value: ReadonlyArray<RelationGroupItem>): void {
+        for (const item of value) {
+            if (item.data.linkTypeId !== this._typeId) {
+                throw new Error('RelationGroup should have only items with same type IRI');
+            }
+        }
+        const previous = this._items;
+        if (previous === value) { return; }
+        this._items = value;
+        this.updateItemKeys();
+        this.relationSource.trigger('changeItems', {source: this, previous});
+        this.relationSource.trigger('requestedRedraw', {source: this, level: 'template'});
+    }
+
+    get itemKeys(): ReadonlyHashSet<LinkKey> {
+        return this._itemKeys;
+    }
+
+    get itemSources(): ReadonlySet<ElementIri> {
+        return this._sources;
+    }
+
+    get itemTargets(): ReadonlySet<ElementIri> {
+        return this._targets;
+    }
+
+    private updateItemKeys(): void {
+        this._itemKeys.clear();
+        this._sources.clear();
+        this._targets.clear();
+        for (const item of this._items) {
+            this._itemKeys.add(item.data);
+            this._sources.add(item.data.sourceId);
+            this._targets.add(item.data.targetId);
+        }
+    }
+}
+
+export interface RelationGroupItem {
+    readonly data: LinkModel;
+    readonly linkState?: LinkTemplateState | undefined;
+}
+
+export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray<RelationGroupItem>): Command {
+    return Command.create('Set relation group items', () => {
+        const before = group.items;
+        group.setItems(items);
+        return setRelationGroupItems(group, before);
+    });
 }
 
 export interface ElementTypeEvents {
@@ -286,8 +400,8 @@ export class LinkType {
     }
 }
 
-export function setElementData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
-    const command = Command.create('Set element data', () => {
+export function changeEntityData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
+    const command = Command.create('Change entity data', () => {
         const previousIri = target;
         const newIri = data.id;
 
@@ -342,16 +456,16 @@ function updateLinksToReferByNewIri(model: DiagramModel, element: Element, oldIr
     }
 }
 
-export function setLinkData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
+export function changeRelationData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
     if (!equalLinks(oldData, newData)) {
         throw new Error('Cannot change typeId, sourceId or targetId when changing link data');
     }
-    return Command.create('Set link data', () => {
+    return Command.create('Change relation data', () => {
         for (const link of model.links) {
             if (link instanceof RelationLink && equalLinks(link.data, oldData)) {
                 link.setData(newData);
             }
         }
-        return setLinkData(model, newData, oldData);
+        return changeRelationData(model, newData, oldData);
     });
 }

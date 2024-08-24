@@ -47,8 +47,8 @@ export * from './data/sparql/sparqlDataProviderSettings';
 export * from './diagram/canvasApi';
 export { defineCanvasWidget } from './diagram/canvasWidget';
 export {
-    RestoreGeometry, setElementExpanded, changeLinkTypeVisibility,
-    restoreCapturedLinkGeometry, restoreViewport,
+    RestoreGeometry, setElementState, setElementExpanded, setLinkState,
+    changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
 } from './diagram/commands';
 export * from './diagram/customization';
 export {
@@ -85,7 +85,8 @@ export {
     ElementType, ElementTypeEvents,
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
-    iterateEntitiesOf, setElementData, setLinkData, setEntityGroupItems,
+    changeEntityData, setEntityElementData, setEntityGroupItems, iterateEntitiesOf,
+    changeRelationData, setRelationGroupItems, setRelationLinkData,
 } from './editor/dataElements';
 export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,
