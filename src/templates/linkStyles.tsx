@@ -37,7 +37,6 @@ const LINK_SUB_CLASS_OF: LinkTemplate = {
         <DefaultLinkPathTemplate {...props}
             pathProps={{
                 stroke: '#f8a485',
-                strokeWidth: 2,
             }}
         />
     ),
@@ -53,7 +52,6 @@ const LINK_DOMAIN: LinkTemplate = {
         <DefaultLinkPathTemplate {...props}
             pathProps={{
                 stroke: '#34c7f3',
-                strokeWidth: 2,
             }}
         />
     ),
@@ -69,7 +67,6 @@ const LINK_RANGE: LinkTemplate = {
         <DefaultLinkPathTemplate {...props}
             pathProps={{
                 stroke: '#34c7f3',
-                strokeWidth: 2,
             }}
         />
     ),
@@ -85,7 +82,6 @@ const LINK_TYPE_OF: LinkTemplate = {
         <DefaultLinkPathTemplate {...props}
             pathProps={{
                 stroke: '#8cd965',
-                strokeWidth: 2,
             }}
         />
     ),

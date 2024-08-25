@@ -47,8 +47,8 @@ export * from './data/sparql/sparqlDataProviderSettings';
 export * from './diagram/canvasApi';
 export { defineCanvasWidget } from './diagram/canvasWidget';
 export {
-    RestoreGeometry, setElementExpanded, changeLinkTypeVisibility,
-    restoreCapturedLinkGeometry, restoreViewport,
+    RestoreGeometry, setElementState, setElementExpanded, setLinkState,
+    changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
 } from './diagram/commands';
 export * from './diagram/customization';
 export {
@@ -85,7 +85,8 @@ export {
     ElementType, ElementTypeEvents,
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
-    iterateEntitiesOf, setElementData, setLinkData, setEntityGroupItems,
+    changeEntityData, setEntityElementData, setEntityGroupItems, iterateEntitiesOf,
+    changeRelationData, setRelationGroupItems, setRelationLinkData, iterateRelationsOf,
 } from './editor/dataElements';
 export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,
@@ -102,9 +103,9 @@ export { ValidationState, ElementValidation, LinkValidation } from './editor/val
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
 export {
-    SerializedLayout, SerializedDiagram, SerializedLayoutElement, SerializedLayoutGroup,
-    SerializedLayoutGroupItem, SerializedLayoutLink, SerializedLinkOptions,
-    makeSerializedDiagram, makeSerializedLayout,
+    SerializedDiagram, SerializedLayout, SerializedLinkOptions,
+    SerializedLayoutElement, SerializedLayoutElementGroup, SerializedLayoutElementItem,
+    SerializedLayoutLink, SerializedLayoutLinkGroup, SerializedLayoutLinkItem,
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate } from './templates/classicTemplate';

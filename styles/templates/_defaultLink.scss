@@ -1,4 +1,8 @@
 .reactodia-default-link {
+  &--group .reactodia-link-path {
+    stroke-width: 2px;
+  }
+
   &__label-text {
     fill: black;
     stroke: none;
@@ -17,5 +21,16 @@
     fill: white;
     stroke: none;
     stroke-width: 0;
+  }
+
+  &__source-count &__label-text,
+  &__target-count &__label-text {
+    fill: gray;
+    font-size: 12px;
+  }
+
+  &__source-count &__label-background,
+  &__target-count &__label-background {
+    opacity: 80%;
   }
 }

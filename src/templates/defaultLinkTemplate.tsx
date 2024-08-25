@@ -6,7 +6,7 @@ import { FormattedProperty, LinkTemplate, LinkTemplateProps } from '../diagram/c
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
-import { RelationLink } from '../editor/dataElements';
+import { RelationGroup, RelationLink } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { TemplateProperties } from '../workspace';
 
@@ -57,14 +57,16 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         const backgroundClass = `${CLASS_NAME}__label-background`;
 
         let label: string;
-        let properties: readonly FormattedProperty[];
-        if ((link instanceof RelationLink && model instanceof DataDiagramModel)) {
+        let properties: readonly FormattedProperty[] = [];
+
+        if (model instanceof DataDiagramModel) {
             const linkType = model.getLinkType(link.typeId);
             label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
-            properties = model.locale.formatPropertyList(link.data.properties);
+            if (link instanceof RelationLink) {
+                properties = model.locale.formatPropertyList(link.data.properties);
+            }
         } else {
             label = model.locale.formatIri(link.typeId);
-            properties = [];
         }
 
         labelContent = <>
@@ -105,6 +107,26 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     </>}
                 />
             ))}
+            {link instanceof RelationGroup ? (
+                <>
+                    <LinkLabel className={`${CLASS_NAME}__source-count`}
+                        link={link}
+                        position={getPathPosition(0.1)}
+                        textClass={textClass}
+                        rectClass={backgroundClass}
+                        title={`${link.itemSources.size} source elements`}
+                        content={<>{link.itemSources.size}</>}
+                    />
+                    <LinkLabel className={`${CLASS_NAME}__target-count`}
+                        link={link}
+                        position={getPathPosition(0.9)}
+                        textClass={textClass}
+                        rectClass={backgroundClass}
+                        title={`${link.itemTargets.size} target elements`}
+                        content={<>{link.itemTargets.size}</>}
+                    />
+                </>
+            ) : null}
         </>;
     }
 
@@ -114,6 +136,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         <g
             className={classnames(
                 CLASS_NAME,
+                link instanceof RelationGroup ? `${CLASS_NAME}--group` : undefined,
                 renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
                 className
             )}>

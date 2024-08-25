@@ -6,7 +6,7 @@ import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data
 
 import { AuthoringState } from './authoringState';
 import { DataGraphStructure } from './dataDiagramModel';
-import { EntityElement, RelationLink } from './dataElements';
+import { iterateEntitiesOf, iterateRelationsOf } from './dataElements';
 import { EditorController } from './editorController';
 
 export interface ValidationState {
@@ -80,19 +80,20 @@ export function changedElementsToValidate(
     });
 
     for (const element of graph.elements) {
-        if (!(element instanceof EntityElement)) {
-            continue;
-        }
-        const current = currentAuthoring.elements.get(element.iri);
-        const previous = previousAuthoring.elements.get(element.iri);
-        if (current !== previous) {
-            toValidate.add(element.iri);
+        for (const entity of iterateEntitiesOf(element)) {
+            const current = currentAuthoring.elements.get(entity.id);
+            const previous = previousAuthoring.elements.get(entity.id);
+            if (current !== previous) {
+                toValidate.add(entity.id);
 
-            // when we remove element incoming link are removed as well so we should update their sources
-            if ((current || previous)!.deleted) {
-                for (const link of graph.getElementLinks(element)) {
-                    if (link instanceof RelationLink && link.data.sourceId !== element.iri) {
-                        toValidate.add(link.data.sourceId);
+                // when we remove element incoming link are removed as well so we should update their sources
+                if ((current || previous)!.deleted) {
+                    for (const link of graph.getElementLinks(element)) {
+                        for (const relation of iterateRelationsOf(link)) {
+                            if (relation.targetId === entity.id && relation.sourceId !== entity.id) {
+                                toValidate.add(relation.sourceId);
+                            }
+                        }
                     }
                 }
             }
@@ -113,38 +114,42 @@ export function validateElements(
     const newState = ValidationState.createMutable();
 
     for (const element of graph.elements) {
-        if (!(element instanceof EntityElement) || newState.elements.has(element.iri)) {
-            continue;
-        }
-
-        const outboundLinks: LinkModel[] = [];
-        for (const link of graph.getElementLinks(element)) {
-            if (link instanceof RelationLink && link.sourceId === element.id) {
-                outboundLinks.push(link.data);
+        for (const entity of iterateEntitiesOf(element)) {
+            if (newState.elements.has(entity.id)) {
+                continue;
             }
-        }
 
-        if (targets.has(element.iri)) {
-            const event: ValidationEvent = {
-                target: element.data,
-                outboundLinks,
-                state: editor.authoringState,
-                graph,
-                signal,
-            };
-            const result = mapAbortedToNull(validationApi.validate(event), signal);
+            const outboundLinks: LinkModel[] = [];
+            for (const link of graph.getElementLinks(element)) {
+                for (const relation of iterateRelationsOf(link)) {
+                    if (relation.sourceId === entity.id) {
+                        outboundLinks.push(relation);
+                    }
+                }
+            }
 
-            const loadingElement: ElementValidation = {loading: true, errors: []};
-            const loadingLink: LinkValidation = {loading: true, errors: []};
-            newState.elements.set(element.iri, loadingElement);
-            outboundLinks.forEach(link => newState.links.set(link, loadingLink));
+            if (targets.has(entity.id)) {
+                const event: ValidationEvent = {
+                    target: entity,
+                    outboundLinks,
+                    state: editor.authoringState,
+                    graph,
+                    signal,
+                };
+                const result = mapAbortedToNull(validationApi.validate(event), signal);
 
-            processValidationResult(result, loadingElement, loadingLink, event, editor);
-        } else {
-            // use previous state for element and outbound links
-            newState.elements.set(element.iri, previousState.elements.get(element.iri)!);
-            for (const link of outboundLinks) {
-                newState.links.set(link, previousState.links.get(link)!);
+                const loadingElement: ElementValidation = {loading: true, errors: []};
+                const loadingLink: LinkValidation = {loading: true, errors: []};
+                newState.elements.set(entity.id, loadingElement);
+                outboundLinks.forEach(link => newState.links.set(link, loadingLink));
+
+                processValidationResult(result, loadingElement, loadingLink, event, editor);
+            } else {
+                // use previous state for element and outbound links
+                newState.elements.set(entity.id, previousState.elements.get(entity.id)!);
+                for (const link of outboundLinks) {
+                    newState.links.set(link, previousState.links.get(link)!);
+                }
             }
         }
     }

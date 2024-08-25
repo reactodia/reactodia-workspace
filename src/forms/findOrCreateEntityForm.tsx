@@ -3,7 +3,7 @@ import * as React from 'react';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
-import { EntityElement, RelationLink, setElementData } from '../editor/dataElements';
+import { EntityElement, RelationLink, changeEntityData } from '../editor/dataElements';
 
 import { ProgressBar } from '../widgets/progressBar';
 
@@ -179,7 +179,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 editor.setTemporaryState(temporaryState);
                 // Target IRI change may also update link data
                 const batch = model.history.startBatch();
-                batch.history.execute(setElementData(model, target.iri, elementValue.value));
+                batch.history.execute(changeEntityData(model, target.iri, elementValue.value));
                 batch.discard();
                 
                 temporaryState = TemporaryState.addElement(temporaryState, target.data);

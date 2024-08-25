@@ -45,16 +45,6 @@ export interface GraphStructure {
     sourceOf(link: Link): Element | undefined;
     targetOf(link: Link): Element | undefined;
     getLinkVisibility(linkTypeId: LinkTypeIri): LinkTypeVisibility;
-    /**
-     * Specifies whether a link should be displayed on a canvas at all.
-     *
-     * Note that the result is cached, so it should stay the same
-     * unless the link is removed and re-added to the model.
-     *
-     * By default every link is rendered but this could be overridden
-     * in a derived model.
-     */
-    shouldRenderLink(link: Link): boolean;
 }
 
 export interface DiagramModelOptions {
@@ -158,10 +148,6 @@ export class DiagramModel implements GraphStructure {
 
     setLinkVisibility(linkTypeId: LinkTypeIri, value: LinkTypeVisibility): void {
         this.graph.setLinkVisibility(linkTypeId, value);
-    }
-
-    shouldRenderLink(link: Link): boolean {
-        return true;
     }
 
     protected resetGraph(): void {
