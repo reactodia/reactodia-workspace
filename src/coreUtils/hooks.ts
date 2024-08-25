@@ -3,6 +3,11 @@ import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
 import type { Events } from './events';
 
+/**
+ * Represents an event store which can be subscribed to listen its changes.
+ *
+ * This store exactly the same as accepted by `React.useSyncExternalStore()` hook.
+ */
 export type SyncStore = (onChange: () => void) => (() => void);
 
 export function useObservedProperty<E, K extends keyof E, R>(
@@ -53,26 +58,38 @@ export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {
     }, [subscribe]);
 }
 
-export function useSyncStore<R>(
+/**
+ * Same as `React.useSyncExternalStore()` with a support shim for lower React versions.
+ */
+export function useSyncStore<R>(subscribe: SyncStore, getSnapshot: () => R): R {
+    return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+/**
+ * Same as `React.useSyncExternalStore()` with custom equality comparison
+ * for snapshot values.
+ * 
+ * Update will be skipped unless `equalResults()` called with previous and
+ * current snapshot returns `false`.
+ */
+export function useSyncStoreWithComparator<R>(
     subscribe: SyncStore,
     getSnapshot: () => R,
-    equalResults?: (a: R, b: R) => boolean
+    equalResults: (a: R, b: R) => boolean
 ) {
     const lastSnapshot = React.useRef<[R]>();
     return useSyncExternalStore(
         subscribe,
-        equalResults ? (
-            () => {
-                const result = getSnapshot();
-                if (lastSnapshot.current) {
-                    const [lastResult] = lastSnapshot.current;
-                    if (equalResults(lastResult, result)) {
-                        return lastResult;
-                    }
+        () => {
+            const result = getSnapshot();
+            if (lastSnapshot.current) {
+                const [lastResult] = lastSnapshot.current;
+                if (equalResults(lastResult, result)) {
+                    return lastResult;
                 }
-                lastSnapshot.current = [result];
-                return result;
             }
-        ) : getSnapshot
+            lastSnapshot.current = [result];
+            return result;
+        }
     );
 }

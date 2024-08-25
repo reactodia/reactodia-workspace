@@ -1,8 +1,10 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+
 import type * as Rdf from '../data/rdf/rdfModel';
-import { ElementModel, isEncodedBlank } from '../data/model';
+import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
@@ -13,7 +15,7 @@ import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEnti
 import { AuthoringState } from '../editor/authoringState';
 import { EntityLocaleFormatter } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
-import { useObservedElement } from '../editor/observedElement';
+import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
@@ -54,8 +56,13 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const workspace = useWorkspace();
     const {model, editor, getElementTypeStyle} = workspace;
 
+    useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
+    useKeyedSyncStore(
+        subscribePropertyTypes,
+        (data && isExpanded) ? Object.keys(data.properties) as PropertyTypeIri[] : [],
+        model
+    );
     const entityContext = useAuthoredEntity(data, isExpanded);
-    useObservedElement(data);
 
     const label = formatEntityLabel(data, model.locale);
     const typesLabel = formatEntityTypes(data, model.locale);
@@ -238,6 +245,8 @@ interface StandardTemplateGroupItemProps extends TemplateProps {
 
 function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     const {data, target, canvas, workspace: {model, editor, ungroupSome, getElementTypeStyle}} = props;
+
+    useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     const label = formatEntityLabel(data, model.locale);
     const iri = model.locale.formatIri(data.id);

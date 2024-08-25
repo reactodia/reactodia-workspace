@@ -1,14 +1,20 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+
+import { PropertyTypeIri } from '../data/model';
+import { TemplateProperties } from '../data/schema';
+
 import { useCanvas } from '../diagram/canvasApi';
-import { FormattedProperty, LinkTemplate, LinkTemplateProps } from '../diagram/customization';
+import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
-import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { RelationGroup, RelationLink } from '../editor/dataElements';
+import { subscribeLinkTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
-import { TemplateProperties } from '../workspace';
+
+import { useWorkspace } from '../workspace/workspaceContext';
 
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
@@ -48,7 +54,15 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
-    const {model, canvas} = useCanvas();
+    const {canvas} = useCanvas();
+    const {model} = useWorkspace();
+
+    useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
+    useKeyedSyncStore(
+        subscribePropertyTypes,
+        link instanceof RelationLink ? Object.keys(link.data.properties) as PropertyTypeIri[] : [],
+        model
+    );
 
     const renamedLabel = editableLabel?.getLabel(link);
     let labelContent: JSX.Element | null = null;
@@ -56,18 +70,11 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         const textClass = `${CLASS_NAME}__label-text`;
         const backgroundClass = `${CLASS_NAME}__label-background`;
 
-        let label: string;
-        let properties: readonly FormattedProperty[] = [];
-
-        if (model instanceof DataDiagramModel) {
-            const linkType = model.getLinkType(link.typeId);
-            label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
-            if (link instanceof RelationLink) {
-                properties = model.locale.formatPropertyList(link.data.properties);
-            }
-        } else {
-            label = model.locale.formatIri(link.typeId);
-        }
+        const linkType = model.getLinkType(link.typeId);
+        const label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
+        const properties = link instanceof RelationLink
+            ? model.locale.formatPropertyList(link.data.properties)
+            : [];
 
         labelContent = <>
             <LinkLabel {...primaryLabelProps}

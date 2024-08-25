@@ -1,9 +1,12 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+
+import { PropertyTypeIri } from '../data/model';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
-import { useObservedElement } from '../editor/observedElement';
+import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -14,7 +17,12 @@ export function ClassicTemplate(props: TemplateProps) {
     const data = element instanceof EntityElement ? element.data : undefined;
 
     const {model, getElementTypeStyle} = useWorkspace();
-    useObservedElement(data);
+    useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
+    useKeyedSyncStore(
+        subscribePropertyTypes,
+        (data && isExpanded) ? Object.keys(data.properties) as PropertyTypeIri[] : [],
+        model
+    );
 
     if (!data) {
         return null;

@@ -3,7 +3,7 @@ import * as React from 'react';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
 import {
-    SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore,
+    SyncStore, useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 
 import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
@@ -56,7 +56,7 @@ export function Selection(props: SelectionProps) {
     const {model, canvas} = useCanvas();
 
     const subscribeSelection = useEventStore(model.events, 'changeSelection');
-    const selectedElements = useSyncStore(
+    const selectedElements = useSyncStoreWithComparator(
         subscribeSelection,
         () => model.selection.filter(
             (cell): cell is Element => cell instanceof Element
@@ -197,7 +197,7 @@ function SelectionBox(props: SelectionBoxProps) {
 
     const elementBoundsStore = useElementBoundsStore(model, canvas, selectedElements);
     const elementBoundsDebouncedStore = useFrameDebouncedStore(elementBoundsStore);
-    const fittingBox = useSyncStore(
+    const fittingBox = useSyncStoreWithComparator(
         elementBoundsDebouncedStore,
         () => getContentFittingBox(selectedElements, [], canvas.renderingState),
         Rect.equals

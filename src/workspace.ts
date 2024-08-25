@@ -4,8 +4,10 @@ export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtil
 export { makeMoveComparator, shallowArrayEqual } from './coreUtils/collections';
 export * from './coreUtils/events';
 export * from './coreUtils/hashMap';
-export { useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore } from './coreUtils/hooks';
-export { KeyedObserver } from './coreUtils/keyedObserver';
+export {
+    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore, useSyncStoreWithComparator,
+} from './coreUtils/hooks';
+export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
 export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export {
     CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink,
@@ -95,7 +97,9 @@ export {
 } from './editor/dataFetcher';
 export { EditorOptions, EditorEvents, EditorController } from './editor/editorController';
 export { DragEditOperation, DragEditConnect, DragEditMoveEndpoint } from './editor/editLayer';
-export { useObservedElement } from './editor/observedElement';
+export {
+    subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
+} from './editor/observedElement';
 export {
     OverlayController, OverlayControllerEvents, PropertyEditor, PropertyEditorOptions,
 } from './editor/overlayController';
