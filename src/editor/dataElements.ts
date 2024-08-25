@@ -292,6 +292,16 @@ export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray
     });
 }
 
+export function* iterateRelationsOf(link: Link): Iterable<LinkModel> {
+    if (link instanceof RelationLink) {
+        yield link.data;
+    } else if (link instanceof RelationGroup) {
+        for (const item of link.items) {
+            yield item.data;
+        }
+    }
+}
+
 export interface ElementTypeEvents {
     changeData: PropertyChange<ElementType, ElementTypeModel | undefined>;
 }
@@ -406,34 +416,58 @@ export function changeEntityData(model: DiagramModel, target: ElementIri, data: 
         const newIri = data.id;
 
         const previousEntities = new Map<EntityElement, ElementModel>();
-        const previousGroups = new Map<EntityGroup, ReadonlyArray<EntityGroupItem>>();
+        const previousEntityGroups = new Map<EntityGroup, ReadonlyArray<EntityGroupItem>>();
+        const previousRelations = new Map<RelationLink, LinkModel>();
+        const previousRelationGroups = new Map<RelationGroup, ReadonlyArray<RelationGroupItem>>();
+        
+        const updateLinksToReferByNewIri = (element: Element) => {
+            for (const link of model.getElementLinks(element)) {
+                if (link instanceof RelationLink) {
+                    previousRelations.set(link, link.data);
+                    link.setData(mapRelationEndpoint(link.data, previousIri, newIri));
+                } else if (link instanceof RelationGroup) {
+                    if (link.itemSources.has(previousIri) || link.itemTargets.has(previousIri)) {
+                        previousRelationGroups.set(link, link.items);
+                        const items = link.items.map((item): RelationGroupItem => ({
+                            ...item,
+                            data: mapRelationEndpoint(item.data, previousIri, newIri),
+                        }));
+                        link.setItems(items);
+                    }
+                }
+            }
+        };
         
         for (const element of model.elements) {
             if (element instanceof EntityElement) {
                 if (element.iri === target) {
                     previousEntities.set(element, element.data);
                     element.setData(data);
-                    updateLinksToReferByNewIri(model, element, previousIri, newIri);
+                    updateLinksToReferByNewIri(element);
                 }
             } else if (element instanceof EntityGroup) {
                 if (element.itemIris.has(target)) {
-                    previousGroups.set(element, element.items);
+                    previousEntityGroups.set(element, element.items);
                     const nextItems = element.items.map((item): EntityGroupItem =>
                         item.data.id === target ? {...item, data} : item
                     );
                     element.setItems(nextItems);
-                    updateLinksToReferByNewIri(model, element, previousIri, newIri);
+                    updateLinksToReferByNewIri(element);
                 }
             }
         }
         return Command.create('Revert element data', () => {
             for (const [element, previousData] of previousEntities) {
                 element.setData(previousData);
-                updateLinksToReferByNewIri(model, element, newIri, previousIri);
             }
-            for (const [element, previousItems] of previousGroups) {
+            for (const [element, previousItems] of previousEntityGroups) {
                 element.setItems(previousItems);
-                updateLinksToReferByNewIri(model, element, newIri, previousIri);
+            }
+            for (const [link, previousData] of previousRelations) {
+                link.setData(previousData);
+            }
+            for (const [link, previousItems] of previousRelationGroups) {
+                link.setItems(previousItems);
             }
             return command;
         });
@@ -441,19 +475,15 @@ export function changeEntityData(model: DiagramModel, target: ElementIri, data: 
     return command;
 }
 
-function updateLinksToReferByNewIri(model: DiagramModel, element: Element, oldIri: ElementIri, newIri: ElementIri) {
-    for (const link of model.getElementLinks(element)) {
-        if (link instanceof RelationLink) {
-            let data = link.data;
-            if (data.sourceId === oldIri) {
-                data = {...data, sourceId: newIri};
-            }
-            if (data.targetId === oldIri) {
-                data = {...data, targetId: newIri};
-            }
-            link.setData(data);
-        }
+function mapRelationEndpoint(relation: LinkModel, oldIri: ElementIri, newIri: ElementIri): LinkModel {
+    let data = relation;
+    if (data.sourceId === oldIri) {
+        data = {...data, sourceId: newIri};
     }
+    if (data.targetId === oldIri) {
+        data = {...data, targetId: newIri};
+    }
+    return data;
 }
 
 export function changeRelationData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {

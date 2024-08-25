@@ -13,8 +13,8 @@ import {
 } from './authoringState';
 import { DataDiagramModel } from './dataDiagramModel';
 import {
-    EntityElement, EntityGroup, RelationLink, iterateEntitiesOf,
-    changeRelationData, changeEntityData, setEntityGroupItems,
+    EntityElement, EntityGroup, RelationLink, RelationGroup, iterateEntitiesOf, iterateRelationsOf,
+    changeRelationData, changeEntityData, setEntityGroupItems, setRelationGroupItems,
 } from './dataElements';
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
@@ -181,8 +181,10 @@ export class EditorController {
                 }
                 this.model.removeElement(item.id);
             } else if (item instanceof Link) {
-                if (item instanceof RelationLink && AuthoringState.isNewLink(this.authoringState, item.data)) {
-                    this.deleteRelation(item.data);
+                for (const relation of iterateRelationsOf(item)) {
+                    if (AuthoringState.isNewLink(this.authoringState, relation)) {
+                        this.deleteRelation(relation);
+                    }
                 }
             }
         }
@@ -252,18 +254,15 @@ export class EditorController {
 
         const batch = this.model.history.startBatch('Delete entity');
 
-        const event = state.elements.get(elementIri);
-        // remove new connected links
-        const linksToRemove = new Set<string>();
+        // Remove new connected links
         for (const element of elements) {
-            for (const link of this.model.getElementLinks(element)) {
-                if (link instanceof RelationLink && AuthoringState.isNewLink(state, link.data)) {
-                    linksToRemove.add(link.id);
-                }
-            }
+            this.removeRelationsFromLinks(
+                this.model.getElementLinks(element),
+                relation => AuthoringState.isNewLink(state, relation)
+            );
         }
-        linksToRemove.forEach(linkId => this.model.removeLink(linkId));
 
+        const event = state.elements.get(elementIri);
         if (event) {
             this.discardChange(event);
         }
@@ -284,8 +283,7 @@ export class EditorController {
             this.model.createLinks(base.data);
         }
 
-        const links = findRelations(this.model, base.data);
-        if (links.length > 0) {
+        if (hasRelationOnDiagram(this.model, base.data)) {
             if (options.temporary) {
                 this.setTemporaryState(
                     TemporaryState.addLink(this.temporaryState, base.data)
@@ -317,9 +315,10 @@ export class EditorController {
             newState = AuthoringState.addLink(newState, newData);
 
             if (AuthoringState.isNewLink(this._authoringState, oldData)) {
-                for (const link of findRelations(this.model, oldData)) {
-                    this.model.removeLink(link.id);
-                }
+                this.removeRelationsFromLinks(
+                    this.model.links,
+                    relation => equalLinks(relation, oldData)
+                );
             }
             this.model.createLinks(newData);
             this.setAuthoringState(newState);
@@ -361,9 +360,10 @@ export class EditorController {
         const batch = this.model.history.startBatch('Delete link');
         const newState = AuthoringState.deleteLink(state, model);
         if (AuthoringState.isNewLink(state, model)) {
-            for (const link of findRelations(this.model, model)) {
-                this.model.removeLink(link.id);
-            }
+            this.removeRelationsFromLinks(
+                this.model.links,
+                relation => equalLinks(relation, model)
+            );
         }
         this.setAuthoringState(newState);
         batch.store();
@@ -445,9 +445,10 @@ export class EditorController {
                     changeRelationData(this.model, event.after, event.before)
                 );
             } else {
-                for (const link of findRelations(this.model, event.after)) {
-                    this.model.removeLink(link.id);
-                }
+                this.removeRelationsFromLinks(
+                    this.model.links,
+                    relation => equalLinks(relation, event.after)
+                );
             }
         }
         this.setAuthoringState(newState);
@@ -458,18 +459,39 @@ export class EditorController {
         const nextItems = group.items.filter(item => item.data.id !== target);
         this.model.history.execute(setEntityGroupItems(group, nextItems));
 
-        const discardedLinks = this.model.getElementLinks(group)
-            .filter(link =>
-                link instanceof RelationLink &&
-                (link.data.sourceId === target || link.data.targetId === target)
-            );
-        for (const link of discardedLinks) {
-            this.model.removeLink(link.id);
-        }
+        this.removeRelationsFromLinks(
+            this.model.getElementLinks(group),
+            ({sourceId, targetId}) => sourceId === target || targetId === target
+        );
 
         if (nextItems.length <= 1) {
             this.model.ungroupAll([group]);
         }
+    }
+
+    private removeRelationsFromLinks(
+        relations: ReadonlyArray<Link>,
+        match: (relation: LinkModel) => boolean
+    ): void {
+        const toRemove: Link[] = [];
+        const toRegroup: RelationGroup[] = [];
+        for (const link of relations) {
+            if (link instanceof RelationLink) {
+                if (match(link.data)) {
+                    toRemove.push(link);
+                }
+            } else if (link instanceof RelationGroup) {
+                if (link.items.some(item => match(item.data))) {
+                    const items = link.items.filter(item => !match(item.data));
+                    this.model.history.execute(setRelationGroupItems(link, items));
+                    toRegroup.push(link);
+                }
+            }
+        }
+        for (const link of toRemove) {
+            this.model.removeLink(link.id);
+        }
+        this.model.regroupLinks(toRegroup);
     }
 }
 
@@ -494,8 +516,13 @@ function findAnyEntityData(
     return undefined;
 }
 
-function findRelations(graph: GraphStructure, target: LinkModel): RelationLink[] {
-    return graph.links.filter((link): link is RelationLink =>
-        link instanceof RelationLink && equalLinks(link.data, target)
-    );
+function hasRelationOnDiagram(graph: GraphStructure, target: LinkModel): boolean {
+    for (const link of graph.links) {
+        for (const relation of iterateRelationsOf(link)) {
+            if (equalLinks(relation, target)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

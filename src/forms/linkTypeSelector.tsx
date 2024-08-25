@@ -3,13 +3,13 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
-import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks } from '../data/model';
+import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { RelationLink, LinkType } from '../editor/dataElements';
+import { LinkType, iterateRelationsOf } from '../editor/dataElements';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
@@ -193,12 +193,7 @@ export function validateLinkType(
     if (equalLinks(currentLink, originalLink)) {
         return Promise.resolve({error: undefined, allowChange: true});
     }
-    const alreadyOnDiagram = model.links.find(link =>
-        link instanceof RelationLink &&
-        equalLinks(link.data, currentLink) &&
-        !editor.temporaryState.links.has(currentLink)
-    );
-    if (alreadyOnDiagram) {
+    if (isRelationOnDiagram(model, currentLink) && !editor.temporaryState.links.has(currentLink)) {
         return Promise.resolve({error: 'The link already exists.', allowChange: false});
     }
     return model.dataProvider.links({
@@ -210,4 +205,15 @@ export function validateLinkType(
             ? {error: 'The link already exists.', allowChange: false}
             : {error: undefined, allowChange: true};
     });
+}
+
+function isRelationOnDiagram(model: DataDiagramModel, target: LinkKey): boolean {
+    for (const link of model.links) {
+        for (const relation of iterateRelationsOf(link)) {
+            if (equalLinks(relation, target)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

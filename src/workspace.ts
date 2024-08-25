@@ -86,7 +86,7 @@ export {
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
     changeEntityData, setEntityElementData, setEntityGroupItems, iterateEntitiesOf,
-    changeRelationData, setRelationGroupItems, setRelationLinkData,
+    changeRelationData, setRelationGroupItems, setRelationLinkData, iterateRelationsOf,
 } from './editor/dataElements';
 export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,

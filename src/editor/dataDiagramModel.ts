@@ -597,6 +597,18 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return ungroupedElements;
     }
 
+    regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
+        const batch = this.history.startBatch('Regroup relations');
+
+        for (const link of links) {
+            this.removeLink(link.id);
+        }
+
+        this.recreateLinks(new Set(links));
+
+        batch.store();
+    }
+
     private recreateLinks(links: ReadonlySet<Link>): void {
         for (const link of links) {
             if (link instanceof RelationLink) {
