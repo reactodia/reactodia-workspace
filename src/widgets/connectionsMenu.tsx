@@ -15,7 +15,7 @@ import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
-import { EntityElement, iterateEntitiesOf } from '../editor/dataElements';
+import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
@@ -88,6 +88,10 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             overlay.showDialog({
                 target: placeTarget,
                 dialogType: 'connectionsMenu',
+                style: {
+                    defaultSize: {width: 310, height: 320},
+                    minSize: {width: 300, height: 250},
+                },
                 content: (
                     <ConnectionsMenuInner {...props}
                         placeTarget={placeTarget}
@@ -511,7 +515,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }
     }
 
-    private onAddSelectedElements = (selectedObjects: ElementOnDiagram[]) => {
+    private onAddSelectedElements = (
+        selectedObjects: ElementOnDiagram[],
+        mode: ObjectPlacingMode
+    ) => {
         const {onClose} = this.props;
         const {objects} = this.state;
 
@@ -519,19 +526,37 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const linkTypeId = objects ? objects.chunk.linkType.id : undefined;
         const hasChosenLinkType = objects && linkTypeId !== this.ALL_RELATED_ELEMENTS_LINK.id;
 
-        this.placeElements(addedElementsIris, hasChosenLinkType ? linkTypeId : undefined);
+        this.placeElements(addedElementsIris, hasChosenLinkType ? linkTypeId : undefined, mode);
         onClose();
     };
 
-    private placeElements(elementIris: ElementIri[], linkTypeId: LinkTypeIri | undefined) {
+    private placeElements(
+        elementIris: ElementIri[],
+        linkTypeId: LinkTypeIri | undefined,
+        mode: ObjectPlacingMode
+    ): void {
         const {placeTarget, workspace: {model, triggerWorkspaceEvent}, canvas} = this.props;
         const batch = model.history.startBatch('Add connected elements');
 
-        const elements = elementIris.map(iri => model.createElement(iri));
-        canvas.renderingState.syncUpdate();
+        let placedElements: Element[] = [];
+        switch (mode) {
+            case 'separately': {
+                placedElements = elementIris.map(iri => model.createElement(iri));
+                break;
+            }
+            case 'grouped': {
+                const group = new EntityGroup({
+                    items: elementIris.map(iri => ({data: EntityElement.placeholderData(iri)})),
+                });
+                model.addElement(group);
+                placedElements = [group];
+                break;
+            }
+        }
 
+        canvas.renderingState.syncUpdate();
         placeElementsAround({
-            elements,
+            elements: placedElements,
             model,
             sizeProvider: canvas.renderingState,
             targetElement: placeTarget,
@@ -914,9 +939,14 @@ interface ObjectsPanelProps {
     loading?: boolean;
     model: DiagramModel;
     filterKey?: string;
-    onPressAddSelected: (selectedObjects: ElementOnDiagram[]) => void;
+    onPressAddSelected: (
+        selectedObjects: ElementOnDiagram[],
+        mode: ObjectPlacingMode
+    ) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 }
+
+type ObjectPlacingMode = 'separately' | 'grouped';
 
 interface ObjectsPanelState {
     chunkId: string;
@@ -1025,6 +1055,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
 
         const nonPresented = objects.filter(el => !el.presentOnDiagram);
         const active = nonPresented.filter(el => selection.has(el.model.id));
+        const selectedItems = active.length > 0 ? active : nonPresented;
 
         return <div className={`${CLASS_NAME}__objects`}>
             <div className={`${CLASS_NAME}__objects-select-all`}>
@@ -1065,13 +1096,23 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             )}
             <div className={`${CLASS_NAME}__objects-statusbar`}>
                 {this.renderCounter(active.length)}
+                <div className={`${CLASS_NAME}__objects-spacer`} aria-hidden='true' />
                 <button
                     className={classnames(
                         `${CLASS_NAME}__objects-add-button`,
-                        'reactodia-btn reactodia-btn-primary pull-right'
+                        'reactodia-btn reactodia-btn-secondary'
+                    )}
+                    disabled={this.props.loading || selectedItems.length <= 1}
+                    onClick={() => onPressAddSelected(selectedItems, 'grouped')}>
+                    Add as group
+                </button>
+                <button
+                    className={classnames(
+                        `${CLASS_NAME}__objects-add-button`,
+                        'reactodia-btn reactodia-btn-primary'
                     )}
                     disabled={this.props.loading || nonPresented.length === 0}
-                    onClick={() => onPressAddSelected(active.length > 0 ? active : nonPresented)}>
+                    onClick={() => onPressAddSelected(selectedItems, 'separately')}>
                     {active.length > 0 ? 'Add selected' : 'Add all'}
                 </button>
             </div>

@@ -10,14 +10,40 @@ import {
 
 import { DraggableHandle } from '../workspace/draggableHandle';
 
-export interface DialogProps {
+export interface DialogProps extends DialogStyleProps {
     target: Element | Link;
-    size?: { width: number; height: number };
+    onClose: () => void;
+    children: React.ReactNode;
+}
+
+/**
+ * Dialog style, placement and sizing options.
+ */
+export interface DialogStyleProps {
+    /**
+     * Default size for the dialog.
+     *
+     * @default {width: 300, height: 300}
+     */
+    defaultSize?: Size;
+    /**
+     * Minimum size for the dialog when resizing.
+     *
+     * @default {width: 250, height: 250}
+     */
+    minSize?: Size;
+    /**
+     * Maximum size for the dialog when resizing.
+     *
+     * @default {width: 800, height: 800}
+     */
+    maxSize?: Size;
+    /**
+     * Dialog caption which is displayed in its header.
+     */
     caption?: string;
     offset?: Vector;
     calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
-    onClose: () => void;
-    children: React.ReactNode;
 }
 
 interface State {
@@ -28,10 +54,8 @@ interface State {
 const CLASS_NAME = 'reactodia-dialog';
 
 const DEFAULT_SIZE: Size = {width: 300, height: 300};
-const MIN_WIDTH = 250;
-const MIN_HEIGHT = 250;
-const MAX_WIDTH = 800;
-const MAX_HEIGHT = 800;
+const MIN_SIZE: Size = {width: 250, height: 250};
+const MAX_SIZE: Size = {width: 800, height: 800};
 
 const ELEMENT_OFFSET = 40;
 const LINK_OFFSET = 20;
@@ -117,7 +141,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private calculatePositionForElement(element: Element): Vector {
-        const {size = DEFAULT_SIZE} = this.props;
+        const {defaultSize = DEFAULT_SIZE} = this.props;
         const {canvas} = this.context;
 
         const bbox = boundsOf(element, canvas.renderingState);
@@ -129,7 +153,7 @@ export class Dialog extends React.Component<DialogProps, State> {
 
         return {
             x: x1 + ELEMENT_OFFSET,
-            y: (y0 + y1) / 2 - (size.height / 2),
+            y: (y0 + y1) / 2 - (defaultSize.height / 2),
         };
     }
 
@@ -190,15 +214,15 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private getDialogScrollablePoints(): {min: Vector; max: Vector} {
-        const {size = DEFAULT_SIZE} = this.props;
+        const {defaultSize = DEFAULT_SIZE} = this.props;
         const {x, y} = this.calculatePosition();
         const min = {
             x: x - FOCUS_OFFSET,
             y: y - FOCUS_OFFSET,
         };
         const max = {
-            x: min.x + size.width + FOCUS_OFFSET * 2,
-            y: min.y + size.height + FOCUS_OFFSET * 2,
+            x: min.x + defaultSize.width + FOCUS_OFFSET * 2,
+            y: min.y + defaultSize.height + FOCUS_OFFSET * 2,
         };
         return {min, max};
     }
@@ -238,21 +262,32 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     private onStartDragging = (e: React.MouseEvent<HTMLDivElement>) => {
         this.preventSelection();
-        const {size = DEFAULT_SIZE} = this.props;
-        this.startSize = {x: this.state.width || size.width, y: this.state.height || size.height};
+        const {defaultSize = DEFAULT_SIZE} = this.props;
+        this.startSize = {
+            x: this.state.width || defaultSize.width,
+            y: this.state.height || defaultSize.height,
+        };
     };
 
     private calculateHeight(height: number) {
-        const {size = DEFAULT_SIZE} = this.props;
-        const minHeight = Math.min(size.height, MIN_HEIGHT);
-        const maxHeight = Math.max(size.height, MAX_HEIGHT);
+        const {
+            defaultSize = DEFAULT_SIZE,
+            minSize = MIN_SIZE,
+            maxSize = MAX_SIZE,
+        } = this.props;
+        const minHeight = Math.min(defaultSize.height, minSize.height);
+        const maxHeight = Math.max(defaultSize.height, maxSize.height);
         return Math.max(minHeight, Math.min(maxHeight, height));
     }
 
     private calculateWidth(width: number) {
-        const {size = DEFAULT_SIZE} = this.props;
-        const minWidth = Math.min(size.width, MIN_WIDTH);
-        const maxWidth = Math.max(size.width, MAX_WIDTH);
+        const {
+            defaultSize = DEFAULT_SIZE,
+            minSize = MIN_SIZE,
+            maxSize = MAX_SIZE
+        } = this.props;
+        const minWidth = Math.min(defaultSize.width, minSize.width);
+        const maxWidth = Math.max(defaultSize.width, maxSize.width);
         return Math.max(minWidth, Math.min(maxWidth, width));
     }
 
@@ -282,10 +317,10 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     render() {
-        const {size = DEFAULT_SIZE, caption} = this.props;
+        const {defaultSize = DEFAULT_SIZE, caption} = this.props;
         const {x, y} = this.calculatePosition();
-        const width = this.state.width || size.width;
-        const height = this.state.height || size.height;
+        const width = this.state.width || defaultSize.width;
+        const height = this.state.height || defaultSize.height;
         const style = {
             top: y,
             left: x,
