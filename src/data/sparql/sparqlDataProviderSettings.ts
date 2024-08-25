@@ -18,6 +18,11 @@ export interface SparqlDataProviderSettings {
     dataLabelProperty: string;
 
     /**
+     * Set of language tags to provide a FILTER for labels and other literal values.
+     */
+    filterOnlyLanguages?: ReadonlyArray<string>;
+
+    /**
      * SELECT query to retrieve class tree.
      *
      * Parametrized variables:
@@ -37,6 +42,7 @@ export interface SparqlDataProviderSettings {
      * Parametrized variables:
      *   - `${ids}` VALUES clause content with class IRIs
      *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      *
      * Expected output bindings:
      *   - `?class`
@@ -51,6 +57,7 @@ export interface SparqlDataProviderSettings {
      * Parametrized variables:
      *   - `${linkTypesPattern}` `linkTypesPattern` property from the settings
      *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      *
      * Expected output bindings:
      *   - `?link`
@@ -72,6 +79,7 @@ export interface SparqlDataProviderSettings {
      * Parametrized variables:
      *   - `${ids}` VALUES clause content with link type IRIs
      *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      *
      * Expected output bindings:
      *   - `?link`
@@ -86,6 +94,7 @@ export interface SparqlDataProviderSettings {
      * Parametrized variables:
      *   - `${ids}` VALUES clause content with datatype property IRIs
      *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      *
      * Expected output bindings:
      *   - `?property`
@@ -99,12 +108,14 @@ export interface SparqlDataProviderSettings {
      * Parametrized variables:
      *   - `${ids}` VALUES clause content with element IRIs
      *   - `${dataLabelProperty}` `dataLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
+     *   - `${valueLanguageFilter}` property value filter based on `filterOnlyLanguages`
      *   - `${propertyConfigurations}`
      *
      * Expected output format for triples:
      *   - `?inst <urn:reactodia:sparql:type> ?class` element has type
      *   - `?inst <urn:reactodia:sparql:label> ?label` element has label
-     *   - `?inst ?property ?value` element has value for a datatype property
+     *   - `?inst ?propType ?propValue` element has value for a datatype property
      */
     elementInfoQuery: string;
 
@@ -113,6 +124,7 @@ export interface SparqlDataProviderSettings {
      *
      * Parametrized variables:
      *   - `${ids}` VALUES clause content with element IRIs
+     *   - `${propLanguageFilter}` property value filter based on `filterOnlyLanguages`
      *   - `${linkConfigurations}`
      *
      * Expected output bindings:
@@ -192,7 +204,8 @@ export interface SparqlDataProviderSettings {
      * but within the lookup query.
      *
      * Parametrized variables:
-     *   - `${dataLabelProperty}`
+     *   - `${dataLabelProperty}` `dataLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      */
     filterElementInfoPattern: string;
 
@@ -375,14 +388,20 @@ export const RdfSettings: SparqlDataProviderSettings = {
     classInfoQuery:
 `SELECT ?class ?label ?instcount WHERE {
     VALUES(?class) {\${ids}}
-    OPTIONAL { ?class \${schemaLabelProperty} ?label }
+    OPTIONAL {
+        ?class \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
     BIND("" as ?instcount)
 }`,
 
     linkTypesQuery:
 `SELECT DISTINCT ?link ?instcount ?label WHERE {
     \${linkTypesPattern}
-    OPTIONAL { ?link \${schemaLabelProperty} ?label }
+    OPTIONAL {
+        ?link \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
 }`,
 
     linkTypesPattern: '',
@@ -390,13 +409,19 @@ export const RdfSettings: SparqlDataProviderSettings = {
     linkTypesInfoQuery:
 `SELECT ?link ?label WHERE {
     VALUES(?link) {\${ids}}
-    OPTIONAL { ?link \${schemaLabelProperty} ?label }
+    OPTIONAL {
+        ?link \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
 }`,
 
     propertyInfoQuery:
 `SELECT ?property ?label WHERE {
     VALUES(?property) {\${ids}}
-    OPTIONAL { ?property \${schemaLabelProperty} ?label }
+    OPTIONAL {
+        ?property \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
 }`,
 
     elementInfoQuery: '',
@@ -425,6 +450,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
     classTreeQuery: `
         SELECT distinct ?class ?label ?parent WHERE {
             ?class rdfs:label ?label.
+            \${labelLanguageFilter}
             { ?class wdt:P279 wd:Q35120. }
             UNION
             { ?parent wdt:P279 wd:Q35120.
@@ -447,6 +473,17 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
     OPTIONAL {
         ?claim <http://wikiba.se/ontology#directClaim> ?link .
         ?claim \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
+}`,
+
+    propertyInfoQuery:
+`SELECT ?property ?label WHERE {
+    VALUES (?property) {\${ids}}
+    OPTIONAL {
+        ?claim <http://wikiba.se/ontology#directClaim> ?property .
+        ?claim \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
     }
 }`,
 
@@ -460,10 +497,14 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
             OPTIONAL {
                 ?inst wdt:P31 ?class
             }
-            OPTIONAL {?inst rdfs:label ?label}
+            OPTIONAL {
+                ?inst rdfs:label ?label
+                \${labelLanguageFilter}
+            }
             OPTIONAL {
                 \${propertyConfigurations}
                 FILTER (isLiteral(?propValue))
+                \${valueLanguageFilter}
             }
         }
     `,
@@ -507,10 +548,14 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
                         BIND(STR(?inst) as ?strInst)
                         FILTER exists {?inst ?someprop ?someobj}
 `,
-    filterElementInfoPattern: `OPTIONAL {?inst wdt:P31 ?foundClass}
-                BIND (coalesce(?foundClass, owl:Thing) as ?class)
-                OPTIONAL {?inst rdfs:label ?label}
-`,
+    filterElementInfoPattern: `
+        OPTIONAL {?inst wdt:P31 ?foundClass}
+        BIND (coalesce(?foundClass, owl:Thing) as ?class)
+        OPTIONAL {
+            ?inst rdfs:label ?label
+            \${labelLanguageFilter}
+        }
+    `,
     fullTextSearch: {
         prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>\n',
         queryPattern: `
@@ -551,25 +596,28 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
         extractLabel: true,
     },
     classTreeQuery: `
-            SELECT ?class ?label ?parent
-            WHERE {
-                {
-                    ?class a rdfs:Class
-                } UNION {
-                    ?class a owl:Class
-                }
-                FILTER ISIRI(?class)
-                OPTIONAL {?class rdfs:label ?label}
-                OPTIONAL {?class rdfs:subClassOf ?parent. FILTER ISIRI(?parent)}
+        SELECT ?class ?label ?parent
+        WHERE {
+            {
+                ?class a rdfs:Class
+            } UNION {
+                ?class a owl:Class
             }
-        `,
+            FILTER ISIRI(?class)
+            OPTIONAL {
+                ?class rdfs:label ?label
+                \${labelLanguageFilter}
+            }
+            OPTIONAL {?class rdfs:subClassOf ?parent. FILTER ISIRI(?parent)}
+        }
+    `,
 
     // todo: think more, maybe add a limit here?
-    linkTypesPattern: `{	?link a rdf:Property
-                    } UNION {
-                    ?link a owl:ObjectProperty
-                }
-                BIND('' as ?instcount)
+    linkTypesPattern: `
+        { ?link a rdf:Property }
+        UNION
+        { ?link a owl:ObjectProperty }
+        BIND('' as ?instcount)
     `,
     elementInfoQuery: `
         CONSTRUCT {
@@ -579,10 +627,14 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
         } WHERE {
             VALUES (?inst) {\${ids}}
             OPTIONAL { ?inst a ?class }
-            OPTIONAL {?inst \${dataLabelProperty} ?label}
+            OPTIONAL {
+                ?inst \${dataLabelProperty} ?label
+                \${labelLanguageFilter}
+            }
             OPTIONAL {
                 \${propertyConfigurations}
                 FILTER (isLiteral(?propValue))
+                \${valueLanguageFilter}
             }
         }
     `,
@@ -611,9 +663,14 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     `,
     filterRefElementLinkPattern: '',
     filterTypePattern: '?inst a ?instType. ?instType rdfs:subClassOf* ?class',
-    filterElementInfoPattern: `OPTIONAL {?inst rdf:type ?foundClass}
-                BIND (coalesce(?foundClass, owl:Thing) as ?class)
-                OPTIONAL {?inst \${dataLabelProperty} ?label}`,
+    filterElementInfoPattern: `
+        OPTIONAL {?inst rdf:type ?foundClass}
+        BIND (coalesce(?foundClass, owl:Thing) as ?class)
+        OPTIONAL {
+            ?inst \${dataLabelProperty} ?label
+            \${labelLanguageFilter}
+        }
+    `,
     filterAdditionalRestriction: '',
 };
 
@@ -633,7 +690,10 @@ const OWLStatsOverride: Partial<SparqlDataProviderSettings> = {
             } UNION {
                 ?class rdf:type owl:Class
             }
-            OPTIONAL {?class rdfs:label ?label}
+            OPTIONAL {
+                ?class rdfs:label ?label
+                \${labelLanguageFilter}
+            }
             OPTIONAL {?class rdfs:subClassOf ?parent. FILTER ISIRI(?parent)}
         }
     `,

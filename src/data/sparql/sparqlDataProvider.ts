@@ -151,13 +151,14 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<ElementTypeGraph> {
         const {signal} = params;
-        const {defaultPrefix, schemaLabelProperty, classTreeQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, classTreeQuery} = this.settings;
         if (!classTreeQuery) {
             return {elementTypes: [], subtypeOf: []};
         }
 
         const query = defaultPrefix + resolveTemplate(classTreeQuery, {
             schemaLabelProperty,
+            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
         const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
         const classTree = getClassTree(result);
@@ -174,7 +175,7 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         const {propertyIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, propertyInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, propertyInfoQuery} = this.settings;
 
         let properties: Map<PropertyTypeIri, PropertyTypeModel>;
         if (propertyInfoQuery) {
@@ -182,6 +183,7 @@ export class SparqlDataProvider implements DataProvider {
             const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
                 ids,
                 schemaLabelProperty,
+                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
             });
             const result = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
             properties = getPropertyInfo(result);
@@ -204,7 +206,7 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         const {classIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, classInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, classInfoQuery} = this.settings;
 
         let classes: Map<ElementTypeIri, ElementTypeModel>;
         if (classInfoQuery) {
@@ -212,6 +214,7 @@ export class SparqlDataProvider implements DataProvider {
             const query = defaultPrefix + resolveTemplate(classInfoQuery, {
                 ids,
                 schemaLabelProperty,
+                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
             });
             const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
             classes = getClassInfo(result);
@@ -234,7 +237,7 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, linkTypesInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesInfoQuery} = this.settings;
 
         let linkTypes: Map<LinkTypeIri, LinkTypeModel>;
         if (linkTypesInfoQuery) {
@@ -242,6 +245,7 @@ export class SparqlDataProvider implements DataProvider {
             const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
                 ids,
                 schemaLabelProperty,
+                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
             });
             const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
             linkTypes = getLinkTypes(result);
@@ -263,7 +267,9 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<LinkTypeModel[]> {
         const {signal} = params;
-        const {defaultPrefix, schemaLabelProperty, linkTypesQuery, linkTypesPattern} = this.settings;
+        const {
+            defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesQuery, linkTypesPattern,
+        } = this.settings;
         if (!linkTypesQuery) {
             return [];
         }
@@ -271,6 +277,7 @@ export class SparqlDataProvider implements DataProvider {
         const query = defaultPrefix + resolveTemplate(linkTypesQuery, {
             linkTypesPattern,
             schemaLabelProperty,
+            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
         const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
         const linkTypes = getLinkTypes(result);
@@ -291,10 +298,12 @@ export class SparqlDataProvider implements DataProvider {
         let triples: Rdf.Quad[];
         if (elementIds.length > 0) {
             const ids = elementIds.map(escapeIri).map(id => ` (${id})`).join(' ');
-            const {defaultPrefix, dataLabelProperty, elementInfoQuery} = this.settings;
+            const {defaultPrefix, dataLabelProperty, filterOnlyLanguages, elementInfoQuery} = this.settings;
             const query = defaultPrefix + resolveTemplate(elementInfoQuery, {
                 ids,
                 dataLabelProperty,
+                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                valueLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
                 propertyConfigurations: this.formatPropertyInfo(),
             });
             triples = await this.executeSparqlConstruct(query);
@@ -362,12 +371,14 @@ export class SparqlDataProvider implements DataProvider {
 
         let bindings: Promise<SparqlResponse<LinkBinding>>;
         if (elementIds.length > 0) {
+            const {filterOnlyLanguages, linksInfoQuery} = this.settings;
             const ids = elementIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
-            const linksInfoQuery =  this.settings.defaultPrefix + resolveTemplate(this.settings.linksInfoQuery, {
+            const query =  this.settings.defaultPrefix + resolveTemplate(linksInfoQuery, {
                 ids,
+                propLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
                 linkConfigurations,
             });
-            bindings = this.executeSparqlSelect<LinkBinding>(linksInfoQuery, {signal});
+            bindings = this.executeSparqlSelect<LinkBinding>(query, {signal});
         } else {
             bindings = Promise.resolve({
                 head: {vars: []},
@@ -548,7 +559,14 @@ export class SparqlDataProvider implements DataProvider {
             elementTypePart = this.settings.filterTypePattern.replace(/[?$]class\b/g, elementTypeIri);
         }
 
-        const {defaultPrefix, fullTextSearch, dataLabelProperty} = this.settings;
+        const {
+            defaultPrefix, dataLabelProperty, filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
+        } = this.settings;
+
+        const elementInfoPart = resolveTemplate(filterElementInfoPattern, {
+            dataLabelProperty,
+            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+        });
 
         let textSearchPart = '';
         if (params.text) {
@@ -580,7 +598,7 @@ export class SparqlDataProvider implements DataProvider {
                 ${limitPart}
             }
             ${refQueryTypes}
-            ${resolveTemplate(this.settings.filterElementInfoPattern, {dataLabelProperty})}
+            ${elementInfoPart}
         } ${textSearchPart ? 'ORDER BY DESC(?score)' : ''}
         `;
     }
@@ -939,6 +957,21 @@ function queryInternal(params: {
         headers: params.headers,
         signal: params.signal,
     });
+}
+
+function formatLanguageFilter(
+    variable: string,
+    languages: ReadonlyArray<string> | undefined
+): string {
+    if (!languages) {
+        return '';
+    }
+    const parts = [`FILTER(!isLiteral(${variable}) || lang(${variable}) = ""`];
+    for (const language of languages) {
+        parts.push(` || lang(${variable}) = "${language}"`);
+    }
+    parts.push(')');
+    return parts.join('');
 }
 
 function sparqlExtractLabel(subject: string, label: string): string {
