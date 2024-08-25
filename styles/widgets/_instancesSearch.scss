@@ -99,4 +99,29 @@
       filter: invert(100%);
     }
   }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    height: 40px;
+    border-top: 1px solid rgb(221, 221, 221);
+    transition: height 200ms 0ms;
+  }
+
+  &__actions-hidden {
+    height: 0;
+    padding: 0;
+  }
+
+  &__action {
+    padding-top: 1px;
+    padding-bottom: 2px;
+
+    margin-top: 6px;
+    margin-bottom: 6px;
+    margin-left: 6px;
+    &:last-child {
+      margin-right: 6px;
+    }
+  }
 }

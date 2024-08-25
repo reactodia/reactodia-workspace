@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as ReactDom from 'react-dom';
 import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
@@ -7,11 +8,18 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement } from '../data/model';
 import { LookupParams } from '../data/provider';
 
+import type { CanvasApi } from '../diagram/canvasApi';
+import { VoidElement } from '../diagram/elements';
+import { Vector } from '../diagram/geometry';
+import { placeElementsAround } from '../diagram/layout';
+
+import { requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
+
 import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
 
 import { ProgressBar, ProgressState } from './progressBar';
 import { SearchResults } from './searchResults';
-import { EntityElement } from '../workspace';
+import { boundsOf, EntityElement, EntityGroup } from '../workspace';
 
 const DIRECTION_IN_ICON = require('@images/direction-in.svg');
 const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
@@ -149,6 +157,8 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
 
         const searchTerm = this.state.inputText === undefined
             ? this.state.criteria.text : this.state.inputText;
+        
+        const actionsAreHidden = this.state.querying || this.state.selection.size === 0;
 
         return <div className={className}>
             <ProgressBar state={progressState}
@@ -196,6 +206,25 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
                         Show more
                     </button>
                 </div>
+            </div>
+            <div
+                className={classnames(
+                    `${CLASS_NAME}__actions`,
+                    actionsAreHidden ? `${CLASS_NAME}__actions-hidden` : undefined
+                )}
+                aria-hidden={actionsAreHidden ? 'true' : undefined}>
+                <button type='button'
+                    className={`${CLASS_NAME}__action reactodia-btn reactodia-btn-secondary`}
+                    disabled={this.state.querying || this.state.selection.size <= 1}
+                    onClick={() => this.placeSelectedItems('group')}>
+                    Add as group
+                </button>
+                <button type='button'
+                    className={`${CLASS_NAME}__action reactodia-btn reactodia-btn-primary`}
+                    disabled={this.state.querying || this.state.selection.size === 0}
+                    onClick={() => this.placeSelectedItems('separately')}>
+                    Add selected
+                </button>
             </div>
         </div>;
     }
@@ -369,6 +398,57 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
             });
         }
     }
+
+    private placeSelectedItems(mode: 'separately' | 'group'): void {
+        const {model, view} = this.context;
+        const canvas = view.findAnyCanvas();
+        const {items, selection} = this.state;
+
+        if (!canvas || selection.size === 0) {
+            return;
+        }
+
+        const batch = model.history.startBatch('Add selected elements');
+        const selectedEntities = items
+            ? items.filter(item => selection.has(item.id))
+            : Array.from(selection, EntityElement.placeholderData);
+
+        if (mode === 'separately') {
+            const target = new VoidElement({
+                position: getViewportPlacementPosition(canvas, 0.3, 0.5),
+            });
+
+            const elements = selectedEntities.map(entity => model.createElement(entity));
+            canvas.renderingState.syncUpdate();
+
+            placeElementsAround({
+                elements,
+                model,
+                sizeProvider: canvas.renderingState,
+                targetElement: target,
+                preferredLinksLength: 150,
+            });
+        } else {
+            const group = new EntityGroup({
+                items: selectedEntities.map(data => ({data})),
+                position: getViewportPlacementPosition(canvas, 0.5, 0.5),
+            });
+
+            model.addElement(group);
+            canvas.renderingState.syncUpdate();
+
+            const {x, y, width, height} = boundsOf(group, canvas.renderingState);
+            group.setPosition({
+                x: x - width / 2,
+                y: y - height / 2,
+            });
+        }
+
+        batch.history.execute(requestElementData(model, Array.from(selection)));
+        batch.history.execute(restoreLinksBetweenElements(model));
+
+        batch.store();
+    }
 }
 
 export function createRequest(criteria: SearchCriteria): LookupParams {
@@ -381,4 +461,12 @@ export function createRequest(criteria: SearchCriteria): LookupParams {
         linkDirection,
         limit: ITEMS_PER_PAGE,
     };
+}
+
+function getViewportPlacementPosition(canvas: CanvasApi, fractionX: number, fractionY: number): Vector {
+    const viewport = canvas.metrics.area;
+    return canvas.metrics.clientToPaperCoords(
+        viewport.clientWidth * fractionX,
+        viewport.clientHeight * fractionY
+    );
 }

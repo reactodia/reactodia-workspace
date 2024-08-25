@@ -4,13 +4,13 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 
 import { ElementModel, LinkModel } from '../data/model';
 
-import { CanvasApi, CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
+import { CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex } from '../diagram/elements';
-import { Vector } from '../diagram/geometry';
+import { Size } from '../diagram/geometry';
 import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
-import { Dialog } from '../widgets/dialog';
+import { Dialog, DialogStyleProps } from '../widgets/dialog';
 
 import { EditEntityForm } from '../forms/editEntityForm';
 import { EditLinkForm } from '../forms/editLinkForm';
@@ -202,20 +202,32 @@ export class OverlayController {
     }
 
     showDialog(params: {
+        /**
+         * Element or link to anchor dialog to.
+         */
         target: Element | Link;
         dialogType?: KnownDialogType;
+        /**
+         * Dialog style, placement and sizing options.
+         */
+        style?: DialogStyleProps;
+        /**
+         * Dialog content.
+         */
         content: React.ReactElement<any>;
-        size?: { width: number; height: number };
-        caption?: string;
-        offset?: Vector;
-        calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
+        /**
+         * Whether to prevent selection changes while dialog is open.
+         *
+         * @default false
+         */
         holdSelection?: boolean;
+        /**
+         * Callback which is called when dialog is closed for any reason
+         * (e.g. when another dialog is opened).
+         */
         onClose: () => void;
-    }) {
-        const {
-            target, dialogType, content, size, caption, offset, calculatePosition, onClose,
-            holdSelection = false,
-        } = params;
+    }): void {
+        const {target, style, dialogType, content, holdSelection = false, onClose} = params;
         if (this._openedDialog && this._openedDialog.target !== target) {
             this.hideDialog();
         }
@@ -229,11 +241,8 @@ export class OverlayController {
         };
 
         const dialog = (
-            <Dialog target={target}
-                size={size}
-                caption={caption}
-                offset={offset}
-                calculatePosition={calculatePosition}
+            <Dialog {...style}
+                target={target}
                 onClose={onClose}>
                 {content}
             </Dialog>
@@ -324,8 +333,10 @@ export class OverlayController {
         this.showDialog({
             target,
             dialogType: 'findOrCreateEntity',
+            style: {
+                caption: 'Establish New Connection',
+            },
             content,
-            caption: 'Establish New Connection',
             onClose: onCancel,
         });
     }
@@ -368,36 +379,40 @@ export class OverlayController {
         this.showDialog({
             target: link,
             dialogType: 'editLink',
+            style: {
+                defaultSize: {width: 300, height: 160},
+                caption,
+            },
             content,
-            size: {width: 300, height: 160},
-            caption,
             onClose: onCancel,
         });
     }
 
     showRenameLinkForm(link: Link): void {
-        const size = {width: 300, height: 145};
+        const defaultSize: Size = {width: 300, height: 145};
         const onFinish = () => this.hideDialog();
         this.showDialog({
             target: link,
             dialogType: 'renameLink',
+            style: {
+                defaultSize,
+                caption: 'Rename Link',
+                offset: {x: 25, y: - defaultSize.height / 2},
+                calculatePosition: canvas => {
+                    const bounds = canvas.renderingState.getLinkLabelBounds(link);
+                    if (bounds) {
+                        const {x, y, width, height} = bounds;
+                        return {x: x + width, y: y + height / 2};
+                    } else {
+                        return undefined;
+                    }
+                },
+            },
             content: (
                 <RenameLinkForm link={link}
                     onFinish={onFinish}
                 />
             ),
-            size,
-            caption: 'Rename Link',
-            offset: {x: 25, y: - size.height / 2},
-            calculatePosition: canvas => {
-                const bounds = canvas.renderingState.getLinkLabelBounds(link);
-                if (bounds) {
-                    const {x, y, width, height} = bounds;
-                    return {x: x + width, y: y + height / 2};
-                } else {
-                    return undefined;
-                }
-            },
             onClose: onFinish,
         });
     }

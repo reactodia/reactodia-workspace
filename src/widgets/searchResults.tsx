@@ -20,6 +20,16 @@ export interface SearchResultProps {
     highlightText?: string;
     /** @default true */
     useDragAndDrop?: boolean;
+    /**
+     * Whether to unselect previously selected item on click and require
+     * to click with Control/Meta key to select multiple items.
+     * 
+     * It is also always possible to select a range of items by holding Shift
+     * when selecting a second item to select all other items in between as well.
+     *
+     * @default false
+     */
+    singleSelectOnClick?: boolean;
 }
 
 const enum Direction { Up, Down }
@@ -169,8 +179,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
     private onItemClick = (event: React.MouseEvent<any>, model: ElementModel) => {
         event.preventDefault();
 
-        const {items, selection, onSelectionChanged} = this.props;
-        const previouslySelected = selection.has(model.id);
+        const {items, selection, onSelectionChanged, singleSelectOnClick} = this.props;
         const modelIndex = items.indexOf(model);
 
         let newSelection: Set<ElementIri>;
@@ -183,14 +192,16 @@ export class SearchResults extends React.Component<SearchResultProps> {
             this.endSelection = this.startSelection = modelIndex;
             const ctrlKey = event.ctrlKey || event.metaKey;
 
-            if (ctrlKey) { // select/deselect
+            if (!singleSelectOnClick || ctrlKey) {
+                // select/deselect
                 newSelection = new Set(selection);
                 if (selection.has(model.id)) {
                     newSelection.delete(model.id);
                 } else {
                     newSelection.add(model.id);
                 }
-            } else { // single click
+            } else {
+                // single click
                 newSelection = new Set<ElementIri>();
                 newSelection.add(model.id);
             }
