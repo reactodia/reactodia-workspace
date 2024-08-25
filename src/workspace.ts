@@ -103,9 +103,9 @@ export { ValidationState, ElementValidation, LinkValidation } from './editor/val
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
 export {
-    SerializedLayout, SerializedDiagram, SerializedLayoutElement, SerializedLayoutGroup,
-    SerializedLayoutGroupItem, SerializedLayoutLink, SerializedLinkOptions,
-    makeSerializedDiagram, makeSerializedLayout,
+    SerializedDiagram, SerializedLayout, SerializedLinkOptions,
+    SerializedLayoutElement, SerializedLayoutElementGroup, SerializedLayoutElementItem,
+    SerializedLayoutLink, SerializedLayoutLinkGroup, SerializedLayoutLinkItem,
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate } from './templates/classicTemplate';

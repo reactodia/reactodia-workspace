@@ -8,11 +8,10 @@ import {
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/provider';
 import * as Rdf from '../data/rdf/rdfModel';
-import { PLACEHOLDER_LINK_TYPE, TemplateProperties } from '../data/schema';
 
 import { setLinkState } from '../diagram/commands';
 import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
-import { Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
+import { Link, LinkTypeVisibility } from '../diagram/elements';
 import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
 import {
@@ -30,8 +29,8 @@ import {
 } from './dataElements';
 import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
 import {
-    SerializedLayout, SerializedLinkOptions, SerializedDiagram, emptyDiagram, emptyLayoutData,
-    makeSerializedLayout, makeSerializedDiagram, 
+    SerializedDiagram, SerializedLinkOptions, emptyDiagram,
+    serializeDiagram, deserializeDiagram, markLayoutOnly,
 } from './serializedDiagram';
 import { DataGraph } from './dataGraph';
 
@@ -164,7 +163,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
 
             this.createGraphElements({
-                layoutData: diagram.layoutData,
+                diagram,
                 preloadedElements,
                 markLinksAsLayoutOnly: validateLinks,
             });
@@ -211,22 +210,16 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     exportLayout(): SerializedDiagram {
-        const layoutData = makeSerializedLayout(this.graph.getElements(), this.graph.getLinks());
         const knownLinkTypes = new Set(this.graph.getLinks().map(link => link.typeId));
-        const linkTypeOptions: SerializedLinkOptions[] = [];
+        const linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
         for (const linkTypeIri of knownLinkTypes) {
-            const visibility = this.getLinkVisibility(linkTypeIri);
-            // do not serialize default link type options
-            if  (visibility !== 'visible' && linkTypeIri !== PLACEHOLDER_LINK_TYPE) {
-                linkTypeOptions.push({
-                    '@type': 'LinkTypeOptions',
-                    property: linkTypeIri,
-                    visible: visibility !== 'hidden',
-                    showLabel: visibility !== 'withoutLabel',
-                });
-            }
+            linkTypeVisibility.set(linkTypeIri, this.getLinkVisibility(linkTypeIri));
         }
-        return makeSerializedDiagram({layoutData, linkTypeOptions});
+        return serializeDiagram({
+            elements: this.graph.getElements(),
+            links: this.graph.getLinks(),
+            linkTypeVisibility,
+        });
     }
 
     private initLinkTypes(linkTypes: LinkTypeModel[]): LinkType[] {
@@ -253,95 +246,35 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     private createGraphElements(params: {
-        layoutData?: SerializedLayout;
+        diagram: SerializedDiagram;
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
         markLinksAsLayoutOnly: boolean;
     }): void {
-        const {
-            layoutData = emptyLayoutData(),
-            preloadedElements,
-            markLinksAsLayoutOnly,
-        } = params;
+        const {diagram, preloadedElements, markLinksAsLayoutOnly} = params;
 
-        const elementIrisToRequestData: ElementIri[] = [];
-        const usedLinkTypes = new Set<LinkTypeIri>();
+        const {
+            elements,
+            links,
+            linkTypeVisibility,
+        } = deserializeDiagram(diagram, {preloadedElements, markLinksAsLayoutOnly});
 
         const batch = this.history.startBatch('Import layout');
 
-        for (const layoutElement of layoutData.elements) {
-            switch (layoutElement['@type']) {
-                case 'Element': {
-                    const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
-                    if (iri) {
-                        const preloadedData = preloadedElements?.get(iri);
-                        const data = preloadedData ?? EntityElement.placeholderData(iri);
-                        const element = new EntityElement({id, data, position, expanded: isExpanded, elementState});
-                        this.graph.addElement(element);
-                        if (!preloadedData) {
-                            elementIrisToRequestData.push(element.iri);
-                        }
-                    }
-                    break;
-                }
-                case 'Group': {
-                    const {'@id': id, items, position, elementState} = layoutElement;
-                    const groupItems: EntityGroupItem[] = [];
-                    for (const item of items) {
-                        const preloadedData = preloadedElements?.get(item.iri);
-                        groupItems.push({
-                            data: preloadedData ?? EntityElement.placeholderData(item.iri),
-                            elementState: item.elementState,
-                        });
-                        if (!preloadedData) {
-                            elementIrisToRequestData.push(item.iri);
-                        }
-                    }
-                    const group = new EntityGroup({id, items: groupItems, position, elementState});
-                    this.graph.addElement(group);
-                    break;
-                }
-            }
-            
+        for (const [linkTypeIri, visibility] of linkTypeVisibility) {
+            this.setLinkVisibility(linkTypeIri, visibility);
         }
 
-        for (const layoutLink of layoutData.links) {
-            const {'@id': id, property, source, target, vertices, linkState} = layoutLink;
-            const linkType = this.createLinkType(property);
+        const usedLinkTypes = new Set<LinkTypeIri>();
+        for (const link of links) {
+            const linkType = this.createLinkType(link.typeId);
             usedLinkTypes.add(linkType.id);
-            
-            const sourceElement = this.graph.getElement(source['@id']);
-            const targetElement = this.graph.getElement(target['@id']);
+        }
 
-            const sourceIri = layoutLink.sourceIri ?? (
-                sourceElement instanceof EntityElement ? sourceElement.data.id : undefined
-            );
-            const targetIri = layoutLink.targetIri ?? (
-                targetElement instanceof EntityElement ? targetElement.data.id : undefined
-            );
-
-            if (sourceElement && targetElement && sourceIri && targetIri) {
-                const data: LinkModel = {
-                    linkTypeId: property,
-                    sourceId: sourceIri,
-                    targetId: targetIri,
-                    properties: {},
-                };
-                const link = new RelationLink({
-                    id,
-                    sourceId: sourceElement.id,
-                    targetId: targetElement.id,
-                    data,
-                    vertices,
-                    linkState,
-                });
-                if (markLinksAsLayoutOnly) {
-                    link.setLinkState({
-                        ...link.linkState,
-                        [TemplateProperties.LayoutOnly]: true,
-                    });
-                }
-                this.addLink(link);
-            }
+        for (const element of elements) {
+            this.addElement(element);
+        }
+        for (const link of links) {
+            this.addLink(link);
         }
 
         batch.store();
@@ -450,12 +383,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         const existingLinks = Array.from(this.graph.iterateLinks(source.id, target.id, data.linkTypeId));
         for (const link of existingLinks) {
             if (link instanceof RelationLink && equalLinks(link.data, data)) {
-                this.history.execute(setLinkState(link, omitLayoutOnly(link.linkState)));
+                this.history.execute(setLinkState(link, markLayoutOnly(link.linkState, false)));
                 this.history.execute(setRelationLinkData(link, data));
                 return link;
             } else if (link instanceof RelationGroup && link.itemKeys.has(data)) {
                 const items = link.items.map((item): RelationGroupItem => equalLinks(item.data, data)
-                    ? {...item, data, linkState: omitLayoutOnly(item.linkState)}
+                    ? {...item, data, linkState: markLayoutOnly(item.linkState, false)}
                     : item
                 );
                 this.history.execute(setRelationGroupItems(link, items));
@@ -749,15 +682,4 @@ export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
     return Command.effect('Restore links between elements', () => {
         model.requestLinksOfType();
     });
-}
-
-function omitLayoutOnly(linkState: LinkTemplateState | undefined): LinkTemplateState | undefined {
-    if (linkState && Object.prototype.hasOwnProperty.call(linkState, TemplateProperties.LayoutOnly)) {
-        const {
-            [TemplateProperties.LayoutOnly]: layoutOnly,
-            ...withoutLayoutOnly
-        } = linkState;
-        return withoutLayoutOnly;
-    }
-    return linkState;
 }
