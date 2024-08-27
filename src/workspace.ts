@@ -92,6 +92,7 @@ export {
 } from './editor/dataElements';
 export {
     ChangeOperationsEvent, FetchOperation, FetchOperationFail,
+    FetchOperationTargetType, FetchOperationTypeToTarget,
     FetchOperationElement, FetchOperationLink, FetchOperationElementType,
     FetchOperationLinkType, FetchOperationPropertyType,
 } from './editor/dataFetcher';

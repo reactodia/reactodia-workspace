@@ -35,6 +35,15 @@ export type FetchOperation =
     | FetchOperationLinkType
     | FetchOperationPropertyType;
 
+export type FetchOperationTargetType = Exclude<FetchOperation['type'], 'link'>;
+
+export interface FetchOperationTypeToTarget {
+    'element': ElementIri;
+    'elementType': ElementTypeIri;
+    'linkType': LinkTypeIri;
+    'propertyType': PropertyTypeIri;
+}
+
 export interface FetchOperationElement {
     readonly type: 'element';
     readonly targets: ReadonlySet<ElementIri>;
@@ -66,6 +75,7 @@ export class DataFetcher {
     private readonly cancellation = new AbortController();
 
     private _operations: ReadonlyArray<FetchOperation> = [];
+    private _failReasons = new Map<FetchOperationTargetType, Map<string, unknown>>();
 
     private elementTypeQueue = new BufferingQueue<ElementTypeIri>(classIds => {
         const operation: FetchOperationElementType = {
@@ -116,6 +126,14 @@ export class DataFetcher {
         return this._operations;
     }
 
+    getFailReason<T extends FetchOperationTargetType>(
+        type: T,
+        target: FetchOperationTypeToTarget[T]
+    ): unknown {
+        const reasons = this._failReasons.get(type);
+        return reasons?.get(target);
+    }
+
     private addOperation(
         operation: FetchOperation,
         task: Promise<unknown>
@@ -138,12 +156,35 @@ export class DataFetcher {
             next.splice(index, 1);
             this._operations = next;
         }
+
+        switch (operation.type) {
+            case 'element':
+            case 'elementType':
+            case 'linkType':
+            case 'propertyType': {
+                const reasons = this.ensureFailReasons(operation.type);
+                for (const target of operation.targets) {
+                    // Set or clear the error for the target
+                    reasons.set(target, error);
+                }
+            }
+        }
+
         if (this._operations !== previous || error) {
             this.source.trigger('changeOperations', {
                 previous,
                 fail: error ? {operation, error} : undefined,
             });
         }
+    }
+
+    private ensureFailReasons(type: FetchOperationTargetType): Map<string, unknown> {
+        let reasons = this._failReasons.get(type);
+        if (!reasons) {
+            reasons = new Map<string, unknown>();
+            this._failReasons.set(type, reasons);
+        }
+        return reasons;
     }
 
     fetchElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {

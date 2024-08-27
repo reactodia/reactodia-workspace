@@ -1,25 +1,17 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model';
-
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { ChangeOperationsEvent, FetchOperation, FetchOperationFail } from './dataFetcher';
+import {
+    ChangeOperationsEvent, FetchOperation, FetchOperationFail, FetchOperationTargetType,
+    FetchOperationTypeToTarget,
+} from './dataFetcher';
 
-export interface WithFetchStatusProps<T extends ListenableOperationTypes> {
+export interface WithFetchStatusProps<T extends FetchOperationTargetType> {
     type: T;
-    target: TypeToTarget[T];
+    target: FetchOperationTypeToTarget[T];
     children: React.ReactElement<{ className?: string }>;
-}
-
-type ListenableOperationTypes = Exclude<FetchOperation['type'], 'link'>;
-
-interface TypeToTarget {
-    'element': ElementIri;
-    'elementType': ElementTypeIri;
-    'linkType': LinkTypeIri;
-    'propertyType': PropertyTypeIri;
 }
 
 enum Status {
@@ -30,30 +22,34 @@ enum Status {
 
 const CLASS_NAME = 'reactodia-fetch-status';
 
-export function WithFetchStatus<T extends ListenableOperationTypes>(props: WithFetchStatusProps<T>) {
+export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;
 
     const {model} = useWorkspace();
 
-    const [status, setStatus] = React.useState<Status>(Status.None);
+    const [status, setStatus] = React.useState<Status>(
+        // Initialize with error status if needed to avoid layout jumps
+        model.getOperationFailReason(type, target) ? Status.Error : Status.None
+    );
 
     React.useEffect(() => {
         const checkOperations = (fail?: FetchOperationFail) => {
-            setStatus(previous => {
-                if (previous === Status.Error) {
+            setStatus(() => {
+                if (fail && isOperationMatch(fail.operation, type, target)) {
                     return Status.Error;
-                } else if (fail && isOperationMatch(fail.operation, type, target)) {
-                    return Status.Error;
-                } else {
-                    let loading: FetchOperation | undefined;
-                    for (const operation of model.operations) {
-                        if (isOperationMatch(operation, type, target)) {
-                            loading = operation;
-                            break;
-                        }
-                    }
-                    return loading ? Status.Loading : Status.None;
                 }
+
+                for (const operation of model.operations) {
+                    if (isOperationMatch(operation, type, target)) {
+                        return Status.Loading;
+                    }
+                }
+
+                if (model.getOperationFailReason(type, target)) {
+                    return Status.Error;
+                }
+
+                return Status.None;
             });
         };
 
@@ -82,7 +78,7 @@ export function WithFetchStatus<T extends ListenableOperationTypes>(props: WithF
 
 function isOperationMatch(
     operation: FetchOperation,
-    type: ListenableOperationTypes,
+    type: FetchOperationTargetType,
     target: string
 ): boolean {
     type AnyTargets = ReadonlySet<string>;

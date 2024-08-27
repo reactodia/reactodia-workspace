@@ -27,7 +27,10 @@ import {
     LinkType, LinkTypeEvents,
     iterateEntitiesOf, setEntityGroupItems, setRelationGroupItems, setRelationLinkData,
 } from './dataElements';
-import { DataFetcher, ChangeOperationsEvent, FetchOperation } from './dataFetcher';
+import {
+    DataFetcher, ChangeOperationsEvent, FetchOperation, FetchOperationTargetType,
+    FetchOperationTypeToTarget,
+} from './dataFetcher';
 import {
     SerializedDiagram, SerializedLinkOptions, emptyDiagram,
     serializeDiagram, deserializeDiagram, markLayoutOnly,
@@ -91,8 +94,22 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return this._dataProvider.factory;
     }
 
+    /**
+     * Returns a list of current fetch operations.
+     */
     get operations(): ReadonlyArray<FetchOperation> {
         return this.fetcher.operations;
+    }
+
+    /**
+     * Returns a reason (error) why latest fetch operation for specific target
+     * failed, if any; otherwise returns `undefined`.
+     */
+    getOperationFailReason<T extends FetchOperationTargetType>(
+        type: T,
+        target: FetchOperationTypeToTarget[T]
+    ): unknown {
+        return this.fetcher.getFailReason(type, target);
     }
 
     protected override resetGraph(): void {
