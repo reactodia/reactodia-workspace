@@ -8,6 +8,7 @@ import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
+import { TemplateProps, FormattedProperty } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -18,12 +19,21 @@ import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataEleme
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { Paginator } from '../widgets/paginator';
 
-import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-standard-template';
 const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
+
+export interface StandardTemplateProps extends TemplateProps {
+    /**
+     * Number items to show per page in element group.
+     *
+     * @default 6
+     */
+    groupPageSize?: number;
+}
 
 export function StandardTemplate(props: TemplateProps) {
     const {element} = props;
@@ -203,13 +213,13 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     );
 }
 
-interface StandardTemplateGroupProps extends TemplateProps {
+interface StandardTemplateGroupProps extends StandardTemplateProps {
     items: ReadonlyArray<EntityGroupItem>;
     target: EntityGroup;
 }
 
 function StandardTemplateGroup(props: StandardTemplateGroupProps) {
-    const {items, target} = props;
+    const {items, target, elementState, groupPageSize = 6} = props;
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
     const {getElementStyle} = workspace;
@@ -219,10 +229,22 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
         '--reactodia-standard-group-color': groupColor,
     } as React.CSSProperties;
 
+    const pageCount = Math.max(Math.ceil(items.length / groupPageSize), 1);
+    const groupPageFromState = elementState?.[TemplateProperties.GroupPage];
+    let pageIndex = typeof groupPageFromState === 'number' ? groupPageFromState : 0;
+    pageIndex = Number.isFinite(pageIndex) ? pageIndex : 0;
+    pageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
+
+    const pageOffset = pageIndex * groupPageSize;
+    const pageItems = items.slice(
+        pageOffset,
+        Math.min(pageOffset + groupPageSize, items.length)
+    );
+
     return (
         <div className={classnames(CLASS_NAME, `${CLASS_NAME}--group`)}
             style={groupStyle}>
-            {items.map(item => (
+            {pageItems.map(item => (
                 <StandardTemplateGroupItem {...props}
                     key={item.data.id}
                     data={item.data}
@@ -232,6 +254,15 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
                     workspace={workspace}
                 />
             ))}
+            {pageCount > 1 ? (
+                <Paginator pageIndex={pageIndex}
+                    pageCount={pageCount}
+                    onChangePage={page => target.setElementState({
+                        ...target.elementState,
+                        [TemplateProperties.GroupPage]: page,
+                    })}
+                />
+            ) : null}
         </div>
     );
 }

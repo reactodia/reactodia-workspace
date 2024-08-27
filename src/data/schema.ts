@@ -15,6 +15,7 @@ export namespace TemplateProperties {
     export const PinnedProperties = 'urn:reactodia:pinnedProperties';
     export const CustomLabel = 'urn:reactodia:customLabel';
     export const LayoutOnly = 'urn:reactodia:layoutOnly';
+    export const GroupPage = 'urn:reactodia:groupPage';
 }
 
 export interface PinnedProperties {

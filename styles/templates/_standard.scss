@@ -263,6 +263,7 @@ $standard-new-entity-stripe: white;
     height: 18px;
     padding: 0px;
     align-self: center;
+    margin-left: 2px;
 
     display: block;
     opacity: 0;
@@ -272,5 +273,9 @@ $standard-new-entity-stripe: white;
   &:hover &__ungroup-one-button,
   &:focus &__ungroup-one-button {
     opacity: 1;
+  }
+
+  &--group .reactodia-paginator {
+    margin-top: 4px;
   }
 }

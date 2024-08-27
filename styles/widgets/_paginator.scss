@@ -1,0 +1,26 @@
+@import "../mixin/icons";
+
+.reactodia-paginator {
+  display: flex;
+
+  &__previous,
+  &__next {
+    height: 22px;
+    padding: 0 5px;
+  }
+
+  &__previous {
+    @include codicon-button("chevron-left");
+  }
+
+  &__next {
+    @include codicon-button("chevron-right");
+  }
+
+  &__status {
+    flex: 60px 0 0;
+    text-align: center;
+    border-top: 1px solid #f1f1f3;
+    border-bottom: 1px solid #f1f1f3;
+  }
+}
