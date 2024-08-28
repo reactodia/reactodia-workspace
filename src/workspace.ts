@@ -102,7 +102,8 @@ export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from './editor/observedElement';
 export {
-    OverlayController, OverlayControllerEvents, PropertyEditor, PropertyEditorOptions,
+    OverlayController, OverlayControllerEvents, OverlayTask,
+    PropertyEditor, PropertyEditorOptions,
 } from './editor/overlayController';
 export { ValidationState, ElementValidation, LinkValidation } from './editor/validation';
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';

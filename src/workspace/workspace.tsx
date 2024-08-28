@@ -13,7 +13,9 @@ import { hashFnv32a } from '../data/utils';
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, LabelLanguageSelector } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
-import { LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout } from '../diagram/layout';
+import {
+    CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
+} from '../diagram/layout';
 import { blockingDefaultLayout } from '../diagram/layoutShared';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
@@ -283,7 +285,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
         const {canvas: targetCanvas, layoutFunction, selectedElements, animate, zoomToFit, signal} = params;
-        const {model, view, disposeSignal} = this.workspaceContext;
+        const {model, view, overlay, disposeSignal} = this.workspaceContext;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
         if (!canvas) {
@@ -291,14 +293,28 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
 
         canvas.renderingState.syncUpdate();
-        const calculatedLayout = await calculateLayout({
-            layoutFunction: layoutFunction ?? view.defaultLayout,
-            model,
-            selectedElements,
-            sizeProvider: canvas.renderingState,
-            typeProvider: this.layoutTypeProvider,
-            signal: signal ?? disposeSignal,
+
+        const task = overlay.startTask({
+            title: 'Computing graph layout',
+            delay: 200,
         });
+        let calculatedLayout: CalculatedLayout;
+        try {
+            calculatedLayout = await calculateLayout({
+                layoutFunction: layoutFunction ?? view.defaultLayout,
+                model,
+                selectedElements,
+                sizeProvider: canvas.renderingState,
+                typeProvider: this.layoutTypeProvider,
+                signal: signal ?? disposeSignal,
+            });
+        } catch (err) {
+            task.setError(err);
+            console.error('Failed to compute graph layout', err);
+            return;
+        } finally {
+            task.end();
+        }
 
         const batch = model.history.startBatch('Graph layout');
         batch.history.registerToUndo(RestoreGeometry.capture(model));
@@ -410,7 +426,7 @@ export function useLoadedWorkspace(
 
             const controller = new AbortController();
             (async () => {
-                const task = context.overlay._startTask();
+                const task = context.overlay.startTask();
                 try {
                     await latestOnLoad({context, signal: controller.signal});
                 } catch (err) {
