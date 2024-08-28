@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { delay } from '../coreUtils/async';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 
 import { ElementModel, LinkModel } from '../data/model';
@@ -46,6 +47,7 @@ export interface OverlayControllerEvents {
     changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
 }
 
+/** @hide */
 export type KnownDialogType =
     | 'connectionsMenu'
     | 'editEntity'
@@ -55,6 +57,7 @@ export type KnownDialogType =
 
 export interface OpenedDialog {
     readonly target: Element | Link;
+    /** @hide */
     readonly knownType: KnownDialogType | undefined;
     readonly holdSelection: boolean;
     readonly onClose: () => void;
@@ -73,6 +76,8 @@ export class OverlayController {
     private readonly authoringStateDecorator: ElementDecoratorResolver;
 
     private _openedDialog: OpenedDialog | undefined;
+    private _tasks = new Set<ExtendedOverlayTask>();
+    private _taskError: { error: unknown } | undefined;
 
     /** @hidden */
     constructor(props: OverlayControllerProps) {
@@ -156,32 +161,110 @@ export class OverlayController {
         );
     }
 
-    /** @hidden */
-    _startTask(): OverlayTask {
-        let hasError = false;
-        let error: unknown;
+    /**
+     * Starts a new foreground task which blocks canvas interaction and
+     * displays a loading indicator until the task has ended.
+     *
+     * If multiple tasks are started at any given time, an indicator will be shown
+     * while at least one of them is still active.
+     */
+    startTask(params: {
+        /**
+         * Task title to display.
+         */
+        title?: string;
+        /**
+         * Delay in milliseconds before displaying loading indicator to avoid showing it
+         * in case the task ends quickly.
+         *
+         * @default 0
+         */
+        delay?: number;
+    } = {}): OverlayTask {
+        const {title, delay: delayMs = 0} = params;
 
-        this.setSpinner({});
-        return {
-            setError: (taskError: unknown) => {
-                hasError = true;
-                error = taskError;
+        if (this._tasks.size === 0 && this._taskError) {
+            // Clear the error
+            this._taskError = undefined;
+        }
+
+        const delayed = delayMs > 0 && this._tasks.size === 0;
+        const createdTask: ExtendedOverlayTask = {
+            title,
+            setError: (error: unknown) => {
+                this._taskError = {error};
             },
             end: () => {
-                if (hasError) {
-                    let statusText: string | undefined;
-                    if (error && typeof error === 'object' && 'message' in error) {
-                        const message = error.message;
-                        if (typeof message === 'string') {
-                            statusText = message;
-                        }
-                    }
-                    this.setSpinner({statusText, errorOccurred: true});
-                } else {
-                    this.setSpinner(undefined);
-                }
+                this._tasks.delete(createdTask);
+                this.updateTaskSpinner();
             },
+            [OverlayTaskActive]: !delayed,
         };
+        this._tasks.add(createdTask);
+        this.updateTaskSpinner();
+
+        if (delayed) {
+            delay(delayMs).then(() => {
+                if (this._tasks.has(createdTask)) {
+                    // Activate all tasks if any activates
+                    for (const task of this._tasks) {
+                        task[OverlayTaskActive] = true;
+                    }
+                    this.updateTaskSpinner();
+                }
+            });
+        }
+
+        return createdTask;
+    }
+
+    /**
+     * Creates a task via `startTask()` for the operation defined by a Promise.
+     *
+     * @see startTask()
+     */
+    showSpinnerWhile(operation: Promise<unknown>): void {
+        const task = this.startTask();
+        (async () => {
+            try {
+                await operation;
+            } catch (err) {
+                console.error(err);
+                task.setError(new Error('Unknown error occurred', {cause: err}));
+            } finally {
+                task.end();
+            }
+        })();
+    }
+
+    private updateTaskSpinner(): void {
+        if (this._taskError) {
+            const statusText = getErrorMessage(this._taskError.error);
+            this.setSpinner({statusText, errorOccurred: true});
+        } else {
+            let hasActiveTask = false;
+            let title: string | undefined;
+            for (const task of this._tasks) {
+                if (task[OverlayTaskActive]) {
+                    hasActiveTask = true;
+                }
+
+                if (task.title) {
+                    if (title === undefined) {
+                        title = task.title;
+                    } else {
+                        title = 'Multiple tasks are in progress';
+                        break;
+                    }
+                }
+            }
+
+            if (hasActiveTask) {
+                this.setSpinner({statusText: title});
+            } else {
+                this.setSpinner(undefined);
+            }
+        }
     }
 
     private setSpinner(props: SpinnerProps | undefined) {
@@ -191,22 +274,16 @@ export class OverlayController {
         } : null);
     }
 
-    showSpinnerWhile(operation: Promise<unknown>): void {
-        this.setSpinner({});
-        operation.then(() => {
-            this.setSpinner(undefined);
-        }).catch(error => {
-            console.error(error);
-            this.setSpinner({statusText: 'Unknown error occurred', errorOccurred: true});
-        });
-    }
-
+    /**
+     * Shows on-canvas dialog anchored to the target element or link.
+     *
+     * @see hideDialog()
+     */
     showDialog(params: {
         /**
          * Element or link to anchor dialog to.
          */
         target: Element | Link;
-        dialogType?: KnownDialogType;
         /**
          * Dialog style, placement and sizing options.
          */
@@ -226,6 +303,8 @@ export class OverlayController {
          * (e.g. when another dialog is opened).
          */
         onClose: () => void;
+        /** @hide */
+        dialogType?: KnownDialogType;
     }): void {
         const {target, style, dialogType, content, holdSelection = false, onClose} = params;
         if (this._openedDialog && this._openedDialog.target !== target) {
@@ -254,6 +333,11 @@ export class OverlayController {
         });
     }
 
+    /**
+     * Closes currently open dialog if any is active.
+     *
+     * @see showDialog()
+     */
     hideDialog() {
         if (this._openedDialog) {
             const previous = this._openedDialog;
@@ -418,9 +502,19 @@ export class OverlayController {
     }
 }
 
-interface OverlayTask {
+/**
+ * Represents a foreground canvas task.
+ */
+export interface OverlayTask {
+    readonly title: string | undefined;
     setError(error: unknown): void;
     end(): void;
+}
+
+const OverlayTaskActive: unique symbol = Symbol('OverlayTask.active');
+
+interface ExtendedOverlayTask extends OverlayTask {
+    [OverlayTaskActive]: boolean;
 }
 
 function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
@@ -449,4 +543,14 @@ function CanvasOverlayHandler(props: {
         return () => listener.stopListening();
     }, [onCanvasPointerUp]);
     return null;
+}
+
+function getErrorMessage(error: unknown): string | undefined {
+    if (error && typeof error === 'object' && 'message' in error) {
+        const message = error.message;
+        if (typeof message === 'string') {
+            return message;
+        }
+    }
+    return undefined;
 }
