@@ -9,7 +9,7 @@ import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
-import { Element } from '../diagram/elements';
+import { Element, ElementTemplateState } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
@@ -25,14 +25,22 @@ import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceConte
 
 const CLASS_NAME = 'reactodia-standard-template';
 const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
 export interface StandardTemplateProps extends TemplateProps {
     /**
-     * Number items to show per page in element group.
+     * Default number items to show per page in element group.
      *
      * @default 6
      */
     groupPageSize?: number;
+    /**
+     * Available group page sizes to select from.
+     *
+     * @default [5, 10, 15, 20, 30]
+     */
+    groupPageSizes?: ReadonlyArray<number>;
 }
 
 export function StandardTemplate(props: TemplateProps) {
@@ -219,7 +227,11 @@ interface StandardTemplateGroupProps extends StandardTemplateProps {
 }
 
 function StandardTemplateGroup(props: StandardTemplateGroupProps) {
-    const {items, target, elementState, groupPageSize = 6} = props;
+    const {
+        items, target, elementState,
+        groupPageSize = DEFAULT_PAGE_SIZE,
+        groupPageSizes = DEFAULT_PAGE_SIZES,
+    } = props;
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
     const {getElementStyle} = workspace;
@@ -229,21 +241,27 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
         '--reactodia-standard-group-color': groupColor,
     } as React.CSSProperties;
 
-    const pageCount = Math.max(Math.ceil(items.length / groupPageSize), 1);
-    const groupPageFromState = elementState?.[TemplateProperties.GroupPage];
+    const pageSizeFromState = elementState?.[TemplateProperties.GroupPageSize];
+    let pageSize = typeof pageSizeFromState === 'number' ? pageSizeFromState : groupPageSize;
+    pageSize = Number.isFinite(pageSize) ? pageSize : groupPageSize;
+
+    const pageCount = Math.max(Math.ceil(items.length / pageSize), 1);
+    const groupPageFromState = elementState?.[TemplateProperties.GroupPageIndex];
     let pageIndex = typeof groupPageFromState === 'number' ? groupPageFromState : 0;
     pageIndex = Number.isFinite(pageIndex) ? pageIndex : 0;
     pageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
 
-    const pageOffset = pageIndex * groupPageSize;
+    const pageOffset = pageIndex * pageSize;
     const pageItems = items.slice(
         pageOffset,
-        Math.min(pageOffset + groupPageSize, items.length)
+        Math.min(pageOffset + pageSize, items.length)
     );
+    const fillerCount = pageCount === 1 ? 0 : pageOffset + pageSize - items.length;
 
     return (
         <div className={classnames(CLASS_NAME, `${CLASS_NAME}--group`)}
-            style={groupStyle}>
+            style={groupStyle}
+            role='list'>
             {pageItems.map(item => (
                 <StandardTemplateGroupItem {...props}
                     key={item.data.id}
@@ -254,15 +272,26 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
                     workspace={workspace}
                 />
             ))}
-            {pageCount > 1 ? (
-                <Paginator pageIndex={pageIndex}
-                    pageCount={pageCount}
-                    onChangePage={page => target.setElementState({
-                        ...target.elementState,
-                        [TemplateProperties.GroupPage]: page,
-                    })}
-                />
-            ) : null}
+            {Array.from({length: fillerCount}, (_, index) => (
+                <div key={index}
+                    className={`${CLASS_NAME}__item-filler`}
+                    aria-hidden={true}>
+                    &nbsp;
+                </div>
+            ))}
+            <Paginator pageIndex={pageIndex}
+                pageCount={pageCount}
+                onChangePage={page => target.setElementState({
+                    ...target.elementState,
+                    [TemplateProperties.GroupPageIndex]: page,
+                })}
+                pageSize={pageSize}
+                pageSizes={groupPageSizes}
+                onChangePageSize={size => target.setElementState({
+                    ...target.elementState,
+                    [TemplateProperties.GroupPageSize]: size,
+                })}
+            />
         </div>
     );
 }
@@ -292,7 +321,8 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
 
     return (
         <div className={classnames(`${CLASS_NAME}__item`, authoringStatusClass)}
-            style={itemStyle}>
+            style={itemStyle}
+            role='listitem'>
             <div className={`${CLASS_NAME}__item-stripe`} aria-hidden='true' />
             <div className={`${CLASS_NAME}__item-body`}>
                 <WithFetchStatus type='element' target={data.id}>

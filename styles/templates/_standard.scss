@@ -53,10 +53,16 @@ $standard-new-entity-stripe: white;
     display: flex;
     border-radius: 2px;
     border: 0px;
+  }
 
-    &:not(:first-child) {
-      margin-top: 4px;
-    }
+  &__item-filler {
+    font-size: 15px;
+    padding: 3px;
+  }
+
+  &__item:not(:first-child),
+  &__item-filler:not(:first-child) {
+    margin-top: 4px;
   }
 
   &__item-stripe {
@@ -277,5 +283,11 @@ $standard-new-entity-stripe: white;
 
   &--group .reactodia-paginator {
     margin-top: 4px;
+    opacity: 0.4;
+    transition: opacity 200ms 0ms;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }
