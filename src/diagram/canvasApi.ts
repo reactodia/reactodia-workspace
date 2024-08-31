@@ -9,6 +9,9 @@ import type { DiagramModel } from './model';
 import type { PaperTransform } from './paper';
 import type { ToDataURLOptions } from './toSvg';
 
+/**
+ * @category Core
+ */
 export interface CanvasApi {
     readonly events: Events<CanvasEvents>;
     readonly renderingState: RenderingState;
@@ -172,6 +175,9 @@ export interface CanvasContext {
 /** @hidden */
 export const CanvasContext = React.createContext<CanvasContext | null>(null);
 
+/**
+ * @category Hooks
+ */
 export function useCanvas(): CanvasContext {
     const context = React.useContext(CanvasContext);
     if (!context) {

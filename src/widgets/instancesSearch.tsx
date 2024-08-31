@@ -1,12 +1,11 @@
 import * as React from 'react';
-import * as ReactDom from 'react-dom';
 import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement } from '../data/model';
-import { LookupParams } from '../data/provider';
+import { DataProviderLookupParams } from '../data/provider';
 
 import type { CanvasApi } from '../diagram/canvasApi';
 import { VoidElement } from '../diagram/elements';
@@ -15,7 +14,7 @@ import { placeElementsAround } from '../diagram/layout';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 
-import { WorkspaceContext, WorkspaceEventKey } from '../workspace/workspaceContext';
+import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 import { ProgressBar, ProgressState } from './progressBar';
 import { SearchResults } from './searchResults';
@@ -41,6 +40,22 @@ export interface SearchCriteria {
     readonly linkDirection?: 'in' | 'out';
 }
 
+/**
+ * @category Components
+ */
+export function InstancesSearch(props: InstancesSearchProps) {
+    const workspace = useWorkspace();
+    return (
+        <InstancesSearchInner {...props}
+            workspace={workspace}
+        />
+    );
+}
+
+interface InstancesSearchInnerProps extends InstancesSearchProps {
+    workspace: WorkspaceContext;
+}
+
 interface State {
     readonly criteria: SearchCriteria;
     readonly inputText?: string;
@@ -56,19 +71,16 @@ const CLASS_NAME = 'reactodia-instances-search';
 
 const ITEMS_PER_PAGE = 100;
 
-export class InstancesSearch extends React.Component<InstancesSearchProps, State> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
-
+class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly criteriaListener = new EventObserver();
     private readonly delayedUpdateAll = new Debouncer();
 
     private requestCancellation = new AbortController();
-    private currentRequest: LookupParams | undefined;
+    private currentRequest: DataProviderLookupParams | undefined;
 
-    constructor(props: InstancesSearchProps, context: any) {
-        super(props, context);
+    constructor(props: InstancesSearchInnerProps) {
+        super(props);
         this.state = {
             criteria: {},
             resultId: 0,
@@ -77,8 +89,8 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     componentDidMount() {
-        const {commands} = this.props;
-        const {model, triggerWorkspaceEvent} = this.context;
+        const {commands, workspace} = this.props;
+        const {model, triggerWorkspaceEvent} = workspace;
 
         this.listener.listen(model.events, 'changeLanguage', () => this.forceUpdate());
         this.listener.listen(model.events, 'loadingStart', () => {
@@ -110,7 +122,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private resubscribeToCriteria() {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         const {criteria} = this.state;
         this.criteriaListener.stopListening();
 
@@ -234,7 +246,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     };
 
     private renderCriteria(): React.ReactElement<any> {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         const {criteria} = this.state;
         const criterions: React.ReactElement<any>[] = [];
 
@@ -311,11 +323,11 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private queryItems(loadMoreItems: boolean) {
-        const {model, triggerWorkspaceEvent} = this.context;
+        const {workspace: {model, triggerWorkspaceEvent}} = this.props;
 
         this.requestCancellation.abort();
 
-        let request: LookupParams;
+        let request: DataProviderLookupParams;
         if (loadMoreItems) {
             if (!this.currentRequest) {
                 throw new Error('Cannot request more items without initial request.');
@@ -400,7 +412,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 
     private placeSelectedItems(mode: 'separately' | 'group'): void {
-        const {model, view} = this.context;
+        const {workspace: {model, view}} = this.props;
         const canvas = view.findAnyCanvas();
         const {items, selection} = this.state;
 
@@ -451,7 +463,7 @@ export class InstancesSearch extends React.Component<InstancesSearchProps, State
     }
 }
 
-export function createRequest(criteria: SearchCriteria): LookupParams {
+export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
     const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
     return {
         text,

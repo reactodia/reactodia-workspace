@@ -18,13 +18,29 @@ import { DataDiagramModel } from '../../editor/dataDiagramModel';
 import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
 
-import { WorkspaceContext } from '../../workspace/workspaceContext';
+import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 import { TreeNode } from './treeModel';
 import { Forest } from './leaf';
 
 export interface ClassTreeProps {
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
+}
+
+/**
+ * @category Components
+ */
+export function ClassTree(props: ClassTreeProps) {
+    const workspace = useWorkspace();
+    return (
+        <ClassTreeInner {...props}
+            workspace={workspace}
+        />
+    );
+}
+
+interface ClassTreeInnerProps extends ClassTreeProps {
+    workspace: WorkspaceContext;
 }
 
 interface State {
@@ -50,10 +66,7 @@ interface ClassTreeItem extends ElementTypeModel {
 const CLASS_NAME = 'reactodia-class-tree';
 const MIN_TERM_LENGTH = 3;
 
-export class ClassTree extends React.Component<ClassTreeProps, State> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
-
+class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly delayedClassUpdate = new Debouncer();
     private readonly delayedSearch = new Debouncer(200 /* ms */);
@@ -64,7 +77,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     private refreshOperation = new AbortController();
     private createElementCancellation = new AbortController();
 
-    constructor(props: ClassTreeProps) {
+    constructor(props: ClassTreeInnerProps) {
         super(props);
         this.state = {
             refreshingState: 'none',
@@ -78,7 +91,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     render() {
-        const {editor} = this.context;
+        const {workspace: {editor}} = this.props;
         const {
             refreshingState, requestedSearchText, appliedSearchText, filteredRoots, selectedNode, constructibleClasses,
             showOnlyConstructible
@@ -134,7 +147,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     componentDidMount() {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         this.listener.listen(model.events, 'changeLanguage', () => this.refreshClassTree());
         this.listener.listen(model.events, 'loadingStart', () => {
             this.initClassTree();
@@ -157,10 +170,11 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private async initClassTree() {
-        if (this.fetchedGraph && this.fetchedGraph.dataProvider === this.context.model.dataProvider) {
+        const {workspace: {model}} = this.props;
+        if (this.fetchedGraph && this.fetchedGraph.dataProvider === model.dataProvider) {
             this.refreshClassTree();
-        } else if (this.context.model.dataProvider) {
-            const dataProvider = this.context.model.dataProvider;
+        } else if (model.dataProvider) {
+            const dataProvider = model.dataProvider;
             this.classTree = undefined;
 
             const cancellation = new AbortController();
@@ -222,7 +236,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     };
 
     private onDragCreate = (node: TreeNode) => {
-        const {view} = this.context;
+        const {workspace: {view}} = this.props;
         view.setHandlerForNextDropOnPaper(e => {
             this.createInstanceAt(node.iri, e);
         });
@@ -230,11 +244,11 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
 
     private refreshClassTree = () => {
         const cancellation = new AbortController();
-        const {model, editor} = this.context;
         this.refreshOperation.abort();
         this.refreshOperation = cancellation;
 
         this.setState((state, props) => {
+            const {workspace: {model, editor}} = props;
             if (!this.classTree) {
                 return {refreshingState: 'none'};
             }
@@ -255,7 +269,8 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     };
 
     private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
-        const {metadataApi} = this.context.editor;
+        const {workspace: {editor}} = this.props;
+        const {metadataApi} = editor;
         if (!metadataApi) {
             return;
         }
@@ -279,7 +294,7 @@ export class ClassTree extends React.Component<ClassTreeProps, State> {
     }
 
     private async createInstanceAt(classId: ElementTypeIri, dropEvent?: CanvasDropEvent) {
-        const {model, view, editor, overlay} = this.context;
+        const {workspace: {model, view, editor, overlay}} = this.props;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
@@ -483,11 +498,6 @@ function filterOnlyCreatable(
         return acc;
     }
     return roots.reduce(collectOnlyCreatable, []);
-}
-
-function forceNonReactExecutionContext(): Promise<void> {
-    // force non-React executing context to resolve forceUpdate() synchronously
-    return Promise.resolve();
 }
 
 function getViewportCenterInPaperCoords(canvas: CanvasApi): Vector {

@@ -3,6 +3,9 @@ import * as cola from 'webcola';
 import type { Rect, Vector } from './geometry';
 import type { LayoutGraph, LayoutState } from './layout';
 
+/**
+ * @category Geometry
+ */
 export function evaluateColaLayout(
     graph: LayoutGraph,
     state: LayoutState,
@@ -57,6 +60,9 @@ export interface ColaForceLayoutOptions {
     avoidOverlaps?: boolean;
 }
 
+/**
+ * @category Geometry
+ */
 export function colaForceLayout(
     graph: LayoutGraph,
     state: LayoutState,
@@ -90,6 +96,9 @@ export interface ColaFlowLayoutOptions {
     avoidOverlaps?: boolean;
 }
 
+/**
+ * @category Geometry
+ */
 export function colaFlowLayout(
     graph: LayoutGraph,
     state: LayoutState,
@@ -113,6 +122,9 @@ export function colaFlowLayout(
     });
 }
 
+/**
+ * @category Geometry
+ */
 export function colaRemoveOverlaps(state: LayoutState): LayoutState {
     const nodeRectangles = new Map<string, cola.Rectangle>();
     for (const [id, {x, y, width, height}] of Object.entries(state.bounds)) {
@@ -142,6 +154,9 @@ export interface PaddedLayoutState {
     readonly unwrap: (transformed: LayoutState) => LayoutState;
 }
 
+/**
+ * @category Geometry
+ */
 export function layoutPadded(
     state: LayoutState,
     padding: Vector | undefined
@@ -181,6 +196,9 @@ export interface PaddedBiasFreeLayoutState {
     readonly unwrap: (transformed: LayoutState) => LayoutState;
 }
 
+/**
+ * @category Geometry
+ */
 export function layoutPaddedBiasFree(
     state: LayoutState,
     padding: Vector | undefined
@@ -230,6 +248,9 @@ export interface DefaultLayoutOptions {
     padding?: Vector;
 }
 
+/**
+ * @category Geometry
+ */
 export function blockingDefaultLayout(
     graph: LayoutGraph,
     state: LayoutState,
@@ -249,6 +270,9 @@ export function blockingDefaultLayout(
     return Promise.resolve(result);
 }
 
+/**
+ * @category Geometry
+ */
 export function getContentFittingBoxForLayout(state: LayoutState): Rect {
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;

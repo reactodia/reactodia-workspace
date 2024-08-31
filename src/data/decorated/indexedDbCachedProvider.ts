@@ -4,7 +4,7 @@ import {
     PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount,
     LinkedElement,
 } from '../model';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 
 export interface IndexedDbCachedProviderOptions {
     readonly baseProvider: DataProvider;
@@ -64,6 +64,9 @@ interface LookupRecord {
     readonly result: LinkedElement[];
 }
 
+/**
+ * @category Data
+ */
 export class IndexedDbCachedProvider implements DataProvider {
     static readonly DB_VERSION = 2;
 
@@ -307,7 +310,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.stats;
     }
 
-    async lookup(params: LookupParams): Promise<LinkedElement[]> {
+    async lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
         if (!this.cacheTextLookups && params.text !== undefined) {
             return this.baseProvider.lookup(params);
         }

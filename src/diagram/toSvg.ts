@@ -32,6 +32,9 @@ const FOREIGN_OBJECT_SIZE_PADDING = 2;
 const DEFAULT_BORDER_PADDING: Vector = {x: 100, y: 100};
 const XML_ENCODING_HEADER = '<?xml version="1.0" encoding="UTF-8"?>';
 
+/**
+ * @category Core
+ */
 export function toSVG(options: ToSVGOptions): Promise<string> {
     return exportSVG(options)
         .then(svg => {
@@ -293,6 +296,9 @@ export interface ToDataURLOptions {
 
 const DEFAULT_MAX_FALLBACK_SIZE: Size = {width: 4096, height: 4096};
 
+/**
+ * @category Core
+ */
 export async function toDataURL(options: ToSVGOptions & ToDataURLOptions): Promise<string> {
     const {
         mimeType = 'image/png',
@@ -342,7 +348,7 @@ export async function toDataURL(options: ToSVGOptions & ToDataURLOptions): Promi
     }
 }
 
-export function loadImage(source: string): Promise<HTMLImageElement> {
+function loadImage(source: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = function () {

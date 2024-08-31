@@ -6,6 +6,9 @@ export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElemen
     onEndDragHandle?: (e: MouseEvent) => void;
 }
 
+/**
+ * @category Components
+ */
 export class DraggableHandle extends React.Component<DraggableHandleProps> {
     private holdState: {
         readonly origin: {
@@ -16,6 +19,7 @@ export class DraggableHandle extends React.Component<DraggableHandleProps> {
         readonly pointerId: number;
     } | undefined;
 
+    /** @hidden */
     render() {
         const {onBeginDragHandle, onDragHandle, onEndDragHandle, ...props} = this.props;
         return (
@@ -25,6 +29,7 @@ export class DraggableHandle extends React.Component<DraggableHandleProps> {
         );
     }
 
+    /** @hidden */
     componentWillUnmount() {
         this.removeListeners();
     }

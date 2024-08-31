@@ -9,24 +9,19 @@ import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
-import { Element, ElementTemplateState } from '../diagram/elements';
+import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
 import { AuthoringState } from '../editor/authoringState';
-import { EntityLocaleFormatter } from '../editor/dataDiagramModel';
+import { DataGraphLocaleFormatter } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { Paginator } from '../widgets/paginator';
+import { GroupPaginator } from '../widgets/groupPaginator';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
-
-const CLASS_NAME = 'reactodia-standard-template';
-const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
-const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
 export interface StandardTemplateProps extends TemplateProps {
     /**
@@ -43,6 +38,9 @@ export interface StandardTemplateProps extends TemplateProps {
     groupPageSizes?: ReadonlyArray<number>;
 }
 
+/**
+ * @category Components
+ */
 export function StandardTemplate(props: TemplateProps) {
     const {element} = props;
     if (element instanceof EntityElement) {
@@ -68,6 +66,11 @@ interface StandardTemplateBodyProps extends TemplateProps {
     data: ElementModel;
     target: Element;
 }
+
+const CLASS_NAME = 'reactodia-standard-template';
+const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
 function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const {data, isExpanded, elementState, target} = props;
@@ -279,7 +282,7 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
                     &nbsp;
                 </div>
             ))}
-            <Paginator pageIndex={pageIndex}
+            <GroupPaginator pageIndex={pageIndex}
                 pageCount={pageCount}
                 onChangePage={page => target.setElementState({
                     ...target.elementState,
@@ -346,7 +349,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     );
 }
 
-function formatEntityLabel(data: ElementModel, locale: EntityLocaleFormatter): string {
+function formatEntityLabel(data: ElementModel, locale: DataGraphLocaleFormatter): string {
     const foafName = Object.prototype.hasOwnProperty.call(data.properties, FOAF_NAME)
         ? data.properties[FOAF_NAME] : undefined;
     if (foafName) {
@@ -358,7 +361,7 @@ function formatEntityLabel(data: ElementModel, locale: EntityLocaleFormatter): s
     return locale.formatLabel(data.label, data.id);
 }
 
-function formatEntityTypes(data: ElementModel, locale: EntityLocaleFormatter): string {
+function formatEntityTypes(data: ElementModel, locale: DataGraphLocaleFormatter): string {
     return data.types.length > 0
         ? locale.formatElementTypes(data.types).join(', ')
         : 'Thing';

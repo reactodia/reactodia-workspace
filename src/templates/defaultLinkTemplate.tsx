@@ -45,6 +45,9 @@ type CustomizedLinkLabelProps = Omit<
     'primary' | 'link' | 'position' | 'line' | 'content'
 >;
 
+/**
+ * @category Components
+ */
 export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     const {
         link, className, path, pathProps, getPathPosition, route,

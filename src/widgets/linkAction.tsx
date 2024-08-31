@@ -27,6 +27,9 @@ export interface LinkActionContext {
 
 export const LinkActionContext = React.createContext<LinkActionContext | null>(null);
 
+/**
+ * @category Hooks
+ */
 export function useLinkActionContext(): LinkActionContext {
     const context = React.useContext(LinkActionContext);
     if (!context) {
@@ -51,6 +54,9 @@ export interface LinkActionProps extends LinkActionStyleProps {
 
 const CLASS_NAME = 'reactodia-link-action';
 
+/**
+ * @category Components
+ */
 export function LinkAction(props: LinkActionProps) {
     const {dockSide, dockIndex, className, title, onSelect, onMouseDown, children} = props;
     const {getPosition} = useLinkActionContext();
@@ -68,6 +74,9 @@ export function LinkAction(props: LinkActionProps) {
 
 export interface LinkActionSpinnerProps extends LinkActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function LinkActionSpinner(props: LinkActionStyleProps) {
     const {dockSide, dockIndex, className, title} = props;
     const {buttonSize, getPosition} = useLinkActionContext();
@@ -82,6 +91,9 @@ export function LinkActionSpinner(props: LinkActionStyleProps) {
 
 export interface LinkActionEditProps extends LinkActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
@@ -156,6 +168,9 @@ function useCanEditLink(
 
 export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function LinkActionDelete(props: LinkActionDeleteProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
@@ -233,6 +248,9 @@ function useCanDeleteLink(
 
 export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 'dockIndex'> {}
 
+/**
+ * @category Components
+ */
 export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
@@ -283,6 +301,9 @@ export interface LinkActionRenameProps {
     title?: string;
 }
 
+/**
+ * @category Components
+ */
 export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();

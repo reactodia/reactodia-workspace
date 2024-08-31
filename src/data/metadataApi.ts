@@ -1,5 +1,8 @@
 import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel, LinkDirection } from './model';
 
+/**
+ * @category Core
+ */
 export interface MetadataApi {
     /**
      * Can user create element and link from this element?

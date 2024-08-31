@@ -2,6 +2,9 @@ import * as React from 'react';
 
 import type { Unsubscribe } from './events';
 
+/**
+ * @category Utilities
+ */
 export class KeyedObserver<Key extends string> {
     private observedKeys = new Map<string, Unsubscribe>();
 
@@ -56,6 +59,9 @@ export type KeyedSyncStore<K, Context> = (
     onStoreChange: () => void
 ) => () => void;
 
+/**
+ * @category Hooks
+ */
 export function useKeyedSyncStore<K extends string, Context>(
     store: KeyedSyncStore<K, Context>,
     keys: ReadonlyArray<K>,

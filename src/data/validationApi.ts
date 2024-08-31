@@ -24,6 +24,9 @@ export interface ValidationEvent {
     readonly signal: AbortSignal | undefined;
 }
 
+/**
+ * @category Core
+ */
 export interface ValidationApi {
     /**
      * Validate element and its outbound links.

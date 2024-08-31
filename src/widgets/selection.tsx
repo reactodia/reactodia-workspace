@@ -52,6 +52,9 @@ export interface SelectionProps {
 
 const CLASS_NAME = 'reactodia-selection';
 
+/**
+ * @category Components
+ */
 export function Selection(props: SelectionProps) {
     const {model, canvas} = useCanvas();
 

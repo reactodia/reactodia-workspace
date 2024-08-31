@@ -8,6 +8,9 @@ import { Vector, isPolylineEqual } from './geometry';
 import { Command } from './history';
 import type { DiagramModel } from './model';
 
+/**
+ * @category Commands
+ */
 export class RestoreGeometry implements Command {
     readonly title = 'Move elements and links';
 
@@ -63,6 +66,9 @@ export class RestoreGeometry implements Command {
     }
 }
 
+/**
+ * @category Commands
+ */
 export function restoreCapturedLinkGeometry(link: Link): Command {
     const vertices = link.vertices;
     return Command.create('Change link vertices', () => {
@@ -72,6 +78,9 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
     });
 }
 
+/**
+ * @category Commands
+ */
 export function setElementState(element: Element, state: ElementTemplateState | undefined): Command {
     return Command.create('Change element state', () => {
         const previous = element.elementState;
@@ -80,6 +89,9 @@ export function setElementState(element: Element, state: ElementTemplateState | 
     });
 }
 
+/**
+ * @category Commands
+ */
 export function setElementExpanded(element: Element, expanded: boolean): Command {
     const title = expanded ? 'Expand element' : 'Collapse element';
     return Command.create(title, () => {
@@ -88,6 +100,9 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
     });
 }
 
+/**
+ * @category Commands
+ */
 export function setLinkState(link: Link, state: LinkTemplateState | undefined): Command {
     return Command.create('Change link state', () => {
         const previous = link.linkState;
@@ -96,6 +111,9 @@ export function setLinkState(link: Link, state: LinkTemplateState | undefined): 
     });
 }
 
+/**
+ * @category Commands
+ */
 export function changeLinkTypeVisibility(
     model: DiagramModel,
     linkTypeId: LinkTypeIri,
@@ -108,6 +126,9 @@ export function changeLinkTypeVisibility(
     });
 }
 
+/**
+ * @category Commands
+ */
 export function restoreViewport(canvas: CanvasApi): Command {
     interface CapturedViewport {
         readonly center: Vector;

@@ -15,6 +15,9 @@ import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 export interface DropOnCanvasProps {}
 
+/**
+ * @category Components
+ */
 export function DropOnCanvas(props: DropOnCanvasProps) {
     const {canvas} = useCanvas();
     const {model, triggerWorkspaceEvent} = useWorkspace();

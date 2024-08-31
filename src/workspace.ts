@@ -1,14 +1,57 @@
 require('../styles/main.scss');
 
 export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
-export { makeMoveComparator, shallowArrayEqual } from './coreUtils/collections';
-export * from './coreUtils/events';
+export { moveComparator, shallowArrayEqual } from './coreUtils/collections';
+export {
+    Listener, AnyListener, AnyEvent, PropertyChange,
+    Events, EventTrigger, EventObserver, EventSource,
+} from './coreUtils/events';
 export * from './coreUtils/hashMap';
 export {
-    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore, useSyncStoreWithComparator,
+    SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
+    useSyncStore, useSyncStoreWithComparator,
 } from './coreUtils/hooks';
 export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
 export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
+export { Debouncer, animateInterval } from './coreUtils/scheduler';
+
+export * from './data/model';
+export * from './data/metadataApi';
+export * from './data/validationApi';
+export * from './data/provider';
+export {
+    TemplateProperties, PinnedProperties,
+    DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
+} from './data/schema';
+export * from './data/composite/composite';
+export {
+    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, delayProviderDecorator,
+} from './data/decorated/decoratedDataProvider';
+export { EmptyDataProvider } from './data/decorated/emptyDataProvider';
+export {
+    IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
+} from './data/decorated/indexedDbCachedProvider';
+export { MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
+export * from './data/rdf/rdfDataProvider';
+/** @category Core */
+export * as Rdf from './data/rdf/rdfModel';
+export * from './data/sparql/sparqlDataProvider';
+export * from './data/sparql/sparqlDataProviderSettings';
+
+export * from './diagram/canvasApi';
+export { defineCanvasWidget } from './diagram/canvasWidget';
+export {
+    RestoreGeometry, setElementState, setElementExpanded, setLinkState,
+    changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
+} from './diagram/commands';
+export * from './diagram/customization';
+export {
+    Element, ElementEvents, ElementProps, ElementTemplateState,
+    Link, LinkEvents, LinkProps, LinkTemplateState, LinkVertex,
+    Cell, VoidElement, LinkTypeVisibility,
+} from './diagram/elements';
+export * from './diagram/geometry';
+export * from './diagram/history';
 export {
     CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink,
     LayoutTypeProvider, LayoutFunction,
@@ -22,44 +65,6 @@ export {
     ColaFlowLayoutOptions, colaFlowLayout,
     colaRemoveOverlaps, layoutPadded, layoutPaddedBiasFree, getContentFittingBoxForLayout,
 } from './diagram/layoutShared';
-export * from './coreUtils/scheduler';
-
-export * from './data/model';
-export * from './data/metadataApi';
-export * from './data/validationApi';
-export * from './data/provider';
-export {
-    TemplateProperties, PinnedProperties,
-    DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
-} from './data/schema';
-export * from './data/composite/composite';
-export {
-    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, makeDelayProviderDecorator,
-} from './data/decorated/decoratedDataProvider';
-export { EmptyDataProvider } from './data/decorated/emptyDataProvider';
-export {
-    IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
-} from './data/decorated/indexedDbCachedProvider';
-export { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './data/rdf/memoryDataset';
-export * from './data/rdf/rdfDataProvider';
-export * as Rdf from './data/rdf/rdfModel';
-export * from './data/sparql/sparqlDataProvider';
-export * from './data/sparql/sparqlDataProviderSettings';
-
-export * from './diagram/canvasApi';
-export { defineCanvasWidget } from './diagram/canvasWidget';
-export {
-    RestoreGeometry, setElementState, setElementExpanded, setLinkState,
-    changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
-} from './diagram/commands';
-export * from './diagram/customization';
-export {
-    Element, ElementEvents, ElementTemplateState,
-    Link, LinkEvents, LinkTemplateState, LinkVertex,
-    Cell, VoidElement,
-} from './diagram/elements';
-export * from './diagram/geometry';
-export * from './diagram/history';
 export {
     LinkPath, LinkPathProps,
     LinkLabel, LinkLabelProps,
@@ -78,12 +83,15 @@ export {
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
 export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
-export * from './editor/authoringState';
+export {
+    AuthoringState, AuthoringEvent, AuthoringKind, ElementChange, LinkChange, TemporaryState,
+} from './editor/authoringState';
 export * from './editor/dataDiagramModel';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
     EntityGroup, EntityGroupEvents, EntityGroupProps, EntityGroupItem,
     RelationLink, RelationLinkEvents, RelationLinkProps,
+    RelationGroup, RelationGroupEvents, RelationGroupProps, RelationGroupItem,
     ElementType, ElementTypeEvents,
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
@@ -151,8 +159,8 @@ export {
     ListElementView, ListElementViewProps, highlightSubstring, startDragElements,
 } from './widgets/listElementView';
 export { Navigator, NavigatorProps } from './widgets/navigator';
-export { ProgressBar, ProgressBarProps } from './widgets/progressBar';
-export { SearchResults, SearchResultProps } from './widgets/searchResults';
+export { ProgressBar, ProgressBarProps, ProgressState } from './widgets/progressBar';
+export { SearchResults, SearchResultsProps } from './widgets/searchResults';
 export { Selection, SelectionProps } from './widgets/selection';
 export {
     SelectionAction, SelectionActionProps, SelectionActionStyleProps,

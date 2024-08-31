@@ -6,6 +6,9 @@ import { LinkLabel } from '../diagram/linkLayer';
 
 import { DefaultLinkTemplate, DefaultLinkPathTemplate } from './defaultLinkTemplate';
 
+/**
+ * @category Constants
+ */
 export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
     ...DefaultLinkTemplate,
     renderLink: props => (
@@ -87,6 +90,9 @@ const LINK_TYPE_OF: LinkTemplate = {
     ),
 };
 
+/**
+ * @category Constants
+ */
 export const OntologyLinkTemplates: LinkTemplateResolver = type => {
     if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
         return LINK_SUB_CLASS_OF;

@@ -1,9 +1,15 @@
 import type { Element, Link } from './elements';
 
+/**
+ * @category Geometry
+ */
 export interface Vector {
     readonly x: number;
     readonly y: number;
 }
+/**
+ * @category Geometry
+ */
 export namespace Vector {
     export function add(a: Vector, b: Vector): Vector {
         return {
@@ -39,17 +45,26 @@ export namespace Vector {
     }
 }
 
+/**
+ * @category Geometry
+ */
 export interface Size {
     readonly width: number;
     readonly height: number;
 }
 
+/**
+ * @category Geometry
+ */
 export interface Rect {
     readonly x: number;
     readonly y: number;
     readonly width: number;
     readonly height: number;
 }
+/**
+ * @category Geometry
+ */
 export namespace Rect {
     export function equals(a: Rect, b: Rect): boolean {
         return (
@@ -72,10 +87,16 @@ export namespace Rect {
     }
 }
 
+/**
+ * @category Geometry
+ */
 export interface SizeProvider {
     getElementSize(element: Element): Size | undefined;
 }
 
+/**
+ * @category Geometry
+ */
 export function boundsOf(element: Element, sizeProvider: SizeProvider): Rect {
     const {x, y} = element.position;
     const size = sizeProvider.getElementSize(element);
@@ -125,6 +146,9 @@ function intersectRayFromRectangleCenter(sourceRect: Rect, rayTarget: Vector) {
     }
 }
 
+/**
+ * @category Geometry
+ */
 export function isPolylineEqual(left: ReadonlyArray<Vector>, right: ReadonlyArray<Vector>) {
     if (left === right) { return true; }
     if (left.length !== right.length) { return false; }
@@ -138,6 +162,9 @@ export function isPolylineEqual(left: ReadonlyArray<Vector>, right: ReadonlyArra
     return true;
 }
 
+/**
+ * @category Geometry
+ */
 export function computePolyline(
     sourceRect: Rect,
     targetRect: Rect,
@@ -150,6 +177,9 @@ export function computePolyline(
     return [startPoint, ...vertices, endPoint];
 }
 
+/**
+ * @category Geometry
+ */
 export function computePolylineLength(polyline: ReadonlyArray<Vector>): number {
     let previous: Vector;
     return polyline.reduce((acc, point) => {
@@ -159,6 +189,9 @@ export function computePolylineLength(polyline: ReadonlyArray<Vector>): number {
     }, 0);
 }
 
+/**
+ * @category Geometry
+ */
 export function getPointAlongPolyline(polyline: ReadonlyArray<Vector>, offset: number): Vector {
     if (polyline.length === 0) {
         throw new Error('Cannot compute a point for empty polyline');
@@ -186,6 +219,9 @@ export function getPointAlongPolyline(polyline: ReadonlyArray<Vector>, offset: n
     return polyline[polyline.length - 1];
 }
 
+/**
+ * @category Geometry
+ */
 export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, location: Vector): number {
     let minDistance = Infinity;
     let foundIndex = 0;
@@ -212,10 +248,16 @@ export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, locatio
     return foundIndex;
 }
 
+/**
+ * @category Geometry
+ */
 export function pathFromPolyline(polyline: ReadonlyArray<Vector>): string {
     return 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
 }
 
+/**
+ * @category Geometry
+ */
 export function findElementAtPoint(
     elements: ReadonlyArray<Element>,
     point: Vector,
@@ -237,6 +279,9 @@ export function findElementAtPoint(
     return undefined;
 }
 
+/**
+ * @category Geometry
+ */
 export function getContentFittingBox(
     elements: Iterable<Element>,
     links: Iterable<Link>,

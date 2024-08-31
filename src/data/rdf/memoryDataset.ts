@@ -4,6 +4,9 @@ import {
     Quad, Term, DefaultDataFactory, dropHighestNonSignBit, hashTerm, equalTerms, hashQuad, equalQuads,
 } from './rdfModel';
 
+/**
+ * @category Utilities
+ */
 export interface MemoryDataset extends Iterable<Quad> {
     readonly size: number;
     add(quad: Quad): this;
@@ -43,7 +46,10 @@ export enum IndexQuadBy {
     /* Reserved: G = 64 */
 }
 
-export function makeIndexedDataset(indexBy: IndexQuadBy): MemoryDataset {
+/**
+ * @category Utilities
+ */
+export function indexedDataset(indexBy: IndexQuadBy): MemoryDataset {
     return new IndexedDataset(indexBy);
 }
 

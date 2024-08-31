@@ -10,6 +10,9 @@ const locationIcon = require('@images/semantic/location.svg');
 const eventIcon = require('@images/semantic/event.svg');
 const objectIcon = require('@images/semantic/object.svg');
 
+/**
+ * @category Constants
+ */
 export const SemanticTypeStyles: TypeStyleResolver = types => {
     if (types.indexOf('http://www.w3.org/2002/07/owl#Class') !== -1 ||
         types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1

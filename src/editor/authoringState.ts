@@ -2,18 +2,30 @@ import { HashMap, ReadonlyHashMap, HashSet, ReadonlyHashSet } from '../coreUtils
 
 import { ElementModel, ElementIri, LinkKey, LinkModel, equalLinks, hashLink } from '../data/model';
 
+/**
+ * @category Core
+ */
 export interface AuthoringState {
     readonly elements: ReadonlyMap<ElementIri, ElementChange>;
     readonly links: ReadonlyHashMap<LinkKey, LinkChange>;
 }
 
+/**
+ * @category Core
+ */
 export type AuthoringEvent = ElementChange | LinkChange;
 
+/**
+ * @category Core
+ */
 export enum AuthoringKind {
     ChangeElement = 'changeElement',
     ChangeLink = 'changeLink',
 }
 
+/**
+ * @category Core
+ */
 export interface ElementChange {
     readonly type: AuthoringKind.ChangeElement;
     readonly before?: ElementModel;
@@ -22,6 +34,9 @@ export interface ElementChange {
     readonly deleted: boolean;
 }
 
+/**
+ * @category Core
+ */
 export interface LinkChange {
     readonly type: AuthoringKind.ChangeLink;
     readonly before?: LinkModel;
@@ -34,6 +49,9 @@ interface MutableAuthoringState extends AuthoringState {
     readonly links: HashMap<LinkKey, LinkChange>;
 }
 
+/**
+ * @category Core
+ */
 export namespace AuthoringState {
     export const empty: AuthoringState = {
         elements: new Map<ElementIri, ElementChange>(),
@@ -237,11 +255,17 @@ export namespace AuthoringState {
     }
 }
 
+/**
+ * @category Core
+ */
 export interface TemporaryState {
     readonly elements: ReadonlySet<ElementIri>;
     readonly links: ReadonlyHashSet<LinkKey>;
 }
 
+/**
+ * @category Core
+ */
 export namespace TemporaryState {
     export const empty: TemporaryState = {
         elements: new Set<ElementIri>(),

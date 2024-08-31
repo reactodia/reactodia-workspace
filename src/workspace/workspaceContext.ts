@@ -123,6 +123,9 @@ export interface ProcessedTypeStyle {
 /** @hidden */
 export const WorkspaceContext = React.createContext<WorkspaceContext | null>(null);
 
+/**
+ * @category Hooks
+ */
 export function useWorkspace(): WorkspaceContext {
     const context = React.useContext(WorkspaceContext);
     if (!context) {

@@ -29,6 +29,9 @@ export interface ToolbarProps {
 
 const CLASS_NAME = 'reactodia-toolbar';
 
+/**
+ * @category Components
+ */
 export function Toolbar(props: ToolbarProps) {
     const {menu, children, languages = []} = props;
     const menuContent = menu === null ? null : (

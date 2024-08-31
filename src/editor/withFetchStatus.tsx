@@ -22,6 +22,9 @@ enum Status {
 
 const CLASS_NAME = 'reactodia-fetch-status';
 
+/**
+ * @category Components
+ */
 export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;
 

@@ -1,14 +1,24 @@
 import { EventSource, Events } from '../coreUtils/events';
 
+/**
+ * @category Core
+ */
 export interface Command {
     readonly title?: string;
     /** @returns Inverse command */
     invoke(): Command;
 }
 
-/** @returns Inverse command */
+/**
+ * Command action which can be executed for its effect.
+ *
+ * @returns Inverse command
+ */
 export type CommandAction = () => Command;
 
+/**
+ * @category Core
+ */
 export namespace Command {
     export function create(title: string, action: CommandAction): Command {
         return new SimpleCommand(title, action);
@@ -70,6 +80,9 @@ export interface CommandHistoryEvents {
     historyChanged: { readonly hasChanges: boolean };
 }
 
+/**
+ * @category Core
+ */
 export interface CommandHistory {
     readonly events: Events<CommandHistoryEvents>;
     readonly undoStack: ReadonlyArray<Command>;
@@ -82,6 +95,9 @@ export interface CommandHistory {
     startBatch(title?: string): CommandBatch;
 }
 
+/**
+ * @category Core
+ */
 export interface CommandBatch {
     readonly history: CommandHistory;
     store(): void;
@@ -93,6 +109,9 @@ interface InMemoryBatch extends CommandBatch {
     readonly _inverses: Command[];
 }
 
+/**
+ * @category Core
+ */
 export class InMemoryHistory implements CommandHistory {
     private readonly source = new EventSource<CommandHistoryEvents>();
     readonly events: Events<CommandHistoryEvents> = this.source;

@@ -26,6 +26,9 @@ export interface ToolbarActionProps extends ToolbarActionStyleProps {
     children?: React.ReactNode;
 }
 
+/**
+ * @category Components
+ */
 export function ToolbarAction(props: ToolbarActionProps) {
     const {className, title, disabled, onSelect, children} = props;
     const insideDropdown = useInsideDropdown();
@@ -56,6 +59,9 @@ export interface ToolbarActionOpenProps extends ToolbarActionStyleProps {
     children?: React.ReactNode;
 }
 
+/**
+ * @category Components
+ */
 export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
     const {className, fileAccept, onSelect, children, ...otherProps} = props;
     const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -89,6 +95,9 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
     children?: React.ReactNode;
 }
 
+/**
+ * @category Components
+ */
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     const {className, mode, onSelect, children, ...otherProps} = props;
     const {model, editor} = useWorkspace();
@@ -122,6 +131,9 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
 
 export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     const {className, title, ...otherProps} = props;
     const {model, editor} = useWorkspace();
@@ -155,6 +167,9 @@ export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
     rasterOptions?: ExportRasterOptions;
 }
 
+/**
+ * @category Components
+ */
 export function ToolbarActionExport(props: ToolbarActionExportProps) {
     const {
         className, title, kind, fileName = 'diagram', rasterOptions, ...otherProps
@@ -214,6 +229,9 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
 
 export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
+/**
+ * @category Components
+ */
 export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
     const {className, title, ...otherProps} = props;
     const {model: {history}} = useCanvas();
@@ -244,6 +262,9 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
 
 export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
+/**
+ * @category Components
+ */
 export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
     const {className, title, ...otherProps} = props;
     const {model: {history}} = useCanvas();
@@ -274,6 +295,9 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
 
 export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
+/**
+ * @category Components
+ */
 export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     const {className, title, ...otherProps} = props;
     const {performLayout} = useWorkspace();
@@ -309,6 +333,9 @@ export interface WorkspaceLanguage {
     readonly label: string;
 }
 
+/**
+ * @category Components
+ */
 export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
     const {className, title, languages} = props;
     const {model} = useCanvas();

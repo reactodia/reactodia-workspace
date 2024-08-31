@@ -46,6 +46,9 @@ export enum RenderingLayer {
 const DEFAULT_ELEMENT_TEMPLATE_RESOLVER: ElementTemplateResolver = types => undefined;
 const DEFAULT_LINK_TEMPLATE_RESOLVER: LinkTemplateResolver = type => undefined;
 
+/**
+ * @category Core
+ */
 export class RenderingState implements SizeProvider {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<RenderingStateEvents>();

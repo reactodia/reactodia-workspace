@@ -1,14 +1,24 @@
-export abstract class BatchingScheduler {
-    private useAnimationFrame: boolean;
+/**
+ * @category Utilities
+ */
+export class Debouncer {
+    private readonly useAnimationFrame: boolean;
     // TODO: fix
     private scheduled: any;
+
+    private callback: (() => void) | undefined;
 
     constructor(readonly waitingTime = 0) {
         this.useAnimationFrame = waitingTime === 0;
         this.runSynchronously = this.runSynchronously.bind(this);
     }
 
-    protected schedule() {
+    call(callback: () => void) {
+        this.callback = callback;
+        this.schedule();
+    }
+
+    private schedule() {
         if (typeof this.scheduled === 'undefined') {
             if (this.useAnimationFrame) {
                 this.scheduled = requestAnimationFrame(this.runSynchronously);
@@ -18,7 +28,10 @@ export abstract class BatchingScheduler {
         }
     }
 
-    protected abstract run(): void;
+    private run() {
+        const callback = this.callback;
+        callback?.();
+    }
 
     runSynchronously() {
         const wasScheduled = this.cancelScheduledTimeout();
@@ -45,14 +58,15 @@ export abstract class BatchingScheduler {
     }
 }
 
-export class BufferingQueue<Key extends string> extends BatchingScheduler {
-    private queuedItems = new Set<Key>();
+export class BufferingQueue<Key extends string> {
+    private readonly debouncer: Debouncer;
+    private readonly queuedItems = new Set<Key>();
 
     constructor(
         private onFetch: (keys: Key[]) => void,
         waitingTime = 200
     ) {
-        super(waitingTime);
+        this.debouncer = new Debouncer(waitingTime);
     }
 
     has(key: Key): boolean {
@@ -61,35 +75,24 @@ export class BufferingQueue<Key extends string> extends BatchingScheduler {
 
     push(key: Key): void {
         this.queuedItems.add(key);
-        this.schedule();
+        this.debouncer.call(this.run);
     }
 
     clear(): void {
         this.queuedItems.clear();
     }
 
-    protected run(): void {
+    private run = (): void => {
         const {queuedItems, onFetch} = this;
         const keys = Array.from(queuedItems);
         queuedItems.clear();
         onFetch(keys);
-    }
+    };
 }
 
-export class Debouncer extends BatchingScheduler {
-    private callback: (() => void) | undefined;
-
-    call(callback: () => void) {
-        this.callback = callback;
-        this.schedule();
-    }
-
-    protected run() {
-        const callback = this.callback;
-        callback?.();
-    }
-}
-
+/**
+ * @category Utilities
+ */
 export function animateInterval(
     duration: number,
     onProgress: (progress: number) => void,

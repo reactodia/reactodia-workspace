@@ -11,8 +11,6 @@ import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
-import { EntityElement } from '../workspace';
-import { EntityGroup } from '../editor/dataElements';
 
 export interface NavigatorProps {
     /**
@@ -62,6 +60,9 @@ export interface NavigatorStrokeStyle {
     readonly dash?: ReadonlyArray<number>;
 }
 
+/**
+ * @category Components
+ */
 export function Navigator(props: NavigatorProps) {
     const {canvas} = useCanvas();
     const workspace = useWorkspace();

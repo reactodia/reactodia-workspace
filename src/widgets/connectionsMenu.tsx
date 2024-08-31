@@ -53,6 +53,9 @@ export interface PropertyScore {
     score: number;
 }
 
+/**
+ * @category Components
+ */
 export function ConnectionsMenu(props: ConnectionsMenuProps) {
     const {commands} = props;
 

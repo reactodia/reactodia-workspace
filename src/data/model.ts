@@ -25,14 +25,22 @@ export type LinkDirection = 'in' | 'out';
 /**
  * Describes a graph of element types (nodes) and "subtype of" relations
  * between them (edges).
+ *
+ * @category Data
  */
 export interface ElementTypeGraph {
     readonly elementTypes: ReadonlyArray<ElementTypeModel>;
     readonly subtypeOf: ReadonlyArray<SubtypeEdge>;
 }
 
+/**
+ * @category Data
+ */
 export type SubtypeEdge = readonly [ElementTypeIri, ElementTypeIri];
 
+/**
+ * @category Data
+ */
 export interface ElementModel {
     readonly id: ElementIri;
     readonly types: ReadonlyArray<ElementTypeIri>;
@@ -41,12 +49,18 @@ export interface ElementModel {
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
+/**
+ * @category Data
+ */
 export interface LinkKey {
     readonly linkTypeId: LinkTypeIri;
     readonly sourceId: ElementIri;
     readonly targetId: ElementIri;
 }
 
+/**
+ * @category Data
+ */
 export interface LinkModel {
     readonly linkTypeId: LinkTypeIri;
     readonly sourceId: ElementIri;
@@ -54,23 +68,35 @@ export interface LinkModel {
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
+/**
+ * @category Data
+ */
 export interface ElementTypeModel {
     readonly id: ElementTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
     readonly count?: number;
 }
 
+/**
+ * @category Data
+ */
 export interface LinkTypeModel {
     readonly id: LinkTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
     readonly count?: number;
 }
 
+/**
+ * @category Data
+ */
 export interface PropertyTypeModel {
     readonly id: PropertyTypeIri;
     readonly label: ReadonlyArray<Rdf.Literal>;
 }
 
+/**
+ * @category Data
+ */
 export interface LinkCount {
     readonly id: LinkTypeIri;
     readonly inCount: number;
@@ -85,6 +111,8 @@ export interface LinkCount {
 /**
  * Describes an element with information on which link types and directions
  * are used to connect it to other elements.
+ *
+ * @category Data
  */
 export interface LinkedElement {
     readonly element: ElementModel;
@@ -92,10 +120,16 @@ export interface LinkedElement {
     readonly outLinks: ReadonlySet<LinkTypeIri>;
 }
 
+/**
+ * @category Data
+ */
 export function isEncodedBlank(iri: string): boolean {
     return iri.startsWith('urn:reactodia:blank:');
 }
 
+/**
+ * @category Data
+ */
 export function hashSubtypeEdge(edge: SubtypeEdge): number {
     const [from, to] = edge;
     let hash = Rdf.hashString(from);
@@ -103,12 +137,18 @@ export function hashSubtypeEdge(edge: SubtypeEdge): number {
     return Rdf.dropHighestNonSignBit(hash);
 }
 
+/**
+ * @category Data
+ */
 export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
     const [aFrom, aTo] = a;
     const [bFrom, bTo] = b;
     return aFrom === bFrom && aTo === bTo;
 }
 
+/**
+ * @category Data
+ */
 export function equalLinks(left: LinkKey, right: LinkKey) {
     return (
         left.linkTypeId === right.linkTypeId &&
@@ -117,6 +157,9 @@ export function equalLinks(left: LinkKey, right: LinkKey) {
     );
 }
 
+/**
+ * @category Data
+ */
 export function hashLink(link: LinkKey): number {
     const {linkTypeId, sourceId, targetId} = link;
     let hash = hashFnv32a(linkTypeId);
@@ -125,6 +168,9 @@ export function hashLink(link: LinkKey): number {
     return hash;
 }
 
+/**
+ * @category Data
+ */
 export function equalElements(a: ElementModel, b: ElementModel): boolean {
     return (
         a.id === b.id &&

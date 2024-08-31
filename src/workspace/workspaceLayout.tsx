@@ -20,10 +20,16 @@ export interface WorkspaceLayoutContainerProps extends CommonWorkspaceLayoutProp
 
 type WorkspaceChild = React.ReactElement<WorkspaceLayoutContainerProps | WorkspaceLayoutItemProps>;
 
+/**
+ * @category Components
+ */
 export function WorkspaceLayoutRow(props: WorkspaceLayoutContainerProps) {
     return renderContainer(props, 'row');
 }
 
+/**
+ * @category Components
+ */
 export function WorkspaceLayoutColumn(props: WorkspaceLayoutContainerProps) {
     return renderContainer(props, 'column');
 }
@@ -34,6 +40,9 @@ export interface WorkspaceLayoutItemProps extends CommonWorkspaceLayoutProps {
     children: React.ReactElement;
 }
 
+/**
+ * @category Components
+ */
 export function WorkspaceLayoutItem(props: WorkspaceLayoutItemProps) {
     return props.children;
 }

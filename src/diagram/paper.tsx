@@ -128,6 +128,9 @@ function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | un
     return undefined;
 }
 
+/**
+ * @category Geometry
+ */
 export interface PaperTransform {
     width: number;
     height: number;
@@ -143,37 +146,41 @@ export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
 }
 
-export class TransformedSvgCanvas extends Component<TransformedSvgCanvasProps> {
-    private static readonly SVG_STYLE: CSSProperties = {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-    };
-    render() {
-        const {svgCanvasRef, paperTransform, style, children, ...otherProps} = this.props;
-        const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
-        const scaledWidth = width * scale;
-        const scaledHeight = height * scale;
-        let svgStyle = TransformedSvgCanvas.SVG_STYLE;
-        if (style) {
-            svgStyle = {...svgStyle, ...style};
-        }
-        return (
-            <svg ref={svgCanvasRef}
-                width={scaledWidth}
-                height={scaledHeight}
-                style={svgStyle}
-                {...otherProps}>
-                <g transform={`scale(${scale},${scale})translate(${originX},${originY})`}>
-                    {children}
-                </g>
-            </svg>
-        );
+const TRANSFORMED_SVG_CANVAS_STYLE: Readonly<CSSProperties> = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+};
+
+/**
+ * @category Components
+ */
+export function TransformedSvgCanvas(props: TransformedSvgCanvasProps) {
+    const {svgCanvasRef, paperTransform, style, children, ...otherProps} = props;
+    const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
+    const scaledWidth = width * scale;
+    const scaledHeight = height * scale;
+    let svgStyle = TRANSFORMED_SVG_CANVAS_STYLE;
+    if (style) {
+        svgStyle = {...svgStyle, ...style};
     }
+    return (
+        <svg ref={svgCanvasRef}
+            width={scaledWidth}
+            height={scaledHeight}
+            style={svgStyle}
+            {...otherProps}>
+            <g transform={`scale(${scale},${scale})translate(${originX},${originY})`}>
+                {children}
+            </g>
+        </svg>
+    );
 }
 
 /**
  * @returns scrollable pane size in non-scaled pane coords.
+ *
+ * @category Geometry
  */
 export function totalPaneSize(pt: PaperTransform): Vector {
     return {
@@ -184,11 +191,16 @@ export function totalPaneSize(pt: PaperTransform): Vector {
 
 /**
  * @returns scrollable pane top-left corner position in non-scaled pane coords.
+ *
+ * @category Geometry
  */
 export function paneTopLeft(pt: PaperTransform): Vector {
     return {x: -pt.paddingX, y: -pt.paddingY};
 }
 
+/**
+ * @category Geometry
+ */
 export function paneFromPaperCoords(paper: Vector, pt: PaperTransform): Vector {
     return {
         x: (paper.x + pt.originX) * pt.scale,
@@ -196,6 +208,9 @@ export function paneFromPaperCoords(paper: Vector, pt: PaperTransform): Vector {
     };
 }
 
+/**
+ * @category Geometry
+ */
 export function paperFromPaneCoords(pane: Vector, pt: PaperTransform): Vector {
     return {
         x: pane.x / pt.scale - pt.originX,

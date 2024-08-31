@@ -13,11 +13,27 @@ import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import type { InstancesSearchCommands } from './instancesSearch';
 import { highlightSubstring } from './listElementView';
 import { ProgressBar, ProgressState } from './progressBar';
+
+export interface LinkTypesToolboxProps {
+    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
+}
+
+/**
+ * @category Components
+ */
+export function LinkTypesToolbox(props: LinkTypesToolboxProps) {
+    const workspace = useWorkspace();
+    return (
+        <LinkTypesToolboxInner {...props}
+            workspace={workspace}
+        />
+    );
+}
 
 interface LinkInToolBoxProps {
     model: DiagramModel;
@@ -248,8 +264,8 @@ class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { 
     }
 }
 
-export interface LinkTypesToolboxProps {
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
+interface LinkTypesToolboxInnerProps extends LinkTypesToolboxProps {
+    workspace: WorkspaceContext;
 }
 
 interface LinkTypesToolboxState {
@@ -259,10 +275,7 @@ interface LinkTypesToolboxState {
     readonly countMap?: { readonly [linkTypeId: string]: number };
 }
 
-export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, LinkTypesToolboxState> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
-
+class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, LinkTypesToolboxState> {
     private readonly listener = new EventObserver();
     private readonly linkListener = new EventObserver();
     private readonly delayedUpdateAll = new Debouncer();
@@ -270,10 +283,10 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
 
     private currentRequest: { elementId: string } | undefined;
 
-    constructor(props: LinkTypesToolboxProps, context: any) {
-        super(props, context);
+    constructor(props: LinkTypesToolboxInnerProps) {
+        super(props);
 
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
 
         this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
         this.listener.listen(model.events, 'changeLanguage', this.updateOnCurrentSelection);
@@ -288,7 +301,10 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
         this.updateOnCurrentSelection();
     }
 
-    componentDidUpdate(prevProps: LinkTypesToolboxProps, prevState: LinkTypesToolboxState): void {
+    componentDidUpdate(
+        prevProps: LinkTypesToolboxInnerProps,
+        prevState: LinkTypesToolboxState
+    ): void {
         if (this.state.linksOfElement !== prevState.linksOfElement) {
             this.subscribeOnLinksEvents();
         }
@@ -302,7 +318,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     }
 
     private updateOnCurrentSelection = () => {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         const single = model.selection.length === 1 ? model.selection[0] : null;
         if (single !== this.state.selectedElement && single instanceof EntityElement) {
             this.requestLinksOf(single);
@@ -310,7 +326,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     };
 
     private requestLinksOf(selectedElement: EntityElement) {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         if (selectedElement) {
             const request = {elementId: selectedElement.iri};
             this.currentRequest = request;
@@ -336,7 +352,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     }
 
     private computeStateFromRequestResult(linkTypes: ReadonlyArray<LinkCount>) {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
 
         const linksOfElement: LinkTypeModel[] = [];
         const countMap: { [linkTypeId: string]: number } = {};
@@ -354,7 +370,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     }
 
     private subscribeOnLinksEvents() {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         this.linkListener.stopListening();
 
         const {linksOfElement} = this.state;
@@ -378,8 +394,7 @@ export class LinkTypesToolbox extends React.Component<LinkTypesToolboxProps, Lin
     };
 
     render() {
-        const {instancesSearchCommands} = this.props;
-        const {model} = this.context;
+        const {instancesSearchCommands, workspace: {model}} = this.props;
         const {selectedElement, dataState, linksOfElement, countMap} = this.state;
         return (
             <LinkTypesToolboxView model={model}

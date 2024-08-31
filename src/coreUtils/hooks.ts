@@ -10,6 +10,9 @@ import type { Events } from './events';
  */
 export type SyncStore = (onChange: () => void) => (() => void);
 
+/**
+ * @category Hooks
+ */
 export function useObservedProperty<E, K extends keyof E, R>(
     events: Events<E>,
     key: K,
@@ -22,10 +25,16 @@ export function useObservedProperty<E, K extends keyof E, R>(
 const NEVER_SYNC_STORE_DISPOSE = (): void => {};
 const NEVER_SYNC_STORE: SyncStore = () => NEVER_SYNC_STORE_DISPOSE;
 
+/**
+ * @category Utility
+ */
 export function neverSyncStore(): SyncStore {
     return NEVER_SYNC_STORE;
 }
 
+/**
+ * @category Hooks
+ */
 export function useEventStore<E, K extends keyof E>(events: Events<E> | undefined, key: K): SyncStore {
     return React.useCallback((onStoreChange: () => void) => {
         if (events) {
@@ -37,6 +46,9 @@ export function useEventStore<E, K extends keyof E>(events: Events<E> | undefine
     }, [events, key]);
 }
 
+/**
+ * @category Hooks
+ */
 export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {
     return React.useCallback<SyncStore>(onChange => {
         let scheduled: number | undefined;
@@ -60,6 +72,8 @@ export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {
 
 /**
  * Same as `React.useSyncExternalStore()` with a support shim for lower React versions.
+ *
+ * @category Hooks
  */
 export function useSyncStore<R>(subscribe: SyncStore, getSnapshot: () => R): R {
     return useSyncExternalStore(subscribe, getSnapshot);
@@ -71,6 +85,8 @@ export function useSyncStore<R>(subscribe: SyncStore, getSnapshot: () => R): R {
  * 
  * Update will be skipped unless `equalResults()` called with previous and
  * current snapshot returns `false`.
+ *
+ * @category Hooks
  */
 export function useSyncStoreWithComparator<R>(
     subscribe: SyncStore,

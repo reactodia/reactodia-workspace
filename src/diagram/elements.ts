@@ -5,6 +5,9 @@ import { GenerateID } from '../data/schema';
 
 import { Vector, isPolylineEqual } from './geometry';
 
+/**
+ * @category Core
+ */
 export type Cell = Element | Link | LinkVertex;
 
 export interface ElementEvents {
@@ -30,6 +33,8 @@ export interface ElementProps {
 
 /**
  * Abstract base class for diagram elements (nodes).
+ *
+ * @category Core
  */
 export abstract class Element {
     protected readonly source = new EventSource<ElementEvents>();
@@ -94,6 +99,8 @@ export abstract class Element {
 
 /**
  * Diagram element represented by an invisible single point.
+ *
+ * @category Core
  */
 export class VoidElement extends Element {
     constructor(props: Pick<ElementProps, 'id' | 'position'>) {
@@ -125,6 +132,9 @@ export interface LinkProps {
     linkState?: LinkTemplateState;
 }
 
+/**
+ * @category Core
+ */
 export abstract class Link {
     protected readonly source = new EventSource<LinkEvents>();
     readonly events: Events<LinkEvents> = this.source;
@@ -192,6 +202,9 @@ export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
     return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
 }
 
+/**
+ * @category Core
+ */
 export class LinkVertex {
     constructor(
         readonly link: Link,

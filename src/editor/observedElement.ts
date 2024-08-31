@@ -6,6 +6,8 @@ import type { DataDiagramModel } from './dataDiagramModel';
 
 /**
  * Allows to subscribe to the changes to the data of multiple element types via `useKeyedSyncStore()`.
+ *
+ * @category Core
  */
 export const subscribeElementTypes: KeyedSyncStore<ElementTypeIri, DataDiagramModel> =
     (key, model, onStoreChange) => {
@@ -16,6 +18,8 @@ export const subscribeElementTypes: KeyedSyncStore<ElementTypeIri, DataDiagramMo
 
 /**
  * Allows to subscribe to the changes to the data of multiple property types via `useKeyedSyncStore()`.
+ *
+ * @category Core
  */
 export const subscribePropertyTypes: KeyedSyncStore<PropertyTypeIri, DataDiagramModel> =
     (key, model, onStoreChange) => {
@@ -26,6 +30,8 @@ export const subscribePropertyTypes: KeyedSyncStore<PropertyTypeIri, DataDiagram
 
 /**
  * Allows to subscribe to the changes to the data of multiple link types via `useKeyedSyncStore()`.
+ *
+ * @category Core
  */
 export const subscribeLinkTypes: KeyedSyncStore<LinkTypeIri, DataDiagramModel> =
     (key, model, onStoreChange) => {

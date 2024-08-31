@@ -2,6 +2,9 @@ import * as React from 'react';
 
 import type { WorkerCall, WorkerCallSuccess, WorkerCallError, WorkerConstructor } from '../worker-protocol';
 
+/**
+ * @category Utilities
+ */
 export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
     workerFactory: () => Worker,
     constructorArgs: ConstructorParameters<T>
@@ -32,6 +35,9 @@ interface RefCountedWorkerState<T> {
     refCount: number;
 }
 
+/**
+ * @category Hooks
+ */
 export function useWorker<T>(worker: WorkerDefinition<T>): T {
     React.useEffect(() => {
         let enterState = worker[WORKER_STATE];

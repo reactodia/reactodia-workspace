@@ -32,6 +32,9 @@ export function multimapDelete<K, V>(map: BasicMap<K, Set<V>>, key: K, value: V)
     }
 }
 
+/**
+ * @category Utilities
+ */
 export function shallowArrayEqual<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {
     if (a.length !== b.length) { return false; }
     for (let i = 0; i < a.length; i++) {
@@ -79,18 +82,17 @@ export class OrderedMap<V> {
     }
 }
 
-export enum MoveDirection {
-    ToStart = -1,
-    ToEnd = 1,
-}
-
-export function makeMoveComparator<T>(
+/**
+ * @category Utilities
+ */
+export function moveComparator<T>(
     items: ReadonlyArray<T>,
     selected: ReadonlyArray<T>,
-    moveDirection: MoveDirection,
+    moveDirection: 'start' | 'end',
 ): (a: T, b: T) => number {
     const orderMap = new Map<T, number>();
-    const selectionIndexOffset = moveDirection * items.length;
+    const moveSign = moveDirection === 'start' ? -1 : 1;
+    const selectionIndexOffset = moveSign * items.length;
 
     items.forEach((item, index) => {
         orderMap.set(item, index);

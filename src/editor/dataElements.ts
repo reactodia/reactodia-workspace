@@ -24,6 +24,9 @@ export interface EntityElementProps extends ElementProps {
     data: ElementModel;
 }
 
+/**
+ * @category Core
+ */
 export class EntityElement extends Element {
     declare readonly events: Events<EntityElementEvents>;
 
@@ -59,6 +62,9 @@ export class EntityElement extends Element {
     }
 }
 
+/**
+ * @category Commands
+ */
 export function setEntityElementData(
     entity: EntityElement,
     data: ElementModel
@@ -78,6 +84,9 @@ export interface EntityGroupProps extends ElementProps {
     items?: ReadonlyArray<EntityGroupItem>;
 }
 
+/**
+ * @category Core
+ */
 export class EntityGroup extends Element {
     declare readonly events: Events<EntityGroupEvents>;
 
@@ -124,6 +133,9 @@ export interface EntityGroupItem {
     readonly elementState?: ElementTemplateState | undefined;
 }
 
+/**
+ * @category Commands
+ */
 export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<EntityGroupItem>): Command {
     return Command.create('Set entity group items', () => {
         const before = group.items;
@@ -132,6 +144,9 @@ export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<Ent
     });
 }
 
+/**
+ * @category Core
+ */
 export function* iterateEntitiesOf(element: Element): Iterable<ElementModel> {
     if (element instanceof EntityElement) {
         yield element.data;
@@ -150,6 +165,9 @@ export interface RelationLinkProps extends LinkProps {
     data: LinkModel;
 }
 
+/**
+ * @category Core
+ */
 export class RelationLink extends Link {
     declare readonly events: Events<RelationLinkEvents>;
 
@@ -192,6 +210,9 @@ export class RelationLink extends Link {
     }
 }
 
+/**
+ * @category Commands
+ */
 export function setRelationLinkData(
     relation: RelationLink,
     data: LinkModel
@@ -212,6 +233,9 @@ export interface RelationGroupProps extends LinkProps {
     items: ReadonlyArray<RelationGroupItem>;
 }
 
+/**
+ * @category Core
+ */
 export class RelationGroup extends Link {
     declare readonly events: Events<RelationGroupEvents>;
 
@@ -284,6 +308,9 @@ export interface RelationGroupItem {
     readonly linkState?: LinkTemplateState | undefined;
 }
 
+/**
+ * @category Commands
+ */
 export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray<RelationGroupItem>): Command {
     return Command.create('Set relation group items', () => {
         const before = group.items;
@@ -292,6 +319,9 @@ export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray
     });
 }
 
+/**
+ * @category Core
+ */
 export function* iterateRelationsOf(link: Link): Iterable<LinkModel> {
     if (link instanceof RelationLink) {
         yield link.data;
@@ -306,6 +336,9 @@ export interface ElementTypeEvents {
     changeData: PropertyChange<ElementType, ElementTypeModel | undefined>;
 }
 
+/**
+ * @category Core
+ */
 export class ElementType {
     private readonly source = new EventSource<ElementTypeEvents>();
     readonly events: Events<ElementTypeEvents> = this.source;
@@ -342,6 +375,9 @@ export interface PropertyTypeEvents {
     changeData: PropertyChange<PropertyType, PropertyTypeModel | undefined>;
 }
 
+/**
+ * @category Core
+ */
 export class PropertyType {
     private readonly source = new EventSource<PropertyTypeEvents>();
     readonly events: Events<PropertyTypeEvents> = this.source;
@@ -378,6 +414,9 @@ export interface LinkTypeEvents {
     changeData: PropertyChange<LinkType, LinkTypeModel | undefined>;
 }
 
+/**
+ * @category Core
+ */
 export class LinkType {
     private readonly source = new EventSource<LinkTypeEvents>();
     readonly events: Events<LinkTypeEvents> = this.source;
@@ -410,6 +449,9 @@ export class LinkType {
     }
 }
 
+/**
+ * @category Commands
+ */
 export function changeEntityData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
     const command = Command.create('Change entity data', () => {
         const previousIri = target;
@@ -486,6 +528,9 @@ function mapRelationEndpoint(relation: LinkModel, oldIri: ElementIri, newIri: El
     return data;
 }
 
+/**
+ * @category Commands
+ */
 export function changeRelationData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
     if (!equalLinks(oldData, newData)) {
         throw new Error('Cannot change typeId, sourceId or targetId when changing link data');

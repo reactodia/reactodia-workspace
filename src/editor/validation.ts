@@ -9,6 +9,9 @@ import { DataGraphStructure } from './dataDiagramModel';
 import { iterateEntitiesOf, iterateRelationsOf } from './dataElements';
 import { EditorController } from './editorController';
 
+/**
+ * @category Core
+ */
 export interface ValidationState {
     readonly elements: ReadonlyMap<ElementIri, ElementValidation>;
     readonly links: ReadonlyHashMap<LinkKey, LinkValidation>;
@@ -24,6 +27,9 @@ export interface LinkValidation {
     readonly errors: ReadonlyArray<LinkError>;
 }
 
+/**
+ * @category Core
+ */
 export namespace ValidationState {
     export const empty: ValidationState = createMutable();
     export const emptyElement: ElementValidation = {loading: false, errors: []};

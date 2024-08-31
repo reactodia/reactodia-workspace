@@ -26,6 +26,9 @@ enum AllowedActions {
     All = Edit | Delete,
 }
 
+/**
+ * @category Hooks
+ */
 export function useAuthoredEntity(
     data: ElementModel | undefined,
     shouldLoad: boolean

@@ -18,6 +18,7 @@ import {
 } from './dataElements';
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
+/** @hidden */
 export interface EditorProps extends EditorOptions {
     readonly model: DataDiagramModel;
 }
@@ -42,6 +43,8 @@ export interface EditorEvents {
  *   - exposes methods to create, change or delete entities and relations;
  *   - provides methods to remove graph elements and links with discarding
  *     relevant changes at the same time, or discarding changes directly.
+ *
+ * @category Core
  */
 export class EditorController {
     private readonly listener = new EventObserver();

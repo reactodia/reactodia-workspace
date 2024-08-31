@@ -12,6 +12,9 @@ import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
 
+/**
+ * @category Components
+ */
 export function ClassicTemplate(props: TemplateProps) {
     const {element, isExpanded} = props;
     const data = element instanceof EntityElement ? element.data : undefined;

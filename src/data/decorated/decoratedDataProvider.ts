@@ -1,7 +1,7 @@
 import { delay } from '../../coreUtils/async';
 
 import type * as Rdf from '../rdf/rdfModel';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel, LinkedElement,
@@ -29,6 +29,9 @@ export type DataProviderDecorator = <P extends { signal?: AbortSignal }, R>(
     body: (params: P) => Promise<R>,
 ) => Promise<R>;
 
+/**
+ * @category Data
+ */
 export class DecoratedDataProvider implements DataProvider {
     private readonly baseProvider: DataProvider;
     private readonly decorator: DataProviderDecorator;
@@ -108,12 +111,15 @@ export class DecoratedDataProvider implements DataProvider {
         return this.decorate('connectedLinkStats', [params]);
     }
 
-    lookup(params: LookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
         return this.decorate('lookup', [params]);
     }
 }
 
-export function makeDelayProviderDecorator(
+/**
+ * @category Data
+ */
+export function delayProviderDecorator(
     meanDelay: number,
     distribution: 'constant' | 'linear' | 'exponential'
 ) {

@@ -8,6 +8,9 @@ interface WithMetadata {
     [GET_WIDGET_METADATA]?: (element: React.ReactElement) => CanvasWidgetDescription;
 }
 
+/**
+ * @category Core
+ */
 export function defineCanvasWidget<P>(
     type: React.ComponentType<P>,
     metadataOf: (element: React.ReactElement<P>) => CanvasWidgetDescription

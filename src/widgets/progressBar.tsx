@@ -17,6 +17,9 @@ export type ProgressState = 'none' | 'loading' | 'error' | 'completed';
 
 const CLASS_NAME = 'reactodia-progress-bar';
 
+/**
+ * @category Components
+ */
 export function ProgressBar(props: ProgressBarProps) {
     const {state, title, percent = 100, height = 20} = props;
     const className = `${CLASS_NAME} ${CLASS_NAME}--${state}`;

@@ -46,6 +46,9 @@ export interface HaloProps {
     children?: React.ReactNode;
 }
 
+/**
+ * @category Components
+ */
 export function Halo(props: HaloProps) {
     const {model, canvas} = useCanvas();
 

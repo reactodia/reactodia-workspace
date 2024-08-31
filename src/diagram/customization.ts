@@ -64,6 +64,9 @@ export interface LinkTemplateProps {
     editableLabel?: EditableLinkLabel;
 }
 
+/**
+ * @category Core
+ */
 export interface LinkRouter {
     route(model: GraphStructure, sizeProvider: SizeProvider): RoutedLinks;
 }

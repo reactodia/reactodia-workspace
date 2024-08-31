@@ -1,3 +1,6 @@
+/**
+ * @category Utilities
+ */
 export function mapAbortedToNull<T>(
     promise: Promise<T>,
     signal: AbortSignal | undefined
@@ -13,6 +16,9 @@ export function mapAbortedToNull<T>(
     return promise.then(onResolve, onReject);
 }
 
+/**
+ * @category Utilities
+ */
 export function raceAbortSignal<T>(
     promise: Promise<T>,
     signal: AbortSignal | undefined
@@ -95,6 +101,9 @@ export async function raceHappyEyes<T, R>(
     throw new Error('No variants left to attempt');
 }
 
+/**
+ * @category Utilities
+ */
 export class AbortScope {
     private readonly controller: AbortController;
     private readonly parentSignal: AbortSignal | undefined;
@@ -125,6 +134,9 @@ export class AbortScope {
     }
 }
 
+/**
+ * @category Utilities
+ */
 export function delay(timeout: number, options?: { signal?: AbortSignal }): Promise<void> {
     const signal = options?.signal;
     return new Promise<void>((resolve, reject) => {

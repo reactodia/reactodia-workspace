@@ -6,6 +6,8 @@ import {
 
 /**
  * Asynchronously provides data for the elements, links and other graph entities.
+ *
+ * @category Data
  */
 export interface DataProvider {
     /**
@@ -91,10 +93,13 @@ export interface DataProvider {
      *
      * Filters can be combined to produce an intersection of the results.
      */
-    lookup(params: LookupParams): Promise<LinkedElement[]>;
+    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]>;
 }
 
-export interface LookupParams {
+/**
+ * @category Data
+ */
+export interface DataProviderLookupParams {
     /**
      * Filter by an element type.
      */

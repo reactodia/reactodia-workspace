@@ -6,7 +6,7 @@ import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
 } from '../model';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 import {
     enrichElementsWithImages,
     getClassTree,
@@ -104,6 +104,9 @@ export interface SparqlDataProviderOptions {
     ) => Promise<Map<string, Rdf.Literal[]>>;
 }
 
+/**
+ * @category Data
+ */
 export class SparqlDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
     private readonly options: SparqlDataProviderOptions;
@@ -499,9 +502,9 @@ export class SparqlDataProvider implements DataProvider {
         return foundLinkStats;
     }
 
-    async lookup(baseParams: LookupParams): Promise<LinkedElement[]> {
+    async lookup(baseParams: DataProviderLookupParams): Promise<LinkedElement[]> {
         const {signal} = baseParams;
-        const params: LookupParams = {
+        const params: DataProviderLookupParams = {
             ...baseParams,
             limit: baseParams.limit === undefined ? 100 : baseParams.limit,
         };
@@ -528,7 +531,7 @@ export class SparqlDataProvider implements DataProvider {
         return linkedElements;
     }
 
-    private createFilterQuery(params: LookupParams): string {
+    private createFilterQuery(params: DataProviderLookupParams): string {
         if (!params.refElementId && params.refElementLinkId) {
             throw new Error('Cannot execute refElementLink filter without refElement');
         }

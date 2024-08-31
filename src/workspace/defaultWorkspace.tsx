@@ -50,6 +50,9 @@ export interface DefaultWorkspaceProps {
     instancesSearchCommands?: Events<InstancesSearchCommands> & EventTrigger<InstancesSearchCommands>;
 }
 
+/**
+ * @category Components
+ */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
         leftColumn, rightColumn,

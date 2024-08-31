@@ -18,6 +18,9 @@ export interface ListElementViewProps {
 
 const CLASS_NAME = 'reactodia-list-element-view';
 
+/**
+ * @category Components
+ */
 export function ListElementView(props: ListElementViewProps) {
     const {model, getElementTypeStyle} = useWorkspace();
     const {
@@ -62,6 +65,9 @@ export function ListElementView(props: ListElementViewProps) {
     );
 }
 
+/**
+ * @category Utilities
+ */
 export function startDragElements(e: React.DragEvent<unknown>, iris: ReadonlyArray<string>) {
     try {
         e.dataTransfer.setData('application/x-reactodia-elements', JSON.stringify(iris));
@@ -75,6 +81,9 @@ const DEFAULT_HIGHLIGHT_PROPS: React.HTMLProps<HTMLSpanElement> = {
     className: 'reactodia-text-highlight'
 };
 
+/**
+ * @category Utilities
+ */
 export function highlightSubstring(
     text: string,
     substring: string | undefined,

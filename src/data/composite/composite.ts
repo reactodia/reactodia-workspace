@@ -1,5 +1,5 @@
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
@@ -26,6 +26,9 @@ export interface DataProviderDefinition {
     readonly provider: DataProvider;
 }
 
+/**
+ * @category Data
+ */
 export class CompositeDataProvider implements DataProvider {
     readonly providers: ReadonlyArray<DataProviderDefinition>;
 
@@ -109,7 +112,7 @@ export class CompositeDataProvider implements DataProvider {
         return this.requestWithMerge(p => p.connectedLinkStats(params), mergeConnectedLinkStats);
     }
 
-    lookup(params: LookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
         return this.requestWithMerge(p => p.lookup(params), mergeLookup);
     }
 }

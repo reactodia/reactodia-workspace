@@ -89,6 +89,9 @@ const DEFAULT_LANGUAGE = 'en';
 const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
 const TYPE_STYLE_COLOR_SEED = 0x0BADBEEF;
 
+/**
+ * @category Components
+ */
 export class Workspace extends React.Component<WorkspaceProps> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
@@ -101,6 +104,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private readonly workspaceContext: WorkspaceContext;
 
+    /** @hidden */
     constructor(props: WorkspaceProps) {
         super(props);
 
@@ -179,6 +183,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         return this.workspaceContext;
     }
 
+    /** @hidden */
     render() {
         const {children} = this.props;
         return (
@@ -188,6 +193,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         );
     }
 
+    /** @hidden */
     componentDidMount() {
         const {onWorkspaceEvent} = this.props;
         const {model, view, overlay} = this.workspaceContext;
@@ -213,6 +219,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     }
 
+    /** @hidden */
     componentDidUpdate(prevProps: WorkspaceProps) {
         const {editor} = this.workspaceContext;
 
@@ -221,6 +228,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     }
 
+    /** @hidden */
     componentWillUnmount() {
         this.listener.stopListening();
         const {view, editor, overlay} = this.workspaceContext;
@@ -383,6 +391,8 @@ export interface LoadedWorkspace {
  *
  * This function could be used to setup data provider, fetch initial data
  * or import existing diagram layout.
+ * 
+ * @category Hooks
  */
 export function useLoadedWorkspace(
     onLoad: (params: LoadedWorkspaceParams) => Promise<void>,

@@ -45,6 +45,9 @@ export interface SharedCanvasStateOptions {
     defaultLayout: LayoutFunction;
 }
 
+/**
+ * @category Core
+ */
 export class SharedCanvasState {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<SharedCanvasStateEvents>();

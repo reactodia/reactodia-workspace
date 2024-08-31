@@ -5,15 +5,16 @@ import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri } from '../data/model';
 
-import { EntityElement } from '../editor/dataElements';
+import type { DataGraphStructure } from '../editor/dataDiagramModel';
+import { EntityElement, iterateEntitiesOf } from '../editor/dataElements';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'reactodia-search-results';
 
-export interface SearchResultProps {
+export interface SearchResultsProps {
     items: ReadonlyArray<ElementModel>;
     selection: ReadonlySet<ElementIri>;
     onSelectionChanged: (newSelection: ReadonlySet<ElementIri>) => void;
@@ -34,11 +35,26 @@ export interface SearchResultProps {
 
 const enum Direction { Up, Down }
 
+/**
+ * @category Components
+ */
+export function SearchResults(props: SearchResultsProps) {
+    const workspace = useWorkspace();
+    return (
+        <SearchResultsInner {...props}
+            workspace={workspace}
+        />
+    );
+}
+
+interface SearchResultsInnerProps extends SearchResultsProps {
+    workspace: WorkspaceContext;
+}
+
 const DEFAULT_USE_DRAG_AND_DROP = true;
 
-export class SearchResults extends React.Component<SearchResultProps> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
+class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
+    declare readonly context: void;
 
     private readonly listener = new EventObserver();
     private readonly delayedChangeCells = new Debouncer();
@@ -49,7 +65,8 @@ export class SearchResults extends React.Component<SearchResultProps> {
     private endSelection = 0;
 
     render(): React.ReactElement<any> {
-        const {items} = this.props;
+        const {items, workspace: {model}} = this.props;
+        const presentOnDiagram = computePresentOnDiagramEntities(model);
         return (
             <ul ref={this.onRootMount}
                 className={CLASS_NAME}
@@ -59,7 +76,7 @@ export class SearchResults extends React.Component<SearchResultProps> {
                 tabIndex={-1}
                 onFocus={this.addKeyListener}
                 onBlur={this.removeKeyListener}>
-                {items.map(this.renderResultItem)}
+                {items.map(item => this.renderResultItem(item, presentOnDiagram))}
             </ul>
         );
     }
@@ -68,9 +85,9 @@ export class SearchResults extends React.Component<SearchResultProps> {
         this.root = root;
     };
 
-    private renderResultItem = (model: ElementModel) => {
+    private renderResultItem(model: ElementModel, presentOnDiagram: ReadonlySet<ElementIri>) {
         const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
-        const canBeSelected = this.canBeSelected(model);
+        const canBeSelected = this.canBeSelected(model, presentOnDiagram);
         return (
             <ListElementView key={model.id}
                 element={model}
@@ -89,18 +106,17 @@ export class SearchResults extends React.Component<SearchResultProps> {
                 } : undefined}
             />
         );
-    };
+    }
 
     componentDidMount() {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         this.listener.listen(model.events, 'changeCells', () => {
             this.delayedChangeCells.call(this.onChangeCells);
         });
     }
 
     private onChangeCells = () => {
-        const {model} = this.context;
-        const {items, selection} = this.props;
+        const {items, selection, workspace: {model}} = this.props;
         if (selection.size === 0) {
             if (items.length > 0) {
                 // redraw "already on diagram" state
@@ -211,11 +227,12 @@ export class SearchResults extends React.Component<SearchResultProps> {
     };
 
     private selectRange(start: number, end: number): Set<ElementIri> {
-        const {items} = this.props;
+        const {items, workspace: {model}} = this.props;
+        const presentOnDiagram = computePresentOnDiagramEntities(model);
         const selection = new Set<ElementIri>();
         for (let i = start; i <= end; i++) {
             const selectedModel = items[i];
-            if (this.canBeSelected(selectedModel)) {
+            if (this.canBeSelected(selectedModel, presentOnDiagram)) {
                 selection.add(selectedModel.id);
             }
         }
@@ -223,29 +240,26 @@ export class SearchResults extends React.Component<SearchResultProps> {
     }
 
     private getNextIndex(startIndex: number, direction: Direction) {
-        const {items} = this.props;
+        const {items, workspace: {model}} = this.props;
         if (items.length === 0) {
             return startIndex;
         }
+        const presentOnDiagram = computePresentOnDiagramEntities(model);
         const indexDelta = direction === Direction.Up ? -1 : 1;
         for (let step = 1; step < items.length; step++) {
             let nextIndex = startIndex + step * indexDelta;
             if (nextIndex < 0) { nextIndex += items.length; }
             if (nextIndex >= items.length) { nextIndex -= items.length; }
-            if (this.canBeSelected(items[nextIndex])) {
+            if (this.canBeSelected(items[nextIndex], presentOnDiagram)) {
                 return nextIndex;
             }
         }
         return startIndex;
     }
 
-    private canBeSelected(item: ElementModel) {
-        const {model} = this.context;
+    private canBeSelected(item: ElementModel, presentOnDiagram: ReadonlySet<ElementIri>) {
         const {useDragAndDrop = DEFAULT_USE_DRAG_AND_DROP} = this.props;
-        const alreadyOnDiagram = model.elements.some(
-            el => el instanceof EntityElement && el.iri === item.id
-        );
-        return !useDragAndDrop || !alreadyOnDiagram;
+        return !useDragAndDrop || !presentOnDiagram.has(item.id);
     }
 
     private focusOn(index: number) {
@@ -266,4 +280,14 @@ export class SearchResults extends React.Component<SearchResultProps> {
 
         item.focus();
     }
+}
+
+function computePresentOnDiagramEntities(graph: DataGraphStructure): Set<ElementIri> {
+    const presentOnDiagram = new Set<ElementIri>();
+    for (const element of graph.elements) {
+        for (const entity of iterateEntitiesOf(element)) {
+            presentOnDiagram.add(entity.id);
+        }
+    }
+    return presentOnDiagram;
 }

@@ -5,6 +5,51 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Add ability to group elements and links:
+  * Add `EntityGroup` element type and `RelationGroup` link type and corresponding commands;
+  * Add `DataDiagramModel.{group, ungroupAll, ungroupSome}` and `WorkspaceContext.{group, ungroupAll, ungroupSome}` methods to group and ungroup entities;
+  * Auto-group relations when creating them using `DataDiagramModel.createLinks()` with ability to manually regroup via `DataDiagramModel.regroupLinks()`;
+  * Add `SelectionActionGroup` to group/ungroup from `Halo` and `Selection`, update default actions and its dock placement;
+  * Include `sourceIri` and `targetIri` when serializing `RelationLink` (required to restore entity groups).
+- Support adding elements as group from `ConnectionMenu` and `InstancesSearch`.
+- Add `OverlayController.startTask()` method to start foreground canvas tasks:
+  * Display overlay task while computing graph layout via `WorkspaceContext.performLayout()`.
+- Allow to choose element template based on element itself in addition to its types in `CanvasProps.elementTemplateResolver`.
+- Allow to fetch labels and property values only in specified languages in `SparqlDataProviderSettings` via `filterOnlyLanguages` setting.
+- Allow to skip "zoom to fit" in `WorkspaceContext.performLayout()` by passing `zoomToFit: false`.
+- Export `EmptyDataProvider` which implements `DataProvider` interface with no data.
+
+### Changed
+- **[Breaking]** Prepare to decouple basic diagram renderer from entity and relation graph:
+  * Use separate `EntityElement` and `RelationLink` types for elements and links with data;
+  * Rename `AsyncModel` -> `DataDiagramModel`;
+  * Move methods related to element / link / property types from `DiagramModel` to `DataDiagramModel`, including locale formatting;
+  * Move link type visibility state from `LinkType` to `DiagramModel` itself;
+  * Change `TemplateProps` to have `element: Element` instead of `data: ElementModel` inside;
+  * Inject additional type information to layout computation via `LayoutTypeProvider`;
+  * Change `InstancesSearch` criteria to use primitive values instead of element and type references.
+- **[Breaking]** Change `ElementType`, `LinkType` and `PropertyType` to store original data inside instead of unpacking it into label and other properties.
+- **[Breaking]** Move `EditorController.{selection, setSelection, bringElements}` to `DiagramModel`.
+- **[Breaking]** Rename `EditorController` methods to reflect new terminology (element and link -> entity and relation).
+- **[Breaking]** Rename commands to globally change entity graph: `setElementData()` -> `changeEntityData()` and `setLinkData()` -> `changeRelationData()`.
+- **[Breaking]** Replace implicit element type and property subscriptions by explicit hook calls:
+  * Extract `useSyncStore()` overload with equality comparator into separate function `useSyncStoreWithComparator()` for performance reasons;
+  * Add `KeyedSyncStore` type and `useKeyedSyncStore()` hook mirroring built-in `SyncStore` / `useExternalSyncStore()` React hook but for multiple subscriptions via keys at the same time;
+  * Add `subscribeElementTypes`, `subscribePropertyTypes` and `subscribeLinkTypes` keyed event stores;
+- Replace `Element.temporary` property with separate `VoidElement` type;
+- Replace `Link.layoutOnly` property by `TemplateProperties.LayoutOnly` link state property;
+- Change search results component in `ConnectionMenu` and `InstancesSearch` to select multiple items without holding Control/Meta;
+
+### Fixed
+- Fix `RenderingState.syncUpdate()` not updating element sizes when called from React-managed handlers due to batching;
+- Store failed operation errors to display even when `WithFetchStatus` is re-mounted:
+  * Add `DataDiagramModel.getOperationFailReason()` to check if latest fetch operation failed;
+- Fix `WikidataSettings` for `SparqlDataProvider` to resolve property type labels;
+
+### Removed
+- Remove legacy grouping functionality: `WorkspaceProps.groupBy` option, `EmbeddedLayer` and `GroupTemplate` components, `Element.group` property and relevant events.
+- **[Breaking]** Remove `DataDiagramModel.createLink()` method: either `addLink()` or `createLinks()` should be used instead;
 
 ## [0.24.0] - 2024-03-27
 ### Added

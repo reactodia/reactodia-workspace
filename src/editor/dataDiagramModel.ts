@@ -57,23 +57,31 @@ export interface DataDiagramModelEvents extends DiagramModelEvents {
     };
 }
 
+/**
+ * @category Core
+ */
 export interface DataGraphStructure extends GraphStructure {
     getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
     getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
     getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
 }
 
+/** @hidden */
 export interface DataDiagramModelOptions extends DiagramModelOptions {}
 
+/**
+ * @category Core
+ */
 export class DataDiagramModel extends DiagramModel implements DataGraphStructure {
     declare readonly events: Events<DataDiagramModelEvents>;
-    declare readonly locale: EntityLocaleFormatter;
+    declare readonly locale: DataGraphLocaleFormatter;
 
     private dataGraph = new DataGraph();
     private loadingScope: AbortScope | undefined;
     private _dataProvider: DataProvider;
     private fetcher: DataFetcher;
 
+    /** @hidden */
     constructor(options: DataDiagramModelOptions) {
         super(options);
         this._dataProvider = new EmptyDataProvider();
@@ -643,7 +651,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 }
 
-export interface EntityLocaleFormatter extends LocaleFormatter {
+export interface DataGraphLocaleFormatter extends LocaleFormatter {
     formatElementTypes(
         types: ReadonlyArray<ElementTypeIri>,
         language?: string
@@ -655,7 +663,7 @@ export interface EntityLocaleFormatter extends LocaleFormatter {
     ): FormattedProperty[];
 }
 
-class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLocaleFormatter {
+class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGraphLocaleFormatter {
     declare protected model: DataDiagramModel;
 
     constructor(
@@ -701,12 +709,18 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements EntityLo
     }
 }
 
+/**
+ * @category Commands
+ */
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
     return Command.effect('Fetch element data', () => {
         model.requestElementData(elementIris);
     });
 }
 
+/**
+ * @category Commands
+ */
 export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
     return Command.effect('Restore links between elements', () => {
         model.requestLinksOfType();

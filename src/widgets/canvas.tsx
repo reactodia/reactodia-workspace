@@ -29,6 +29,9 @@ export type TypedElementResolver = (types: readonly string[], element: Element) 
 
 const CLASS_NAME = 'reactodia-canvas';
 
+/**
+ * @category Components
+ */
 export function Canvas(props: CanvasProps) {
     const {model, view} = useWorkspace();
     const {

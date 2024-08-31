@@ -1,5 +1,7 @@
 /**
  * Dataset-schema specific settings for SPARQL data provider.
+ *
+ * @category Data
  */
 export interface SparqlDataProviderSettings {
     /**
@@ -359,6 +361,9 @@ export interface PropertyConfiguration {
     path: string;
 }
 
+/**
+ * @category Constants
+ */
 export const RdfSettings: SparqlDataProviderSettings = {
     linkConfigurations: [],
     openWorldLinks: false,
@@ -576,9 +581,12 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
     },
 };
 
+/**
+ * @category Constants
+ */
 export const WikidataSettings: SparqlDataProviderSettings = {...RdfSettings, ...WikidataSettingsOverride};
 
-export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
+const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     defaultPrefix:
         `PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
  PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -674,6 +682,9 @@ export const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     filterAdditionalRestriction: '',
 };
 
+/**
+ * @category Constants
+ */
 export const OwlRdfsSettings: SparqlDataProviderSettings = {...RdfSettings, ...OwlRdfsSettingsOverride};
 
 const OWLStatsOverride: Partial<SparqlDataProviderSettings> = {
@@ -698,6 +709,10 @@ const OWLStatsOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
 };
+
+/**
+ * @category Constants
+ */
 export const OwlStatsSettings: SparqlDataProviderSettings = {...OwlRdfsSettings, ...OWLStatsOverride};
 
 const DBPediaOverride: Partial<SparqlDataProviderSettings> = {
@@ -748,4 +763,8 @@ const DBPediaOverride: Partial<SparqlDataProviderSettings> = {
             STRAFTER(STR(?fullImage), "Special:FilePath/"), "&w=200") AS ?image)
     `,
 };
+
+/**
+ * @category Constants
+ */
 export const DBPediaSettings: SparqlDataProviderSettings = {...OwlRdfsSettings, ...DBPediaOverride};

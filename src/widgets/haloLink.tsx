@@ -14,8 +14,6 @@ import type { DiagramModel, GraphStructure } from '../diagram/model';
 import { TransformedSvgCanvas } from '../diagram/paper';
 import type { RenderingState } from '../diagram/renderingState';
 
-import { useWorkspace } from '../workspace/workspaceContext';
-
 import {
     LinkActionContext, LinkActionMoveEndpoint, LinkActionEdit, LinkActionDelete, LinkActionRename,
 } from './linkAction';
@@ -50,6 +48,9 @@ export interface HaloLinkProps {
     children?: React.ReactNode;
 }
 
+/**
+ * @category Components
+ */
 export function HaloLink(props: HaloLinkProps) {
     const {canvas, model} = useCanvas();
 

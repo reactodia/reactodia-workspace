@@ -42,6 +42,9 @@ export type DockDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 const CLASS_NAME = 'reactodia-selection-action';
 
+/**
+ * @category Components
+ */
 export function SelectionAction(props: SelectionActionProps) {
     const {
         dock, dockRow, dockColumn, className, title, disabled,
@@ -87,6 +90,9 @@ function getDockStyle(
 
 export interface SelectionActionSpinnerProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
     const {dock, dockRow, dockColumn, className, title} = props;
     return (
@@ -101,6 +107,9 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
 
 export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
     const {model, editor} = useWorkspace();
@@ -137,6 +146,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
 
 export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
@@ -164,6 +176,9 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
 
 export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {className, title, ...otherProps} = props;
     const {performLayout} = useWorkspace();
@@ -189,6 +204,9 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
 
 export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
     const {model} = useWorkspace();
@@ -252,6 +270,9 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
 
 export interface SelectionActionAnchorProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title} = props;
     const {model, canvas} = useCanvas();
@@ -283,6 +304,9 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
     commands?: EventTrigger<ConnectionsMenuCommands>;
 }
 
+/**
+ * @category Components
+ */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
     const {model, overlay} = useWorkspace();
@@ -327,6 +351,9 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
     commands?: EventTrigger<InstancesSearchCommands>;
 }
 
+/**
+ * @category Components
+ */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, commands, ...otherProps} = props;
     const {model} = useCanvas();
@@ -353,6 +380,9 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
 
 export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionGroup(props: SelectionActionGroupProps) {
     const {className, title, ...otherProps} = props;
     const workspace = useWorkspace();
@@ -393,6 +423,9 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
 
 export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {}
 
+/**
+ * @category Components
+ */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
     const {model, editor, overlay} = useWorkspace();

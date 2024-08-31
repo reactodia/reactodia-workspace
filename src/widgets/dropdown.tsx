@@ -14,6 +14,9 @@ interface DropdownContext {
 }
 const DropdownContext = React.createContext<DropdownContext | null>(null);
 
+/**
+ * @category Components
+ */
 export function Dropdown(props: DropdownProps) {
     const {className, title, children} = props;
     const menuRef = React.useRef<HTMLElement | null>(null);
@@ -67,6 +70,9 @@ export interface DropdownItemProps {
 
 const ITEM_CLASS_NAME = 'reactodia-dropdown-item';
 
+/**
+ * @category Components
+ */
 export function DropdownItem(props: DropdownItemProps) {
     const {className, title, disabled, onSelect, children} = props;
     const menuContext = React.useContext(DropdownContext);
@@ -91,6 +97,9 @@ export function DropdownItem(props: DropdownItemProps) {
     );
 }
 
+/**
+ * @category Hooks
+ */
 export function useInsideDropdown(): boolean {
     const menuContext = React.useContext(DropdownContext);
     return Boolean(menuContext);

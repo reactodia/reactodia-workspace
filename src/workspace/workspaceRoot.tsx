@@ -9,6 +9,9 @@ export interface WorkspaceRootProps {
 
 const CLASS_NAME = 'reactodia-workspace';
 
+/**
+ * @category Components
+ */
 export function WorkspaceRoot(props: WorkspaceRootProps) {
     return (
         <div className={classnames(CLASS_NAME, props.className)}

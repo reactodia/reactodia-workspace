@@ -5,9 +5,9 @@ import {
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge, LinkedElement,
     hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 
-import { MemoryDataset, IndexQuadBy, makeIndexedDataset } from './memoryDataset';
+import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 
 export interface RdfDataProviderOptions {
@@ -74,6 +74,9 @@ const RDFS_SUB_CLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
 
 const SCHEMA_THUMBNAIL_URL = 'https://schema.org/thumbnailUrl';
 
+/**
+ * @category Data
+ */
 export class RdfDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
 
@@ -91,7 +94,7 @@ export class RdfDataProvider implements DataProvider {
 
     constructor(options: RdfDataProviderOptions = {}) {
         this.factory = options.factory ?? Rdf.DefaultDataFactory;
-        this.dataset = makeIndexedDataset(
+        this.dataset = indexedDataset(
             IndexQuadBy.S |
             IndexQuadBy.SP |
             IndexQuadBy.O |
@@ -391,7 +394,7 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(counts);
     }
 
-    lookup(params: LookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
         interface ResultItem {
             readonly term: Rdf.NamedNode | Rdf.BlankNode;
             outLinks?: Set<LinkTypeIri>;

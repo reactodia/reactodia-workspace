@@ -1,4 +1,4 @@
-import { makeMoveComparator, MoveDirection } from '../coreUtils/collections';
+import { moveComparator } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri, isEncodedBlank } from '../data/model';
@@ -23,6 +23,9 @@ export interface DiagramModelEvents {
     discardGraph: { readonly source: DiagramModel };
 }
 
+/**
+ * @category Core
+ */
 export interface GraphStructure {
     /**
      * [RDF term factory](https://rdf.js.org/data-model-spec/#datafactory-interface)
@@ -47,11 +50,15 @@ export interface GraphStructure {
     getLinkVisibility(linkTypeId: LinkTypeIri): LinkTypeVisibility;
 }
 
+/** @hidden */
 export interface DiagramModelOptions {
     history: CommandHistory,
     selectLabelLanguage?: LabelLanguageSelector;
 }
 
+/**
+ * @category Core
+ */
 export class DiagramModel implements GraphStructure {
     protected readonly source = new EventSource<DiagramModelEvents>();
     readonly events: Events<DiagramModelEvents> = this.source;
@@ -65,6 +72,7 @@ export class DiagramModel implements GraphStructure {
     readonly history: CommandHistory;
     readonly locale: LocaleFormatter;
 
+    /** @hidden */
     constructor(options: DiagramModelOptions) {
         const {history, selectLabelLanguage = defaultSelectLabel} = options;
         this.history = history;
@@ -209,10 +217,10 @@ export class DiagramModel implements GraphStructure {
         if (targets.length === 0) {
             return;
         }
-        this.reorderElements(makeMoveComparator(
+        this.reorderElements(moveComparator(
             this.elements,
             targets,
-            to === 'front' ? MoveDirection.ToEnd : MoveDirection.ToStart,
+            to === 'front' ? 'start' : 'end',
         ));
     }
 
@@ -319,6 +327,9 @@ class RemoveLinkCommand implements Command {
     }
 }
 
+/**
+ * @category Core
+ */
 export interface LocaleFormatter {
     selectLabel(
         labels: ReadonlyArray<Rdf.Literal>,

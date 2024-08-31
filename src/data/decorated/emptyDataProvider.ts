@@ -2,9 +2,12 @@ import {
     ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri, PropertyTypeModel,
     LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount, LinkedElement,
 } from '../model';
-import { DataProvider, LookupParams } from '../provider';
+import { DataProvider, DataProviderLookupParams } from '../provider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
+/**
+ * @category Data
+ */
 export class EmptyDataProvider implements DataProvider {
     get factory(): DataFactory {
         return DefaultDataFactory;
@@ -69,7 +72,7 @@ export class EmptyDataProvider implements DataProvider {
         return Promise.resolve([]);
     }
 
-    lookup(params: LookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
         return Promise.resolve([]);
     }
 }

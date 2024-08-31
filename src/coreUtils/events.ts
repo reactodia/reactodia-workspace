@@ -1,5 +1,6 @@
 export type Listener<Data, Key extends keyof Data> = (data: Data[Key]) => void;
 export type AnyListener<Data> = (data: Partial<Data>) => void;
+/** @hidden */
 export type Unsubscribe = () => void;
 
 export interface PropertyChange<Source, Value> {
@@ -11,6 +12,9 @@ export interface AnyEvent<Data> {
     readonly data: Partial<Data>;
 }
 
+/**
+ * @category Core
+ */
 export interface Events<out Data> {
     on<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
     off<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
@@ -18,10 +22,16 @@ export interface Events<out Data> {
     offAny(listener: AnyListener<Data>): void;
 }
 
+/**
+ * @category Core
+ */
 export interface EventTrigger<in Data> {
     trigger<Key extends keyof Data>(eventKey: Key, data: Data[Key]): void;
 }
 
+/**
+ * @category Core
+ */
 export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
     private listeners = new Map<keyof Data, Set<Listener<Data, any>>>();
     private anyListeners: Set<AnyListener<Data>> | undefined;
@@ -74,6 +84,9 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
     }
 }
 
+/**
+ * @category Core
+ */
 export class EventObserver {
     private onDispose = new Set<Unsubscribe>();
 

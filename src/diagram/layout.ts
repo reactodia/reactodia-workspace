@@ -5,39 +5,63 @@ import type { Element, Link } from './elements';
 import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
 import { DiagramModel } from './model';
 
+/**
+ * @category Geometry
+ */
 export interface LayoutGraph {
     readonly nodes: { readonly [id: string]: LayoutNode };
     readonly links: ReadonlyArray<LayoutLink>;
 }
 
+/**
+ * @category Geometry
+ */
 export interface LayoutNode {
     readonly types: readonly ElementTypeIri[];
     readonly fixed?: boolean;
 }
 
+/**
+ * @category Geometry
+ */
 export interface LayoutLink {
     readonly type: LinkTypeIri;
     readonly source: string;
     readonly target: string;
 }
 
+/**
+ * @category Geometry
+ */
 export interface LayoutState {
     readonly bounds: { readonly [id: string]: Rect };
 }
 
+/**
+ * @category Geometry
+ */
 export type LayoutFunction = (graph: LayoutGraph, state: LayoutState) => Promise<LayoutState>;
 
+/**
+ * @category Geometry
+ */
 export interface LayoutTypeProvider {
     readonly getElementTypes?: (element: Element) => readonly ElementTypeIri[];
     readonly getLinkType?: (link: Link) => LinkTypeIri;
 }
 
+/**
+ * @category Geometry
+ */
 export interface CalculatedLayout {
     positions: Map<string, Vector>;
     sizes: Map<string, Size>;
     nestedLayouts: CalculatedLayout[];
 }
 
+/**
+ * @category Geometry
+ */
 export async function calculateLayout(params: {
     layoutFunction: LayoutFunction;
     model: DiagramModel;
@@ -103,6 +127,9 @@ export async function calculateLayout(params: {
     };
 }
 
+/**
+ * @category Geometry
+ */
 export function applyLayout(
     layout: CalculatedLayout,
     model: DiagramModel
@@ -145,6 +172,9 @@ class StaticSizeProvider implements SizeProvider {
     }
 }
 
+/**
+ * @category Geometry
+ */
 export function translateToPositiveQuadrant(positions: Map<string, Vector>, offset: Vector): void {
     let minX = Infinity, minY = Infinity;
     positions.forEach(position => {
@@ -161,6 +191,9 @@ export function translateToPositiveQuadrant(positions: Map<string, Vector>, offs
     });
 }
 
+/**
+ * @category Geometry
+ */
 export function uniformGrid(params: {
     rows: number;
     cellSize: Vector;
@@ -177,6 +210,9 @@ export function uniformGrid(params: {
     };
 }
 
+/**
+ * @category Geometry
+ */
 export function calculateAveragePosition(
     elements: ReadonlyArray<Element>,
     sizeProvider: SizeProvider
@@ -194,6 +230,9 @@ export function calculateAveragePosition(
     };
 }
 
+/**
+ * @category Geometry
+ */
 export function placeElementsAround(params: {
     elements: ReadonlyArray<Element>;
     targetElement: Element;

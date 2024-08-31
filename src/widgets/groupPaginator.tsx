@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-export interface PaginatorProps {
+export interface GroupPaginatorProps {
     readonly pageIndex: number;
     readonly pageCount: number;
     readonly onChangePage: (page: number) => void;
@@ -11,9 +11,12 @@ export interface PaginatorProps {
     readonly onChangePageSize: (size: number) => void;
 }
 
-const CLASS_NAME = 'reactodia-paginator';
+const CLASS_NAME = 'reactodia-group-paginator';
 
-export function Paginator(props: PaginatorProps) {
+/**
+ * @category Components
+ */
+export function GroupPaginator(props: GroupPaginatorProps) {
     const {
         pageIndex, pageCount, onChangePage,
         pageSize, pageSizes, onChangePageSize,

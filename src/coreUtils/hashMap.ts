@@ -1,13 +1,22 @@
+/**
+ * @category Utilities
+ */
 export interface ReadonlyHashMap<K, V> extends ReadonlyMap<K, V> {
     clone(): HashMap<K, V>;
 }
 
+/**
+ * @category Utilities
+ */
 export interface ReadonlyHashSet<K> extends ReadonlySet<K> {
     clone(): HashSet<K>;
 }
 
 type Bucket<K, V> = { readonly k: K; readonly v: V } | Array<{ readonly k: K; readonly v: V }>;
 
+/**
+ * @category Utilities
+ */
 export class HashMap<K, V> implements ReadonlyMap<K, V> {
     private readonly map = new Map<number, Bucket<K, V>>();
     private _size = 0;
@@ -163,6 +172,9 @@ export class HashMap<K, V> implements ReadonlyMap<K, V> {
     }
 }
 
+/**
+ * @category Utilities
+ */
 export class HashSet<K> implements ReadonlyHashSet<K> {
     private map: HashMap<K, K>;
 

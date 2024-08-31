@@ -4,6 +4,9 @@ import type { GraphStructure } from './model';
 import type { Link } from './elements';
 import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
 
+/**
+ * @category Core
+ */
 export class DefaultLinkRouter implements LinkRouter {
     constructor(private gap = 20) {}
 

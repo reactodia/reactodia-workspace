@@ -8,6 +8,9 @@ export interface ZoomControlProps {}
 
 const CLASS_NAME = 'reactodia-zoom-control';
 
+/**
+ * @category Components
+ */
 export function ZoomControl(props: ZoomControlProps) {
     const {canvas} = useCanvas();
     return (

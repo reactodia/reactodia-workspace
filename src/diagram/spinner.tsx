@@ -10,6 +10,9 @@ export interface SpinnerProps {
 
 const CLASS_NAME = 'reactodia-spinner';
 
+/**
+ * @category Components
+ */
 export function Spinner(props: SpinnerProps) {
     const {position = {x: 0, y: 0}, size = 50, statusText, errorOccurred} = props;
 
@@ -30,6 +33,9 @@ export function Spinner(props: SpinnerProps) {
     );
 }
 
+/**
+ * @category Components
+ */
 export function HtmlSpinner(props: { width: number; height: number }) {
     const {width, height} = props;
     const size = Math.min(width, height);

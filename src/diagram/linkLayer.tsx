@@ -328,6 +328,9 @@ export interface LinkPathProps {
 
 const LINK_PATH_CLASS = 'reactodia-link-path';
 
+/**
+ * @category Components
+ */
 export function LinkPath(props: LinkPathProps) {
     const {typeIndex, path, pathProps} = props;
     return <>
@@ -375,8 +378,13 @@ const LINK_LABEL_CLASS = 'reactodia-link-label';
 const GROUPED_LABEL_MARGIN = 2;
 const DEFAULT_TEXT_ANCHOR = 'middle';
 
+/**
+ * @category Components
+ */
 export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
+    /** @hidden */
     static contextType = LinkLayerContext;
+    /** @hidden */
     declare readonly context: LinkLayerContext;
 
     private text: SVGTextElement | undefined | null;
@@ -392,6 +400,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         return primary ? link : undefined;
     }
 
+    /** @hidden */
     render() {
         const {
             primary, position: {x, y}, line = 0, className, textAnchor = DEFAULT_TEXT_ANCHOR,
@@ -469,19 +478,23 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         this.text = text;
     };
 
+    /** @hidden */
     componentDidMount() {
         this.tryRecomputeBounds(this.props);
     }
 
+    /** @hidden */
     componentWillUnmount() {
         const {scheduleLabelMeasure} = this.context;
         scheduleLabelMeasure(this, true);
     }
 
+    /** @hidden */
     UNSAFE_componentWillReceiveProps(nextProps: LinkLabelProps) {
         this.shouldUpdateBounds = true;
     }
 
+    /** @hidden */
     componentDidUpdate(props: LinkLabelProps) {
         this.tryRecomputeBounds(this.props);
     }
@@ -508,6 +521,9 @@ export interface LinkVerticesProps {
 
 const LINK_VERTICES_CLASS = 'reactodia-link-vertices';
 
+/**
+ * @category Components
+ */
 export function LinkVertices(props: LinkVerticesProps) {
     const {linkId, vertices, className, vertexRadius = 10, fill} = props;
     const {model} = useCanvas();

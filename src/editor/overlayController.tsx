@@ -47,7 +47,7 @@ export interface OverlayControllerEvents {
     changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
 }
 
-/** @hide */
+/** @hidden */
 export type KnownDialogType =
     | 'connectionsMenu'
     | 'editEntity'
@@ -57,12 +57,15 @@ export type KnownDialogType =
 
 export interface OpenedDialog {
     readonly target: Element | Link;
-    /** @hide */
+    /** @hidden */
     readonly knownType: KnownDialogType | undefined;
     readonly holdSelection: boolean;
     readonly onClose: () => void;
 }
 
+/**
+ * @category Core
+ */
 export class OverlayController {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<OverlayControllerEvents>();
@@ -303,7 +306,7 @@ export class OverlayController {
          * (e.g. when another dialog is opened).
          */
         onClose: () => void;
-        /** @hide */
+        /** @hidden */
         dialogType?: KnownDialogType;
     }): void {
         const {target, style, dialogType, content, holdSelection = false, onClose} = params;
