@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
 
+## [0.25.1] - 2024-08-31
+### Fixed
+- Fix missing default value for `zoomToFit` option in `WorkspaceContext.performLayout()`.
+
 ## [0.25.0] - 2024-08-31
 ### Added
 - Add ability to group elements and links:
@@ -226,7 +230,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...HEAD
+[0.25.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...v0.23.0
