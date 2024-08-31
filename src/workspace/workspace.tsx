@@ -292,7 +292,10 @@ export class Workspace extends React.Component<WorkspaceProps> {
     }
 
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
-        const {canvas: targetCanvas, layoutFunction, selectedElements, animate, zoomToFit, signal} = params;
+        const {
+            canvas: targetCanvas, layoutFunction, selectedElements, animate, signal,
+            zoomToFit = true,
+        } = params;
         const {model, view, overlay, disposeSignal} = this.workspaceContext;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
