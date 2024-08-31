@@ -1,10 +1,12 @@
-# Change Log
+# Changelog
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.25.0] - 2024-08-31
 ### Added
 - Add ability to group elements and links:
   * Add `EntityGroup` element type and `RelationGroup` link type and corresponding commands;
@@ -224,7 +226,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.0...HEAD
+[0.24.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.21.0...v0.22.0
