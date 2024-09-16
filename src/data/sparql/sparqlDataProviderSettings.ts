@@ -1,5 +1,5 @@
 /**
- * Dataset-schema specific settings for SPARQL data provider.
+ * Dataset-schema specific settings for `SparqlDataProvider`.
  *
  * @category Data
  */

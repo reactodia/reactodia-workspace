@@ -1,4 +1,7 @@
 /**
+ * Transforms `Promise` in such a way that resolved or rejected results
+ * are mapped to `null` if specified abort `signal` is aborted.
+ *
  * @category Utilities
  */
 export function mapAbortedToNull<T>(
@@ -102,6 +105,10 @@ export async function raceHappyEyes<T, R>(
 }
 
 /**
+ * Creates a derived abort signal, i.e. `AbortSignal` instance
+ * which is automatically aborted when parent signal is aborted,
+ * but can be aborted separately the same way as normal `AbortController`.
+ *
  * @category Utilities
  */
 export class AbortScope {
@@ -135,6 +142,11 @@ export class AbortScope {
 }
 
 /**
+ * Waits a specified timeout in milliseconds the resolves the result promise.
+ *
+ * Can be cancelled via specified `AbortSignal`, in which case the promise
+ * will be rejected with abort signal reason (an error with `name === "AbortError"`).
+ *
  * @category Utilities
  */
 export function delay(timeout: number, options?: { signal?: AbortSignal }): Promise<void> {

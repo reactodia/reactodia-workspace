@@ -1,11 +1,15 @@
 import {
     ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri, PropertyTypeModel,
-    LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount, LinkedElement,
+    LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
-import { DataProvider, DataProviderLookupParams } from '../provider';
+import {
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
 /**
+ * Empty graph data provider, which always return nothing.
+ *
  * @category Data
  */
 export class EmptyDataProvider implements DataProvider {
@@ -68,11 +72,11 @@ export class EmptyDataProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean | undefined;
         signal?: AbortSignal | undefined;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         return Promise.resolve([]);
     }
 
-    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         return Promise.resolve([]);
     }
 }

@@ -12,26 +12,88 @@ import type { EntityElement, EntityGroup } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 import type { OverlayController } from '../editor/overlayController';
 
+/**
+ * Represents a context for the whole workspace, its stores and services.
+ *
+ * This context is created once and exists for the full lifetime of the workspace.
+ */
 export interface WorkspaceContext {
+    /**
+     * Stores the diagram content and asynchronously fetches from a data provider.
+     */
     readonly model: DataDiagramModel;
+    /**
+     * Stores common state and settings for all canvases in the workspace.
+     */
     readonly view: SharedCanvasState;
+    /**
+     * Stores, modifies and validates changes from the visual graph authoring.
+     */
     readonly editor: EditorController;
+    /**
+     * Controls UI overlays for the canvases, including dialogs and tasks.
+     */
     readonly overlay: OverlayController;
+    /**
+     * Cancellation signal that becomes aborted when the workspace is disposed.
+     */
     readonly disposeSignal: AbortSignal;
 
+    /**
+     * Computes a style to display target element in various parts of the UI.
+     */
     readonly getElementStyle: (element: Element) => ProcessedTypeStyle;
+    /**
+     * Computes a style to display an element with target set of types
+     * in various parts of the UI.
+     */
     readonly getElementTypeStyle: (types: ReadonlyArray<ElementTypeIri>) => ProcessedTypeStyle;
+    /**
+     * Computes and applies **with animation** graph layout algorithm on the diagram content.
+     *
+     * A spinner overlay will be displayed if layout calculation will take too long (> 200ms).
+     *
+     * The operation puts a command to the command history.
+     */
     readonly performLayout: (params: WorkspacePerformLayoutParams) => Promise<void>;
+    /**
+     * Groups **with animation** multiple elements into an entity group.
+     *
+     * The operation puts a command to the command history.
+     *
+     * @see DataDiagramModel.group()
+     */
     readonly group: (params: WorkspaceGroupParams) => Promise<EntityGroup>;
+    /**
+     * Ungroups **with animation** one or many entity groups into all contained elements.
+     *
+     * The operation puts a command to the command history.
+     *
+     * @see DataDiagramModel.ungroupAll()
+     */
     readonly ungroupAll: (params: WorkspaceUngroupAllParams) => Promise<EntityElement[]>;
+    /**
+     * Ungroups **with animation** some entities from an entity group.
+     *
+     * The operation puts a command to the command history.
+     *
+     * @see DataDiagramModel.ungroupSome()
+     */
     readonly ungroupSome: (params: WorkspaceUngroupSomeParams) => Promise<EntityElement[]>;
-
-    readonly triggerWorkspaceEvent: WorkspaceEventHandler;
+    /**
+     * Triggers a well-known workspace event.
+     */
+    readonly triggerWorkspaceEvent: (key: WorkspaceEventKey) => void;
 }
 
+/**
+ * Options for `WorkspaceContext.performLayout()` method.
+ *
+ * @see WorkspaceContext.performLayout()
+ */
 export interface WorkspacePerformLayoutParams {
     /**
-     * Target canvas to get element sizes from and perform layout on.
+     * Target canvas to get element sizes from and perform layout algorithm on.
      *
      * If not specified, uses the result from `SharedCanvasState.findAnyCanvas()`.
      * It is recommended to provide this value if possible for consistent
@@ -66,6 +128,11 @@ export interface WorkspacePerformLayoutParams {
     signal?: AbortSignal;
 }
 
+/**
+ * Options for `WorkspaceContext.group()` method.
+ *
+ * @see WorkspaceContext.group()
+ */
 export interface WorkspaceGroupParams {
     /**
      * Selected elements to group.
@@ -77,6 +144,11 @@ export interface WorkspaceGroupParams {
     canvas: CanvasApi;
 }
 
+/**
+ * Options for `WorkspaceContext.ungroupAll()` method.
+ *
+ * @see WorkspaceContext.ungroupAll()
+ */
 export interface WorkspaceUngroupAllParams {
     /**
      * Selected groups to ungroup all entities from.
@@ -88,6 +160,11 @@ export interface WorkspaceUngroupAllParams {
     canvas: CanvasApi;
 }
 
+/**
+ * Options for `WorkspaceContext.ungroupSome()` method.
+ *
+ * @see WorkspaceContext.ungroupSome()
+ */
 export interface WorkspaceUngroupSomeParams {
     /**
      * Selected group to ungroup some entities from.
@@ -103,7 +180,9 @@ export interface WorkspaceUngroupSomeParams {
     canvas: CanvasApi;
 }
 
-export type WorkspaceEventHandler = (key: WorkspaceEventKey) => void;
+/**
+ * Well-known workspace events.
+ */
 export enum WorkspaceEventKey {
     searchUpdateCriteria = 'search:updateCriteria',
     searchQueryItem = 'search:queryItems',
@@ -115,8 +194,17 @@ export enum WorkspaceEventKey {
     editorAddElements = 'editor:addElements',
 }
 
+/**
+ * Represents a computed style to display an element in various parts of the UI.
+ */
 export interface ProcessedTypeStyle {
+    /**
+     * CSS color string.
+     */
     readonly color: string;
+    /**
+     * Icon image URL.
+     */
     readonly icon: string | undefined;
 }
 
@@ -124,6 +212,10 @@ export interface ProcessedTypeStyle {
 export const WorkspaceContext = React.createContext<WorkspaceContext | null>(null);
 
 /**
+ * React hook to get current workspace context.
+ *
+ * Throws an error if called from component which is outside the workspace.
+ *
  * @category Hooks
  */
 export function useWorkspace(): WorkspaceContext {

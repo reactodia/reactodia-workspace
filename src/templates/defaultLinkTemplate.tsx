@@ -6,7 +6,6 @@ import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import { PropertyTypeIri } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
-import { useCanvas } from '../diagram/canvasApi';
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
 import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
 
@@ -50,15 +49,13 @@ type CustomizedLinkLabelProps = Omit<
  */
 export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     const {
-        link, className, path, pathProps, getPathPosition, route,
-        editableLabel,
+        link, className, path, pathProps, markerSource, markerTarget, getPathPosition, route,
         primaryLabelProps,
         propertyLabelProps,
         propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
-    const {canvas} = useCanvas();
-    const {model} = useWorkspace();
+    const {model, view: {renameLinkHandler}} = useWorkspace();
 
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
     useKeyedSyncStore(
@@ -67,7 +64,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         model
     );
 
-    const renamedLabel = editableLabel?.getLabel(link);
+    const renamedLabel = renameLinkHandler?.getLabel(link);
     let labelContent: JSX.Element | null = null;
     if (model.getLinkVisibility(link.typeId) === 'visible') {
         const textClass = `${CLASS_NAME}__label-text`;
@@ -150,8 +147,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
                 className
             )}>
-            <LinkPath typeIndex={canvas.renderingState.ensureLinkTypeIndex(link.typeId)}
-                path={path}
+            <LinkPath path={path}
                 pathProps={{
                     fill: 'none',
                     ...pathProps,
@@ -160,6 +156,8 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     strokeDasharray: linkState?.[TemplateProperties.LayoutOnly]
                         ? '5,5' : pathProps?.strokeDasharray,
                 }}
+                markerSource={markerSource}
+                markerTarget={markerTarget}
             />
             {labelContent}
             {link.vertices.length === 0 ? null : (

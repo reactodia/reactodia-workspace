@@ -11,7 +11,11 @@ import type { Events } from './events';
 export type SyncStore = (onChange: () => void) => (() => void);
 
 /**
+ * Subscribes to a value which changes are tracked by the specified event.
+ *
  * @category Hooks
+ * @see useEventStore()
+ * @see useSyncStore()
  */
 export function useObservedProperty<E, K extends keyof E, R>(
     events: Events<E>,
@@ -26,6 +30,8 @@ const NEVER_SYNC_STORE_DISPOSE = (): void => {};
 const NEVER_SYNC_STORE: SyncStore = () => NEVER_SYNC_STORE_DISPOSE;
 
 /**
+ * An event store that never triggers any change.
+ *
  * @category Utility
  */
 export function neverSyncStore(): SyncStore {
@@ -33,6 +39,8 @@ export function neverSyncStore(): SyncStore {
 }
 
 /**
+ * Creates an event store which changes when an event triggers with the specified event type.
+ *
  * @category Hooks
  */
 export function useEventStore<E, K extends keyof E>(events: Events<E> | undefined, key: K): SyncStore {
@@ -47,6 +55,9 @@ export function useEventStore<E, K extends keyof E>(events: Events<E> | undefine
 }
 
 /**
+ * Transforms event store in a way that the result store debounces the changes
+ * until the next rendered frame (via `requestAnimationFrame()`).
+ *
  * @category Hooks
  */
 export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {

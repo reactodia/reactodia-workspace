@@ -43,6 +43,7 @@ export { defineCanvasWidget } from './diagram/canvasWidget';
 export {
     RestoreGeometry, setElementState, setElementExpanded, setLinkState,
     changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
+    placeElementsAroundTarget,
 } from './diagram/commands';
 export * from './diagram/customization';
 export {
@@ -51,12 +52,12 @@ export {
     Cell, VoidElement, LinkTypeVisibility,
 } from './diagram/elements';
 export * from './diagram/geometry';
+export { CellsChangedEvent } from './diagram/graph';
 export * from './diagram/history';
 export {
     CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink,
     LayoutTypeProvider, LayoutFunction,
-    calculateLayout, applyLayout, uniformGrid, calculateAveragePosition,
-    placeElementsAround, translateToPositiveQuadrant,
+    calculateLayout, applyLayout, uniformGrid, translateToPositiveQuadrant,
 } from './diagram/layout';
 export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
@@ -74,11 +75,10 @@ export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter 
 export {
     PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
 } from './diagram/paper';
-export { ZoomOptions } from './diagram/paperArea';
-export { type RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
+export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
     type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter, ElementDecoratorResolver,
-    FindCanvasEvent, IriClickEvent, IriClickIntent,
+    FindCanvasEvent, IriClickEvent, IriClickIntent, RenameLinkToLinkStateHandler,
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
@@ -104,7 +104,7 @@ export {
     FetchOperationElement, FetchOperationLink, FetchOperationElementType,
     FetchOperationLinkType, FetchOperationPropertyType,
 } from './editor/dataFetcher';
-export { EditorOptions, EditorEvents, EditorController } from './editor/editorController';
+export { EditorEvents, EditorController } from './editor/editorController';
 export { DragEditOperation, DragEditConnect, DragEditMoveEndpoint } from './editor/editLayer';
 export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
@@ -195,7 +195,7 @@ export {
     Workspace, WorkspaceProps, LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
 } from './workspace/workspace';
 export {
-    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, WorkspacePerformLayoutParams,
+    WorkspaceContext, WorkspaceEventKey, WorkspacePerformLayoutParams,
     WorkspaceGroupParams, WorkspaceUngroupAllParams, WorkspaceUngroupSomeParams,
     ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';

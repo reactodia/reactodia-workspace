@@ -5,10 +5,30 @@ import type { Link } from './elements';
 import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
 
 /**
+ * Options for `DefaultLinkRouter`.
+ */
+export interface DefaultLinkRouterOptions {
+    /**
+     * Margin to put between the middle parts of links to move
+     * them apart of each other.
+     *
+     * @default 20
+     */
+    gap?: number;
+}
+
+/**
+ * Default link router which moves links with same source and target apart.
+ *
  * @category Core
  */
 export class DefaultLinkRouter implements LinkRouter {
-    constructor(private gap = 20) {}
+    private readonly gap: number;
+
+    constructor(options: DefaultLinkRouterOptions = {}) {
+        const {gap = 20} = options;
+        this.gap = gap;
+    }
 
     route(model: GraphStructure, sizeProvider: SizeProvider): RoutedLinks {
         const routings: RoutedLinks = new Map();

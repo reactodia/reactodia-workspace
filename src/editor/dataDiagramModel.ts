@@ -37,32 +37,97 @@ import {
 } from './serializedDiagram';
 import { DataGraph } from './dataGraph';
 
+/**
+ * Event data for `DataDiagramModel` events.
+ *
+ * @see DataDiagramModel
+ */
 export interface DataDiagramModelEvents extends DiagramModelEvents {
+    /**
+     * Triggered on any event from an element type in the graph.
+     */
     elementTypeEvent: AnyEvent<ElementTypeEvents>;
+    /**
+     * Triggered on any event from a link type in the graph.
+     */
     linkTypeEvent: AnyEvent<LinkTypeEvents>;
+    /**
+     * Triggered on any event from a property type in the graph.
+     */
     propertyTypeEvent: AnyEvent<PropertyTypeEvents>;
 
-    loadingStart: { source: DataDiagramModel };
-    loadingSuccess: { source: DataDiagramModel };
+    /**
+     * Triggered on start of the diagram "create new" or "import" operations.
+     *
+     * @see DataDiagramModel.createNewDiagram()
+     * @see DataDiagramModel.importLayout()
+     */
+    loadingStart: { readonly source: DataDiagramModel };
+    /**
+     * Triggered on successful completion of diagram loading operation.
+     */
+    loadingSuccess: { readonly source: DataDiagramModel };
+    /**
+     * Triggered on failed completion of diagram loading operation.
+     */
     loadingError: {
-        source: DataDiagramModel;
-        error: unknown;
+        readonly source: DataDiagramModel;
+        readonly error: unknown;
     };
 
+    /**
+     * Triggered on `operations` property change.
+     */
     changeOperations: ChangeOperationsEvent;
+    /**
+     * Triggered when a link would be created on the diagram from a data provider.
+     *
+     * It is possible to discard the link and avoid creating it by calling  `cancel()`
+     * method on the event object.
+     *
+     * This event is triggered only when a link is created from a data provider and
+     * won't be triggered on explicit call for the model to create links.
+     */
     createLoadedLink: {
-        source: DataDiagramModel;
-        model: LinkModel;
+        readonly source: DataDiagramModel;
+        readonly model: LinkModel;
         cancel(): void;
     };
 }
 
 /**
+ * Provides entity graph content: elements and connected links,
+ * as well as element, link and property types.
+ *
  * @category Core
  */
 export interface DataGraphStructure extends GraphStructure {
+    /**
+     * Gets an element type by its `ElementType.id` in the graph if exists.
+     *
+     * Element types are added to the graph as requested by `createElementType()`
+     * so the data (e.g. labels) can be fetched from a data provider.
+     *
+     * @see DataDiagramModel.createElementType()
+     */
     getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
+    /**
+     * Gets an link type by its `LinkType.id` in the graph if exists.
+     *
+     * Link types are added to the graph as requested by `createLinkType()`
+     * so the data (e.g. labels) can be fetched from a data provider.
+     *
+     * @see DataDiagramModel.createLinkType()
+     */
     getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
+    /**
+     * Gets an property type by its `PropertyType.id` in the graph if exists.
+     *
+     * Property types are added to the graph as requested by `createPropertyType()`
+     * so the data (e.g. labels) can be fetched from a data provider.
+     *
+     * @see DataDiagramModel.createPropertyType()
+     */
     getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
 }
 
@@ -70,6 +135,13 @@ export interface DataGraphStructure extends GraphStructure {
 export interface DataDiagramModelOptions extends DiagramModelOptions {}
 
 /**
+ * Asynchronously fetches and stores the entity diagram content:
+ * graph elements and links, as well as element, link and property types;
+ * maintains selection and the current language to display the data.
+ *
+ * Additionally, the diagram model provides the means to undo/redo commands
+ * via `history` and format the content using `locale`.
+ *
  * @category Core
  */
 export class DataDiagramModel extends DiagramModel implements DataGraphStructure {
@@ -96,21 +168,34 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return this.source as EventSource<any>;
     }    
 
-    get dataProvider() { return this._dataProvider; }
+    /**
+     * Returns the data provider that is associated with the current diagram
+     * via creating new or importing an existing layout.
+     *
+     * This provider is used to fetch entity graph data on-demand.
+     *
+     * By default, it is set to `EmptyDataProvider` instance without any graph data.
+     *
+     * @see createNewDiagram()
+     * @see importLayout()
+     */
+    get dataProvider(): DataProvider {
+        return this._dataProvider;
+    }
 
     protected getTermFactory(): Rdf.DataFactory {
         return this._dataProvider.factory;
     }
 
     /**
-     * Returns a list of current fetch operations.
+     * Returns an immutable snapshot of current fetch operations.
      */
     get operations(): ReadonlyArray<FetchOperation> {
         return this.fetcher.operations;
     }
 
     /**
-     * Returns a reason (error) why latest fetch operation for specific target
+     * Returns a reason (thrown error) why latest fetch operation for specific target
      * failed, if any; otherwise returns `undefined`.
      */
     getOperationFailReason<T extends FetchOperationTargetType>(
@@ -149,20 +234,79 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         });
     }
 
+    /**
+     * Clears up the diagram and associates a new data provider for it.
+     *
+     * This method discards all current diagram state (elements, links and other data)
+     * and resets the command history.
+     *
+     * @see importLayout()
+     */
     async createNewDiagram(params: {
+        /**
+         * Data provider to associate with the diagram.
+         *
+         * This provider will be used to fetch entity graph data on-demand
+         * for the diagram.
+         */
         dataProvider: DataProvider;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<void> {
         const {dataProvider, signal} = params;
         return this.importLayout({dataProvider, signal});
     }
 
+    /**
+     * Restores diagram content from previously exported state and associates
+     * a new data provider for the diagram.
+     *
+     * This method discards all current diagram state (elements, links and other data)
+     * and resets the command history.
+     *
+     * @see createNewDiagram()
+     * @see exportLayout()
+     */
     async importLayout(params: {
+        /**
+         * Data provider to associate with the diagram.
+         *
+         * This provider will be used to fetch entity graph data on-demand
+         * for the diagram.
+         */
         dataProvider: DataProvider;
+        /**
+         * Diagram state to restore (elements and their positions,
+         * links with visibility settings, etc).
+         *
+         * If specified, current diagram content will be replaced by one
+         * from the state, otherwise the diagram will be cleared up only.
+         */
         diagram?: SerializedDiagram;
+        /**
+         * Pre-cached data for the elements which should be used instead of
+         * being requested from the data provider on import.
+         */
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
+        /**
+         * Whether links for the between imported elements should be requested
+         * from the data provider on import.
+         *
+         * @default false
+         */
         validateLinks?: boolean;
+        /**
+         * Whether to fetch known link types on import and automatically hide
+         * all unused link types.
+         *
+         * @default false
+         */
         hideUnusedLinkTypes?: boolean;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<void> {
         const {
@@ -181,8 +325,6 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         const signal = this.loadingScope.signal;
 
         try {
-            const linkTypes = await this.dataProvider.knownLinkTypes({signal});
-            const knownLinkTypes = this.initLinkTypes(linkTypes);
             signal.throwIfAborted();
 
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
@@ -194,6 +336,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             });
 
             if (hideUnusedLinkTypes) {
+                const linkTypes = await this.dataProvider.knownLinkTypes({signal});
+                signal.throwIfAborted();
+                const knownLinkTypes = this.initLinkTypes(linkTypes);
                 this.hideUnusedLinkTypes(knownLinkTypes);
             }
 
@@ -210,7 +355,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
             const requestingModels = this.requestElementData(elementIrisToRequestData);
             const requestingLinks = params.validateLinks
-                ? this.requestLinksOfType() : Promise.resolve();
+                ? this.requestLinks() : Promise.resolve();
 
             await Promise.all([requestingModels, requestingLinks]);
 
@@ -225,6 +370,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         }
     }
 
+    /**
+     * Discards all diagram content and resets associated data provider to en empty one.
+     */
     discardLayout(): void {
         this.resetGraph();
         this.setDataProvider(new EmptyDataProvider());
@@ -234,6 +382,15 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         this.extendedSource.trigger('loadingSuccess', {source: this});
     }
 
+    /**
+     * Exports current diagram state to a serializable object.
+     *
+     * The exported state includes element and link geometry, template state,
+     * references to described entities and relations (via IRIs).
+     * Additionally, link type visibility settings are exported as well.
+     *
+     * @see importLayout()
+     */
     exportLayout(): SerializedDiagram {
         const knownLinkTypes = new Set(this.graph.getLinks().map(link => link.typeId));
         const linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
@@ -318,11 +475,24 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         }
     }
 
+    /**
+     * Requests to fetch the data for the specified elements from a data provider.
+     */
     requestElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {
         return this.fetcher.fetchElementData(elementIris);
     }
 
-    requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
+    /**
+     * Requests to fetch links between all elements on the diagram from a data provider.
+     */
+    requestLinks(options: {
+        /**
+         * If specified, instructs the data provider to only return links with one
+         * of the specified types.
+         */
+        linkTypes?: ReadonlyArray<LinkTypeIri>;
+    } = {}): Promise<void> {
+        const {linkTypes} = options;
         const elementIris: ElementIri[] = [];
         for (const element of this.graph.getElements()) {
             for (const entity of iterateEntitiesOf(element)) {
@@ -333,10 +503,28 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             return Promise.resolve();
         }
         return this.fetcher
-            .fetchLinks(elementIris, linkTypeIds)
+            .fetchLinks(elementIris, linkTypes)
             .then(links => this.onLinkInfoLoaded(links));
     }
 
+    /**
+     * @deprecated Use `requestLinks()` instead.
+     */
+    requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
+        return this.requestLinks({linkTypes: linkTypeIds});
+    }
+
+    /**
+     * Creates or gets an existing entity element on the diagram.
+     *
+     * If element is specified as an IRI only, then the placeholder data will
+     * be used.
+     *
+     * If multiple entity elements with the same IRI is on the diagram,
+     * the first one in the order will be returned.
+     *
+     * The operation puts a command to the command history.
+     */
     createElement(elementIriOrModel: ElementIri | ElementModel): EntityElement {
         const elementIri = typeof elementIriOrModel === 'string'
             ? elementIriOrModel : (elementIriOrModel as ElementModel).id;
@@ -359,6 +547,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     override addLink(link: Link): void {
+        // TODO: postpone creating link type until first render
+        // the same way as with element types
         this.createLinkType(link.typeId);
         super.addLink(link);
     }
@@ -369,6 +559,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
         const batch = this.history.startBatch('Create loaded links');
         for (const linkModel of links) {
+            // TODO: postpone creating link type until first render
+            // the same way as with element types
             this.createLinkType(linkModel.linkTypeId);
             allowToCreate = true;
             this.extendedSource.trigger('createLoadedLink', {source: this, model: linkModel, cancel});
@@ -379,6 +571,17 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         batch.discard();
     }
 
+    /**
+     * Creates or gets an existing links for the specified link model.
+     *
+     * Multiple links may exists for the same link model because in some cases
+     * there could be multiple source or target elements with the same IRI.
+     *
+     * Each existing link for the same link model will be updated with the specified data,
+     * link state property `urn:reactodia:layoutOnly` will be discarded if set.
+     *
+     * The operation puts a command to the command history.
+     */
     createLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
         const sources = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
             el instanceof EntityElement && el.iri === data.sourceId ||
@@ -458,6 +661,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return this.dataGraph.getElementType(elementTypeIri);
     }
 
+    /**
+     * Creates or gets an existing element type in the graph.
+     *
+     * If element type does not exists in the graph yet, it will be created
+     * and the data for it will be requested for it from the data provider.
+     */
     createElementType(elementTypeIri: ElementTypeIri): ElementType {
         const existing = this.dataGraph.getElementType(elementTypeIri);
         if (existing) {
@@ -473,6 +682,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return this.dataGraph.getLinkType(linkTypeIri);
     }
 
+    /**
+     * Creates or gets an existing link type in the graph.
+     *
+     * If link type does not exists in the graph yet, it will be created
+     * and the data for it will be requested for it from the data provider.
+     */
     createLinkType(linkTypeIri: LinkTypeIri): LinkType {
         const existing = this.dataGraph.getLinkType(linkTypeIri);
         if (existing) {
@@ -488,6 +703,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return this.dataGraph.getPropertyType(propertyTypeIri);
     }
 
+    /**
+     * Creates or gets an existing property type in the graph.
+     *
+     * If property type does not exists in the graph yet, it will be created
+     * and the data for it will be requested for it from the data provider.
+     */
     createPropertyType(propertyIri: PropertyTypeIri): PropertyType {
         const existing = this.dataGraph.getPropertyType(propertyIri);
         if (existing) {
@@ -499,6 +720,18 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return property;
     }
 
+    /**
+     * Groups multiple entity elements into an entity group element.
+     *
+     * Specified entity elements are removed from the diagram and
+     * a single entity group element with these entities is created
+     * at the center of the bounding box between them.
+     *
+     * Relation links from/to specified elements are re-grouped to
+     * form relation group links the same way.
+     *
+     * The operation puts a command to the command history.
+     */
     group(entities: ReadonlyArray<EntityElement>): EntityGroup {
         const batch = this.history.startBatch('Group entities');
 
@@ -546,6 +779,18 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return group;
     }
 
+    /**
+     * Ungroups one or many entity group elements into all contained entity elements.
+     *
+     * Specified entity group elements are removed from the diagram and
+     * all contained entity elements are created at the same position as
+     * the owner group.
+     *
+     * Relation links from/to ungrouped entities are re-grouped to
+     * form relation group links the same way.
+     *
+     * The operation puts a command to the command history.
+     */
     ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
         const batch = this.history.startBatch('Ungroup entities');
 
@@ -577,6 +822,19 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return ungrouped;
     }
 
+    /**
+     * Ungroups some entities from an entity group element.
+     *
+     * Specified entity group is modified to remove target entities
+     * and re-create them at the same position as the group.
+     * If only one or less entities are left in the group,
+     * the group will be completely ungrouped instead.
+     *
+     * Relation links from/to ungrouped entities are re-grouped to
+     * form relation group links the same way.
+     *
+     * The operation puts a command to the command history.
+     */
     ungroupSome(group: EntityGroup, entities: ReadonlySet<ElementIri>): EntityElement[] {
         const leftGrouped = group.items.filter(item => !entities.has(item.data.id));
         if (leftGrouped.length <= 1) {
@@ -622,6 +880,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return ungroupedElements;
     }
 
+    /**
+     * Re-creates a set of relations or relation groups to automatically
+     * group relations with the same link type connected to entity groups.
+     *
+     * The operation puts a command to the command history.
+     */
     regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
         const batch = this.history.startBatch('Regroup relations');
 
@@ -652,11 +916,19 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 }
 
 export interface DataGraphLocaleFormatter extends LocaleFormatter {
+    /**
+     * Formats an array of element types into a sorted labels
+     * to display in the UI.
+     */
     formatElementTypes(
         types: ReadonlyArray<ElementTypeIri>,
         language?: string
     ): string[];
 
+    /**
+     * Formats a map of property values into a sorted list with labels
+     * to display in the UI.
+     */
     formatPropertyList(
         properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
         language?: string
@@ -710,7 +982,11 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
 }
 
 /**
+ * Command effect to request data for the specified entity elements on the diagram
+ * from a data provider.
+ * 
  * @category Commands
+ * @see DataDiagramModel.requestElementData()
  */
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
     return Command.effect('Fetch element data', () => {
@@ -719,10 +995,14 @@ export function requestElementData(model: DataDiagramModel, elementIris: Readonl
 }
 
 /**
+ * Command effect to request links between elements on the diagram
+ * from a data provider.
+ *
  * @category Commands
+ * @see DataDiagramModel.requestLinks()
  */
 export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
     return Command.effect('Restore links between elements', () => {
-        model.requestLinksOfType();
+        model.requestLinks();
     });
 }

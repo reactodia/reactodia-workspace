@@ -1,4 +1,10 @@
 /**
+ * Debounces a function call such that only one is performed if multiple
+ * requests are made since initial one for the waiting time.
+ *
+ * If `waitingTime` is 0, then the timeout is assumed to be up until next
+ * rendered frame (via `requestAnimationFrame()`).
+ *
  * @category Utilities
  */
 export class Debouncer {
@@ -91,6 +97,9 @@ export class BufferingQueue<Key extends string> {
 }
 
 /**
+ * Runs specified callback on each rendered frame for the `duration` interval
+ * using `requestAnimationFrame()`.
+ *
  * @category Utilities
  */
 export function animateInterval(

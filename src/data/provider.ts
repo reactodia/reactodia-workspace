@@ -1,7 +1,7 @@
 import type { DataFactory } from './rdf/rdfModel';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
+    ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from './model';
 
 /**
@@ -11,7 +11,8 @@ import {
  */
 export interface DataProvider {
     /**
-     * Returns a factory to create RDF terms from a diagram model as necessary.
+     * Returns an [RDF term factory](https://rdf.js.org/data-model-spec/#datafactory-interface)
+     * to create RDF terms for identifiers and property values.
      */
     readonly factory: DataFactory;
 
@@ -19,6 +20,9 @@ export interface DataProvider {
      * Gets the structure and data for all known element types.
      */
     knownElementTypes(params: {
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<ElementTypeGraph>;
 
@@ -26,6 +30,9 @@ export interface DataProvider {
      * Gets the data and statistics for all known link types.
      */
     knownLinkTypes(params: {
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<LinkTypeModel[]>;
 
@@ -33,7 +40,13 @@ export interface DataProvider {
      * Gets the data for the specified element types.
      */
     elementTypes(params: {
+        /**
+         * Target element types to query data for.
+         */
         classIds: ReadonlyArray<ElementTypeIri>;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<Map<ElementTypeIri, ElementTypeModel>>;
 
@@ -41,7 +54,13 @@ export interface DataProvider {
      * Gets the data for the specified property types.
      */
     propertyTypes(params: {
+        /**
+         * Target property types to query data for.
+         */
         propertyIds: ReadonlyArray<PropertyTypeIri>;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<Map<PropertyTypeIri, PropertyTypeModel>>;
 
@@ -49,7 +68,13 @@ export interface DataProvider {
      * Gets the data for the specified link types.
      */
     linkTypes(params: {
+        /**
+         * Target link types to query data for.
+         */
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<Map<LinkTypeIri, LinkTypeModel>>;
 
@@ -57,7 +82,13 @@ export interface DataProvider {
      * Gets the data for the specified elements.
      */
     elements(params: {
+        /**
+         * Target elements to query data for.
+         */
         elementIds: ReadonlyArray<ElementIri>;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<Map<ElementIri, ElementModel>>;
 
@@ -65,8 +96,17 @@ export interface DataProvider {
      * Get all links between specified elements.
      */
     links(params: {
+        /**
+         * Target elements to query links between.
+         */
         elementIds: ReadonlyArray<ElementIri>;
+        /**
+         * Return only links with specified types.
+         */
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
     }): Promise<LinkModel[]>;
 
@@ -74,6 +114,9 @@ export interface DataProvider {
      * Gets connected link types of an element for exploration.
      */
     connectedLinkStats(params: {
+        /**
+         * Target element to count linked elements from/to.
+         */
         elementId: ElementIri;
         /**
          * Whether to allow to return inexact count of elements connected by
@@ -82,8 +125,11 @@ export interface DataProvider {
          * @default false
          */
         inexactCount?: boolean;
+        /**
+         * Cancellation signal.
+         */
         signal?: AbortSignal;
-    }): Promise<LinkCount[]>;
+    }): Promise<DataProviderLinkCount[]>;
 
     /**
      * Looks up elements with different filters:
@@ -93,11 +139,41 @@ export interface DataProvider {
      *
      * Filters can be combined to produce an intersection of the results.
      */
-    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]>;
+    lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]>;
 }
 
 /**
+ * Describes how many unique elements are connected to some other element
+ * via some link type (`id`) in each direction.
+ *
  * @category Data
+ * @see DataProvider.connectedLinkStats()
+ */
+export interface DataProviderLinkCount {
+    /**
+     * Link type from/to target element.
+     */
+    readonly id: LinkTypeIri;
+    /**
+     * How many elements linked to target element via the link type.
+     */
+    readonly inCount: number;
+    /**
+     * How many elements linked from target element via the link type.
+     */
+    readonly outCount: number;
+    /**
+     * If `true`, then `inCount` and `outCount` values might be not exact
+     * in case when the values are non-zero.
+     */
+    readonly inexact?: boolean;
+}
+
+/**
+ * Parameters for `DataProvider.lookup()` operation.
+ *
+ * @category Data
+ * @see DataProvider.lookup()
  */
 export interface DataProviderLookupParams {
     /**
@@ -142,4 +218,30 @@ export interface DataProviderLookupParams {
      * Abort signal to cancel the async operation.
      */
     signal?: AbortSignal;
+}
+
+/**
+ * Describes an element with information on which link types and directions
+ * are used to connect it to other elements.
+ *
+ * @category Data
+ * @see DataProvider.lookup()
+ */
+export interface DataProviderLookupItem {
+    /**
+     * Result looked up element data.
+     */
+    readonly element: ElementModel;
+    /**
+     * Link types by which result `element` is linked from the lookup target (`refElementId`).
+     *
+     * Only applicable if `refElementId` is specified in `DataProvider.lookup()`.
+     */
+    readonly inLinks: ReadonlySet<LinkTypeIri>;
+    /**
+     * Link types by which result `element` is linked to the lookup target (`refElementId`).
+     *
+     * Only applicable if `refElementId` is specified in `DataProvider.lookup()`.
+     */
+    readonly outLinks: ReadonlySet<LinkTypeIri>;
 }

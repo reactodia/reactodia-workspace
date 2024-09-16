@@ -8,7 +8,7 @@ import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/schedu
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
     CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
-    ExportSvgOptions, ExportRasterOptions,
+    CanvasPointerMode, ZoomOptions, ExportSvgOptions, ExportRasterOptions,
 } from './canvasApi';
 import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
@@ -19,29 +19,19 @@ import {
 import { DiagramModel } from './model';
 import { CommandBatch } from './history';
 import { Paper, PaperTransform } from './paper';
-import { RenderingState, RenderingLayer } from './renderingState';
+import { MutableRenderingState, RenderingLayer } from './renderingState';
 import {
     ToSVGOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
 } from './toSvg';
 
 export interface PaperAreaProps {
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
     zoomOptions?: ZoomOptions;
     hideScrollBars?: boolean;
     watermarkSvg?: string;
     watermarkUrl?: string;
     children?: React.ReactNode;
-}
-
-export interface ZoomOptions {
-    min?: number;
-    max?: number;
-    step?: number;
-    /** Used when zooming to fit to limit zoom of small diagrams */
-    maxFit?: number;
-    fitPadding?: number;
-    requireCtrl?: boolean;
 }
 
 interface State {
@@ -119,17 +109,14 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         top: number;
     };
 
-    private get zoomOptions(): Required<ZoomOptions> {
-        const {
-            min = 0.2, max = 2, step = 0.1, maxFit = 1, fitPadding = 20, requireCtrl = true,
-        } = this.props.zoomOptions || {};
-        return {min, max, step, maxFit, fitPadding, requireCtrl};
-    }
+    private _pointerMode: CanvasPointerMode = 'panning';
+    private readonly _zoomOptions: Required<ZoomOptions>;
 
     readonly metrics: CanvasMetrics;
 
     constructor(props: PaperAreaProps, context: any) {
         super(props, context);
+        const {zoomOptions = {}} = this.props;
         this.state = {
             width: this.pageSize.x,
             height: this.pageSize.y,
@@ -158,10 +145,35 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             canvas: this,
             model: props.model,
         };
+        this._zoomOptions = {
+            min: zoomOptions.min ?? 0.2,
+            max: zoomOptions.max ?? 2,
+            maxFit: zoomOptions.maxFit ?? 1,
+            step: zoomOptions.step ?? 0.1,
+            fitPadding: zoomOptions.fitPadding ?? 20,
+            requireCtrl: zoomOptions.requireCtrl ?? true,
+        };
     }
 
-    get renderingState(): RenderingState {
+    get renderingState(): MutableRenderingState {
         return this.props.renderingState;
+    }
+
+    get pointerMode(): CanvasPointerMode {
+        return this._pointerMode;
+    }
+
+    setPointerMode(value: CanvasPointerMode): void {
+        const previous = this._pointerMode;
+        if (previous === value) {
+            return;
+        }
+        this._pointerMode = value;
+        this.source.trigger('changePointerMode', {source: this, previous});
+    }
+
+    get zoomOptions(): Required<ZoomOptions> {
+        return this._zoomOptions;
     }
 
     render() {
@@ -637,7 +649,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private shouldStartZooming(e: MouseEvent | React.MouseEvent<any>) {
-        return Boolean(e.ctrlKey) && Boolean(this.zoomOptions.requireCtrl) || !this.zoomOptions.requireCtrl;
+        return Boolean(e.ctrlKey) === this.zoomOptions.requireCtrl;
     }
 
     centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
@@ -735,19 +747,26 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             return Promise.resolve();
         }
 
+        const {min, maxFit, fitPadding} = this.zoomOptions;
+
+        const paddedRect: Rect = {
+            x: paperRect.x - fitPadding,
+            y: paperRect.y - fitPadding,
+            width: paperRect.width + fitPadding,
+            height: paperRect.height + fitPadding,
+        };
         const {width} = fitRectKeepingAspectRatio(
-            paperRect.width, paperRect.height,
+            paddedRect.width, paddedRect.height,
             clientWidth, clientHeight,
         );
 
-        let scale = width / paperRect.width;
-        const {min, maxFit} = this.zoomOptions;
+        let scale = width / paddedRect.width;
         scale = Math.max(scale, min);
         scale = Math.min(scale, maxFit);
 
         const center = {
-            x: paperRect.x + paperRect.width / 2,
-            y: paperRect.y + paperRect.height / 2,
+            x: paddedRect.x + paddedRect.width / 2,
+            y: paddedRect.y + paddedRect.height / 2,
         };
 
         const viewPortState: ViewportState = {
@@ -960,7 +979,6 @@ abstract class BasePaperMetrics implements CanvasMetrics {
         return this.transform;
     }
 
-    /** Returns paper size in paper coordinates. */
     getPaperSize(): { width: number; height: number } {
         const {width, height, scale} = this.transform;
         return {width: width / scale, height: height / scale};

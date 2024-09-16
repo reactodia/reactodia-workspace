@@ -282,15 +282,57 @@ function foreachNode<T extends Node>(nodeList: NodeListOf<T>, callback: (node: T
     }
 }
 
+/**
+ * Options for exporting the canvas as raster image Base64-encoded into data URL.
+ */
 export interface ToDataURLOptions {
-    /** 'image/png' | 'image/jpeg' | ... */
+    /**
+     * [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
+     * for the exported raster image.
+     *
+     * Example: `image/png`, `image/jpeg`, ...
+     *
+     * @default "image/png"
+     */
     mimeType?: string;
+    /**
+     * Target width of the exported image.
+     *
+     * If only `width` is specified, the height is set based on the diagram aspect ratio,
+     * otherwise the diagram is fit into desired bounds with margins on sides.
+     *
+     * If neither `width` or `height` is set, the image size is computed automatically
+     * based on `maxFallbackSize` with 2x maximum resolution for the content.
+     */
     width?: number;
+    /**
+     * Target height of the exported image.
+     *
+     * If only `height` is specified, the height is set based on the diagram aspect ratio,
+     * otherwise the diagram is fit into desired bounds with margins on sides.
+     *
+     * If neither `width` or `height` is set, the image size is computed automatically
+     * based on `maxFallbackSize` with 2x maximum resolution for the content.
+     */
     height?: number;
-    /** Background color, transparent by default. */
+    /**
+     * Background color for the exported image.
+     *
+     * If not specified, the background is transparent by default.
+     */
     backgroundColor?: string;
+    /**
+     * Exported image quality value from 0.0 to 1.0
+     * (applicable only for lossy image types).
+     *
+     * @default 1.0
+     */
     quality?: number;
-    /** @default {width: 4096, height: 4096} */
+    /**
+     * Maximum exported image size when neither `width` nor `height` is specified.
+     *
+     * @default {width: 4096, height: 4096}
+     */
     maxFallbackSize?: Size;
 }
 

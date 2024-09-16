@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+/**
+ * Props for `Spinner` component.
+ */
 export interface SpinnerProps {
     size?: number;
     position?: { x: number; y: number };
@@ -11,6 +14,8 @@ export interface SpinnerProps {
 const CLASS_NAME = 'reactodia-spinner';
 
 /**
+ * Utility SVG component that displays loading spinner.
+ *
  * @category Components
  */
 export function Spinner(props: SpinnerProps) {
@@ -34,7 +39,10 @@ export function Spinner(props: SpinnerProps) {
 }
 
 /**
+ * Same as `Spinner` component but for non-SVG context.
+ *
  * @category Components
+ * @see Spinner
  */
 export function HtmlSpinner(props: { width: number; height: number }) {
     const {width, height} = props;

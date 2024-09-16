@@ -14,6 +14,7 @@ import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
 import { SharedCanvasState } from './sharedCanvasState';
 
+/** @hidden */
 export interface RenderingStateOptions {
     model: DiagramModel;
     shared: SharedCanvasState;
@@ -22,34 +23,151 @@ export interface RenderingStateOptions {
     linkRouter?: LinkRouter;
 }
 
+/**
+ * Event data for `RenderingState` events.
+ *
+ * @see RenderingState
+ */
 export interface RenderingStateEvents {
-    syncUpdate: { readonly layer: RenderingLayer };
-    changeLinkTemplates: { readonly source: RenderingState };
+    /**
+     * Triggered on a request to synchronously render on a specific layer.
+     */
+    syncUpdate: {
+        /**
+         * Target layer to render on.
+         */
+        readonly layer: RenderingLayer;
+    };
+    /**
+     * Triggered on `getLinkTemplates()` property change.
+     */
+    changeLinkTemplates: {
+        /**
+         * Event source (rendering state).
+         */
+        readonly source: RenderingState;
+    };
+    /**
+     * Triggered when an element size has changed.
+     *
+     * Element size changes happen when rendering on `ElementSize` layer.
+     */
     changeElementSize: PropertyChange<Element, Size | undefined>;
+    /**
+     * Triggered when a primary label size for a link has changed.
+     *
+     * Link label size changes happen when rendering on `LinkLabel` layer.
+     */
     changeLinkLabelBounds: PropertyChange<Link, Rect | undefined>;
+    /**
+     * Triggered on `getRoutings()` property change.
+     */
     changeRoutings: PropertyChange<RenderingState, RoutedLinks>;
 }
 
+/**
+ * Defines a rendering order which consists of multiple layers.
+ *
+ * The layers are organized in such way that changes from an earlier layer
+ * only affect rendering on the later layers. This way the full rendering
+ * could be done by rendering on each layer in order.
+ */
 export enum RenderingLayer {
+    /**
+     * Layer to render element templates.
+     */
     Element = 1,
+    /**
+     * Layer to measure rendered elements to get their sizes.
+     */
     ElementSize,
+    /**
+     * Layer to adjust scrollable area for the underlying canvas.
+     */
     PaperArea,
+    /**
+     * Layer to route links (compute link geometry).
+     */
     LinkRoutes,
+    /**
+     * Layer to render link templates.
+     */
     Link,
+    /**
+     * Layer to measure rendered link labels to get their sizes.
+     */
     LinkLabel,
-    Editor,
-
-    FirstToUpdate = Element,
-    LastToUpdate = Editor,
+    /**
+     * Layer to update additional content placed on the diagram cells.
+     */
+    Overlay,
 }
+
+const FIRST_LAYER = RenderingLayer.Element;
+const LAST_LAYER = RenderingLayer.Overlay;
 
 const DEFAULT_ELEMENT_TEMPLATE_RESOLVER: ElementTemplateResolver = types => undefined;
 const DEFAULT_LINK_TEMPLATE_RESOLVER: LinkTemplateResolver = type => undefined;
 
 /**
+ * Stores current rendering state for a single canvas.
+ *
  * @category Core
  */
-export class RenderingState implements SizeProvider {
+export interface RenderingState extends SizeProvider {
+    /**
+     * Events for the rendering state.
+     */
+    readonly events: Events<RenderingStateEvents>;
+    /**
+     * Shared state for all canvases rendering the same model.
+     */
+    readonly shared: SharedCanvasState;
+    /**
+     * Request to synchronously render the canvas, performing any
+     * previously deferred updates.
+     *
+     * This method should be used before reading from the rendering state
+     * after any render-impacting change was made to the diagram content.
+     *
+     * **Example**:
+     * ```ts
+     * // Add new element to the diagram
+     * model.addElement(someElement);
+     * // Force synchronous render
+     * view.syncUpdate();
+     * // Read rendered element size
+     * const computedSize = view.getElementSize(someElement);
+     * ```
+     */
+    syncUpdate(): void;
+    /**
+     * Returns computed element size in paper coordinates.
+     */
+    getElementSize(element: Element): Size | undefined;
+    /**
+     * Returns computed bounds for a link primary label in paper coordinates.
+     */
+    getLinkLabelBounds(link: Link): Rect | undefined;
+    /**
+     * Resolve template component for the element.
+     */
+    getElementTemplate(element: Element): ElementTemplate;
+    /**
+     * Returns link templates for all types of rendered links.
+     */
+    getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate>;
+    /**
+     * Returns route data for all links in the graph.
+     */
+    getRoutings(): ReadonlyMap<string, RoutedLink>;
+    /**
+     * Return route data for a specific link in the graph.
+     */
+    getRouting(linkId: string): RoutedLink | undefined;
+}
+
+export class MutableRenderingState implements RenderingState {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<RenderingStateEvents>();
     readonly events: Events<RenderingStateEvents> = this.source;
@@ -124,7 +242,7 @@ export class RenderingState implements SizeProvider {
     }
 
     syncUpdate() {
-        for (let layer = RenderingLayer.FirstToUpdate; layer <= RenderingLayer.LastToUpdate; layer++) {
+        for (let layer = FIRST_LAYER; layer <= LAST_LAYER; layer++) {
             this.source.trigger('syncUpdate', {layer});
         }
     }
@@ -146,9 +264,6 @@ export class RenderingState implements SizeProvider {
         }
     }
 
-    /**
-     * Returns bounds for link primary label in paper coordinates.
-     */
     getLinkLabelBounds(link: Link): Rect | undefined {
         return this.linkLabelBounds.get(link);
     }
@@ -179,7 +294,7 @@ export class RenderingState implements SizeProvider {
     ensureLinkTypeIndex(linkTypeId: LinkTypeIri): number {
         let typeIndex = this.linkTypeIndex.get(linkTypeId);
         if (typeIndex === undefined) {
-            typeIndex = RenderingState.nextLinkTypeIndex++;
+            typeIndex = MutableRenderingState.nextLinkTypeIndex++;
             this.linkTypeIndex.set(linkTypeId, typeIndex);
         }
         return typeIndex;

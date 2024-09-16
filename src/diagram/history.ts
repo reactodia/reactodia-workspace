@@ -1,11 +1,22 @@
 import { EventSource, Events } from '../coreUtils/events';
 
 /**
+ * Represents an atomic change to the state tracked by the command history,
+ * which could be performed and reverted later if needed.
+ *
  * @category Core
+ * @see CommandHistory
  */
 export interface Command {
+    /**
+     * Command title to display in the UI.
+     */
     readonly title?: string;
-    /** @returns Inverse command */
+    /**
+     * Performs the command action.
+     *
+     * @returns Inverse command to reverse changes done by the action.
+     */
     invoke(): Command;
 }
 
@@ -17,17 +28,44 @@ export interface Command {
 export type CommandAction = () => Command;
 
 /**
+ * Utility functions to create commands of different kinds.
+ *
  * @category Core
  */
 export namespace Command {
+    /**
+     * Creates a basic reversible command.
+     *
+     * **Example**:
+     * ```ts
+     * function changeFoo(store: FooStore, foo: Foo): Command {
+     *     return Command.create('Set foo', () => {
+     *         const previous = store.foo;
+     *         store.setFoo(foo);
+     *         return changeFoo(store, previous);
+     *     });
+     * }
+     * ```
+     */
     export function create(title: string, action: CommandAction): Command {
         return new SimpleCommand(title, action);
     }
 
+    /**
+     * Creates a command which only does its action in one direction,
+     * i.e. performs an effect on the execution but skips it when being undone
+     * or vice-versa.
+     */
     export function effect(title: string, body: () => void): Command {
         return new EffectCommand(title, body);
     }
 
+    /**
+     * Creates a command composed of multiple other commands.
+     *
+     * When executed, sub-commands in be executed in the same order,
+     * and the inverse command will use a reversed order of the sub-command inverses.
+     */
     export function compound(title: string | undefined, commands: ReadonlyArray<Command>): Command {
         return new CompoundCommand(title, commands);
     }
@@ -76,31 +114,115 @@ class CompoundCommand {
     }
 }
 
+/**
+ * Event data for `CommandHistory` events.
+ *
+ * @see CommandHistory
+ */
 export interface CommandHistoryEvents {
-    historyChanged: { readonly hasChanges: boolean };
+    /**
+     * Triggered when command history changes after a command is executed,
+     * undone, redone or the history is cleared.
+     */
+    historyChanged: CommandHistoryChangedEvent;
 }
 
 /**
+ * Event data for command history changed event.
+ */
+export interface CommandHistoryChangedEvent {
+    /**
+     * `true` if there are any changes which could be reverted.
+     */
+    readonly hasChanges: boolean;
+}
+
+/**
+ * Provides an undo/redo mechanism to the diagram model and components.
+ *
+ * To make it possible to undo/redo the changes, all state modifications
+ * are organized in a form of atomic commands. These commands can be
+ * combined into a command batch to be presented to user as a single
+ * meaningful operation.
+ *
  * @category Core
  */
 export interface CommandHistory {
+    /**
+     * Events for the command history.
+     */
     readonly events: Events<CommandHistoryEvents>;
+    /**
+     * Current stack of operation which could be undone (reverted).
+     *
+     * Latest executed (or redone) commands are put at the end of the stack.
+     */
     readonly undoStack: ReadonlyArray<Command>;
+    /**
+     * Current stack of operation which could be redone (performed again after being undone).
+     *
+     * Latest undone commands are put at the end of the stack.
+     */
     readonly redoStack: ReadonlyArray<Command>;
+    /**
+     * Clears undo and redo stacks of commands.
+     */
     reset(): void;
+    /**
+     * Undoes (reverts) the latest executed command and puts it into redo stack.
+     *
+     * If undo stack is empty, does nothing.
+     */
     undo(): void;
+    /**
+     * Redoes (performs again) the latest undone command.
+     *
+     * If redo stack is empty, does nothing.
+     */
     redo(): void;
+    /**
+     * Executes the specified command and puts its inverse into undo stack.
+     */
     execute(command: Command): void;
+    /**
+     * Puts the inverse command directly into undo stack.
+     */
     registerToUndo(command: Command): void;
+    /**
+     * Starts a new command batch which will be active either stored or discarded.
+     *
+     * When a batch is active, all executed or registered to undo commands will be put
+     * into the batch instead of the undo stack, so it could be undo as whole later.
+     *
+     * Starting a new batch when there is an active command batch already
+     * causes the new batch to become nested, which allows to use operations creating
+     * command batches as part of a larger operation having its own top-level batch.
+     */
     startBatch(title?: string): CommandBatch;
 }
 
 /**
+ * Provide the means to store or discard command batch.
+ *
  * @category Core
+ * @see CommandHistory.startBatch()
  */
 export interface CommandBatch {
+    /**
+     * Command history which owns this batch.
+     */
     readonly history: CommandHistory;
+    /**
+     * Stores the batch, combining the nested command sequence
+     * into a single revertible command.
+     */
     store(): void;
+    /**
+     * Discards the batch, throwing away all nested commands, so they cannot be undone.
+     *
+     * This is useful when performing state changes on temporary items to
+     * avoid being able to revert it.
+     */
     discard(): void;
 }
 
@@ -110,6 +232,8 @@ interface InMemoryBatch extends CommandBatch {
 }
 
 /**
+ * Implements command history which stores all commands in memory.
+ *
  * @category Core
  */
 export class InMemoryHistory implements CommandHistory {

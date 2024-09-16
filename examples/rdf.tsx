@@ -35,6 +35,8 @@ function RdfExample() {
 
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
     const [validationApi] = React.useState(() => new ExampleValidationApi());
+    const [renameLinkHandler] = React.useState(() => new RenameSubclassOfHandler());
+
     const suggestProperties = React.useCallback<Reactodia.PropertySuggestionHandler>(params => {
         let maxLength = 0;
         for (const iri of params.properties) {
@@ -52,6 +54,7 @@ function RdfExample() {
             defaultLayout={defaultLayout}
             metadataApi={metadataApi}
             validationApi={validationApi}
+            renameLinkHandler={renameLinkHandler}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
@@ -64,10 +67,7 @@ function RdfExample() {
                     },
                     linkTemplateResolver: type => {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
-                            return {
-                                ...Reactodia.DefaultLinkTemplate,
-                                editableLabel: EDITABLE_LINK_LABEL,
-                            };
+                            return Reactodia.DefaultLinkTemplate;
                         }
                         return Reactodia.OntologyLinkTemplates(type); 
                     },
@@ -84,28 +84,11 @@ function RdfExample() {
     );
 }
 
-const CUSTOM_LINK_LABEL_IRI = 'urn:example:custom-link-label';
-const EDITABLE_LINK_LABEL: Reactodia.EditableLinkLabel = {
-    getLabel: link => {
-        const {linkState} = link;
-        if (
-            linkState &&
-            Object.prototype.hasOwnProperty.call(linkState, CUSTOM_LINK_LABEL_IRI)
-        ) {
-            const customLabel = linkState[CUSTOM_LINK_LABEL_IRI];
-            if (typeof customLabel === 'string') {
-                return customLabel;
-            }
-        }
-        return undefined;
-    },
-    setLabel: (link, label) => {
-        link.setLinkState({
-            ...link.linkState,
-            [CUSTOM_LINK_LABEL_IRI]: label.length === 0 ? undefined : label,
-        });
-    },
-};
+class RenameSubclassOfHandler extends Reactodia.RenameLinkToLinkStateHandler {
+    canRename(link: Reactodia.Link): boolean {
+        return link.typeId === 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
+    }
+}
 
 interface ToolbarActionOpenTurtleGraphProps {
     onOpen: (turtleText: string) => void;

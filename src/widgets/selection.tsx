@@ -72,7 +72,9 @@ export function Selection(props: SelectionProps) {
         let origin: PageOrigin | undefined;
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerDown', e => {
-            if (!e.target && !e.panning && e.sourceEvent.shiftKey) {
+            const requireShift = e.source.pointerMode !== 'selection';
+            const allowSelection = e.sourceEvent.shiftKey === requireShift;
+            if (!e.target && !e.panning && allowSelection) {
                 e.sourceEvent.preventDefault();
                 const {pageX, pageY} = e.sourceEvent;
                 origin = {pageX, pageY};

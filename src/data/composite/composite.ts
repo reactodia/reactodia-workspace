@@ -1,8 +1,10 @@
 import * as Rdf from '../rdf/rdfModel';
-import { DataProvider, DataProviderLookupParams } from '../provider';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
+import {
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../model';
 import {
     CompositeResponse,
@@ -17,16 +19,37 @@ import {
     mergeLookup,
 } from './mergeUtils';
 
+/**
+ * Options for `CompositeDataProvider`.
+ *
+ * @see CompositeDataProvider
+ */
 export interface CompositeDataProviderOptions {
+    /**
+     * Base data providers to combine result data from.
+     */
     providers: ReadonlyArray<DataProviderDefinition>;
 }
 
+/**
+ * Combined data provider definition.
+ *
+ * @see CompositeDataProvider
+ */
 export interface DataProviderDefinition {
+    /**
+     * Provider name to assist in debugging.
+     */
     readonly name: string;
+    /**
+     * Data provider to combine data from.
+     */
     readonly provider: DataProvider;
 }
 
 /**
+ * Provides graph data by combining results from multiple other data providers.
+ *
  * @category Data
  */
 export class CompositeDataProvider implements DataProvider {
@@ -108,11 +131,11 @@ export class CompositeDataProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean;
         signal?: AbortSignal;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         return this.requestWithMerge(p => p.connectedLinkStats(params), mergeConnectedLinkStats);
     }
 
-    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         return this.requestWithMerge(p => p.lookup(params), mergeLookup);
     }
 }

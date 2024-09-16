@@ -1,11 +1,12 @@
 import type { ElementTypeIri, LinkTypeIri } from '../data/model';
 
-import { RestoreGeometry } from './commands';
 import type { Element, Link } from './elements';
-import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
-import { DiagramModel } from './model';
+import { Rect, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition } from './geometry';
+import type { DiagramModel } from './model';
 
 /**
+ * Represents basic graph structure as an input for a graph layout algorithm.
+ *
  * @category Geometry
  */
 export interface LayoutGraph {
@@ -14,7 +15,10 @@ export interface LayoutGraph {
 }
 
 /**
+ * Represents basic graph node for a graph layout algorithm.
+ *
  * @category Geometry
+ * @see LayoutGraph
  */
 export interface LayoutNode {
     readonly types: readonly ElementTypeIri[];
@@ -22,7 +26,10 @@ export interface LayoutNode {
 }
 
 /**
+ * Represents basic graph edge for a graph layout algorithm.
+ *
  * @category Geometry
+ * @see LayoutGraph
  */
 export interface LayoutLink {
     readonly type: LinkTypeIri;
@@ -31,6 +38,9 @@ export interface LayoutLink {
 }
 
 /**
+ * Represents graph node positions and sizes as an input and an output state
+ * for a graph layout algorithm.
+ *
  * @category Geometry
  */
 export interface LayoutState {
@@ -38,11 +48,15 @@ export interface LayoutState {
 }
 
 /**
+ * Performs a graph layout algorithm.
+ *
  * @category Geometry
  */
 export type LayoutFunction = (graph: LayoutGraph, state: LayoutState) => Promise<LayoutState>;
 
 /**
+ * Provides additional diagram content metadata for a graph layout algorithm.
+ *
  * @category Geometry
  */
 export interface LayoutTypeProvider {
@@ -51,7 +65,11 @@ export interface LayoutTypeProvider {
 }
 
 /**
+ * Represents a result of performing a graph layout algorithm on a diagram.
+ *
  * @category Geometry
+ * @see calculateLayout()
+ * @see applyLayout()
  */
 export interface CalculatedLayout {
     positions: Map<string, Vector>;
@@ -60,15 +78,54 @@ export interface CalculatedLayout {
 }
 
 /**
+ * Computes a layout on the specified diagram elements using specified
+ * graph layout algorithm function (`layoutFunction`).
+ *
+ * **Example**:
+ * ```ts
+ * const layout = await calculateLayout({
+ *     layoutFunction: defaultLayout,
+ *     model,
+ *     sizeProvider: canvas.renderingState,
+ * });
+ * 
+ * await canvas.animateGraph(() => {
+ *     applyLayout(layout, model);
+ * });
+ * ```
+ *
  * @category Geometry
+ * @see applyLayout()
  */
 export async function calculateLayout(params: {
+    /**
+     * Graph layout algorithm function.
+     */
     layoutFunction: LayoutFunction;
+    /**
+     * Model of a diagram to calculate layout for.
+     */
     model: DiagramModel;
+    /**
+     * Size provider for the elements.
+     */
     sizeProvider: SizeProvider;
+    /**
+     * Additional metadata provider for the elements.
+     */
     typeProvider?: LayoutTypeProvider;
+    /**
+     * Set of elements which should not be moved by layout algorithm
+     * (if supported).
+     */
     fixedElements?: ReadonlySet<Element>;
+    /**
+     * Subset of elements from the diagram to layout.
+     */
     selectedElements?: ReadonlySet<Element>;
+    /**
+     * Cancellation signal.
+     */
     signal?: AbortSignal;
 }): Promise<CalculatedLayout> {    
     const {
@@ -128,7 +185,10 @@ export async function calculateLayout(params: {
 }
 
 /**
+ * Applies the computed graph layout to the diagram.
+ *
  * @category Geometry
+ * @see calculateLayout()
  */
 export function applyLayout(
     layout: CalculatedLayout,
@@ -173,6 +233,9 @@ class StaticSizeProvider implements SizeProvider {
 }
 
 /**
+ * Moves each point in `positions` by the same vector to ensure every point
+ * has positive `x` and `y` coordinates, then additionally moves each point by `offset`.
+ *
  * @category Geometry
  */
 export function translateToPositiveQuadrant(positions: Map<string, Vector>, offset: Vector): void {
@@ -192,6 +255,9 @@ export function translateToPositiveQuadrant(positions: Map<string, Vector>, offs
 }
 
 /**
+ * Make a function that maps successive integer indices into a positions
+ * on a uniformly sized grid with the specified cell size.
+ *
  * @category Geometry
  */
 export function uniformGrid(params: {
@@ -208,99 +274,4 @@ export function uniformGrid(params: {
             height: params.cellSize.y,
         };
     };
-}
-
-/**
- * @category Geometry
- */
-export function calculateAveragePosition(
-    elements: ReadonlyArray<Element>,
-    sizeProvider: SizeProvider
-): Vector {
-    let xSum = 0;
-    let ySum = 0;
-    for (const element of elements) {
-        const {x, y, width, height} = boundsOf(element, sizeProvider);
-        xSum += x + width / 2;
-        ySum += y + height / 2;
-    }
-    return {
-        x: xSum / elements.length,
-        y: ySum / elements.length,
-    };
-}
-
-/**
- * @category Geometry
- */
-export function placeElementsAround(params: {
-    elements: ReadonlyArray<Element>;
-    targetElement: Element;
-    model: DiagramModel;
-    sizeProvider: SizeProvider;
-    /** @default 300 */
-    preferredLinksLength?: number;
-    startAngle?: number;
-}): void {
-    const {
-        elements, model, sizeProvider, targetElement,
-        preferredLinksLength = 300,
-    } = params;
-    const capturedGeometry = RestoreGeometry.capture(model);
-
-    const targetElementBounds = boundsOf(targetElement, sizeProvider);
-    const targetPosition: Vector = {
-        x: targetElementBounds.x + targetElementBounds.width / 2,
-        y: targetElementBounds.y + targetElementBounds.height / 2,
-    };
-    let outgoingAngle = 0;
-    const targetLinks = model.getElementLinks(targetElement);
-    if (targetLinks.length > 0) {
-        const averageSourcePosition = calculateAveragePosition(
-            targetLinks.map(link => {
-                const linkSource = model.sourceOf(link)!;
-                return linkSource !== targetElement ? linkSource : model.targetOf(link)!;
-            }),
-            sizeProvider
-        );
-        const vectorDiff: Vector = {
-            x: targetPosition.x - averageSourcePosition.x,
-            y: targetPosition.y - averageSourcePosition.y,
-        };
-        if (vectorDiff.x !== 0 || vectorDiff.y !== 0) {
-            outgoingAngle = Math.atan2(vectorDiff.y, vectorDiff.x);
-        }
-    }
-
-    const step = Math.min(Math.PI / elements.length, Math.PI / 6);
-    const elementStack: Element[]  = [...elements];
-
-    const placeElementFromStack = (curAngle: number, element: Element) => {
-        if (element) {
-            const {width, height} = boundsOf(element, sizeProvider);
-            element.setPosition({
-                x: targetPosition.x + preferredLinksLength * Math.cos(curAngle) - width / 2,
-                y: targetPosition.y + preferredLinksLength * Math.sin(curAngle) - height / 2,
-            });
-        }
-    };
-
-    const isOddLength = elementStack.length % 2 === 0;
-    if (isOddLength) {
-        for (let angle = step / 2; elementStack.length > 0; angle += step) {
-            placeElementFromStack(outgoingAngle - angle, elementStack.pop()!);
-            placeElementFromStack(outgoingAngle + angle, elementStack.pop()!);
-        }
-    } else {
-        placeElementFromStack(outgoingAngle, elementStack.pop()!);
-        for (let angle = step; elementStack.length > 0; angle += step) {
-            placeElementFromStack(outgoingAngle - angle, elementStack.pop()!);
-            placeElementFromStack(outgoingAngle + angle, elementStack.pop()!);
-        }
-    }
-
-    const restoreGeometry = capturedGeometry.filterOutUnchanged();
-    if (restoreGeometry.hasChanges()) {
-        model.history.registerToUndo(restoreGeometry);
-    }
 }

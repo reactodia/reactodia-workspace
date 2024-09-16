@@ -6,24 +6,69 @@ import { GenerateID } from '../data/schema';
 import { Vector, isPolylineEqual } from './geometry';
 
 /**
+ * Represents a diagram content object that can be interacted with.
+ *
  * @category Core
  */
 export type Cell = Element | Link | LinkVertex;
 
+/**
+ * Event data for `Element` events.
+ */
 export interface ElementEvents {
+    /**
+     * Triggered on `position` property change.
+     */
     changePosition: PropertyChange<Element, Vector>;
+    /**
+     * Triggered on `isExpanded` property change.
+     */
     changeExpanded: PropertyChange<Element, boolean>;
+    /**
+     * Triggered on `elementState` property change.
+     */
     changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
-    requestedFocus: { source: Element };
-    requestedRedraw: {
+    /**
+     * Triggered on a request to set DOM focus on the element.
+     */
+    requestedFocus: {
+        /**
+         * Event source (element).
+         */
         source: Element;
-        /** @default "render" */
+    };
+    /**
+     * Triggered on a request to re-render element on a canvas.
+     */
+    requestedRedraw: {
+        /**
+         * Event source (element).
+         */
+        source: Element;
+        /**
+         * Element re-render level: which cached state should be invalidated
+         * when redrawing it on a canvas.
+         *
+         * @default "render"
+         */
         level?: ElementRedrawLevel;
     };
 }
 
+/**
+ * Specifies which cached state should be invalidated
+ * when redrawing an element on a canvas:
+ *   - `render` - force render only on a wrapping component,
+ *     skipping element template render if template type has not changed;
+ *   - `template` - full element render including its template component.
+ *
+ * @see Element.redraw()
+ */
 export type ElementRedrawLevel = 'render' | 'template';
 
+/**
+ * Properties for `Element`.
+ */
 export interface ElementProps {
     id?: string;
     position?: Vector;
@@ -32,7 +77,7 @@ export interface ElementProps {
 }
 
 /**
- * Abstract base class for diagram elements (nodes).
+ * Abstract base class for diagram elements (graph nodes).
  *
  * @category Core
  */
@@ -98,6 +143,16 @@ export abstract class Element {
 }
 
 /**
+ * Contains a template-specific state for an element.
+ *
+ * Each property value should be JSON-serializable to be able
+ * to export and import it as part of the serialized diagram layout.
+ */
+export interface ElementTemplateState {
+    [propertyIri: string]: unknown;
+}
+
+/**
  * Diagram element represented by an invisible single point.
  *
  * @category Core
@@ -108,22 +163,32 @@ export class VoidElement extends Element {
     }
 }
 
-export interface ElementTemplateState {
-    [propertyIri: string]: unknown;
-}
-
+/**
+ * Event data for `Link` events.
+ */
 export interface LinkEvents {
+    /**
+     * Triggered on `vertices` property change.
+     */
     changeVertices: PropertyChange<Link, ReadonlyArray<Vector>>;
+    /**
+     * Triggered on `linkState` property change.
+     */
     changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
+    /**
+     * Triggered on a request to re-render link on a canvas.
+     */
     requestedRedraw: {
+        /**
+         * Event source (link).
+         */
         source: Link;
-        /** @default "render" */
-        level?: ElementRedrawLevel;
     };
 }
 
-export type LinkRedrawLevel = 'render' | 'template';
-
+/**
+ * Properties for `Link`.
+ */
 export interface LinkProps {
     id?: string;
     sourceId: string;
@@ -133,6 +198,8 @@ export interface LinkProps {
 }
 
 /**
+ * Abstract base class for diagram links (graph edges)
+ *
  * @category Core
  */
 export abstract class Link {
@@ -187,22 +254,32 @@ export abstract class Link {
         this.source.trigger('changeLinkState', {source: this, previous});
     }
 
-    redraw(level?: LinkRedrawLevel) {
-        this.source.trigger('requestedRedraw', {source: this, level});
+    redraw() {
+        this.source.trigger('requestedRedraw', {source: this});
     }
 }
 
+/**
+ * Contains a template-specific state for a link.
+ *
+ * Each property value should be JSON-serializable to be able
+ * to export and import it as part of the serialized diagram layout.
+ */
 export interface LinkTemplateState {
     [propertyIri: string]: unknown;
 }
 
-export type LinkTypeVisibility = 'hidden' | 'withoutLabel' | 'visible';
-
-export function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `ramp-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
-}
+/**
+ * Visibility mode for all links of a type:
+ *   - `hidden` - completely skip rendering the links;
+ *   - `visible` - display the links normally;
+ *   - `withoutLabel` - display only the link path without any labels.
+ */
+export type LinkTypeVisibility = 'hidden' | 'visible' | 'withoutLabel';
 
 /**
+ * Represents a convenient way to refer to a particular vertex of a diagram link.
+ *
  * @category Core
  */
 export class LinkVertex {

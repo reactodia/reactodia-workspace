@@ -249,6 +249,15 @@ export interface DefaultLayoutOptions {
 }
 
 /**
+ * Default (fallback) diagram layout function.
+ *
+ * The algorithm used is force-directed layout from [cola.js](https://ialab.it.monash.edu/webcola/).
+ *
+ * This function is computationally expensive and should be used only as fallback
+ * when other ways to compute diagram layout is not available.
+ * The recommended way is to use web workers via `@reactodia/workspace/layout.worker`
+ * and `Reactodia.useWorker()`.
+ *
  * @category Geometry
  */
 export function blockingDefaultLayout(

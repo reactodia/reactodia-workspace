@@ -11,6 +11,7 @@ import { Element, VoidElement } from '../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../diagram/linkLayer';
 import { TransformedSvgCanvas } from '../diagram/paper';
+import type { MutableRenderingState } from '../diagram/renderingState';
 import { Spinner } from '../diagram/spinner';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
@@ -430,14 +431,15 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         }
 
         const transform = canvas.metrics.getTransform();
+        const renderingState = canvas.renderingState as MutableRenderingState;
         return (
             <TransformedSvgCanvas paperTransform={transform} style={{overflow: 'visible'}}>
-                <LinkMarkers renderingState={canvas.renderingState} />
+                <LinkMarkers renderingState={renderingState} />
                 {this.renderHighlight()}
                 {this.renderCanDropIndicator()}
                 {waitingForMetadata ? null : (
                     <LinkLayer model={model}
-                        renderingState={canvas.renderingState}
+                        renderingState={renderingState}
                         links={[this.temporaryLink]}
                     />
                 )}

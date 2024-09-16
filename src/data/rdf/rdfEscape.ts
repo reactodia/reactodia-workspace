@@ -1,6 +1,5 @@
 // Adopted from N3.js by Ruben Verborgh: https://github.com/rdfjs/N3.js
 // https://github.com/rdfjs/N3.js/blob/208aef00342a7fe2031352aef45cff9a9eb261b8/src/N3Writer.js
-
 export function escapeRdfValue(value: string): string {
     return ESCAPE_TEST.test(value) ? value.replace(ESCAPE_TARGETS, escapeReplacer) : value;
 }
@@ -18,7 +17,7 @@ const ESCAPED_CHARACTERS: { [str: string]: string | undefined } = {
 };
 
 /**
- * Replaces a character by its escaped version
+ * Replaces a character by its escaped version in string literals for the N3 format.
  */
 function escapeReplacer(character: string) {
     // Replace a single character by its escaped version

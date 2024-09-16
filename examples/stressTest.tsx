@@ -42,7 +42,7 @@ function StressTestExample() {
             batch.store();
             await Promise.all([
                 model.requestElementData(nodes),
-                model.requestLinksOfType(),
+                model.requestLinks(),
             ]);
             model.history.reset();
 

@@ -1,18 +1,35 @@
 import * as Rdf from '../rdf/rdfModel';
 import {
     ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
-    PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel, LinkCount,
-    LinkedElement,
+    PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
-import { DataProvider, DataProviderLookupParams } from '../provider';
+import {
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
 
+/**
+ * Options for `IndexedDbCachedProvider`.
+ *
+ * @see IndexedDbCachedProvider
+ */
 export interface IndexedDbCachedProviderOptions {
+    /**
+     * Base data provider to cache request results for.
+     */
     readonly baseProvider: DataProvider;
+    /**
+     * `IndexedDB` database name to store cached data.
+     */
     readonly dbName: string;
     /**
+     * Whether to cache results from `DataProvider.lookup()` with `text` requests.
+     *
      * @default false
      */
     readonly cacheTextLookups?: boolean;
+    /**
+     * Signal to close `IndexedDB` database and dispose the provider.
+     */
     readonly closeSignal: AbortSignal;
 }
 
@@ -41,7 +58,7 @@ interface KnownLinkTypesRecord {
 
 interface ConnectedLinkStatsRecord {
     readonly elementId: ElementIri;
-    readonly stats: LinkCount[];
+    readonly stats: DataProviderLinkCount[];
 }
 
 type LookupLinkDirectionKey = 'in' | 'out' | '';
@@ -61,10 +78,13 @@ interface LookupRecord {
     readonly direction: LookupLinkDirectionKey;
     readonly text: string;
     readonly limit: string;
-    readonly result: LinkedElement[];
+    readonly result: DataProviderLookupItem[];
 }
 
 /**
+ * Caches graph data returned from another data provider using
+ * [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) storage.
+ *
  * @category Data
  */
 export class IndexedDbCachedProvider implements DataProvider {
@@ -291,7 +311,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean;
         signal?: AbortSignal | undefined;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         const {elementId, inexactCount, signal} = params;
         const db = await this.openDb();
         const result = await fetchSingleWithDbCache(
@@ -310,7 +330,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.stats;
     }
 
-    async lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
+    async lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         if (!this.cacheTextLookups && params.text !== undefined) {
             return this.baseProvider.lookup(params);
         }

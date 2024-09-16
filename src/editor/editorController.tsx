@@ -19,42 +19,54 @@ import {
 import { ValidationState, changedElementsToValidate, validateElements } from './validation';
 
 /** @hidden */
-export interface EditorProps extends EditorOptions {
+export interface EditorProps {
     readonly model: DataDiagramModel;
-}
-
-export interface EditorOptions {
+    readonly metadataApi?: MetadataApi;
     readonly validationApi?: ValidationApi;
 }
 
+/**
+ * Event data for `EditorController` events.
+ *
+ * @see EditorController
+ */
 export interface EditorEvents {
-    changeMode: { source: EditorController };
+    /**
+     * Triggered on `inAuthoringMode` property change.
+     */
+    changeMode: { readonly source: EditorController };
+    /**
+     * Triggered on `authoringState` property change.
+     */
     changeAuthoringState: PropertyChange<EditorController, AuthoringState>;
+    /**
+     * Triggered on `validationState` property change.
+     */
     changeValidationState: PropertyChange<EditorController, ValidationState>;
+    /**
+     * Triggered on `temporaryState` property change.
+     */
     changeTemporaryState: PropertyChange<EditorController, TemporaryState>;
 }
 
 /**
- * Supports visual data authoring of the graph data (entities and relations).
- *
- * This controller:
- *   - stores authored changes to the graph (`authoringState`);
- *   - validates graph changes and stores the found issues (`validationState`);
- *   - exposes methods to create, change or delete entities and relations;
- *   - provides methods to remove graph elements and links with discarding
- *     relevant changes at the same time, or discarding changes directly.
+ * Stores, modifies and validates changes from the visual graph authoring
+ * (added, deleted or changed graph entities and/or relations).
  *
  * @category Core
  */
 export class EditorController {
     private readonly listener = new EventObserver();
     private readonly source = new EventSource<EditorEvents>();
+    /**
+     * Events for the editor controller.
+     */
     readonly events: Events<EditorEvents> = this.source;
 
     private readonly model: DataDiagramModel;
-    private readonly options: EditorOptions;
 
     private _metadataApi: MetadataApi | undefined;
+    private _validationApi: ValidationApi | undefined;
     private _authoringState = AuthoringState.empty;
     private _validationState = ValidationState.empty;
     private _temporaryState = TemporaryState.empty;
@@ -63,9 +75,10 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, ...options} = props;
+        const {model, metadataApi, validationApi} = props;
         this.model = model;
-        this.options = options;
+        this._metadataApi = metadataApi;
+        this._validationApi = validationApi;
 
         this.listener.listen(this.events, 'changeValidationState', e => {
             for (const element of this.model.elements) {
@@ -80,20 +93,7 @@ export class EditorController {
             }
         });
         this.listener.listen(this.events, 'changeAuthoringState', e => {
-            if (this.options.validationApi) {
-                const changedElements = changedElementsToValidate(
-                    e.previous,
-                    this.authoringState,
-                    this.model
-                );
-                validateElements(
-                    changedElements,
-                    this.options.validationApi,
-                    this.model,
-                    this,
-                    this.cancellation.signal
-                );
-            }
+            this.validateChangedFrom(e.previous);
         });
 
         document.addEventListener('keyup', this.onKeyUp);
@@ -103,17 +103,32 @@ export class EditorController {
     }
 
     /** @hidden */
-    dispose() {
+    dispose(): void {
         this.listener.stopListening();
         this.cancellation.abort();
     }
 
+    /**
+     * Returns `true` if the diagram editor is in the graph authoring mode
+     * (i.e. has `metadataApi` set); otherwise `false`.
+     */
     get inAuthoringMode(): boolean {
         return Boolean(this._metadataApi);
     }
 
-    get metadataApi(): MetadataApi | undefined { return this._metadataApi; }
-    setMetadataApi(value: MetadataApi | undefined) {
+    /**
+     * Current strategy for the graph authoring mode.
+     */
+    get metadataApi(): MetadataApi | undefined {
+        return this._metadataApi;
+    }
+    /**
+     * Sets the strategy for the graph authoring mode.
+     *
+     * If set to a non-`undefined` value, the diagram editor switches to
+     * the graph authoring mode.
+     */
+    setMetadataApi(value: MetadataApi | undefined): void {
         const previous = this._metadataApi;
         if (value === previous) { return; }
         this._metadataApi = value;
@@ -123,8 +138,41 @@ export class EditorController {
         }
     }
 
-    get authoringState() { return this._authoringState; }
-    setAuthoringState(value: AuthoringState) {
+    /**
+     * Current strategy to validate data changes from the graph authoring.
+     */
+    get validationApi(): ValidationApi | undefined {
+        return this._validationApi;
+    }
+    /**
+     * Sets the strategy to validate data changes from the graph authoring.
+     *
+     * When changed, causes a re-validation of all data changes in the graph.
+     */
+    setValidationApi(value: ValidationApi | undefined): void {
+        const previous = this._validationApi;
+        if (value === previous) {
+            return;
+        }
+        this._validationApi = value;
+        this.setValidationState(ValidationState.empty);
+        if (this._validationApi) {
+            this.validateChangedFrom(AuthoringState.empty);
+        }
+    }
+
+    /**
+     * Graph authoring state snapshot.
+     */
+    get authoringState(): AuthoringState {
+        return this._authoringState;
+    }
+    /**
+     * Sets graph authoring state.
+     *
+     * The operation puts a command to the command history.
+     */
+    setAuthoringState(value: AuthoringState): void {
         const previous = this._authoringState;
         if (previous === value) { return; }
         this.model.history.execute(this.updateAuthoringState(value));
@@ -139,20 +187,54 @@ export class EditorController {
         });
     }
 
-    get validationState() { return this._validationState; }
-    setValidationState(value: ValidationState) {
+    /**
+     * Validation state snapshot for the data changes from the graph authoring.
+     */
+    get validationState(): ValidationState {
+        return this._validationState;
+    }
+    /**
+     * Sets validation state for the data changes from the graph authoring.
+     */
+    setValidationState(value: ValidationState): void {
         const previous = this._validationState;
         if (value === previous) { return; }
         this._validationState = value;
         this.source.trigger('changeValidationState', {source: this, previous});
     }
 
-    get temporaryState() { return this._temporaryState; }
-    setTemporaryState(value: TemporaryState) {
+    /**
+     * Temporary (transient) state for the graph authoring.
+     */
+    get temporaryState(): TemporaryState {
+        return this._temporaryState;
+    }
+    /**
+     * Sets temporary (transient) state for the graph authoring.
+     */
+    setTemporaryState(value: TemporaryState): void {
         const previous = this._temporaryState;
         if (value === previous) { return; }
         this._temporaryState = value;
         this.source.trigger('changeTemporaryState', {source: this, previous});
+    }
+
+    private validateChangedFrom(previous: AuthoringState): void {
+        if (!this.validationApi) {
+            return;
+        }
+        const changedElements = changedElementsToValidate(
+            previous,
+            this.authoringState,
+            this.model
+        );
+        validateElements(
+            changedElements,
+            this.validationApi,
+            this.model,
+            this,
+            this.cancellation.signal
+        );
     }
 
     private onKeyUp = (e: KeyboardEvent) => {
@@ -165,6 +247,12 @@ export class EditorController {
         }
     };
 
+    /**
+     * Removes all selected diagram elements from the diagram
+     * and discards any associated graph authoring state.
+     *
+     * The operation puts a command to the command history.
+     */
     removeSelectedElements() {
         const itemsToRemove = this.model.selection;
         if (itemsToRemove.length > 0) {
@@ -173,6 +261,15 @@ export class EditorController {
         }
     }
 
+    /**
+     * Removes the specified diagram cells from the diagram
+     * and discards any associated graph authoring state.
+     *
+     * The links are only removed when its a new relation
+     * added by the graph authoring.
+     *
+     * The operation puts a command to the command history.
+     */
     removeItems(items: ReadonlyArray<Element | Link>) {
         const batch = this.model.history.startBatch();
         const entitiesToDiscard = new Set<ElementIri>();
@@ -209,6 +306,11 @@ export class EditorController {
         batch.store();
     }
 
+    /**
+     * Creates a new entity with graph authoring.
+     *
+     * The operation puts a command to the command history.
+     */
     createEntity(data: ElementModel, options: { temporary?: boolean } = {}): EntityElement {
         const batch = this.model.history.startBatch('Create new entity');
 
@@ -229,6 +331,14 @@ export class EditorController {
         return element;
     }
 
+    /**
+     * Changes an existing entity with graph authoring.
+     *
+     * If no entities with target IRI found on the diagram,
+     * no changes will be applied to the graph authoring state.
+     *
+     * The operation puts a command to the command history.
+     */
     changeEntity(targetIri: ElementIri, newData: ElementModel): void {
         const elements = findEntities(this.model, targetIri);
         const oldData = findAnyEntityData(elements, targetIri);
@@ -247,6 +357,14 @@ export class EditorController {
         batch.store();
     }
 
+    /**
+     * Deletes an existing entity with graph authoring.
+     *
+     * If no entities with target IRI found on the diagram,
+     * no changes will be applied to the graph authoring state.
+     *
+     * The operation puts a command to the command history.
+     */
     deleteEntity(elementIri: ElementIri): void {
         const state = this.authoringState;
         const elements = findEntities(this.model, elementIri);
@@ -273,10 +391,18 @@ export class EditorController {
         batch.store();
     }
 
+    /**
+     * Creates a new relation with graph authoring.
+     *
+     * An error will be thrown if the relation with same identity
+     * already exists on the diagram.
+     *
+     * The operation puts a command to the command history.
+     */
     createRelation(base: RelationLink, options: { temporary?: boolean } = {}): RelationLink {
         const existingLink = this.model.findLink(base.typeId, base.sourceId, base.targetId);
         if (existingLink) {
-            throw Error('The link already exists');
+            throw Error('The relation with same (source IRI, target IRI, type) already exists');
         }
 
         const batch = this.model.history.startBatch('Create new link');
@@ -305,6 +431,11 @@ export class EditorController {
         return base;
     }
 
+    /**
+     * Changes an existing relation with graph authoring.
+     *
+     * The operation puts a command to the command history.
+     */
     changeRelation(oldData: LinkModel, newData: LinkModel) {
         const batch = this.model.history.startBatch('Change link');
         if (equalLinks(oldData, newData)) {
@@ -329,6 +460,12 @@ export class EditorController {
         batch.store();
     }
 
+    /**
+     * Changes an existing relation with graph authoring
+     * by moving its source to another entity element.
+     *
+     * The operation puts a command to the command history.
+     */
     moveRelationSource(params: {
         link: RelationLink;
         newSource: EntityElement;
@@ -342,6 +479,12 @@ export class EditorController {
         return newLink;
     }
 
+    /**
+     * Changes an existing relation with graph authoring
+     * by moving its target to another entity element.
+     *
+     * The operation puts a command to the command history.
+     */
     moveRelationTarget(params: {
         link: RelationLink;
         newTarget: EntityElement;
@@ -355,6 +498,11 @@ export class EditorController {
         return newLink;
     }
 
+    /**
+     * Deletes an existing relation with graph authoring.
+     *
+     * The operation puts a command to the command history.
+     */
     deleteRelation(model: LinkModel): void {
         const state = this.authoringState;
         if (AuthoringState.isDeletedLink(state, model)) {
@@ -372,6 +520,11 @@ export class EditorController {
         batch.store();
     }
 
+    /**
+     * Removes all diagram cells from the temporary state for the graph authoring.
+     *
+     * @see temporaryState
+     */
     removeAllTemporaryCells(): void {
         const {temporaryState} = this;
 
@@ -396,6 +549,12 @@ export class EditorController {
         }
     }
 
+    /**
+     * Removes the specified diagram cells from the temporary state
+     * for the graph authoring.
+     *
+     * @see temporaryState
+     */
     removeTemporaryCells(cells: ReadonlyArray<Element | Link>) {
         const {temporaryState} = this;
         let nextTemporaryState = temporaryState;
@@ -419,6 +578,12 @@ export class EditorController {
         this.setTemporaryState(nextTemporaryState);
     }
 
+    /**
+     * Discards the specified graph authoring event from the state
+     * while reverting associated changes to the diagram:
+     *   - new entities and links are removed;
+     *   - changed entities and links have their data reverted back.
+     */
     discardChange(event: AuthoringEvent): void {
         const newState = AuthoringState.discard(this._authoringState, event);
         if (newState === this._authoringState) { return; }

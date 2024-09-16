@@ -16,15 +16,30 @@ import {
 import { Command } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
+/**
+ * Event data for `EntityElement` events.
+ *
+ * @see EntityElement
+ */
 export interface EntityElementEvents extends ElementEvents {
-    changeData: PropertyChange<Element, ElementModel>;
+    /**
+     * Triggered on `data` property change.
+     */
+    changeData: PropertyChange<EntityElement, ElementModel>;
 }
 
+/**
+ * Properties for `EntityElement`.
+ *
+ * @see EntityElement
+ */
 export interface EntityElementProps extends ElementProps {
     data: ElementModel;
 }
 
 /**
+ * Diagram element representing an graph entity referenced by an IRI.
+ *
  * @category Core
  */
 export class EntityElement extends Element {
@@ -37,6 +52,12 @@ export class EntityElement extends Element {
         this._data = props.data;
     }
 
+    /**
+     * Creates an empty (placeholder) data for the specified entity IRI.
+     *
+     * This data can be used to display an entity in the UI
+     * until the actual data is loaded from a data provider.
+     */
     static placeholderData(iri: ElementIri): ElementModel {
         return {
             id: iri,
@@ -63,6 +84,8 @@ export class EntityElement extends Element {
 }
 
 /**
+ * Command to set entity element data.
+ *
  * @category Commands
  */
 export function setEntityElementData(
@@ -76,15 +99,30 @@ export function setEntityElementData(
     });
 }
 
+/**
+ * Event data for `EntityGroup` events.
+ * 
+ * @see EntityGroup
+ */
 export interface EntityGroupEvents extends ElementEvents {
+    /**
+     * Triggered on `items` property change.
+     */
     changeItems: PropertyChange<EntityGroup, ReadonlyArray<EntityGroupItem>>;
 }
 
+/**
+ * Properties for `EntityGroup`.
+ *
+ * @see EntityGroup
+ */
 export interface EntityGroupProps extends ElementProps {
     items?: ReadonlyArray<EntityGroupItem>;
 }
 
 /**
+ * Diagram element representing a group of multiple graph entities.
+ *
  * @category Core
  */
 export class EntityGroup extends Element {
@@ -128,12 +166,19 @@ export class EntityGroup extends Element {
     }
 }
 
+/**
+ * Represents a single entity contained in the entity group.
+ *
+ * @see EntityGroup.items
+ */
 export interface EntityGroupItem {
     readonly data: ElementModel;
     readonly elementState?: ElementTemplateState | undefined;
 }
 
 /**
+ * Command to set entity group items.
+ *
  * @category Commands
  */
 export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<EntityGroupItem>): Command {
@@ -145,6 +190,8 @@ export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<Ent
 }
 
 /**
+ * Iterates over data for all entities of the target element.
+ *
  * @category Core
  */
 export function* iterateEntitiesOf(element: Element): Iterable<ElementModel> {
@@ -157,15 +204,31 @@ export function* iterateEntitiesOf(element: Element): Iterable<ElementModel> {
     }
 }
 
+/**
+ * Event data for `RelationLink` events.
+ *
+ * @see RelationLink
+ */
 export interface RelationLinkEvents extends LinkEvents {
-    changeData: PropertyChange<Link, LinkModel>;
+    /**
+     * Triggered on `data` property change.
+     */
+    changeData: PropertyChange<RelationLink, LinkModel>;
 }
 
+/**
+ * Properties for `RelationLink`.
+ *
+ * @see RelationLink
+ */
 export interface RelationLinkProps extends LinkProps {
     data: LinkModel;
 }
 
 /**
+ * Diagram link representing a graph relation, uniquely identified by
+ * (source entity IRI, target entity IRI, link type IRI) tuple.
+ *
  * @category Core
  */
 export class RelationLink extends Link {
@@ -192,7 +255,7 @@ export class RelationLink extends Link {
         if (previous === value) { return; }
         this._data = value;
         this.relationSource.trigger('changeData', {source: this, previous});
-        this.relationSource.trigger('requestedRedraw', {source: this, level: 'template'});
+        this.relationSource.trigger('requestedRedraw', {source: this});
     }
 
     withDirection(data: LinkModel): RelationLink {
@@ -211,6 +274,8 @@ export class RelationLink extends Link {
 }
 
 /**
+ * Command to set relation relation link data.
+ *
  * @category Commands
  */
 export function setRelationLinkData(
@@ -224,16 +289,31 @@ export function setRelationLinkData(
     });
 }
 
+/**
+ * Event data for `RelationGroup` events.
+ *
+ * @see RelationGroup
+ */
 export interface RelationGroupEvents extends LinkEvents {
+    /**
+     * Triggered on `items` property change.
+     */
     changeItems: PropertyChange<RelationGroup, ReadonlyArray<RelationGroupItem>>;
 }
 
+/**
+ * Properties for `RelationGroup`.
+ *
+ * @see RelationGroup
+ */
 export interface RelationGroupProps extends LinkProps {
     typeId: LinkTypeIri;
     items: ReadonlyArray<RelationGroupItem>;
 }
 
 /**
+ * Diagram link representing a group of multiple graph relations.
+ *
  * @category Core
  */
 export class RelationGroup extends Link {
@@ -276,7 +356,7 @@ export class RelationGroup extends Link {
         this._items = value;
         this.updateItemKeys();
         this.relationSource.trigger('changeItems', {source: this, previous});
-        this.relationSource.trigger('requestedRedraw', {source: this, level: 'template'});
+        this.relationSource.trigger('requestedRedraw', {source: this});
     }
 
     get itemKeys(): ReadonlyHashSet<LinkKey> {
@@ -303,12 +383,19 @@ export class RelationGroup extends Link {
     }
 }
 
+/**
+ * Represents a single relation contained in the relation group.
+ *
+ * @see RelationGroup.items
+ */
 export interface RelationGroupItem {
     readonly data: LinkModel;
     readonly linkState?: LinkTemplateState | undefined;
 }
 
 /**
+ * Command to set relation group items.
+ *
  * @category Commands
  */
 export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray<RelationGroupItem>): Command {
@@ -320,6 +407,8 @@ export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray
 }
 
 /**
+ * Iterates over data for all relations of the target link.
+ *
  * @category Core
  */
 export function* iterateRelationsOf(link: Link): Iterable<LinkModel> {
@@ -332,11 +421,21 @@ export function* iterateRelationsOf(link: Link): Iterable<LinkModel> {
     }
 }
 
+/**
+ * Event data for `ElementType` events.
+ *
+ * @see ElementType
+ */
 export interface ElementTypeEvents {
+    /**
+     * Triggered on `data` property change.
+     */
     changeData: PropertyChange<ElementType, ElementTypeModel | undefined>;
 }
 
 /**
+ * Stores data of an entity type in the graph.
+ *
  * @category Core
  */
 export class ElementType {
@@ -371,11 +470,21 @@ export class ElementType {
     }
 }
 
+/**
+ * Event data for `PropertyType` events.
+ *
+ * @see PropertyType
+ */
 export interface PropertyTypeEvents {
+    /**
+     * Triggered on `data` property change.
+     */
     changeData: PropertyChange<PropertyType, PropertyTypeModel | undefined>;
 }
 
 /**
+ * Stores data of a property type in the graph.
+ *
  * @category Core
  */
 export class PropertyType {
@@ -410,11 +519,21 @@ export class PropertyType {
     }
 }
 
+/**
+ * Event data for `LinkType` events.
+ *
+ * @see LinkType
+ */
 export interface LinkTypeEvents {
+    /**
+     * Triggered on `data` property change.
+     */
     changeData: PropertyChange<LinkType, LinkTypeModel | undefined>;
 }
 
 /**
+ * Stores data of a link type in the graph.
+ *
  * @category Core
  */
 export class LinkType {
@@ -450,6 +569,12 @@ export class LinkType {
 }
 
 /**
+ * Command to replace data for all entities with target IRI on the diagram.
+ *
+ * If IRI in the new `data` is different from the `target`, the relations
+ * connected to the entities will have their data changed as well to refer
+ * to the same entities by the new IRI.
+ *
  * @category Commands
  */
 export function changeEntityData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
@@ -529,6 +654,11 @@ function mapRelationEndpoint(relation: LinkModel, oldIri: ElementIri, newIri: El
 }
 
 /**
+ * Command to replace data for all relations with same target identity.
+ *
+ * The relation identity should be the same for both `oldData` and `newData`
+ * otherwise an error wil be thrown.
+ *
  * @category Commands
  */
 export function changeRelationData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {

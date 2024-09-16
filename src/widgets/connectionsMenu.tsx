@@ -8,10 +8,9 @@ import { generate128BitID } from '../data/utils';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
-import { changeLinkTypeVisibility } from '../diagram/commands';
+import { changeLinkTypeVisibility, placeElementsAroundTarget } from '../diagram/commands';
 import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
-import { placeElementsAround } from '../diagram/layout';
 import { DiagramModel } from '../diagram/model';
 
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
@@ -558,12 +557,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }
 
         canvas.renderingState.syncUpdate();
-        placeElementsAround({
+        batch.history.execute(placeElementsAroundTarget({
+            target: placeTarget,
             elements: placedElements,
-            model,
+            graph: model,
             sizeProvider: canvas.renderingState,
-            targetElement: placeTarget,
-        });
+        }));
 
         if (linkTypeId && model.getLinkVisibility(linkTypeId) === 'hidden') {
             batch.history.execute(changeLinkTypeVisibility(model, linkTypeId, 'visible'));
