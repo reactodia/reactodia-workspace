@@ -58,12 +58,11 @@ export function useAuthoredEntity(
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
 
-    const authoringState = useObservedProperty(
+    const authoringEvent = useObservedProperty(
         editor.events,
         'changeAuthoringState',
-        () => editor.authoringState
+        () => data ? editor.authoringState.elements.get(data.id) : undefined
     );
-    const authoringEvent = data ? authoringState.elements.get(data.id) : undefined;
 
     React.useEffect(() => {
         const cancellation = new AbortController();
