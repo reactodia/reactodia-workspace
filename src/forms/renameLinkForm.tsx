@@ -22,19 +22,18 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
     const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
     const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
 
-    const [customLabel, setCustomLabel] = React.useState('');
+    const defaultLabel = React.useMemo(
+        () => model.locale.formatLabel(linkTypeLabel, link.typeId),
+        [link, linkTypeLabel]
+    );
 
-    const defaultLabel = React.useMemo(() => {
-        const label = renameLinkHandler?.getLabel(link)
-            ?? model.locale.formatLabel(linkTypeLabel, link.typeId);
-        return label;
-    }, [link, linkTypeLabel]);
-
-    const effectiveLabel = customLabel ? customLabel : defaultLabel;
+    const [customLabel, setCustomLabel] = React.useState(
+        renameLinkHandler?.getLabel(link) ?? defaultLabel
+    );
 
     const onApply = () => {
         if (renameLinkHandler) {
-            renameLinkHandler.setLabel(link, effectiveLabel);
+            renameLinkHandler.setLabel(link, customLabel);
         }
         onFinish();
     };
@@ -45,8 +44,10 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                 <div className={`${CLASS_NAME}__form-row`}>
                     <label>Link Label</label>
                     <input className='reactodia-form-control'
-                        value={effectiveLabel}
-                        onChange={e => setCustomLabel((e.target as HTMLInputElement).value)} />
+                        placeholder={defaultLabel}
+                        value={customLabel}
+                        onChange={e => setCustomLabel((e.target as HTMLInputElement).value)}
+                    />
                 </div>
             </div>
             <div className={`${CLASS_NAME}__controls`}>
