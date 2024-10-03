@@ -1,15 +1,22 @@
 import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge, LinkedElement,
+    ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, SubtypeEdge,
     hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import { DataProvider, DataProviderLookupParams } from '../provider';
+import {
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
 
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 
+/**
+ * Options for `RdfDataProvider`.
+ *
+ * @see RdfDataProvider
+ */
 export interface RdfDataProviderOptions {
     /**
      * Whether to support blank node terms when accessing the data.
@@ -75,6 +82,8 @@ const RDFS_SUB_CLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
 const SCHEMA_THUMBNAIL_URL = 'https://schema.org/thumbnailUrl';
 
 /**
+ * Provides graph data from in-memory RDF quad dataset.
+ *
  * @category Data
  */
 export class RdfDataProvider implements DataProvider {
@@ -353,7 +362,7 @@ export class RdfDataProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean;
         signal?: AbortSignal;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         const {elementId} = params;
         const elementIri = this.decodeTerm(elementId);
         
@@ -373,7 +382,7 @@ export class RdfDataProvider implements DataProvider {
             }
         }
 
-        const counts: LinkCount[] = [];
+        const counts: DataProviderLinkCount[] = [];
         for (const [linkTypeId, outCount] of outCounts) {
             counts.push({
                 id: linkTypeId,
@@ -394,7 +403,7 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(counts);
     }
 
-    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         interface ResultItem {
             readonly term: Rdf.NamedNode | Rdf.BlankNode;
             outLinks?: Set<LinkTypeIri>;
@@ -474,7 +483,7 @@ export class RdfDataProvider implements DataProvider {
             requiredTextFilter = undefined;
         }
 
-        const linkedElements: LinkedElement[] = [];
+        const linkedElements: DataProviderLookupItem[] = [];
         const limit = typeof params.limit === 'number' ? params.limit : Number.POSITIVE_INFINITY;
         for (const item of items.values()) {
             if (linkedElements.length >= limit) {

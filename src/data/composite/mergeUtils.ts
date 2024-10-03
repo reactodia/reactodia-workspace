@@ -2,10 +2,11 @@ import { HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount,
-    PropertyTypeIri, PropertyTypeModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
+    PropertyTypeIri, PropertyTypeModel, ElementIri, ElementTypeIri, LinkTypeIri,
     hashLink, equalLinks, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
+import type { DataProviderLinkCount, DataProviderLookupItem } from '../provider';
 import type { DataProviderDefinition } from './composite';
 
 const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
@@ -182,8 +183,10 @@ export function mergeLinksInfo(responses: CompositeResponse<LinkModel[]>[]): Lin
     return result;
 }
 
-export function mergeConnectedLinkStats(responses: CompositeResponse<LinkCount[]>[]): LinkCount[] {
-    const result = new Map<LinkTypeIri, LinkCount>();
+export function mergeConnectedLinkStats(
+    responses: CompositeResponse<DataProviderLinkCount[]>[]
+): DataProviderLinkCount[] {
+    const result = new Map<LinkTypeIri, DataProviderLinkCount>();
     for (const [response] of responses) {
         for (const model of response) {
             const existing = result.get(model.id);
@@ -193,7 +196,7 @@ export function mergeConnectedLinkStats(responses: CompositeResponse<LinkCount[]
     return Array.from(result.values());
 }
 
-function mergeLinkCount(a: LinkCount, b: LinkCount): LinkCount {
+function mergeLinkCount(a: DataProviderLinkCount, b: DataProviderLinkCount): DataProviderLinkCount {
     return {
         ...a,
         ...b,
@@ -203,14 +206,16 @@ function mergeLinkCount(a: LinkCount, b: LinkCount): LinkCount {
     };
 }
 
-interface MutableLinkedElement {
+interface MutableLookupItem {
     element: ElementModel;
     inLinks: Set<LinkTypeIri>;
     outLinks: Set<LinkTypeIri>;
 }
 
-export function mergeLookup(responses: CompositeResponse<LinkedElement[]>[]): LinkedElement[] {
-    const linkedElements = new Map<ElementIri, MutableLinkedElement>();
+export function mergeLookup(
+    responses: CompositeResponse<DataProviderLookupItem[]>[]
+): DataProviderLookupItem[] {
+    const linkedElements = new Map<ElementIri, MutableLookupItem>();
     for (const [response, provider] of responses) {
         for (const {element: baseElement, inLinks, outLinks} of response) {
             const element: ElementModel = {

@@ -11,7 +11,9 @@ import { ValidationApi } from '../data/validationApi';
 import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
-import { TypeStyleResolver, LabelLanguageSelector } from '../diagram/customization';
+import {
+    TypeStyleResolver, LabelLanguageSelector, RenameLinkHandler,
+} from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
@@ -31,10 +33,13 @@ import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
 
 import {
-    WorkspaceContext, WorkspaceEventHandler, WorkspaceEventKey, ProcessedTypeStyle,
+    WorkspaceContext, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
 import { EntityElement } from '../workspace';
 
+/**
+ * Props for `Workspace` component.
+ */
 export interface WorkspaceProps {
     /**
      * Overrides default command history implementation.
@@ -51,19 +56,23 @@ export interface WorkspaceProps {
      */
     typeStyleResolver?: TypeStyleResolver;
     /**
-     * Provides a strategy to visually edit graph data.
+     * Provides an strategy to visually edit graph data.
      * 
-     * If provided, switches editor into "authoring mode".
+     * If provided, switches editor into the graph authoring mode.
      */
     metadataApi?: MetadataApi;
     /**
-     * Provides a strategy to validate changes to the graph data in "authoring mode".
+     * Provides a strategy to validate changes to the data in the graph authoring mode.
      */
     validationApi?: ValidationApi;
     /**
-     * Overrides default property editor for elements and links in "authoring mode".
+     * Overrides default property editor for elements and links in the graph authoring mode.
      */
     propertyEditor?: PropertyEditor;
+    /**
+     * Provides a strategy to rename diagram links (change labels).
+     */
+    renameLinkHandler?: RenameLinkHandler;
     /**
      * Overrides how a single label gets selected from multiple of them based on target language.
      */
@@ -78,10 +87,17 @@ export interface WorkspaceProps {
      * If not provided, uses synchronous fallback to `layoutForcePadded()`.
      */
     defaultLayout?: LayoutFunction;
-
+    /**
+     * Handler for a request to navigate to a specific IRI.
+     *
+     * @deprecated Use element templates to change how IRIs should be opened.
+     */
     onIriClick?: (event: IriClickEvent) => void;
-    onWorkspaceEvent?: WorkspaceEventHandler;
-
+    /**
+     * Handler for a well-known workspace event.
+     */
+    onWorkspaceEvent?: (key: WorkspaceEventKey) => void;
+    /** @hidden */
     children: React.ReactNode;
 }
 
@@ -113,6 +129,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             metadataApi,
             validationApi,
             propertyEditor,
+            renameLinkHandler,
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
@@ -131,13 +148,14 @@ export class Workspace extends React.Component<WorkspaceProps> {
             defaultElementTemplate: StandardTemplate,
             defaultLinkTemplate: DefaultLinkTemplate,
             defaultLayout: defaultLayout ?? blockingDefaultLayout,
+            renameLinkHandler,
         });
 
         const editor = new EditorController({
             model,
+            metadataApi,
             validationApi,
         });
-        editor.setMetadataApi(metadataApi);
 
         const overlay = new OverlayController({
             model,
@@ -223,8 +241,11 @@ export class Workspace extends React.Component<WorkspaceProps> {
     componentDidUpdate(prevProps: WorkspaceProps) {
         const {editor} = this.workspaceContext;
 
-        if (this.props.metadataApi !== editor.metadataApi) {
+        if (this.props.metadataApi !== prevProps.metadataApi) {
             editor.setMetadataApi(this.props.metadataApi);
+        }
+        if (this.props.validationApi !== prevProps.validationApi) {
+            editor.setValidationApi(this.props.validationApi);
         }
     }
 
@@ -390,7 +411,7 @@ export interface LoadedWorkspace {
 }
 
 /**
- * Hook to perform asynchronous initialization of the workspace.
+ * React hook to perform asynchronous initialization of the workspace.
  *
  * This function could be used to setup data provider, fetch initial data
  * or import existing diagram layout.

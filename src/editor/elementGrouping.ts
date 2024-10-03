@@ -1,9 +1,8 @@
 import { ElementIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
-import { RestoreGeometry } from '../diagram/commands';
+import { RestoreGeometry, placeElementsAroundTarget } from '../diagram/commands';
 import { Rect, Vector, boundsOf, getContentFittingBox } from '../diagram/geometry';
-import { placeElementsAround } from '../diagram/layout';
 
 import { EntityElement, EntityGroup } from './dataElements';
 
@@ -17,7 +16,7 @@ export async function groupEntitiesAnimated(
     const {model} = workspace;
     const batch = model.history.startBatch('Group entities');
 
-    const capturedGeometry = RestoreGeometry.captureElementsAndLinks(elements, []);
+    const capturedGeometry = RestoreGeometry.capturePartial(elements, []);
 
     const fittingBox = getContentFittingBox(elements, [], canvas.renderingState);
     const groupCenter = Rect.center(fittingBox);
@@ -91,12 +90,12 @@ export async function ungroupSomeEntitiesAnimated(
     canvas.renderingState.syncUpdate();
 
     await canvas.animateGraph(() => {
-        placeElementsAround({
+        batch.history.execute(placeElementsAroundTarget({
+            target: group,
             elements: ungrouped.filter(element => entities.has(element.data.id)),
-            model,
+            graph: model,
             sizeProvider: canvas.renderingState,
-            targetElement: group,
-        });
+        }));
     });
 
     batch.store();

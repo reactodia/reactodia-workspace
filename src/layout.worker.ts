@@ -9,7 +9,16 @@ import {
     colaRemoveOverlaps,
 } from './diagram/layoutShared';
 
+/**
+ * Provides a web worker with basic diagram layout algorithms.
+ */
 class DefaultLayouts {
+    /**
+     * Default layout algorithm, the same as `blockingDefaultLayout()`
+     * but non-blocking due to being run in a worker.
+     *
+     * @see blockingDefaultLayout()
+     */
     async defaultLayout(
         graph: LayoutGraph,
         state: LayoutState,
@@ -18,6 +27,9 @@ class DefaultLayouts {
         return blockingDefaultLayout(graph, state, options);
     }
 
+    /**
+     * Force-directed layout algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
+     */
     async forceLayout(
         graph: LayoutGraph,
         state: LayoutState,
@@ -26,6 +38,9 @@ class DefaultLayouts {
         return colaForceLayout(graph, state, options);
     }
 
+    /**
+     * Flow layout algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
+     */
     async flowLayout(
         graph: LayoutGraph,
         state: LayoutState,
@@ -34,6 +49,9 @@ class DefaultLayouts {
         return colaFlowLayout(graph, state, options);
     }
 
+    /**
+     * Remove overlaps algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
+     */
     async removeOverlaps(
         graph: LayoutGraph,
         state: LayoutState

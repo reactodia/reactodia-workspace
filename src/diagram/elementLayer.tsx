@@ -9,12 +9,12 @@ import { TemplateProps } from './customization';
 import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
 import { DiagramModel } from './model';
-import { RenderingState, RenderingLayer } from './renderingState';
+import { MutableRenderingState, RenderingLayer } from './renderingState';
 import { SharedCanvasState, IriClickIntent } from './sharedCanvasState';
 
 export interface ElementLayerProps {
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
     style: React.CSSProperties;
 }
 
@@ -270,7 +270,7 @@ function computeTemplateProps(element: Element): TemplateProps {
 interface OverlaidElementProps {
     state: ElementState;
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 

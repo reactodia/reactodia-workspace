@@ -11,11 +11,30 @@ import { EntityElement } from '../editor/dataElements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Graph authoring status for an entity.
+ */
 export interface AuthoredEntityContext {
+    /**
+     * The new IRI if entity IRI has changed in the entity data,
+     * otherwise `undefined`.
+     */
     editedIri?: string;
+    /**
+     * Whether its allowed to change the entity data.
+     */
     canEdit: boolean | undefined;
+    /**
+     * Whether its allowed to delete the entity.
+     */
     canDelete: boolean | undefined;
+    /**
+     * Handler to begin editing the entity data from the UI.
+     */
     onEdit: (target: Element) => void;
+    /**
+     * Handler to delete the entity.
+     */
     onDelete: () => void;
 }
 
@@ -27,6 +46,8 @@ enum AllowedActions {
 }
 
 /**
+ * React hook to load entity authoring status for the graph authoring.
+ *
  * @category Hooks
  */
 export function useAuthoredEntity(

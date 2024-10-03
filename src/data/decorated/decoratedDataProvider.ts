@@ -1,17 +1,35 @@
 import { delay } from '../../coreUtils/async';
 
 import type * as Rdf from '../rdf/rdfModel';
-import { DataProvider, DataProviderLookupParams } from '../provider';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel, LinkedElement,
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
+import {
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel,
 } from '../model';
 
+/**
+ * Options for `DecoratedDataProvider`.
+ *
+ * @see DecoratedDataProvider
+ */
 export interface DecoratedDataProviderOptions {
+    /**
+     * Base data provider to decorate.
+     */
     readonly baseProvider: DataProvider;
+    /**
+     * Callback which decorates requests to the base data provider.
+     */
     readonly decorator: DataProviderDecorator;
 }
 
+/**
+ * Known data provider operation names.
+ *
+ * @see DecoratedDataProvider
+ */
 export type DecoratedMethodName =
     | 'knownElementTypes'
     | 'knownLinkTypes'
@@ -23,6 +41,11 @@ export type DecoratedMethodName =
     | 'connectedLinkStats'
     | 'lookup';
 
+/**
+ * Callback to pass-through or alter requests to a data provider.
+ *
+ * @see DecoratedDataProvider
+ */
 export type DataProviderDecorator = <P extends { signal?: AbortSignal }, R>(
     method: DecoratedMethodName,
     params: P,
@@ -30,6 +53,9 @@ export type DataProviderDecorator = <P extends { signal?: AbortSignal }, R>(
 ) => Promise<R>;
 
 /**
+ * Utility graph data provider to wrap over another provider to modify
+ * how the requests are made or alter the results.
+ *
  * @category Data
  */
 export class DecoratedDataProvider implements DataProvider {
@@ -107,11 +133,11 @@ export class DecoratedDataProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean;
         signal?: AbortSignal;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         return this.decorate('connectedLinkStats', [params]);
     }
 
-    lookup(params: DataProviderLookupParams): Promise<LinkedElement[]> {
+    lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         return this.decorate('lookup', [params]);
     }
 }

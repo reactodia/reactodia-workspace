@@ -28,7 +28,7 @@ export function hashFnv32a(str: string, seed = 0x811c9dc5): number {
 }
 
 /**
- * Extracts local name for URI the same way as it's done in RDF4J.
+ * Extracts local name for URI the same way as it's done in [RDF4J](https://github.com/eclipse-rdf4j/rdf4j).
  */
 export function getUriLocalName(uri: string): string | undefined {
     let index = uri.indexOf('#');

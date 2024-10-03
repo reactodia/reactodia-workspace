@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
-import { useCanvas } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -17,27 +16,25 @@ export interface RenameLinkFormProps {
 export function RenameLinkForm(props: RenameLinkFormProps) {
     const {link, onFinish} = props;
 
-    const {canvas} = useCanvas();
-    const {model} = useWorkspace();
+    const {model, view: {renameLinkHandler}} = useWorkspace();
 
     const linkType = model.getLinkType(link.typeId);
     const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
     const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
 
-    const [customLabel, setCustomLabel] = React.useState('');
+    const defaultLabel = React.useMemo(
+        () => model.locale.formatLabel(linkTypeLabel, link.typeId),
+        [link, linkTypeLabel]
+    );
 
-    const defaultLabel = React.useMemo(() => {
-        const {editableLabel} = canvas.renderingState.createLinkTemplate(link.typeId);
-        const label = editableLabel?.getLabel(link)
-            ?? model.locale.formatLabel(linkTypeLabel, link.typeId);
-        return label;
-    }, [link, linkTypeLabel]);
-
-    const effectiveLabel = customLabel ? customLabel : defaultLabel;
+    const [customLabel, setCustomLabel] = React.useState(
+        renameLinkHandler?.getLabel(link) ?? defaultLabel
+    );
 
     const onApply = () => {
-        const {editableLabel} = canvas.renderingState.createLinkTemplate(link.typeId);
-        editableLabel!.setLabel(link, effectiveLabel);
+        if (renameLinkHandler) {
+            renameLinkHandler.setLabel(link, customLabel);
+        }
         onFinish();
     };
 
@@ -47,8 +44,10 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                 <div className={`${CLASS_NAME}__form-row`}>
                     <label>Link Label</label>
                     <input className='reactodia-form-control'
-                        value={effectiveLabel}
-                        onChange={e => setCustomLabel((e.target as HTMLInputElement).value)} />
+                        placeholder={defaultLabel}
+                        value={customLabel}
+                        onChange={e => setCustomLabel((e.target as HTMLInputElement).value)}
+                    />
                 </div>
             </div>
             <div className={`${CLASS_NAME}__controls`}>

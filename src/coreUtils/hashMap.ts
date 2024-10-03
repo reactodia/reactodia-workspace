@@ -15,6 +15,9 @@ export interface ReadonlyHashSet<K> extends ReadonlySet<K> {
 type Bucket<K, V> = { readonly k: K; readonly v: V } | Array<{ readonly k: K; readonly v: V }>;
 
 /**
+ * Implements a basic hash map data structure with ability to pass custom hash
+ * and equality comparison functions.
+ *
  * @category Utilities
  */
 export class HashMap<K, V> implements ReadonlyMap<K, V> {
@@ -173,6 +176,9 @@ export class HashMap<K, V> implements ReadonlyMap<K, V> {
 }
 
 /**
+ * Implements a basic hash set data structure with ability to pass custom hash
+ * and equality comparison functions.
+ *
  * @category Utilities
  */
 export class HashSet<K> implements ReadonlyHashSet<K> {

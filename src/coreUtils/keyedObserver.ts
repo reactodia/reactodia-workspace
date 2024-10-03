@@ -52,6 +52,11 @@ export class KeyedObserver<Key extends string> {
  *
  * This store is similar to one accepted by `React.useSyncEventStore()` hook
  * but accepted by `useKeyedSyncStore()` instead.
+ *
+ * Arbitrary `context` value can be made required by the store which is captured
+ * on the initial subscription and its changes does not force a re-subscription.
+ *
+ * @see useKeyedSyncStore()
  */
 export type KeyedSyncStore<K, Context> = (
     key: K,
@@ -60,6 +65,8 @@ export type KeyedSyncStore<K, Context> = (
 ) => () => void;
 
 /**
+ * Same as `React.useSyncExternalStore()` but for `KeyedSyncStore`.
+ *
  * @category Hooks
  */
 export function useKeyedSyncStore<K extends string, Context>(

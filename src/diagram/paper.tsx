@@ -6,11 +6,11 @@ import { ElementLayer } from './elementLayer';
 import { Vector } from './geometry';
 import { LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
-import { RenderingState } from './renderingState';
+import { MutableRenderingState } from './renderingState';
 
 export interface PaperProps {
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
     paperTransform: PaperTransform;
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
     onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
@@ -129,6 +129,8 @@ function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | un
 }
 
 /**
+ * Transformation data between paper and scrollable pane coordinates.
+ *
  * @category Geometry
  */
 export interface PaperTransform {
@@ -141,6 +143,11 @@ export interface PaperTransform {
     paddingY: number;
 }
 
+/**
+ * Props for `TransformedSvgCanvas` component.
+ *
+ * @see TransformedSvgCanvas
+ */
 export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement> {
     paperTransform: PaperTransform;
     svgCanvasRef?: React.RefObject<SVGSVGElement>;
@@ -153,6 +160,8 @@ const TRANSFORMED_SVG_CANVAS_STYLE: Readonly<CSSProperties> = {
 };
 
 /**
+ * SVG canvas component to render its children on the diagram in paper coordinate system.
+ *
  * @category Components
  */
 export function TransformedSvgCanvas(props: TransformedSvgCanvasProps) {
@@ -199,6 +208,8 @@ export function paneTopLeft(pt: PaperTransform): Vector {
 }
 
 /**
+ * Translates paper to scrollable pane coordinates.
+ *
  * @category Geometry
  */
 export function paneFromPaperCoords(paper: Vector, pt: PaperTransform): Vector {
@@ -209,6 +220,8 @@ export function paneFromPaperCoords(paper: Vector, pt: PaperTransform): Vector {
 }
 
 /**
+ * Translates scrollable pane to paper coordinates.
+ *
  * @category Geometry
  */
 export function paperFromPaneCoords(pane: Vector, pt: PaperTransform): Vector {

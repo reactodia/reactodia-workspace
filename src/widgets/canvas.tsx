@@ -1,11 +1,12 @@
 import * as React from 'react';
 
-import {
+import type { ZoomOptions } from '../diagram/canvasApi';
+import type {
     LinkRouter, LinkTemplateResolver, ElementTemplate,
 } from '../diagram/customization';
 import { Element } from '../diagram/elements';
-import { PaperArea, ZoomOptions } from '../diagram/paperArea';
-import { RenderingState } from '../diagram/renderingState';
+import { PaperArea } from '../diagram/paperArea';
+import { MutableRenderingState } from '../diagram/renderingState';
 
 import { EntityElement } from '../editor/dataElements';
 
@@ -39,7 +40,7 @@ export function Canvas(props: CanvasProps) {
         showScrollbars, zoomOptions, watermarkSvg, watermarkUrl, children,
     } = props;
 
-    const [renderingState] = React.useState(() => new RenderingState({
+    const [renderingState] = React.useState(() => new MutableRenderingState({
         model,
         shared: view,
         elementTemplateResolver: elementTemplateResolver ? (

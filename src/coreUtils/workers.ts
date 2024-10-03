@@ -3,7 +3,23 @@ import * as React from 'react';
 import type { WorkerCall, WorkerCallSuccess, WorkerCallError, WorkerConstructor } from '../worker-protocol';
 
 /**
+ * Creates a ref-counted Web Worker definition.
+ *
+ * The worker module should follow a specific communication protocol,
+ * defined by `@reactodia/workspace/worker-protocol` module.
+ *
+ * **Example**:
+ * ```
+ * const worker = defineWorker(() => new Worker('./worker.js'), []);
+ * 
+ * function Component() {
+ *   const instance = useWorker(worker);
+ *   ...
+ * }
+ * ```
+ *
  * @category Utilities
+ * @see useWorker()
  */
 export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
     workerFactory: () => Worker,
@@ -36,7 +52,13 @@ interface RefCountedWorkerState<T> {
 }
 
 /**
+ * Gets a shared instance of the defined worker.
+ *
+ * The worker instance will be created on the first call and
+ * disposed when the last component using the hook is unmounted.
+ *
  * @category Hooks
+ * @see defineWorker()
  */
 export function useWorker<T>(worker: WorkerDefinition<T>): T {
     React.useEffect(() => {

@@ -3,10 +3,11 @@ import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkTypeModel, ElementTypeModel, ElementTypeGraph, ElementModel, LinkModel, PropertyTypeModel, LinkCount,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
+    LinkTypeModel, ElementTypeModel, ElementTypeGraph, ElementModel, LinkModel, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
 } from '../model';
+import type { DataProviderLinkCount, DataProviderLookupItem } from '../provider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
 import {
     SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
@@ -396,7 +397,9 @@ export function getConnectedLinkTypes(
     return Array.from(linkTypes.values());
 }
 
-export function getLinkStatistics(response: SparqlResponse<LinkCountBinding>): LinkCount | undefined {
+export function getLinkStatistics(
+    response: SparqlResponse<LinkCountBinding>
+): DataProviderLinkCount | undefined {
     for (const binding of response.results.bindings) {
         if (isRdfIri(binding.link)) {
             return getLinkCount(binding);
@@ -410,7 +413,7 @@ export function getFilteredData(
     sourceTypes: ReadonlySet<ElementTypeIri> | undefined,
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> | undefined,
     openWorldLinks: boolean
-): LinkedElement[] {
+): DataProviderLookupItem[] {
     const predicateToConfig = linkByPredicateType ?? EMPTY_MAP;
 
     const instances = new Map<ElementIri, MutableElementModel>();
@@ -447,7 +450,7 @@ export function getFilteredData(
         }
     }
 
-    const linkedElements: LinkedElement[] = [];
+    const linkedElements: DataProviderLookupItem[] = [];
     for (const model of instances.values()) {
         const targetTypes = resultTypes.get(model.id);
         const doesMatchesDomain = openWorldLinks || (
@@ -593,7 +596,7 @@ function parseCount(countLiteral: Rdf.Literal): number {
     return Number.isFinite(numericCount) ? numericCount : 0;
 }
 
-function getLinkCount(sLinkType: LinkCountBinding): LinkCount {
+function getLinkCount(sLinkType: LinkCountBinding): DataProviderLinkCount {
     return {
         id: sLinkType.link.value as LinkTypeIri,
         inCount: parseCount(sLinkType.inCount),

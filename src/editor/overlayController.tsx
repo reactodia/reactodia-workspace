@@ -26,6 +26,7 @@ import { EditLayer, DragEditOperation } from './editLayer';
 import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
+/** @hidden */
 export interface OverlayControllerProps extends OverlayControllerOptions {
     readonly model: DataDiagramModel;
     readonly view: SharedCanvasState;
@@ -43,7 +44,15 @@ export interface PropertyEditorOptions {
     onCancel?: () => void;
 }
 
+/**
+ * Event data for `OverlayController` events.
+ *
+ * @see OverlayController
+ */
 export interface OverlayControllerEvents {
+    /**
+     * Triggered on `openedDialog` property change.
+     */
     changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
 }
 
@@ -55,15 +64,30 @@ export type KnownDialogType =
     | 'findOrCreateEntity'
     | 'renameLink';
 
+/**
+ * Describes a dialog opened as an overlay for the canvas.
+ */
 export interface OpenedDialog {
+    /**
+     * Dialog target (anchor).
+     */
     readonly target: Element | Link;
     /** @hidden */
     readonly knownType: KnownDialogType | undefined;
+    /**
+     * Whether the diagram should not change selection
+     * while the dialog is opened.
+     */
     readonly holdSelection: boolean;
+    /**
+     * Handler which will be called when dialog is closed.
+     */
     readonly onClose: () => void;
 }
 
 /**
+ * Controls UI overlays for the canvases, including dialogs and tasks.
+ *
  * @category Core
  */
 export class OverlayController {
@@ -123,6 +147,11 @@ export class OverlayController {
         this.updateElementDecorator();
     }
 
+    /**
+     * Currently open dialog.
+     *
+     * Returns `undefined` if no dialog is opened.
+     */
     get openedDialog(): OpenedDialog | undefined {
         return this._openedDialog;
     }
@@ -509,8 +538,26 @@ export class OverlayController {
  * Represents a foreground canvas task.
  */
 export interface OverlayTask {
+    /**
+     * Task title to display.
+     */
     readonly title: string | undefined;
+    /**
+     * Marks the task as failed with the specified error.
+     *
+     * If set, the error will be displayed until another task
+     * will be started later.
+     *
+     * This method can be called multiple times and will not
+     * complete the task (i.e. `end()` method call is required).
+     */
     setError(error: unknown): void;
+    /**
+     * Completes the task and removes its representation from the overlay.
+     *
+     * If the task is marked with error via `setError()`, that error
+     * will be kept displaying until another task is started later.
+     */
     end(): void;
 }
 

@@ -10,24 +10,52 @@ import { iterateEntitiesOf, iterateRelationsOf } from './dataElements';
 import { EditorController } from './editorController';
 
 /**
+ * Immutable validation state for the data changes from the graph authoring.
+ *
  * @category Core
  */
 export interface ValidationState {
+    /**
+     * Validation state for the entities.
+     */
     readonly elements: ReadonlyMap<ElementIri, ElementValidation>;
+    /**
+     * Validation state for the relations.
+     */
     readonly links: ReadonlyHashMap<LinkKey, LinkValidation>;
 }
 
+/**
+ * Validation state for a single entity.
+ */
 export interface ElementValidation {
+    /**
+     * Whether the entity is currently being validated.
+     */
     readonly loading: boolean;
+    /**
+     * Validation errors for the entity.
+     */
     readonly errors: ReadonlyArray<ElementError>;
 }
 
+/**
+ * Validation state for a single relation.
+ */
 export interface LinkValidation {
+    /**
+     * Whether the relation is currently being validated.
+     */
     readonly loading: boolean;
+    /**
+     * Validation errors for the relation.
+     */
     readonly errors: ReadonlyArray<LinkError>;
 }
 
 /**
+ * Utility functions to operate on validation state for the graph authoring.
+ *
  * @category Core
  */
 export namespace ValidationState {

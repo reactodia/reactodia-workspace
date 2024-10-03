@@ -4,15 +4,15 @@ import { hashFnv32a } from '../data/utils';
 import * as Rdf from './rdf/rdfModel';
 
 /**
- * Nominal (branded) type for element IRI, i.e. unique ID string.
+ * Nominal (branded) type for element (graph node) IRI, i.e. unique ID string.
  */
 export type ElementIri = string & { readonly elementBrand: void };
 /**
- * Nominal (branded) type for element type IRI, i.e. unique ID string.
+ * Nominal (branded) type for element (graph node) type IRI, i.e. unique ID string.
  */
 export type ElementTypeIri = string & { readonly classBrand: void };
 /**
- * Nominal (branded) type for link type IRI, i.e. unique ID string.
+ * Nominal (branded) type for link (graph edge) type IRI, i.e. unique ID string.
  */
 export type LinkTypeIri = string & { readonly linkTypeBrand: void };
 /**
@@ -20,6 +20,9 @@ export type LinkTypeIri = string & { readonly linkTypeBrand: void };
  */
 export type PropertyTypeIri = string & { readonly propertyTypeBrand: void };
 
+/**
+ * Link (graph edge) direction: `in` for incoming, `out` for outgoing.
+ */
 export type LinkDirection = 'in' | 'out';
 
 /**
@@ -34,11 +37,16 @@ export interface ElementTypeGraph {
 }
 
 /**
+ * "Subtype of" relation between derived element type and its base type.
+ *
  * @category Data
+ * @see ElementTypeGraph
  */
 export type SubtypeEdge = readonly [ElementTypeIri, ElementTypeIri];
 
 /**
+ * Element (graph node) data.
+ *
  * @category Data
  */
 export interface ElementModel {
@@ -50,6 +58,8 @@ export interface ElementModel {
 }
 
 /**
+ * A `{source, target, type}` tuple which uniquely identifies a link (graph edge).
+ *
  * @category Data
  */
 export interface LinkKey {
@@ -59,6 +69,8 @@ export interface LinkKey {
 }
 
 /**
+ * Link (graph edge) data.
+ *
  * @category Data
  */
 export interface LinkModel {
@@ -69,6 +81,8 @@ export interface LinkModel {
 }
 
 /**
+ * Element (graph node) type data.
+ *
  * @category Data
  */
 export interface ElementTypeModel {
@@ -78,6 +92,8 @@ export interface ElementTypeModel {
 }
 
 /**
+ * Link (graph edge) type data.
+ *
  * @category Data
  */
 export interface LinkTypeModel {
@@ -87,6 +103,8 @@ export interface LinkTypeModel {
 }
 
 /**
+ * Property type data.
+ *
  * @category Data
  */
 export interface PropertyTypeModel {
@@ -95,32 +113,16 @@ export interface PropertyTypeModel {
 }
 
 /**
- * @category Data
- */
-export interface LinkCount {
-    readonly id: LinkTypeIri;
-    readonly inCount: number;
-    readonly outCount: number;
-    /**
-     * If `true`, then `inCount` and `outCount` values might be not exact
-     * in case when the values are non-zero.
-     */
-    readonly inexact?: boolean;
-}
-
-/**
- * Describes an element with information on which link types and directions
- * are used to connect it to other elements.
+ * Returns `true` if IRI represents an anonymous entity specific to the data provider;
+ * otherwise `false`.
  *
- * @category Data
- */
-export interface LinkedElement {
-    readonly element: ElementModel;
-    readonly inLinks: ReadonlySet<LinkTypeIri>;
-    readonly outLinks: ReadonlySet<LinkTypeIri>;
-}
-
-/**
+ * The represented entity can only be decoded by a `DataProvider` with a support
+ * for the specific blank node subtype, determined by the IRI prefix, e.g.:
+ *   - `urn:reactodia:blank:rdf:*` encodes RDF blank nodes from `RdfDataProvider;
+ *   - `urn:reactodia:blank:sparql:*` encodes outer graph content for blank nodes
+ *     from `SparqlDataProvider`;
+ *   - etc.
+ *
  * @category Data
  */
 export function isEncodedBlank(iri: string): boolean {
@@ -128,6 +130,8 @@ export function isEncodedBlank(iri: string): boolean {
 }
 
 /**
+ * Computes a hash code for `SubtypeEdge` value.
+ *
  * @category Data
  */
 export function hashSubtypeEdge(edge: SubtypeEdge): number {
@@ -138,6 +142,8 @@ export function hashSubtypeEdge(edge: SubtypeEdge): number {
 }
 
 /**
+ * Computes whether `SubtypeEdges` values are the same.
+ *
  * @category Data
  */
 export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
@@ -147,6 +153,8 @@ export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
 }
 
 /**
+ * Computes whether `LinkKey` values are the same.
+ *
  * @category Data
  */
 export function equalLinks(left: LinkKey, right: LinkKey) {
@@ -158,6 +166,8 @@ export function equalLinks(left: LinkKey, right: LinkKey) {
 }
 
 /**
+ * Computes a hash code for `LinkKey` value.
+ *
  * @category Data
  */
 export function hashLink(link: LinkKey): number {
@@ -169,6 +179,8 @@ export function hashLink(link: LinkKey): number {
 }
 
 /**
+ * Computes whether `ElementModel` values are the same, including property values.
+ *
  * @category Data
  */
 export function equalElements(a: ElementModel, b: ElementModel): boolean {

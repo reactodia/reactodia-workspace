@@ -268,13 +268,15 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
     }, [model.events, elements]);
 }
 
-export interface SelectionActionAnchorProps extends SelectionActionStyleProps {}
+export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
+    onSelect?: (target: EntityElement, e: React.MouseEvent<HTMLAnchorElement>) => void;
+}
 
 /**
  * @category Components
  */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
-    const {dock, dockRow, dockColumn, className, title} = props;
+    const {dock, dockRow, dockColumn, className, title, onSelect} = props;
     const {model, canvas} = useCanvas();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
@@ -295,7 +297,13 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
             style={getDockStyle(dockRow, dockColumn)}
             href={target.iri}
             title={title ?? 'Jump to resource'}
-            onClick={e => canvas.renderingState.shared.onIriClick(target.iri, target, 'jumpToEntity', e)}
+            onClick={e => {
+                if (onSelect) {
+                    onSelect(target, e);
+                } else {
+                    canvas.renderingState.shared.onIriClick(target.iri, target, 'jumpToEntity', e);
+                }
+            }}
         />
     );
 }

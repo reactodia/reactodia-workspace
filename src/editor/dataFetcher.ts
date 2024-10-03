@@ -18,16 +18,41 @@ export interface DataFetcherEvents {
     changeOperations: ChangeOperationsEvent;
 }
 
+/**
+ * Event data for change current fetch operations event.
+ */
 export interface ChangeOperationsEvent {
+    /**
+     * Previous operations before the change.
+     */
     readonly previous: ReadonlyArray<FetchOperation>;
+    /**
+     * If set, specifies the operation that failed and the fail reason (error).
+     */
     readonly fail?: FetchOperationFail;
 }
 
+/**
+ * Describes the failed operation with its fail reason (error).
+ *
+ * @see ChangeOperationsEvent
+ */
 export interface FetchOperationFail {
+    /**
+     * Operation that failed.
+     */
     readonly operation: FetchOperation;
+    /**
+     * The reason why operation failed (the thrown exception).
+     */
     readonly error: unknown;
 }
 
+/**
+ * Describes a operation to fetch graph data from a data provider.
+ *
+ * @see DataProvider
+ */
 export type FetchOperation =
     | FetchOperationElement
     | FetchOperationLink
@@ -35,8 +60,18 @@ export type FetchOperation =
     | FetchOperationLinkType
     | FetchOperationPropertyType;
 
+/**
+ * A possible `type` value for an fetch operation with a set of targets.
+ *
+ * @see FetchOperation
+ */
 export type FetchOperationTargetType = Exclude<FetchOperation['type'], 'link'>;
 
+/**
+ * A type which maps fetch operation `type` to a target type for such operation.
+ *
+ * @see FetchOperation
+ */
 export interface FetchOperationTypeToTarget {
     'element': ElementIri;
     'elementType': ElementTypeIri;
@@ -44,27 +79,69 @@ export interface FetchOperationTypeToTarget {
     'propertyType': PropertyTypeIri;
 }
 
+/**
+ * Fetch operation for an element (graph node) data.
+ */
 export interface FetchOperationElement {
+    /**
+     * Fetch operation type.
+     */
     readonly type: 'element';
+    /**
+     * Fetch operation targets.
+     */
     readonly targets: ReadonlySet<ElementIri>;
 }
 
+/**
+ * Fetch operation for links (graph edges) between elements.
+ */
 export interface FetchOperationLink {
+    /**
+     * Fetch operation type.
+     */
     readonly type: 'link';
 }
 
+/**
+ * Fetch operation for an element type data.
+ */
 export interface FetchOperationElementType {
+    /**
+     * Fetch operation type.
+     */
     readonly type: 'elementType';
+    /**
+     * Fetch operation targets.
+     */
     readonly targets: ReadonlySet<ElementTypeIri>;
 }
 
+/**
+ * Fetch operation for a link type data.
+ */
 export interface FetchOperationLinkType {
+    /**
+     * Fetch operation type.
+     */
     readonly type: 'linkType';
+    /**
+     * Fetch operation targets.
+     */
     readonly targets: ReadonlySet<LinkTypeIri>;
 }
 
+/**
+ * Fetch operation for a property type data.
+ */
 export interface FetchOperationPropertyType {
+    /**
+     * Fetch operation type.
+     */
     readonly type: 'propertyType';
+    /**
+     * Fetch operation targets.
+     */
     readonly targets: ReadonlySet<PropertyTypeIri>;
 }
 

@@ -6,20 +6,18 @@ import { Debouncer } from '../coreUtils/scheduler';
 
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
-import {
-    Element, Link, LinkVertex, linkMarkerKey,
-} from './elements';
+import { Element, Link, LinkVertex } from './elements';
 import {
     Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength,
     getPointAlongPolyline, pathFromPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
-import { RenderingState, RenderingLayer } from './renderingState';
+import { MutableRenderingState, RenderingLayer } from './renderingState';
 import { useCanvas } from './canvasApi';
 
 export interface LinkLayerProps {
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
     links: ReadonlyArray<Link>;
 }
 
@@ -263,7 +261,7 @@ const LinkLayerContext = React.createContext<LinkLayerContext | null>(null);
 interface LinkViewProps {
     link: Link;
     model: DiagramModel;
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
 }
 
 const LINK_CLASS = 'reactodia-link';
@@ -299,16 +297,18 @@ function LinkView(props: LinkViewProps) {
         return getPointAlongPolyline(polyline, polylineLength * offset);
     };
 
+    const typeIndex = renderingState.ensureLinkTypeIndex(link.typeId);
+
     const {highlighter} = renderingState.shared;
     const isBlurred = highlighter && !highlighter(link);
     
     const renderedLink = template.renderLink({
         link,
-        typeIndex: renderingState.ensureLinkTypeIndex(link.typeId),
+        markerSource: `url(#${linkMarkerKey(typeIndex, true)})`,
+        markerTarget: `url(#${linkMarkerKey(typeIndex, false)})`,
         path,
         getPathPosition,
         route,
-        editableLabel: template.editableLabel,
     });
     return (
         <g data-link-id={link.id}
@@ -321,9 +321,10 @@ function LinkView(props: LinkViewProps) {
 }
 
 export interface LinkPathProps {
-    typeIndex: number;
     path: string;
     pathProps?: React.SVGAttributes<SVGPathElement>;
+    markerSource?: string;
+    markerTarget?: string;
 }
 
 const LINK_PATH_CLASS = 'reactodia-link-path';
@@ -332,16 +333,20 @@ const LINK_PATH_CLASS = 'reactodia-link-path';
  * @category Components
  */
 export function LinkPath(props: LinkPathProps) {
-    const {typeIndex, path, pathProps} = props;
+    const {path, pathProps, markerSource, markerTarget} = props;
     return <>
         <path {...pathProps}
             className={classnames(LINK_PATH_CLASS, pathProps?.className)}
             d={path}
-            markerStart={`url(#${linkMarkerKey(typeIndex, true)})`}
-            markerEnd={`url(#${linkMarkerKey(typeIndex, false)})`}
+            markerStart={markerSource}
+            markerEnd={markerTarget}
         />
         <path className={`${LINK_PATH_CLASS}__wrap`} d={path} />
     </>;
+}
+
+function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
+    return `reactodia-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
 }
 
 export interface LinkLabelProps {
@@ -604,7 +609,7 @@ class VertexTools extends React.Component<{
 }
 
 export interface LinkMarkersProps {
-    renderingState: RenderingState;
+    renderingState: MutableRenderingState;
 }
 
 export class LinkMarkers extends React.Component<LinkMarkersProps> {
@@ -714,7 +719,9 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
         path.setAttribute('d', d);
         if (style.fill !== undefined) { path.setAttribute('fill', style.fill); }
         if (style.stroke !== undefined) { path.setAttribute('stroke', style.stroke); }
-        if (style.strokeWidth !== undefined) { path.setAttribute('stroke-width', style.strokeWidth); }
+        if (style.strokeWidth !== undefined) {
+            path.setAttribute('stroke-width', String(style.strokeWidth));
+        }
 
         marker.appendChild(path);
     };

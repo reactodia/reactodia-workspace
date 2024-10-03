@@ -5,6 +5,8 @@ import {
 } from './rdfModel';
 
 /**
+ * In-memory [RDF quad dataset](https://rdf.js.org/dataset-spec/).
+ *
  * @category Utilities
  */
 export interface MemoryDataset extends Iterable<Quad> {
@@ -29,6 +31,9 @@ export interface MemoryDataset extends Iterable<Quad> {
     forEach(callback: (t: Quad) => void): void;
 }
 
+/**
+ * Bit-flags for dataset indexing modes.
+ */
 export enum IndexQuadBy {
     /** Index by whole quad (default, required). */
     OnlyQuad = 0,
@@ -47,6 +52,9 @@ export enum IndexQuadBy {
 }
 
 /**
+ * Creates an empty mutable in-memory RDF quad dataset,
+ * with optional simple indexes on quad sub-parts (subject, predicate, object).
+ *
  * @category Utilities
  */
 export function indexedDataset(indexBy: IndexQuadBy): MemoryDataset {

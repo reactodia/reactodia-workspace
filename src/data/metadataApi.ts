@@ -1,6 +1,11 @@
 import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel, LinkDirection } from './model';
 
 /**
+ * Provides a strategy to visual graph authoring: which parts of the graph
+ * are editable and what is the range of possible values to allow.
+ *
+ * **Experimental**: this feature will likely change in the future.
+ *
  * @category Core
  */
 export interface MetadataApi {

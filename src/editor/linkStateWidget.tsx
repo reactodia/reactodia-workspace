@@ -82,7 +82,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
             canvas.renderingState.events, 'changeLinkLabelBounds', this.scheduleUpdate
         );
         this.listener.listen(canvas.renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer === RenderingLayer.Editor) {
+            if (layer === RenderingLayer.Overlay) {
                 this.delayedUpdate.runSynchronously();
             }
         });

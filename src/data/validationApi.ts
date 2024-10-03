@@ -25,11 +25,13 @@ export interface ValidationEvent {
 }
 
 /**
+ * Provides a strategy to validate changes to the data in the graph authoring mode.
+ *
  * @category Core
  */
 export interface ValidationApi {
     /**
-     * Validate element and its outbound links.
+     * Validate an element (graph node) and its outbound links (graph edges).
      */
     validate(e: ValidationEvent): Promise<Array<ElementError | LinkError>>;
 }

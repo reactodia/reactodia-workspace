@@ -33,6 +33,9 @@ export function multimapDelete<K, V>(map: BasicMap<K, Set<V>>, key: K, value: V)
 }
 
 /**
+ * Returns `true` if two arrays has equal elements (compared via `===`)
+ * and in the same order, otherwise returns `false`.
+ *
  * @category Utilities
  */
 export function shallowArrayEqual<T>(a: ReadonlyArray<T>, b: ReadonlyArray<T>): boolean {
@@ -83,6 +86,10 @@ export class OrderedMap<V> {
 }
 
 /**
+ * Makes a sorting comparator (a function to pass to `Array.sort()`) which
+ * moves specified subset of items either to the beginning of the array
+ * or to the end.
+ *
  * @category Utilities
  */
 export function moveComparator<T>(

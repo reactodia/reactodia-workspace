@@ -9,6 +9,23 @@ interface WithMetadata {
 }
 
 /**
+ * Defines the React component to be a canvas widget. 
+ *
+ * A component cannot be rendered by canvas as widget unless explicitly
+ * defined as such using this function.
+ *
+ * **Example**:
+ * ```jsx
+ * function MyWidget(props) {
+ *    ...
+ * }
+ * 
+ * defineCanvasWidget(MyWidget, element => ({
+ *     element,
+ *     attachment: 'viewport'
+ * }));
+ * ```
+ *
  * @category Core
  */
 export function defineCanvasWidget<P>(

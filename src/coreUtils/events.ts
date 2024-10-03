@@ -1,19 +1,51 @@
+/**
+ * Event listener callback for a specific event type.
+ *
+ * @see Events.on()
+ */
 export type Listener<Data, Key extends keyof Data> = (data: Data[Key]) => void;
+/**
+ * Event listener callback for all event types.
+ *
+ * @see Events.onAny()
+ */
 export type AnyListener<Data> = (data: Partial<Data>) => void;
 /** @hidden */
 export type Unsubscribe = () => void;
 
+/**
+ * Event data for a property change event, i.e. event which is raised
+ * when some property value changes to another.
+ */
 export interface PropertyChange<Source, Value> {
+    /**
+     * Event source (the object owning the property).
+     */
     readonly source: Source;
+    /**
+     * Previous value for a property which has changed.
+     */
     readonly previous: Value;
 }
 
+/**
+ * Event data for combined (all) event types.
+ *
+ * @see Events.onAny()
+ */
 export interface AnyEvent<Data> {
     readonly data: Partial<Data>;
 }
 
 /**
+ * Defines an observable object with one or many event types to subscribe to.
+ *
+ * `Data` type variable is expected to be an interface type, where each property
+ * is an event type and its value type is event data.
+ *
  * @category Core
+ * @see EventTrigger
+ * @see EventSource
  */
 export interface Events<out Data> {
     on<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
@@ -23,13 +55,38 @@ export interface Events<out Data> {
 }
 
 /**
+ * Defines an event emitter which can trigger one or many event types.
+ *
+ * `Data` type variable is expected to be an interface type, where each property
+ * is an event type and its value type is event data.
+ * 
  * @category Core
+ * @see Events
+ * @see EventSource
  */
 export interface EventTrigger<in Data> {
     trigger<Key extends keyof Data>(eventKey: Key, data: Data[Key]): void;
 }
 
 /**
+ * Implements an event bus, exposing both an observable object (`Events`) and
+ * event emitter (`EventTrigger`) sides.
+ *
+ * **Example**:
+ * ```ts
+ * interface CollectionEvents {
+ *     addItem: AddItemEvent;
+ *     removeItem: RemoveItemEvent;
+ * }
+ * 
+ * const source = new EventSource<CollectionEvents>();
+ * const events: Events<CollectionEvents> = source;
+ * 
+ * events.on('addItem', e => { ... });
+ *
+ * source.trigger('addItem', { item: someItem });
+ * ```
+ * 
  * @category Core
  */
 export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
@@ -85,7 +142,11 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
 }
 
 /**
+ * Provides a convenient way to subscribe to one or many observable objects
+ * and unsubscribe from all of them at once.
+ * 
  * @category Core
+ * @see Events
  */
 export class EventObserver {
     private onDispose = new Set<Unsubscribe>();

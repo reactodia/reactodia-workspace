@@ -4,7 +4,8 @@ import classnames from 'classnames';
 import { Debouncer } from '../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
 
-import { LinkCount, LinkTypeModel } from '../data/model';
+import { LinkTypeModel } from '../data/model';
+import { DataProviderLinkCount } from '../data/provider';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { LinkTypeVisibility } from '../diagram/elements';
 import { DiagramModel } from '../diagram/model';
@@ -351,7 +352,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
         }
     }
 
-    private computeStateFromRequestResult(linkTypes: ReadonlyArray<LinkCount>) {
+    private computeStateFromRequestResult(linkTypes: ReadonlyArray<DataProviderLinkCount>) {
         const {workspace: {model}} = this.props;
 
         const linksOfElement: LinkTypeModel[] = [];

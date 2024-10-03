@@ -4,13 +4,13 @@ import classnames from 'classnames';
 import { EventObserver, Events } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, LinkedElement } from '../data/model';
-import { DataProviderLookupParams } from '../data/provider';
+import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
+import { DataProviderLookupParams, DataProviderLookupItem } from '../data/provider';
 
 import type { CanvasApi } from '../diagram/canvasApi';
+import { placeElementsAroundTarget } from '../diagram/commands';
 import { VoidElement } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
-import { placeElementsAround } from '../diagram/layout';
 
 import { requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 
@@ -374,7 +374,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         });
     }
 
-    private processFilterData(elements: LinkedElement[]) {
+    private processFilterData(elements: readonly DataProviderLookupItem[]) {
         const requestedAdditionalItems =
             typeof this.currentRequest!.limit === 'number' &&
             this.currentRequest!.limit > ITEMS_PER_PAGE;
@@ -433,13 +433,13 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             const elements = selectedEntities.map(entity => model.createElement(entity));
             canvas.renderingState.syncUpdate();
 
-            placeElementsAround({
+            batch.history.execute(placeElementsAroundTarget({
+                target,
                 elements,
-                model,
+                graph: model,
                 sizeProvider: canvas.renderingState,
-                targetElement: target,
-                preferredLinksLength: 150,
-            });
+                distance: 150,
+            }));
         } else {
             const group = new EntityGroup({
                 items: selectedEntities.map(data => ({data})),

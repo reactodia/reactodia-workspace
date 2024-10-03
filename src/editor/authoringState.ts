@@ -3,10 +3,19 @@ import { HashMap, ReadonlyHashMap, HashSet, ReadonlyHashSet } from '../coreUtils
 import { ElementModel, ElementIri, LinkKey, LinkModel, equalLinks, hashLink } from '../data/model';
 
 /**
+ * Immutable graph authoring state: added, deleted or changed
+ * graph entities and/or relations.
+ *
  * @category Core
  */
 export interface AuthoringState {
+    /**
+     * Authoring state for the graph entities.
+     */
     readonly elements: ReadonlyMap<ElementIri, ElementChange>;
+    /**
+     * Authoring state for the graph relations.
+     */
     readonly links: ReadonlyHashMap<LinkKey, LinkChange>;
 }
 
@@ -24,6 +33,9 @@ export enum AuthoringKind {
 }
 
 /**
+ * Represents a change to an entity in graph authoring
+ * (added, changed or deleted entity).
+ *
  * @category Core
  */
 export interface ElementChange {
@@ -35,6 +47,9 @@ export interface ElementChange {
 }
 
 /**
+ * Represents a change to a relation in graph authoring
+ * (added, changed or deleted relation).
+ *
  * @category Core
  */
 export interface LinkChange {
@@ -44,24 +59,41 @@ export interface LinkChange {
     readonly deleted: boolean;
 }
 
-interface MutableAuthoringState extends AuthoringState {
+/**
+ * A mutable clone of the graph authoring state.
+ *
+ * @see AuthoringState.clone()
+ */
+export interface MutableAuthoringState extends AuthoringState {
     readonly elements: Map<ElementIri, ElementChange>;
     readonly links: HashMap<LinkKey, LinkChange>;
 }
 
 /**
+ * Utility functions to operate on graph authoring state.
+ *
  * @category Core
  */
 export namespace AuthoringState {
+    /**
+     * Empty graph authoring state.
+     */
     export const empty: AuthoringState = {
         elements: new Map<ElementIri, ElementChange>(),
         links: new HashMap<LinkKey, LinkChange>(hashLink, equalLinks),
     };
 
+    /**
+     * Returns `true` is specified graph authoring state is empty;
+     * otherwise `false`.
+     */
     export function isEmpty(state: AuthoringState) {
         return state.elements.size === 0 && state.links.size === 0;
     }
 
+    /**
+     * Creates a mutable clone of the specified graph authoring state.
+     */
     export function clone(index: AuthoringState): MutableAuthoringState {
         return {
             elements: new Map(index.elements),
@@ -69,12 +101,19 @@ export namespace AuthoringState {
         };
     }
 
+    /**
+     * Returns `true` if a graph authoring state contains specified `event`;
+     * otherwise `false`.
+     */
     export function has(state: AuthoringState, event: AuthoringEvent): boolean {
         return event.type === AuthoringKind.ChangeElement
             ? state.elements.get(event.after.id) === event
             : state.links.get(event.after) === event;
     }
 
+    /**
+     * Discards the specified event from the graph authoring state if the state contains it.
+     */
     export function discard(state: AuthoringState, discarded: AuthoringEvent): AuthoringState {
         if (!has(state, discarded)) {
             return state;
@@ -256,17 +295,34 @@ export namespace AuthoringState {
 }
 
 /**
+ * Immutable temporary (transient) state for the graph authoring.
+ *
+ * Represents a set of temporary entities and relations which are
+ * discarded from the diagram if a graph authoring operation gets
+ * cancelled.
+ *
  * @category Core
  */
 export interface TemporaryState {
+    /**
+     * A set of temporary entities.
+     */
     readonly elements: ReadonlySet<ElementIri>;
+    /**
+     * A set of temporary relations.
+     */
     readonly links: ReadonlyHashSet<LinkKey>;
 }
 
 /**
+ * Utility functions to operate on temporary state for the graph authoring.
+ *
  * @category Core
  */
 export namespace TemporaryState {
+    /**
+     * Empty temporary state for the graph authoring.
+     */
     export const empty: TemporaryState = {
         elements: new Set<ElementIri>(),
         links: new HashSet<LinkKey>(hashLink, equalLinks),
@@ -308,7 +364,7 @@ export namespace TemporaryState {
     }
 }
 
-export function isLinkConnectedToElement(link: LinkKey, elementIri: ElementIri) {
+function isLinkConnectedToElement(link: LinkKey, elementIri: ElementIri) {
     return link.sourceId === elementIri || link.targetId === elementIri;
 }
 

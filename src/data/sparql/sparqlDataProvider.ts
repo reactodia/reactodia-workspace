@@ -3,10 +3,12 @@ import * as N3 from 'n3';
 import { multimapArrayAdd } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, LinkCount, PropertyTypeModel,
-    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkedElement,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../model';
-import { DataProvider, DataProviderLookupParams } from '../provider';
+import {
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+} from '../provider';
 import {
     enrichElementsWithImages,
     getClassTree,
@@ -32,16 +34,10 @@ import {
     SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
 } from './sparqlDataProviderSettings';
 
-export type SparqlQueryFunction = (params: {
-    url: string;
-    body?: string;
-    headers: { [header: string]: string };
-    method: string;
-    signal?: AbortSignal;
-}) => Promise<Response>;
-
 /**
- * Runtime settings of SPARQL data provider
+ * Options for `SparqlDataProvider`.
+ *
+ * @see SparqlDataProvider
  */
 export interface SparqlDataProviderOptions {
     /**
@@ -105,6 +101,19 @@ export interface SparqlDataProviderOptions {
 }
 
 /**
+ * Custom function to send SPARQL HTTP requests.
+ */
+export type SparqlQueryFunction = (params: {
+    url: string;
+    body?: string;
+    headers: { [header: string]: string };
+    method: string;
+    signal?: AbortSignal;
+}) => Promise<Response>;
+
+/**
+ * Provides graph data by requesting it from a SPARQL endpoint.
+ *
  * @category Data
  */
 export class SparqlDataProvider implements DataProvider {
@@ -412,7 +421,7 @@ export class SparqlDataProvider implements DataProvider {
         elementId: ElementIri;
         inexactCount?: boolean;
         signal?: AbortSignal;
-    }): Promise<LinkCount[]> {
+    }): Promise<DataProviderLinkCount[]> {
         const {elementId, inexactCount, signal} = params;
         const {defaultPrefix, linkTypesOfQuery, linkTypesStatisticsQuery, filterTypePattern} = this.settings;
 
@@ -451,7 +460,7 @@ export class SparqlDataProvider implements DataProvider {
             ? 'FILTER (IsIri(?inObject) || IsBlank(?inObject))'
             : 'FILTER IsIri(?inObject)';
 
-        const foundLinkStats: LinkCount[] = [];
+        const foundLinkStats: DataProviderLinkCount[] = [];
         await Promise.all(connectedLinkTypes.map(async ({linkType, hasInLink, hasOutLink}) => {
             const linkConfig = this.linkById.get(linkType);
             let linkConfigurationOut: string;
@@ -502,7 +511,7 @@ export class SparqlDataProvider implements DataProvider {
         return foundLinkStats;
     }
 
-    async lookup(baseParams: DataProviderLookupParams): Promise<LinkedElement[]> {
+    async lookup(baseParams: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         const {signal} = baseParams;
         const params: DataProviderLookupParams = {
             ...baseParams,
@@ -606,6 +615,9 @@ export class SparqlDataProvider implements DataProvider {
         `;
     }
 
+    /**
+     * Executes arbitrary SPARQL SELECT query and returns the result tuples.
+     */
     executeSparqlSelect<Binding>(
         query: string,
         options?: { signal?: AbortSignal }
@@ -622,6 +634,9 @@ export class SparqlDataProvider implements DataProvider {
         );
     }
 
+    /**
+     * Executes arbitrary SPARQL CONSTRUCT query and returns the result RDF graph.
+     */
     executeSparqlConstruct(
         query: string,
         options?: { signal?: AbortSignal }
@@ -718,7 +733,7 @@ export class SparqlDataProvider implements DataProvider {
         return {unionParts, usePredicatePart};
     }
 
-    formatLinkLinks(): string {
+    private formatLinkLinks(): string {
         const unionParts: string[] = [];
         let hasDirectLink = false;
         for (const link of this.settings.linkConfigurations) {
@@ -744,11 +759,11 @@ export class SparqlDataProvider implements DataProvider {
         );
     }
 
-    formatLinkPath(path: string, source: string, target: string): string {
+    private formatLinkPath(path: string, source: string, target: string): string {
         return path.replace(/[?$]source\b/g, source).replace(/[?$]target\b/g, target);
     }
 
-    formatPropertyInfo(): string {
+    private formatPropertyInfo(): string {
         const unionParts: string[] = [];
         let hasDirectProperty = false;
         for (const property of this.settings.propertyConfigurations) {
@@ -771,7 +786,7 @@ export class SparqlDataProvider implements DataProvider {
         return unionParts.join('\nUNION\n');
     }
 
-    formatPropertyPath(path: string, subject: string, value: string): string {
+    private formatPropertyPath(path: string, subject: string, value: string): string {
         return path.replace(/[?$]inst\b/g, subject).replace(/[?$]value\b/g, value);
     }
 

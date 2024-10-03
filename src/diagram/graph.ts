@@ -14,9 +14,23 @@ export interface GraphEvents {
     changeLinkVisibility: PropertyChange<LinkTypeIri, LinkTypeVisibility>;
 }
 
+/**
+ * Event data for diagram cells changed event.
+ */
 export interface CellsChangedEvent {
+    /**
+     * If `true`, it should be assumed that many elements or links
+     * were added or removed at the same time, and any caches based
+     * on the diagram content should be completely re-computed.
+     */
     readonly updateAll: boolean;
+    /**
+     * Specific element was added or removed.
+     */
     readonly changedElement?: Element;
+    /**
+     * Specific links were added or removed.
+     */
     readonly changedLinks?: ReadonlyArray<Link>;
 }
 
