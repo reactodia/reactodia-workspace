@@ -35,7 +35,7 @@ function RdfExample() {
 
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
     const [validationApi] = React.useState(() => new ExampleValidationApi());
-    const [renameLinkHandler] = React.useState(() => new RenameSubclassOfHandler());
+    const [renameLinkProvider] = React.useState(() => new RenameSubclassOfProvider());
 
     const suggestProperties = React.useCallback<Reactodia.PropertySuggestionHandler>(params => {
         let maxLength = 0;
@@ -54,7 +54,7 @@ function RdfExample() {
             defaultLayout={defaultLayout}
             metadataApi={metadataApi}
             validationApi={validationApi}
-            renameLinkHandler={renameLinkHandler}
+            renameLinkProvider={renameLinkProvider}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
@@ -84,8 +84,8 @@ function RdfExample() {
     );
 }
 
-class RenameSubclassOfHandler extends Reactodia.RenameLinkToLinkStateHandler {
-    canRename(link: Reactodia.Link): boolean {
+class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
+    override canRename(link: Reactodia.Link): boolean {
         return link.typeId === 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
     }
 }

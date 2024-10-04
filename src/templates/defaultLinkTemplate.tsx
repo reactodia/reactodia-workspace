@@ -55,7 +55,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
-    const {model, view: {renameLinkHandler}} = useWorkspace();
+    const {model, view: {renameLinkProvider}} = useWorkspace();
 
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
     useKeyedSyncStore(
@@ -64,7 +64,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         model
     );
 
-    const renamedLabel = renameLinkHandler?.getLabel(link);
+    const renamedLabel = renameLinkProvider?.getLabel(link);
     let labelContent: JSX.Element | null = null;
     if (model.getLinkVisibility(link.typeId) === 'visible') {
         const textClass = `${CLASS_NAME}__label-text`;

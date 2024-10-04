@@ -78,7 +78,7 @@ export {
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
     type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter, ElementDecoratorResolver,
-    FindCanvasEvent, IriClickEvent, IriClickIntent, RenameLinkToLinkStateHandler,
+    FindCanvasEvent, IriClickEvent, IriClickIntent, RenameLinkToLinkStateProvider,
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 

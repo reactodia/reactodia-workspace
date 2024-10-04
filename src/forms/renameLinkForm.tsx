@@ -16,7 +16,7 @@ export interface RenameLinkFormProps {
 export function RenameLinkForm(props: RenameLinkFormProps) {
     const {link, onFinish} = props;
 
-    const {model, view: {renameLinkHandler}} = useWorkspace();
+    const {model, view: {renameLinkProvider}} = useWorkspace();
 
     const linkType = model.getLinkType(link.typeId);
     const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
@@ -28,12 +28,12 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
     );
 
     const [customLabel, setCustomLabel] = React.useState(
-        renameLinkHandler?.getLabel(link) ?? defaultLabel
+        renameLinkProvider?.getLabel(link) ?? defaultLabel
     );
 
     const onApply = () => {
-        if (renameLinkHandler) {
-            renameLinkHandler.setLabel(link, customLabel);
+        if (renameLinkProvider) {
+            renameLinkProvider.setLabel(link, customLabel);
         }
         onFinish();
     };

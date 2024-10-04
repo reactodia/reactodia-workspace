@@ -308,7 +308,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkHandler}, overlay} = useWorkspace();
+    const {view: {renameLinkProvider}, overlay} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -316,7 +316,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
         () => canvas.renderingState.getLinkLabelBounds(link)
     );
 
-    if (!(renameLinkHandler?.canRename(link) && labelBounds)) {
+    if (!(renameLinkProvider?.canRename(link) && labelBounds)) {
         return null;
     }
 

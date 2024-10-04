@@ -12,7 +12,7 @@ import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import {
-    TypeStyleResolver, LabelLanguageSelector, RenameLinkHandler,
+    TypeStyleResolver, LabelLanguageSelector, RenameLinkProvider,
 } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
@@ -72,7 +72,7 @@ export interface WorkspaceProps {
     /**
      * Provides a strategy to rename diagram links (change labels).
      */
-    renameLinkHandler?: RenameLinkHandler;
+    renameLinkProvider?: RenameLinkProvider;
     /**
      * Overrides how a single label gets selected from multiple of them based on target language.
      */
@@ -129,7 +129,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             metadataApi,
             validationApi,
             propertyEditor,
-            renameLinkHandler,
+            renameLinkProvider,
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
@@ -148,7 +148,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             defaultElementTemplate: StandardTemplate,
             defaultLinkTemplate: DefaultLinkTemplate,
             defaultLayout: defaultLayout ?? blockingDefaultLayout,
-            renameLinkHandler,
+            renameLinkProvider,
         });
 
         const editor = new EditorController({

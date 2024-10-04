@@ -226,7 +226,7 @@ export interface RoutedLink {
 /**
  * Provides a strategy to rename diagram links (change labels).
  */
-export interface RenameLinkHandler {
+export interface RenameLinkProvider {
     /**
      * Returns `true` if the target link has editable label.
      */
