@@ -18,16 +18,27 @@ import {
     LinkActionContext, LinkActionMoveEndpoint, LinkActionEdit, LinkActionDelete, LinkActionRename,
 } from './linkAction';
 
+/**
+ * Props for `HaloLink` component.
+ *
+ * @see HaloLink
+ */
 export interface HaloLinkProps {
     /**
+     * Margin for the highlight box under the selected link label.
+     *
      * @default 0
      */
     highlightMargin?: number;
     /**
+     * Size for each displayed link action button.
+     *
      * @default 20
      */
     buttonSize?: number;
     /**
+     * Margin between link action buttons based on the `dockIndex` order.
+     *
      * @default 5
      */
     buttonMargin?: number;
@@ -49,6 +60,8 @@ export interface HaloLinkProps {
 }
 
 /**
+ * Canvas widget component to display actions for the single selected diagram link.
+ *
  * @category Components
  */
 export function HaloLink(props: HaloLinkProps) {

@@ -39,6 +39,8 @@ import { EntityElement } from '../workspace';
 
 /**
  * Props for `Workspace` component.
+ *
+ * @see Workspace
  */
 export interface WorkspaceProps {
     /**
@@ -97,7 +99,9 @@ export interface WorkspaceProps {
      * Handler for a well-known workspace event.
      */
     onWorkspaceEvent?: (key: WorkspaceEventKey) => void;
-    /** @hidden */
+    /**
+     * Component children.
+     */
     children: React.ReactNode;
 }
 
@@ -106,6 +110,9 @@ const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
 const TYPE_STYLE_COLOR_SEED = 0x0BADBEEF;
 
 /**
+ * Top-level component which establishes workspace context, which stores
+ * graph data and provides means to display and interact with the diagram.
+ *
  * @category Components
  */
 export class Workspace extends React.Component<WorkspaceProps> {
@@ -197,6 +204,9 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     }
 
+    /**
+     * Returns top-level workspace context.
+     */
     getContext(): WorkspaceContext {
         return this.workspaceContext;
     }
@@ -400,13 +410,38 @@ function hashTypeIris(types: ReadonlyArray<ElementTypeIri>, seed = 0): number {
     return hash | 0;
 }
 
+/**
+ * Parameters which are passed to the workspace initialization callback.
+ *
+ * @see useLoadedWorkspace()
+ */
 export interface LoadedWorkspaceParams {
+    /**
+     * Top-level workspace context to use for initialization.
+     */
     readonly context: WorkspaceContext;
+    /**
+     * Cancellation signal which is aborted on the workspace unmount.
+     */
     readonly signal: AbortSignal;
 }
 
+/**
+ * Result of the workspace initialization hook.
+ *
+ * @see useLoadedWorkspace()
+ */
 export interface LoadedWorkspace {
+    /**
+     * Returns the top-level context for the mounted workspace via the hook.
+     *
+     * Throws an error if the workspace is not mounted yet.
+     */
     readonly getContext: () => WorkspaceContext;
+    /**
+     * Callback to pass as `ref` to the top-level workspace component
+     * to perform the initialization specified in the hook.
+     */
     readonly onMount: (workspace: Workspace | null) => void;
 }
 
@@ -415,6 +450,17 @@ export interface LoadedWorkspace {
  *
  * This function could be used to setup data provider, fetch initial data
  * or import existing diagram layout.
+ *
+ * **Example**:
+ * ```ts
+ * const {getContext, onMount} = useLoadedWorkspace();
+ * 
+ * return (
+ *     <Reactodia.Workspace ref={onMount}>
+ *         ...
+ *     </Reactodia.Workspace>
+ * );
+ * ```
  * 
  * @category Hooks
  */

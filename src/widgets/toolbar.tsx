@@ -8,17 +8,42 @@ import {
     ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
 } from './toolbarAction';
 
+/**
+ * Props for `Toolbar` component.
+ *
+ * @see Toolbar
+ */
 export interface ToolbarProps {
     /**
-     * Main menu content, in a form of `<ToolbarItem>` elements.
+     * Main menu content, in a form of `ToolbarAction` elements.
      *
      * If `null`, the menu toggle button will be hidden.
+     *
+     * **Default**:
+     * ```jsx
+     * <>
+     *     <ToolbarActionClearAll />
+     *     <ToolbarActionExport kind='exportRaster' />
+     *     <ToolbarActionExport kind='exportSvg' />
+     *     <ToolbarActionExport kind='print' />
+     * </>
+     * ```
      */
     menu?: React.ReactNode | null;
     /**
-     * Toolbar panel content, in a form of `<ToolbarItem>` or other elements.
+     * Toolbar panel content, in a form of `ToolbarAction` or other elements.
      *
      * If `null`, the panel will be hidden.
+     *
+     * **Default**:
+     * ```jsx
+     * <>
+     *     <ToolbarActionUndo />
+     *     <ToolbarActionRedo />
+     *     <ToolbarActionLayout />
+     *     <ToolbarLanguageSelector languages={props.languages} />
+     * </>
+     * ```
      */
     children?: React.ReactNode | null;
     /**
@@ -30,6 +55,8 @@ export interface ToolbarProps {
 const CLASS_NAME = 'reactodia-toolbar';
 
 /**
+ * Canvas widget component to display a simple toolbar with a dropdown menu.
+ *
  * @category Components
  */
 export function Toolbar(props: ToolbarProps) {
