@@ -9,6 +9,11 @@ import {
     RelationLink, RelationGroup, RelationGroupItem,
 } from './dataElements';
 
+/**
+ * Serialized diagram state in [JSON-LD](https://json-ld.org/) compatible format.
+ *
+ * @see serializeDiagram()
+ */
 export interface SerializedDiagram {
     '@context': any;
     '@type': 'Diagram';
@@ -16,6 +21,9 @@ export interface SerializedDiagram {
     linkTypeOptions?: ReadonlyArray<SerializedLinkOptions>;
 }
 
+/**
+ * Serialized state for a single link type on a diagram.
+ */
 export interface SerializedLinkOptions {
     '@type': 'LinkTypeOptions';
     property: LinkTypeIri;
@@ -23,12 +31,18 @@ export interface SerializedLinkOptions {
     showLabel?: boolean;
 }
 
+/**
+ * Serialized diagram layout, composed of elements and links.
+ */
 export interface SerializedLayout {
     '@type': 'Layout';
     elements: ReadonlyArray<SerializedLayoutElement | SerializedLayoutElementGroup>;
     links: ReadonlyArray<SerializedLayoutLink | SerializedLayoutLinkGroup>;
 }
 
+/**
+ * Serialized entity element state.
+ */
 export interface SerializedLayoutElement {
     '@type': 'Element';
     '@id': string;
@@ -38,6 +52,9 @@ export interface SerializedLayoutElement {
     elementState?: ElementTemplateState;
 }
 
+/**
+ * Serialized entity group state. 
+ */
 export interface SerializedLayoutElementGroup {
     '@type': 'ElementGroup';
     '@id': string;
@@ -46,12 +63,18 @@ export interface SerializedLayoutElementGroup {
     elementState?: ElementTemplateState;
 }
 
+/**
+ * Serialized entity group item state.
+ */
 export interface SerializedLayoutElementItem {
     '@type': 'ElementItem';
     iri: ElementIri;
     elementState?: ElementTemplateState;
 }
 
+/**
+ * Serialized relation link state.
+ */
 export interface SerializedLayoutLink {
     '@type': 'Link';
     '@id': string;
@@ -64,6 +87,9 @@ export interface SerializedLayoutLink {
     linkState?: LinkTemplateState;
 }
 
+/**
+ * Serialized relation group state.
+ */
 export interface SerializedLayoutLinkGroup {
     '@type': 'LinkGroup';
     '@id': string;
@@ -75,6 +101,9 @@ export interface SerializedLayoutLinkGroup {
     linkState?: LinkTemplateState;
 }
 
+/**
+ * Serialized relation group item state.
+ */
 export interface SerializedLayoutLinkItem {
     '@type': 'LinkItem';
     targetIri: ElementIri;
@@ -82,6 +111,9 @@ export interface SerializedLayoutLinkItem {
     linkState?: LinkTemplateState;
 }
 
+/**
+ * Makes an empty serialized diagram state.
+ */
 export function emptyDiagram(): SerializedDiagram {
     return {
         '@context': DIAGRAM_CONTEXT_URL_V1,
@@ -95,12 +127,22 @@ export function emptyDiagram(): SerializedDiagram {
     };
 }
 
+/**
+ * Raw diagram state to serialize.
+ *
+ * @see deserializeDiagram()
+ */
 export interface DeserializedDiagram {
     elements: ReadonlyArray<Element>;
     links: ReadonlyArray<Link>;
     linkTypeVisibility: ReadonlyMap<LinkTypeIri, LinkTypeVisibility>;
 }
 
+/**
+ * Exports diagram model state for [JSON-LD](https://json-ld.org/) compatible serialization.
+ *
+ * @see deserializeDiagram()
+ */
 export function serializeDiagram(diagram: DeserializedDiagram): SerializedDiagram {
     const {elements, links, linkTypeVisibility} = diagram;
     let linkTypeOptions: SerializedLinkOptions[] | undefined;
@@ -190,11 +232,19 @@ function serializeLayout(
     return {'@type': 'Layout', elements, links};
 }
 
+/**
+ * Options for diagram deserialization.
+ */
 export interface DeserializeDiagramOptions {
     readonly preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
     readonly markLinksAsLayoutOnly?: boolean;
 }
 
+/**
+ * Imports diagram model state from the serialized form.
+ *
+ * @see serializeDiagram()
+ */
 export function deserializeDiagram(
     diagram: SerializedDiagram,
     options: DeserializeDiagramOptions = {}

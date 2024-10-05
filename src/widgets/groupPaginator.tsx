@@ -1,19 +1,44 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+/**
+ * Props for `GroupPaginator` component.
+ *
+ * @see GroupPaginator
+ */
 export interface GroupPaginatorProps {
+    /**
+     * Current page index.
+     */
     readonly pageIndex: number;
+    /**
+     * Total page count.
+     */
     readonly pageCount: number;
+    /**
+     * Handler to change the page.
+     */
     readonly onChangePage: (page: number) => void;
 
+    /**
+     * Current page size.
+     */
     readonly pageSize: number;
+    /**
+     * Selectable page sizes.
+     */
     readonly pageSizes: ReadonlyArray<number>;
+    /**
+     * Handler to change the page size.
+     */
     readonly onChangePageSize: (size: number) => void;
 }
 
 const CLASS_NAME = 'reactodia-group-paginator';
 
 /**
+ * Utility component to display paginator for an element group.
+ *
  * @category Components
  */
 export function GroupPaginator(props: GroupPaginatorProps) {

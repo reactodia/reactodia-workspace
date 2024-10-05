@@ -137,6 +137,7 @@ export {
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
 } from './widgets/connectionsMenu';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
+export { GroupPaginator, GroupPaginatorProps } from './widgets/groupPaginator';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
