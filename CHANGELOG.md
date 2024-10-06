@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- JSDoc for almost all exported components, services, interfaces and functions;
+
+### Changed
+- **[Breaking]** Change `placeElementsAround()` function into `placeElementsAroundTarget()` command;
+- **[Breaking]** Replace `LinkTemplateProps.typeIndex` with `markerSource` and `markerTarget` properties;
+- **[Breaking]** Replace `EditableLabel` on the link template by a separate `RenameLinkProvider`;
+- **[Breaking]** Replace `GenerateID.{forElement, forLink}` with static methods `Element.generateId()` and `Link.generateId()`;
+
+### Removed
+- Remove unused `LinkRedrawLevel` type with corresponding parameters;
+- Deprecate `SemanticTypeStyles` and `OntologyLinkTemplates`;
+- Deprecate `WorkspaceProps.onIriClick` handler and related `SharedCanvasState.onIriClick()` method;
+- Deprecate `DataDiagramModel.requestLinksOfType()` which is replaced by `requestLinks()` method;
 
 ## [0.25.1] - 2024-08-31
 ### Fixed
