@@ -1,5 +1,10 @@
 import * as React from 'react';
 
+/**
+ * Props for `DraggableHandle` component.
+ *
+ * @see DraggableHandle
+ */
 export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElement> {
     onBeginDragHandle: (e: React.MouseEvent<HTMLDivElement>) => void;
     onDragHandle: (e: MouseEvent, dx: number, dy: number) => void;
@@ -7,6 +12,8 @@ export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElemen
 }
 
 /**
+ * Utility component for a draggable handle.
+ *
  * @category Components
  */
 export class DraggableHandle extends React.Component<DraggableHandleProps> {

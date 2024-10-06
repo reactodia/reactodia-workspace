@@ -33,6 +33,7 @@ type ScheduleLabelMeasure = (
     clear: boolean
 ) => void;
 
+/** @hidden */
 interface MeasurableLabel {
     readonly owner: Link | undefined;
     measureSize(): Size | undefined;
@@ -320,16 +321,35 @@ function LinkView(props: LinkViewProps) {
     );
 }
 
+/**
+ * Props for `LinkPath` component.
+ *
+ * @see LinkPath
+ */
 export interface LinkPathProps {
+    /**
+     * Link geometry represented as an SVG path string.
+     */
     path: string;
+    /**
+     * Additional attributes for the SVG path.
+     */
     pathProps?: React.SVGAttributes<SVGPathElement>;
+    /**
+     * SVG path marker for the source endpoint of the link.
+     */
     markerSource?: string;
+    /**
+     * SVG path marker for the target endpoint of the link.
+     */
     markerTarget?: string;
 }
 
 const LINK_PATH_CLASS = 'reactodia-link-path';
 
 /**
+ * Component to render link geometry as an SVG path.
+ *
  * @category Components
  */
 export function LinkPath(props: LinkPathProps) {
@@ -345,32 +365,75 @@ export function LinkPath(props: LinkPathProps) {
     </>;
 }
 
-function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `reactodia-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
-}
-
+/**
+ * Props for `LinkLabel` component.
+ *
+ * @see LinkLabel
+ */
 export interface LinkLabelProps {
+    /**
+     * Owner link to display label over.
+     */
     link: Link;
+    /**
+     * Whether the label should be considered as primary one for the link.
+     *
+     * Primary label bounds are available via `RenderingState.getLinkLabelBounds()`.
+     */
     primary?: boolean;
-
+    /**
+     * Label position in paper coordinates.
+     */
     position: Vector;
     /**
+     * Vertical row shift for the label
+     * (e.g. `-1` for one row above, `1` for one row below).
+     *
      * @default 0
      */
     line?: number;
-
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
     /**
+     * Label text alignment relative to its position.
+     *
      * @default "middle"
      */
     textAnchor?: 'start' | 'middle' | 'end';
+    /**
+     * Additional CSS class for the SVG rect used as underlying text background.
+     */
     rectClass?: string;
+    /**
+     * Additional CSS styles for the SVG rect used as underlying text background.
+     */
     rectStyle?: React.CSSProperties;
+    /**
+     * Additional CSS class for the SVG text used to display the label text.
+     */
     textClass?: string;
+    /**
+     * Additional CSS styles for the SVG text used to display the label text.
+     */
     textStyle?: React.CSSProperties;
-
+    /**
+     * Title for the label.
+     */
     title?: string;
+    /**
+     * Label text content.
+     *
+     * This content is nested in SVG `<text>` element, so only plain text children
+     * or elements like `<tspan>` should be specified.
+     */
     content?: React.ReactNode;
+    /**
+     * Additional content rendered with the label.
+     *
+     * This content is rendered in the SVG context.
+     */
     children?: React.ReactNode;
 }
 
@@ -384,6 +447,8 @@ const GROUPED_LABEL_MARGIN = 2;
 const DEFAULT_TEXT_ANCHOR = 'middle';
 
 /**
+ * Component to display a text label over a diagram link.
+ *
  * @category Components
  */
 export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
@@ -400,6 +465,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         this.state = {width: 0, height: 0};
     }
 
+    /** @hidden */
     get owner(): Link | undefined {
         const {link, primary} = this.props;
         return primary ? link : undefined;
@@ -444,6 +510,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         );
     }
 
+    /** @hidden */
     measureSize(): Size | undefined {
         if (!this.text) {
             return undefined;
@@ -452,6 +519,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         return {width, height};
     }
 
+    /** @hidden */
     applySize({width, height}: Size): void {
         if (!(
             width === this.state.width &&
@@ -461,6 +529,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
         }
     }
 
+    /** @hidden */
     computeBounds({width, height}: Size): Rect {
         const {position: {x, y}, textAnchor = DEFAULT_TEXT_ANCHOR} = this.props;
 
@@ -513,20 +582,44 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
     }
 }
 
+/**
+ * Props for `LinkVertices` component.
+ *
+ * @see LinkVertices
+ */
 export interface LinkVerticesProps {
+    /**
+     * Target link to manipulate vertices of.
+     */
     linkId: string;
+    /**
+     * Vertices to display and interact with.
+     */
     vertices: ReadonlyArray<Vector>;
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
     /**
+     * Radius for each vertex in px.
+     *
      * @default 10
      */
     vertexRadius?: number;
+    /**
+     * Fill color for each vertex.
+     */
     fill?: string;
 }
 
 const LINK_VERTICES_CLASS = 'reactodia-link-vertices';
 
 /**
+ * Component to render interactive vertices of the link geometry.
+ *
+ * Each displayed vertex can be moved or deleted which
+ * adds a command to the command history.
+ *
  * @category Components
  */
 export function LinkVertices(props: LinkVerticesProps) {
@@ -725,4 +818,8 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
 
         marker.appendChild(path);
     };
+}
+
+function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
+    return `reactodia-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
 }

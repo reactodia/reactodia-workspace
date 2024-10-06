@@ -1,9 +1,25 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+/**
+ * Props for `Dropdown` component.
+ *
+ * @see Dropdown
+ */
 export interface DropdownProps {
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Title for the toggle menu button.
+     */
     title?: string;
+    /**
+     * `DropdownItem` list items for the dropdown menu.
+     *
+     * @see DropdownItem
+     */
     children: React.ReactNode;
 }
 
@@ -15,6 +31,8 @@ interface DropdownContext {
 const DropdownContext = React.createContext<DropdownContext | null>(null);
 
 /**
+ * Utility component to display a dropdown menu with a list of items.
+ *
  * @category Components
  */
 export function Dropdown(props: DropdownProps) {
@@ -60,17 +78,41 @@ export function Dropdown(props: DropdownProps) {
     );
 }
 
+/**
+ * Props for `DropdownItem` component.
+ *
+ * @see DropdownItem
+ */
 export interface DropdownItemProps {
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Title for the list item.
+     */
     title?: string;
+    /**
+     * Whether the menu item is disabled for selection.
+     *
+     * @default false
+     */
     disabled?: boolean;
+    /**
+     * Handler for the menu item selection.
+     */
     onSelect?: () => void;
+    /**
+     * Menu item content.
+     */
     children: React.ReactNode;
 }
 
 const ITEM_CLASS_NAME = 'reactodia-dropdown-item';
 
 /**
+ * Utility component to display a single dropdown menu item.
+ *
  * @category Components
  */
 export function DropdownItem(props: DropdownItemProps) {
@@ -98,7 +140,10 @@ export function DropdownItem(props: DropdownItemProps) {
 }
 
 /**
+ * React hook to check if a component is rendered inside a dropdown menu.
+ *
  * @category Hooks
+ * @see Dropdown
  */
 export function useInsideDropdown(): boolean {
     const menuContext = React.useContext(DropdownContext);

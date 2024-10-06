@@ -12,55 +12,96 @@ import {
 } from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Props for `Navigator` component.
+ *
+ * @see Navigator
+ */
 export interface NavigatorProps {
     /**
+     * Whether the navigator should be initially expanded.
+     *
      * @default true
      */
     expanded?: boolean;
     /**
+     * Horizontal size of the navigator in px.
+     * 
      * @default 300
      */
     width?: number;
     /**
+     * Vertical size of the navigator in px.
+     *
      * @default 160
      */
     height?: number;
     /**
+     * Fraction of the diagram content size to add as padding to the minimap.
+     *
      * @default 0.2
      */
     scalePadding?: number;
     /**
+     * CSS color for the minimap underlying background.
+     *
      * @default "#F5F5F5"
      */
     backgroundFill?: string;
     /**
+     * CSS color for the scrollable pane background.
+     *
      * @default "#F5F5F5"
      */
     scrollablePaneFill?: string;
     /**
+     * CSS color for the viewport area background.
+     *
      * @default "#FFFFFF"
      */
     viewportFill?: string;
     /**
+     * Stroke style for the viewport area border.
+     *
      * @default {color: "#EEEEEE", width: 2}
      */
     viewportStroke?: NavigatorStrokeStyle;
     /**
+     * Stroke style for the viewport area overflow border
+     * (displayed when the viewport is cutoff at the minimap border).
+     *
      * @default {color: "#EEEEEE", width: 2, dash: [5, 5]}
      */
     overflowStroke?: NavigatorStrokeStyle;
 }
 
+/**
+ * Stroke style for the lines drawn in the navigator.
+ */
 export interface NavigatorStrokeStyle {
-    /** @default "transparent" */
+    /**
+     * Stroke color.
+     *
+     * @default "transparent"
+     */
     readonly color?: string;
-    /** @default 1 */
+    /**
+     * Stroke thickness in px.
+     *
+     * @default 1
+     */
     readonly width?: number;
-    /** @default [] */
+    /**
+     * Stroke [dash array](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray).
+     *
+     * @default []
+     */
     readonly dash?: ReadonlyArray<number>;
 }
 
 /**
+ * Canvas widget component to display a minimap of the diagram contents.
+ *
  * @category Components
  */
 export function Navigator(props: NavigatorProps) {

@@ -6,19 +6,47 @@ import { ElementModel } from '../data/model';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Props for `ListElementView` component.
+ *
+ * @see ListElementView
+ */
 export interface ListElementViewProps {
+    /**
+     * Entity data to display.
+     */
     element: ElementModel;
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Text sub-string to highlight in the displayed entity.
+     */
     highlightText?: string;
+    /**
+     * Whether to disable item selection and ability to drag and drop it.
+     */
     disabled?: boolean;
+    /**
+     * Whether the list item is selected.
+     */
     selected?: boolean;
+    /**
+     * Handler for a click on the list item.
+     */
     onClick?: (event: React.MouseEvent<any>, model: ElementModel) => void;
+    /**
+     * Handler for a drag start event of the list item.
+     */
     onDragStart?: React.HTMLProps<HTMLElement>['onDragStart'];
 }
 
 const CLASS_NAME = 'reactodia-list-element-view';
 
 /**
+ * Utility component to display an entity as a draggable list item.
+ *
  * @category Components
  */
 export function ListElementView(props: ListElementViewProps) {
@@ -66,6 +94,16 @@ export function ListElementView(props: ListElementViewProps) {
 }
 
 /**
+ * Configure [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent) data to
+ * contain a list of entity IRIs.
+ *
+ * The data uses `application/x-reactodia-elements` format with a `text` format fallback.
+ *
+ * A list of entity IRIs is represented as serialized JSON array of IRI strings.
+ *
+ * When the configured drag data is dropped on the diagram canvas, corresponding
+ * entities will be added to it.
+ *
  * @category Utilities
  */
 export function startDragElements(e: React.DragEvent<unknown>, iris: ReadonlyArray<string>) {
@@ -82,6 +120,13 @@ const DEFAULT_HIGHLIGHT_PROPS: React.HTMLProps<HTMLSpanElement> = {
 };
 
 /**
+ * Renders a text span with all occurrences of the specified sub-string
+ * highlighted.
+ * 
+ * @param text source text to display
+ * @param substring sub-string to highlight each instance of inside the `text`
+ * @param highlightProps props to pass to each `<span>` for a sub-string occurrence
+ *
  * @category Utilities
  */
 export function highlightSubstring(

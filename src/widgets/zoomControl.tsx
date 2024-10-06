@@ -4,11 +4,18 @@ import classnames from 'classnames';
 import { useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
+/**
+ * Props for `ZoomControl` component.
+ *
+ * @see ZoomControl
+ */
 export interface ZoomControlProps {}
 
 const CLASS_NAME = 'reactodia-zoom-control';
 
 /**
+ * Canvas widget component to display zoom controls (zoom-in, zoom-out, zoom-to-fit).
+ *
  * @category Components
  */
 export function ZoomControl(props: ZoomControlProps) {

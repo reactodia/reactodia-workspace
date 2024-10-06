@@ -4,7 +4,7 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 
 import { ElementIri, ElementModel, LinkModel } from '../data/model';
-import { GenerateID, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { Element, VoidElement } from '../diagram/elements';
@@ -24,17 +24,44 @@ export interface EditLayerProps {
     onFinishEditing: () => void;
 }
 
+/**
+ * Describes a graph authoring operation from dragging a link endpoint.
+ */
 export type DragEditOperation = DragEditConnect | DragEditMoveEndpoint;
 
+/**
+ * Graph authoring operation to connect an entity element with some other element.
+ */
 export interface DragEditConnect {
+    /**
+     * Graph authoring drag operation type.
+     */
     readonly mode: 'connect';
+    /**
+     * Target entity element to drag a relation link from.
+     */
     readonly source: EntityElement;
+    /**
+     * Initial position for the dragged link endpoint on paper.
+     */
     readonly point: Vector;
 }
 
+/**
+ * Graph authoring operation to move relation link endpoint to another element.
+ */
 export interface DragEditMoveEndpoint {
+    /**
+     * Graph authoring drag operation type.
+     */
     readonly mode: 'moveSource' | 'moveTarget';
+    /**
+     * Target relation link to drag an endpoint of.
+     */
     readonly link: RelationLink;
+    /**
+     * Initial position for the dragged link endpoint on paper.
+     */
     readonly point: Vector;
 }
 
@@ -140,7 +167,6 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
         const temporaryElement = this.createTemporaryElement(point);
         const linkTemplate = new RelationLink({
-            id: GenerateID.forLink(),
             sourceId: mode === 'moveSource' ? temporaryElement.id : sourceId,
             targetId: mode === 'moveTarget' ? temporaryElement.id : targetId,
             data: {

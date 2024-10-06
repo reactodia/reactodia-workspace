@@ -15,19 +15,39 @@ import { EditorController } from '../editor/editorController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Represents rendering context for the link action.
+ */
 export interface LinkActionContext {
+    /**
+     * Target link to display action for.
+     */
     readonly link: Link;
+    /**
+     * Action button size in px.
+     */
     readonly buttonSize: number;
+    /**
+     * Calculates action button position as a CSS style properties.
+     */
     readonly getPosition: (
         side: 'source' | 'target',
         index: number
     ) => { top: number; left: number };
+    /**
+     * Calculates a link line angle at the action button position
+     * in degrees.
+     */
     readonly getAngleInDegrees: (side: 'source' | 'target') => number;
 }
 
 export const LinkActionContext = React.createContext<LinkActionContext | null>(null);
 
 /**
+ * React hook to get rendering context for the link action.
+ *
+ * Throws an error if called outside `HaloLink` component.
+ *
  * @category Hooks
  */
 export function useLinkActionContext(): LinkActionContext {
@@ -38,23 +58,61 @@ export function useLinkActionContext(): LinkActionContext {
     return context;
 }
 
+/**
+ * Base props for link action components.
+ *
+ * @see LinkAction
+ */
 export interface LinkActionStyleProps {
+    /**
+     * Link endpoint to place the action.
+     */
     dockSide: 'source' | 'target';
+    /**
+     * Place shift for the action button from the `dockSide` endpoint
+     * towards another endpoint (e.g. `1` for one place towards link target
+     * if `dockSide` is `source).
+     */
     dockIndex: number;
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Title for the action button.
+     */
     title?: string;
 }
 
+/**
+ * Props for `LinkAction` component.
+ *
+ * @see LinkAction
+ */
 export interface LinkActionProps extends LinkActionStyleProps {
+    /**
+     * Whether the action is disabled.
+     */
     disabled?: boolean;
+    /**
+     * Handler to call when the action is selected.
+     */
     onSelect?: () => void;
+    /**
+     * Raw handler for mouse down event on the action button.
+     */
     onMouseDown?: (e: React.MouseEvent) => void;
+    /**
+     * Action content.
+     */
     children?: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-link-action';
 
 /**
+ * Base component to display an action on the selected link from `HaloLink`.
+ *
  * @category Components
  */
 export function LinkAction(props: LinkActionProps) {
@@ -72,9 +130,16 @@ export function LinkAction(props: LinkActionProps) {
     );
 }
 
+/**
+ * Props for `LinkActionSpinner` component.
+ *
+ * @see LinkActionSpinner
+ */
 export interface LinkActionSpinnerProps extends LinkActionStyleProps {}
 
 /**
+ * Link action component to display a loading spinner.
+ *
  * @category Components
  */
 export function LinkActionSpinner(props: LinkActionStyleProps) {
@@ -89,9 +154,18 @@ export function LinkActionSpinner(props: LinkActionStyleProps) {
     );
 }
 
+/**
+ * Props for `LinkActionEdit` component.
+ *
+ * @see LinkActionEdit
+ */
 export interface LinkActionEditProps extends LinkActionStyleProps {}
 
 /**
+ * Link action component to start editing the link.
+ *
+ * This action is visible only when graph authoring mode is active.
+ *
  * @category Components
  */
 export function LinkActionEdit(props: LinkActionEditProps) {
@@ -166,9 +240,20 @@ function useCanEditLink(
     return canEdit;
 }
 
+/**
+ * Props for `LinkActionDelete` component.
+ *
+ * @see LinkActionDelete
+ */
 export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 
 /**
+ * Link action component to delete the link.
+ *
+ * This action is visible only when graph authoring mode is active.
+ *
+ * Deleting a link adds a command to the command history.
+ *
  * @category Components
  */
 export function LinkActionDelete(props: LinkActionDeleteProps) {
@@ -246,9 +331,21 @@ function useCanDeleteLink(
     return canDelete;
 }
 
+/**
+ * 
+ */
 export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 'dockIndex'> {}
 
 /**
+ * Link action component to change the relation link by moving its endpoint
+ * to another entity element.
+ *
+ * The changed endpoint is specified via `dockSide` prop.
+ *
+ * This action is visible only when graph authoring mode is active.
+ *
+ * Changing a link adds a command to the command history.
+ *
  * @category Components
  */
 export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
@@ -296,19 +393,27 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     );
 }
 
-export interface LinkActionRenameProps {
-    className?: string;
-    title?: string;
-}
+/**
+ * Props for `LinkActionRename` component.
+ *
+ * @see LinkActionRename
+ */
+export interface LinkActionRenameProps
+    extends Pick<LinkActionStyleProps, 'className' | 'title'> {}
 
 /**
+ * Link action component to rename a link (change its label).
+ *
+ * This action is visible only when `RenameLinkProvider.canRename()` returns `true`
+ * for the selected link.
+ *
  * @category Components
  */
 export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkHandler}, overlay} = useWorkspace();
+    const {view: {renameLinkProvider}, overlay} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -316,7 +421,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
         () => canvas.renderingState.getLinkLabelBounds(link)
     );
 
-    if (!(renameLinkHandler?.canRename(link) && labelBounds)) {
+    if (!(renameLinkProvider?.canRename(link) && labelBounds)) {
         return null;
     }
 

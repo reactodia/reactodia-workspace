@@ -25,34 +25,110 @@ import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../works
 import { highlightSubstring } from './listElementView';
 import { SearchResults } from './searchResults';
 
+/**
+ * Props for `ConnectionsMenu` component.
+ *
+ * @see ConnectionsMenu
+ */
 export interface ConnectionsMenuProps {
+    /**
+     * Event bus to listen commands for this component.
+     */
     commands: Events<ConnectionsMenuCommands>;
+    /**
+     * Whether to open (connected by) "All" link type by default.
+     *
+     * @default false
+     */
     openAllByDefault?: boolean;
+    /**
+     * Smart link type suggestion provider when searching by the link type label.
+     */
     suggestProperties?: PropertySuggestionHandler;
+    /**
+     * Event bus to send commands to `InstancesSearch` component.
+     */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
+/**
+ * Events for `ConnectionsMenu` event bus.
+ *
+ * @see ConnectionsMenu
+ */
 export interface ConnectionsMenuCommands {
+    /**
+     * Can be triggered to open connections menu for the target elements.
+     */
     show: {
+        /**
+         * Target diagram elements to navigate from.
+         */
         readonly targets: ReadonlyArray<Element>;
+        /**
+         * Whether to open (connected by) "All" link type.
+         *
+         * @default false
+         */
         readonly openAll?: boolean;
     };
 }
 
+/**
+ * Provides smart suggestions when searching by the link type label.
+ *
+ * @see ConnectionsMenuProps.suggestProperties
+ */
 export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<PropertyScore[]>;
+
+/**
+ * Parameters for the smart link type suggestion handler.
+ *
+ * @see PropertySuggestionHandler
+ */
 export interface PropertySuggestionParams {
+    /**
+     * Target connected entity IRI.
+     */
     elementId: string;
+    /**
+     * Link type label search token.
+     */
     token: string;
+    /**
+     * A collection of possible link type IRIs.
+     */
     properties: readonly string[];
+    /**
+     * Current diagram model data language.
+     */
     lang: string;
+    /**
+     * Cancellation signal.
+     */
     signal: AbortSignal | undefined;
 }
+
+/**
+ * Result entry for the smart link type suggestion handler.
+ *
+ * @see PropertySuggestionHandler
+ */
 export interface PropertyScore {
+    /**
+     * Link type IRI.
+     */
     propertyIri: string;
+    /**
+     * Suggestion score (higher is more suggested for the top positions).
+     */
     score: number;
 }
 
 /**
+ * Canvas widget component to explore and navigate the graph by adding
+ * connected entities to the diagram.
+ *
  * @category Components
  */
 export function ConnectionsMenu(props: ConnectionsMenuProps) {

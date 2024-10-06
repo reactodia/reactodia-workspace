@@ -23,24 +23,73 @@ import { boundsOf, EntityElement, EntityGroup } from '../workspace';
 const DIRECTION_IN_ICON = require('@images/direction-in.svg');
 const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
 
+/**
+ * Props for `InstancesSearch` component.
+ *
+ * @see InstancesSearch
+ */
 export interface InstancesSearchProps {
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Event bus to listen commands for this component.
+     */
     commands: Events<InstancesSearchCommands>;
 }
 
+/**
+ * Events for `InstancesSearch` event bus.
+ */
 export interface InstancesSearchCommands {
-    setCriteria: { readonly criteria: SearchCriteria };
+    /**
+     * Can be triggered to set filter criteria and initiate the search.
+     */
+    setCriteria: {
+        /**
+         * Filter criteria to use for the search.
+         */
+        readonly criteria: SearchCriteria;
+    };
 }
 
+/**
+ * A filter criteria for the entity lookup from a `DataProvider`.
+ *
+ * @see DataProviderLookupParams
+ */
 export interface SearchCriteria {
+    /**
+     * Filter by a text lookup.
+     */
     readonly text?: string;
+    /**
+     * Filter by an element type.
+     */
     readonly elementType?: ElementTypeIri;
+    /**
+     * Filter by having a connected element with specified IRI.
+     */
     readonly refElement?: ElementIri;
+    /**
+     * Filter by connection link type.
+     *
+     * Only applicable when `refElement` is set.
+     */
     readonly refElementLink?: LinkTypeIri;
+    /**
+     * Reference element link type direction ('in' | 'out').
+     * 
+     * Only when `refElementLink` is set.
+     */
     readonly linkDirection?: 'in' | 'out';
 }
 
 /**
+ * Component to search for entities by various filter criteria
+ * to add them as elements to the diagram.
+ *
  * @category Components
  */
 export function InstancesSearch(props: InstancesSearchProps) {

@@ -20,15 +20,27 @@ import {
     SelectionActionExpand, SelectionActionConnections, SelectionActionGroup,
 } from './selectionAction';
 
+/**
+ * Props for `Selection` component.
+ *
+ * @see Selection
+ */
 export interface SelectionProps {
     /**
+     * Margin for the displayed bounding box over all the selected cells.
+     *
      * @default 5
      */
     boxMargin?: number;
     /**
+     * Margin for the displayed highlight box over each selected cell.
+     *
      * @default 2
      */
     itemMargin?: number;
+    /**
+     * Event bus to send commands to `ConnectionMenu` component.
+     */
     connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
     /**
      * `SelectionAction` items representing available actions on the selected elements.
@@ -53,6 +65,8 @@ export interface SelectionProps {
 const CLASS_NAME = 'reactodia-selection';
 
 /**
+ * Canvas widget component for rectangular element selection on the diagram.
+ *
  * @category Components
  */
 export function Selection(props: SelectionProps) {

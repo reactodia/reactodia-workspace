@@ -8,9 +8,21 @@ import {
     FetchOperationTypeToTarget,
 } from './dataFetcher';
 
+/**
+ * Props for `WithFetchStatus` component.
+ */
 export interface WithFetchStatusProps<T extends FetchOperationTargetType> {
+    /**
+     * Fetch operation type.
+     */
     type: T;
+    /**
+     * Fetch operation target.
+     */
     target: FetchOperationTypeToTarget[T];
+    /**
+     * Decorated element.
+     */
     children: React.ReactElement<{ className?: string }>;
 }
 
@@ -23,7 +35,17 @@ enum Status {
 const CLASS_NAME = 'reactodia-fetch-status';
 
 /**
+ * Decorator component that styles the child element based on the fetching status
+ * of the graph operation target.
+ *
+ * Depending on the fetch status, the child element will be rendered
+ * with an additional CSS class:
+ *   - none or finished - no additional classes;
+ *   - loading - `reactodia-fetch-status--loading`;
+ *   - failed - `reactodia-fetch-status--error`.
+ *
  * @category Components
+ * @see FetchOperation
  */
 export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;

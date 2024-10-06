@@ -22,35 +22,133 @@ import {
 } from './workspaceLayout';
 import { WorkspaceRoot } from './workspaceRoot';
 
+/**
+ * Props for `DefaultWorkspace` component.
+ *
+ * @see DefaultWorkspace
+ */
 export interface DefaultWorkspaceProps {
     /**
-     * **Default**: `{defaultSize: 275}`
+     * Props for the left layout column of the default workspace.
+     *
+     * @default {defaultSize: 275}
      */
     leftColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
     /**
-     * **Default**: `{defaultSize: 275, defaultCollapsed: true}`
+     * Props for the right layout column of the default workspace.
+     *
+     * @default {defaultSize: 275, defaultCollapsed: true}
      */
     rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
 
+    /**
+     * Props for the `Canvas` component.
+     *
+     * @see Canvas
+     */
     canvas?: CanvasProps;
+    /**
+     * Props for the `ConnectionMenu` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see ConnectionsMenu
+     */
     connectionsMenu?: Omit<ConnectionsMenuProps, 'commands'> | null;
+    /**
+     * Props for the `DropOnCanvas` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see DropOnCanvas
+     */
     dropOnCanvas?: DropOnCanvasProps | null;
+    /**
+     * Props for the `Halo` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see Halo
+     */
     halo?: HaloProps | null;
+    /**
+     * Props for the `HaloLink` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see HaloLink
+     */
     haloLink?: HaloLinkProps | null;
+    /**
+     * Props for the `Selection` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see Selection
+     */
     selection?: SelectionProps | null;
+    /**
+     * Props for the `Navigator` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see Navigator
+     */
     navigator?: NavigatorProps | null;
+    /**
+     * Props for the `Toolbar` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see Toolbar
+     */
     toolbar?: ToolbarProps | null;
+    /**
+     * Props for the `ZoomControl` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see ZoomControl
+     */
     zoomControl?: ZoomControlProps | null;
 
+    /**
+     * Props for the `ClassTree` component.
+     *
+     * @see ClassTree
+     */
     classTree?: ClassTreeProps;
+    /**
+     * Props for the `InstancesSearch` component.
+     *
+     * @see InstancesSearch
+     */
     instancesSearch?: Omit<InstancesSearchProps, 'commands'>;
+    /**
+     * Props for the `LinkTypesToolbox` component.
+     *
+     * @see LinkTypesToolbox
+     */
     linkToolbox?: LinkTypesToolboxProps;
 
+    /**
+     * Event bus to connect `ConnectionMenu` to other components.
+     *
+     * If not specified, an internal instance will be automatically created.
+     */
     connectionsMenuCommands?: Events<ConnectionsMenuCommands> & EventTrigger<ConnectionsMenuCommands>;
+    /**
+     * Event bus to connect `InstancesSearch` to other components.
+     *
+     * If not specified, an internal instance will be automatically created.
+     */
     instancesSearchCommands?: Events<InstancesSearchCommands> & EventTrigger<InstancesSearchCommands>;
 }
 
 /**
+ * Component with default ready-to-use workspace with a canvas and
+ * all components and widgets pre-configured.
+ *
  * @category Components
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {

@@ -13,9 +13,17 @@ import { EntityElement } from '../editor/dataElements';
 
 import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Props for `DropOnCanvas` component.
+ *
+ * @see DropOnCanvas
+ */
 export interface DropOnCanvasProps {}
 
 /**
+ * Canvas widget component to allow creating entity elements on the diagram
+ * by dragging then dropping a URL (IRI) to the canvas.
+ *
  * @category Components
  */
 export function DropOnCanvas(props: DropOnCanvasProps) {

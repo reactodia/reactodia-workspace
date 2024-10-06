@@ -33,7 +33,11 @@ export {
 } from './data/decorated/indexedDbCachedProvider';
 export { MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
 export * from './data/rdf/rdfDataProvider';
-/** @category Core */
+/**
+ * Utility namespace to work with [RDF.js model](https://rdf.js.org/data-model-spec/).
+ *
+ * @category Core
+ */
 export * as Rdf from './data/rdf/rdfModel';
 export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
@@ -78,7 +82,7 @@ export {
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
     type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter, ElementDecoratorResolver,
-    FindCanvasEvent, IriClickEvent, IriClickIntent, RenameLinkToLinkStateHandler,
+    FindCanvasEvent, IriClickEvent, IriClickIntent, RenameLinkToLinkStateProvider,
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
@@ -137,6 +141,7 @@ export {
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
 } from './widgets/connectionsMenu';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
+export { GroupPaginator, GroupPaginatorProps } from './widgets/groupPaginator';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {

@@ -16,12 +16,25 @@ import {
     SelectionActionEstablishLink,
 } from './selectionAction';
 
+/**
+ * Props for `Halo` component.
+ *
+ * @see Halo
+ */
 export interface HaloProps {
     /**
+     * Margin between the element and surrounding actions.
+     *
      * @default 5
      */
     margin?: number;
+    /**
+     * Event bus to send commands to `ConnectionMenu` component.
+     */
     connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
+    /**
+     * Event bus to send commands to `InstancesSearch` component.
+     */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
     /**
      * `SelectionAction` items representing available actions on the selected element.
@@ -47,6 +60,8 @@ export interface HaloProps {
 }
 
 /**
+ * Canvas widget component to display actions for the single selected diagram element.
+ *
  * @category Components
  */
 export function Halo(props: HaloProps) {

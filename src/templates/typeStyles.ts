@@ -11,7 +11,20 @@ const eventIcon = require('@images/semantic/event.svg');
 const objectIcon = require('@images/semantic/object.svg');
 
 /**
+ * Built-in type style provider for Semantic Web element types:
+ *   - Class: `owl:Class`, `rdfs:Class`
+ *   - Object property: `owl:ObjectProperty`
+ *   - Datatype property: `owl:DatatypeProperty`
+ *   - Person: `foaf:Person`, `wd:Q5`
+ *   - Country: `wd:Q6256`
+ *   - Organization: `schema:Organization`, `dbpedia:Organisation`,
+ *     `foaf:Organization`, `wd:Q43229`
+ *   - Location: `wd:Q618123`
+ *   - Event: `wd:Q1190554`
+ *   - Object: `wd:Q488383`
+ *
  * @category Constants
+ * @deprecated These styles will be removed in later versions
  */
 export const SemanticTypeStyles: TypeStyleResolver = types => {
     if (types.indexOf('http://www.w3.org/2002/07/owl#Class') !== -1 ||

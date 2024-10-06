@@ -13,6 +13,12 @@ import { useWorkspace } from '../workspace/workspaceContext';
 const CLASS_NAME = 'reactodia-classic-template';
 
 /**
+ * Element template component to display component in the classic style.
+ *
+ * This classic "look and feel" was used for elements before v0.8.0
+ *
+ * The template does not support displaying entity groups.
+ *
  * @category Components
  */
 export function ClassicTemplate(props: TemplateProps) {

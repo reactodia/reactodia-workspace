@@ -7,7 +7,7 @@ import { TemplateProperties } from '../data/schema';
 import type {
     CanvasApi, CanvasDropEvent, CanvasWidgetDescription,
 } from './canvasApi';
-import type { ElementTemplate, LinkTemplate, RenameLinkHandler } from './customization';
+import type { ElementTemplate, LinkTemplate, RenameLinkProvider } from './customization';
 import { Element, Link } from './elements';
 import type { LayoutFunction } from './layout';
 
@@ -85,7 +85,7 @@ export interface SharedCanvasStateOptions {
     defaultElementTemplate: ElementTemplate;
     defaultLinkTemplate: LinkTemplate;
     defaultLayout: LayoutFunction;
-    renameLinkHandler?: RenameLinkHandler;
+    renameLinkProvider?: RenameLinkProvider;
 }
 
 /**
@@ -123,18 +123,18 @@ export class SharedCanvasState {
     /**
      * A strategy to rename diagram links (change labels).
      */
-    readonly renameLinkHandler: RenameLinkHandler | undefined;
+    readonly renameLinkProvider: RenameLinkProvider | undefined;
 
     /** @hidden */
     constructor(options: SharedCanvasStateOptions) {
         const {
-            defaultElementTemplate, defaultLinkTemplate, defaultLayout, renameLinkHandler,
+            defaultElementTemplate, defaultLinkTemplate, defaultLayout, renameLinkProvider,
         } = options;
         this._canvasWidgets = new Map();
         this.defaultElementTemplate = defaultElementTemplate;
         this.defaultLinkTemplate = defaultLinkTemplate;
         this.defaultLayout = defaultLayout;
-        this.renameLinkHandler = renameLinkHandler;
+        this.renameLinkProvider = renameLinkProvider;
     }
 
     /** @hidden */
@@ -265,7 +265,13 @@ export class SharedCanvasState {
     }
 }
 
-export class RenameLinkToLinkStateHandler implements RenameLinkHandler {
+/**
+ * A strategy to rename diagram links which stores changed link label
+ * in the link template state.
+ *
+ * @see TemplateProperties.CustomLabel
+ */
+export class RenameLinkToLinkStateProvider implements RenameLinkProvider {
     canRename(link: Link): boolean {
         return true;
     }

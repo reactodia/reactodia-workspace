@@ -15,18 +15,47 @@ import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-toolbar-action';
 
+/**
+ * Base props for toolbar action components.
+ *
+ * @see ToolbarAction
+ */
 export interface ToolbarActionStyleProps {
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Title for the action button or menu item.
+     */
     title?: string;
+    /**
+     * Whether the action is disabled.
+     */
     disabled?: boolean;
 }
 
+/**
+ * Props for `ToolbarAction` component.
+ *
+ * @see ToolbarAction
+ */
 export interface ToolbarActionProps extends ToolbarActionStyleProps {
+    /**
+     * Handler to call when the action is selected
+     * (button clicked or menu item selected).
+     */
     onSelect?: () => void;
+    /**
+     * Action content.
+     */
     children?: React.ReactNode;
 }
 
 /**
+ * Base component to display an action on the `Toolbar` itself or
+ * in the dropdown menu in a generic way.
+ *
  * @category Components
  */
 export function ToolbarAction(props: ToolbarActionProps) {
@@ -53,13 +82,30 @@ export function ToolbarAction(props: ToolbarActionProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionOpen` component.
+ *
+ * @see ToolbarActionOpen
+ */
 export interface ToolbarActionOpenProps extends ToolbarActionStyleProps {
+    /**
+     * Accepted [file types](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept)
+     * for the file selection.
+     */
     fileAccept?: string;
+    /**
+     * Handler for the selected file.
+     */
     onSelect: (file: File) => void;
+    /**
+     * Action content.
+     */
     children?: React.ReactNode;
 }
 
 /**
+ * Toolbar action component to open a file selection dialog.
+ *
  * @category Components
  */
 export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
@@ -89,13 +135,32 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionSave` component.
+ *
+ * @see ToolbarActionSave
+ */
 export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'disabled'> {
+    /**
+     * Enable mode for the action:
+     *   - `layout` - the action is enabled when there are unsaved changes
+     *     to the diagram layout (when a command history is non-empty);
+     *   - `authoring` - the action is enabled when graph authoring state is non-empty.
+     */
     mode: 'layout' | 'authoring';
+    /**
+     * Handler for the action.
+     */
     onSelect: () => void;
+    /**
+     * Action content.
+     */
     children?: React.ReactNode;
 }
 
 /**
+ * Toolbar action component to save diagram layout state or apply authored changed.
+ *
  * @category Components
  */
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
@@ -129,9 +194,18 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionClearAll` component.
+ *
+ * @see ToolbarActionClearAll
+ */
 export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
 
 /**
+ * Toolbar action component to clear diagram content.
+ *
+ * Clearing the diagram adds a command to the command history.
+ *
  * @category Components
  */
 export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
@@ -151,23 +225,40 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionExport` component.
+ *
+ * @see ToolbarActionExport
+ */
 export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
+    /**
+     * Export mode:
+     *   - `exportRaster` - exports the diagram into a raster image file;
+     *   - `exportSvg` - export the diagram into an SVG file;
+     *   - `print` - prints the diagram.
+     */
     kind: 'exportRaster' | 'exportSvg' | 'print';
     /**
      * Exported file name without extension.
+     *
+     * Only applicable when `kind` is `exportRaster` or `exportSvg`.
      *
      * @default "diagram"
      */
     fileName?: string;
     /**
-     * Exported image background color for raster images.
+     * Export options (e.g. background color) for raster images.
      *
-     * @default {backgroundColor: 'white'}
+     * Only applicable when `kind` is `exportRaster`.
+     *
+     * @default {backgroundColor: "white"}
      */
     rasterOptions?: ExportRasterOptions;
 }
 
 /**
+ * Toolbar action component to export the diagram into a file, or print it.
+ *
  * @category Components
  */
 export function ToolbarActionExport(props: ToolbarActionExportProps) {
@@ -227,9 +318,16 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
     }
 }
 
+/**
+ * Props for `ToolbarActionUndo` component.
+ *
+ * @see ToolbarActionUndo
+ */
 export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
 /**
+ * Toolbar action component to undo a command from the command history.
+ *
  * @category Components
  */
 export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
@@ -260,9 +358,16 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionRedo` component.
+ *
+ * @see ToolbarActionRedo
+ */
 export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
 /**
+ * Toolbar action component to redo a command from the command history.
+ *
  * @category Components
  */
 export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
@@ -293,9 +398,18 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
     );
 }
 
+/**
+ * Props for `ToolbarActionLayout` component.
+ *
+ * @see ToolbarActionLayout
+ */
 export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
 /**
+ * Toolbar action component to perform graph layout algorithm on the diagram content.
+ *
+ * Applying the layout adds a command to the command history.
+ *
  * @category Components
  */
 export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
@@ -323,17 +437,37 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     );
 }
 
+/**
+ * Props for `ToolbarLanguageSelector` component.
+ *
+ * @see ToolbarLanguageSelector
+ */
 export interface ToolbarLanguageSelectorProps
     extends Pick<ToolbarActionStyleProps, 'className' | 'title'> {
+    /**
+     * List of languages to select from.
+     */
     languages: ReadonlyArray<WorkspaceLanguage>;
 }
 
+/**
+ * Workspace data language variant to select.
+ */
 export interface WorkspaceLanguage {
+    /**
+     * Language code which is specified as lowercase [BCP47](https://www.rfc-editor.org/rfc/rfc5646)
+     * string (examples: `en`, `en-gb`, etc).
+     */
     readonly code: string;
+    /**
+     * Language display name.
+     */
     readonly label: string;
 }
 
 /**
+ * Toolbar component to select a data language for the workspace.
+ *
  * @category Components
  */
 export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {

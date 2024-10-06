@@ -73,7 +73,9 @@ export class EntityElement extends Element {
 
     get iri() { return this._data.id; }
 
-    get data() { return this._data; }
+    get data(): ElementModel {
+        return this._data;
+    }
     setData(value: ElementModel) {
         const previous = this._data;
         if (previous === value) { return; }
@@ -249,7 +251,9 @@ export class RelationLink extends Link {
         return this._data.linkTypeId;
     }
 
-    get data() { return this._data; }
+    get data(): LinkModel {
+        return this._data;
+    }
     setData(value: LinkModel) {
         const previous = this._data;
         if (previous === value) { return; }

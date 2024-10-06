@@ -241,10 +241,24 @@ export function layoutPaddedBiasFree(
     };
 }
 
+/**
+ * Options for `blockingDefaultLayout()` function.
+ *
+ * @see blockingDefaultLayout()
+ */
 export interface DefaultLayoutOptions {
-    /** @default 200 */
+    /**
+     * Preferred length of the graph links in the result layout.
+     *
+     * @default 200
+     */
     preferredLinkLength?: number;
-    /** @default {x: 50, y: 50} */
+    /**
+     * Padding for each graph node to make them more spaced apart
+     * when computing the layout.
+     *
+     * @default {x: 50, y: 50}
+     */
     padding?: Vector;
 }
 

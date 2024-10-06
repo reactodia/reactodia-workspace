@@ -23,26 +23,71 @@ import { useWorkspace } from '../workspace/workspaceContext';
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 
+/**
+ * Base props for selection action components.
+ *
+ * @see SelectionAction
+ */
 export interface SelectionActionStyleProps {
+    /**
+     * Dock side direction for the action around the selected elements.
+     */
     dock: DockDirection;
+    /**
+     * Vertical place shift for the action button
+     * (e.g. `-1` for one place above, `1` for one place below).
+     */
     dockRow?: number;
+    /**
+     * Horizontal place shift for the action button
+     * (e.g. `-1` for one place to the left, `1` for one place to the right).
+     */
     dockColumn?: number;
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Title for the action button.
+     */
     title?: string;
 }
 
+/**
+ * Props for `SelectionAction` component.
+ *
+ * @see SelectionAction
+ */
 export interface SelectionActionProps extends SelectionActionStyleProps {
+    /**
+     * Whether the action is disabled.
+     */
     disabled?: boolean;
+    /**
+     * Handler to call when the action is selected.
+     */
     onSelect?: () => void;
+    /**
+     * Raw handler for mouse down event on the action button.
+     */
     onMouseDown?: (e: React.MouseEvent) => void;
+    /**
+     * Action content.
+     */
     children?: React.ReactNode;
 }
 
+/**
+ * Compass-like direction for the dock side.
+ */
 export type DockDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 const CLASS_NAME = 'reactodia-selection-action';
 
 /**
+ * Base component to display an action on the selected diagram elements
+ * from `Halo` or `Selection`.
+ *
  * @category Components
  */
 export function SelectionAction(props: SelectionActionProps) {
@@ -88,9 +133,16 @@ function getDockStyle(
     return dockStyle;
 }
 
+/**
+ * Props for `SelectionActionSpinner` component.
+ *
+ * @see SelectionActionSpinner
+ */
 export interface SelectionActionSpinnerProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to display a loading spinner.
+ *
  * @category Components
  */
 export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
@@ -105,9 +157,18 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionRemove` component.
+ *
+ * @see SelectionActionRemove
+ */
 export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to remove an element from the diagram.
+ *
+ * Removing the elements adds a command to the command history.
+ *
  * @category Components
  */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
@@ -144,9 +205,17 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionZoomToFit` component.
+ *
+ * @see SelectionActionZoomToFit
+ */
 export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to zoom-in or zoom-out the viewport
+ * to fit all selected diagram elements.
+ *
  * @category Components
  */
 export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
@@ -174,9 +243,17 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionLayout` component.
+ */
 export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to perform graph layout algorithm on the sub-graph
+ * formed from the selected elements.
+ *
+ * Applying the layout adds a command to the command history.
+ *
  * @category Components
  */
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
@@ -202,9 +279,21 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionExpand` component.
+ *
+ * @see SelectionActionExpand
+ */
 export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to toggle expanded state for the selected elements.
+ *
+ * Elements are collapsed if all of them are expanded, otherwise only collapsed
+ * ones are expanded instead.
+ *
+ * Expanding or collapsing the elements adds a command to the command history.
+ *
  * @category Components
  */
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
@@ -268,11 +357,18 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
     }, [model.events, elements]);
 }
 
+/**
+ * Props for `SelectionActionAnchor` component.
+ *
+ * @see SelectionActionAnchor
+ */
 export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
     onSelect?: (target: EntityElement, e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**
+ * Selection action component to display a link to the entity IRI.
+ *
  * @category Components
  */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
@@ -308,11 +404,21 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionConnections` component.
+ *
+ * @see SelectionActionConnections
+ */
 export interface SelectionActionConnectionsProps extends SelectionActionStyleProps {
+    /**
+     * Event bus to send commands to `ConnectionMenu` component.
+     */
     commands?: EventTrigger<ConnectionsMenuCommands>;
 }
 
 /**
+ * Selection action component to open a `ConnectionsMenu` for the selected entities.
+ *
  * @category Components
  */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
@@ -355,11 +461,19 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     );
 }
 
+/**
+ * Props for `SelectionActionAddToFilter` component.
+ */
 export interface SelectionActionAddToFilterProps extends SelectionActionStyleProps {
+    /**
+     * Event bus to send commands to `InstancesSearch` component.
+     */
     commands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
+ * Selection action component to add the selected entity to the `InstancesSearch` filter.
+ *
  * @category Components
  */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
@@ -386,9 +500,21 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     );
 }
 
+/**
+ * Props for `SelectionActionGroup` component.
+ *
+ * @see SelectionActionGroup
+ */
 export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to group or ungroup selected elements.
+ *
+ * Selected elements can be grouped if only entity elements are selected,
+ * the elements can be ungrouped if only entity groups are selected.
+ *
+ * Grouping or ungrouping the elements adds a command to the command history.
+ *
  * @category Components
  */
 export function SelectionActionGroup(props: SelectionActionGroupProps) {
@@ -429,9 +555,21 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
     );
 }
 
+/**
+ * Props for `SelectionActionEstablishLink` component.
+ *
+ * @see SelectionActionEstablishLink
+ */
 export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {}
 
 /**
+ * Selection action component to start creating a relation link to an existing
+ * or a new entity.
+ *
+ * This action is visible only when graph authoring mode is active.
+ *
+ * Creating a link adds a command to the command history.
+ *
  * @category Components
  */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {

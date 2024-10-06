@@ -27,20 +27,36 @@ import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
 /** @hidden */
-export interface OverlayControllerProps extends OverlayControllerOptions {
+export interface OverlayControllerProps {
     readonly model: DataDiagramModel;
     readonly view: SharedCanvasState;
     readonly editor: EditorController;
-}
 
-interface OverlayControllerOptions {
     readonly propertyEditor: PropertyEditor | undefined;
 }
 
-export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement<any>;
+/**
+ * Provides custom editor for the entity data.
+ */
+export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
+/**
+ * Parameters for `PropertyEditor`.
+ */
 export interface PropertyEditorOptions {
+    /**
+     * Target entity data to edit.
+     */
     elementData: ElementModel;
+    /**
+     * Handler to submit changed entity data.
+     *
+     * Changed data may have a different entity IRI (`ElementModel.id`)
+     * in case when the entity identity needs to be changed.
+     */
     onSubmit: (newData: ElementModel) => void;
+    /**
+     * Handler to abort changing the entity, discarding the operation.
+     */
     onCancel?: () => void;
 }
 
@@ -98,8 +114,8 @@ export class OverlayController {
     private readonly model: DataDiagramModel;
     private readonly view: SharedCanvasState;
     private readonly editor: EditorController;
-    private readonly options: OverlayControllerOptions;
 
+    private readonly propertyEditor: PropertyEditor | undefined;
     private readonly authoringStateDecorator: ElementDecoratorResolver;
 
     private _openedDialog: OpenedDialog | undefined;
@@ -108,11 +124,12 @@ export class OverlayController {
 
     /** @hidden */
     constructor(props: OverlayControllerProps) {
-        const {model, view, editor, ...options} = props;
+        const {model, view, editor, propertyEditor} = props;
         this.model = model;
         this.view = view;
         this.editor = editor;
-        this.options = options;
+
+        this.propertyEditor = propertyEditor;
 
         this.listener.listen(this.model.events, 'loadingSuccess', () => {
             this.view.setCanvasWidget('states', {
@@ -394,7 +411,7 @@ export class OverlayController {
     }
 
     showEditEntityForm(target: EntityElement): void {
-        const {propertyEditor} = this.options;
+        const {propertyEditor} = this;
         const onSubmit = (newData: ElementModel) => {
             this.hideDialog();
             this.editor.changeEntity(target.data.id, newData);
