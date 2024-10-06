@@ -15,6 +15,13 @@ import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Default link template.
+ *
+ * Uses `DefaultLinkPathTemplate` to display the link itself.
+ *
+ * @see DefaultLinkPathTemplate
+ */
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
         d: 'M0,0 L0,8 L9,4 z',
@@ -27,24 +34,69 @@ export const DefaultLinkTemplate: LinkTemplate = {
 
 const CLASS_NAME = 'reactodia-default-link';
 
+/**
+ * Props for `DefaultLinkPathTemplate` component.
+ *
+ * @see DefaultLinkPathTemplate
+ */
 export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
+    /**
+     * Additional CSS class for the component.
+     */
     className?: string;
+    /**
+     * Additional attributes for SVG path rendering of the link geometry.
+     */
     pathProps?: React.SVGAttributes<SVGPathElement>;
+    /**
+     * Additional props for the primary link label.
+     *
+     * @see LinkLabelProps.primary
+     */
     primaryLabelProps?: CustomizedLinkLabelProps;
+    /**
+     * Additional props for each label displaying a property from
+     * a relation link data.
+     */
     propertyLabelProps?: CustomizedLinkLabelProps;
     /**
+     * Starting row shift when displaying relation link data properties.
+     *
      * @default 1
+     * @see LinkLabelProps.line
      */
     propertyLabelStartLine?: number;
+    /**
+     * Additional labels to display for the link.
+     *
+     * When prepending labels for a relational link it is useful to specify
+     * `propertyLabelStartLine` to avoid overlapping prepended and data labels.
+     */
     prependLabels?: React.ReactNode;
 }
 
+/**
+ * Additional style props for the link labels in `DefaultLinkPathTemplate`.
+ *
+ * @see DefaultLinkPathTemplateProps
+ */
 type CustomizedLinkLabelProps = Omit<
     LinkLabelProps,
     'primary' | 'link' | 'position' | 'line' | 'content'
 >;
 
 /**
+ * Default link path template component.
+ *
+ * The template supports displaying any diagram links, including relation
+ * links and relation groups.
+ *
+ * The template supports the following template state:
+ *   - layout only mark.
+ *
+ * `RenameLinkProvider` can be used to display a different label
+ * than the default one based on the relation data or the link type.
+ *
  * @category Components
  */
 export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {

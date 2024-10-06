@@ -143,7 +143,10 @@ export class DecoratedDataProvider implements DataProvider {
 }
 
 /**
+ * Data provider decorator which delays each request to the base provider.
+ *
  * @category Data
+ * @see DecoratedDataProvider
  */
 export function delayProviderDecorator(
     meanDelay: number,

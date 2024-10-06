@@ -1,7 +1,7 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri } from '../data/model';
-import { GenerateID } from '../data/schema';
+import { generate128BitID } from '../data/utils';
 
 import { Vector, isPolylineEqual } from './geometry';
 
@@ -93,7 +93,7 @@ export abstract class Element {
 
     constructor(props: ElementProps) {
         const {
-            id = GenerateID.forElement(),
+            id = Element.generateId(),
             position = {x: 0, y: 0},
             expanded = false,
             elementState,
@@ -103,6 +103,13 @@ export abstract class Element {
         this._position = position;
         this._expanded = expanded;
         this._elementState = elementState;
+    }
+
+    /**
+     * Generates a new unique ID for an element.
+     */
+    static generateId(): string {
+        return `urn:reactodia:e:${generate128BitID()}`;
     }
 
     get position(): Vector { return this._position; }
@@ -217,7 +224,7 @@ export abstract class Link {
 
     constructor(props: LinkProps) {
         const {
-            id = GenerateID.forLink(),
+            id = Link.generateId(),
             sourceId,
             targetId,
             vertices = [],
@@ -228,6 +235,13 @@ export abstract class Link {
         this._targetId = targetId;
         this._vertices = vertices;
         this._linkState = linkState;
+    }
+
+    /**
+     * Generates a new unique ID for an link.
+     */
+    static generateId(): string {
+        return `urn:reactodia:l:${generate128BitID()}`;
     }
 
     get sourceId(): string { return this._sourceId; }

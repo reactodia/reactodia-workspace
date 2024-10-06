@@ -20,11 +20,22 @@ import type { InstancesSearchCommands } from './instancesSearch';
 import { highlightSubstring } from './listElementView';
 import { ProgressBar, ProgressState } from './progressBar';
 
+/**
+ * Props for `LinkTypesToolbox` component.
+ *
+ * @see LinkTypesToolbox
+ */
 export interface LinkTypesToolboxProps {
+    /**
+     * Event bus to send commands to `InstancesSearch` component.
+     */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
+ * Component to display incoming and outgoing link types from selected elements,
+ * toggle their visibility and initiate the lookup for connected entities.
+ *
  * @category Components
  */
 export function LinkTypesToolbox(props: LinkTypesToolboxProps) {

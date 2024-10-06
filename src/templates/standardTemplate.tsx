@@ -23,6 +23,11 @@ import { GroupPaginator } from '../widgets/groupPaginator';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
+/**
+ * Props for `StandardTemplate` component.
+ *
+ * @see StandardTemplate
+ */
 export interface StandardTemplateProps extends TemplateProps {
     /**
      * Default number items to show per page in element group.
@@ -39,6 +44,17 @@ export interface StandardTemplateProps extends TemplateProps {
 }
 
 /**
+ * Default element template component.
+ *
+ * The template supports displaying entity elements, including entity groups.
+ *
+ * The template supports the following template state:
+ *   - pinned properties;
+ *   - group page index and size.
+ *
+ * Entities can be edited or deleted using corresponding buttons
+ * from the expanded state.
+ *
  * @category Components
  */
 export function StandardTemplate(props: TemplateProps) {

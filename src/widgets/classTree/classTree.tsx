@@ -23,11 +23,27 @@ import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext
 import { TreeNode } from './treeModel';
 import { Forest } from './leaf';
 
+/**
+ * Props for `ClassTree` component.
+ *
+ * @see ClassTree
+ */
 export interface ClassTreeProps {
+    /**
+     * Event bus to send commands to `InstancesSearch` component.
+     */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
+ * Component to display an element type (class) tree for the workspace.
+ *
+ * Element type graph is loaded from `DataProvider` associated with
+ * the diagram model.
+ *
+ * In graph authoring mode, the class tree can be used to create entity
+ * elements that are instances of the displayed types.
+ *
  * @category Components
  */
 export function ClassTree(props: ClassTreeProps) {

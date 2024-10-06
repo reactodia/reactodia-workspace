@@ -39,6 +39,12 @@ export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
 const WORKER_CONSTRUCT = Symbol('WorkerDefinition.construct');
 const WORKER_STATE = Symbol('WorkerDefinition.state');
 
+/**
+ * Represents an opaque ref-counted Web Worker definition
+ * created by `defineWorker()`.
+ *
+ * @see defineWorker()
+ */
 export interface WorkerDefinition<T> {
     /** @hidden */
     readonly [WORKER_CONSTRUCT]: () => RefCountedWorkerState<T>;

@@ -33,7 +33,11 @@ export {
 } from './data/decorated/indexedDbCachedProvider';
 export { MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
 export * from './data/rdf/rdfDataProvider';
-/** @category Core */
+/**
+ * Utility namespace to work with [RDF.js model](https://rdf.js.org/data-model-spec/).
+ *
+ * @category Core
+ */
 export * as Rdf from './data/rdf/rdfModel';
 export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';

@@ -14,12 +14,33 @@ import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'reactodia-search-results';
 
+/**
+ * Props for `SearchResults` component.
+ *
+ * @see SearchResults
+ */
 export interface SearchResultsProps {
+    /**
+     * List of entities to display.
+     */
     items: ReadonlyArray<ElementModel>;
+    /**
+     * Set of selected entities from `items`.
+     */
     selection: ReadonlySet<ElementIri>;
+    /**
+     * Handler to change a selected set of entities.
+     */
     onSelectionChanged: (newSelection: ReadonlySet<ElementIri>) => void;
+    /**
+     * Text sub-string to highlight in the displayed entities.
+     */
     highlightText?: string;
-    /** @default true */
+    /**
+     * Whether to allow to drag entities from the list (e.g. onto the diagram canvas).
+     *
+     * @default true
+     */
     useDragAndDrop?: boolean;
     /**
      * Whether to unselect previously selected item on click and require
@@ -33,9 +54,9 @@ export interface SearchResultsProps {
     singleSelectOnClick?: boolean;
 }
 
-const enum Direction { Up, Down }
-
 /**
+ * Utility component to display a list of selectable entities.
+ *
  * @category Components
  */
 export function SearchResults(props: SearchResultsProps) {
@@ -52,6 +73,8 @@ interface SearchResultsInnerProps extends SearchResultsProps {
 }
 
 const DEFAULT_USE_DRAG_AND_DROP = true;
+
+const enum Direction { Up, Down }
 
 class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
     declare readonly context: void;

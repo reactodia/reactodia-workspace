@@ -2,26 +2,25 @@ import { ElementTypeIri, LinkTypeIri } from './model';
 import { generate128BitID } from './utils';
 
 /**
+ * [JSON-LD](https://json-ld.org/) context IRI (`@context` value) for the
+ * serialized diagram state.
+ *
  * @category Constants
  */
 export const DIAGRAM_CONTEXT_URL_V1 = 'https://ontodia.org/context/v1.json';
 
 /**
+ * Element type for an newly created temporary entity in graph authoring mode.
+ *
  * @category Constants
  */
 export const PLACEHOLDER_ELEMENT_TYPE = 'urn:reactodia:newElement' as ElementTypeIri;
 /**
+ * Link type for an newly created temporary relation in graph authoring mode.
+ *
  * @category Constants
  */
 export const PLACEHOLDER_LINK_TYPE = 'urn:reactodia:newLink' as LinkTypeIri;
-
-/**
- * @category Constants
- */
-export namespace GenerateID {
-    export function forElement() { return `urn:reactodia:e:${generate128BitID()}`; }
-    export function forLink() { return `urn:reactodia:l:${generate128BitID()}`; }
-}
 
 /**
  * Well-known properties for element state (`Element.elementState`)
@@ -60,6 +59,8 @@ export namespace TemplateProperties {
 }
 
 /**
+ * Shape for a value of the template state property `PinnedProperties`.
+ *
  * @see TemplateProperties.PinnedProperties
  */
 export interface PinnedProperties {

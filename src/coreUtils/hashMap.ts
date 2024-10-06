@@ -1,14 +1,26 @@
 /**
+ * Represents a read-only hash map data structure that can be cloned.
+ *
  * @category Utilities
  */
 export interface ReadonlyHashMap<K, V> extends ReadonlyMap<K, V> {
+    /**
+     * Creates a mutable copy of this map with the same hash
+     * and equality functions.
+     */
     clone(): HashMap<K, V>;
 }
 
 /**
+ * Represents a read-only hash set data structure that can be cloned.
+ *
  * @category Utilities
  */
 export interface ReadonlyHashSet<K> extends ReadonlySet<K> {
+    /**
+     * Creates a mutable copy of this set with the same hash
+     * and equality functions.
+     */
     clone(): HashSet<K>;
 }
 

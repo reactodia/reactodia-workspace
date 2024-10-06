@@ -7,6 +7,9 @@ import { LinkLabel } from '../diagram/linkLayer';
 import { DefaultLinkTemplate, DefaultLinkPathTemplate } from './defaultLinkTemplate';
 
 /**
+ * Built-in link template which displays an additional label
+ * with the link type IRI.
+ *
  * @category Constants
  */
 export const LINK_STYLE_SHOW_IRI: LinkTemplate = {
@@ -91,7 +94,14 @@ const LINK_TYPE_OF: LinkTemplate = {
 };
 
 /**
+ * Built-in link template provider for Web Ontology link types:
+ *   - Sub-class-of: `rdfs:subClassOf`
+ *   - Domain: `rdfs:domain`
+ *   - Range: `rdfs:range`
+ *   - Type-of: `rdf:type`
+ *
  * @category Constants
+ * @deprecated These link templates will be removed in later versions
  */
 export const OntologyLinkTemplates: LinkTemplateResolver = type => {
     if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
