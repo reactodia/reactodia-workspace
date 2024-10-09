@@ -10,13 +10,17 @@ import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../provider';
 import {
+    MutableClassModel,
+    MutableLinkType,
+    MutablePropertyModel,
+    collectClassInfo,
+    collectElementTypes,
+    collectLinkTypes,
+    collectPropertyInfo,
     enrichElementsWithImages,
     getClassTree,
-    getClassInfo,
-    getPropertyInfo,
-    getLinkTypes,
     getElementsInfo,
-    getElementTypes,
+    getLinkTypes,
     getLinksInfo,
     getConnectedLinkTypes,
     getFilteredData,
@@ -74,6 +78,15 @@ export interface SparqlDataProviderOptions {
      * ```
      */
     queryFunction?: SparqlQueryFunction;
+
+    /**
+     * Chunk size to split each SPARQL request with multiple input IRIs into.
+     *
+     * To disable batch splitting pass `Infinity`.
+     *
+     * @default 200
+     */
+    chunkSize?: number;
 
     /**
      * Element property type IRIs to use to get image URLs for elements.
@@ -143,6 +156,14 @@ export class SparqlDataProvider implements DataProvider {
         this.settings = settings;
         this.queryFunction = queryFunction;
 
+        const {chunkSize} = this.options;
+        if (!validateChunkSize(chunkSize)) {
+            throw new Error(
+                'SparqlDataProviderOptions.chunkSize should be either ' +
+                'a positive number or Infinity'
+            );
+        }
+
         for (const link of settings.linkConfigurations) {
             this.linkById.set(link.id as LinkTypeIri, link);
             const predicate = isDirectLink(link) ? link.path : link.id;
@@ -157,6 +178,21 @@ export class SparqlDataProvider implements DataProvider {
         }
         this.openWorldProperties = settings.propertyConfigurations.length === 0 ||
             Boolean(settings.openWorldProperties);
+    }
+
+    private async queryChunked<T extends string>(
+        items: readonly T[],
+        callback: (batch: readonly T[]) => Promise<void>
+    ): Promise<void> {
+        const {chunkSize = 200} = this.options;
+        if (!Number.isFinite(chunkSize)) {
+            return callback(items);
+        }
+        const tasks: Array<Promise<void>> = [];
+        for (let offset = 0; offset < items.length; offset += chunkSize) {
+            tasks.push(callback(items.slice(offset, offset + chunkSize)));
+        }
+        await Promise.all(tasks);
     }
 
     async knownElementTypes(params: {
@@ -189,18 +225,19 @@ export class SparqlDataProvider implements DataProvider {
         const {propertyIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, propertyInfoQuery} = this.settings;
 
-        let properties: Map<PropertyTypeIri, PropertyTypeModel>;
+        const properties = new Map<PropertyTypeIri, MutablePropertyModel>();
         if (propertyInfoQuery) {
-            const ids = propertyIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
-            const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
-                ids,
-                schemaLabelProperty,
-                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+            await this.queryChunked(propertyIds, async batch => {
+                const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
+                const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
+                    ids,
+                    schemaLabelProperty,
+                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                });
+                const response = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
+                collectPropertyInfo(response, properties);
             });
-            const result = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
-            properties = getPropertyInfo(result);
         } else {
-            properties = new Map<PropertyTypeIri, PropertyTypeModel>();
             for (const id of propertyIds) {
                 properties.set(id, {id, label: []});
             }
@@ -220,18 +257,19 @@ export class SparqlDataProvider implements DataProvider {
         const {classIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, classInfoQuery} = this.settings;
 
-        let classes: Map<ElementTypeIri, ElementTypeModel>;
+        const classes = new Map<ElementTypeIri, MutableClassModel>();
         if (classInfoQuery) {
-            const ids = classIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
-            const query = defaultPrefix + resolveTemplate(classInfoQuery, {
-                ids,
-                schemaLabelProperty,
-                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+            await this.queryChunked(classIds, async batch => {
+                const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
+                const query = defaultPrefix + resolveTemplate(classInfoQuery, {
+                    ids,
+                    schemaLabelProperty,
+                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                });
+                const response = await this.executeSparqlSelect<ClassBinding>(query, {signal});
+                collectClassInfo(response, classes);
             });
-            const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
-            classes = getClassInfo(result);
         } else {
-            classes = new Map<ElementTypeIri, ElementTypeModel>();
             for (const classId of classIds) {
                 classes.set(classId, {id: classId, label: []});
             }
@@ -251,18 +289,19 @@ export class SparqlDataProvider implements DataProvider {
         const {linkTypeIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesInfoQuery} = this.settings;
 
-        let linkTypes: Map<LinkTypeIri, LinkTypeModel>;
+        const linkTypes = new Map<LinkTypeIri, MutableLinkType>();
         if (linkTypesInfoQuery) {
-            const ids = linkTypeIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
-            const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
-                ids,
-                schemaLabelProperty,
-                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+            await this.queryChunked(linkTypeIds, async batch => {
+                const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
+                const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
+                    ids,
+                    schemaLabelProperty,
+                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                });
+                const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
+                collectLinkTypes(response, linkTypes);
             });
-            const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-            linkTypes = getLinkTypes(result);
         } else {
-            linkTypes = new Map<LinkTypeIri, LinkTypeModel>();
             for (const typeId of linkTypeIds) {
                 linkTypes.set(typeId, {id: typeId, label: []});
             }
@@ -307,20 +346,23 @@ export class SparqlDataProvider implements DataProvider {
     }): Promise<Map<ElementIri, ElementModel>> {
         const {elementIds, signal} = params;
 
-        let triples: Rdf.Quad[];
+        const triples: Rdf.Quad[] = [];
         if (elementIds.length > 0) {
-            const ids = elementIds.map(escapeIri).map(id => ` (${id})`).join(' ');
-            const {defaultPrefix, dataLabelProperty, filterOnlyLanguages, elementInfoQuery} = this.settings;
-            const query = defaultPrefix + resolveTemplate(elementInfoQuery, {
-                ids,
-                dataLabelProperty,
-                labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
-                valueLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
-                propertyConfigurations: this.formatPropertyInfo(),
+            await this.queryChunked(elementIds, async batch => {
+                const ids = batch.map(escapeIri).map(id => ` (${id})`).join(' ');
+                const {defaultPrefix, dataLabelProperty, filterOnlyLanguages, elementInfoQuery} = this.settings;
+                const query = defaultPrefix + resolveTemplate(elementInfoQuery, {
+                    ids,
+                    dataLabelProperty,
+                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                    valueLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
+                    propertyConfigurations: this.formatPropertyInfo(),
+                });
+                const response = await this.executeSparqlConstruct(query);
+                for (const triple of response) {
+                    triples.push(triple);
+                }
             });
-            triples = await this.executeSparqlConstruct(query);
-        } else {
-            triples = [];
         }
 
         const types = this.queryManyElementTypes(
@@ -351,26 +393,28 @@ export class SparqlDataProvider implements DataProvider {
 
     private async attachImages(
         elements: Map<ElementIri, ElementModel>,
-        types: ReadonlyArray<string>,
+        imagePropertyIris: ReadonlyArray<string>,
         signal: AbortSignal | undefined
     ): Promise<void> {
-        const ids = Array.from(elements.keys(), id => ` ( ${escapeIri(id)} )`).join(' ');
-        const typesString = types.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
+        const imageProperties = imagePropertyIris.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
 
-        const query = this.settings.defaultPrefix + `
-            SELECT ?inst ?linkType ?image
-            WHERE {{
-                VALUES (?inst) {${ids}}
-                VALUES (?linkType) {${typesString}}
-                ${this.settings.imageQueryPattern}
-            }}
-        `;
-        try {
-            const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
-            enrichElementsWithImages(bindings, elements);
-        } catch (err) {
-            console.error(err);
-        }
+        await this.queryChunked(Array.from(elements.keys()), async batch => {
+            const ids = batch.map(id => ` ( ${escapeIri(id)} )`).join(' ');
+            const query = this.settings.defaultPrefix + `
+                SELECT ?inst ?linkType ?image
+                WHERE {
+                    VALUES (?inst) {${ids}}
+                    VALUES (?linkType) {${imageProperties}}
+                    ${this.settings.imageQueryPattern}
+                }
+            `;
+            try {
+                const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
+                enrichElementsWithImages(bindings, elements);
+            } catch (err) {
+                console.warn('Failed to load entity image URLs', err);
+            }
+        });
     }
 
     async links(params: {
@@ -904,14 +948,29 @@ export class SparqlDataProvider implements DataProvider {
             return new Map();
         }
         const {filterTypePattern} = this.settings;
-        const ids = elements.map(iri => `(${escapeIri(iri)})`).join(' ');
-
-        const queryTemplate = 'SELECT ?inst ?class { VALUES(?inst) { ${ids} } ${filterTypePattern} }';
-        const query = resolveTemplate(queryTemplate, {ids, filterTypePattern});
-        const response = await this.executeSparqlSelect<ElementTypeBinding>(query, {signal});
-
-        return getElementTypes(response);
+        const elementTypes = new Map<ElementIri, Set<ElementTypeIri>>();
+        await this.queryChunked(elements, async batch => {
+            const ids = batch.map(iri => `(${escapeIri(iri)})`).join(' ');
+            const queryTemplate = 'SELECT ?inst ?class { VALUES(?inst) { ${ids} } ${filterTypePattern} }';
+            const query = resolveTemplate(queryTemplate, {ids, filterTypePattern});
+            const response = await this.executeSparqlSelect<ElementTypeBinding>(query, {signal});
+            collectElementTypes(response, elementTypes);
+        });
+        return elementTypes;
     }
+}
+
+function validateChunkSize(batchSize: number | undefined): boolean {
+    if (typeof batchSize === 'number') {
+        if (batchSize === Infinity) {
+            return true;
+        } else if (Number.isFinite(batchSize) && batchSize > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 interface LabeledItem {
