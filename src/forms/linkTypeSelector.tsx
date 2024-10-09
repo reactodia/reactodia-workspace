@@ -197,7 +197,8 @@ export function validateLinkType(
         return Promise.resolve({error: 'The link already exists.', allowChange: false});
     }
     return model.dataProvider.links({
-        elementIds: [currentLink.sourceId, currentLink.targetId],
+        targetElements: [currentLink.sourceId],
+        pairedElements: [currentLink.targetId],
         linkTypeIds: [currentLink.linkTypeId],
     }).then((links): Pick<LinkValue, 'error' | 'allowChange'> => {
         const alreadyExists = links.some(link => equalLinks(link, currentLink));

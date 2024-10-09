@@ -93,13 +93,20 @@ export interface DataProvider {
     }): Promise<Map<ElementIri, ElementModel>>;
 
     /**
-     * Get all links between specified elements.
+     * Get all links between two specified sets of entities (bipartite graph links).
+     *
+     * To get all links between all elements in the set, it is possible to
+     * pass the same set to both `targetElements` and `pairedElements`.
      */
     links(params: {
         /**
-         * Target elements to query links between.
+         * First set of entities to get links between them and `pairedElements`.
          */
-        elementIds: ReadonlyArray<ElementIri>;
+        targetElements: ReadonlyArray<ElementIri>;
+        /**
+         * Second set of entities to get links between them and `targetElements`.
+         */
+        pairedElements: ReadonlyArray<ElementIri>;
         /**
          * Return only links with specified types.
          */

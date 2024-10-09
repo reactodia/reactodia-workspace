@@ -305,14 +305,16 @@ export class DataFetcher {
     };
 
     fetchLinks(
-        elementIris: ReadonlyArray<ElementIri>,
+        targetElements: ReadonlyArray<ElementIri>,
+        pairedElements: ReadonlyArray<ElementIri>,
         linkTypeIris?: ReadonlyArray<LinkTypeIri>
     ): Promise<LinkModel[]> {
         const operation: FetchOperationLink = {
             type: 'link',
         };
         const task = this.dataProvider.links({
-            elementIds: elementIris,
+            targetElements,
+            pairedElements,
             linkTypeIds: linkTypeIris,
         });
         this.addOperation(operation, task);

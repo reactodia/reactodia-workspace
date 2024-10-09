@@ -374,33 +374,49 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     async links(params: {
-        elementIds: ReadonlyArray<ElementIri>;
+        targetElements: ReadonlyArray<ElementIri>;
+        pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        const {elementIds, linkTypeIds, signal} = params;
+        const {targetElements, pairedElements, linkTypeIds, signal} = params;
+        const {filterOnlyLanguages, linksInfoQuery} = this.settings;
+
+        const propLanguageFilter = formatLanguageFilter('?propValue', filterOnlyLanguages);
         const linkConfigurations = this.formatLinkLinks();
 
-        let bindings: Promise<SparqlResponse<LinkBinding>>;
-        if (elementIds.length > 0) {
-            const {filterOnlyLanguages, linksInfoQuery} = this.settings;
-            const ids = elementIds.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
-            const query =  this.settings.defaultPrefix + resolveTemplate(linksInfoQuery, {
-                ids,
-                propLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
-                linkConfigurations,
-            });
-            bindings = this.executeSparqlSelect<LinkBinding>(query, {signal});
+        let bindings: Promise<ReadonlyArray<LinkBinding>>;
+        if (targetElements.length > 0 && pairedElements.length > 0) {
+            if (linksInfoQuery.includes('${ids}')) {
+                bindings = this.queryUndirectedLinks(
+                    targetElements,
+                    pairedElements,
+                    {propLanguageFilter, linkConfigurations},
+                    signal,
+                );
+            } else {
+                bindings = this.queryDirectedLinks(
+                    targetElements,
+                    pairedElements,
+                    {propLanguageFilter, linkConfigurations},
+                    signal,
+                );
+            }
         } else {
-            bindings = Promise.resolve({
-                head: {vars: []},
-                results: {bindings: []},
-            });
+            bindings = Promise.resolve<LinkBinding[]>([]);
+        }
+
+        let elementsForTypes: Set<ElementIri> | undefined;
+        if (this.linkByPredicate.size > 0) {
+            // Optimization for common case without link configurations
+            elementsForTypes = new Set(targetElements);
+            for (const iri of pairedElements) {
+                elementsForTypes.add(iri);
+            }
         }
 
         const types = this.queryManyElementTypes(
-            // Optimization for common case without link configurations
-            this.linkByPredicate.size === 0 ? [] : elementIds,
+            elementsForTypes ? Array.from(elementsForTypes) : [],
             signal
         );
 
@@ -415,6 +431,85 @@ export class SparqlDataProvider implements DataProvider {
             linksInfo = linksInfo.filter(link => allowedLinkTypes.has(link.linkTypeId));
         }
         return linksInfo;
+    }
+
+    private async queryUndirectedLinks(
+        mainElements: ReadonlyArray<ElementIri>,
+        pairedElements: ReadonlyArray<ElementIri>,
+        queryVariables: {
+            propLanguageFilter: string;
+            linkConfigurations: string;
+        },
+        signal: AbortSignal | undefined
+    ): Promise<LinkBinding[]> {
+        const {propLanguageFilter, linkConfigurations} = queryVariables;
+        const {defaultPrefix, linksInfoQuery} = this.settings;
+
+        const allElementIris = new Set<ElementIri>(mainElements);
+        for (const iri of pairedElements) {
+            allElementIris.add(iri);
+        }
+        const query = defaultPrefix + resolveTemplate(linksInfoQuery, {
+            ids: formatValueClauseContent(allElementIris),
+            propLanguageFilter,
+            linkConfigurations,
+        });
+        const response = await this.executeSparqlSelect<LinkBinding>(query, {signal});
+        return response.results.bindings;
+    }
+
+    private async queryDirectedLinks(
+        mainElements: ReadonlyArray<ElementIri>,
+        pairedElements: ReadonlyArray<ElementIri>,
+        queryVariables: {
+            propLanguageFilter: string;
+            linkConfigurations: string;
+        },
+        signal: AbortSignal | undefined
+    ): Promise<LinkBinding[]> {
+        const {propLanguageFilter, linkConfigurations} = queryVariables;
+        const {defaultPrefix, linksInfoQuery} = this.settings;
+
+        if (mainElements.length < pairedElements.length) {
+            [mainElements, pairedElements] = [pairedElements, mainElements];
+        }
+
+        const pairedIris = formatValueClauseContent(pairedElements);
+        const forwardQuery = defaultPrefix + resolveTemplate(linksInfoQuery, {
+            sourceIris: formatValueClauseContent(mainElements),
+            targetIris: pairedIris,
+            propLanguageFilter,
+            linkConfigurations,
+        });
+        const forwardTask = this.executeSparqlSelect<LinkBinding>(forwardQuery, {signal});
+
+        const pairedSet = new Set<ElementIri>(pairedElements);
+        const reducedMainElements = mainElements.filter(iri => !pairedSet.has(iri));
+        // "main" and "paired" sets are the equal:
+        // skip querying links in other direction because they will be the same
+        if (reducedMainElements.length === 0) {
+            const response = await forwardTask;
+            return response.results.bindings;
+        }
+
+        const backwardQuery = defaultPrefix + resolveTemplate(linksInfoQuery, {
+            sourceIris: pairedIris,
+            targetIris: formatValueClauseContent(reducedMainElements),
+            propLanguageFilter,
+            linkConfigurations,
+        });
+        const backwardTask = this.executeSparqlSelect<LinkBinding>(backwardQuery, {signal});
+        const [forwardResponse, backwardResponse] = await Promise.all([
+            forwardTask,
+            backwardTask,
+        ]);
+
+        const bindings = forwardResponse.results.bindings;
+        for (const binding of backwardResponse.results.bindings) {
+            bindings.push(binding);
+        }
+
+        return bindings;
     }
 
     async connectedLinkStats(params: {
@@ -1003,6 +1098,10 @@ function sparqlExtractLabel(subject: string, label: string): string {
             if (?label4 != "", ?label4,
             if (?label5 != "", ?label5, ?label6))) as ${label})
     `;
+}
+
+function formatValueClauseContent(iris: Iterable<string>): string {
+    return Array.from(iris, iri => ` ( ${escapeIri(iri)} )`).join(' ');
 }
 
 function escapeIri(iri: string) {
