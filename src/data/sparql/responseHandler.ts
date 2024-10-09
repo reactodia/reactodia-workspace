@@ -21,7 +21,7 @@ const LABEL_PREDICATE = 'urn:reactodia:sparql:label';
 const EMPTY_MAP: ReadonlyMap<any, any> = new Map();
 const EMPTY_SET: ReadonlySet<any> = new Set();
 
-interface MutableClassModel {
+export interface MutableClassModel {
     readonly id: ElementTypeIri;
     label: Rdf.Literal[];
     count?: number;
@@ -75,14 +75,14 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
     };
 }
 
-export function getClassInfo(
-    response: SparqlResponse<ClassBinding>
-): Map<ElementTypeIri, ElementTypeModel> {
-    const classes = new Map<ElementTypeIri, MutableClassModel>();
+export function collectClassInfo(
+    response: SparqlResponse<ClassBinding>,
+    result: Map<ElementTypeIri, MutableClassModel>
+): void {
     for (const binding of response.results.bindings) {
         if (!binding.class) { continue; }
         const id = binding.class.value as ElementTypeIri;
-        const model = classes.get(id);
+        const model = result.get(id);
         if (model) {
             appendLabel(model.label, binding.label);
             if (binding.instcount) {
@@ -94,64 +94,65 @@ export function getClassInfo(
                 }
             }
         } else {
-            classes.set(id, {
+            result.set(id, {
                 id,
                 label: binding.label ? [binding.label] : [],
                 count: binding.instcount ? parseCount(binding.instcount) : undefined,
             });
         }
     }
-
-    return classes;
 }
 
-interface MutablePropertyModel {
+export interface MutablePropertyModel {
     readonly id: PropertyTypeIri;
     label: Rdf.Literal[];
 }
 
-export function getPropertyInfo(
-    response: SparqlResponse<PropertyBinding>
-): Map<PropertyTypeIri, PropertyTypeModel> {
-    const models = new Map<PropertyTypeIri, MutablePropertyModel>();
-
+export function collectPropertyInfo(
+    response: SparqlResponse<PropertyBinding>,
+    result: Map<PropertyTypeIri, MutablePropertyModel>
+): void {
     for (const binding of response.results.bindings) {
         const propertyTypeId = binding.property.value as PropertyTypeIri;
-        const existing = models.get(propertyTypeId);
+        const existing = result.get(propertyTypeId);
         if (existing) {
             appendLabel(existing.label, binding.label);
         } else {
-            models.set(propertyTypeId, {
+            result.set(propertyTypeId, {
                 id: binding.property.value as PropertyTypeIri,
                 label: binding.label ? [binding.label] : [],
             });
         }
     }
-    return models;
 }
 
-interface MutableLinkType {
+export interface MutableLinkType {
     readonly id: LinkTypeIri;
     label: Rdf.Literal[];
     count?: number;
 }
 
-export function getLinkTypes(
-    response: SparqlResponse<LinkTypeBinding>
-): Map<LinkTypeIri, LinkTypeModel> {
-    const linkTypes = new Map<LinkTypeIri, MutableLinkType>();
-
+export function collectLinkTypes(
+    response: SparqlResponse<LinkTypeBinding>,
+    result: Map<LinkTypeIri, MutableLinkType>
+): void {
     for (const binding of response.results.bindings) {
         const linkTypeId = binding.link.value as LinkTypeIri;
-        const existing = linkTypes.get(linkTypeId);
+        const existing = result.get(linkTypeId);
         if (existing) {
             appendLabel(existing.label, binding.label);
         } else {
-            linkTypes.set(linkTypeId, getLinkTypeInfo(binding));
+            result.set(linkTypeId, getLinkTypeInfo(binding));
         }
     }
+}
 
-    return linkTypes;
+export function getLinkTypes(
+    response: SparqlResponse<LinkTypeBinding>
+): Map<LinkTypeIri, LinkTypeModel> {
+    const result = new Map<LinkTypeIri, MutableLinkType>();
+    collectLinkTypes(response, result);
+    return result;
 }
 
 export function triplesToElementBinding(
@@ -288,18 +289,17 @@ export function enrichElementsWithImages(
     }
 }
 
-export function getElementTypes(
-    response: SparqlResponse<ElementTypeBinding>
-): Map<ElementIri, Set<ElementTypeIri>> {
-    const types = new Map<ElementIri, Set<ElementTypeIri>>();
+export function collectElementTypes(
+    response: SparqlResponse<ElementTypeBinding>,
+    result: Map<ElementIri, Set<ElementTypeIri>>
+): void {
     for (const binding of response.results.bindings) {
         if (isRdfIri(binding.inst) && isRdfIri(binding.class)) {
             const element = binding.inst.value as ElementIri;
             const type = binding.class.value as ElementTypeIri;
-            multimapAdd(types, element, type);
+            multimapAdd(result, element, type);
         }
     }
-    return types;
 }
 
 interface MutableLinkModel {
