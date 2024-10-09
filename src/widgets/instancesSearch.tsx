@@ -505,8 +505,9 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             });
         }
 
-        batch.history.execute(requestElementData(model, Array.from(selection)));
-        batch.history.execute(restoreLinksBetweenElements(model));
+        const addedElements = Array.from(selection);
+        batch.history.execute(requestElementData(model, addedElements));
+        batch.history.execute(restoreLinksBetweenElements(model, {addedElements}));
 
         batch.store();
     }

@@ -310,15 +310,14 @@ interface MutableLinkModel {
 }
 
 export function getLinksInfo(
-    response: SparqlResponse<LinkBinding>,
+    bindings: ReadonlyArray<LinkBinding>,
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> = EMPTY_MAP,
     openWorldLinks: boolean = true
 ): LinkModel[] {
-    const sparqlLinks = response.results.bindings;
     const links = new HashMap<LinkModel, MutableLinkModel>(hashLink, equalLinks);
 
-    for (const binding of sparqlLinks) {
+    for (const binding of bindings) {
         const model: MutableLinkModel = {
             sourceId: binding.source.value as ElementIri,
             linkTypeId: binding.type.value as LinkTypeIri,

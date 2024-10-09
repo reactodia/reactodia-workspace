@@ -299,7 +299,8 @@ export class IndexedDbCachedProvider implements DataProvider {
     }
 
     links(params: {
-        elementIds: readonly ElementIri[];
+        targetElements: ReadonlyArray<ElementIri>;
+        pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {

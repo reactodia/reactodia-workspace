@@ -326,15 +326,23 @@ export class RdfDataProvider implements DataProvider {
     }
 
     links(params: {
-        elementIds: ReadonlyArray<ElementIri>;
+        targetElements: ReadonlyArray<ElementIri>;
+        pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        const {elementIds, linkTypeIds} = params;
+        const {targetElements, pairedElements, linkTypeIds} = params;
+
         const targets = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
-        for (const elementId of elementIds) {
-            targets.add(this.decodeTerm(elementId));
+        for (const elementIri of targetElements) {
+            targets.add(this.decodeTerm(elementIri));
         }
+
+        const paired = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
+        for (const elementIri of pairedElements) {
+            paired.add(this.decodeTerm(elementIri));
+        }
+
         const linkTypeSet = linkTypeIds ? new Set<string>(linkTypeIds) : undefined;
         const links: LinkModel[] = [];
         // TODO avoid full scan
@@ -343,7 +351,10 @@ export class RdfDataProvider implements DataProvider {
                 isResourceTerm(t.subject) &&
                 t.predicate.termType === 'NamedNode' &&
                 isResourceTerm(t.object) &&
-                (targets.has(t.subject) || targets.has(t.object)) &&
+                (
+                    targets.has(t.subject) && paired.has(t.object) ||
+                    paired.has(t.subject) && targets.has(t.object)
+                ) &&
                 (!linkTypeSet || !linkTypeSet.has(t.predicate.value))
             ) {
                 const properties = findProperties(this.dataset, t);

@@ -120,7 +120,8 @@ export class CompositeDataProvider implements DataProvider {
     }
 
     links(params: {
-        elementIds: ReadonlyArray<ElementIri>;
+        targetElements: ReadonlyArray<ElementIri>;
+        pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {

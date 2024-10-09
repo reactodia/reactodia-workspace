@@ -485,25 +485,23 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     /**
      * Requests to fetch links between all elements on the diagram from a data provider.
      */
-    requestLinks(options: {
-        /**
-         * If specified, instructs the data provider to only return links with one
-         * of the specified types.
-         */
-        linkTypes?: ReadonlyArray<LinkTypeIri>;
-    } = {}): Promise<void> {
-        const {linkTypes} = options;
-        const elementIris: ElementIri[] = [];
+    requestLinks(options: RequestLinksOptions = {}): Promise<void> {
+        const {addedElements, linkTypes} = options;
+
+        const targetElements: ElementIri[] = [];
         for (const element of this.graph.getElements()) {
             for (const entity of iterateEntitiesOf(element)) {
-                elementIris.push(entity.id);
+                targetElements.push(entity.id);
             }
         }
-        if (elementIris.length === 0) {
+
+        const pairedElements = addedElements ?? targetElements;
+        if (targetElements.length === 0 || pairedElements.length === 0) {
             return Promise.resolve();
         }
+
         return this.fetcher
-            .fetchLinks(elementIris, linkTypes)
+            .fetchLinks(targetElements, pairedElements, linkTypes)
             .then(links => this.onLinkInfoLoaded(links));
     }
 
@@ -915,6 +913,28 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 }
 
+/**
+ * Options for `DataDiagramModel.requestLinks()`.
+ *
+ * @see DataDiagramModel.requestLinks()
+ * @see restoreLinksBetweenElements()
+ */
+export interface RequestLinksOptions {
+    /**
+     * If specified, skips fetching links between existing elements on the diagram
+     * and only adds links between all elements and the specified set.
+     *
+     * It is recommended to specify this set if possible to allow incremental
+     * link loading (avoid fetching already added links).
+     */
+    addedElements?: ReadonlyArray<ElementIri>;
+    /**
+     * If specified, instructs the data provider to only return links with one
+     * of the specified types.
+     */
+    linkTypes?: ReadonlyArray<LinkTypeIri>;
+}
+
 export interface DataGraphLocaleFormatter extends LocaleFormatter {
     /**
      * Formats an array of element types into a sorted labels
@@ -1001,8 +1021,11 @@ export function requestElementData(model: DataDiagramModel, elementIris: Readonl
  * @category Commands
  * @see DataDiagramModel.requestLinks()
  */
-export function restoreLinksBetweenElements(model: DataDiagramModel): Command {
+export function restoreLinksBetweenElements(
+    model: DataDiagramModel,
+    options: RequestLinksOptions = {}
+): Command {
     return Command.effect('Restore links between elements', () => {
-        model.requestLinks();
+        model.requestLinks(options);
     });
 }

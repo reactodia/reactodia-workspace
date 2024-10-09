@@ -645,7 +645,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }
 
         batch.history.execute(requestElementData(model, elementIris));
-        batch.history.execute(restoreLinksBetweenElements(model));
+        batch.history.execute(restoreLinksBetweenElements(model, {
+            addedElements: elementIris,
+        }));
         batch.store();
 
         triggerWorkspaceEvent(WorkspaceEventKey.editorAddElements);

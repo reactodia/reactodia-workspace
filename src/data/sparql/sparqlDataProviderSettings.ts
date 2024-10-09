@@ -122,10 +122,17 @@ export interface SparqlDataProviderSettings {
     elementInfoQuery: string;
 
     /**
-     * SELECT query to retrieve all links between specified elements.
+     * SELECT query to retrieve links between specified `sourceIris` and
+     * `targetIris` sets of entities.
+     *
+     * For backwards compatibility, `${ids}` placeholder variable with
+     * combined set of entities can be used; in that case incremental
+     * link querying will be disabled.
      *
      * Parametrized variables:
-     *   - `${ids}` VALUES clause content with element IRIs
+     *   - `${sourceIris}` VALUES clause content with source entity IRIs
+     *   - `${targetIris}` VALUES clause content with target entity IRIs
+     *   - `${ids}` VALUES clause content with all entity IRIs (for compatibility)
      *   - `${propLanguageFilter}` property value filter based on `filterOnlyLanguages`
      *   - `${linkConfigurations}`
      *
@@ -374,8 +381,8 @@ export const RdfSettings: SparqlDataProviderSettings = {
     linksInfoQuery: `SELECT ?source ?type ?target
             WHERE {
                 \${linkConfigurations}
-                VALUES (?source) {\${ids}}
-                VALUES (?target) {\${ids}}
+                VALUES (?source) {\${sourceIris}}
+                VALUES (?target) {\${targetIris}}
             }`,
 
     defaultPrefix: '',

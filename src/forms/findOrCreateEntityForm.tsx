@@ -227,7 +227,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 AuthoringState.addElement(editor.authoringState, target.data)
             );
         } else {
-            model.requestLinks();
+            model.requestLinks({addedElements: [elementValue.value.id]});
         }
 
         const newLink = new RelationLink({

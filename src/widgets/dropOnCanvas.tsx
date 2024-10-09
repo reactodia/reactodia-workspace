@@ -41,7 +41,9 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
                 const placedElements = placeElements(iris, e.position, canvas, model);
                 const irisToLoad = placedElements.map(elem => elem.iri);
                 batch.history.execute(requestElementData(model, irisToLoad));
-                batch.history.execute(restoreLinksBetweenElements(model));
+                batch.history.execute(restoreLinksBetweenElements(model, {
+                    addedElements: iris,
+                }));
                 batch.store();
     
                 if (placedElements.length > 0) {
