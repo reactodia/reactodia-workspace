@@ -40,6 +40,7 @@ const enum ObjectStore {
     linkTypes = 'linkTypes',
     propertyTypes = 'propertyTypes',
     elements = 'elements',
+    links = 'links',
     connectedLinkStats = 'connectedLinkStats',
     lookup = 'lookup',
 }
@@ -54,6 +55,13 @@ const KNOWN_LINK_TYPES_KEY = 'knownLinkTypes';
 interface KnownLinkTypesRecord {
     readonly id: typeof KNOWN_LINK_TYPES_KEY;
     readonly value: LinkTypeModel[];
+}
+
+type LinkKey = [ElementIri, ElementIri];
+interface LinkRecord {
+    readonly source: ElementIri;
+    readonly target: ElementIri;
+    readonly links: LinkModel[];
 }
 
 interface ConnectedLinkStatsRecord {
@@ -298,12 +306,109 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result;
     }
 
-    links(params: {
+    async links(params: {
         targetElements: ReadonlyArray<ElementIri>;
         pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {
+        if (params.targetElements.length === 0 || params.pairedElements.length === 0) {
+            return [];
+        }
+
+        const db = await this.openDb();
+
+        // const elements = new Map<ElementIri, LinksFromElementRecord | null>();
+        // for (const iri of params.targetElements) {
+        //     elements.set(iri, null);
+        // }
+        // for (const iri of params.pairedElements) {
+        //     elements.set(iri, null);
+        // }
+
+        const left = [...params.targetElements].sort();
+        const right = [...params.pairedElements].sort();
+        
+
+        const tx = db.transaction(ObjectStore.links, 'readwrite');
+        const store = tx.objectStore(ObjectStore.links);
+
+        try {
+            const range = IDBKeyRange.bound(
+                [left[0], right[0]] satisfies LinkKey,
+                [left[left.length - 1], right[right.length - 1]] satisfies LinkKey
+            );
+            let i = 0;
+            let j = 0;
+
+            await indexedDbKeyScan(store, range, cursor => {
+                const [leftKey, rightKey] = cursor.key as LinkKey;
+
+                nextLeft: while (true) {
+                    while (i < left.length && indexedDB.cmp(left[i], leftKey) < 0) {
+                        // Key [L, ?] is 
+                        i++;
+                    }
+                    if (i >= left.length) {
+                        return;
+                    }
+
+                    if (indexedDB.cmp(left[i], leftKey) > 0) {
+                        cursor.continue([left[i], right[0]]);
+                        return;
+                    }
+
+                    while (j < right.length && indexedDB.cmp(right[i], rightKey) < 0) {
+                        j++;
+                    }
+                    if (j >= right.length) {
+                        j = 0;
+                        i++;
+                        continue nextLeft;
+                    }
+
+                    if (indexedDB.cmp(right[j], rightKey) > 0) {
+                        cursor.continue([left[i], right[j]]);
+                        return;
+                    }
+
+                    // Found the the key [left[i], right[j]]
+                    cursor.continue();
+                }
+            });
+        } finally {
+            tx.commit();
+        }
+
+        // function setOfLinkedFrom(iris: ReadonlyArray<ElementIri>): Set<ElementIri> {
+        //     const linked = new Set<ElementIri>();
+        //     for (const sourceIri of iris) {
+        //         const record = elements.get(sourceIri);
+        //         if (record) {
+        //             for (const linkedIri in record.connected) {
+        //                 if (Object.prototype.hasOwnProperty.call(record.connected, linkedIri)) {
+        //                     linked.add(linkedIri as ElementIri);
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     return linked;
+        // }
+
+        // const cachedToPaired = setOfLinkedFrom(params.targetElements);
+        // const cachedToTargets = setOfLinkedFrom(params.pairedElements);
+
+        const keys: LinksKey[] = [];
+        for (const left of params.targetElements) {
+            // const hasLeft = hasLinks.has(left);
+            for (const right of params.pairedElements) {
+                // if (!(hasLeft && hasLinks.has(right))) {
+                // }
+
+                keys.push([left, right]);
+            }
+        }
+
         // TODO: cache this result as well
         return this.baseProvider.links(params);
     }
@@ -512,8 +617,29 @@ function indexedDbPutMany(
     });
 }
 
+function indexedDbKeyScan(
+    store: IDBObjectStore,
+    query: IDBKeyRange,
+    scanner: (cursor: IDBCursor) => void
+): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const request = store.openKeyCursor(query);
+        request.onsuccess = e => {
+            const cursor = request.result;
+            if (!cursor) {
+                resolve();
+                return;
+            }
+            scanner(cursor);
+        };
+        request.onerror = () => {
+            reject(request.error);
+        };
+    });
+}
+
 function serializeForDb<T>(value: T): T {
-    return JSON.parse(JSON.stringify(value));
+    return structuredClone(value);
 }
 
 function rehydrateLabels(
