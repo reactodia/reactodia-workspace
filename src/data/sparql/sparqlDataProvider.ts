@@ -9,6 +9,7 @@ import {
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../provider';
+import { validateChunkSize, processChunked } from './requestChunking';
 import {
     MutableClassModel,
     MutableLinkType,
@@ -180,19 +181,12 @@ export class SparqlDataProvider implements DataProvider {
             Boolean(settings.openWorldProperties);
     }
 
-    private async queryChunked<T extends string>(
+    private queryChunked<T extends string>(
         items: readonly T[],
         callback: (batch: readonly T[]) => Promise<void>
     ): Promise<void> {
         const {chunkSize = 200} = this.options;
-        if (!Number.isFinite(chunkSize)) {
-            return callback(items);
-        }
-        const tasks: Array<Promise<void>> = [];
-        for (let offset = 0; offset < items.length; offset += chunkSize) {
-            tasks.push(callback(items.slice(offset, offset + chunkSize)));
-        }
-        await Promise.all(tasks);
+        return processChunked(items, callback, chunkSize);
     }
 
     async knownElementTypes(params: {
@@ -958,19 +952,6 @@ export class SparqlDataProvider implements DataProvider {
         });
         return elementTypes;
     }
-}
-
-function validateChunkSize(batchSize: number | undefined): boolean {
-    if (typeof batchSize === 'number') {
-        if (batchSize === Infinity) {
-            return true;
-        } else if (Number.isFinite(batchSize) && batchSize > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    return true;
 }
 
 interface LabeledItem {
