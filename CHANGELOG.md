@@ -6,13 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
 ### Added
-- JSDoc for almost all exported components, services, interfaces and functions;
+- Split `SparqlDataProvider` requests into chunks of configurable size (`chunkSize`);
+- Support incremental links loading from `DataProvider`:
+  * [Breaking] Change `DataProvider.links()` contract to return links between two sets of elements to allow partial link requests;
+  * Extend `SparqlDataProviderSettings.linksInfoQuery` to support partial link queries (with backwards compatibility fallback);
+- JSDoc for almost all exported components, services, interfaces and functions.
 
 ### Changed
 - **[Breaking]** Change `placeElementsAround()` function into `placeElementsAroundTarget()` command;
 - **[Breaking]** Replace `LinkTemplateProps.typeIndex` with `markerSource` and `markerTarget` properties;
 - **[Breaking]** Replace `EditableLabel` on the link template by a separate `RenameLinkProvider`;
-- **[Breaking]** Replace `GenerateID.{forElement, forLink}` with static methods `Element.generateId()` and `Link.generateId()`;
+- **[Breaking]** Replace `GenerateID.{forElement, forLink}` with static methods `Element.generateId()` and `Link.generateId()`.
+
+### Fixed
+- Grouped entity width overflow when a label is too long in the `StandardTemplate`.
 
 ### Removed
 - Remove unused `LinkRedrawLevel` type with corresponding parameters;
