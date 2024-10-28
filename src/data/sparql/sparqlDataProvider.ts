@@ -9,7 +9,7 @@ import {
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../provider';
-import { validateChunkSize, processChunked } from './requestChunking';
+import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
 import {
     MutableClassModel,
     MutableLinkType,
@@ -83,11 +83,12 @@ export interface SparqlDataProviderOptions {
     /**
      * Chunk size to split each SPARQL request with multiple input IRIs into.
      *
-     * To disable batch splitting pass `Infinity`.
+     * To disable batch splitting pass `null`.
      *
-     * @default 200
+     * **Default** is `{maxSize: 2500, unit: 'totalLength'}` when `queryMethod` is `GET`,
+     * otherwise `null`.
      */
-    chunkSize?: number;
+    chunk?: SparqlProviderChunkOptions | null;
 
     /**
      * Element property type IRIs to use to get image URLs for elements.
@@ -126,6 +127,29 @@ export type SparqlQueryFunction = (params: {
 }) => Promise<Response>;
 
 /**
+ * Options for request chunking in `SparqlDataProvider`.
+ *
+ * @see SparqlDataProviderOptions.chunk
+ */
+export interface SparqlProviderChunkOptions {
+    /**
+     * Maximum allowed chunk size.
+     *
+     * This value must be a non-negative integer.
+     *
+     * Note that the provider may form the chunk which is larger than
+     * specified if it cannot be split into smaller sub-chunks. 
+     */
+    readonly maxSize: number;
+    /**
+     * Unit of measure for `maxSize`:
+     *   - `itemCount` - count of IRIs in the chunk;
+     *   - `totalLength` - total length of IRIs with separators in the chunk.
+     */
+    readonly unit: 'itemCount' | 'totalLength';
+}
+
+/**
  * Provides graph data by requesting it from a SPARQL endpoint.
  *
  * @category Data
@@ -136,6 +160,7 @@ export class SparqlDataProvider implements DataProvider {
     private readonly settings: SparqlDataProviderSettings;
     private readonly queryFunction: SparqlQueryFunction;
     private readonly acceptBlankNodes = false;
+    private readonly chunkMeasure: ChunkMeasure;
 
     private linkByPredicate = new Map<string, LinkConfiguration[]>();
     private linkById = new Map<LinkTypeIri, LinkConfiguration>();
@@ -157,12 +182,30 @@ export class SparqlDataProvider implements DataProvider {
         this.settings = settings;
         this.queryFunction = queryFunction;
 
-        const {chunkSize} = this.options;
-        if (!validateChunkSize(chunkSize)) {
-            throw new Error(
-                'SparqlDataProviderOptions.chunkSize should be either ' +
-                'a positive number or Infinity'
-            );
+        const {chunk, queryMethod = 'GET'} = this.options;
+        if (chunk) {
+            if (!Number.isSafeInteger(chunk.maxSize)) {
+                throw new Error(
+                    'SparqlDataProviderOptions.chunk.maxSize should be a non-negative number'
+                );
+            }
+        }
+
+        if (chunk) {
+            this.chunkMeasure = {
+                maxSize: chunk.maxSize,
+                measure: makeChunkMeasure(chunk.unit),
+            };
+        } else if (chunk === undefined && queryMethod === 'GET') {
+            this.chunkMeasure = {
+                maxSize: 2500,
+                measure: makeChunkMeasure('totalLength'),
+            };
+        } else {
+            this.chunkMeasure = {
+                maxSize: Infinity,
+                measure: makeChunkMeasure('itemCount'),
+            };
         }
 
         for (const link of settings.linkConfigurations) {
@@ -181,12 +224,16 @@ export class SparqlDataProvider implements DataProvider {
             Boolean(settings.openWorldProperties);
     }
 
-    private queryChunked<T extends string>(
+    private async queryChunked<T extends string>(
         items: readonly T[],
         callback: (batch: readonly T[]) => Promise<void>
     ): Promise<void> {
-        const {chunkSize = 200} = this.options;
-        return processChunked(items, callback, chunkSize);
+        const {maxSize, measure} = this.chunkMeasure;
+        const tasks: Promise<void>[] = [];
+        for (const chunk of chunkArray(items, measure, maxSize)) {
+            tasks.push(callback(chunk));
+        }
+        await Promise.all(tasks);
     }
 
     async knownElementTypes(params: {
@@ -507,46 +554,31 @@ export class SparqlDataProvider implements DataProvider {
     ): Promise<LinkBinding[]> {
         const {propLanguageFilter, linkConfigurations} = queryVariables;
         const {defaultPrefix, linksInfoQuery} = this.settings;
+        const {maxSize, measure} = this.chunkMeasure;
 
-        if (mainElements.length < pairedElements.length) {
-            [mainElements, pairedElements] = [pairedElements, mainElements];
-        }
+        const bindings: LinkBinding[] = [];
+        const tasks = Array.from(
+            chunkUndirectedCrossProduct(
+                mainElements,
+                pairedElements,
+                measure,
+                maxSize
+            ),
+            async chunk => {
+                const query = defaultPrefix + resolveTemplate(linksInfoQuery, {
+                    sourceIris: formatValueClauseContent(chunk.sources),
+                    targetIris: formatValueClauseContent(chunk.targets),
+                    propLanguageFilter,
+                    linkConfigurations,
+                });
+                const result = await this.executeSparqlSelect<LinkBinding>(query, {signal});
+                for (const binding of result.results.bindings) {
+                    bindings.push(binding);
+                }
+            }
+        );
 
-        const pairedIris = formatValueClauseContent(pairedElements);
-        const forwardQuery = defaultPrefix + resolveTemplate(linksInfoQuery, {
-            sourceIris: formatValueClauseContent(mainElements),
-            targetIris: pairedIris,
-            propLanguageFilter,
-            linkConfigurations,
-        });
-        const forwardTask = this.executeSparqlSelect<LinkBinding>(forwardQuery, {signal});
-
-        const pairedSet = new Set<ElementIri>(pairedElements);
-        const reducedMainElements = mainElements.filter(iri => !pairedSet.has(iri));
-        // "main" and "paired" sets are the equal:
-        // skip querying links in other direction because they will be the same
-        if (reducedMainElements.length === 0) {
-            const response = await forwardTask;
-            return response.results.bindings;
-        }
-
-        const backwardQuery = defaultPrefix + resolveTemplate(linksInfoQuery, {
-            sourceIris: pairedIris,
-            targetIris: formatValueClauseContent(reducedMainElements),
-            propLanguageFilter,
-            linkConfigurations,
-        });
-        const backwardTask = this.executeSparqlSelect<LinkBinding>(backwardQuery, {signal});
-        const [forwardResponse, backwardResponse] = await Promise.all([
-            forwardTask,
-            backwardTask,
-        ]);
-
-        const bindings = forwardResponse.results.bindings;
-        for (const binding of backwardResponse.results.bindings) {
-            bindings.push(binding);
-        }
-
+        await Promise.all(tasks);
         return bindings;
     }
 
@@ -954,6 +986,24 @@ export class SparqlDataProvider implements DataProvider {
     }
 }
 
+interface ChunkMeasure {
+    readonly measure: (item: string) => number;
+    readonly maxSize: number;
+}
+
+function makeChunkMeasure(unit: SparqlProviderChunkOptions['unit']): ChunkMeasure['measure'] {
+    switch (unit) {
+        case 'totalLength': {
+            // IRI is formatted as (IRI) and joined with a space,
+            // which gives 5 additional characters per IRI
+            return item => escapeIri(item).length + 3;
+        }
+        default: {
+            return () => 1;
+        }
+    }
+}
+
 interface LabeledItem {
     id: string;
     label: ReadonlyArray<Rdf.Literal>;
@@ -1141,7 +1191,7 @@ function sparqlExtractLabel(subject: string, label: string): string {
 }
 
 function formatValueClauseContent(iris: Iterable<string>): string {
-    return Array.from(iris, iri => ` ( ${escapeIri(iri)} )`).join(' ');
+    return Array.from(iris, iri => `(${escapeIri(iri)})`).join(' ');
 }
 
 function escapeIri(iri: string) {

@@ -7,6 +7,7 @@ export default defineConfig({
             provider: 'playwright',
             enabled: true,
             name: 'chromium',
+            screenshotFailures: false,
         },
     }
 });
