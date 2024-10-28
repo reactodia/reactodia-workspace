@@ -67,38 +67,41 @@ export async function raceHappyEyes<T, R>(
         | { type: 'reject', variant: T }
         | { type: 'timeout' };
 
-    using scope = new AbortScope(parentSignal);
+    const scope = new AbortScope(parentSignal);
     const {signal} = scope;
+    try {
+        const attempts = new Map<T, Promise<AttemptResult>>();
+        let previous: T | undefined;
+        for (const variant of variants) {
+            signal.throwIfAborted();
+            attempts.set(variant, makeAttempt(variant, signal).then(
+                (result): AttemptResult => ({type: 'resolve', result}),
+                (): AttemptResult => ({type: 'reject', variant})
+            ));
 
-    const attempts = new Map<T, Promise<AttemptResult>>();
-    let previous: T | undefined;
-    for (const variant of variants) {
-        signal.throwIfAborted();
-        attempts.set(variant, makeAttempt(variant, signal).then(
-            (result): AttemptResult => ({type: 'resolve', result}),
-            (): AttemptResult => ({type: 'reject', variant})
-        ));
-
-        const wait = delay(timeout, {signal}).then((): AttemptResult => ({type: 'timeout'}));
-        waitForEvent: while (attempts.size > 0) {
-            const raced = await Promise.race([...attempts.values(), wait]);
-            switch (raced.type) {
-                case 'resolve': {
-                    return raced.result;
-                }
-                case 'reject': {
-                    attempts.delete(raced.variant);
-                    if (raced.variant === previous) {
+            const wait = delay(timeout, {signal}).then((): AttemptResult => ({type: 'timeout'}));
+            waitForEvent: while (attempts.size > 0) {
+                const raced = await Promise.race([...attempts.values(), wait]);
+                switch (raced.type) {
+                    case 'resolve': {
+                        return raced.result;
+                    }
+                    case 'reject': {
+                        attempts.delete(raced.variant);
+                        if (raced.variant === previous) {
+                            break waitForEvent;
+                        }
+                        break;
+                    }
+                    case 'timeout': {
                         break waitForEvent;
                     }
-                    break;
-                }
-                case 'timeout': {
-                    break waitForEvent;
                 }
             }
+            previous = variant;
         }
-        previous = variant;
+    } finally {
+        scope.abort();
     }
 
     throw new Error('No variants left to attempt');
@@ -181,4 +184,63 @@ export function delay(timeout: number, options?: { signal?: AbortSignal }): Prom
             signal.addEventListener('abort', onAbort);
         }
     });
+}
+
+export class AsyncLock {
+    private active: AsyncLockItem | undefined;
+
+    acquire(): Promise<AsyncLockToken> {
+        let item!: AsyncLockItem;
+        const promise = new Promise<AsyncLockToken>((resolve, reject) => {
+            item = {
+                resolve,
+                reject,
+                token: {
+                    release: () => this.release(item),
+                }
+            };
+        });
+        
+        if (this.active) {
+            this.active.next = item;
+        } else {
+            this.active = item;
+            this.activate();
+        }
+
+        return promise;
+    }
+
+    private release(item: AsyncLockItem): Promise<void> {
+        if (this.active === item) {
+            this.active = this.active.next;
+            this.activate();
+        }
+        return Promise.resolve();
+    }
+
+    private activate(): void {
+        if (this.active) {
+            this.active.resolve(this.active.token);
+        }
+    }
+
+    dispose(): void {
+        let item = this.active;
+        while (item) {
+            item.reject(new Error('AsyncLock is disposed'));
+            item = item.next;
+        }
+    }
+}
+
+interface AsyncLockItem {
+    resolve: (token: AsyncLockToken) => void;
+    reject: (error: unknown) => void;
+    token: AsyncLockToken;
+    next?: AsyncLockItem | undefined;
+}
+
+export interface AsyncLockToken {
+    release(): Promise<void>;
 }

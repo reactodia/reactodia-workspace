@@ -64,6 +64,14 @@ function BasicExample() {
 ```
 Look for more examples in the [documentation](https://reactodia.github.io/docs/category/examples).
 
+## Development
+
+### Tests
+
+The library uses [Vitest](https://vitest.dev/) as a testing framework: run `npm run test` to execute all tests.
+
+See [Vitest Debugging](https://vitest.dev/guide/debugging) documentation page for an integrated debugger setup for the tests (e.g. VSCode debugger).
+
 ## License
 
 The library is distributed under LGPL-2.1 or (at your option) any later version.
