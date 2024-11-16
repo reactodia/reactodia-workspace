@@ -26,6 +26,16 @@ export interface IndexedDbCachedProviderOptions {
      */
     readonly dbName: string;
     /**
+     * Whether to cache missing (negative) results from the following `DataProvider` methods:
+     *  - `elements()`
+     *  - `elementTypes()`
+     *  - `linkTypes()`
+     *  - `propertyTypes()`
+     *
+     * @default true
+     */
+    readonly cacheMissing?: boolean;
+    /**
      * Whether to cache results from `DataProvider.links()`.
      *
      * If enabled, stores and updates a partial "mirror" of a previously-requested
@@ -65,6 +75,12 @@ const enum ObjectStoreIndex {
     linkBlockByRangeKey = 'byRangeKey',
 }
 
+const MISSING_RECORD_KEY = '__missing';
+interface MissingRecord<K extends string> {
+    readonly id: K;
+    readonly [MISSING_RECORD_KEY]: boolean;
+}
+
 const KNOWN_ELEMENT_TYPES_KEY = 'knownElementTypes';
 interface KnownElementTypesRecord {
     readonly id: typeof KNOWN_ELEMENT_TYPES_KEY;
@@ -79,7 +95,7 @@ interface KnownLinkTypesRecord {
 
 type LinkRecordKey = [ElementIri, ElementIri];
 interface LinkRecord extends LinkModel {
-    indexedDbId: number;
+    __id: number;
 }
 type LinkRangeKey = string & { readonly linkRangeKeyBrand: void };
 interface LinkBlockRecord {
@@ -93,8 +109,10 @@ interface LinkRanges {
     readonly rangeByKey: ReadonlyMap<LinkRangeKey, AdjacencyRange<ElementIri>>;
 }
 
+type ConnectedLinkStatsKey = [elementId: ElementIri, inexactCount: 0 | 1];
 interface ConnectedLinkStatsRecord {
     readonly elementId: ElementIri;
+    readonly inexactCount: 0 | 1;
     readonly stats: DataProviderLinkCount[];
 }
 
@@ -129,6 +147,7 @@ export class IndexedDbCachedProvider implements DataProvider {
 
     private readonly baseProvider: DataProvider;
     private readonly dbName: string;
+    private readonly cacheMissing: boolean;
     private readonly cacheLinks: boolean;
     private readonly cacheTextLookups: boolean;
     private readonly linkLock = new AsyncLock();
@@ -140,6 +159,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     constructor(options: IndexedDbCachedProviderOptions) {
         this.baseProvider = options.baseProvider;
         this.dbName = options.dbName;
+        this.cacheMissing = options.cacheMissing ?? true;
         this.cacheLinks = options.cacheLinks ?? true;
         this.cacheTextLookups = options.cacheTextLookups ?? false;
         this.closeSignal = options.closeSignal;
@@ -204,7 +224,7 @@ export class IndexedDbCachedProvider implements DataProvider {
                         db.createObjectStore(ObjectStore.elements, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.links)) {
-                        const keyPath: keyof LinkRecord = 'indexedDbId';
+                        const keyPath: keyof LinkRecord = '__id';
                         const store = db.createObjectStore(ObjectStore.links, {
                             keyPath,
                             autoIncrement: true,
@@ -222,7 +242,7 @@ export class IndexedDbCachedProvider implements DataProvider {
                         db.createObjectStore(ObjectStore.linkRanges);
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.connectedLinkStats)) {
-                        const keyPath: keyof ConnectedLinkStatsRecord = 'elementId';
+                        const keyPath: Array<keyof ConnectedLinkStatsRecord> = ['elementId', 'inexactCount'];
                         db.createObjectStore(ObjectStore.connectedLinkStats, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.lookup)) {
@@ -301,6 +321,7 @@ export class IndexedDbCachedProvider implements DataProvider {
             db,
             ObjectStore.elementTypes,
             classIds,
+            this.cacheMissing,
             async ids => await this.baseProvider.elementTypes({classIds: ids, signal}),
         );
         rehydrateLabels(result.values(), this.factory);
@@ -317,6 +338,7 @@ export class IndexedDbCachedProvider implements DataProvider {
             db,
             ObjectStore.propertyTypes,
             propertyIds,
+            this.cacheMissing,
             async ids => await this.baseProvider.propertyTypes({propertyIds: ids, signal}),
         );
         rehydrateLabels(result.values(), this.factory);
@@ -333,6 +355,7 @@ export class IndexedDbCachedProvider implements DataProvider {
             db,
             ObjectStore.linkTypes,
             linkTypeIds,
+            this.cacheMissing,
             async ids => await this.baseProvider.linkTypes({linkTypeIds: ids, signal}),
         );
         rehydrateLabels(result.values(), this.factory);
@@ -349,6 +372,7 @@ export class IndexedDbCachedProvider implements DataProvider {
             db,
             ObjectStore.elements,
             elementIds,
+            this.cacheMissing,
             async ids => await this.baseProvider.elements({elementIds: ids, signal}),
         );
         rehydrateLabels(result.values(), this.factory);
@@ -678,7 +702,7 @@ export class IndexedDbCachedProvider implements DataProvider {
                 orderedSources,
                 orderedTargets,
                 cursor => {
-                    const {indexedDbId, ...link} = cursor.value as LinkRecord;
+                    const {__id, ...link} = cursor.value as LinkRecord;
                     onLink(link);
                 }
             );
@@ -695,17 +719,22 @@ export class IndexedDbCachedProvider implements DataProvider {
         inexactCount?: boolean;
         signal?: AbortSignal | undefined;
     }): Promise<DataProviderLinkCount[]> {
-        const {elementId, inexactCount, signal} = params;
+        const {signal} = params;
         const db = await this.openDb();
+        const key: ConnectedLinkStatsKey = [
+            params.elementId,
+            params.inexactCount ? 1 : 0,
+        ];
         const result = await fetchSingleWithDbCache(
             db,
             ObjectStore.connectedLinkStats,
-            elementId,
-            async (key): Promise<ConnectedLinkStatsRecord> => ({
-                elementId: key,
+            key,
+            async ([elementId, inexactCount]): Promise<ConnectedLinkStatsRecord> => ({
+                elementId,
+                inexactCount,
                 stats: await this.baseProvider.connectedLinkStats({
-                    elementId: key,
-                    inexactCount,
+                    elementId,
+                    inexactCount: Boolean(inexactCount),
                     signal
                 }),
             })
@@ -758,7 +787,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     }
 }
 
-async function fetchSingleWithDbCache<K extends string | string[], V>(
+async function fetchSingleWithDbCache<K extends IDBValidKey, V>(
     db: IDBDatabase,
     storeName: string,
     key: K,
@@ -784,10 +813,11 @@ async function fetchSingleWithDbCache<K extends string | string[], V>(
     return fetched;
 }
 
-async function fetchManyWithDbCache<K extends string, V>(
+async function fetchManyWithDbCache<K extends string, V extends { readonly id: K }>(
     db: IDBDatabase,
     storeName: string,
     keys: ReadonlyArray<K>,
+    cacheMissing: boolean,
     fetchBase: (keys: ReadonlyArray<K>) => Promise<Map<K, V>>
 ): Promise<Map<K, V>> {
     const result = new Map<K, V>();
@@ -802,7 +832,13 @@ async function fetchManyWithDbCache<K extends string, V>(
             (value, classId) => {
                 const model = value as V | undefined;
                 if (model) {
-                    result.set(classId, model);
+                    if (isMissingRecord(model)) {
+                        if (!cacheMissing) {
+                            missingKeys.push(classId);
+                        }
+                    } else {
+                        result.set(classId, model);
+                    }
                 } else {
                     missingKeys.push(classId);
                 }
@@ -813,11 +849,16 @@ async function fetchManyWithDbCache<K extends string, V>(
 
     if (missingKeys.length > 0) {
         const fetched = await fetchBase(missingKeys);
-        const stored: V[] = [];
-        for (const [key, model] of fetched) {
-            const serialized = serializeForDb(model);
-            result.set(key, serialized);
-            stored.push(serialized);
+        const stored: Array<V | MissingRecord<K>> = [];
+        for (const key of missingKeys) {
+            if (fetched.has(key)) {
+                const value = fetched.get(key)!;
+                const serialized = serializeForDb(value);
+                result.set(key, serialized);
+                stored.push(serialized);
+            } else {
+                stored.push({id: key, [MISSING_RECORD_KEY]: true});
+            }
         }
         const writeTx = db.transaction(storeName, 'readwrite');
         const writeStore = writeTx.objectStore(storeName);
@@ -1025,6 +1066,14 @@ function indexedDbSilentAbort(tx: IDBTransaction): void {
 
 function serializeForDb<T>(value: T): T {
     return JSON.parse(JSON.stringify(value));
+}
+
+function isMissingRecord<K extends string>(value: { readonly id: K }): value is MissingRecord<K> {
+    return (
+        typeof value === 'object' && value &&
+        Object.prototype.hasOwnProperty.call(value, MISSING_RECORD_KEY) &&
+        Boolean((value as Partial<MissingRecord<K>>)[MISSING_RECORD_KEY])
+    );
 }
 
 function rehydrateLabels(

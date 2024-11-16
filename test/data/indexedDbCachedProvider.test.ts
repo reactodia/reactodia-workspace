@@ -55,19 +55,19 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.elements({
-                elementIds: [element('a'), element('b'), element('c')],
+                elementIds: [element('a'), element('b'), missing(element('c'))],
             });
 
             expect(elementsSpy.mock.calls.map(call => call[0].elementIds)).toEqual([
-                [element('a'), element('b'), element('c')],
+                [element('a'), element('b'), missing(element('c'))],
             ] satisfies Array<ElementIri[]>);
 
             await provider.elements({
-                elementIds: [element('d'), element('b'), element('c'), element('e')],
+                elementIds: [element('d'), element('b'), missing(element('c')), element('e')],
             });
 
             expect(elementsSpy.mock.calls.map(call => call[0].elementIds)).toEqual([
-                [element('a'), element('b'), element('c')],
+                [element('a'), element('b'), missing(element('c'))],
                 [element('d'), element('e')],
             ] satisfies Array<ElementIri[]>);
         } finally {
@@ -92,53 +92,59 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.elementTypes({
-                classIds: [elementType('a'), elementType('b'), elementType('c')],
+                classIds: [elementType('a'), elementType('b'), missing(elementType('c'))],
             });
 
             await provider.linkTypes({
-                linkTypeIds: [linkType('a'), linkType('b'), linkType('c')],
+                linkTypeIds: [linkType('a'), linkType('b'), missing(linkType('c'))],
             });
 
             await provider.propertyTypes({
-                propertyIds: [propertyType('a'), propertyType('b'), propertyType('c')],
+                propertyIds: [propertyType('a'), propertyType('b'), missing(propertyType('c'))],
             });
 
             expect(elementTypesSpy.mock.calls.map(call => call[0].classIds)).toEqual([
-                [elementType('a'), elementType('b'), elementType('c')],
+                [elementType('a'), elementType('b'), missing(elementType('c'))],
             ] satisfies Array<ElementTypeIri[]>);
 
             expect(linkTypesSpy.mock.calls.map(call => call[0].linkTypeIds)).toEqual([
-                [linkType('a'), linkType('b'), linkType('c')],
+                [linkType('a'), linkType('b'), missing(linkType('c'))],
             ] satisfies Array<LinkTypeIri[]>);
 
             expect(propertyTypesSpy.mock.calls.map(call => call[0].propertyIds)).toEqual([
-                [propertyType('a'), propertyType('b'), propertyType('c')],
+                [propertyType('a'), propertyType('b'), missing(propertyType('c'))],
             ] satisfies Array<PropertyTypeIri[]>);
 
             await provider.elementTypes({
-                classIds: [elementType('d'), elementType('b'), elementType('c'), elementType('e')],
+                classIds: [
+                    elementType('d'), elementType('b'), missing(elementType('c')), elementType('e'),
+                ],
             });
 
             await provider.linkTypes({
-                linkTypeIds: [linkType('d'), linkType('b'), linkType('c'), linkType('e')],
+                linkTypeIds: [
+                    linkType('d'), linkType('b'), missing(linkType('c')), linkType('e'),
+                ],
             });
 
             await provider.propertyTypes({
-                propertyIds: [propertyType('d'), propertyType('b'), propertyType('c'), propertyType('e')],
+                propertyIds: [
+                    propertyType('d'), propertyType('b'), missing(propertyType('c')), propertyType('e'),
+                ],
             });
 
             expect(elementTypesSpy.mock.calls.map(call => call[0].classIds)).toEqual([
-                [elementType('a'), elementType('b'), elementType('c')],
+                [elementType('a'), elementType('b'), missing(elementType('c'))],
                 [elementType('d'), elementType('e')],
             ] satisfies Array<ElementTypeIri[]>);
 
             expect(linkTypesSpy.mock.calls.map(call => call[0].linkTypeIds)).toEqual([
-                [linkType('a'), linkType('b'), linkType('c')],
+                [linkType('a'), linkType('b'), missing(linkType('c'))],
                 [linkType('d'), linkType('e')],
             ] satisfies Array<LinkTypeIri[]>);
 
             expect(propertyTypesSpy.mock.calls.map(call => call[0].propertyIds)).toEqual([
-                [propertyType('a'), propertyType('b'), propertyType('c')],
+                [propertyType('a'), propertyType('b'), missing(propertyType('c'))],
                 [propertyType('d'), propertyType('e')],
             ] satisfies Array<PropertyTypeIri[]>);
         } finally {
@@ -158,6 +164,7 @@ describe('IndexedDbCachedProvider', () => {
             const provider = new IndexedDbCachedProvider({
                 baseProvider,
                 dbName: 'test',
+                cacheMissing: false,
                 closeSignal: controller.signal,
             });
 
