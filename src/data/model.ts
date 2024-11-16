@@ -42,7 +42,7 @@ export interface ElementTypeGraph {
  * @category Data
  * @see ElementTypeGraph
  */
-export type SubtypeEdge = readonly [ElementTypeIri, ElementTypeIri];
+export type SubtypeEdge = readonly [derived: ElementTypeIri, base: ElementTypeIri];
 
 /**
  * Element (graph node) data.

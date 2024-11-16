@@ -1,4 +1,6 @@
-import * as Rdf from '../rdf/rdfModel';
+import { AsyncLock } from '../../coreUtils/async';
+import { multimapAdd } from '../../coreUtils/collections';
+import type * as Rdf from '../rdf/rdfModel';
 import {
     ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
     PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel,
@@ -6,6 +8,8 @@ import {
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../provider';
+
+import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
 
 /**
  * Options for `IndexedDbCachedProvider`.
@@ -21,6 +25,15 @@ export interface IndexedDbCachedProviderOptions {
      * `IndexedDB` database name to store cached data.
      */
     readonly dbName: string;
+    /**
+     * Whether to cache results from `DataProvider.links()`.
+     *
+     * If enabled, stores and updates a partial "mirror" of a previously-requested
+     * graph links from previous requests to partially or fully return cached ones.
+     *
+     * @default true
+     */
+    readonly cacheLinks?: boolean;
     /**
      * Whether to cache results from `DataProvider.lookup()` with `text` requests.
      *
@@ -40,8 +53,16 @@ const enum ObjectStore {
     linkTypes = 'linkTypes',
     propertyTypes = 'propertyTypes',
     elements = 'elements',
+    links = 'links',
+    linkBlocks = 'linkBlocks',
+    linkRanges = 'linkRanges',
     connectedLinkStats = 'connectedLinkStats',
     lookup = 'lookup',
+}
+
+const enum ObjectStoreIndex {
+    linkBySourceTarget = 'bySourceTarget',
+    linkBlockByRangeKey = 'byRangeKey',
 }
 
 const KNOWN_ELEMENT_TYPES_KEY = 'knownElementTypes';
@@ -54,6 +75,22 @@ const KNOWN_LINK_TYPES_KEY = 'knownLinkTypes';
 interface KnownLinkTypesRecord {
     readonly id: typeof KNOWN_LINK_TYPES_KEY;
     readonly value: LinkTypeModel[];
+}
+
+type LinkRecordKey = [ElementIri, ElementIri];
+interface LinkRecord extends LinkModel {
+    indexedDbId: number;
+}
+type LinkRangeKey = string & { readonly linkRangeKeyBrand: void };
+interface LinkBlockRecord {
+    readonly endpoint: ElementIri;
+    readonly connectedRange: LinkRangeKey;
+}
+type LinkBlock = AdjacencyBlock<ElementIri>;
+interface LinkRanges {
+    readonly endpoints: ReadonlySet<ElementIri>;
+    readonly rangeByEndpoint: ReadonlyMap<ElementIri, LinkRangeKey>;
+    readonly rangeByKey: ReadonlyMap<LinkRangeKey, AdjacencyRange<ElementIri>>;
 }
 
 interface ConnectedLinkStatsRecord {
@@ -88,11 +125,13 @@ interface LookupRecord {
  * @category Data
  */
 export class IndexedDbCachedProvider implements DataProvider {
-    static readonly DB_VERSION = 2;
+    static readonly DB_VERSION = 3;
 
     private readonly baseProvider: DataProvider;
     private readonly dbName: string;
+    private readonly cacheLinks: boolean;
     private readonly cacheTextLookups: boolean;
+    private readonly linkLock = new AsyncLock();
     private readonly closeSignal: AbortSignal;
 
     private openedDb: Promise<IDBDatabase> | undefined;
@@ -101,6 +140,7 @@ export class IndexedDbCachedProvider implements DataProvider {
     constructor(options: IndexedDbCachedProviderOptions) {
         this.baseProvider = options.baseProvider;
         this.dbName = options.dbName;
+        this.cacheLinks = options.cacheLinks ?? true;
         this.cacheTextLookups = options.cacheTextLookups ?? false;
         this.closeSignal = options.closeSignal;
         this.closeSignal.addEventListener('abort', this.onClose);
@@ -148,35 +188,53 @@ export class IndexedDbCachedProvider implements DataProvider {
                         });
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.elementTypes)) {
-                        db.createObjectStore(ObjectStore.elementTypes, {
-                            keyPath: 'id',
-                        });
+                        const keyPath: keyof ElementTypeModel = 'id';
+                        db.createObjectStore(ObjectStore.elementTypes, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.linkTypes)) {
-                        db.createObjectStore(ObjectStore.linkTypes, {
-                            keyPath: 'id',
-                        });
+                        const keyPath: keyof LinkTypeModel = 'id';
+                        db.createObjectStore(ObjectStore.linkTypes, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.propertyTypes)) {
-                        db.createObjectStore(ObjectStore.propertyTypes, {
-                            keyPath: 'id',
-                        });
+                        const keyPath: keyof PropertyTypeModel = 'id';
+                        db.createObjectStore(ObjectStore.propertyTypes, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.elements)) {
-                        db.createObjectStore(ObjectStore.elements, {
-                            keyPath: 'id',
+                        const keyPath: keyof ElementModel = 'id';
+                        db.createObjectStore(ObjectStore.elements, {keyPath});
+                    }
+                    if (!db.objectStoreNames.contains(ObjectStore.links)) {
+                        const keyPath: keyof LinkRecord = 'indexedDbId';
+                        const store = db.createObjectStore(ObjectStore.links, {
+                            keyPath,
+                            autoIncrement: true,
                         });
+                        const bySourceTargetKeyPath: Array<keyof LinkRecord> = ['sourceId', 'targetId'];
+                        store.createIndex(ObjectStoreIndex.linkBySourceTarget, bySourceTargetKeyPath);
+                    }
+                    if (!db.objectStoreNames.contains(ObjectStore.linkBlocks)) {
+                        const keyPath: keyof LinkBlockRecord = 'endpoint';
+                        const store = db.createObjectStore(ObjectStore.linkBlocks, {keyPath});
+                        const byRangeKeyPath: keyof LinkBlockRecord = 'connectedRange';
+                        store.createIndex(ObjectStoreIndex.linkBlockByRangeKey, byRangeKeyPath);
+                    }
+                    if (!db.objectStoreNames.contains(ObjectStore.linkRanges)) {
+                        db.createObjectStore(ObjectStore.linkRanges);
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.connectedLinkStats)) {
-                        db.createObjectStore(ObjectStore.connectedLinkStats, {
-                            keyPath: 'elementId',
-                        });
+                        const keyPath: keyof ConnectedLinkStatsRecord = 'elementId';
+                        db.createObjectStore(ObjectStore.connectedLinkStats, {keyPath});
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.lookup)) {
                         db.createObjectStore(ObjectStore.lookup, {
                             keyPath: LOOKUP_KEY_PROPERTIES,
                         });
                     }
+                };
+                request.onblocked = e => {
+                    reject(new Error(
+                        'IndexedDB is blocked from upgrade due to being opened at another browser tab'
+                    ));
                 };
                 request.onsuccess = e => {
                     const db = request.result;
@@ -298,14 +356,338 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result;
     }
 
-    links(params: {
+    async links(params: {
         targetElements: ReadonlyArray<ElementIri>;
         pairedElements: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {
-        // TODO: cache this result as well
-        return this.baseProvider.links(params);
+        if (!this.cacheLinks) {
+            return this.baseProvider.links(params);
+        }
+
+        if (params.targetElements.length === 0 || params.pairedElements.length === 0) {
+            return [];
+        }
+
+        const db = await this.openDb();
+
+        const orderedMain = [...params.targetElements].sort();
+        const orderedPaired = [...params.pairedElements].sort();
+        const request: LinkBlock = {
+            sources: new Set(orderedMain),
+            targets: new Set(orderedPaired),
+        };
+
+        const lock = await this.linkLock.acquire();
+        try {
+            const ranges = await this.readLinkRanges(db, request);
+            const blocks = await this.selectMissingLinkBlocks(request, ranges);
+            if (blocks.length > 0) {
+                await this.fetchAndCacheLinks(db, blocks, params.signal);
+                await this.updateLinkRanges(db, ranges, request);
+            }
+        } finally {
+            await lock.release();
+        }
+
+        const links: LinkModel[] = [];
+        const onlyTypeIds = params.linkTypeIds ? new Set(params.linkTypeIds) : undefined;
+        await this.readLinksFromCache(
+            db, orderedMain, orderedPaired,
+            link => {
+                if (!onlyTypeIds || onlyTypeIds.has(link.linkTypeId)) {
+                    links.push(link);
+                }
+            }
+        );
+
+        const nonSelfMain = orderedMain.filter(main => !request.targets.has(main));
+        await this.readLinksFromCache(
+            db, orderedPaired, nonSelfMain,
+            link => {
+                if ((!onlyTypeIds || onlyTypeIds.has(link.linkTypeId))) {
+                    links.push(link);
+                }
+            }
+        );
+
+        rehydrateProperties(links, this.factory);
+        return links;
+    }
+
+    private async readLinkRanges(
+        db: IDBDatabase,
+        request: LinkBlock
+    ): Promise<LinkRanges> {
+        const tx = db.transaction(
+            [ObjectStore.linkBlocks, ObjectStore.linkRanges],
+            'readonly'
+        );
+
+        try {
+            const blockStore = tx.objectStore(ObjectStore.linkBlocks);
+            const rangeStore = tx.objectStore(ObjectStore.linkRanges);
+
+            const endpoints = new Set(request.sources);
+            for (const target of request.targets) {
+                endpoints.add(target);
+            }
+
+            const rangeByEndpoint = new Map<ElementIri, LinkRangeKey>();
+            await indexedDbGetMany(blockStore, Array.from(endpoints), value => {
+                const block = value as LinkBlockRecord | undefined;
+                if (block) {
+                    rangeByEndpoint.set(block.endpoint, block.connectedRange);
+                }
+            });
+
+            const uniqueRangeKeys = new Set(rangeByEndpoint.values());
+            const rangeByKey = new Map<LinkRangeKey, AdjacencyRange<ElementIri>>();
+            await indexedDbGetMany(rangeStore, Array.from(uniqueRangeKeys), (value, key) => {
+                const range = value as AdjacencyRange<ElementIri> | undefined;
+                if (range) {
+                    rangeByKey.set(key, range);
+                }
+            });
+
+            tx.commit();
+
+            return {endpoints, rangeByEndpoint, rangeByKey};
+        } catch (err) {
+            indexedDbSilentAbort(tx);
+            throw new Error('Failed to read link ranges for an update', {cause: err});
+        }
+    }
+
+    private selectMissingLinkBlocks(
+        request: LinkBlock,
+        ranges: LinkRanges
+    ): LinkBlock[] {
+        // Determine a set of intersected target ranges
+        const rangeToSources = new Map<LinkRangeKey, Set<ElementIri>>();
+        for (const source of request.sources) {
+            const range = ranges.rangeByEndpoint.get(source);
+            if (range) {
+                multimapAdd(rangeToSources, range, source);
+            }
+        }
+
+        // Fetch target ranges to form intersected blocks
+        const intersectedRanges = Array.from(rangeToSources.keys()).sort();
+        const blocks: LinkBlock[] = [];
+        for (const rangeKey of intersectedRanges) {
+            const sources = rangeToSources.get(rangeKey);
+            const targets = ranges.rangeByKey.get(rangeKey);
+            if (sources && targets) {
+                blocks.push({sources, targets});
+            }
+        }
+
+        // Compute missing parts for each block
+        return subtractAdjacencyBlocks(request, blocks);
+    }
+
+    private async fetchAndCacheLinks(
+        db: IDBDatabase,
+        blocks: ReadonlyArray<LinkBlock>,
+        signal: AbortSignal | undefined
+    ): Promise<void> {
+        const serializedLinks: LinkModel[] = [];
+        await Promise.all(blocks.map(async block => {
+            const links = await this.baseProvider.links({
+                targetElements: Array.from(block.sources),
+                pairedElements: Array.from(block.targets),
+                signal: signal,
+            });
+            for (const link of links) {
+                serializedLinks.push(serializeForDb(link));
+            }
+        }));
+
+        signal?.throwIfAborted();
+
+        const tx = db.transaction(ObjectStore.links, 'readwrite');
+        try {
+            const linkStore = tx.objectStore(ObjectStore.links);
+            await indexedDbPutMany(linkStore, serializedLinks);
+            tx.commit();
+        } catch (err) {
+            indexedDbSilentAbort(tx);
+            throw new Error(
+                'Failed to fetch and cache missing links from base provider',
+                {cause: err}
+            );
+        }
+    }
+
+    private async updateLinkRanges(
+        db: IDBDatabase,
+        ranges: LinkRanges,
+        update: AdjacencyBlock<ElementIri>
+    ): Promise<void> {
+        interface RangeHashRequest {
+            readonly before?: AdjacencyRange<ElementIri> | undefined;
+            readonly items: ReadonlySet<ElementIri>;
+            computedHash?: LinkRangeKey;
+        }
+
+        const fullBothRequest: RangeHashRequest = {items: ranges.endpoints};
+        const fullSourcesRequest: RangeHashRequest = {items: update.sources};
+        const fullTargetsRequest: RangeHashRequest = {items: update.targets};
+
+        const bothRequests = new Map<LinkRangeKey, RangeHashRequest>();
+        const sourceRequests = new Map<LinkRangeKey, RangeHashRequest>();
+        const targetRequests = new Map<LinkRangeKey, RangeHashRequest>();
+
+        for (const [endpoint, rangeKey] of ranges.rangeByEndpoint) {
+            if (update.sources.has(endpoint) && update.targets.has(endpoint)) {
+                if (!bothRequests.has(rangeKey)) {
+                    const before = ranges.rangeByKey.get(rangeKey);
+                    const items = new Set(before);
+                    for (const source of update.sources) {
+                        items.add(source);
+                    }
+                    for (const target of update.targets) {
+                        items.add(target);
+                    }
+                    bothRequests.set(rangeKey, {before, items});
+                }
+            } else if (update.sources.has(endpoint)) {
+                if (!sourceRequests.has(rangeKey)) {
+                    const before = ranges.rangeByKey.get(rangeKey);
+                    const items = new Set(before);
+                    for (const target of update.targets) {
+                        items.add(target);
+                    }
+                    sourceRequests.set(rangeKey, {before, items});
+                }
+            } else if (update.targets.has(endpoint)) {
+                if (!targetRequests.has(rangeKey)) {
+                    const before = ranges.rangeByKey.get(rangeKey);
+                    const items = new Set(before);
+                    for (const source of update.sources) {
+                        items.add(source);
+                    }
+                    targetRequests.set(rangeKey, {before, items});
+                }
+            }
+        }
+
+        const requests: RangeHashRequest[] = [fullBothRequest, fullSourcesRequest, fullTargetsRequest];
+        for (const requestMap of [bothRequests, sourceRequests, targetRequests]) {
+            for (const request of requestMap.values()) {
+                if (request.items.size > (request.before?.size ?? 0)) {
+                    requests.push(request);
+                }
+            }
+        }
+
+        await Promise.all(requests.map(async request => {
+            request.computedHash = (await hashAdjacencyRange(request.items)) as LinkRangeKey;
+        }));
+
+        const tx = db.transaction(
+            [ObjectStore.linkBlocks, ObjectStore.linkRanges],
+            'readwrite'
+        );
+
+        try {
+            const blockStore = tx.objectStore(ObjectStore.linkBlocks);
+            const rangeStore = tx.objectStore(ObjectStore.linkRanges);
+
+            const updatedBlocks: LinkBlockRecord[] = [];
+            const addedRanges = new Map<LinkRangeKey, RangeHashRequest>();
+
+            for (const endpoint of ranges.endpoints) {
+                const rangeKey = ranges.rangeByEndpoint.get(endpoint);
+
+                let request: RangeHashRequest | undefined;
+                if (update.sources.has(endpoint) && update.targets.has(endpoint)) {
+                    request = rangeKey ? bothRequests.get(rangeKey) : fullBothRequest;
+                } else if (update.sources.has(endpoint)) {
+                    request = rangeKey ? sourceRequests.get(rangeKey) : fullTargetsRequest;
+                } else if (update.targets.has(endpoint)) {
+                    request = rangeKey ? targetRequests.get(rangeKey) : fullSourcesRequest;
+                }
+
+                if (request?.computedHash) {
+                    updatedBlocks.push({
+                        endpoint,
+                        connectedRange: request.computedHash,
+                    });
+                    if (!ranges.rangeByKey.has(request.computedHash)) {
+                        addedRanges.set(request.computedHash, request);
+                    }
+                }
+            }
+
+            // Store added ranges (OK to override due to being keyed by content hash)
+            await indexedDbPutMany(
+                rangeStore,
+                Array.from(addedRanges.values()),
+                request => [request.computedHash!, request.items]
+            );
+
+            // Update ranges for intersected blocks
+            await indexedDbPutMany(blockStore, updatedBlocks);
+
+            // Cleanup no longer used ranges
+            const changedRangeSet = new Set<LinkRangeKey>();
+            for (const block of updatedBlocks) {
+                const beforeKey = ranges.rangeByEndpoint.get(block.endpoint);
+                if (beforeKey) {
+                    changedRangeSet.add(beforeKey);
+                }
+            }
+
+            const blockByRange = blockStore.index(ObjectStoreIndex.linkBlockByRangeKey);
+            const changedRanges = Array.from(changedRangeSet);
+            const foundRanges = new Set<LinkRangeKey>();
+            await indexedDbGetMany(blockByRange, changedRanges, (value, key) => {
+                if (value) {
+                    foundRanges.add(key);
+                }
+            });
+            await indexedDbDeleteMany(
+                rangeStore,
+                changedRanges.filter(key => !foundRanges.has(key))
+            );
+
+            tx.commit();
+        } catch (err) {
+            indexedDbSilentAbort(tx);
+            throw new Error('Failed to update cached link blocks', {cause: err});
+        }
+    }
+
+    private async readLinksFromCache(
+        db: IDBDatabase,
+        orderedSources: ReadonlyArray<ElementIri>,
+        orderedTargets: ReadonlyArray<ElementIri>,
+        onLink: (link: LinkModel) => void
+    ): Promise<void> {
+        const tx = db.transaction(ObjectStore.links, 'readonly');
+        try {
+            const linkStore = tx.objectStore(ObjectStore.links);
+            const linkBySourceTarget = linkStore.index(ObjectStoreIndex.linkBySourceTarget);
+
+            // Process all links from a mirror store
+            await indexedDbScanOrderedArea2D(
+                linkBySourceTarget,
+                orderedSources,
+                orderedTargets,
+                cursor => {
+                    const {indexedDbId, ...link} = cursor.value as LinkRecord;
+                    onLink(link);
+                }
+            );
+
+            tx.commit();
+        } catch (err) {
+            indexedDbSilentAbort(tx);
+            throw new Error('Failed to read links from cache', {cause: err});
+        }
     }
 
     async connectedLinkStats(params: {
@@ -454,10 +836,13 @@ function indexedDbRequestAsPromise<T>(request: IDBRequest<T>): Promise<T> {
 }
 
 function indexedDbGetMany<K extends IDBValidKey>(
-    store: IDBObjectStore,
+    store: IDBObjectStore | IDBIndex,
     keys: ReadonlyArray<K>,
     onGet: (value: unknown, key: K) => void
 ): Promise<void> {
+    if (keys.length === 0) {
+        return Promise.resolve();
+    }
     return new Promise<void>((resolve, reject) => {
         let resolvedCount = 0;
         let rejected = false;
@@ -486,21 +871,31 @@ function indexedDbGetMany<K extends IDBValidKey>(
     });
 }
 
-function indexedDbPutMany(
+function indexedDbPutMany<T>(
     store: IDBObjectStore,
-    values: ReadonlyArray<unknown>
+    items: ReadonlyArray<T>,
+    asKeyValue?: (value: T) => readonly [IDBValidKey, unknown]
 ): Promise<IDBValidKey[]> {
+    if (items.length === 0) {
+        return Promise.resolve([]);
+    }
     return new Promise<IDBValidKey[]>((resolve, reject) => {
         const addedKeys: IDBValidKey[] = [];
         let rejected = false;
-        for (const value of values) {
-            const request = store.put(value);
+        for (const item of items) {
+            let request: IDBRequest<IDBValidKey>;
+            if (asKeyValue) {
+                const [key, value] = asKeyValue(item);
+                request = store.put(value, key);
+            } else {
+                request = store.put(item);
+            }
             request.onsuccess = () => {
                 if (rejected) {
                     return;
                 }
                 addedKeys.push(request.result);
-                if (addedKeys.length === values.length) {
+                if (addedKeys.length === items.length) {
                     resolve(addedKeys);
                 }
             };
@@ -510,6 +905,122 @@ function indexedDbPutMany(
             };
         }
     });
+}
+
+function indexedDbDeleteMany<K extends IDBValidKey>(
+    store: IDBObjectStore,
+    keys: ReadonlyArray<K>
+): Promise<void> {
+    if (keys.length === 0) {
+        return Promise.resolve();
+    }
+    return new Promise<void>((resolve, reject) => {
+        let deletedCount = 0;
+        let rejected = false;
+        for (const key of keys) {
+            const request = store.delete(key);
+            request.onsuccess = () => {
+                if (rejected) {
+                    return;
+                }
+                deletedCount++;
+                if (deletedCount === keys.length) {
+                    resolve();
+                }
+            };
+            request.onerror = () => {
+                rejected = true;
+                reject(request.error);
+            };
+        }
+    });
+}
+
+// Inspired by "Indexed DB - N-Dimensional Selection"
+// https://gist.github.com/inexorabletash/704e9688f99ac12dd336
+function indexedDbScanOrderedArea2D<K extends string>(
+    store: IDBObjectStore | IDBIndex,
+    first: ReadonlyArray<K>,
+    second: ReadonlyArray<K>,
+    scanner: (cursor: IDBCursorWithValue) => void
+): Promise<void> {
+    if (first.length === 0 || second.length === 0) {
+        return Promise.resolve();
+    }
+
+    const range = IDBKeyRange.bound(
+        [first[0], second[0]],
+        [first[first.length - 1], second[second.length - 1]]
+    );
+    let i = 0;
+    let j = 0;
+
+    return indexedDbScan(store, range, cursor => {
+        const [firstKey, secondKey] = cursor.key as [K, K];
+
+        nextLeft: while (true) {
+            while (i < first.length && indexedDB.cmp(first[i], firstKey) < 0) {
+                i++;
+                j = 0;
+            }
+            if (i >= first.length) {
+                return;
+            }
+
+            if (indexedDB.cmp(first[i], firstKey) > 0) {
+                cursor.continue([first[i], second[0]]);
+                return;
+            }
+
+            while (j < second.length && indexedDB.cmp(second[j], secondKey) < 0) {
+                j++;
+            }
+            if (j >= second.length) {
+                j = 0;
+                i++;
+                continue nextLeft;
+            }
+
+            if (indexedDB.cmp(second[j], secondKey) > 0) {
+                cursor.continue([first[i], second[j]]);
+                return;
+            }
+
+            // Found the the key [left[i], right[j]]
+            scanner(cursor);
+            cursor.continue();
+            return;
+        }
+    });
+}
+
+function indexedDbScan(
+    store: IDBObjectStore | IDBIndex,
+    query: IDBKeyRange,
+    scanner: (cursor: IDBCursorWithValue) => void
+): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const request = store.openCursor(query);
+        request.onsuccess = e => {
+            const cursor = request.result;
+            if (!cursor) {
+                resolve();
+                return;
+            }
+            scanner(cursor);
+        };
+        request.onerror = () => {
+            reject(request.error);
+        };
+    });
+}
+
+function indexedDbSilentAbort(tx: IDBTransaction): void {
+    try {
+        tx.abort();
+    } catch (err) {
+        /* ignore */
+    }
 }
 
 function serializeForDb<T>(value: T): T {
