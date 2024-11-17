@@ -1,6 +1,6 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.26.0-next",
+  "version": "0.26.0",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
