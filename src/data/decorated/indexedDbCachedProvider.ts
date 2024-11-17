@@ -26,7 +26,7 @@ export interface IndexedDbCachedProviderOptions {
      */
     readonly dbName: string;
     /**
-     * Whether to cache missing (negative) results from the following `DataProvider` methods:
+     * Whether to cache missing results from the following `DataProvider` methods:
      *  - `elements()`
      *  - `elementTypes()`
      *  - `linkTypes()`

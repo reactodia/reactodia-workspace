@@ -5,21 +5,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.26.0] - 2024-11-17
 ### Added
-- Split `SparqlDataProvider` requests into chunks of configurable size (`chunkSize`);
 - Support incremental links loading from `DataProvider`:
   * [Breaking] Change `DataProvider.links()` contract to return links between two sets of elements to allow partial link requests;
   * Extend `SparqlDataProviderSettings.linksInfoQuery` to support partial link queries (with backwards compatibility fallback);
+- Split `SparqlDataProvider` requests into chunks of configurable size (`chunkSize`):
+  * Splitting `SparqlDataProvider.links()` requests requires to migrate to the new `linksInfoQuery` contract, see above;
+- Links caching via perfect mirroring for `IndexedDdCachedProvider.links()`:
+  * Enabled by default, can be disabled by setting `IndexedDdCachedProviderOptions.cacheLinks` to `false`;
+- Cache missing results for applicable methods in `IndexedDbCachedProvider`:
+  * Enabled by default, can be disabled by setting `IndexedDdCachedProviderOptions.cacheMissing` to `false`;
 - JSDoc for almost all exported components, services, interfaces and functions.
 
 ### Changed
 - **[Breaking]** Change `placeElementsAround()` function into `placeElementsAroundTarget()` command;
 - **[Breaking]** Replace `LinkTemplateProps.typeIndex` with `markerSource` and `markerTarget` properties;
 - **[Breaking]** Replace `EditableLabel` on the link template by a separate `RenameLinkProvider`;
-- **[Breaking]** Replace `GenerateID.{forElement, forLink}` with static methods `Element.generateId()` and `Link.generateId()`.
+- **[Breaking]** Replace `GenerateID.{forElement, forLink}` with static methods `Element.generateId()` and `Link.generateId()`;
+- Increased IndexedDB database version in `IndexedDbCachedProvider`: previous caches will be discarded on upgrade when using the new version.
 
 ### Fixed
 - Grouped entity width overflow when a label is too long in the `StandardTemplate`.
+- Cached results from `IndexedDbCachedProvider.connectedLinkStats()` ignored `inexactCount` parameter.
 
 ### Removed
 - Remove unused `LinkRedrawLevel` type with corresponding parameters;
@@ -251,7 +260,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...v0.26.0
 [0.25.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.23.0...v0.24.0
