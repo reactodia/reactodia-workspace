@@ -95,18 +95,18 @@ export interface DataProvider {
     /**
      * Get all links between two specified sets of entities (bipartite graph links).
      *
-     * To get all links between all elements in the set, it is possible to
-     * pass the same set to both `targetElements` and `pairedElements`.
+     * To get all links between all entities in the set, it is possible to
+     * pass the same set to both `primary` and `secondary` sets of elements.
      */
     links(params: {
         /**
-         * First set of entities to get links between them and `pairedElements`.
+         * First set of entities to get links between them and `secondary` elements.
          */
-        targetElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
         /**
-         * Second set of entities to get links between them and `targetElements`.
+         * Second set of entities to get links between them and `primary` elements.
          */
-        pairedElements: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         /**
          * Return only links with specified types.
          */

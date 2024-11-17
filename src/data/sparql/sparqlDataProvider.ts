@@ -459,30 +459,30 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     async links(params: {
-        targetElements: ReadonlyArray<ElementIri>;
-        pairedElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        const {targetElements, pairedElements, linkTypeIds, signal} = params;
+        const {primary, secondary, linkTypeIds, signal} = params;
         const {filterOnlyLanguages, linksInfoQuery} = this.settings;
 
         const propLanguageFilter = formatLanguageFilter('?propValue', filterOnlyLanguages);
         const linkConfigurations = this.formatLinkLinks();
 
         let bindings: Promise<ReadonlyArray<LinkBinding>>;
-        if (targetElements.length > 0 && pairedElements.length > 0) {
+        if (primary.length > 0 && secondary.length > 0) {
             if (linksInfoQuery.includes('${ids}')) {
                 bindings = this.queryUndirectedLinks(
-                    targetElements,
-                    pairedElements,
+                    primary,
+                    secondary,
                     {propLanguageFilter, linkConfigurations},
                     signal,
                 );
             } else {
                 bindings = this.queryDirectedLinks(
-                    targetElements,
-                    pairedElements,
+                    primary,
+                    secondary,
                     {propLanguageFilter, linkConfigurations},
                     signal,
                 );
@@ -494,8 +494,8 @@ export class SparqlDataProvider implements DataProvider {
         let elementsForTypes: Set<ElementIri> | undefined;
         if (this.linkByPredicate.size > 0) {
             // Optimization for common case without link configurations
-            elementsForTypes = new Set(targetElements);
-            for (const iri of pairedElements) {
+            elementsForTypes = new Set(primary);
+            for (const iri of secondary) {
                 elementsForTypes.add(iri);
             }
         }
@@ -519,8 +519,8 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     private async queryUndirectedLinks(
-        mainElements: ReadonlyArray<ElementIri>,
-        pairedElements: ReadonlyArray<ElementIri>,
+        primary: ReadonlyArray<ElementIri>,
+        secondary: ReadonlyArray<ElementIri>,
         queryVariables: {
             propLanguageFilter: string;
             linkConfigurations: string;
@@ -530,8 +530,8 @@ export class SparqlDataProvider implements DataProvider {
         const {propLanguageFilter, linkConfigurations} = queryVariables;
         const {defaultPrefix, linksInfoQuery} = this.settings;
 
-        const allElementIris = new Set<ElementIri>(mainElements);
-        for (const iri of pairedElements) {
+        const allElementIris = new Set<ElementIri>(primary);
+        for (const iri of secondary) {
             allElementIris.add(iri);
         }
         const query = defaultPrefix + resolveTemplate(linksInfoQuery, {
@@ -544,8 +544,8 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     private async queryDirectedLinks(
-        mainElements: ReadonlyArray<ElementIri>,
-        pairedElements: ReadonlyArray<ElementIri>,
+        primary: ReadonlyArray<ElementIri>,
+        secondary: ReadonlyArray<ElementIri>,
         queryVariables: {
             propLanguageFilter: string;
             linkConfigurations: string;
@@ -559,8 +559,8 @@ export class SparqlDataProvider implements DataProvider {
         const bindings: LinkBinding[] = [];
         const tasks = Array.from(
             chunkUndirectedCrossProduct(
-                mainElements,
-                pairedElements,
+                primary,
+                secondary,
                 measure,
                 maxSize
             ),

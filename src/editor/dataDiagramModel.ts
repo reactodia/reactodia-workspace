@@ -488,20 +488,20 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     requestLinks(options: RequestLinksOptions = {}): Promise<void> {
         const {addedElements, linkTypes} = options;
 
-        const targetElements: ElementIri[] = [];
+        const primaryIris: ElementIri[] = [];
         for (const element of this.graph.getElements()) {
             for (const entity of iterateEntitiesOf(element)) {
-                targetElements.push(entity.id);
+                primaryIris.push(entity.id);
             }
         }
 
-        const pairedElements = addedElements ?? targetElements;
-        if (targetElements.length === 0 || pairedElements.length === 0) {
+        const secondaryIris = addedElements ?? primaryIris;
+        if (primaryIris.length === 0 || secondaryIris.length === 0) {
             return Promise.resolve();
         }
 
         return this.fetcher
-            .fetchLinks(targetElements, pairedElements, linkTypes)
+            .fetchLinks(primaryIris, secondaryIris, linkTypes)
             .then(links => this.onLinkInfoLoaded(links));
     }
 

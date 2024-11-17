@@ -82,53 +82,53 @@ export class MockDataProvider extends EmptyDataProvider {
     }
 
     links(params: {
-        targetElements: ReadonlyArray<ElementIri>;
-        pairedElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {
         const result = new HashSet<LinkModel>(hashLink, equalLinks);
-        for (const mainIri of params.targetElements) {
-            for (const pairedIri of params.pairedElements) {
-                if (mainIri === pairedIri) {
-                    if (mainIri.startsWith('element:self-')) {
+        for (const primaryIri of params.primary) {
+            for (const secondaryIri of params.secondary) {
+                if (primaryIri === secondaryIri) {
+                    if (primaryIri.startsWith('element:self-')) {
                         result.add({
-                            sourceId: mainIri,
-                            targetId: mainIri,
+                            sourceId: primaryIri,
+                            targetId: primaryIri,
                             linkTypeId: linkType('self'),
                             properties: {},
                         });
                     }
                 } else {
-                    if (pairedIri.startsWith(mainIri)) {
+                    if (secondaryIri.startsWith(primaryIri)) {
                         result.add({
-                            sourceId: mainIri,
-                            targetId: pairedIri,
+                            sourceId: primaryIri,
+                            targetId: secondaryIri,
                             linkTypeId: linkType('prefix-of'),
                             properties: {},
                         });
-                    } else if (mainIri.startsWith(pairedIri)) {
+                    } else if (primaryIri.startsWith(secondaryIri)) {
                         result.add({
-                            sourceId: pairedIri,
-                            targetId: mainIri,
+                            sourceId: secondaryIri,
+                            targetId: primaryIri,
                             linkTypeId: linkType('prefix-of'),
                             properties: {},
                         });
                     }
 
                     if (
-                        mainIri.startsWith('element:full-') &&
-                        pairedIri.startsWith('element:full-')
+                        primaryIri.startsWith('element:full-') &&
+                        secondaryIri.startsWith('element:full-')
                     ) {
                         result.add({
-                            sourceId: mainIri,
-                            targetId: pairedIri,
+                            sourceId: primaryIri,
+                            targetId: secondaryIri,
                             linkTypeId: linkType('related'),
                             properties: {},
                         });
                         result.add({
-                            sourceId: pairedIri,
-                            targetId: mainIri,
+                            sourceId: secondaryIri,
+                            targetId: primaryIri,
                             linkTypeId: linkType('related'),
                             properties: {},
                         });

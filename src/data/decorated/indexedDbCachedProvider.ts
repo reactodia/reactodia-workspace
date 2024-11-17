@@ -381,8 +381,8 @@ export class IndexedDbCachedProvider implements DataProvider {
     }
 
     async links(params: {
-        targetElements: ReadonlyArray<ElementIri>;
-        pairedElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {
@@ -390,17 +390,17 @@ export class IndexedDbCachedProvider implements DataProvider {
             return this.baseProvider.links(params);
         }
 
-        if (params.targetElements.length === 0 || params.pairedElements.length === 0) {
+        if (params.primary.length === 0 || params.secondary.length === 0) {
             return [];
         }
 
         const db = await this.openDb();
 
-        const orderedMain = [...params.targetElements].sort();
-        const orderedPaired = [...params.pairedElements].sort();
+        const orderedPrimary = [...params.primary].sort();
+        const orderedSecondary = [...params.secondary].sort();
         const request: LinkBlock = {
-            sources: new Set(orderedMain),
-            targets: new Set(orderedPaired),
+            sources: new Set(orderedPrimary),
+            targets: new Set(orderedSecondary),
         };
 
         const lock = await this.linkLock.acquire();
@@ -418,7 +418,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         const links: LinkModel[] = [];
         const onlyTypeIds = params.linkTypeIds ? new Set(params.linkTypeIds) : undefined;
         await this.readLinksFromCache(
-            db, orderedMain, orderedPaired,
+            db, orderedPrimary, orderedSecondary,
             link => {
                 if (!onlyTypeIds || onlyTypeIds.has(link.linkTypeId)) {
                     links.push(link);
@@ -426,9 +426,9 @@ export class IndexedDbCachedProvider implements DataProvider {
             }
         );
 
-        const nonSelfMain = orderedMain.filter(main => !request.targets.has(main));
+        const nonSelfPrimary = orderedPrimary.filter(element => !request.targets.has(element));
         await this.readLinksFromCache(
-            db, orderedPaired, nonSelfMain,
+            db, orderedSecondary, nonSelfPrimary,
             link => {
                 if ((!onlyTypeIds || onlyTypeIds.has(link.linkTypeId))) {
                     links.push(link);
@@ -520,8 +520,8 @@ export class IndexedDbCachedProvider implements DataProvider {
         const serializedLinks: LinkModel[] = [];
         await Promise.all(blocks.map(async block => {
             const links = await this.baseProvider.links({
-                targetElements: Array.from(block.sources),
-                pairedElements: Array.from(block.targets),
+                primary: Array.from(block.sources),
+                secondary: Array.from(block.targets),
                 signal: signal,
             });
             for (const link of links) {

@@ -221,7 +221,7 @@ describe('IndexedDbCachedProvider', () => {
 
         const popLinksCalls = () => {
             const calls = linksSpy.mock.calls.map(
-                ([params]) => ({targets: params.targetElements, paired: params.pairedElements})
+                ([params]) => ({primary: params.primary, secondary: params.secondary})
             );
             linksSpy.mock.calls.length = 0;
             return calls;
@@ -239,43 +239,43 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.links({
-                targetElements: [element('a'), element('b'), element('c'), element('d')],
-                pairedElements: [element('a'), element('b'), element('e')],
+                primary: [element('a'), element('b'), element('c'), element('d')],
+                secondary: [element('a'), element('b'), element('e')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a'), element('b'), element('c'), element('d')],
-                    paired: [element('a'), element('b'), element('e')]
+                    primary: [element('a'), element('b'), element('c'), element('d')],
+                    secondary: [element('a'), element('b'), element('e')]
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('a'), element('b')],
-                pairedElements: [element('b')],
+                primary: [element('a'), element('b')],
+                secondary: [element('b')],
             });
 
             expect(popLinksCalls()).toEqual([] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('c'), element('x')],
-                pairedElements: [element('a'), element('f')],
+                primary: [element('c'), element('x')],
+                secondary: [element('a'), element('f')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('c')],
-                    paired: [element('f')],
+                    primary: [element('c')],
+                    secondary: [element('f')],
                 },
                 {
-                    targets: [element('x')],
-                    paired: [element('a'), element('f')],
+                    primary: [element('x')],
+                    secondary: [element('a'), element('f')],
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('c')],
-                pairedElements: [element('a'), element('b')],
+                primary: [element('c')],
+                secondary: [element('a'), element('b')],
             });
 
             expect(popLinksCalls()).toEqual([] satisfies LinkRequest);
@@ -290,7 +290,7 @@ describe('IndexedDbCachedProvider', () => {
 
         const popLinksCalls = () => {
             const calls = linksSpy.mock.calls.map(
-                ([params]) => ({targets: params.targetElements, paired: params.pairedElements})
+                ([params]) => ({primary: params.primary, secondary: params.secondary})
             );
             linksSpy.mock.calls.length = 0;
             return calls;
@@ -308,56 +308,56 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.links({
-                targetElements: [element('a')],
-                pairedElements: [element('a')],
+                primary: [element('a')],
+                secondary: [element('a')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a')],
-                    paired: [element('a')],
+                    primary: [element('a')],
+                    secondary: [element('a')],
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('a'), element('b')],
-                pairedElements: [element('b')],
+                primary: [element('a'), element('b')],
+                secondary: [element('b')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a'), element('b')],
-                    paired: [element('b')],
+                    primary: [element('a'), element('b')],
+                    secondary: [element('b')],
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('a'), element('b'), element('c')],
-                pairedElements: [element('c')],
+                primary: [element('a'), element('b'), element('c')],
+                secondary: [element('c')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a'), element('b'), element('c')],
-                    paired: [element('c')],
+                    primary: [element('a'), element('b'), element('c')],
+                    secondary: [element('c')],
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('a'), element('b'), element('c'), element('d')],
-                pairedElements: [element('d')],
+                primary: [element('a'), element('b'), element('c'), element('d')],
+                secondary: [element('d')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a'), element('b'), element('c'), element('d')],
-                    paired: [element('d')],
+                    primary: [element('a'), element('b'), element('c'), element('d')],
+                    secondary: [element('d')],
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('a'), element('b'), element('c'), element('d')],
-                pairedElements: [element('a'), element('b'), element('c'), element('d')],
+                primary: [element('a'), element('b'), element('c'), element('d')],
+                secondary: [element('a'), element('b'), element('c'), element('d')],
             });
 
             expect(popLinksCalls()).toEqual([] satisfies LinkRequest);
@@ -372,7 +372,7 @@ describe('IndexedDbCachedProvider', () => {
 
         const popLinksCalls = () => {
             const calls = linksSpy.mock.calls.map(
-                ([params]) => ({targets: params.targetElements, paired: params.pairedElements})
+                ([params]) => ({primary: params.primary, secondary: params.secondary})
             );
             linksSpy.mock.calls.length = 0;
             return calls;
@@ -390,20 +390,20 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.links({
-                targetElements: [element('a'), element('b'), element('c'), element('d')],
-                pairedElements: [element('a'), element('b'), element('e')],
+                primary: [element('a'), element('b'), element('c'), element('d')],
+                secondary: [element('a'), element('b'), element('e')],
             });
 
             expect(popLinksCalls()).toEqual([
                 {
-                    targets: [element('a'), element('b'), element('c'), element('d')],
-                    paired: [element('a'), element('b'), element('e')]
+                    primary: [element('a'), element('b'), element('c'), element('d')],
+                    secondary: [element('a'), element('b'), element('e')]
                 },
             ] satisfies LinkRequest);
 
             await provider.links({
-                targetElements: [element('e'), element('b')],
-                pairedElements: [element('b')],
+                primary: [element('e'), element('b')],
+                secondary: [element('b')],
             });
 
             expect(popLinksCalls()).toEqual([] satisfies LinkRequest);
@@ -426,13 +426,13 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             const links = await provider.links({
-                targetElements: [
+                primary: [
                     element('a'), element('bb'),
                     element('aa'), element('b'),
                     element('self-a'), element('self-aaa'),
                     element('full-a'), element('full-b'),
                 ],
-                pairedElements: [
+                secondary: [
                     element('a'), element('b'),
                     element('aa'), element('bb'),
                     element('self-a'), element('self-aa'),

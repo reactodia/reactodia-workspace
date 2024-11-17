@@ -61,8 +61,8 @@ export class EmptyDataProvider implements DataProvider {
     }
 
     links(params: {
-        targetElements: ReadonlyArray<ElementIri>;
-        pairedElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         linkTypeIds?: readonly LinkTypeIri[] | undefined;
         signal?: AbortSignal | undefined;
     }): Promise<LinkModel[]> {

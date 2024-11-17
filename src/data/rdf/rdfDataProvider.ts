@@ -326,21 +326,21 @@ export class RdfDataProvider implements DataProvider {
     }
 
     links(params: {
-        targetElements: ReadonlyArray<ElementIri>;
-        pairedElements: ReadonlyArray<ElementIri>;
+        primary: ReadonlyArray<ElementIri>;
+        secondary: ReadonlyArray<ElementIri>;
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        const {targetElements, pairedElements, linkTypeIds} = params;
+        const {primary, secondary, linkTypeIds} = params;
 
-        const targets = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
-        for (const elementIri of targetElements) {
-            targets.add(this.decodeTerm(elementIri));
+        const primarySet = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
+        for (const elementIri of primary) {
+            primarySet.add(this.decodeTerm(elementIri));
         }
 
-        const paired = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
-        for (const elementIri of pairedElements) {
-            paired.add(this.decodeTerm(elementIri));
+        const secondarySet = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
+        for (const elementIri of secondary) {
+            secondarySet.add(this.decodeTerm(elementIri));
         }
 
         const linkTypeSet = linkTypeIds ? new Set<string>(linkTypeIds) : undefined;
@@ -352,8 +352,8 @@ export class RdfDataProvider implements DataProvider {
                 t.predicate.termType === 'NamedNode' &&
                 isResourceTerm(t.object) &&
                 (
-                    targets.has(t.subject) && paired.has(t.object) ||
-                    paired.has(t.subject) && targets.has(t.object)
+                    primarySet.has(t.subject) && secondarySet.has(t.object) ||
+                    secondarySet.has(t.subject) && primarySet.has(t.object)
                 ) &&
                 (!linkTypeSet || !linkTypeSet.has(t.predicate.value))
             ) {
