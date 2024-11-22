@@ -25,6 +25,16 @@ export interface NavigatorProps {
      */
     expanded?: boolean;
     /**
+     * Specifies a maximum allowed fraction of occupied canvas width or height
+     * by the navigator before it will auto-collapse.
+     *
+     * When the canvas is resized, the navigator will expand or collapse
+     * depending on this value.
+     *
+     * @default 0.4
+     */
+    autoCollapseFraction?: number;
+    /**
      * Horizontal size of the navigator in px.
      * 
      * @default 300
@@ -122,6 +132,7 @@ interface NavigatorInnerProps extends NavigatorProps {
 
 interface State {
     expanded: boolean;
+    allowExpand: boolean;
 }
 
 interface NavigatorTransform {
@@ -132,8 +143,10 @@ interface NavigatorTransform {
 
 const CLASS_NAME = 'reactodia-navigator';
 const MIN_SCALE = 0.25;
+const MAX_SIZE_FRACTION = 0.9;
 
 const DEFAULT_EXPANDED = true;
+const DEFAULT_AUTO_COLLAPSE_FRACTION = 0.4;
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 160;
 const DEFAULT_SCALE_PADDING = 0.2;
@@ -152,6 +165,7 @@ const DEFAULT_OVERFLOW_STROKE: NavigatorStrokeStyle = {
 
 class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     private readonly delayedRedraw = new Debouncer();
+    private readonly delayedSizeCheck = new Debouncer();
     private readonly listener = new EventObserver();
     private canvas!: HTMLCanvasElement;
 
@@ -161,7 +175,10 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     constructor(props: NavigatorInnerProps) {
         super(props);
         const {expanded = DEFAULT_EXPANDED} = this.props;
-        this.state = {expanded};
+        this.state = {
+            expanded,
+            allowExpand: true,
+        };
     }
 
     componentDidMount() {
@@ -171,8 +188,13 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         this.listener.listen(model.events, 'elementEvent', this.scheduleRedraw);
         this.listener.listen(canvas.events, 'pointerMove', this.scheduleRedraw);
         this.listener.listen(canvas.events, 'scroll', this.scheduleRedraw);
+        this.listener.listen(canvas.events, 'resize', () => {
+            this.delayedSizeCheck.call(this.onCheckSize);
+        });
         this.listener.listen(renderingState.shared.events, 'changeHighlight', this.scheduleRedraw);
         this.listener.listen(renderingState.events, 'changeElementSize', this.scheduleRedraw);
+
+        this.onCheckSize();
     }
 
     shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
@@ -185,6 +207,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
     componentWillUnmount() {
         this.delayedRedraw.dispose();
+        this.delayedSizeCheck.dispose();
         this.listener.stopListening();
         this.stopDragViewport();
     }
@@ -375,9 +398,36 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         };
     }
 
+    private onCheckSize = () => {
+        const {
+            canvas,
+            autoCollapseFraction = DEFAULT_AUTO_COLLAPSE_FRACTION,
+            width = DEFAULT_WIDTH,
+            height = DEFAULT_HEIGHT,
+        } = this.props;
+        const {expanded, allowExpand} = this.state;
+        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const strictExpanded = (
+            width < clientWidth * MAX_SIZE_FRACTION &&
+            height < clientHeight * MAX_SIZE_FRACTION
+        );
+        const autoExpanded = strictExpanded && (
+            width < clientWidth * autoCollapseFraction &&
+            height < clientHeight * autoCollapseFraction
+        );
+        if (expanded !== autoExpanded) {
+            this.setState({
+                expanded: autoExpanded,
+                allowExpand: strictExpanded,
+            });
+        } else if (strictExpanded !== allowExpand) {
+            this.setState({allowExpand: strictExpanded});
+        }
+    };
+
     render() {
         const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
-        const {expanded} = this.state;
+        const {expanded, allowExpand} = this.state;
         return (
             <div className={`${CLASS_NAME} ${CLASS_NAME}--${expanded ? 'expanded' : 'collapsed'}`}
                 style={expanded ? {width, height} : undefined}>
@@ -393,6 +443,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
                 <button type='button'
                     className={`${CLASS_NAME}__toggle`}
                     title={expanded ? 'Collapse navigator' : 'Expand navigator'}
+                    disabled={!allowExpand}
                     onClick={this.onToggleClick}>
                     <div className={`${CLASS_NAME}__toggle-icon`} />
                 </button>
@@ -444,7 +495,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
     private onToggleClick = () => {
         this.setState(
-            (state): State => ({expanded: !state.expanded}),
+            state => ({expanded: !state.expanded}),
             this.scheduleRedraw
         );
     };

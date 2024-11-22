@@ -35,9 +35,12 @@
     opacity: 0.5;
     transition: opacity 0.3s;
 
-    &:hover {
-      // background: lightgray;
+    &:not(:disabled):hover {
       opacity: 1;
+    }
+
+    &:disabled {
+      opacity: 0.2;
     }
   }
   &--expanded &__toggle {

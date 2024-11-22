@@ -112,6 +112,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private _pointerMode: CanvasPointerMode = 'panning';
     private readonly _zoomOptions: Required<ZoomOptions>;
 
+    private resizeObserver: ResizeObserver;
+
     readonly metrics: CanvasMetrics;
 
     constructor(props: PaperAreaProps, context: any) {
@@ -126,6 +128,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             paddingX: 0,
             paddingY: 0,
         };
+        this.resizeObserver = new ResizeObserver(this.onResize);
         this.metrics = new (class extends BasePaperMetrics {
             constructor(private readonly paperArea: PaperArea) {
                 super();
@@ -273,6 +276,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.area.addEventListener('drop', this.onDragDrop);
         this.area.addEventListener('scroll', this.onScroll, {passive: true});
         this.area.addEventListener('wheel', this.onWheel, {passive: false});
+
+        this.resizeObserver.observe(this.area);
     }
 
     componentDidUpdate(prevProps: PaperAreaProps, prevState: State) {
@@ -299,6 +304,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.area.removeEventListener('drop', this.onDragDrop);
         this.area.removeEventListener('scroll', this.onScroll);
         this.area.removeEventListener('wheel', this.onWheel);
+        this.resizeObserver.disconnect();
     }
 
     private *getAllWidgets(): IterableIterator<CanvasWidgetDescription> {
@@ -651,6 +657,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private shouldStartZooming(e: MouseEvent | React.MouseEvent<any>) {
         return Boolean(e.ctrlKey) === this.zoomOptions.requireCtrl;
     }
+
+    private onResize: ResizeObserverCallback = () => {
+        this.source.trigger('resize', {source: this});
+    };
 
     centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
         const {width, height} = this.state;

@@ -180,6 +180,11 @@ export interface CanvasEvents {
      */
     contextMenu: CanvasContextMenuEvent;
     /**
+     * Triggered on canvas viewport resize, tracked by a
+     * [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver).
+     */
+    resize: CanvasResizeEvent;
+    /**
      * Triggered on `isAnimatingGraph()` property change.
      */
     changeAnimatingGraph: PropertyChange<CanvasApi, boolean>;
@@ -280,6 +285,16 @@ export interface CanvasContextMenuEvent {
      * If `undefined` then the pointer event target is an empty canvas space.
      */
     readonly target: Cell | undefined;
+}
+
+/**
+ * Event data for canvas viewport resize event.
+ */
+export interface CanvasResizeEvent {
+    /**
+     * Event source (canvas).
+     */
+    readonly source: CanvasApi;
 }
 
 /**
