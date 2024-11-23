@@ -419,7 +419,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             this.setState({
                 expanded: autoExpanded,
                 allowExpand: strictExpanded,
-            });
+            }, this.scheduleRedraw);
         } else if (strictExpanded !== allowExpand) {
             this.setState({allowExpand: strictExpanded});
         }
