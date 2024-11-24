@@ -12,6 +12,10 @@ export interface DropdownProps {
      */
     className?: string;
     /**
+     * Whether the dropdown should be rendering in the expanded state.
+     */
+    expanded: boolean;
+    /**
      * Component to display as a toggle for the dropdown.
      */
     toggle: React.ReactNode;
@@ -22,61 +26,47 @@ export interface DropdownProps {
      */
     children: React.ReactNode;
     /**
-     * Whether to auto-close the dropdown when clicked outside its DOM element.
-     *
-     * @default false
+     * Handler for clicks outside the dropdown DOM element.
      */
-    closeOnOutsideClick?: boolean;
+    onClickOutside?: () => void;
 }
-
-export interface DropdownContext {
-    setExpanded: (update: (value: boolean) => boolean) => void;
-}
-export const DropdownContext = React.createContext<DropdownContext | null>(null);
 
 const CLASS_NAME = 'reactodia-dropdown';
 
 /**
- * Utility component to display a custom dropdown element.
+ * Utility component to display a controllable dropdown.
  *
  * @category Components
  */
 export function Dropdown(props: DropdownProps) {
-    const {className, toggle, closeOnOutsideClick, children} = props;
+    const {className, expanded, toggle, onClickOutside, children} = props;
     const menuRef = React.useRef<HTMLElement | null>(null);
-    const [expanded, setExpanded] = React.useState(false);
-    const providedContext = React.useMemo(
-        (): DropdownContext => ({setExpanded}),
-        [setExpanded]
-    );
 
     React.useLayoutEffect(() => {
-        if (closeOnOutsideClick && expanded) {
-            const closeMenu = (e: MouseEvent) => {
+        if (onClickOutside && expanded) {
+            const closeMenu = (e: PointerEvent) => {
                 // Auto-close menu on clicks from outside
                 if (e.target instanceof Node && !menuRef.current?.contains(e.target)) {
-                    setExpanded(false);
+                    onClickOutside();
                 }
             };
-            document.body.addEventListener('click', closeMenu);
-            return () => document.body.removeEventListener('click', closeMenu);
+            document.body.addEventListener('pointerdown', closeMenu);
+            return () => document.body.removeEventListener('pointerdown', closeMenu);
         }
-    }, [closeOnOutsideClick, expanded]);
+    }, [onClickOutside, expanded]);
 
     return (
-        <DropdownContext.Provider value={providedContext}>
-            <nav ref={menuRef}
-                className={classnames(
-                    className,
-                    CLASS_NAME,
-                    expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
-                )}>
-                {toggle}
-                <div className={`${CLASS_NAME}__content`}>
-                    {children}
-                </div>
-            </nav>
-        </DropdownContext.Provider>
+        <nav ref={menuRef}
+            className={classnames(
+                className,
+                CLASS_NAME,
+                expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
+            )}>
+            {toggle}
+            <div className={`${CLASS_NAME}__content`}>
+                {children}
+            </div>
+        </nav>
     );
 }
 
@@ -111,30 +101,53 @@ const MENU_CLASS_NAME = 'reactodia-dropdown-menu';
  */
 export function DropdownMenu(props: DropdownMenuProps) {
     const {className, title, children} = props;
-
-    return (
-        <Dropdown className={classnames(className, MENU_CLASS_NAME)}
-            toggle={
-                <DropdownMenuToggleButton title={title} />
-            }
-            closeOnOutsideClick={true}>
-            <ul role='menu'
-                className={`${MENU_CLASS_NAME}__items`}>
-                {children}
-            </ul>
-        </Dropdown>
+    const [expanded, setExpanded] = React.useState(false);
+    const providedContext = React.useMemo(
+        (): DropdownMenuContext => ({expanded, setExpanded}),
+        [expanded, setExpanded]
     );
+    const onClickOutside = React.useCallback(() => setExpanded(false), [setExpanded]);
+    return (
+        <DropdownMenuContext.Provider value={providedContext}>
+            <Dropdown className={classnames(className, MENU_CLASS_NAME)}
+                expanded={expanded}
+                toggle={
+                    <DropdownMenuToggleButton title={title} />
+                }
+                onClickOutside={onClickOutside}>
+                <ul role='menu'
+                    className={`${MENU_CLASS_NAME}__items`}>
+                    {children}
+                </ul>
+            </Dropdown>
+        </DropdownMenuContext.Provider>
+    );
+}
+
+export interface DropdownMenuContext {
+    expanded: boolean;
+    setExpanded: (update: (value: boolean) => boolean) => void;
+}
+
+const DropdownMenuContext = React.createContext<DropdownMenuContext | null>(null);
+
+export function useDropdownMenu(): DropdownMenuContext {
+    const context = React.useContext(DropdownMenuContext);
+    if (!context) {
+        throw new Error('Missing Reactodia dropdown menu context');
+    }
+    return context;
 }
 
 function DropdownMenuToggleButton(props: { title?: string }) {
     const {title} = props;
-    const dropdownContext = React.useContext(DropdownContext);
+    const {setExpanded} = useDropdownMenu();
 
     return (
         <button type='button'
             className={`${MENU_CLASS_NAME}__toggle reactodia-btn reactodia-btn-default`}
             title={title}
-            onClick={() => dropdownContext?.setExpanded(value => !value)}
+            onClick={() => setExpanded(value => !value)}
         />
     );
 }
@@ -178,7 +191,7 @@ const ITEM_CLASS_NAME = 'reactodia-dropdown-menu-item';
  */
 export function DropdownMenuItem(props: DropdownMenuItemProps) {
     const {className, title, disabled, onSelect, children} = props;
-    const menuContext = React.useContext(DropdownContext);
+    const menuContext = useDropdownMenu();
 
     const wrappedOnClick = React.useCallback(() => {
         menuContext?.setExpanded(() => false);
@@ -201,12 +214,12 @@ export function DropdownMenuItem(props: DropdownMenuItemProps) {
 }
 
 /**
- * React hook to check if a component is rendered inside a dropdown.
+ * React hook to check if a component is rendered inside a dropdown menu.
  *
  * @category Hooks
  * @see Dropdown
  */
 export function useInsideDropdown(): boolean {
-    const menuContext = React.useContext(DropdownContext);
+    const menuContext = React.useContext(DropdownMenuContext);
     return Boolean(menuContext);
 }

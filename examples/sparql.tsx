@@ -8,6 +8,10 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function SparqlExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
+    const [searchCommands] = React.useState(() =>
+        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
+    );
+
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model} = context;
 
@@ -26,6 +30,10 @@ function SparqlExample() {
             validateLinks: true,
             signal,
         });
+
+        if (!diagram) {
+            searchCommands.trigger('focus', {sectionKey: 'entities'});
+        }
     }, []);
 
     return (
@@ -33,20 +41,19 @@ function SparqlExample() {
             defaultLayout={defaultLayout}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
-                toolbar={{
-                    menu: <ExampleToolbarMenu />,
-                    languages: [
-                        {code: 'de', label: 'Deutsch'},
-                        {code: 'en', label: 'english'},
-                        {code: 'es', label: 'español'},
-                        {code: 'fr', label: 'français'},
-                        {code: 'ja', label: '日本語'},
-                        {code: 'hi', label: 'हिन्दी'},
-                        {code: 'pt', label: 'português'},
-                        {code: 'ru', label: 'русский'},
-                        {code: 'zh', label: '汉语'},
-                    ],
-                }}
+                menu={<ExampleToolbarMenu />}
+                searchCommands={searchCommands}
+                languages={[
+                    {code: 'de', label: 'Deutsch'},
+                    {code: 'en', label: 'english'},
+                    {code: 'es', label: 'español'},
+                    {code: 'fr', label: 'français'},
+                    {code: 'ja', label: '日本語'},
+                    {code: 'hi', label: 'हिन्दी'},
+                    {code: 'pt', label: 'português'},
+                    {code: 'ru', label: 'русский'},
+                    {code: 'zh', label: '汉语'},
+                ]}
             />
         </Reactodia.Workspace>
     );

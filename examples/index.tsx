@@ -1,2 +1,2 @@
 // Fallback redirect to first example
-window.location.href = 'rdf.html';
+window.location.href = 'basic.html';

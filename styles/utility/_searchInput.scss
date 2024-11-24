@@ -1,0 +1,38 @@
+@import "../mixin/icons";
+
+.reactodia-search-input {
+  display: flex;
+
+  &__clear-container {
+    width: 0;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+  }
+
+  &__clear {
+    position: relative;
+    left: -33px;
+    padding: 8px;
+    cursor: pointer;
+    background: 0 0;
+    border: 0;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #eeeeee;
+    }
+
+    &::after {
+      @include codicon("close");
+    }
+  }
+
+  &__submit  {
+    margin-left: -1px;
+
+    &::before {
+      @include codicon("search");
+    }
+  }
+}

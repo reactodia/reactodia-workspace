@@ -4,10 +4,16 @@
   flex: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   &__criteria {
     flex-shrink: 0;
     margin: 10px 0 10px 0;
+  }
+
+  &--controlled &__criteria {
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   &__criterions {

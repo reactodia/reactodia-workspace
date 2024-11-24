@@ -20,6 +20,8 @@ import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/ele
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+import type { DockDirection } from './utility/viewportDock';
+
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 
@@ -76,11 +78,6 @@ export interface SelectionActionProps extends SelectionActionStyleProps {
      */
     children?: React.ReactNode;
 }
-
-/**
- * Compass-like direction for the dock side.
- */
-export type DockDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 const CLASS_NAME = 'reactodia-selection-action';
 

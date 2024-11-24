@@ -50,8 +50,11 @@ $toolbarHeight: 30px;
   }
 
   &__layout {
-    margin-right: 5px;
     @include codicon-button("type-hierarchy-sub");
+  }
+
+  .reactodia-toolbar__quick-access-group &__layout {
+    margin-right: 5px;
   }
 
   &__language-selector {

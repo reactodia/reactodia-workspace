@@ -76,9 +76,7 @@ function StyleCustomizationExample() {
                 canvas={{
                     linkTemplateResolver: type => CUSTOM_LINK_TEMPLATE,
                 }}
-                toolbar={{
-                    menu: <ExampleToolbarMenu />,
-                }}
+                menu={<ExampleToolbarMenu />}
             />
         </Reactodia.Workspace>
     );

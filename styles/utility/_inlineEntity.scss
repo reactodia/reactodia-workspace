@@ -1,0 +1,12 @@
+.reactodia-inline-entity {
+  border: 1px solid var(--reactodia-inline-entity-color);
+  background: var(--reactodia-inline-entity-color);
+  padding-left: 5px;
+  word-wrap: break-word;
+  line-height: 1.3;
+
+  &__label {
+    background: white;
+    padding: 0 2px;
+  }
+}

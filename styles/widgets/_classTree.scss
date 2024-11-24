@@ -10,6 +10,10 @@
     margin: 10px 0 10px 0;
   }
 
+  &--controlled &__filter {
+    margin-top: 0;
+  }
+
   &__filter-group {
     margin-left: 10px;
     margin-right: 10px;
@@ -22,6 +26,10 @@
 
   &__tree {
     border-top: 1px solid rgb(221, 221, 221);
+  }
+
+  &__no-results {
+    margin-top: 10px;
   }
 
   &__spinner {

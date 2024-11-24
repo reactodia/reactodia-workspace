@@ -140,7 +140,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 const {width, height, originX, originY, scale, paddingX, paddingY} = this.paperArea.state;
                 return {width, height, originX, originY, scale, paddingX, paddingY};
             }
-            protected getClientRect(): { left: number; top: number; } {
+            protected getClientRect(): AreaClientRect {
                 return this.paperArea.area.getBoundingClientRect();
             }
         })(this);
@@ -971,16 +971,16 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 abstract class BasePaperMetrics implements CanvasMetrics {
     abstract get area(): CanvasAreaMetrics;
     protected abstract get transform(): PaperTransform;
-    protected abstract getClientRect(): { left: number; top: number };
+    protected abstract getClientRect(): AreaClientRect;
 
     snapshot(): CanvasMetrics {
         const {
             clientWidth, clientHeight, offsetWidth, offsetHeight, scrollLeft, scrollTop,
         } = this.area;
-        const {left, top} = this.getClientRect();
+        const {left, right, top, bottom} = this.getClientRect();
         return new SnapshotPaperMetrics(
             {clientWidth, clientHeight, offsetWidth, offsetHeight, scrollLeft, scrollTop},
-            {left, top},
+            {left, right, top, bottom},
             this.transform
         );
     }
@@ -992,6 +992,16 @@ abstract class BasePaperMetrics implements CanvasMetrics {
     getPaperSize(): { width: number; height: number } {
         const {width, height, scale} = this.transform;
         return {width: width / scale, height: height / scale};
+    }
+
+    getViewportPageRect(): Rect {
+        const {left, right, top, bottom} = this.getClientRect();
+        return {
+            x: left + window.scrollX,
+            y: top + window.scrollY,
+            width: right - left,
+            height: bottom - top,
+        };
     }
 
     pageToPaperCoords(pageX: number, pageY: number): Vector {
@@ -1051,19 +1061,26 @@ abstract class BasePaperMetrics implements CanvasMetrics {
 class SnapshotPaperMetrics extends BasePaperMetrics {
     constructor(
         readonly area: CanvasAreaMetrics,
-        private readonly clientRect: { left: number; top: number },
+        private readonly clientRect: AreaClientRect,
         readonly transform: PaperTransform
     ) {
         super();
     }
 
-    protected getClientRect(): { left: number; top: number; } {
+    protected getClientRect(): AreaClientRect {
         return this.clientRect;
     }
 
     snapshot(): CanvasMetrics {
         return this;
     }
+}
+
+interface AreaClientRect {
+    readonly left: number;
+    readonly right: number;
+    readonly top: number;
+    readonly bottom: number;
 }
 
 function clientCoordsFor(container: HTMLElement, e: MouseEvent) {

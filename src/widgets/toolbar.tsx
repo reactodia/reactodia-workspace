@@ -2,11 +2,8 @@ import * as React from 'react';
 
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
-import { Dropdown } from './dropdown';
-import {
-    ToolbarActionClearAll, ToolbarActionExport, ToolbarActionUndo, ToolbarActionRedo,
-    ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
-} from './toolbarAction';
+import { DropdownMenu } from './utility/dropdown';
+import { DockDirection, ViewportDock } from './utility/viewportDock';
 
 /**
  * Props for `Toolbar` component.
@@ -15,41 +12,31 @@ import {
  */
 export interface ToolbarProps {
     /**
+     * Dock direction on the canvas viewport.
+     */
+    dock: DockDirection;
+    /**
+     * Horizontal offset from the dock direction.
+     *
+     * @default 0
+     */
+    dockOffsetX?: number;
+    /**
+     * Vertical offset from the dock direction.
+     *
+     * @default 0
+     */
+    dockOffsetY?: number;
+    /**
      * Main menu content, in a form of `ToolbarAction` elements.
      *
-     * If `null`, the menu toggle button will be hidden.
-     *
-     * **Default**:
-     * ```jsx
-     * <>
-     *     <ToolbarActionClearAll />
-     *     <ToolbarActionExport kind='exportRaster' />
-     *     <ToolbarActionExport kind='exportSvg' />
-     *     <ToolbarActionExport kind='print' />
-     * </>
-     * ```
+     * If not specified or `null`, the menu toggle button will be hidden.
      */
-    menu?: React.ReactNode | null;
+    menu?: React.ReactNode;
     /**
      * Toolbar panel content, in a form of `ToolbarAction` or other elements.
-     *
-     * If `null`, the panel will be hidden.
-     *
-     * **Default**:
-     * ```jsx
-     * <>
-     *     <ToolbarActionUndo />
-     *     <ToolbarActionRedo />
-     *     <ToolbarActionLayout />
-     *     <ToolbarLanguageSelector languages={props.languages} />
-     * </>
-     * ```
      */
-    children?: React.ReactNode | null;
-    /**
-     * Set of languages to display diagram data.
-     */
-    languages?: ReadonlyArray<WorkspaceLanguage>;
+    children: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-toolbar';
@@ -60,37 +47,26 @@ const CLASS_NAME = 'reactodia-toolbar';
  * @category Components
  */
 export function Toolbar(props: ToolbarProps) {
-    const {menu, children, languages = []} = props;
-    const menuContent = menu === null ? null : (
-        menu ?? <>
-            <ToolbarActionClearAll />
-            <ToolbarActionExport kind='exportRaster' />
-            <ToolbarActionExport kind='exportSvg' />
-            <ToolbarActionExport kind='print' />
-        </>
-    );
-    const childrenContent = children === null ? null : (
-        children ?? <>
-            <ToolbarActionUndo />
-            <ToolbarActionRedo />
-            <ToolbarActionLayout />
-            <ToolbarLanguageSelector languages={languages} />
-        </>
-    );
+    const {dock, dockOffsetX, dockOffsetY, menu, children} = props;
     return (
-        <div className={CLASS_NAME}>
-            {menuContent ? (
-                <Dropdown className={`${CLASS_NAME}__menu`}
-                    title='Open menu'>
-                    {menuContent}
-                </Dropdown>
-            ) : null}
-            {childrenContent ? (
-                <div className={`${CLASS_NAME}__quick-access-group reactodia-btn-group reactodia-btn-group-sm`}>
-                    {childrenContent}
-                </div>
-            ) : null}
-        </div>
+        <ViewportDock className={`${CLASS_NAME}__dock`}
+            dock={dock}
+            dockOffsetX={dockOffsetX}
+            dockOffsetY={dockOffsetY}>
+            <div className={CLASS_NAME}>
+                {menu ? (
+                    <DropdownMenu className={`${CLASS_NAME}__menu`}
+                        title='Open menu'>
+                        {menu}
+                    </DropdownMenu>
+                ) : null}
+                {children ? (
+                    <div className={`${CLASS_NAME}__quick-access-group reactodia-btn-group reactodia-btn-group-sm`}>
+                        {children}
+                    </div>
+                ) : null}
+            </div>
+        </ViewportDock>
     );
 }
 

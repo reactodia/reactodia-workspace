@@ -1,0 +1,137 @@
+@import "../mixin/draggable-handle";
+
+$searchButtonWidth: 16px;
+$searchButtonPadding: 8px;
+$searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
+
+.reactodia-unified-search {
+  border: 1px solid #ccc;
+  background: #fff;
+  transition: border-color ease-in-out 0.15s;
+
+  &:focus-within {
+    border-color: #66afe9;
+  }
+
+  &.reactodia-dropdown--expanded {
+    box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+  }
+
+  &__toggle {
+    height: 28px;
+    display: flex;
+    align-items: stretch;
+  }
+
+  &__search-input {
+    flex: auto;
+
+    display: block;
+    margin: 0;
+    padding: 6px #{12px + $searchButtonTotal} 6px 12px;
+    font: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    border: none;
+
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  &__search-icon {
+    position: absolute;
+    right: 0;
+    padding: 0 $searchButtonPadding;
+    align-self: center;
+  
+    border: none;
+    background: none;  
+
+    &::before {
+      @include codicon("search");
+    }
+  }
+
+  &__collapse-button,
+  &__clear-button {
+    position: absolute;
+    right: 0;
+    padding: 6px;
+    align-self: center;
+  
+    background: 0 0;
+    border: 0;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #eeeeee;
+    }
+  }
+
+  &__collapse-button::after {
+    @include codicon("chevron-up");
+  }
+
+  &__clear-button::after {
+    @include codicon("close");
+  }
+
+  & .reactodia-dropdown__content {
+    position: unset;
+    box-shadow: unset;
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__bottom-handle {
+    @include draggable-handle-s;
+  }
+
+  &__right-handle {
+    @include draggable-handle-e;
+  }
+
+  &__corner-handle {
+    @include draggable-handle-se;
+  }
+
+  &__section-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px;
+  }
+
+  &__section-tab {
+    padding: 4px;
+    font-size: 13px;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    user-select: none;
+
+    border-width: 1px;
+    border-style: solid;
+
+    transition: background-color 0.3s;
+  }
+
+  &__section {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__section:not(&__section--active) {
+    display: none;
+  }
+}

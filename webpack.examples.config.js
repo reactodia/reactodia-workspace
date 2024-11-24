@@ -10,7 +10,6 @@ const webpack = require('webpack');
 module.exports = (env, argv) => {
   const IS_DEV_SERVER = Boolean(process.env.WEBPACK_SERVE);
 
-  const SPARQL_ENDPOINT = env.SPARQL_ENDPOINT;
   const WIKIDATA_ENDPOINT = env.WIKIDATA_ENDPOINT
     ?? 'https://query.wikidata.org/sparql';
 
@@ -18,6 +17,7 @@ module.exports = (env, argv) => {
     'index',
     'basic',
     'rdf',
+    'rdfClassic',
     'sparql',
     'stressTest',
     'styleCustomization',

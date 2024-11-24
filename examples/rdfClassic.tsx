@@ -10,12 +10,8 @@ const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
-function RdfExample() {
+function RdfClassicExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
-
-    const [searchCommands] = React.useState(() =>
-        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
-    );
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
@@ -29,16 +25,12 @@ function RdfExample() {
         }
     
         const diagram = tryLoadLayoutFromLocalStorage();
-        await model.importLayout({
+        model.importLayout({
             diagram,
             dataProvider,
             validateLinks: true,
             signal,
         });
-
-        if (!diagram) {
-            searchCommands.trigger('focus', {sectionKey: 'elementTypes'});
-        }
     }, [turtleData]);
 
     const [metadataApi] = React.useState(() => new ExampleMetadataApi());
@@ -53,7 +45,7 @@ function RdfExample() {
             renameLinkProvider={renameLinkProvider}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
-            <Reactodia.DefaultWorkspace
+            <Reactodia.ClassicWorkspace
                 canvas={{
                     elementTemplateResolver: types => {
                         if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
@@ -68,13 +60,14 @@ function RdfExample() {
                         return Reactodia.OntologyLinkTemplates(type); 
                     },
                 }}
-                menu={
-                    <>
-                        <ToolbarActionOpenTurtleGraph onOpen={setTurtleData} />
-                        <ExampleToolbarMenu />
-                    </>
-                }
-                searchCommands={searchCommands}
+                toolbar={{
+                    menu: (
+                        <>
+                            <ToolbarActionOpenTurtleGraph onOpen={setTurtleData} />
+                            <ExampleToolbarMenu />
+                        </>
+                    ),
+                }}
             />
         </Reactodia.Workspace>
     );
@@ -104,4 +97,4 @@ function ToolbarActionOpenTurtleGraph(props: ToolbarActionOpenTurtleGraphProps) 
     );
 }
 
-mountOnLoad(<RdfExample />);
+mountOnLoad(<RdfClassicExample />);

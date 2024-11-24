@@ -4,6 +4,8 @@ import { hcl } from 'd3-color';
 
 import { ElementModel } from '../data/model';
 
+import { DataDiagramModel } from '../editor/dataDiagramModel';
+
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
@@ -66,11 +68,6 @@ export function ListElementView(props: ListElementViewProps) {
 
     const localizedText = model.locale.formatLabel(element.label, element.id);
 
-    let typeString = '';
-    if (element.types.length > 0) {
-        typeString = `\nClasses: ${model.locale.formatElementTypes(element.types).join(', ')}`;
-    }
-
     const onItemClick = (event: React.MouseEvent<any>) => {
         if (!disabled && onClick) {
             event.persist();
@@ -82,7 +79,7 @@ export function ListElementView(props: ListElementViewProps) {
         <li className={combinedClass}
             role='option'
             draggable={!disabled && Boolean(onDragStart)}
-            title={`${localizedText} ${model.locale.formatIri(element.id)}${typeString}`}
+            title={formatEntityTitle(element, model)}
             style={{background: hcl(h, c, l).toString()}}
             onClick={onItemClick}
             onDragStart={onDragStart}>
@@ -149,4 +146,16 @@ export function highlightSubstring(
     const after = text.substring(end);
 
     return <span>{before}<span {...highlightProps}>{highlighted}</span>{after}</span>;
+}
+
+export function formatEntityTitle(entity: ElementModel, model: DataDiagramModel): string {
+    const label = model.locale.formatLabel(entity.label, entity.id);
+    const iri = model.locale.formatIri(entity.id);
+
+    let typeString = '';
+    if (entity.types.length > 0) {
+        typeString = `\nClasses: ${model.locale.formatElementTypes(entity.types).join(', ')}`;
+    }
+
+    return `${label} ${iri}${typeString}`;
 }
