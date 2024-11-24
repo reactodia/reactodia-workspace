@@ -5,37 +5,44 @@
   float: left;
   z-index: 1;
 
-  &__toggle {
-    &::before {
-      @include codicon("menu");
-    }
-  }
-
-  &--expanded &__toggle {
-    background-color: #bfbfbf;
-  }
-
-  &__items {
+  &__content {
     position: absolute;
-    margin: 0;
-    padding: 0;
     opacity: 1;
     background: white;
-    list-style: none;
     display: flex;
     flex-direction: column;
 
     transition: opacity 0.1s ease-in-out;
   }
 
-  &--collapsed &__items {
+  &--collapsed &__content {
     height: 0;
     opacity: 0;
     pointer-events: none;
   }
 }
 
-.reactodia-dropdown-item {
+.reactodia-dropdown-menu {
+  &--expanded &__toggle {
+    background-color: #bfbfbf;
+  }
+
+  &__toggle {
+    &::before {
+      @include codicon("menu");
+    }
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.reactodia-dropdown-menu-item {
   & ~ & {
     margin-top: -1px;
     border-top-color: #eee;

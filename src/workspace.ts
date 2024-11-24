@@ -145,7 +145,7 @@ export { GroupPaginator, GroupPaginatorProps } from './widgets/groupPaginator';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
-    Dropdown, DropdownProps, DropdownItem, DropdownItemProps,
+    DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
 } from './widgets/dropdown';
 export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,

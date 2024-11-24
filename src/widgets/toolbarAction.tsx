@@ -9,7 +9,7 @@ import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
 
-import { DropdownItem, useInsideDropdown } from './dropdown';
+import { DropdownMenuItem, useInsideDropdown } from './dropdown';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -62,12 +62,12 @@ export function ToolbarAction(props: ToolbarActionProps) {
     const {className, title, disabled, onSelect, children} = props;
     const insideDropdown = useInsideDropdown();
     return insideDropdown ? (
-        <DropdownItem className={className}
+        <DropdownMenuItem className={className}
             title={title}
             disabled={disabled}
             onSelect={onSelect}>
             {children}
-        </DropdownItem>
+        </DropdownMenuItem>
     ) : (
         <button type='button'
             className={classnames(
@@ -113,13 +113,13 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
     const inputRef = React.useRef<HTMLInputElement | null>(null);
     return (
         <>
-            <DropdownItem {...otherProps}
+            <DropdownMenuItem {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__open`)}
                 onSelect={() => {
                     inputRef.current?.click();
                 }}>
                 {children}
-            </DropdownItem>
+            </DropdownMenuItem>
             <input ref={inputRef}
                 type='file'
                 className={`${CLASS_NAME}__open-input`}
@@ -185,12 +185,12 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     }
 
     return (
-        <DropdownItem {...otherProps}
+        <DropdownMenuItem {...otherProps}
             className={classnames(className, `${CLASS_NAME}__save`)}
             disabled={!enabled}
             onSelect={onSelect}>
             {children}
-        </DropdownItem>
+        </DropdownMenuItem>
     );
 }
 
