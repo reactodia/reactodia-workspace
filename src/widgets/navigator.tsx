@@ -12,12 +12,30 @@ import {
 } from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
+import { DockDirection, ViewportDock } from './utility/viewportDock';
+
 /**
  * Props for `Navigator` component.
  *
  * @see Navigator
  */
 export interface NavigatorProps {
+    /**
+     * Dock direction on the canvas viewport.
+     */
+    dock: DockDirection;
+    /**
+     * Horizontal offset from the dock direction.
+     *
+     * @default 0
+     */
+    dockOffsetX?: number;
+    /**
+     * Vertical offset from the dock direction.
+     *
+     * @default 0
+     */
+    dockOffsetY?: number;
     /**
      * Whether the navigator should be initially expanded.
      *
@@ -199,6 +217,9 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
     shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
         return !(
+            nextProps.dock === this.props.dock &&
+            nextProps.dockOffsetX === this.props.dockOffsetX &&
+            nextProps.dockOffsetY === this.props.dockOffsetY &&
             nextProps.width === this.props.width &&
             nextProps.height === this.props.height &&
             nextState === this.state
@@ -426,28 +447,36 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     };
 
     render() {
-        const {width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT} = this.props;
+        const {
+            dock = 'se', dockOffsetX, dockOffsetY,
+            width = DEFAULT_WIDTH,
+            height = DEFAULT_HEIGHT,
+        } = this.props;
         const {expanded, allowExpand} = this.state;
         return (
-            <div className={`${CLASS_NAME} ${CLASS_NAME}--${expanded ? 'expanded' : 'collapsed'}`}
-                style={expanded ? {width, height} : undefined}>
-                <canvas ref={this.onCanvasMount}
-                    width={width}
-                    height={height}
-                    onMouseDown={e => {
-                        this.startDragViewport();
-                        this.onDragViewport(e);
-                    }}
-                    onWheel={this.onWheel}
-                />
-                <button type='button'
-                    className={`${CLASS_NAME}__toggle`}
-                    title={expanded ? 'Collapse navigator' : 'Expand navigator'}
-                    disabled={!allowExpand}
-                    onClick={this.onToggleClick}>
-                    <div className={`${CLASS_NAME}__toggle-icon`} />
-                </button>
-            </div>
+            <ViewportDock dock={dock}
+                dockOffsetX={dockOffsetX}
+                dockOffsetY={dockOffsetY}>
+                <div className={`${CLASS_NAME} ${CLASS_NAME}--${expanded ? 'expanded' : 'collapsed'}`}
+                    style={expanded ? {width, height} : undefined}>
+                    <canvas ref={this.onCanvasMount}
+                        width={width}
+                        height={height}
+                        onMouseDown={e => {
+                            this.startDragViewport();
+                            this.onDragViewport(e);
+                        }}
+                        onWheel={this.onWheel}
+                    />
+                    <button type='button'
+                        className={`${CLASS_NAME}__toggle`}
+                        title={expanded ? 'Collapse navigator' : 'Expand navigator'}
+                        disabled={!allowExpand}
+                        onClick={this.onToggleClick}>
+                        <div className={`${CLASS_NAME}__toggle-icon`} />
+                    </button>
+                </div>
+            </ViewportDock>
         );
     }
 

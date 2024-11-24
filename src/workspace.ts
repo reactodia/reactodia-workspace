@@ -134,6 +134,16 @@ export { StandardTemplate } from './templates/standardTemplate';
 export { SemanticTypeStyles } from './templates/typeStyles';
 export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
 
+export {
+    DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
+} from './widgets/utility/dropdown';
+export {
+    SearchInputStore, SearchInputStoreEvents, SearchInputStoreChangeValueEvent,
+    UseSearchInputStoreOptions, useSearchInputStore,
+} from './widgets/utility/searchInput';
+export {
+    ViewportDock, ViewportDockProps, DockDirection,
+} from './widgets/utility/viewportDock';
 export { ClassTree, ClassTreeProps } from './widgets/classTree';
 export { Canvas, CanvasProps } from './widgets/canvas';
 export {
@@ -144,9 +154,6 @@ export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { GroupPaginator, GroupPaginatorProps } from './widgets/groupPaginator';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
-export {
-    DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
-} from './widgets/dropdown';
 export {
     InstancesSearch, InstancesSearchProps, InstancesSearchCommands,
 } from './widgets/instancesSearch';
@@ -192,8 +199,19 @@ export {
     ToolbarActionLayout, ToolbarActionLayoutProps,
     ToolbarLanguageSelector, ToolbarLanguageSelectorProps, WorkspaceLanguage,
 } from './widgets/toolbarAction';
+export {
+    UnifiedSearch, UnifiedSearchProps, UnifiedSearchCommands, UnifiedSearchSection,
+    UnifiedSearchSectionProvidedContext, useUnifiedSearchSection,
+    SearchSectionElementTypes,
+    SearchSectionEntities,
+    SearchSectionLinkTypes,
+} from './widgets/unifiedSearch';
 export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
 
+export {
+    ClassicWorkspace, ClassicWorkspaceProps,
+    ClassicToolbar, ClassicToolbarProps,
+} from './workspace/classicWorkspace';
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export {

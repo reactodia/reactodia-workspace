@@ -52,6 +52,10 @@ export interface SearchResultsProps {
      * @default false
      */
     singleSelectOnClick?: boolean;
+    /**
+     * Additional components to render after the result items.
+     */
+    footer?: React.ReactNode;
 }
 
 /**
@@ -88,7 +92,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
     private endSelection = 0;
 
     render(): React.ReactElement<any> {
-        const {items, workspace: {model}} = this.props;
+        const {items, footer, workspace: {model}} = this.props;
         const presentOnDiagram = computePresentOnDiagramEntities(model);
         return (
             <ul ref={this.onRootMount}
@@ -100,6 +104,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
                 onFocus={this.addKeyListener}
                 onBlur={this.removeKeyListener}>
                 {items.map(item => this.renderResultItem(item, presentOnDiagram))}
+                {footer}
             </ul>
         );
     }

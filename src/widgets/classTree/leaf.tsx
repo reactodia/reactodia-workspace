@@ -152,16 +152,18 @@ export interface ForestProps extends CommonProps {
     className?: string;
     nodes: ReadonlyArray<TreeNode>;
     root?: boolean;
+    footer?: React.ReactNode;
 }
 
 export class Forest extends React.Component<ForestProps> {
     render() {
-        const {className, nodes, root, ...otherProps} = this.props;
+        const {className, nodes, root, footer, ...otherProps} = this.props;
         return (
             <div className={className} role={root ? 'tree' : undefined}>
                 {nodes.map(node => (
                     <Leaf key={`node-${node.iri}`} node={node} {...otherProps} />
                 ))}
+                {footer}
             </div>
         );
     }

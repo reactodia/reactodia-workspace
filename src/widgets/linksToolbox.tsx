@@ -1,24 +1,25 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
-import { Debouncer } from '../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
+import { useObservedProperty } from '../coreUtils/hooks';
+import { Debouncer } from '../coreUtils/scheduler';
 
-import { LinkTypeModel } from '../data/model';
-import { DataProviderLinkCount } from '../data/provider';
+import type { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
-import { LinkTypeVisibility } from '../diagram/elements';
-import { DiagramModel } from '../diagram/model';
+import { Element, LinkTypeVisibility } from '../diagram/elements';
+import type { DiagramModel } from '../diagram/model';
 
-import { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement } from '../editor/dataElements';
+import { LinkType, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
+import { InlineEntity } from './utility/inlineEntity';
+import { NoSearchResults } from './utility/noSearchResults';
+import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
 import type { InstancesSearchCommands } from './instancesSearch';
 import { highlightSubstring } from './listElementView';
-import { ProgressBar, ProgressState } from './progressBar';
 
 /**
  * Props for `LinkTypesToolbox` component.
@@ -26,6 +27,36 @@ import { ProgressBar, ProgressState } from './progressBar';
  * @see LinkTypesToolbox
  */
 export interface LinkTypesToolboxProps {
+    /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
+    /**
+     * Whether the component should listen to the diagram selection to
+     * display links connected to the selected items first.
+     *
+     * @default true
+     */
+    trackSelected?: boolean;
+    /**
+     * Controlled search input state store.
+     *
+     * If specified, renders the component in "headless" mode
+     * without a text filter input.
+     */
+    searchStore?: SearchInputStore;
+    /**
+     * Debounce timeout in milliseconds after input to perform the text search.
+     *
+     * @default 200
+     */
+    searchTimeout?: number;
+    /**
+     * Minimum number of characters in the search term to initiate the search.
+     *
+     * @default 1
+     */
+    minSearchTermLength?: number;
     /**
      * Event bus to send commands to `InstancesSearch` component.
      */
@@ -39,366 +70,165 @@ export interface LinkTypesToolboxProps {
  * @category Components
  */
 export function LinkTypesToolbox(props: LinkTypesToolboxProps) {
+    const {
+        searchStore,
+        searchTimeout = 200,
+        minSearchTermLength = 1,
+    } = props;
+    const uncontrolledSearch = useSearchInputStore({
+        initialValue: '',
+        submitTimeout: searchTimeout,
+        allowSubmit: term => term.length >= minSearchTermLength,
+    });
+    const effectiveSearchStore = searchStore ?? uncontrolledSearch;
+    const requireSubmit = useObservedProperty(
+        effectiveSearchStore.events,
+        'changeMode',
+        () => effectiveSearchStore.mode === 'explicit'
+    );
     const workspace = useWorkspace();
     return (
         <LinkTypesToolboxInner {...props}
+            isControlled={Boolean(searchStore)}
+            searchStore={effectiveSearchStore}
+            minSearchTermLength={minSearchTermLength}
+            requireSubmit={requireSubmit}
             workspace={workspace}
         />
     );
 }
 
-interface LinkInToolBoxProps {
-    model: DiagramModel;
-    link: LinkTypeModel;
-    count: number;
-    onPressFilter?: (type: LinkTypeModel) => void;
-    filterKey?: string;
-}
-
-const CLASS_NAME = 'link-types-toolbox';
-
-class LinkInToolBox extends React.Component<LinkInToolBoxProps> {
-    private onPressFilter = () => {
-        if (this.props.onPressFilter) {
-            this.props.onPressFilter(this.props.link);
-        }
-    };
-
-    private changeState(state: LinkTypeVisibility) {
-        const {model, link} = this.props;
-        changeLinkTypeState(model, state, [link]);
-    }
-
-    private isChecked(stateName: LinkTypeVisibility): boolean {
-        const {model, link} = this.props;
-        return model.getLinkVisibility(link.id) === stateName;
-    }
-
-    private getText() {
-        const {link: linkType, model, filterKey} = this.props;
-        const fullText = model.locale.formatLabel(linkType.label, linkType.id);
-        return highlightSubstring(fullText, filterKey);
-    }
-
-    render() {
-        return (
-            <li data-linktypeid={this.props.link.id}
-                className={classnames(`${CLASS_NAME}__link-item`, 'clearfix')}>
-                <span data-toggle='buttons'
-                    className={classnames(
-                        `${CLASS_NAME}__link-buttons`,
-                        'reactodia-btn-group reactodia-btn-group-xs'
-                    )}>
-                    <button id='hidden' title='Hide links and labels'
-                        className={classnames(
-                            `${CLASS_NAME}__toggle-invisible`,
-                            'reactodia-btn reactodia-btn-default',
-                            this.isChecked('hidden') ? 'active' : undefined
-                        )}
-                        onClick={() => this.changeState('hidden')}>
-                    </button>
-                    <button id='withoutLabel' title='Show only lines for links (without labels)'
-                        className={classnames(
-                            `${CLASS_NAME}__toggle-lines-only`,
-                            'reactodia-btn reactodia-btn-default',
-                            this.isChecked('withoutLabel') ? 'active' : undefined
-                        )}
-                        onClick={() => this.changeState('withoutLabel')}>
-                    </button>
-                    <button id='visible' title='Show links with labels'
-                        className={classnames(
-                            `${CLASS_NAME}__toggle-visible`,
-                            'reactodia-btn reactodia-btn-default',
-                            this.isChecked('visible') ? 'active' : undefined
-                        )}
-                        onClick={() => this.changeState('visible')}>
-                    </button>
-                </span>
-                <WithFetchStatus type='linkType' target={this.props.link.id}>
-                    <div className={`${CLASS_NAME}__link-title`}>{this.getText()}</div>
-                </WithFetchStatus>
-                {this.props.count === 0 ? null : (
-                    <span className={classnames(`${CLASS_NAME}__count-badge`, 'reactodia-badge')}>
-                        {this.props.count}
-                    </span>
-                )}
-                {this.props.onPressFilter ? (
-                    <div className={`${CLASS_NAME}__filter-button`}
-                        onClick={this.onPressFilter}
-                    />
-                ) : null}
-            </li>
-        );
-    }
-}
-
-interface LinkTypesToolboxViewProps {
-    model: DataDiagramModel;
-    links: ReadonlyArray<LinkTypeModel> | undefined;
-    countMap: { readonly [linkTypeId: string]: number } | undefined;
-    selectedElement: EntityElement | undefined;
-    dataState: ProgressState;
-    filterCallback: ((type: LinkTypeModel) => void) | undefined;
-}
-
-class LinkTypesToolboxView extends React.Component<LinkTypesToolboxViewProps, { filterKey: string }> {
-    constructor(props: LinkTypesToolboxViewProps) {
-        super(props);
-        this.state = {filterKey: ''};
-    }
-
-    private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {model} = this.props;
-        const aText = model.locale.formatLabel(a.label, a.id);
-        const bText = model.locale.formatLabel(b.label, b.id);
-        return aText.localeCompare(bText);
-    };
-
-    private onChangeInput = (e: React.SyntheticEvent<HTMLInputElement>) => {
-        this.setState({filterKey: e.currentTarget.value});
-    };
-
-    private onDropFilter = () => {
-        this.setState({filterKey: ''});
-    };
-
-    private getLinks() {
-        const {model, links = []} = this.props;
-        return links
-            .filter(linkType => {
-                const text = model.locale.formatLabel(linkType.label, linkType.id).toLowerCase();
-                return !this.state.filterKey || text.indexOf(this.state.filterKey.toLowerCase()) >= 0;
-            })
-            .sort(this.compareLinks);
-    }
-
-    private getViews(links: readonly LinkTypeModel[]) {
-        const countMap = this.props.countMap || {};
-        const views: React.ReactElement<any>[] = [];
-        for (const link of links) {
-            views.push(
-                <LinkInToolBox key={link.id}
-                    model={this.props.model}
-                    link={link}
-                    onPressFilter={this.props.filterCallback}
-                    count={countMap[link.id] || 0}
-                    filterKey={this.state.filterKey}
-                    
-                />
-            );
-        }
-        return views;
-    }
-
-    render() {
-        const {model, dataState, selectedElement} = this.props;
-
-        const links = this.getLinks();
-        const views = this.getViews(links);
-
-        let connectedTo: JSX.Element | null = null;
-        if (selectedElement) {
-            const selectedElementLabel = model.locale.formatLabel(
-                selectedElement.data.label,
-                selectedElement.iri
-            );
-            connectedTo = (
-                <span role='heading'
-                    className={`${CLASS_NAME}__links-heading`}
-                    style={{display: 'block'}}>
-                    Connected to{'\u00A0'}
-                    <span>{selectedElementLabel}</span>
-                </span>
-            );
-        }
-
-        let dropButton: JSX.Element | null = null;
-        if (this.state.filterKey) {
-            dropButton = <button type='button' className={`${CLASS_NAME}__clearSearch`}
-                onClick={this.onDropFilter}>
-                <span aria-hidden='true'></span>
-            </button>;
-        }
-
-        const enableVisibilityButtons = links.length > 0;
-        return (
-            <div className={CLASS_NAME}>
-                <div className={`${CLASS_NAME}__heading`}>
-                    <div className={`${CLASS_NAME}__searching-box`}>
-                        <input className='search-input reactodia-form-control'
-                            type='text'
-                            value={this.state.filterKey}
-                            onChange={this.onChangeInput}
-                            placeholder='Search for...' />
-                        {dropButton}
-                    </div>
-                    <div className={`${CLASS_NAME}__switch-all`}>
-                        <div className='reactodia-btn-group reactodia-btn-group-xs'>
-                            <button title='Hide links and labels'
-                                className={classnames(
-                                    `${CLASS_NAME}__toggle-invisible`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(model, 'hidden', links)}>
-                            </button>
-                            <button title='Show only lines for links (without labels)'
-                                className={classnames(
-                                    `${CLASS_NAME}__toggle-lines-only`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(model, 'withoutLabel', links)}>
-                            </button>
-                            <button title='Show links with labels'
-                                className={classnames(
-                                    `${CLASS_NAME}__toggle-visible`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                disabled={!enableVisibilityButtons}
-                                onClick={() => changeLinkTypeState(model, 'visible', links)}>
-                            </button>
-                        </div>
-                        <span>&nbsp;Switch all</span>
-                    </div>
-                </div>
-                <ProgressBar state={dataState}
-                    title='Loading connected links for the selected element'
-                />
-                <div className={`${CLASS_NAME}__rest`}>
-                    {connectedTo}
-                    <div className='reactodia-scrollable'>
-                        <ul className={`${CLASS_NAME}__connected-links`}>{views}</ul>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-}
+const CLASS_NAME = 'reactodia-links-toolbox';
+const DEFAULT_TRACK_SELECTED = true;
 
 interface LinkTypesToolboxInnerProps extends LinkTypesToolboxProps {
+    isControlled: boolean;
+    searchStore: SearchInputStore;
+    minSearchTermLength: number;
+    requireSubmit: boolean;
     workspace: WorkspaceContext;
 }
 
-interface LinkTypesToolboxState {
-    readonly dataState: ProgressState;
-    readonly selectedElement?: EntityElement;
-    readonly linksOfElement?: ReadonlyArray<LinkTypeModel>;
-    readonly countMap?: { readonly [linkTypeId: string]: number };
+interface State {
+    readonly filteredLinks: FilteredLinkTypes;
 }
 
-class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, LinkTypesToolboxState> {
-    private readonly listener = new EventObserver();
-    private readonly linkListener = new EventObserver();
-    private readonly delayedUpdateAll = new Debouncer();
-    private readonly debounceSelection = new Debouncer(50 /* ms */);
+interface FilteredLinkTypes {
+    readonly term: string;
+    readonly diagramHasLink: boolean;
+    readonly selection: ReadonlyArray<ElementModel>;
+    readonly selectionLinks: ReadonlySet<LinkTypeIri>;
+    readonly links: ReadonlyArray<LabelledLinkType>;
+}
 
-    private currentRequest: { elementId: string } | undefined;
+interface LabelledLinkType {
+    readonly iri: LinkTypeIri;
+    readonly type: LinkType;
+    readonly label: string;
+}
+
+class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, State> {
+    private readonly listener = new EventObserver();
+    private readonly selectionListener = new EventObserver();
+    private readonly searchListener = new EventObserver();
+    private readonly linkListener = new EventObserver();
+
+    private readonly debounceSelection = new Debouncer(50 /* ms */);
+    private readonly delayedUpdateAll = new Debouncer();
 
     constructor(props: LinkTypesToolboxInnerProps) {
         super(props);
-
-        const {workspace: {model}} = this.props;
-
-        this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
-        this.listener.listen(model.events, 'changeLanguage', this.updateOnCurrentSelection);
-        this.listener.listen(model.events, 'changeSelection', () => {
-            this.debounceSelection.call(this.updateOnCurrentSelection);
-        });
-
-        this.state = {dataState: 'none'};
+        this.state = {
+            filteredLinks: {
+                term: '',
+                diagramHasLink: false,
+                selection: [],
+                selectionLinks: new Set(),
+                links: [],
+            },
+        };
     }
 
     componentDidMount() {
+        const {workspace: {model}} = this.props;
+        this.listener.listen(model.events, 'loadingSuccess', this.updateOnCurrentSelection);
+        this.listener.listen(model.events, 'changeLanguage', this.updateOnCurrentSelection);
+
+        this.subscribeToSelectionChanges();
+        this.listenSearch();
         this.updateOnCurrentSelection();
     }
 
     componentDidUpdate(
         prevProps: LinkTypesToolboxInnerProps,
-        prevState: LinkTypesToolboxState
+        prevState: State
     ): void {
-        if (this.state.linksOfElement !== prevState.linksOfElement) {
-            this.subscribeOnLinksEvents();
+        const {trackSelected = DEFAULT_TRACK_SELECTED, searchStore} = this.props;
+
+        if (trackSelected !== prevProps.trackSelected) {
+            this.subscribeToSelectionChanges();
         }
+
+        if (searchStore.events !== prevProps.searchStore.events) {
+            this.listenSearch();
+        }
+        
+        if (this.state.filteredLinks !== prevState.filteredLinks) {
+            this.subscribeOnFilteredLinksEvents();
+        }
+    }
+
+    private listenSearch() {
+        const {searchStore} = this.props;
+        this.searchListener.stopListening();
+        this.searchListener.listen(searchStore.events, 'executeSearch', ({value}) => {
+            this.setState((state, props) => applyFilter(state, value, props));
+        });
+        this.searchListener.listen(searchStore.events, 'clearSearch', () => {
+            this.setState((state, props) => applyFilter(state, '', props));
+        });
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
+        this.selectionListener.stopListening();
+        this.searchListener.stopListening();
         this.linkListener.stopListening();
-        this.delayedUpdateAll.dispose();
         this.debounceSelection.dispose();
+        this.delayedUpdateAll.dispose();
+    }
+
+    subscribeToSelectionChanges() {
+        const {trackSelected = DEFAULT_TRACK_SELECTED, workspace: {model}} = this.props;
+        this.selectionListener.stopListening();
+        if (trackSelected) {
+            this.selectionListener.listen(model.events, 'changeSelection', () => {
+                this.debounceSelection.call(this.updateOnCurrentSelection);
+            });
+        }
     }
 
     private updateOnCurrentSelection = () => {
-        const {workspace: {model}} = this.props;
-        const single = model.selection.length === 1 ? model.selection[0] : null;
-        if (single !== this.state.selectedElement && single instanceof EntityElement) {
-            this.requestLinksOf(single);
-        }
+        this.setState((state, props) => applyFilter(state, props.searchStore.value, props));
     };
 
-    private requestLinksOf(selectedElement: EntityElement) {
+    private subscribeOnFilteredLinksEvents() {
         const {workspace: {model}} = this.props;
-        if (selectedElement) {
-            const request = {elementId: selectedElement.iri};
-            this.currentRequest = request;
-            this.setState({dataState: 'loading', selectedElement});
-            model.dataProvider.connectedLinkStats(request).then(linkTypes => {
-                if (this.currentRequest !== request) { return; }
-                const {linksOfElement, countMap} = this.computeStateFromRequestResult(linkTypes);
-                this.setState({dataState: 'completed', linksOfElement, countMap});
-            }).catch(error => {
-                if (this.currentRequest !== request) { return; }
-                console.error(error);
-                this.setState({dataState: 'error', linksOfElement: undefined, countMap: {}});
-            });
-        } else {
-            this.currentRequest = undefined;
-            this.setState({
-                dataState: 'completed',
-                selectedElement,
-                linksOfElement: undefined,
-                countMap: {},
-            });
-        }
-    }
+        const {filteredLinks} = this.state;
 
-    private computeStateFromRequestResult(linkTypes: ReadonlyArray<DataProviderLinkCount>) {
-        const {workspace: {model}} = this.props;
-
-        const linksOfElement: LinkTypeModel[] = [];
-        const countMap: { [linkTypeId: string]: number } = {};
-
-        for (const linkType of linkTypes) {
-            const type: LinkTypeModel = model.createLinkType(linkType.id).data ?? {
-                id: linkType.id,
-                label: [],
-            };
-            linksOfElement.push(type);
-            countMap[linkType.id] = linkType.inCount + linkType.outCount;
-        }
-
-        return {linksOfElement, countMap};
-    }
-
-    private subscribeOnLinksEvents() {
-        const {workspace: {model}} = this.props;
         this.linkListener.stopListening();
-
-        const {linksOfElement} = this.state;
-        if (linksOfElement) {
-            for (const link of linksOfElement) {
-                const linkType = model.createLinkType(link.id);
-                this.linkListener.listen(linkType.events, 'changeData', this.onLinkChanged);
-            }
-
-            const linkTypeIris = new Set(linksOfElement.map(link => link.id));
-            this.linkListener.listen(model.events, 'changeLinkVisibility', e => {
-                if (linkTypeIris.has(e.source)) {
-                    this.onLinkChanged();
-                }
-            });
+    
+        const linkTypeIris = new Set<LinkTypeIri>();
+        for (const linkType of filteredLinks.links) {
+            linkTypeIris.add(linkType.iri);
+            this.linkListener.listen(linkType.type.events, 'changeData', this.onLinkChanged);
         }
+
+        this.linkListener.listen(model.events, 'changeLinkVisibility', e => {
+            if (linkTypeIris.has(e.source)) {
+                this.onLinkChanged();
+            }
+        });
     }
 
     private onLinkChanged = () => {
@@ -406,41 +236,237 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     };
 
     render() {
-        const {instancesSearchCommands, workspace: {model}} = this.props;
-        const {selectedElement, dataState, linksOfElement, countMap} = this.state;
+        const {
+            className, isControlled, searchStore, minSearchTermLength, requireSubmit,
+            workspace: {model},
+        } = this.props;
+        const {filteredLinks} = this.state;
+
+        const connectedLinks = filteredLinks.links.filter(link =>
+            filteredLinks.selectionLinks.has(link.iri)
+        );
+        const otherLinks = filteredLinks.links.filter(link =>
+            !filteredLinks.selectionLinks.has(link.iri)
+        );
+
         return (
-            <LinkTypesToolboxView model={model}
-                dataState={dataState}
-                links={linksOfElement}
-                countMap={countMap}
-                filterCallback={instancesSearchCommands ? this.onAddToFilter : undefined}
-                selectedElement={selectedElement}
-            />
+            <div
+                className={classnames(
+                    CLASS_NAME,
+                    isControlled ? `${CLASS_NAME}--controlled` : undefined,
+                    className
+                )}>
+                <div className={`${CLASS_NAME}__heading`}>
+                    {isControlled ? null : (
+                        <SearchInput store={searchStore}
+                            className={`${CLASS_NAME}__filter`}
+                            inputProps={{
+                                name: 'reactodia-link-types-filter',
+                            }}
+                        />
+                    )}
+                    <div className={`${CLASS_NAME}__switch-all`}>
+                        <VisibilityControl
+                            onSetVisibility={mode => changeLinkTypeState(model, mode, filteredLinks.links)}
+                            disabled={filteredLinks.links.length === 0}
+                        />
+                        <span>&nbsp;Switch all</span>
+                    </div>
+                </div>
+                <div className={`${CLASS_NAME}__rest`}>
+                    <div className='reactodia-scrollable'>
+                        {connectedLinks.length > 0 ? (
+                            <>
+                                <div role='heading'
+                                    className={`${CLASS_NAME}__links-heading`}>
+                                    <b>Connected to{'\u00A0'}</b>
+                                    {filteredLinks.selection.length === 1
+                                        ? <InlineEntity target={filteredLinks.selection[0]} />
+                                        : 'selected entities'}
+                                </div>
+                                {this.renderLinks(connectedLinks)}
+                            </>
+                        ) : null}
+                        {connectedLinks.length > 0 && otherLinks.length > 0 ? (
+                            <div role='heading'
+                                className={`${CLASS_NAME}__links-heading`}>
+                                <b>Other links</b>
+                            </div>
+                        ) : null}
+                        {this.renderLinks(otherLinks)}
+                        {filteredLinks.links.length === 0 ? (
+                            <NoSearchResults className={`${CLASS_NAME}__no-results`}
+                                hasQuery={filteredLinks.term.length > 0}
+                                minSearchTermLength={minSearchTermLength}
+                                requireSubmit={requireSubmit}
+                                message={
+                                    filteredLinks.diagramHasLink ? undefined : 'No links found.'
+                                }
+                            />
+                        ) : null}
+                    </div>
+                </div>
+            </div>
         );
     }
 
-    private onAddToFilter = (linkType: LinkTypeModel) => {
+    private renderLinks(links: ReadonlyArray<LabelledLinkType>) {
+        const {instancesSearchCommands, workspace: {model}} = this.props;
+        const {filteredLinks} = this.state;
+        return (
+            <ul className={`${CLASS_NAME}__links`}>
+                {links.map(link => (
+                    <LinkInToolBox key={link.iri}
+                        model={model}
+                        link={link}
+                        onAddToFilter={
+                            instancesSearchCommands && filteredLinks.selectionLinks.has(link.iri)
+                                ? this.onAddToFilter : undefined
+                        }
+                        filterKey={filteredLinks.term}  
+                    />
+                ))}
+            </ul>
+        );
+    }
+
+    private onAddToFilter = (linkType: LinkTypeIri) => {
         const {instancesSearchCommands} = this.props;
-        const {selectedElement} = this.state;
-        if (selectedElement) {
+        const {filteredLinks} = this.state;
+        if (filteredLinks.selection.length === 1) {
             instancesSearchCommands?.trigger('setCriteria', {
                 criteria: {
-                    refElement: selectedElement.iri,
-                    refElementLink: linkType.id,
+                    refElement: filteredLinks.selection[0].id,
+                    refElementLink: linkType,
                 }
             });
         }
     };
 }
 
+function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerProps): State {
+    const {
+        trackSelected = DEFAULT_TRACK_SELECTED,
+        workspace: {model},
+    } = props;
+
+    const allLinkTypeIris = new Set<LinkTypeIri>();
+    for (const link of model.links) {
+        allLinkTypeIris.add(link.typeId);
+    }
+
+    const allLinkTypes = Array.from(allLinkTypeIris, iri => model.createLinkType(iri))
+        .map((link): LabelledLinkType => ({
+            iri: link.id,
+            type: link,
+            label: model.locale.formatLabel(link.data?.label, link.id)
+        }))
+        .filter(link => link.label.toLowerCase().indexOf(term.toLowerCase()) >= 0)
+        .sort((a, b) => {
+            return a.label.localeCompare(b.label);
+        });
+
+    const entities = new Map<ElementIri, ElementModel>();
+    const selectionLinks = new Set<LinkTypeIri>();
+    if (trackSelected) {
+        for (const item of model.selection) {
+            if (item instanceof Element) {
+                for (const entity of iterateEntitiesOf(item)) {
+                    entities.set(entity.id, entity);
+                }
+                for (const link of model.getElementLinks(item)) {
+                    selectionLinks.add(link.typeId);
+                }
+            }
+        }
+    }
+
+    const filteredLinks: FilteredLinkTypes = {
+        term,
+        diagramHasLink: allLinkTypeIris.size > 0,
+        selection: Array.from(entities.values()),
+        selectionLinks,
+        links: allLinkTypes,
+    };
+    return {...state, filteredLinks};
+}
+
+function LinkInToolBox(props: {
+    model: DiagramModel;
+    link: LabelledLinkType;
+    onAddToFilter?: (type: LinkTypeIri) => void;
+    filterKey?: string;
+}) {
+    const {model, link, filterKey, onAddToFilter} = props;
+    return (
+        <li data-linktypeid={link.iri}
+            className={`${CLASS_NAME}__link-item`}>
+            <VisibilityControl className={`${CLASS_NAME}__link-buttons`}
+                visibility={model.getLinkVisibility(link.iri)}
+                onSetVisibility={mode => changeLinkTypeState(model, mode, [link])}
+            />
+            <WithFetchStatus type='linkType' target={link.iri}>
+                <div className={`${CLASS_NAME}__link-title`}>
+                    {highlightSubstring(link.label, filterKey)}
+                </div>
+            </WithFetchStatus>
+            {onAddToFilter ? (
+                <div className={`${CLASS_NAME}__filter-button`}
+                    onClick={() => onAddToFilter(link.iri)}
+                />
+            ) : null}
+        </li>
+    );
+}
+
+function VisibilityControl(props: {
+    className?: string;
+    visibility?: LinkTypeVisibility | undefined;
+    onSetVisibility: (value: LinkTypeVisibility) => void;
+    disabled?: boolean;
+}) {
+    const {className, visibility, onSetVisibility, disabled} = props;
+    return (
+        <div className={classnames(className, 'reactodia-btn-group reactodia-btn-group-xs')}>
+            <button title='Hide links and labels'
+                className={classnames(
+                    `${CLASS_NAME}__toggle-invisible`,
+                    'reactodia-btn reactodia-btn-default',
+                    visibility === 'hidden' ? 'active' : undefined
+                )}
+                disabled={disabled}
+                onClick={() => onSetVisibility('hidden')}>
+            </button>
+            <button title='Show only lines for links (without labels)'
+                className={classnames(
+                    `${CLASS_NAME}__toggle-lines-only`,
+                    'reactodia-btn reactodia-btn-default',
+                    visibility === 'withoutLabel' ? 'active' : undefined
+                )}
+                disabled={disabled}
+                onClick={() => onSetVisibility('withoutLabel')}>
+            </button>
+            <button id='visible' title='Show links with labels'
+                className={classnames(
+                    `${CLASS_NAME}__toggle-visible`,
+                    'reactodia-btn reactodia-btn-default',
+                    visibility === 'visible' ? 'active' : undefined
+                )}
+                disabled={disabled}
+                onClick={() => onSetVisibility('visible')}>
+            </button>
+        </div>
+    );
+}
+
 function changeLinkTypeState(
     model: DiagramModel,
     state: LinkTypeVisibility,
-    links: ReadonlyArray<LinkTypeModel>
+    linkTypes: ReadonlyArray<LabelledLinkType>
 ): void {
     const batch = model.history.startBatch('Change link types visibility');
-    for (const linkType of links) {
-        model.history.execute(changeLinkTypeVisibility(model, linkType.id, state));
+    for (const linkType of linkTypes) {
+        model.history.execute(changeLinkTypeVisibility(model, linkType.iri, state));
     }
     batch.store();
 }

@@ -3,44 +3,31 @@ import * as React from 'react';
 import { Events, EventSource, EventTrigger } from '../coreUtils/events';
 
 import { Canvas, CanvasProps } from '../widgets/canvas';
-import { ClassTree, ClassTreeProps } from '../widgets/classTree';
 import {
     ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
 } from '../widgets/connectionsMenu';
 import { DropOnCanvas, DropOnCanvasProps } from '../widgets/dropOnCanvas';
 import { Halo, HaloProps } from '../widgets/halo';
 import { HaloLink, HaloLinkProps } from '../widgets/haloLink';
-import { InstancesSearch, InstancesSearchProps, InstancesSearchCommands } from '../widgets/instancesSearch';
-import { LinkTypesToolbox, LinkTypesToolboxProps } from '../widgets/linksToolbox';
+import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { Navigator, NavigatorProps } from '../widgets/navigator';
 import { Selection, SelectionProps } from '../widgets/selection';
 import { Toolbar, ToolbarProps } from '../widgets/toolbar';
+import {
+    ToolbarActionClearAll, ToolbarActionExport, ToolbarActionUndo, ToolbarActionRedo,
+    ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
+} from '../widgets/toolbarAction';
+import {
+    UnifiedSearch, UnifiedSearchProps, UnifiedSearchCommands, UnifiedSearchSection,
+    SearchSectionElementTypes,
+    SearchSectionEntities,
+    SearchSectionLinkTypes,
+} from '../widgets/unifiedSearch';
 import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
 
-import {
-    WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem, WorkspaceLayoutContainerProps,
-} from './workspaceLayout';
 import { WorkspaceRoot } from './workspaceRoot';
 
-/**
- * Props for `DefaultWorkspace` component.
- *
- * @see DefaultWorkspace
- */
-export interface DefaultWorkspaceProps {
-    /**
-     * Props for the left layout column of the default workspace.
-     *
-     * @default {defaultSize: 275}
-     */
-    leftColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
-    /**
-     * Props for the right layout column of the default workspace.
-     *
-     * @default {defaultSize: 275, defaultCollapsed: true}
-     */
-    rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
-
+export interface BaseDefaultWorkspaceProps {
     /**
      * Props for the `Canvas` component.
      *
@@ -94,15 +81,7 @@ export interface DefaultWorkspaceProps {
      *
      * @see Navigator
      */
-    navigator?: NavigatorProps | null;
-    /**
-     * Props for the `Toolbar` canvas widget.
-     *
-     * If specified as `null`, the component will not be rendered.
-     *
-     * @see Toolbar
-     */
-    toolbar?: ToolbarProps | null;
+    navigator?: Partial<NavigatorProps> | null;
     /**
      * Props for the `ZoomControl` canvas widget.
      *
@@ -110,27 +89,13 @@ export interface DefaultWorkspaceProps {
      *
      * @see ZoomControl
      */
-    zoomControl?: ZoomControlProps | null;
-
+    zoomControl?: Partial<ZoomControlProps> | null;
     /**
-     * Props for the `ClassTree` component.
+     * Event bus to connect `UnifiedSearch` to other components.
      *
-     * @see ClassTree
+     * If not specified, an internal instance will be automatically created.
      */
-    classTree?: ClassTreeProps;
-    /**
-     * Props for the `InstancesSearch` component.
-     *
-     * @see InstancesSearch
-     */
-    instancesSearch?: Omit<InstancesSearchProps, 'commands'>;
-    /**
-     * Props for the `LinkTypesToolbox` component.
-     *
-     * @see LinkTypesToolbox
-     */
-    linkToolbox?: LinkTypesToolboxProps;
-
+    searchCommands?: Events<UnifiedSearchCommands> & EventTrigger<UnifiedSearchCommands>;
     /**
      * Event bus to connect `ConnectionMenu` to other components.
      *
@@ -146,6 +111,70 @@ export interface DefaultWorkspaceProps {
 }
 
 /**
+ * Props for `DefaultWorkspace` component.
+ *
+ * @see DefaultWorkspace
+ */
+export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
+    /**
+     * Main menu content, in a form of `ToolbarAction` elements.
+     *
+     * If specified as `null`, the menu toggle button will be hidden.
+     *
+     * **Default**:
+     * ```jsx
+     * <>
+     *     <ToolbarActionClearAll />
+     *     <ToolbarActionExport kind='exportRaster' />
+     *     <ToolbarActionExport kind='exportSvg' />
+     *     <ToolbarActionExport kind='print' />
+     * </>
+     * ```
+     * @see ToolbarProps.menu
+     */
+    menu?: React.ReactNode | null;
+    /**
+     * Props for the `UnifiedSearch` canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     *
+     * @see UnifiedSearch
+     */
+    search?: UnifiedSearchProps | null;
+    /**
+     * Content for the secondary (actions) toolbar, in a form of
+     * `ToolbarAction` elements.
+     *
+     * If specified as `null`, the secondary toolbar will be hidden.
+     *
+     * * **Default**:
+     * ```jsx
+     * <>
+     *     <ToolbarActionUndo />
+     *     <ToolbarActionRedo />
+     *     <ToolbarActionLayout />
+     *     <ToolbarLanguageSelector languages={props.languages} />
+     * </>
+     * ```
+     */
+    actions?: React.ReactNode | null;
+    /**
+     * Additional props for the primary (main) toolbar.
+     */
+    mainToolbar?: Pick<ToolbarProps, 'dock' | 'dockOffsetX' | 'dockOffsetY'>;
+    /**
+     * Additional props for the secondary (actions) toolbar.
+     */
+    actionsToolbar?: Pick<ToolbarProps, 'dock' | 'dockOffsetX' | 'dockOffsetY'>;
+    /**
+     * Set of languages for the diagram data language selector.
+     *
+     * If not specified or empty, the selector will be hidden.
+     */
+    languages?: ReadonlyArray<WorkspaceLanguage>;
+}
+
+/**
  * Component with default ready-to-use workspace with a canvas and
  * all components and widgets pre-configured.
  *
@@ -153,11 +182,13 @@ export interface DefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        leftColumn, rightColumn,
         canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator, zoomControl,
-        toolbar, classTree, instancesSearch, linkToolbox,
+        menu, search, actions, mainToolbar, actionsToolbar, languages = [],
     } = props;
 
+    const [searchCommands] = React.useState(() =>
+        props.searchCommands ?? new EventSource<UnifiedSearchCommands>()
+    );
     const [connectionsMenuCommands] = React.useState(() =>
         props.connectionsMenuCommands ?? new EventSource<ConnectionsMenuCommands>()
     );
@@ -165,63 +196,108 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         props.instancesSearchCommands ?? new EventSource<InstancesSearchCommands>()
     );
 
+    const menuContent = menu === null ? null : (
+        menu ?? <>
+            <ToolbarActionClearAll />
+            <ToolbarActionExport kind='exportRaster' />
+            <ToolbarActionExport kind='exportSvg' />
+            <ToolbarActionExport kind='print' />
+        </>
+    );
+
+    const actionsContent = actions === null ? null : (
+        actions ?? <>
+            <ToolbarActionUndo />
+            <ToolbarActionRedo />
+            <ToolbarActionLayout />
+            <ToolbarLanguageSelector languages={languages} />
+        </>
+    );
+
+    const defaultSections = React.useMemo((): readonly UnifiedSearchSection[] => [
+        {
+            key: 'elementTypes',
+            label: 'Types',
+            component: (
+                <SearchSectionElementTypes
+                    instancesSearchCommands={instancesSearchCommands}
+                />
+            )
+        },
+        {
+            key: 'entities',
+            label: 'Entities',
+            component: (
+                <SearchSectionEntities
+                    instancesSearchCommands={instancesSearchCommands}
+                />
+            )
+        },
+        {
+            key: 'linkTypes',
+            label: 'Links',
+            component: (
+                <SearchSectionLinkTypes
+                    instancesSearchCommands={instancesSearchCommands}
+                />
+            )
+        }
+    ], [instancesSearchCommands]);
+
     return (
         <WorkspaceRoot>
-            <WorkspaceLayoutRow>
-                <WorkspaceLayoutColumn defaultSize={275}
-                    {...leftColumn}>
-                    <WorkspaceLayoutItem id='classes' heading='Classes'>
-                        <ClassTree {...classTree}
-                            instancesSearchCommands={instancesSearchCommands}
+            <Canvas {...canvas}>
+                {connectionsMenu === null ? null : (
+                    <ConnectionsMenu {...connectionsMenu}
+                        commands={connectionsMenuCommands}
+                        instancesSearchCommands={instancesSearchCommands}
+                    />
+                )}
+                {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}
+                {halo === null ? null : (
+                    <Halo {...halo}
+                        instancesSearchCommands={instancesSearchCommands}
+                        connectionsMenuCommands={
+                            connectionsMenu === null ? undefined : connectionsMenuCommands
+                        }
+                    />
+                )}
+                {haloLink === null ? null : <HaloLink {...haloLink} />}
+                {selection === null ? null : (
+                    <Selection {...selection}
+                        connectionsMenuCommands={
+                            connectionsMenu === null ? undefined : connectionsMenuCommands
+                        }
+                    />
+                )}
+                {zoomControl === null ? null : (
+                    <ZoomControl dock='w'
+                        {...zoomControl}
+                    />
+                )}
+                {navigator === null ? null : (
+                    <Navigator dock='se'
+                        {...navigator}
+                    />
+                )}
+                <Toolbar {...mainToolbar}
+                    dock={mainToolbar?.dock ?? 'nw'}
+                    menu={menuContent}>
+                    {search === null ? null : (
+                        <UnifiedSearch {...search}
+                            sections={search?.sections ?? defaultSections}
+                            commands={searchCommands}
                         />
-                    </WorkspaceLayoutItem>
-                    <WorkspaceLayoutItem id='instances' heading='Instances'>
-                        <InstancesSearch {...instancesSearch}
-                            commands={instancesSearchCommands}
-                        />
-                    </WorkspaceLayoutItem>
-                </WorkspaceLayoutColumn>
-                <WorkspaceLayoutItem id='canvas'>
-                    <Canvas {...canvas}>
-                        {connectionsMenu === null ? null : (
-                            <ConnectionsMenu {...connectionsMenu}
-                                commands={connectionsMenuCommands}
-                                instancesSearchCommands={instancesSearchCommands}
-                            />
-                        )}
-                        {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}
-                        {halo === null ? null : (
-                            <Halo {...halo}
-                                instancesSearchCommands={instancesSearchCommands}
-                                connectionsMenuCommands={
-                                    connectionsMenu === null ? undefined : connectionsMenuCommands
-                                }
-                            />
-                        )}
-                        {haloLink === null ? null : <HaloLink {...haloLink} />}
-                        {selection === null ? null : (
-                            <Selection {...selection}
-                                connectionsMenuCommands={
-                                    connectionsMenu === null ? undefined : connectionsMenuCommands
-                                }
-                            />
-                        )}
-                        {navigator === null ? null : <Navigator {...navigator} />}
-                        {toolbar === null ? null : <Toolbar {...toolbar} />}
-                        {zoomControl === null ? null : <ZoomControl {...zoomControl} />}
-                    </Canvas>
-                </WorkspaceLayoutItem>
-                <WorkspaceLayoutColumn defaultSize={275}
-                    defaultCollapsed={true}
-                    {...rightColumn}>
-                    <WorkspaceLayoutItem id='connections'
-                        heading='Connections'>
-                        <LinkTypesToolbox {...linkToolbox}
-                            instancesSearchCommands={instancesSearchCommands}
-                        />
-                    </WorkspaceLayoutItem>
-                </WorkspaceLayoutColumn>
-            </WorkspaceLayoutRow>
+                    )}
+                </Toolbar>
+                {actionsContent === null ? null : (
+                    <Toolbar {...actionsToolbar}
+                        dock={actionsToolbar?.dock ?? 'sw'}
+                        menu={null}>
+                        {actionsContent}
+                    </Toolbar>
+                )}
+            </Canvas>
         </WorkspaceRoot>
     );
 }

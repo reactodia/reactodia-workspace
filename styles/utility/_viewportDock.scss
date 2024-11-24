@@ -1,0 +1,68 @@
+.reactodia-viewport-dock {
+  $dock-margin: var(--reactodia-viewport-dock-margin, 10px);
+  $dock-offset-x: calc(#{$dock-margin} + var(--reactodia-viewport-dock-offset-x, 0px));
+  $dock-offset-y: calc(#{$dock-margin} + var(--reactodia-viewport-dock-offset-y, 0px));
+
+  &--row-n,
+  &--row-s {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  &--row-n {
+    top: $dock-offset-y;
+  }
+
+  &--row-s {
+    bottom: $dock-offset-y;
+  }
+
+  &--column-w,
+  &--column-e {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  &--column-w {
+    left: $dock-offset-x;
+  }
+
+  &--column-e {
+    right: $dock-offset-x;
+  }
+
+  &--corner {
+    display: contents;
+  }
+
+  &--dock-nw {
+    position: absolute;
+    left: $dock-offset-x;
+    top: $dock-offset-y;
+  }
+
+  &--dock-ne {
+    position: absolute;
+    right: $dock-offset-x;
+    top: $dock-offset-y;
+  }
+
+  &--dock-se {
+    position: absolute;
+    right: $dock-offset-x;
+    bottom: $dock-offset-y;
+  }
+
+  &--dock-sw {
+    position: absolute;
+    left: $dock-offset-x;
+    bottom: $dock-offset-y;
+  }
+}

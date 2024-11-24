@@ -1,9 +1,11 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
-import { Debouncer } from '../../coreUtils/scheduler';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
+import { useObservedProperty } from '../../coreUtils/hooks';
+import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/provider';
@@ -15,6 +17,8 @@ import { HtmlSpinner } from '../../diagram/spinner';
 
 import { DataDiagramModel } from '../../editor/dataDiagramModel';
 
+import { NoSearchResults } from '../utility/noSearchResults';
+import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
 
@@ -29,6 +33,29 @@ import { Forest } from './leaf';
  * @see ClassTree
  */
 export interface ClassTreeProps {
+    /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
+    /**
+     * Controlled search input state store.
+     *
+     * If specified, renders the component in "headless" mode
+     * without a text filter input.
+     */
+    searchStore?: SearchInputStore;
+    /**
+     * Debounce timeout in milliseconds after input to perform the text search.
+     *
+     * @default 200
+     */
+    searchTimeout?: number;
+    /**
+     * Minimum number of characters in the search term to initiate the search.
+     *
+     * @default 1
+     */
+    minSearchTermLength?: number;
     /**
      * Event bus to send commands to `InstancesSearch` component.
      */
@@ -47,15 +74,46 @@ export interface ClassTreeProps {
  * @category Components
  */
 export function ClassTree(props: ClassTreeProps) {
+    const {
+        searchStore,
+        searchTimeout = 200,
+        minSearchTermLength = 1,
+    } = props;
+    const uncontrolledSearch = useSearchInputStore({
+        initialValue: '',
+        submitTimeout: searchTimeout,
+        allowSubmit: term => normalizeSearchText(term).length >= minSearchTermLength,
+    });
+    const effectiveSearchStore = searchStore ?? uncontrolledSearch;
+    const normalizedTerm = useObservedProperty(
+        effectiveSearchStore.events,
+        'changeValue',
+        () => normalizeSearchText(effectiveSearchStore.value)
+    );
+    const requireSubmit = useObservedProperty(
+        effectiveSearchStore.events,
+        'changeMode',
+        () => effectiveSearchStore.mode === 'explicit'
+    );
     const workspace = useWorkspace();
     return (
         <ClassTreeInner {...props}
+            isControlled={Boolean(searchStore)}
+            searchStore={effectiveSearchStore}
+            normalizedTerm={normalizedTerm}
+            minSearchTermLength={minSearchTermLength}
+            requireSubmit={requireSubmit}
             workspace={workspace}
         />
     );
 }
 
 interface ClassTreeInnerProps extends ClassTreeProps {
+    isControlled: boolean;
+    searchStore: SearchInputStore;
+    normalizedTerm: string;
+    minSearchTermLength: number;
+    requireSubmit: boolean;
     workspace: WorkspaceContext;
 }
 
@@ -63,7 +121,6 @@ interface State {
     refreshingState: ProgressState;
     roots: ReadonlyArray<TreeNode>;
     filteredRoots: ReadonlyArray<TreeNode>;
-    requestedSearchText: string;
     appliedSearchText?: string;
     selectedNode?: TreeNode;
     constructibleClasses: ReadonlyMap<ElementTypeIri, boolean>;
@@ -80,12 +137,11 @@ interface ClassTreeItem extends ElementTypeModel {
 }
 
 const CLASS_NAME = 'reactodia-class-tree';
-const MIN_TERM_LENGTH = 3;
 
 class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     private readonly listener = new EventObserver();
+    private readonly searchListener = new EventObserver();
     private readonly delayedClassUpdate = new Debouncer();
-    private readonly delayedSearch = new Debouncer(200 /* ms */);
     private fetchedGraph: FetchedClassGraph | undefined;
     private classTree: ReadonlyArray<ClassTreeItem> | undefined;
 
@@ -99,7 +155,6 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
             refreshingState: 'none',
             roots: [],
             filteredRoots: [],
-            requestedSearchText: '',
             appliedSearchText: '',
             constructibleClasses: new Map(),
             showOnlyConstructible: false,
@@ -107,28 +162,35 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     }
 
     render() {
-        const {workspace: {editor}} = this.props;
         const {
-            refreshingState, requestedSearchText, appliedSearchText, filteredRoots, selectedNode, constructibleClasses,
+            className, isControlled, searchStore, normalizedTerm, minSearchTermLength, requireSubmit,
+            workspace: {editor},
+        } = this.props;
+        const {
+            refreshingState, appliedSearchText, roots, filteredRoots, selectedNode, constructibleClasses,
             showOnlyConstructible
         } = this.state;
-        const normalizedSearchText = normalizeSearchText(requestedSearchText);
         // highlight search term only if actual tree is already filtered by current or previous term:
         //  - this immediately highlights typed characters thus making it look more responsive,
         //  - prevents expanding non-filtered tree (which can be too large) just to highlight the term
-        const searchText = appliedSearchText ? normalizedSearchText : undefined;
+        const searchText = appliedSearchText ? normalizedTerm : undefined;
 
         return (
-            <div className={CLASS_NAME}>
+            <div
+                className={classnames(
+                    CLASS_NAME,
+                    isControlled ? `${CLASS_NAME}--controlled` : undefined,
+                    className
+                )}>
                 <div className={`${CLASS_NAME}__filter`}>
                     <div className={`${CLASS_NAME}__filter-group`}>
-                        <input type='text'
-                            className='search-input reactodia-form-control'
-                            placeholder='Search for...'
-                            name='reactodia-class-tree-filter'
-                            value={this.state.requestedSearchText}
-                            onChange={this.onSearchTextChange}
-                        />
+                        {isControlled ? null : (
+                            <SearchInput store={searchStore}
+                                inputProps={{
+                                    name: 'reactodia-class-tree-filter',
+                                }}
+                            />
+                        )}
                         {editor.inAuthoringMode ? (
                             <label className={`${CLASS_NAME}__only-creatable`}>
                                 <input type='checkbox'
@@ -152,6 +214,16 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                         creatableClasses={constructibleClasses}
                         onClickCreate={this.onCreateInstance}
                         onDragCreate={this.onDragCreate}
+                        footer={
+                            filteredRoots.length === 0 ? (
+                                <NoSearchResults className={`${CLASS_NAME}__no-results`}
+                                    hasQuery={filteredRoots !== roots}
+                                    minSearchTermLength={minSearchTermLength}
+                                    requireSubmit={requireSubmit}
+                                    message={roots.length === 0 ? 'No classes found.' : undefined}
+                                />
+                            ) : null
+                        }
                     />
                 ) : (
                     <div className={`${CLASS_NAME}__spinner`}>
@@ -173,13 +245,32 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 this.delayedClassUpdate.call(this.refreshClassTree);
             }
         });
+        
+        this.listenSearch();
         this.initClassTree();
+    }
+
+    componentDidUpdate(prevProps: ClassTreeInnerProps): void {
+        if (this.props.searchStore.events !== prevProps.searchStore.events) {
+            this.listenSearch();
+        }
+    }
+
+    private listenSearch() {
+        const {searchStore} = this.props;
+        this.searchListener.stopListening();
+        this.searchListener.listen(searchStore.events, 'executeSearch', ({value}) => {
+            this.performSearch(value);
+        });
+        this.searchListener.listen(searchStore.events, 'clearSearch', () => {
+            this.performSearch('');
+        });
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
+        this.searchListener.stopListening();
         this.delayedClassUpdate.dispose();
-        this.delayedSearch.dispose();
         this.loadClassesOperation.abort();
         this.refreshOperation.abort();
         this.createElementCancellation.abort();
@@ -213,22 +304,10 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         }
     }
 
-    private onSearchTextChange = (e: React.FormEvent<HTMLInputElement>) => {
-        const requestedSearchText = e.currentTarget.value;
-        this.setState({requestedSearchText});
-        this.delayedSearch.call(this.performSearch);
-    };
-
-    private performSearch = () => {
-        const {requestedSearchText} = this.state;
-        const requested = normalizeSearchText(requestedSearchText);
-        if (requested === this.state.appliedSearchText) {
-            return;
-        }
-
-        const appliedSearchText = requested.length < MIN_TERM_LENGTH ? undefined : requested;
+    private performSearch = (requestedTerm: string) => {
+        const normalizedTerm = normalizeSearchText(requestedTerm);
         this.setState((state): State => applyFilters(
-            {...state, appliedSearchText}
+            {...state, appliedSearchText: normalizedTerm}
         ));
     };
 

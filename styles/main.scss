@@ -1,7 +1,6 @@
 @import "shared/badge";
 @import "shared/btn";
 @import "shared/btn-group";
-@import "shared/clearfix";
 @import "shared/form-control";
 @import "shared/input-group";
 @import "shared/label";
@@ -16,11 +15,16 @@
 @import "editor/loadingWidget";
 @import "editor/withFetchStatus";
 
+@import "utility/dropdown";
+@import "utility/inlineEntity";
+@import "utility/noSearchResults";
+@import "utility/searchInput";
+@import "utility/viewportDock";
+
 @import "widgets/canvas";
 @import "widgets/classTree";
 @import "widgets/connectionsMenu";
 @import "widgets/dialog";
-@import "widgets/dropdown";
 @import "widgets/group-paginator";
 @import "widgets/halo";
 @import "widgets/haloLink";
@@ -35,6 +39,7 @@
 @import "widgets/selectionAction";
 @import "widgets/toolbar";
 @import "widgets/toolbarAction";
+@import "widgets/unifiedSearch";
 @import "widgets/zoomControl";
 
 @import "workspace/accordion";

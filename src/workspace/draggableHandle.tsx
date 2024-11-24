@@ -6,8 +6,26 @@ import * as React from 'react';
  * @see DraggableHandle
  */
 export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElement> {
+    /**
+     * Drag axis to receive difference in drag position:
+     *  - `x`: receive only `dx` non-zero value in handler;
+     *  - `y`: receive only `dy` non-zero value in handler;
+     *  - `all`: receive both `dx` and `dy` non-zero values in handler.
+     *
+     * @default "all"
+     */
+    axis?: 'x' | 'y' | 'all';
+    /**
+     * Handler for the start of dragging the handle.
+     */
     onBeginDragHandle: (e: React.MouseEvent<HTMLDivElement>) => void;
+    /**
+     * Handler for each drag movement for the duration of a dragging the handle.
+     */
     onDragHandle: (e: MouseEvent, dx: number, dy: number) => void;
+    /**
+     * Handler for the end of dragging the handle.
+     */
     onEndDragHandle?: (e: MouseEvent) => void;
 }
 
@@ -73,11 +91,11 @@ export class DraggableHandle extends React.Component<DraggableHandleProps> {
         }
         e.preventDefault();
         const {origin} = this.holdState;
-        const {onDragHandle} = this.props;
+        const {axis, onDragHandle} = this.props;
         onDragHandle(
             e,
-            e.pageX - origin.pageX,
-            e.pageY - origin.pageY
+            axis === 'y' ? 0 : e.pageX - origin.pageX,
+            axis === 'x' ? 0 : e.pageY - origin.pageY
         );
     };
 

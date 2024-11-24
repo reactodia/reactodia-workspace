@@ -4,7 +4,7 @@ import { Events, PropertyChange } from '../coreUtils/events';
 
 import type { RenderingState } from './renderingState';
 import type { Cell } from './elements';
-import type { Vector, Rect } from './geometry';
+import type { Vector, Rect, Size } from './geometry';
 import type { DiagramModel } from './model';
 import type { PaperTransform } from './paper';
 import type { ToDataURLOptions } from './toSvg';
@@ -319,7 +319,11 @@ export interface CanvasMetrics {
     /**
      * Returns paper size in paper coordinates.
      */
-    getPaperSize(): { width: number; height: number };
+    getPaperSize(): Size;
+    /**
+     * Returns viewport bounds in page coordinates.
+     */
+    getViewportPageRect(): Rect;
     /**
      * Translates page to paper coordinates.
      */

@@ -58,10 +58,7 @@ function StressTestExample() {
         <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace
-                leftColumn={{defaultCollapsed: true}}
-                toolbar={{
-                    menu: <ExampleToolbarMenu />,
-                }}
+                menu={<ExampleToolbarMenu />}
                 navigator={{
                     expanded: false,
                 }}

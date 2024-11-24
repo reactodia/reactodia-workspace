@@ -9,7 +9,7 @@ import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
 
-import { DropdownMenuItem, useInsideDropdown } from './dropdown';
+import { DropdownMenuItem, useInsideDropdown } from './utility/dropdown';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 

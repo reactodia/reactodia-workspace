@@ -2,21 +2,29 @@
  * Debounces a function call such that only one is performed if multiple
  * requests are made since initial one for the waiting time.
  *
- * If `waitingTime` is 0, then the timeout is assumed to be up until next
+ * If `timeout` is 'frame', then the timeout is assumed to be up until next
  * rendered frame (via `requestAnimationFrame()`).
  *
  * @category Utilities
  */
 export class Debouncer {
-    private readonly useAnimationFrame: boolean;
     // TODO: fix
     private scheduled: any;
 
+    private _timeout: number | 'frame';
     private callback: (() => void) | undefined;
 
-    constructor(readonly waitingTime = 0) {
-        this.useAnimationFrame = waitingTime === 0;
+    constructor(timeout: number | 'frame' = 'frame') {
+        this._timeout = timeout;
         this.runSynchronously = this.runSynchronously.bind(this);
+    }
+
+    get timeout(): number | 'frame' {
+        return this._timeout;
+    }
+
+    setTimeout(timeout: number | 'frame'): void {
+        this._timeout = timeout;
     }
 
     call(callback: () => void) {
@@ -26,10 +34,10 @@ export class Debouncer {
 
     private schedule() {
         if (typeof this.scheduled === 'undefined') {
-            if (this.useAnimationFrame) {
+            if (this.timeout === 'frame') {
                 this.scheduled = requestAnimationFrame(this.runSynchronously);
             } else {
-                this.scheduled = setTimeout(this.runSynchronously, this.waitingTime);
+                this.scheduled = setTimeout(this.runSynchronously, this.timeout);
             }
         }
     }
@@ -52,7 +60,7 @@ export class Debouncer {
 
     private cancelScheduledTimeout(): boolean {
         if (typeof this.scheduled !== 'undefined') {
-            if (this.useAnimationFrame) {
+            if (this.timeout === 'frame') {
                 cancelAnimationFrame(this.scheduled);
             } else {
                 clearTimeout(this.scheduled);
