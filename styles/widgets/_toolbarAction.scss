@@ -65,7 +65,14 @@ $toolbarHeight: 30px;
     display: flex;
     align-items: center;
 
+    &:focus-within {
+      border-color: #66afe9;
+    }
+
     select {
+      background: none;
+      border: none;
+      outline: none;
       color: inherit;
       margin: 0;
       font: inherit;
