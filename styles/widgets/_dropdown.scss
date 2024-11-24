@@ -1,9 +1,10 @@
 @import "../mixin/icons";
+@import "../mixin/z-index";
 
 .reactodia-dropdown {
   position: relative;
   float: left;
-  z-index: 1;
+  z-index: $z-index-dropdown;
 
   &__content {
     position: absolute;

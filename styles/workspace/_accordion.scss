@@ -1,3 +1,5 @@
+@import "../mixin/z-index";
+
 .reactodia-accordion {
   flex: auto;
   display: flex;
@@ -44,7 +46,7 @@
 
   &__handle {
     position: absolute;
-    z-index: 2;
+    z-index: $z-index-accordion-handle;
   }
 
   &__handle-vertical {
@@ -74,7 +76,7 @@
     top: 50%;
     margin-top: -10px;
     width: 20px;
-    z-index: 20;
+    z-index: $z-index-accordion-handle-button;
     transition: 0.3s;
 
     display: flex;
