@@ -112,7 +112,13 @@ export function Selection(props: SelectionProps) {
             moveListener?.stopListening();
             setHighlightedBox(undefined);
             if (e.triggerAsClick) {
-                if (e.target instanceof Element) {
+                const requireShift = e.source.pointerMode !== 'selection';
+                const allowSelection = e.sourceEvent.shiftKey === requireShift;
+                if (
+                    (allowSelection || model.selection.length >= 1) &&
+                    e.target instanceof Element
+                ) {
+                    e.sourceEvent.preventDefault();
                     toggleSelected(e.target, model);
                 }
             } else if (origin) {

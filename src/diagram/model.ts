@@ -336,7 +336,7 @@ export class DiagramModel implements GraphStructure {
         this.reorderElements(moveComparator(
             this.elements,
             targets,
-            to === 'front' ? 'start' : 'end',
+            to === 'front' ? 'end' : 'start',
         ));
     }
 
