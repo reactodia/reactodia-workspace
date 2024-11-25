@@ -168,11 +168,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.listener.listen(model.events, 'loadingStart', () => {
             this.initClassTree();
         });
-        this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
-            if (data.changeData) {
-                this.delayedClassUpdate.call(this.refreshClassTree);
-            }
-        });
+
         this.initClassTree();
     }
 
@@ -425,14 +421,10 @@ function createRoots(
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];
         for (const item of children) {
-            const data = model.getElementType(item.id)?.data;
             nodes.push({
                 iri: item.id,
-                data,
-                label: model.locale.formatLabel(
-                    item.label.length === 0 ? data?.label : item.label,
-                    item.id
-                ),
+                data: item,
+                label: model.locale.formatLabel(item.label, item.id),
                 derived: mapChildren(item.children),
             });
         }
