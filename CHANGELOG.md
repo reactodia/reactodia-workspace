@@ -5,11 +5,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Introduce new search-centric default workspace layout with `UnifiedSearch`:
+  * Add `UnifiedSearch` component to unify graph text lookup under a single entry point, with built-in adapters: `SearchSectionElementTypes` for `ClassTree`, `SearchSectionEntities` for `InstancesSearch`, `SearchSectionLinkTypes` for `LinksToolbox`;
+  * **[Breaking]** Change `DefaultWorkspace` to use unified search, move non-menu toolbar items to the secondary toolbar and `ZoomControl` to the left side of the viewport;
+  * Export previous workspace layout under `ClassicWorkspace` and `ClassicToolbar` components;
+- Display "no results" in various cases in `ClassTree`, `InstancesSearch` and `LinksToolbox` components;
+- Add ability to dock viewport canvas widgets to any side/corner without style overrides:
+  * **[Breaking]** Add `dock` (required), `dockOffsetX`, `dockOffsetY` props to `Navigator`, `Toolbar` and `ZoomControl` widgets;
+- Allow to track canvas viewport bounds on the page with `CanvasMetrics.getViewportPageRect()` and `CanvasEvents.resize`;
+
+### Changed
+- Auto-collapse `Navigator` when there is not enough space in the canvas viewport.
+- Change `LinkTypesToolbox` to only use links on the diagram instead of requesting connected links from a data provider.
+- Display inline entity badges with its type style in `InstancesSearch` and `LinksToolbox`.
+- Improve styles for `ToolbarLanguageSelector`: remove extra background and border.
+- Separate `frame` debounce mode in `Debouncer`, allow to change timeout after creation.
+
+## [0.26.1] - 2024-11-26
+### Fixed
+- Bringing elements to front on selection (regression introduced at [0.25.0]).
+- Avoid accidental text selection on click with Shift pressed when multiple elements are selected with `Selection` widget.
+- Missing count badges in `ClassTree` which reappeared on requesting element type data (regression introduced at [0.25.0]).
+- Element grouping incorrectly group links between different element pairs together due to `DiagramModel.findLink()` returning non-matching links.
 
 ## [0.26.0] - 2024-11-17
 ### Added
 - Support incremental links loading from `DataProvider`:
-  * [Breaking] Change `DataProvider.links()` contract to return links between two sets of elements to allow partial link requests;
+  * **[Breaking]** Change `DataProvider.links()` contract to return links between two sets of elements to allow partial link requests;
   * Extend `SparqlDataProviderSettings.linksInfoQuery` to support partial link queries (with backwards compatibility fallback);
 - Split `SparqlDataProvider` requests into chunks of configurable size (`chunkSize`):
   * Splitting `SparqlDataProvider.links()` requests requires to migrate to the new `linksInfoQuery` contract, see above;
@@ -260,7 +283,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.1...HEAD
+[0.26.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...v0.26.0
 [0.25.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.0...v0.25.1
 [0.25.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.24.0...v0.25.0
