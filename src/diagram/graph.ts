@@ -64,17 +64,14 @@ export class Graph {
         }
         const sourceLinks = this.elementLinks.get(source) ?? this.EMPTY_LINKS;
         const targetLinks = this.elementLinks.get(target) ?? this.EMPTY_LINKS;
-        if (sourceLinks.length <= targetLinks.length) {
-            for (const link of sourceLinks) {
-                if (link.targetId === targetId && (!linkTypeId || link.typeId === linkTypeId)) {
-                    yield link;
-                }
-            }
-        } else {
-            for (const link of targetLinks) {
-                if (link.sourceId === sourceId && (!linkTypeId || link.typeId === linkTypeId)) {
-                    yield link;
-                }
+        const linksToIterate = sourceLinks.length <= targetLinks.length ? sourceLinks : targetLinks;
+        for (const link of linksToIterate) {
+            if (
+                link.sourceId === sourceId &&
+                link.targetId === targetId &&
+                (!linkTypeId || link.typeId === linkTypeId)
+            ) {
+                yield link;
             }
         }
     }
