@@ -1,6 +1,6 @@
 import { expect, describe, it, vi } from 'vitest';
 
-import { IndexedDbCachedProvider } from '../../src/data/decorated/indexedDbCachedProvider';
+import { IndexedDbCachedProvider } from '../../src/data/indexedDb/indexedDbCachedProvider';
 import type {
     ElementIri, ElementTypeIri, LinkModel, LinkTypeIri, PropertyTypeIri,
 } from '../../src/data/model';

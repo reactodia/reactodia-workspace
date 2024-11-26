@@ -2,7 +2,7 @@ import { expect, describe, it } from 'vitest';
 
 import {
     AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange,
-} from '../../src/data/decorated/adjacencyBlocks';
+} from '../../src/data/indexedDb/adjacencyBlocks';
 
 describe('subtractAdjacencyBlocks()', () => {
     it('computes adjacency block extensions', () => {

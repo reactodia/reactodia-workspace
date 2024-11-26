@@ -30,7 +30,7 @@ export {
 export { EmptyDataProvider } from './data/decorated/emptyDataProvider';
 export {
     IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
-} from './data/decorated/indexedDbCachedProvider';
+} from './data/indexedDb/indexedDbCachedProvider';
 export { MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
 export * from './data/rdf/rdfDataProvider';
 /**
