@@ -3,6 +3,7 @@ import { expect, describe, it } from 'vitest';
 import {
     AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange,
 } from '../../src/data/indexedDb/adjacencyBlocks';
+import { Sha256 } from '../../src/data/indexedDb/sha256';
 
 describe('subtractAdjacencyBlocks()', () => {
     it('computes adjacency block extensions', () => {
@@ -54,25 +55,29 @@ function block(
 }
 
 describe('hashAdjacencyRange()', () => {
-    it('produces a consistent content hash for ranges', async () => {
-        expect(await hashAdjacencyRange(new Set([]))).toEqual(
+    it('produces a consistent content hash for ranges', () => {
+        const hasher = new Sha256();
+        expect(hashAdjacencyRange(new Set([]), hasher)).toEqual(
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         );
-        expect(await hashAdjacencyRange(new Set([]))).toEqual(
-            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-        );
-        expect(await hashAdjacencyRange(new Set([
-            'http://example.com/sourceA',
-            'http://example.com/sourceB',
-            'http://example.com/sourceC',
-        ]))).toEqual(
+        expect(hashAdjacencyRange(
+            new Set([
+                'http://example.com/sourceA',
+                'http://example.com/sourceB',
+                'http://example.com/sourceC',
+            ]),
+            hasher
+        )).toEqual(
             '19fabb0ef72a478af74fe009feba1d856965aeef43ffc54a57188a5126f79d08'
         );
-        expect(await hashAdjacencyRange(new Set([
-            'http://example.com/sourceC',
-            'http://example.com/sourceA',
-            'http://example.com/sourceB',
-        ]))).toEqual(
+        expect(hashAdjacencyRange(
+            new Set([
+                'http://example.com/sourceC',
+                'http://example.com/sourceA',
+                'http://example.com/sourceB',
+            ]),
+            hasher
+        )).toEqual(
             '19fabb0ef72a478af74fe009feba1d856965aeef43ffc54a57188a5126f79d08'
         );
     });

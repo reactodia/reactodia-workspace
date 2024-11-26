@@ -10,6 +10,7 @@ import {
 } from '../provider';
 
 import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
+import { Sha256 } from './sha256';
 
 /**
  * Options for `IndexedDbCachedProvider`.
@@ -144,6 +145,8 @@ interface LookupRecord {
  */
 export class IndexedDbCachedProvider implements DataProvider {
     static readonly DB_VERSION = 3;
+
+    private readonly hasher = new Sha256();
 
     private readonly baseProvider: DataProvider;
     private readonly dbName: string;
@@ -607,9 +610,9 @@ export class IndexedDbCachedProvider implements DataProvider {
             }
         }
 
-        await Promise.all(requests.map(async request => {
-            request.computedHash = (await hashAdjacencyRange(request.items)) as LinkRangeKey;
-        }));
+        for (const request of requests) {
+            request.computedHash = hashAdjacencyRange(request.items, this.hasher) as LinkRangeKey;
+        }
 
         const tx = db.transaction(
             [ObjectStore.linkBlocks, ObjectStore.linkRanges],

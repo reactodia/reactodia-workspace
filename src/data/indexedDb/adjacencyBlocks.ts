@@ -1,6 +1,8 @@
 import { HashMap } from '../../coreUtils/hashMap';
 import { hashFnv32a } from '../utils';
 
+import { Sha256 } from './sha256';
+
 export type AdjacencyRange<K> = ReadonlySet<K>;
 
 export interface AdjacencyBlock<K> {
@@ -78,18 +80,23 @@ function sameRange<K>(a: AdjacencyRange<K>, b: AdjacencyRange<K>): boolean {
     return true;
 }
 
-export async function hashAdjacencyRange<K extends string>(range: AdjacencyRange<K>): Promise<string> {
+export function hashAdjacencyRange<K extends string>(
+    range: AdjacencyRange<K>,
+    hasher: Sha256
+): string {
     const keys = Array.from(range).sort();
-    const hashes = new Uint8Array(keys.length * 32);
     const encoder = new TextEncoder();
-    await Promise.all(keys.map(async (key, i) => {
+    const resultDigest = hasher.create();
+    const keyDigest = hasher.create();
+    for (const key of keys) {
         const encodedKey = encoder.encode(key);
-        const hashBytes = await window.crypto.subtle.digest('SHA-256', encodedKey);
-        hashes.set(new Uint8Array(hashBytes), i * 32);
-    }));
-    const totalHashBytes = await window.crypto.subtle.digest('SHA-256', hashes);
+        keyDigest.start();
+        keyDigest.update(encodedKey);
+        resultDigest.update(keyDigest.digest());
+    }
+    const digestBytes = resultDigest.digest();
     const totalHashHex = Array.from(
-        new Uint8Array(totalHashBytes),
+        digestBytes,
         b => b.toString(16).padStart(2, '0')
     ).join('');
     return totalHashHex;
