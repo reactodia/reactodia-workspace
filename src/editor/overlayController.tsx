@@ -2,12 +2,15 @@ import * as React from 'react';
 
 import { delay } from '../coreUtils/async';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
+import {
+    useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
+} from '../coreUtils/hooks';
 
 import { ElementModel, LinkModel } from '../data/model';
 
 import { CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex } from '../diagram/elements';
-import { Size } from '../diagram/geometry';
+import { Size, Vector } from '../diagram/geometry';
 import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
@@ -586,17 +589,34 @@ interface ExtendedOverlayTask extends OverlayTask {
 
 function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
     const {spinnerProps} = props;
-    const {canvas} = useCanvas();
-    const {clientWidth, clientHeight} = canvas.metrics.area;
-    const x = spinnerProps.statusText ? clientWidth / 3 : clientHeight / 2;
-    const position = {x, y: clientHeight / 2};
+    const size = useViewportSize();
+    const position: Vector = {
+        x: spinnerProps.statusText ? size.width / 3 : size.width / 2,
+        y: size.height / 2,
+    };
     return (
         <div className='reactodia-loading-widget'>
-            <svg width={clientWidth} height={clientHeight}>
+            <svg width={size.width} height={size.height}>
                 <Spinner position={position} {...spinnerProps} />
             </svg>
         </div>
     );
+}
+
+function useViewportSize() {
+    const {canvas} = useCanvas();
+    const resizeStore = useFrameDebouncedStore(
+        useEventStore(canvas.events, 'resize')
+    );
+    const size = useSyncStoreWithComparator(
+        resizeStore,
+        (): Size => {
+            const {clientWidth, clientHeight} = canvas.metrics.area;
+            return {width: clientWidth, height: clientHeight};
+        },
+        (a, b) => a.width === b.width && a.height === b.height
+    );
+    return size;
 }
 
 function CanvasOverlayHandler(props: {
