@@ -118,6 +118,7 @@ interface ClassTreeInnerProps extends ClassTreeProps {
 }
 
 interface State {
+    fetchedGraph: FetchedClassGraph | undefined;
     refreshingState: ProgressState;
     roots: ReadonlyArray<TreeNode>;
     filteredRoots: ReadonlyArray<TreeNode>;
@@ -129,7 +130,8 @@ interface State {
 
 interface FetchedClassGraph {
     readonly dataProvider: DataProvider;
-    readonly graph: ElementTypeGraph;
+    readonly classTree?: ReadonlyArray<ClassTreeItem> | undefined;
+    readonly fetchError?: unknown;
 }
 
 interface ClassTreeItem extends ElementTypeModel {
@@ -142,8 +144,6 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly searchListener = new EventObserver();
     private readonly delayedClassUpdate = new Debouncer();
-    private fetchedGraph: FetchedClassGraph | undefined;
-    private classTree: ReadonlyArray<ClassTreeItem> | undefined;
 
     private loadClassesOperation = new AbortController();
     private refreshOperation = new AbortController();
@@ -152,6 +152,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     constructor(props: ClassTreeInnerProps) {
         super(props);
         this.state = {
+            fetchedGraph: undefined,
             refreshingState: 'none',
             roots: [],
             filteredRoots: [],
@@ -167,8 +168,8 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
             workspace: {editor},
         } = this.props;
         const {
-            refreshingState, appliedSearchText, roots, filteredRoots, selectedNode, constructibleClasses,
-            showOnlyConstructible
+            fetchedGraph, refreshingState, appliedSearchText, roots, filteredRoots, selectedNode,
+            constructibleClasses, showOnlyConstructible
         } = this.state;
         // highlight search term only if actual tree is already filtered by current or previous term:
         //  - this immediately highlights typed characters thus making it look more responsive,
@@ -205,7 +206,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 <ProgressBar state={refreshingState}
                     title='Loading element type tree'
                 />
-                {this.classTree ? (
+                {fetchedGraph?.classTree ? (
                     <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
                         nodes={filteredRoots}
                         searchText={searchText}
@@ -227,7 +228,9 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                     />
                 ) : (
                     <div className={`${CLASS_NAME}__spinner`}>
-                        <HtmlSpinner width={30} height={30} />
+                        <HtmlSpinner width={30} height={30}
+                            errorOccurred={Boolean(fetchedGraph?.fetchError)}
+                        />
                     </div>
                 )}
             </div>
@@ -235,11 +238,12 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     }
 
     componentDidMount() {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, editor}} = this.props;
         this.listener.listen(model.events, 'changeLanguage', () => this.refreshClassTree());
         this.listener.listen(model.events, 'loadingStart', () => {
             this.initClassTree();
         });
+        this.listener.listen(editor.events, 'changeMode', () => this.refreshClassTree());
         
         this.listenSearch();
         this.initClassTree();
@@ -273,30 +277,43 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
     private async initClassTree() {
         const {workspace: {model}} = this.props;
-        if (this.fetchedGraph && this.fetchedGraph.dataProvider === model.dataProvider) {
+        const {fetchedGraph} = this.state;
+        const {dataProvider} = model;
+        if (fetchedGraph && fetchedGraph.dataProvider === dataProvider) {
             this.refreshClassTree();
-        } else if (model.dataProvider) {
-            const dataProvider = model.dataProvider;
-            this.classTree = undefined;
-
-            const cancellation = new AbortController();
-            this.loadClassesOperation.abort();
-            this.loadClassesOperation = cancellation;
-
-            const classGraph = await mapAbortedToNull(
-                dataProvider.knownElementTypes({signal: cancellation.signal}),
-                cancellation.signal
-            );
-            if (classGraph === null) {
-                return;
-            }
-
-            this.fetchedGraph = {dataProvider, graph: classGraph};
-            this.classTree = constructTree(classGraph);
-            this.refreshClassTree();
+        } else if (dataProvider) {
+            this.setState({fetchedGraph: undefined}, () => {
+                this.fetchTypeGraph(dataProvider);
+            });
         } else {
             this.refreshClassTree();
         }
+    }
+
+    private async fetchTypeGraph(dataProvider: DataProvider): Promise<void> {
+        const cancellation = new AbortController();
+        this.loadClassesOperation.abort();
+        this.loadClassesOperation = cancellation;
+
+        let classGraph: ElementTypeGraph | null = null;
+        try {
+            classGraph = await mapAbortedToNull(
+                dataProvider.knownElementTypes({signal: cancellation.signal}),
+                cancellation.signal
+            );
+        } catch (error) {
+            this.setState({fetchedGraph: {dataProvider, fetchError: error}});
+            return;
+        }
+
+        if (classGraph === null) {
+            return;
+        }
+
+        const classTree = constructTree(classGraph);
+        this.setState({fetchedGraph: {dataProvider, classTree}}, () => {
+            this.refreshClassTree();
+        });
     }
 
     private performSearch = (requestedTerm: string) => {
@@ -339,13 +356,14 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         this.setState((state, props) => {
             const {workspace: {model, editor}} = props;
-            if (!this.classTree) {
+            const classTree = state.fetchedGraph?.classTree;
+            if (!classTree) {
                 return {refreshingState: 'none'};
             }
 
             let refreshingState: ProgressState = 'none';
             if (editor.inAuthoringMode) {
-                const newIris = getNewClassIris(state.constructibleClasses, this.classTree);
+                const newIris = getNewClassIris(state.constructibleClasses, classTree);
 
                 if (newIris.size > 0) {
                     refreshingState = 'loading';
@@ -353,7 +371,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 }
             }
 
-            const roots = createRoots(this.classTree, model);
+            const roots = createRoots(classTree, model);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     };

@@ -2,12 +2,28 @@ import * as React from 'react';
 
 /**
  * Props for `Spinner` component.
+ *
+ * @see Spinner
  */
 export interface SpinnerProps {
+    /**
+     * Size (width and height) for the spinner circle.
+     */
     size?: number;
-    position?: { x: number; y: number };
-    maxWidth?: number;
+    /**
+     * Spinner circle center position on the SVG canvas.
+     */
+    position?: { readonly x: number; readonly y: number };
+    /**
+     * Status text to display next to the spinner.
+     */
     statusText?: string;
+    /**
+     * Whether to display spinner in the "error" state indicating
+     * that some operation failed.
+     *
+     * @default false
+     */
     errorOccurred?: boolean;
 }
 
@@ -44,12 +60,31 @@ export function Spinner(props: SpinnerProps) {
  * @category Components
  * @see Spinner
  */
-export function HtmlSpinner(props: { width: number; height: number }) {
-    const {width, height} = props;
+export function HtmlSpinner(props: {
+    /**
+     * SVG canvas width to render spinner on.
+     */
+    width: number;
+    /**
+     * SVG canvas height to render spinner on.
+     */
+    height: number;
+    /**
+     * Whether to display spinner in the "error" state indicating
+     * that some operation failed.
+     *
+     * @default false
+     */
+    errorOccurred?: boolean;
+}) {
+    const {width, height, errorOccurred} = props;
     const size = Math.min(width, height);
     return (
         <svg width={width} height={height}>
-            <Spinner size={size} position={{x: width / 2, y: height / 2}} />
+            <Spinner size={size}
+                position={{x: width / 2, y: height / 2}}
+                errorOccurred={errorOccurred}
+            />
         </svg>
     );
 }
