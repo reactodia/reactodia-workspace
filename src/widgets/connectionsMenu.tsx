@@ -167,7 +167,8 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
                 target: placeTarget,
                 dialogType: 'connectionsMenu',
                 style: {
-                    defaultSize: {width: 310, height: 320},
+                    caption: 'Connections',
+                    defaultSize: {width: 310, height: 340},
                     minSize: {width: 300, height: 250},
                 },
                 content: (
@@ -469,10 +470,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {loadingState, filterKey} = this.state;
         return (
             <div className={CLASS_NAME}>
-                <span id='reactodia-dialog-caption'
-                    className={`reactodia-label ${CLASS_NAME}__title-label`}>
-                    {this.getTitle()}
-                </span>
                 {this.getBreadCrumbs()}
                 <div className={`${CLASS_NAME}__search-line`}>
                     <input type='text'
@@ -498,16 +495,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         this.setState({filterKey});
     };
 
-    private getTitle() {
-        const {connections, objects, panel} = this.state;
-        if (objects && panel === 'objects') {
-            return 'Objects';
-        } else if (connections && panel === 'connections') {
-            return 'Connections';
-        }
-        return 'Error';
-    }
-
     private getBreadCrumbs() {
         const {workspace: {model}} = this.props;
         const {objects, panel} = this.state;
@@ -518,7 +505,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
-                    onClick={this.onCollapseLink}>Connections</a>
+                    onClick={this.onCollapseLink}>Link types</a>
                 {'\u00A0' + '/' + '\u00A0'}
                 {localizedText} {direction ? `(${direction})` : null}
             </span>;
@@ -924,6 +911,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         }
         return (
             <ul className={classnames(
+                'reactodia-scrollable',
                 `${CLASS_NAME}__links-list`,
                 views.length === 0 && probableViews.length === 0
                     ? `${CLASS_NAME}__links-list-empty` : undefined

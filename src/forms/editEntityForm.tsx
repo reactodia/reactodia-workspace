@@ -141,7 +141,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     render() {
         return (
             <div className={CLASS_NAME}>
-                <div className={`${CLASS_NAME}__body`}>
+                <div className={`reactodia-scrollable ${CLASS_NAME}__body`}>
                     <div className={`${CLASS_NAME}__form-row`}>
                         {this.renderIri()}
                     </div>

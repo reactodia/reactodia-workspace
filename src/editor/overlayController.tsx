@@ -339,7 +339,7 @@ export class OverlayController {
         /**
          * Dialog style, placement and sizing options.
          */
-        style?: DialogStyleProps;
+        style: DialogStyleProps;
         /**
          * Dialog content.
          */
@@ -435,6 +435,9 @@ export class OverlayController {
         this.showDialog({
             target,
             dialogType: 'editEntity',
+            style: {
+                caption: 'Edit entity',
+            },
             content,
             holdSelection: true,
             onClose: onCancel,
@@ -471,6 +474,7 @@ export class OverlayController {
             dialogType: 'findOrCreateEntity',
             style: {
                 caption: 'Establish New Connection',
+                minSize: {width: 250, height: 320},
             },
             content,
             onClose: onCancel,
@@ -516,7 +520,8 @@ export class OverlayController {
             target: link,
             dialogType: 'editLink',
             style: {
-                defaultSize: {width: 300, height: 160},
+                defaultSize: {width: 300, height: 180},
+                resizableBy: 'x',
                 caption,
             },
             content,
@@ -525,13 +530,14 @@ export class OverlayController {
     }
 
     showRenameLinkForm(link: Link): void {
-        const defaultSize: Size = {width: 300, height: 145};
+        const defaultSize: Size = {width: 300, height: 165};
         const onFinish = () => this.hideDialog();
         this.showDialog({
             target: link,
             dialogType: 'renameLink',
             style: {
                 defaultSize,
+                resizableBy: 'x',
                 caption: 'Rename Link',
                 offset: {x: 25, y: - defaultSize.height / 2},
                 calculatePosition: canvas => {

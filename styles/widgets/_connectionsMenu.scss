@@ -1,7 +1,7 @@
 @import "../mixin/icons";
 
 .reactodia-connections-menu {
-  height: 100%;
+  flex: auto;
   display: flex;
   flex-direction: column;
 
@@ -23,16 +23,6 @@
     &:hover {
       text-decoration: underline;
     }
-  }
-  
-  &__title-label {
-    position: absolute;
-    top: -11px;
-    left: 10px;
-    background: white;
-    padding-left: 3px;
-    padding-right: 3px;
-    border-radius: 6px;
   }
 
   &__search-line {
@@ -122,8 +112,8 @@
     border: 0;
     border-top: 1px solid #eee;
     height: 0;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 6px;
+    margin-bottom: 6px;
   }
 
   &__link {

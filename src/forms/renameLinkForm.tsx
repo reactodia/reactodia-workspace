@@ -42,7 +42,7 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
         <div className={CLASS_NAME}>
             <div className={`${CLASS_NAME}__body`}>
                 <div className={`${CLASS_NAME}__form-row`}>
-                    <label>Link Label</label>
+                    <label>Label</label>
                     <input className='reactodia-form-control'
                         placeholder={defaultLabel}
                         value={customLabel}

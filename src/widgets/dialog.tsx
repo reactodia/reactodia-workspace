@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { EventObserver, Unsubscribe } from '../coreUtils/events';
 
@@ -23,7 +24,7 @@ export interface DialogStyleProps {
     /**
      * Default size for the dialog.
      *
-     * @default {width: 300, height: 300}
+     * @default {width: 300, height: 320}
      */
     defaultSize?: Size;
     /**
@@ -39,9 +40,19 @@ export interface DialogStyleProps {
      */
     maxSize?: Size;
     /**
+     * Allowed directions to resize the dialog:
+     *  - `none` - disallow resize;
+     *  - `x` - allow only horizontal resize;
+     *  - `y` - allow only vertical resize;
+     *  - `all` - allow both horizontal and vertical resize.
+     *
+     * @default "all"
+     */
+    resizableBy?: 'none' | 'x' | 'y' | 'all';
+    /**
      * Dialog caption which is displayed in its header.
      */
-    caption?: string;
+    caption: string;
     offset?: Vector;
     calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
 }
@@ -53,7 +64,7 @@ interface State {
 
 const CLASS_NAME = 'reactodia-dialog';
 
-const DEFAULT_SIZE: Size = {width: 300, height: 300};
+const DEFAULT_SIZE: Size = {width: 300, height: 320};
 const MIN_SIZE: Size = {width: 250, height: 250};
 const MAX_SIZE: Size = {width: 800, height: 800};
 
@@ -317,11 +328,11 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     render() {
-        const {defaultSize = DEFAULT_SIZE, caption} = this.props;
+        const {defaultSize = DEFAULT_SIZE, caption, onClose, resizableBy = 'all'} = this.props;
         const {x, y} = this.calculatePosition();
         const width = this.state.width || defaultSize.width;
         const height = this.state.height || defaultSize.height;
-        const style = {
+        const style: React.CSSProperties = {
             top: y,
             left: x,
             width,
@@ -333,29 +344,43 @@ export class Dialog extends React.Component<DialogProps, State> {
                 role='dialog'
                 aria-labelledby={caption ? 'reactodia-dialog-caption' : undefined}
                 style={style}>
-                <button className={`${CLASS_NAME}__close-button`} onClick={() => this.props.onClose()} />
-                {caption ? (
+                <div className={`${CLASS_NAME}__header`}>
                     <div id='reactodia-dialog-caption'
-                        className='reactodia-dialog__caption'>
+                        className={`${CLASS_NAME}__caption`}
+                        title={caption}>
                         {caption}
                     </div>
-                ) : null}
+                    <button title='Close'
+                        className={classnames(
+                            'reactodia-btn',
+                            `${CLASS_NAME}__close-button`
+                        )}
+                        onClick={() => onClose()}
+                    />
+                </div>
                 {this.props.children}
-                <DraggableHandle
-                    className={`${CLASS_NAME}__bottom-handle`}
-                    onBeginDragHandle={this.onStartDragging}
-                    onDragHandle={this.onDragHandleBottom}>
-                </DraggableHandle>
-                <DraggableHandle
-                    className={`${CLASS_NAME}__right-handle`}
-                    onBeginDragHandle={this.onStartDragging}
-                    onDragHandle={this.onDragHandleRight}>
-                </DraggableHandle>
-                <DraggableHandle
-                    className={`${CLASS_NAME}__bottom-right-handle`}
-                    onBeginDragHandle={this.onStartDragging}
-                    onDragHandle={this.onDragHandleBottomRight}>
-                </DraggableHandle>
+                {resizableBy === 'y' || resizableBy === 'all' ? (
+                    <DraggableHandle
+                        className={`${CLASS_NAME}__bottom-handle`}
+                        onBeginDragHandle={this.onStartDragging}
+                        onDragHandle={this.onDragHandleBottom}>
+                    </DraggableHandle>
+                ) : null}
+                {resizableBy === 'x' || resizableBy === 'all' ? (
+                    <DraggableHandle
+                        className={`${CLASS_NAME}__right-handle`}
+                        onBeginDragHandle={this.onStartDragging}
+                        onDragHandle={this.onDragHandleRight}>
+                    </DraggableHandle>
+                ): null}
+                {resizableBy === 'none' ? null : (
+                    <DraggableHandle
+                        className={`${CLASS_NAME}__bottom-right-handle`}
+                        axis={resizableBy}
+                        onBeginDragHandle={this.onStartDragging}
+                        onDragHandle={this.onDragHandleBottomRight}>
+                    </DraggableHandle>
+                )}
             </div>
         );
     }
