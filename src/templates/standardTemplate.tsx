@@ -12,7 +12,6 @@ import { TemplateProps, FormattedProperty } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { AuthoredEntityContext, useAuthoredEntity } from '../editor/authoredEntity';
 import { AuthoringState } from '../editor/authoringState';
 import { DataGraphLocaleFormatter } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
@@ -20,6 +19,7 @@ import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observe
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { GroupPaginator } from '../widgets/groupPaginator';
+import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 

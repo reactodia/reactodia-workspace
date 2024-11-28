@@ -21,6 +21,7 @@ import {
     ToolbarActionClearAll, ToolbarActionExport, ToolbarActionUndo, ToolbarActionRedo,
     ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
 } from '../widgets/toolbarAction';
+import { VisualAuthoring } from '../widgets/visualAuthoring';
 import { ZoomControl } from '../widgets/zoomControl';
 
 import type { BaseDefaultWorkspaceProps } from './defaultWorkspace';
@@ -80,7 +81,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     const {
         leftColumn, rightColumn,
         canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator, zoomControl,
-        toolbar, classTree, instancesSearch, linkToolbox,
+        visualAuthoring, toolbar, classTree, instancesSearch, linkToolbox,
     } = props;
 
     const [connectionsMenuCommands] = React.useState(() =>
@@ -108,6 +109,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                 </WorkspaceLayoutColumn>
                 <WorkspaceLayoutItem id='canvas'>
                     <Canvas {...canvas}>
+                        <VisualAuthoring {...visualAuthoring} />
                         {connectionsMenu === null ? null : (
                             <ConnectionsMenu {...connectionsMenu}
                                 commands={connectionsMenuCommands}

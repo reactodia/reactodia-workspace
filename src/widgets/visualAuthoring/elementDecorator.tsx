@@ -1,16 +1,16 @@
 import * as React from 'react';
 
-import { EventObserver } from '../coreUtils/events';
+import { EventObserver } from '../../coreUtils/events';
 
-import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { Vector } from '../diagram/geometry';
-import { HtmlSpinner } from '../diagram/spinner';
+import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
+import { Vector } from '../../diagram/geometry';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { ElementChange } from '../../editor/authoringState';
+import { EntityElement } from '../../editor/dataElements';
+import { ElementValidation, LinkValidation } from '../../editor/validation';
 
-import { ElementChange } from './authoringState';
-import { EntityElement } from './dataElements';
-import { ElementValidation, LinkValidation } from './validation';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface ElementDecoratorProps {
     target: EntityElement;

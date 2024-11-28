@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
-import { useObservedProperty } from '../coreUtils/hooks';
+import { mapAbortedToNull } from '../../coreUtils/async';
+import { useObservedProperty } from '../../coreUtils/hooks';
 
-import { ElementModel } from '../data/model';
+import { ElementModel } from '../../data/model';
 
-import { Element } from '../diagram/elements';
+import { Element } from '../../diagram/elements';
 
-import { EntityElement } from '../editor/dataElements';
+import { EntityElement } from '../../editor/dataElements';
 
-import { useWorkspace } from '../workspace/workspaceContext';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 /**
  * Graph authoring status for an entity.
@@ -45,6 +45,13 @@ enum AllowedActions {
     All = Edit | Delete,
 }
 
+const NO_AUTHORING_CONTEXT: AuthoredEntityContext = {
+    canEdit: false,
+    canDelete: false,
+    onEdit: () => {/* nothing */},
+    onDelete: () => {/* nothing */},
+};
+
 /**
  * React hook to load entity authoring status for the graph authoring.
  *
@@ -54,19 +61,21 @@ export function useAuthoredEntity(
     data: ElementModel | undefined,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const {editor, overlay} = useWorkspace();
+    const {editor} = useWorkspace();
+
+    const entity = editor.inAuthoringMode ? data : undefined;
 
     const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
-
+   
     const authoringEvent = useObservedProperty(
         editor.events,
         'changeAuthoringState',
-        () => data ? editor.authoringState.elements.get(data.id) : undefined
+        () => entity ? editor.authoringState.elements.get(entity.id) : undefined
     );
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!data) {
+        if (!entity) {
             setAllowedActions(AllowedActions.None);
         } else if (shouldLoad) {
             if (!editor.metadataApi || (authoringEvent && authoringEvent.deleted)) {
@@ -74,8 +83,8 @@ export function useAuthoredEntity(
             } else {
                 mapAbortedToNull(
                     Promise.all([
-                        editor.metadataApi.canEditElement(data, cancellation.signal),
-                        editor.metadataApi.canDeleteElement(data, cancellation.signal),
+                        editor.metadataApi.canEditElement(entity, cancellation.signal),
+                        editor.metadataApi.canDeleteElement(entity, cancellation.signal),
                     ]),
                     cancellation.signal
                 ).then(result => {
@@ -89,7 +98,11 @@ export function useAuthoredEntity(
             }
         }
         return () => cancellation.abort();
-    }, [data, authoringEvent, shouldLoad]);
+    }, [entity, authoringEvent, shouldLoad]);
+
+    if (!entity) {
+        return NO_AUTHORING_CONTEXT;
+    }
 
     return {
         editedIri: authoringEvent ? authoringEvent.newIri : undefined,
@@ -99,13 +112,11 @@ export function useAuthoredEntity(
             ? undefined : Boolean(allowedActions & AllowedActions.Delete),
         onEdit: (target: Element) => {
             if (target instanceof EntityElement) {
-                overlay.showEditEntityForm(target);
+                editor.authoringCommands.trigger('editEntity', {target});
             }
         },
         onDelete: () => {
-            if (data) {
-                editor.deleteEntity(data.id);
-            }
+            editor.deleteEntity(entity.id);
         },
     };
 }

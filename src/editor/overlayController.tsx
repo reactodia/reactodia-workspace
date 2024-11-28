@@ -6,61 +6,19 @@ import {
     useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 
-import { ElementModel, LinkModel } from '../data/model';
-
 import { CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex } from '../diagram/elements';
 import { Size, Vector } from '../diagram/geometry';
-import { SharedCanvasState, ElementDecoratorResolver } from '../diagram/sharedCanvasState';
+import { DiagramModel } from '../diagram/model';
+import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
 import { Dialog, DialogStyleProps } from '../widgets/dialog';
 
-import { EditEntityForm } from '../forms/editEntityForm';
-import { EditLinkForm } from '../forms/editLinkForm';
-import { FindOrCreateEntityForm } from '../forms/findOrCreateEntityForm';
-import { RenameLinkForm } from '../forms/renameLinkForm';
-
-import { AuthoringState } from './authoringState';
-import { DataDiagramModel } from './dataDiagramModel';
-import { EntityElement, RelationLink } from './dataElements';
-import { EditorController } from './editorController';
-import { EditLayer, DragEditOperation } from './editLayer';
-import { ElementDecorator } from './elementDecorator';
-import { LinkStateWidget } from './linkStateWidget';
-
 /** @hidden */
 export interface OverlayControllerProps {
-    readonly model: DataDiagramModel;
+    readonly model: DiagramModel;
     readonly view: SharedCanvasState;
-    readonly editor: EditorController;
-
-    readonly propertyEditor: PropertyEditor | undefined;
-}
-
-/**
- * Provides custom editor for the entity data.
- */
-export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
-/**
- * Parameters for `PropertyEditor`.
- */
-export interface PropertyEditorOptions {
-    /**
-     * Target entity data to edit.
-     */
-    elementData: ElementModel;
-    /**
-     * Handler to submit changed entity data.
-     *
-     * Changed data may have a different entity IRI (`ElementModel.id`)
-     * in case when the entity identity needs to be changed.
-     */
-    onSubmit: (newData: ElementModel) => void;
-    /**
-     * Handler to abort changing the entity, discarding the operation.
-     */
-    onCancel?: () => void;
 }
 
 /**
@@ -75,14 +33,6 @@ export interface OverlayControllerEvents {
     changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
 }
 
-/** @hidden */
-export type KnownDialogType =
-    | 'connectionsMenu'
-    | 'editEntity'
-    | 'editLink'
-    | 'findOrCreateEntity'
-    | 'renameLink';
-
 /**
  * Describes a dialog opened as an overlay for the canvas.
  */
@@ -91,8 +41,10 @@ export interface OpenedDialog {
      * Dialog target (anchor).
      */
     readonly target: Element | Link;
-    /** @hidden */
-    readonly knownType: KnownDialogType | undefined;
+    /**
+     * Well-known dialog type to check if a specific dialog is currently open.
+     */
+    readonly knownType: OverlayDialogType | undefined;
     /**
      * Whether the diagram should not change selection
      * while the dialog is opened.
@@ -105,6 +57,13 @@ export interface OpenedDialog {
 }
 
 /**
+ * Nominal (branded) type for known overlay dialog type.
+ *
+ * @see OpenedDialog.knownType
+ */
+export type OverlayDialogType = string & { overlayDialogTypeBrand: void };
+
+/**
  * Controls UI overlays for the canvases, including dialogs and tasks.
  *
  * @category Core
@@ -114,12 +73,8 @@ export class OverlayController {
     private readonly source = new EventSource<OverlayControllerEvents>();
     readonly events: Events<OverlayControllerEvents> = this.source;
 
-    private readonly model: DataDiagramModel;
+    private readonly model: DiagramModel;
     private readonly view: SharedCanvasState;
-    private readonly editor: EditorController;
-
-    private readonly propertyEditor: PropertyEditor | undefined;
-    private readonly authoringStateDecorator: ElementDecoratorResolver;
 
     private _openedDialog: OpenedDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
@@ -127,19 +82,10 @@ export class OverlayController {
 
     /** @hidden */
     constructor(props: OverlayControllerProps) {
-        const {model, view, editor, propertyEditor} = props;
+        const {model, view} = props;
         this.model = model;
         this.view = view;
-        this.editor = editor;
 
-        this.propertyEditor = propertyEditor;
-
-        this.listener.listen(this.model.events, 'loadingSuccess', () => {
-            this.view.setCanvasWidget('states', {
-                element: <LinkStateWidget />,
-                attachment: 'overLinks',
-            });
-        });
         this.listener.listen(this.model.events, 'changeSelection', () => {
             const target = this.model.selection.length === 1 ? this.model.selection[0] : undefined;
             if (this.openedDialog && this.openedDialog.target !== target) {
@@ -151,20 +97,6 @@ export class OverlayController {
             element: <CanvasOverlayHandler onCanvasPointerUp={this.onAnyCanvasPointerUp} />,
             attachment: 'viewport',
         });
-        this.authoringStateDecorator = (element: Element) => {
-            if (element instanceof EntityElement) {
-                return (
-                    <ElementDecorator target={element}
-                        position={element.position}
-                    />
-                );
-            }
-            return undefined;
-        };
-        this.listener.listen(this.editor.events, 'changeMode', () => {
-            this.updateElementDecorator();
-        });
-        this.updateElementDecorator();
     }
 
     /**
@@ -206,12 +138,6 @@ export class OverlayController {
             }
         }
     };
-
-    private updateElementDecorator() {
-        this.view._setElementDecorator(
-            this.editor.inAuthoringMode ? this.authoringStateDecorator : undefined
-        );
-    }
 
     /**
      * Starts a new foreground task which blocks canvas interaction and
@@ -345,6 +271,10 @@ export class OverlayController {
          */
         content: React.ReactElement<any>;
         /**
+         * Well-known dialog type to check later if a specific dialog is currently open.
+         */
+        dialogType?: OverlayDialogType;
+        /**
          * Whether to prevent selection changes while dialog is open.
          *
          * @default false
@@ -355,8 +285,6 @@ export class OverlayController {
          * (e.g. when another dialog is opened).
          */
         onClose: () => void;
-        /** @hidden */
-        dialogType?: KnownDialogType;
     }): void {
         const {target, style, dialogType, content, holdSelection = false, onClose} = params;
         if (this._openedDialog && this._openedDialog.target !== target) {
@@ -395,168 +323,9 @@ export class OverlayController {
             const previous = this._openedDialog;
             this._openedDialog = undefined;
             previous.onClose();
-            this.editor.removeTemporaryCells([previous.target]);
             this.view.setCanvasWidget('dialog', null);
             this.source.trigger('changeOpenedDialog', {source: this, previous});
         }
-    }
-
-    startEditing(operation: DragEditOperation): void {
-        const onFinishEditing = () => {
-            this.view.setCanvasWidget('editLayer', null);
-        };
-        const editLayer = (
-            <EditLayer operation={operation}
-                onFinishEditing={onFinishEditing}
-            />
-        );
-        this.view.setCanvasWidget('editLayer', {element: editLayer, attachment: 'overElements'});
-    }
-
-    showEditEntityForm(target: EntityElement): void {
-        const {propertyEditor} = this;
-        const onSubmit = (newData: ElementModel) => {
-            this.hideDialog();
-            this.editor.changeEntity(target.data.id, newData);
-        };
-        let modelToEdit = target.data;
-        const event = this.editor.authoringState.elements.get(target.data.id);
-        if (event && event.newIri) {
-            modelToEdit = {...target.data, id: event.newIri};
-        }
-        const onCancel = () => this.hideDialog();
-        const content = propertyEditor ? propertyEditor({elementData: target.data, onSubmit, onCancel}) : (
-            <EditEntityForm
-                entity={modelToEdit}
-                onApply={onSubmit}
-                onCancel={onCancel}
-            />
-        );
-        this.showDialog({
-            target,
-            dialogType: 'editEntity',
-            style: {
-                caption: 'Edit entity',
-            },
-            content,
-            holdSelection: true,
-            onClose: onCancel,
-        });
-    }
-
-    showFindOrCreateEntityForm(params: {
-        link: RelationLink;
-        source: EntityElement;
-        target: EntityElement;
-        targetIsNew: boolean;
-    }): void {
-        const {link, source, target, targetIsNew} = params;
-        const onCancel = () => {
-            this.editor.removeAllTemporaryCells();
-            this.hideDialog();
-        };
-        const content = (
-            <FindOrCreateEntityForm source={source}
-                target={target}
-                initialTargetIsNew={targetIsNew}
-                originalLink={link}
-                onAfterApply={() => {
-                    this.hideDialog();
-                    if (AuthoringState.isNewElement(this.editor.authoringState, target.iri)) {
-                        this.showEditEntityForm(target);
-                    }
-                }}
-                onCancel={onCancel}
-            />
-        );
-        this.showDialog({
-            target,
-            dialogType: 'findOrCreateEntity',
-            style: {
-                caption: 'Establish New Connection',
-                minSize: {width: 250, height: 320},
-            },
-            content,
-            onClose: onCancel,
-        });
-    }
-
-    showEditLinkForm(link: RelationLink): void {
-        const source = (this.model.getElement(link.sourceId) as EntityElement).data;
-        const target = (this.model.getElement(link.targetId) as EntityElement).data;
-        const onCancel = () => {
-            this.editor.removeTemporaryCells([link]);
-            this.hideDialog();
-        };
-        const content = (
-            <EditLinkForm link={link.data}
-                source={source}
-                target={target}
-                onChange={(data: LinkModel) => {
-                    if (this.editor.temporaryState.links.has(link.data)) {
-                        this.editor.removeTemporaryCells([link]);
-                        const newLink = link.withDirection(data);
-                        this.showEditLinkForm(
-                            this.editor.createRelation(newLink, {temporary: true})
-                        );
-                    }
-                }}
-                onApply={(data: LinkModel) => {
-                    if (this.editor.temporaryState.links.has(link.data)) {
-                        this.editor.removeTemporaryCells([link]);
-                        const newLink = link.withDirection(data);
-                        this.editor.createRelation(newLink);
-                    } else {
-                        this.editor.changeRelation(link.data, data);
-                    }
-                    this.hideDialog();
-                }}
-                onCancel={onCancel}/>
-        );
-        const caption = this.editor.temporaryState.links.has(link.data)
-            ? 'Establish New Connection'
-            : 'Edit Connection';
-        this.showDialog({
-            target: link,
-            dialogType: 'editLink',
-            style: {
-                defaultSize: {width: 300, height: 180},
-                resizableBy: 'x',
-                caption,
-            },
-            content,
-            onClose: onCancel,
-        });
-    }
-
-    showRenameLinkForm(link: Link): void {
-        const defaultSize: Size = {width: 300, height: 165};
-        const onFinish = () => this.hideDialog();
-        this.showDialog({
-            target: link,
-            dialogType: 'renameLink',
-            style: {
-                defaultSize,
-                resizableBy: 'x',
-                caption: 'Rename Link',
-                offset: {x: 25, y: - defaultSize.height / 2},
-                calculatePosition: canvas => {
-                    const bounds = canvas.renderingState.getLinkLabelBounds(link);
-                    if (bounds) {
-                        const {x, y, width, height} = bounds;
-                        return {x: x + width, y: y + height / 2};
-                    } else {
-                        return undefined;
-                    }
-                },
-            },
-            content: (
-                <RenameLinkForm link={link}
-                    onFinish={onFinish}
-                />
-            ),
-            onClose: onFinish,
-        });
     }
 }
 

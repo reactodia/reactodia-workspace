@@ -23,6 +23,7 @@ import {
     SearchSectionEntities,
     SearchSectionLinkTypes,
 } from '../widgets/unifiedSearch';
+import { VisualAuthoring, VisualAuthoringProps } from '../widgets/visualAuthoring';
 import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
 
 import { WorkspaceRoot } from './workspaceRoot';
@@ -82,6 +83,12 @@ export interface BaseDefaultWorkspaceProps {
      * @see Navigator
      */
     navigator?: Partial<NavigatorProps> | null;
+    /**
+     * Props for the `VisualAuthoring` context component.
+     *
+     * @see VisualAuthoring
+     */
+    visualAuthoring?: Omit<VisualAuthoringProps, 'commands' | 'children'>;
     /**
      * Props for the `ZoomControl` canvas widget.
      *
@@ -182,8 +189,9 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator, zoomControl,
-        menu, search, actions, mainToolbar, actionsToolbar, languages = [],
+        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator,
+        visualAuthoring, zoomControl, menu, search, actions, mainToolbar, actionsToolbar,
+        languages = [],
     } = props;
 
     const [searchCommands] = React.useState(() =>
@@ -247,6 +255,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     return (
         <WorkspaceRoot>
             <Canvas {...canvas}>
+                <VisualAuthoring {...visualAuthoring} />
                 {connectionsMenu === null ? null : (
                     <ConnectionsMenu {...connectionsMenu}
                         commands={connectionsMenuCommands}
