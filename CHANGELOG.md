@@ -10,17 +10,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Add `UnifiedSearch` component to unify graph text lookup under a single entry point, with built-in adapters: `SearchSectionElementTypes` for `ClassTree`, `SearchSectionEntities` for `InstancesSearch`, `SearchSectionLinkTypes` for `LinksToolbox`;
   * **[Breaking]** Change `DefaultWorkspace` to use unified search, move non-menu toolbar items to the secondary toolbar and `ZoomControl` to the left side of the viewport;
   * Export previous workspace layout under `ClassicWorkspace` and `ClassicToolbar` components;
-- Display "no results" in various cases in `ClassTree`, `InstancesSearch` and `LinksToolbox` components;
+- Display "no results" in various cases in `ClassTree`, `InstancesSearch` and `LinksToolbox` components.
 - Add ability to dock viewport canvas widgets to any side/corner without style overrides:
-  * **[Breaking]** Add `dock` (required), `dockOffsetX`, `dockOffsetY` props to `Navigator`, `Toolbar` and `ZoomControl` widgets;
-- Allow to track canvas viewport bounds on the page with `CanvasMetrics.getViewportPageRect()` and `CanvasEvents.resize`;
+  * **[Breaking]** Add `dock` (required), `dockOffsetX`, `dockOffsetY` props to `Navigator`, `Toolbar` and `ZoomControl` widgets.
+- Allow to track canvas viewport bounds on the page with `CanvasMetrics.getViewportPageRect()` and `CanvasEvents.resize`.
+- Add `VisualAuthoring` canvas widget to configure and provide implementation for visual graph authoring:
+  * **[Breaking]** Require `VisualAuthoring` widget in be in the canvas for visual graph authoring;
+  * **[Breaking]** Move authoring-related methods from `OverlayController` to `EditorController.authoringCommands`.
+- Expose `dialogType` option in `OverlayController.showDialog()` and `BuiltinDialogType` for built-in dialog types.
 
 ### Changed
 - Auto-collapse `Navigator` when there is not enough space in the canvas viewport.
 - Change `LinkTypesToolbox` to only use links on the diagram instead of requesting connected links from a data provider.
 - Display inline entity badges with its type style in `InstancesSearch` and `LinksToolbox`.
+- Improve default look for the overlay dialogs with a dedicated header with caption and close button:
+  * Allow to disable dialog resize in one or both axes via `DialogStyleProps.resizableBy` prop.
 - Improve styles for `ToolbarLanguageSelector`: remove extra background and border.
 - Separate `frame` debounce mode in `Debouncer`, allow to change timeout after creation.
+
+### Fixed
+- Links caching in `IndexedDbCachedProvider.links()` not working due to native `crypto.subtle` being available only in secure contexts (e.g. HTTPS).
+- `OverlayController.startTask()` spinner not positioned at the center of the canvas horizontally.
+- `ClassTree` becoming stuck at loading instead of displaying a error when initialization fails.
 
 ## [0.26.1] - 2024-11-26
 ### Fixed
