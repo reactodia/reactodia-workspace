@@ -272,7 +272,6 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private onStartDragging = (e: React.MouseEvent<HTMLDivElement>) => {
-        this.preventSelection();
         const {defaultSize = DEFAULT_SIZE} = this.props;
         this.startSize = {
             x: this.state.width || defaultSize.width,
@@ -317,15 +316,6 @@ export class Dialog extends React.Component<DialogProps, State> {
         const height = this.calculateHeight(this.startSize!.y + dy);
         this.setState({width, height});
     };
-
-    private preventSelection() {
-        const onMouseUp = () => {
-            document.body.classList.remove('reactodia--unselectable');
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-        document.addEventListener('mouseup', onMouseUp);
-        document.body.classList.add('reactodia--unselectable');
-    }
 
     render() {
         const {defaultSize = DEFAULT_SIZE, caption, onClose, resizableBy = 'all'} = this.props;

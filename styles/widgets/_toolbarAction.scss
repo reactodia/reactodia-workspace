@@ -73,6 +73,7 @@ $toolbarHeight: 30px;
     }
 
     select {
+      height: $toolbarHeight;
       background: none;
       border: none;
       outline: none;
