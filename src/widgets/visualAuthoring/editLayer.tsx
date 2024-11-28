@@ -1,23 +1,23 @@
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
-import { EventObserver } from '../coreUtils/events';
+import { mapAbortedToNull } from '../../coreUtils/async';
+import { EventObserver } from '../../coreUtils/events';
 
-import { ElementIri, ElementModel, LinkModel } from '../data/model';
-import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { ElementIri, ElementModel, LinkModel } from '../../data/model';
+import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../../data/schema';
 
-import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { Element, VoidElement } from '../diagram/elements';
-import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../diagram/geometry';
-import { LinkLayer, LinkMarkers } from '../diagram/linkLayer';
-import { TransformedSvgCanvas } from '../diagram/paper';
-import type { MutableRenderingState } from '../diagram/renderingState';
-import { Spinner } from '../diagram/spinner';
+import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
+import { Element, VoidElement } from '../../diagram/elements';
+import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../../diagram/geometry';
+import { LinkLayer, LinkMarkers } from '../../diagram/linkLayer';
+import { TransformedSvgCanvas } from '../../diagram/paper';
+import type { MutableRenderingState } from '../../diagram/renderingState';
+import { Spinner } from '../../diagram/spinner';
 
-import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { TemporaryState } from '../../editor/authoringState';
+import { EntityElement, RelationLink } from '../../editor/dataElements';
 
-import { TemporaryState } from './authoringState';
-import { EntityElement, RelationLink } from './dataElements';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface EditLayerProps {
     operation: DragEditOperation;
@@ -323,7 +323,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
-        const {operation, canvas, workspace: {model, editor, overlay}} = this.props;
+        const {operation, canvas, workspace: {model, editor}} = this.props;
 
         try {
             const {targetElement, canLinkFrom, canDropOnCanvas, canDropOnElement} = this.state;
@@ -372,11 +372,11 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
                 if (targetElement) {
                     const focusedLink = modifiedLink || this.oldLink;
                     model.setSelection([focusedLink!]);
-                    overlay.showEditLinkForm(focusedLink!);
+                    editor.authoringCommands.trigger('editRelation', {target: focusedLink!});
                 } else if (createdTarget && modifiedLink) {
                     model.setSelection([createdTarget]);
                     const source = model.getElement(modifiedLink.sourceId) as EntityElement;
-                    overlay.showFindOrCreateEntityForm({
+                    editor.authoringCommands.trigger('findOrCreateEntity', {
                         link: modifiedLink,
                         source,
                         target: createdTarget,

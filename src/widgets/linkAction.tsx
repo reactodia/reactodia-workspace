@@ -2,7 +2,9 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
-import { useEventStore, useFrameDebouncedStore, useSyncStore } from '../coreUtils/hooks';
+import {
+    useEventStore, useObservedProperty, useFrameDebouncedStore, useSyncStore,
+} from '../coreUtils/hooks';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
@@ -171,12 +173,16 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor, overlay} = useWorkspace();
+    const {model, editor} = useWorkspace();
 
-    const canEdit = useCanEditLink(link, model, editor);
+    const inAuthoringMode = useObservedProperty(
+        editor.events, 'changeMode', () => editor.inAuthoringMode
+    );
+
+    const canEdit = useCanEditLink(inAuthoringMode ? link : undefined, model, editor);
     const linkIsDeleted = isDeletedLink(editor.authoringState, link);
 
-    if (!(editor.inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
+    if (!(inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
         return null;
     } else if (canEdit === undefined) {
         const {dockSide, dockIndex} = props;
@@ -197,13 +203,13 @@ export function LinkActionEdit(props: LinkActionEditProps) {
                 canEdit ? 'Edit link' : 'Editing is unavailable for the selected link'
             )}
             disabled={!canEdit}
-            onSelect={() => overlay.showEditLinkForm(link)}
+            onSelect={() => editor.authoringCommands.trigger('editRelation', {target: link})}
         />
     );
 }
 
 function useCanEditLink(
-    link: Link,
+    link: Link | undefined,
     graph: GraphStructure,
     editor: EditorController
 ): boolean | undefined {
@@ -332,7 +338,9 @@ function useCanDeleteLink(
 }
 
 /**
- * 
+ * Props for `LinkActionMoveEndpoint` component.
+ *
+ * @see LinkActionMoveEndpoint
  */
 export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 'dockIndex'> {}
 
@@ -352,9 +360,13 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {editor, overlay} = useWorkspace();
+    const {editor} = useWorkspace();
 
-    if (!(editor.inAuthoringMode && link instanceof RelationLink)) {
+    const inAuthoringMode = useObservedProperty(
+        editor.events, 'changeMode', () => editor.inAuthoringMode
+    );
+
+    if (!(inAuthoringMode && link instanceof RelationLink)) {
         return null;
     }
 
@@ -373,10 +385,12 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             disabled={!isDeletedLink(editor.authoringState, link)}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                overlay.startEditing({
-                    mode: dockSide === 'source' ? 'moveSource' : 'moveTarget',
-                    link,
-                    point,
+                editor.authoringCommands.trigger('startDragEdit', {
+                    operation: {
+                        mode: dockSide === 'source' ? 'moveSource' : 'moveTarget',
+                        link,
+                        point,
+                    }
                 });
             }}>
             <svg width={buttonSize} height={buttonSize}
@@ -413,7 +427,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkProvider}, overlay} = useWorkspace();
+    const {view: {renameLinkProvider}, editor} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -438,7 +452,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
         <button className={classnames(className, `${CLASS_NAME}__rename`)}
             style={style}
             title={title ?? 'Rename link'}
-            onClick={() => overlay.showRenameLinkForm(link)}
+            onClick={() => editor.authoringCommands.trigger('renameLink', {target: link})}
         />
     );
 }

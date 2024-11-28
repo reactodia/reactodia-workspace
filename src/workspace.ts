@@ -86,10 +86,10 @@ export {
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
-export { AuthoredEntityContext, useAuthoredEntity } from './editor/authoredEntity';
 export {
     AuthoringState, AuthoringEvent, AuthoringKind, ElementChange, LinkChange, TemporaryState,
 } from './editor/authoringState';
+export { BuiltinDialogType } from './editor/builtinDialogType';
 export * from './editor/dataDiagramModel';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
@@ -109,13 +109,11 @@ export {
     FetchOperationLinkType, FetchOperationPropertyType,
 } from './editor/dataFetcher';
 export { EditorEvents, EditorController } from './editor/editorController';
-export { DragEditOperation, DragEditConnect, DragEditMoveEndpoint } from './editor/editLayer';
 export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from './editor/observedElement';
 export {
     OverlayController, OverlayControllerEvents, OverlayTask,
-    PropertyEditor, PropertyEditorOptions,
 } from './editor/overlayController';
 export { ValidationState, ElementValidation, LinkValidation } from './editor/validation';
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
@@ -206,6 +204,12 @@ export {
     SearchSectionEntities,
     SearchSectionLinkTypes,
 } from './widgets/unifiedSearch';
+export {
+    VisualAuthoring, VisualAuthoringProps, VisualAuthoringCommands,
+    AuthoredEntityContext, useAuthoredEntity,
+    PropertyEditor, PropertyEditorOptions,
+    DragEditOperation, DragEditConnect, DragEditMoveEndpoint,
+} from './widgets/visualAuthoring';
 export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
 
 export {

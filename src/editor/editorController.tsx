@@ -1,4 +1,4 @@
-import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
+import { Events, EventSource, EventObserver, EventTrigger, PropertyChange } from '../coreUtils/events';
 
 import { MetadataApi } from '../data/metadataApi';
 import { ValidationApi } from '../data/validationApi';
@@ -7,6 +7,8 @@ import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
 import { Element, Link } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
+
+import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 
 import {
     AuthoringState, AuthoringKind, AuthoringEvent, TemporaryState,
@@ -21,6 +23,7 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 /** @hidden */
 export interface EditorProps {
     readonly model: DataDiagramModel;
+    readonly authoringCommands: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
     readonly metadataApi?: MetadataApi;
     readonly validationApi?: ValidationApi;
 }
@@ -64,6 +67,8 @@ export class EditorController {
     readonly events: Events<EditorEvents> = this.source;
 
     private readonly model: DataDiagramModel;
+    private readonly _authoringCommands:
+        Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
 
     private _metadataApi: MetadataApi | undefined;
     private _validationApi: ValidationApi | undefined;
@@ -75,8 +80,9 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, metadataApi, validationApi} = props;
+        const {model, authoringCommands, metadataApi, validationApi} = props;
         this.model = model;
+        this._authoringCommands = authoringCommands;
         this._metadataApi = metadataApi;
         this._validationApi = validationApi;
 
@@ -106,6 +112,13 @@ export class EditorController {
     dispose(): void {
         this.listener.stopListening();
         this.cancellation.abort();
+    }
+
+    /**
+     * Event bus to connect `VisualAuthoring` to other components.
+     */
+    get authoringCommands(): Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands> {
+        return this._authoringCommands;
     }
 
     /**

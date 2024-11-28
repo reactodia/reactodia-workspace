@@ -2,7 +2,7 @@ import * as React from 'react';
 import { hcl } from 'd3-color';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
-import { EventObserver } from '../coreUtils/events';
+import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
 
 import { ElementTypeIri } from '../data/model';
@@ -27,10 +27,12 @@ import { EditorController } from '../editor/editorController';
 import {
     groupEntitiesAnimated, ungroupAllEntitiesAnimated, ungroupSomeEntitiesAnimated,
 } from '../editor/elementGrouping';
-import { OverlayController, PropertyEditor } from '../editor/overlayController';
+import { OverlayController } from '../editor/overlayController';
 
 import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
+
+import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 
 import {
     WorkspaceContext, WorkspaceEventKey, ProcessedTypeStyle,
@@ -68,13 +70,15 @@ export interface WorkspaceProps {
      */
     validationApi?: ValidationApi;
     /**
-     * Overrides default property editor for elements and links in the graph authoring mode.
-     */
-    propertyEditor?: PropertyEditor;
-    /**
      * Provides a strategy to rename diagram links (change labels).
      */
     renameLinkProvider?: RenameLinkProvider;
+    /**
+     * Event bus to connect `VisualAuthoring` to other components.
+     *
+     * If not specified, an internal instance will be automatically created.
+     */
+    authoringCommands?: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
     /**
      * Overrides how a single label gets selected from multiple of them based on target language.
      */
@@ -135,8 +139,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
             history = new InMemoryHistory(),
             metadataApi,
             validationApi,
-            propertyEditor,
             renameLinkProvider,
+            authoringCommands = new EventSource(),
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
@@ -160,6 +164,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const editor = new EditorController({
             model,
+            authoringCommands,
             metadataApi,
             validationApi,
         });
@@ -167,8 +172,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const overlay = new OverlayController({
             model,
             view,
-            editor,
-            propertyEditor,
         });
 
         this.layoutTypeProvider = {

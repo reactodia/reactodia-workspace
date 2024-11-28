@@ -1,25 +1,25 @@
 import * as React from 'react';
 
-import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
+import { EventObserver } from '../../coreUtils/events';
+import { Debouncer } from '../../coreUtils/scheduler';
 
-import { LinkKey } from '../data/model';
+import { LinkKey } from '../../data/model';
 
-import { CanvasApi, useCanvas } from '../diagram/canvasApi';
+import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import {
     Vector, boundsOf, computePolyline, getPointAlongPolyline, computePolylineLength,
     pathFromPolyline,
-} from '../diagram/geometry';
-import { TransformedSvgCanvas } from '../diagram/paper';
-import { RenderingLayer } from '../diagram/renderingState';
-import { Link } from '../diagram/elements';
-import { HtmlSpinner } from '../diagram/spinner';
+} from '../../diagram/geometry';
+import { TransformedSvgCanvas } from '../../diagram/paper';
+import { RenderingLayer } from '../../diagram/renderingState';
+import { Link } from '../../diagram/elements';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { AuthoringKind, AuthoringState } from '../../editor/authoringState';
+import { RelationLink } from '../../editor/dataElements';
+import { LinkValidation, ElementValidation } from '../../editor/validation';
 
-import { AuthoringKind, AuthoringState } from './authoringState';
-import { RelationLink } from './dataElements';
-import { LinkValidation, ElementValidation } from './validation';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface LinkStateWidgetProps {
     /**

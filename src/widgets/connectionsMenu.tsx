@@ -13,6 +13,7 @@ import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
 
+import { BuiltinDialogType } from '../editor/builtinDialogType';
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
@@ -165,7 +166,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
 
             overlay.showDialog({
                 target: placeTarget,
-                dialogType: 'connectionsMenu',
+                dialogType: BuiltinDialogType.connectionsMenu,
                 style: {
                     caption: 'Connections',
                     defaultSize: {width: 310, height: 340},

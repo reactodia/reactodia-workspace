@@ -21,7 +21,7 @@ function hasType(model: ElementModel, type: ElementTypeIri) {
     return Boolean(model.types.find(t => t === type));
 }
 
-const SIMULATED_DELAY: number = 500; /* ms */
+const SIMULATED_DELAY: number = 200; /* ms */
 
 export class ExampleMetadataApi implements MetadataApi {
     async canDropOnCanvas(

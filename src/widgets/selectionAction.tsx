@@ -3,7 +3,9 @@ import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
-import { SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore } from '../coreUtils/hooks';
+import {
+    SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
+} from '../coreUtils/hooks';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -13,7 +15,7 @@ import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
-import type { DataDiagramModel } from '../editor/dataDiagramModel';
+import { BuiltinDialogType } from '../editor/builtinDialogType';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
@@ -421,6 +423,13 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
     const {model, overlay} = useWorkspace();
+
+    const menuOpened = useObservedProperty(
+        overlay.events,
+        'changeOpenedDialog',
+        () => overlay.openedDialog?.knownType === BuiltinDialogType.connectionsMenu
+    );
+
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
 
     let entityCount = 0;
@@ -433,11 +442,6 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     if (!(commands && entityCount > 0)) {
         return null;
     }
-    const {openedDialog} = overlay;
-    const menuOpened = Boolean(
-        openedDialog &&
-        openedDialog.knownType === 'connectionsMenu'
-    );
     return (
         <SelectionAction {...otherProps}
             className={classnames(
@@ -571,7 +575,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
  */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor, overlay} = useWorkspace();
+    const {model, editor} = useWorkspace();
     const {canvas} = useCanvas();
 
     const inAuthoringMode = useObservedProperty(
@@ -580,7 +584,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const target = elements.length === 1 ? elements[0] : undefined;
-    const canLink = useCanEstablishLink(model, editor, target);
+    const canLink = useCanEstablishLink(editor, inAuthoringMode ? target : undefined);
 
     if (!(target instanceof EntityElement && inAuthoringMode)) {
         return null;
@@ -607,13 +611,15 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                overlay.startEditing({mode: 'connect', source: target, point});
+                editor.authoringCommands.trigger('startDragEdit', {
+                    operation: {mode: 'connect', source: target, point},
+                });
             }}
         />
     );
 }
 
-function useCanEstablishLink(model: DataDiagramModel, editor: EditorController, target: Element | undefined) {
+function useCanEstablishLink(editor: EditorController, target: Element | undefined) {
     const [canLink, setCanLink] = React.useState<boolean | undefined>();
 
     const entityTarget = target instanceof EntityElement ? target : undefined;

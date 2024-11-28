@@ -139,6 +139,7 @@ interface ClassTreeItem extends ElementTypeModel {
 }
 
 const CLASS_NAME = 'reactodia-class-tree';
+const EMPTY_CREATABLE_TYPES: ReadonlyMap<ElementTypeIri, boolean> = new Map();
 
 class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     private readonly listener = new EventObserver();
@@ -212,7 +213,9 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                         searchText={searchText}
                         selectedNode={selectedNode}
                         onSelect={this.onSelectNode}
-                        creatableClasses={constructibleClasses}
+                        creatableClasses={
+                            editor.inAuthoringMode ? constructibleClasses : EMPTY_CREATABLE_TYPES
+                        }
                         onClickCreate={this.onCreateInstance}
                         onDragCreate={this.onDragCreate}
                         footer={
@@ -402,7 +405,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     }
 
     private async createInstanceAt(classId: ElementTypeIri, dropEvent?: CanvasDropEvent) {
-        const {workspace: {model, view, editor, overlay}} = this.props;
+        const {workspace: {model, view, editor}} = this.props;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
@@ -435,7 +438,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         batch.store();
         model.setSelection([element]);
-        overlay.showEditEntityForm(element);
+        editor.authoringCommands.trigger('editEntity', {target: element});
     }
 }
 
