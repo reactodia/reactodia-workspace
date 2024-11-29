@@ -1,4 +1,4 @@
-import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel, LinkDirection } from './model';
+import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel } from './model';
 
 /**
  * Provides a strategy to visual graph authoring: which parts of the graph
@@ -8,51 +8,66 @@ import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel, 
  *
  * @category Core
  */
-export interface MetadataApi {
-    /**
-     * Can user create element and link from this element?
-     */
-    canDropOnCanvas(source: ElementModel, signal?: AbortSignal): Promise<boolean>;
+export interface MetadataProvider {
+    createEntity(
+        type: ElementTypeIri,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<ElementModel>;
 
-    /**
-     * Can we create link between two elements?
-     */
-    canDropOnElement(source: ElementModel, target: ElementModel, signal?: AbortSignal): Promise<boolean>;
+    createRelation(
+        source: ElementModel,
+        target: ElementModel,
+        linkType: LinkTypeIri,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<LinkModel>;
 
-    /**
-     * Links of which types can we create between elements?
-     */
-    possibleLinkTypes(source: ElementModel, target: ElementModel, signal?: AbortSignal): Promise<DirectedLinkType[]>;
+    canConnect(
+        source: ElementModel,
+        target: ElementModel | undefined,
+        linkType: LinkTypeIri | undefined,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<MetadataCanConnect[]>;
 
-    /**
-     * If new element is created by dragging link from existing element, this should return available element types.
-     */
-    typesOfElementsDraggedFrom(source: ElementModel, signal?: AbortSignal): Promise<ElementTypeIri[]>;
+    canModifyEntity(
+        entity: ElementModel,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<MetadataCanModifyEntity>;
 
-    /**
-     * List properties for type meant to be edited in-place.
-     */
-    propertiesForType(type: ElementTypeIri, signal?: AbortSignal): Promise<PropertyTypeIri[]>;
+    canModifyRelation(
+        link: LinkModel,
+        source: ElementModel,
+        target: ElementModel,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<MetadataCanModifyEntity>;
+
+    getEntityTypeShape(
+        type: ElementTypeIri,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<MetadataEntityTypeShape>;
 
     filterConstructibleTypes(
         types: ReadonlySet<ElementTypeIri>,
-        signal?: AbortSignal
+        options: { readonly signal?: AbortSignal }
     ): Promise<ReadonlySet<ElementTypeIri>>;
-
-    canDeleteElement(element: ElementModel, signal?: AbortSignal): Promise<boolean>;
-
-    canEditElement(element: ElementModel, signal?: AbortSignal): Promise<boolean>;
-
-    canLinkElement(element: ElementModel, signal?: AbortSignal): Promise<boolean>;
-
-    canDeleteLink(link: LinkModel, source: ElementModel, target: ElementModel, signal?: AbortSignal): Promise<boolean>;
-
-    canEditLink(link: LinkModel, source: ElementModel, target: ElementModel, signal?: AbortSignal): Promise<boolean>;
-
-    generateNewElement(types: ReadonlyArray<ElementTypeIri>, signal?: AbortSignal): Promise<ElementModel>;
 }
 
-export interface DirectedLinkType {
-    readonly linkTypeIri: LinkTypeIri;
-    readonly direction: LinkDirection;
+export interface MetadataCanConnect {
+    readonly targetTypes: ReadonlySet<ElementTypeIri>;
+    readonly inLinks: ReadonlyArray<LinkTypeIri>;
+    readonly outLinks: ReadonlyArray<LinkTypeIri>;
+}
+
+export interface MetadataCanModifyEntity {
+    readonly canChangeIri?: boolean;
+    readonly canEdit?: boolean;
+    readonly canDelete?: boolean;
+}
+
+export interface MetadataCanModifyRelation {
+    readonly canChangeType?: boolean;
+    readonly canDelete?: boolean;
+}
+
+export interface MetadataEntityTypeShape {
+    readonly properties: PropertyTypeIri[];
 }

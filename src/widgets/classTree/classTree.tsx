@@ -381,16 +381,18 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
     private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
         const {workspace: {editor}} = this.props;
-        const {metadataApi} = editor;
-        if (!metadataApi) {
+        const {metadataProvider} = editor;
+        if (!metadataProvider) {
             return;
         }
         try {
             const result = await mapAbortedToNull(
-                metadataApi.filterConstructibleTypes(typeIris, signal),
+                metadataProvider.filterConstructibleTypes(typeIris, {signal}),
                 signal
             );
-            if (result === null) { return; }
+            if (result === null) {
+                return;
+            }
             this.setState((state): State => {
                 const constructibleClasses = new Map(state.constructibleClasses);
                 typeIris.forEach(type => {
@@ -404,13 +406,13 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         }
     }
 
-    private async createInstanceAt(classId: ElementTypeIri, dropEvent?: CanvasDropEvent) {
+    private async createInstanceAt(elementType: ElementTypeIri, dropEvent?: CanvasDropEvent) {
         const {workspace: {model, view, editor}} = this.props;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
         const elementModel = await mapAbortedToNull(
-            editor.metadataApi!.generateNewElement([classId], signal),
+            editor.metadataProvider!.createEntity(elementType, {signal}),
             signal
         );
         if (elementModel === null) {

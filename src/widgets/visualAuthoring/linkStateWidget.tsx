@@ -1,9 +1,11 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { EventObserver } from '../../coreUtils/events';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { LinkKey } from '../../data/model';
+import type { ValidationSeverity } from '../../data/validationProvider';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import {
@@ -15,9 +17,9 @@ import { RenderingLayer } from '../../diagram/renderingState';
 import { Link } from '../../diagram/elements';
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import { AuthoringKind, AuthoringState } from '../../editor/authoringState';
+import { AuthoringState } from '../../editor/authoringState';
 import { RelationLink } from '../../editor/dataElements';
-import { LinkValidation, ElementValidation } from '../../editor/validation';
+import { LinkValidation, ElementValidation, getMaxSeverity } from '../../editor/validation';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -130,35 +132,39 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
             let renderedState: JSX.Element | null = null;
             const state = editor.authoringState.links.get(link.data);
             if (state) {
-                const onCancel = () => editor.discardChange(state);
-
                 let statusText: string;
                 let title: string;
 
-                if (state.deleted) {
-                    statusText = 'Delete';
-                    title = 'Revert deletion of the link';
-                } else if (!state.before) {
-                    statusText = 'New';
-                    title = 'Revert creation of the link';
-                } else {
-                    statusText = 'Change';
-                    title = 'Revert all changes in properties of the link';
+                switch (state.type) {
+                    case 'relationAdd': {
+                        statusText = 'New';
+                        title = 'Revert creation of the link';
+                        break;
+                    }
+                    case 'relationChange': {
+                        statusText = 'Change';
+                        title = 'Revert all changes in properties of the link';
+                        break;
+                    }
+                    case 'relationDelete': {
+                        statusText = 'Delete';
+                        title = 'Revert deletion of the link';
+                        break;
+                    }
                 }
 
-                if (statusText && title) {
-                    renderedState = (
-                        <span>
-                            <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
-                            [<span className={`${CLASS_NAME}__state-cancel`}
-                                onClick={onCancel} title={title}>cancel</span>]
-                        </span>
-                    );
-                }
+                renderedState = (
+                    <span>
+                        <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
+                        [<span className={`${CLASS_NAME}__state-cancel`}
+                            onClick={() => editor.discardChange(state)}
+                            title={title}>cancel</span>]
+                    </span>
+                );
             }
 
-            const renderedErrors = this.renderLinkErrors(link.data);
-            if (renderedState || renderedErrors) {
+            const renderedValidations = this.renderLinkValidations(link.data);
+            if (renderedState || renderedValidations) {
                 const labelPosition = this.getLinkStateLabelPosition(link);
                 if (labelPosition) {
                     const style = {left: labelPosition.x, top: labelPosition.y};
@@ -169,7 +175,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                             <div className={`${CLASS_NAME}__state-indicator-container`}>
                                 <div className={`${CLASS_NAME}__state-indicator-body`}>
                                     {renderedState}
-                                    {renderedErrors}
+                                    {renderedValidations}
                                 </div>
                             </div>
                         </div>
@@ -199,8 +205,11 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                 );
             } else {
                 const event = editor.authoringState.links.get(link.data);
-                const isDeletedLink = AuthoringState.isDeletedLink(editor.authoringState, link.data);
-                const isUncertainLink = AuthoringState.isUncertainLink(editor.authoringState, link.data);
+                const isDeletedLink = AuthoringState.isDeletedRelation(editor.authoringState, link.data);
+                const isUncertainLink = (
+                    AuthoringState.hasEntityChangedIri(editor.authoringState, link.data.sourceId) ||
+                    AuthoringState.hasEntityChangedIri(editor.authoringState, link.data.targetId)
+                );
                 if (event || isDeletedLink || isUncertainLink) {
                     const path = this.calculateLinkPath(link);
                     let color: string | undefined;
@@ -208,8 +217,8 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                         color = 'red';
                     } else if (isUncertainLink) {
                         color = 'blue';
-                    } else if (event && event.type === AuthoringKind.ChangeLink) {
-                        color = event.before ? 'blue' : 'green';
+                    } else if (event) {
+                        color = event.type === 'relationChange' ? 'blue' : 'green';
                     }
                     rendered.push(
                         <path key={link.id}
@@ -239,7 +248,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
         }
     }
 
-    private renderLinkErrors(key: LinkKey) {
+    private renderLinkValidations(key: LinkKey) {
         const {workspace: {editor}} = this.props;
         const {validationState} = editor;
 
@@ -247,19 +256,23 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
         if (!validation) {
             return null;
         }
-        const title = validation.errors.map(error => error.message).join('\n');
+        const title = validation.items.map(item => item.message).join('\n');
 
-        return this.renderErrorIcon(title, validation);
+        return this.renderValidationIcon(title, validation);
     }
 
-    private renderErrorIcon(title: string, validation: LinkValidation | ElementValidation): JSX.Element {
-        return <div className={`${CLASS_NAME}__item-error`} title={title}>
-            {validation.loading
-                ? <HtmlSpinner width={15} height={17} />
-                : <div className={`${CLASS_NAME}__item-error-icon`} />}
-            {(!validation.loading && validation.errors.length > 0)
-                ? validation.errors.length : undefined}
-        </div>;
+    private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation): JSX.Element {
+        const severity = getMaxSeverity(validation.items);
+        return (
+            <div className={classnames(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
+                title={title}>
+                {validation.loading
+                    ? <HtmlSpinner width={15} height={17} />
+                    : <div className={`${CLASS_NAME}__item-validation-icon`} />}
+                {(!validation.loading && validation.items.length > 0)
+                    ? validation.items.length : undefined}
+            </div>
+        );
     }
 
     render() {
@@ -282,5 +295,18 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                 {this.renderLinkStateLabels()}
             </div>
         </div>;
+    }
+}
+
+function getSeverityClass(severity: ValidationSeverity): string | undefined {
+    switch (severity) {
+        case 'info':
+            return `${CLASS_NAME}--severity-info`;
+        case 'warning':
+            return `${CLASS_NAME}--severity-warning`;
+        case 'error':
+            return `${CLASS_NAME}--severity-error`;
+        default:
+            return undefined;
     }
 }

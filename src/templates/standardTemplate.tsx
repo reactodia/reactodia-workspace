@@ -388,11 +388,16 @@ function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState)
     if (!event) {
         return undefined;
     }
-    return (
-        event.deleted ? `${CLASS_NAME}--deleted` :
-        event.before ? `${CLASS_NAME}--changed` :
-        `${CLASS_NAME}--new`
-    );
+    switch (event.type) {
+        case 'entityAdd':
+            return `${CLASS_NAME}--new`;
+        case 'entityChange':
+            return `${CLASS_NAME}--changed`;
+        case 'entityDelete':
+            return `${CLASS_NAME}--deleted`;
+        default:
+            return undefined;
+    }
 }
 
 function PropertyList(props: {

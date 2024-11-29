@@ -1,191 +1,200 @@
-import {
-    ElementModel, LinkModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkDirection,
-    MetadataApi, ValidationApi, ValidationEvent, ElementError, LinkError, DirectedLinkType, Rdf,
-} from '../../src/workspace';
+import * as Reactodia from '../../src/workspace';
 
-const OWL_PREFIX = 'http://www.w3.org/2002/07/owl#';
-const RDFS_PREFIX = 'http://www.w3.org/2000/01/rdf-schema#';
+const owl = vocabulary('http://www.w3.org/2002/07/owl#', [
+    'Class',
+    'AnnotationProperty',
+    'DatatypeProperty',
+    'ObjectProperty',
+    'domain',
+    'range',
+]);
 
-const owl = {
-    class: OWL_PREFIX + 'Class' as ElementTypeIri,
-    objectProperty: OWL_PREFIX + 'ObjectProperty' as ElementTypeIri,
-    domain: OWL_PREFIX + 'domain' as LinkTypeIri,
-    range: OWL_PREFIX + 'range' as LinkTypeIri,
-};
-const rdfs = {
-    subClassOf: RDFS_PREFIX + 'subClassOf' as LinkTypeIri,
-    subPropertyOf: RDFS_PREFIX + 'subPropertyOf' as LinkTypeIri,
-};
-
-function hasType(model: ElementModel, type: ElementTypeIri) {
-    return Boolean(model.types.find(t => t === type));
-}
+const rdfs = vocabulary('http://www.w3.org/2000/01/rdf-schema#', [
+    'subClassOf',
+    'subPropertyOf',
+]);
 
 const SIMULATED_DELAY: number = 200; /* ms */
 
-export class ExampleMetadataApi implements MetadataApi {
-    async canDropOnCanvas(
-        source: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        const elementTypes = await this.typesOfElementsDraggedFrom(source, ct);
-        ct?.throwIfAborted();
-        return elementTypes.length > 0;
-    }
+export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
+    private readonly propertyTypes = [owl.AnnotationProperty, owl.DatatypeProperty, owl.ObjectProperty];
+    private readonly editableTypes = new Set([owl.Class, ...this.propertyTypes]);
 
-    async canDropOnElement(
-        source: ElementModel,
-        target: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        const linkTypes = await this.possibleLinkTypes(source, target, ct);
-        ct?.throwIfAborted();
-        return linkTypes.length > 0;
-    }
-
-    async possibleLinkTypes(
-        source: ElementModel,
-        target: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<DirectedLinkType[]> {
-        function mapLinkTypes(
-            types: LinkTypeIri[],
-            direction: LinkDirection = 'out'
-        ): DirectedLinkType[] {
-            return types.map(linkTypeIri => ({linkTypeIri, direction}));
-        }
-
-        await delay(SIMULATED_DELAY, ct);
-        if (hasType(source, owl.class) && hasType(target, owl.class)) {
-            return mapLinkTypes([rdfs.subClassOf]).concat(mapLinkTypes([rdfs.subClassOf], 'in'));
-        } else if (hasType(source, owl.objectProperty) && hasType(target, owl.class)) {
-            return mapLinkTypes([owl.domain, owl.range]);
-        } else if (hasType(target, owl.objectProperty) && hasType(source, owl.class)) {
-            return mapLinkTypes([owl.domain, owl.range], 'in');
-        } else if (hasType(source, owl.objectProperty) && hasType(target, owl.objectProperty)) {
-            return mapLinkTypes([rdfs.subPropertyOf]).concat(mapLinkTypes([rdfs.subPropertyOf], 'in'));
-        } else {
-            return [];
-        }
-    }
-
-    async typesOfElementsDraggedFrom(
-        source: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<ElementTypeIri[]> {
-        await delay(SIMULATED_DELAY, ct);
-        return (
-            hasType(source, owl.class) ? [owl.class] :
-            hasType(source, owl.objectProperty) ? [owl.class, owl.objectProperty] :
-            []
-        );
-    }
-
-    async propertiesForType(
-        type: ElementTypeIri,
-        ct: AbortSignal | undefined
-    ): Promise<PropertyTypeIri[]> {
-        await delay(SIMULATED_DELAY, ct);
-        return [];
-    }
-
-    async canDeleteElement(
-        element: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        return true;
-    }
-
-    async filterConstructibleTypes(
-        types: ReadonlySet<ElementTypeIri>,
-        ct: AbortSignal | undefined
-    ): Promise<ReadonlySet<ElementTypeIri>> {
-        await delay(SIMULATED_DELAY, ct);
-        const result = new Set<ElementTypeIri>();
-        types.forEach(type => {
-            if (type.length % 2 === 0) {
-                result.add(type);
-            }
-        });
-        return result;
-    }
-
-    async canEditElement(
-        element: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        return true;
-    }
-
-    async canLinkElement(
-        element: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        return true;
-    }
-
-    async canDeleteLink(
-        link: LinkModel,
-        source: ElementModel,
-        target: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        return true;
-    }
-
-    async canEditLink(
-        link: LinkModel,
-        source: ElementModel,
-        target: ElementModel,
-        ct: AbortSignal | undefined
-    ): Promise<boolean> {
-        await delay(SIMULATED_DELAY, ct);
-        return true;
-    }
-
-    async generateNewElement(
-        types: ReadonlyArray<ElementTypeIri>,
-        ct: AbortSignal | undefined
-    ): Promise<ElementModel> {
-        await delay(SIMULATED_DELAY, ct);
+    async createEntity(
+        type: Reactodia.ElementTypeIri,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<Reactodia.ElementModel> {
+        await delay(SIMULATED_DELAY, options.signal);
         const random32BitDigits = Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
+        const typeLabel = Reactodia.Rdf.getLocalName(type) ?? 'Entity';
         return {
-            id: `${types[0]}_${random32BitDigits}` as ElementIri,
-            types: [...types],
-            label: [Rdf.DefaultDataFactory.literal('New Entity')],
+            id: `${type}_${random32BitDigits}` as Reactodia.ElementIri,
+            types: [type],
+            label: [Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)],
             properties: {},
         };
     }
+
+    async createRelation(
+        source: Reactodia.ElementModel,
+        target: Reactodia.ElementModel,
+        linkType: Reactodia.LinkTypeIri,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<Reactodia.LinkModel> {
+        await delay(SIMULATED_DELAY, options.signal);
+        return {
+            sourceId: source.id,
+            targetId: target.id,
+            linkTypeId: linkType,
+            properties: {},
+        };
+    }
+
+    async canConnect(
+        source: Reactodia.ElementModel,
+        target: Reactodia.ElementModel | undefined,
+        linkType: Reactodia.LinkTypeIri | undefined,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<Reactodia.MetadataCanConnect[]> {
+        await delay(SIMULATED_DELAY, options.signal);
+
+        const connections: Reactodia.MetadataCanConnect[] = [];
+        const addConnections = (
+            types: readonly Reactodia.ElementTypeIri[],
+            allOutLinks: readonly Reactodia.LinkTypeIri[],
+            allInLinks: readonly Reactodia.LinkTypeIri[]
+        ) => {
+            const outLinks = linkType
+                ? allOutLinks.filter(type => type === linkType)
+                : allOutLinks;
+            const inLinks = linkType
+                ? allInLinks.filter(type => type === linkType)
+                : allInLinks;
+            if (types.length > 0 && (outLinks.length > 0 || inLinks.length > 0)) {
+                connections.push({targetTypes: new Set(types), outLinks, inLinks});
+            }
+        };
+
+        if (hasType(source, owl.Class)) {
+            if (hasType(target, owl.Class)) {
+                addConnections([owl.Class], [rdfs.subClassOf], [rdfs.subClassOf]);
+            }
+
+            const targetPropertyTypes = this.propertyTypes.filter(type => hasType(target, type));
+            if (targetPropertyTypes.length > 0) {
+                addConnections(targetPropertyTypes, [], [owl.domain, owl.range]);
+            }
+        }
+
+        const sourcePropertyTypes = this.propertyTypes.filter(type => hasType(source, type));
+        if (sourcePropertyTypes.length > 0) {
+            for (const type of sourcePropertyTypes) {
+                if (hasType(target, type)) {
+                    addConnections([type], [rdfs.subPropertyOf], [rdfs.subPropertyOf]);
+                }
+            }
+
+            if (hasType(target, owl.Class)) {
+                addConnections([owl.Class], [owl.domain, owl.range], []);
+            }
+        }
+
+        return connections;
+    }
+
+    async canModifyEntity(
+        entity: Reactodia.ElementModel,
+        options: { readonly signal?: AbortSignal; }
+    ): Promise<Reactodia.MetadataCanModifyEntity> {
+        await delay(SIMULATED_DELAY, options.signal);
+        const editable = entity.types.some(type => this.editableTypes.has(type));
+        return {
+            canChangeIri: entity.types.includes(owl.Class),
+            canEdit: editable,
+            canDelete: editable,
+        };
+    }
+
+    async canModifyRelation(
+        link: Reactodia.LinkModel,
+        source: Reactodia.ElementModel,
+        target: Reactodia.ElementModel,
+        options: { readonly signal?: AbortSignal; }
+    ): Promise<Reactodia.MetadataCanModifyRelation> {
+        await delay(SIMULATED_DELAY, options.signal);
+        switch (link.linkTypeId) {
+            case owl.domain:
+            case owl.range:
+            case rdfs.subClassOf:
+            case rdfs.subPropertyOf: {
+                return {
+                    canChangeType: true,
+                    canDelete: true,
+                };
+            }
+            default: {
+                return {};
+            }
+        }
+    }
+
+    async getEntityTypeShape(
+        type: Reactodia.ElementTypeIri,
+        options: { readonly signal?: AbortSignal; }
+    ): Promise<Reactodia.MetadataEntityTypeShape> {
+        await delay(SIMULATED_DELAY, options.signal);
+        return {
+            properties: [],
+        };
+    }
+
+    async filterConstructibleTypes(
+        types: ReadonlySet<Reactodia.ElementTypeIri>,
+        options: { readonly signal?: AbortSignal }
+    ): Promise<ReadonlySet<Reactodia.ElementTypeIri>> {
+        await delay(SIMULATED_DELAY, options.signal);
+        return new Set(Array.from(types).filter(type => this.editableTypes.has(type)));
+    }
 }
 
-export class ExampleValidationApi implements ValidationApi {
-    async validate(event: ValidationEvent): Promise<Array<ElementError | LinkError>> {
-        const errors: Array<ElementError | LinkError> = [];
-        if (event.target.types.indexOf(owl.class) >= 0) {
+export class ExampleValidationProvider implements Reactodia.ValidationProvider {
+    async validate(
+        event: Reactodia.ValidationEvent
+    ): Promise<Reactodia.ValidationResult> {
+        const items: Array<Reactodia.ValidatedElement | Reactodia.ValidatedLink> = [];
+
+        if (event.target.types.includes(owl.Class)) {
             event.state.links.forEach(e => {
-                if (!e.before && e.after.sourceId === event.target.id) {
-                    errors.push({
+                if (e.type === 'relationAdd' && e.data.sourceId === event.target.id) {
+                    items.push({
                         type: 'link',
-                        target: e.after,
+                        target: e.data,
+                        severity: 'error',
                         message: 'Cannot add any new link from a Class',
                     });
-                    errors.push({
+                    items.push({
                         type: 'element',
                         target: event.target.id,
-                        message: `Cannot create <${e.after.linkTypeId}> link from a Class`,
+                        severity: 'warning',
+                        message: `Cannot create <${e.data.linkTypeId}> link from a Class`,
                     });
                 }
             });
         }
 
+        if (event.target.types.includes(owl.ObjectProperty)) {
+            if (!event.outboundLinks.some(link => link.linkTypeId === rdfs.subPropertyOf)) {
+                items.push({
+                    type: 'element',
+                    target: event.target.id,
+                    severity: 'info',
+                    message: 'It might be a good idea to make the property a sub-property of another',
+                });
+            }
+        }
+
         await delay(SIMULATED_DELAY, event.signal);
-        return errors;
+        return {items};
     }
 }
 
@@ -200,4 +209,22 @@ function waitTimeout(amountMs: number): Promise<void> {
         return Promise.resolve();
     }
     return new Promise(resolve => setTimeout(resolve, amountMs));
+}
+
+type VocabularyKeyType<K extends string> =
+    K extends Capitalize<K> ? Reactodia.ElementTypeIri : Reactodia.LinkTypeIri;
+type Vocabulary<Keys extends string[]> = {
+    readonly [K in Keys[number]]: VocabularyKeyType<K>;
+};
+
+function vocabulary<const Keys extends string[]>(prefix: string, keys: Keys): Vocabulary<Keys> {
+    const result: { [key: string]: string } = Object.create(null);
+    for (const key of keys) {
+        result[key] = prefix + key;
+    }
+    return result as Vocabulary<Keys>;
+}
+
+function hasType(model: Reactodia.ElementModel | undefined, type: Reactodia.ElementTypeIri) {
+    return Boolean(!model || model.types.find(t => t === type));
 }

@@ -3,7 +3,8 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { EventObserver } from '../../coreUtils/events';
 
-import { ElementIri, ElementModel, LinkModel } from '../../data/model';
+import { MetadataCanConnect } from '../../data/metadataProvider';
+import { ElementIri, ElementModel, ElementTypeIri, LinkTypeIri } from '../../data/model';
 import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../../data/schema';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
@@ -83,9 +84,8 @@ interface EditLayerInnerProps extends EditLayerProps {
 
 interface State {
     targetElement?: Element;
-    canLinkFrom?: boolean;
-    canDropOnCanvas?: boolean;
-    canDropOnElement?: boolean;
+    connectionsToAny?: ReadonlyArray<MetadataCanConnect>;
+    connectionsToTarget?: ReadonlyArray<MetadataCanConnect>;
     waitingForMetadata?: boolean;
 }
 
@@ -121,8 +121,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             }
         }
         this.forceUpdate();
-        this.queryCanLinkFrom();
-        this.queryCanDropOnCanvas();
+        this.queryCanConnectToAny();
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
     }
@@ -216,54 +215,35 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         this.setState({targetElement: newTargetElement});
     };
 
-    private queryCanLinkFrom() {
+    private queryCanConnectToAny() {
         const {workspace: {model, editor}} = this.props;
 
-        if (!editor.metadataApi) {
-            this.setState({canLinkFrom: false});
+        if (!editor.metadataProvider) {
+            this.setState({connectionsToAny: []});
             return;
         }
 
-        this.setState({canLinkFrom: undefined});
+        this.setState({connectionsToAny: undefined});
 
-        const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
+        const link = this.temporaryLink!;
+        const source = model.getElement(link.sourceId) as EntityElement;
         mapAbortedToNull(
-            editor.metadataApi.canLinkElement(source.data, this.cancellation.signal),
+            editor.metadataProvider.canConnect(
+                source.data,
+                undefined,
+                link.data.linkTypeId === PLACEHOLDER_LINK_TYPE
+                    ? undefined : link.data.linkTypeId,
+                {signal: this.cancellation.signal}
+            ),
             this.cancellation.signal
         ).then(
-            canLinkFrom => {
-                if (canLinkFrom === null) { return; }
-                this.setState({canLinkFrom});
+            connections => {
+                if (connections === null) { return; }
+                this.setState({connectionsToAny: connections});
             },
             error => {
-                console.error('Error calling canLinkElement:', error);
-                this.setState({canLinkFrom: false});
-            }
-        );
-    }
-
-    private queryCanDropOnCanvas() {
-        const {operation, workspace: {model, editor}} = this.props;
-
-        if (!editor.metadataApi || operation.mode !== 'connect') {
-            this.setState({canDropOnCanvas: false});
-            return;
-        }
-
-        this.setState({canDropOnCanvas: undefined});
-
-        const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
-        mapAbortedToNull(
-            editor.metadataApi.canDropOnCanvas(source.data, this.cancellation.signal),
-            this.cancellation.signal
-        ).then(
-            canDropOnCanvas => {
-                if (canDropOnCanvas === null) { return; }
-                this.setState({canDropOnCanvas});
-            },
-            error => {
-                console.error('Error calling canDropOnCanvas:', error);
-                this.setState({canDropOnCanvas: false});
+                console.error('Error calling MetadataProvider.canConnect() without target', error);
+                this.setState({connectionsToAny: []});
             }
         );
     }
@@ -274,43 +254,56 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         this.canDropOnElementCancellation.abort();
         this.canDropOnElementCancellation = new AbortController();
 
-        if (!(editor.metadataApi && targetElement instanceof EntityElement)) {
-            this.setState({canDropOnElement: false});
+        if (!(editor.metadataProvider && targetElement instanceof EntityElement)) {
+            this.setState({connectionsToTarget: []});
             return;
         }
 
         const targetEvent = editor.authoringState.elements.get(targetElement.iri);
-        if (targetEvent && targetEvent.deleted) {
-            this.setState({canDropOnElement: false});
+        if (targetEvent && targetEvent.type === 'entityDelete') {
+            this.setState({connectionsToTarget: []});
             return;
         }
 
-        this.setState({canDropOnElement: undefined});
+        this.setState({connectionsToTarget: undefined});
 
+        const link = this.temporaryLink!;
         let source: ElementModel;
         let target: ElementModel;
         switch (operation.mode) {
             case 'connect':
             case 'moveTarget': {
-                source = (model.getElement(this.temporaryLink!.sourceId) as EntityElement).data;
+                source = (model.getElement(link.sourceId) as EntityElement).data;
                 target = targetElement.data;
                 break;
             }
             case 'moveSource': {
                 source = targetElement.data;
-                target = (model.getElement(this.temporaryLink!.targetId) as EntityElement).data;
+                target = (model.getElement(link.targetId) as EntityElement).data;
                 break;
             }
         }
 
         const signal = this.canDropOnElementCancellation.signal;
         mapAbortedToNull(
-            editor.metadataApi.canDropOnElement(source, target, signal),
+            editor.metadataProvider.canConnect(
+                source,
+                target,
+                link.data.linkTypeId === PLACEHOLDER_LINK_TYPE
+                    ? undefined : link.data.linkTypeId,
+                {signal}
+            ),
             signal
-        ).then(canDropOnElement => {
-            if (canDropOnElement === null) { return; }
-            this.setState({canDropOnElement});
-        });
+        ).then(
+            connections => {
+                if (connections === null) { return; }
+                this.setState({connectionsToTarget: connections});
+            },
+            error => {
+                console.error('Error calling MetadataProvider.canConnect() with target', error);
+                this.setState({connectionsToAny: []});
+            }
+        );
     }
 
     private onMouseUp = (e: MouseEvent) => {
@@ -326,28 +319,27 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         const {operation, canvas, workspace: {model, editor}} = this.props;
 
         try {
-            const {targetElement, canLinkFrom, canDropOnCanvas, canDropOnElement} = this.state;
+            const {targetElement, connectionsToAny, connectionsToTarget} = this.state;
 
             if (this.oldLink) {
                 model.addLink(this.oldLink);
             }
 
-            const canDrop = targetElement ? canDropOnElement : canDropOnCanvas;
-            if (canLinkFrom && canDrop) {
+            const allowedConnections = targetElement ? connectionsToTarget : connectionsToAny;
+            if (allowedConnections && allowedConnections.length > 0) {
                 let modifiedLink: RelationLink | undefined;
                 let createdTarget = targetElement as EntityElement | undefined;
 
                 switch (operation.mode) {
                     case 'connect': {
                         if (!createdTarget) {
-                            const source = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
-                            createdTarget = await this.createNewElement(source.data);
+                            createdTarget = await this.createNewElement(allowedConnections);
                             createdTarget.setPosition(selectedPosition);
                             canvas.renderingState.syncUpdate();
                             setElementCenterAtPoint(createdTarget, selectedPosition, canvas.renderingState);
                         }
                         const sourceElement = model.getElement(this.temporaryLink!.sourceId) as EntityElement;
-                        modifiedLink = await this.createNewLink(sourceElement, createdTarget);
+                        modifiedLink = await this.createNewLink(sourceElement, createdTarget, allowedConnections);
                         break;
                     }
                     case 'moveSource': {
@@ -389,46 +381,79 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         }
     }
 
-    private async createNewElement(source: ElementModel): Promise<EntityElement> {
+    private async createNewElement(
+        connections: readonly MetadataCanConnect[]
+    ): Promise<EntityElement> {
         const {workspace: {editor}} = this.props;
-        if (!editor.metadataApi) {
-            throw new Error('Cannot create new element without MetadataApi');
+        if (!editor.metadataProvider) {
+            throw new Error('Cannot create new element without metadata provider');
         }
-        const elementTypes = await editor.metadataApi.typesOfElementsDraggedFrom(source, this.cancellation.signal);
-        const classId = elementTypes.length === 1 ? elementTypes[0] : PLACEHOLDER_ELEMENT_TYPE;
-        const elementModel = await editor.metadataApi.generateNewElement([classId], this.cancellation.signal);
+        const elementTypes = new Set<ElementTypeIri>();
+        for (const {targetTypes} of connections) {
+            for (const typeIri of targetTypes) {
+                elementTypes.add(typeIri);
+            }
+        }
+        const selectedType = elementTypes.size === 1 ? Array.from(elementTypes)[0] : PLACEHOLDER_ELEMENT_TYPE;
+        const elementModel = await editor.metadataProvider.createEntity(
+            selectedType,
+            {signal: this.cancellation.signal}
+        );
         return editor.createEntity(elementModel, {temporary: true});
     }
 
-    private async createNewLink(source: EntityElement, target: EntityElement): Promise<RelationLink | undefined> {
+    private async createNewLink(
+        source: EntityElement,
+        target: EntityElement,
+        connections: readonly MetadataCanConnect[]
+    ): Promise<RelationLink | undefined> {
         const {workspace: {model, editor}} = this.props;
-        if (!editor.metadataApi) {
+        if (!editor.metadataProvider) {
             return undefined;
         }
-        const linkTypes = await mapAbortedToNull(
-            editor.metadataApi.possibleLinkTypes(source.data, target.data, this.cancellation.signal),
-            this.cancellation.signal
-        );
-        if (linkTypes === null) { return undefined; }
-        const placeholder = {linkTypeIri: PLACEHOLDER_LINK_TYPE, direction: 'out'};
-        const {linkTypeIri: typeId, direction} = linkTypes.length === 1 ? linkTypes[0] : placeholder;
-        let data: LinkModel = {
-            linkTypeId: typeId,
-            sourceId: source.iri,
-            targetId: target.iri,
-            properties: {},
-        };
-        let [sourceId, targetId] = [source.id, target.id];
+
+        const inLinkSet = new Set<LinkTypeIri>();
+        const outLinkSet = new Set<LinkTypeIri>();
+        for (const {targetTypes, inLinks, outLinks} of connections) {
+            if (target.data.types.some(type => targetTypes.has(type))) {
+                for (const linkType of inLinks) {
+                    inLinkSet.add(linkType);
+                }
+                for (const linkType of outLinks) {
+                    outLinkSet.add(linkType);
+                }
+            }
+        }
+
+        let linkTypeIri: LinkTypeIri;
+        let direction: 'in' | 'out';
+        if (inLinkSet.size === 0 && outLinkSet.size === 1) {
+            linkTypeIri = [...outLinkSet][0];
+            direction = 'out';
+        } else if (inLinkSet.size === 1 && outLinkSet.size === 0) {
+            linkTypeIri = [...inLinkSet][0];
+            direction = 'in';
+        } else {
+            linkTypeIri = PLACEHOLDER_LINK_TYPE;
+            direction = 'out';
+        }
+
+        let [effectiveSource, effectiveTarget] = [source, target];
         // switches source and target if the direction equals 'in'
         if (direction === 'in') {
-            data = {
-                ...data,
-                sourceId: target.iri,
-                targetId: source.iri,
-            };
-            [sourceId, targetId] = [targetId, sourceId];
+            [effectiveSource, effectiveTarget] = [effectiveTarget, effectiveSource];
         }
-        const link = new RelationLink({sourceId, targetId, data});
+        const data = await editor.metadataProvider.createRelation(
+            effectiveSource.data,
+            effectiveTarget.data,
+            linkTypeIri,
+            { signal: this.cancellation.signal }
+        );
+        const link = new RelationLink({
+            sourceId: effectiveSource.id,
+            targetId: effectiveTarget.id,
+            data,
+        });
         const existingLink = model.findLink(link.typeId, link.sourceId, link.targetId);
         return existingLink instanceof RelationLink
             ? existingLink : editor.createRelation(link, {temporary: true});
@@ -441,7 +466,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         model.removeElement(this.temporaryElement!.id);
         model.removeLink(this.temporaryLink!.id);
         editor.setTemporaryState(
-            TemporaryState.deleteLink(editor.temporaryState, this.temporaryLink!.data)
+            TemporaryState.removeRelation(editor.temporaryState, this.temporaryLink!.data)
         );
         batch.discard();
 
@@ -475,13 +500,13 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
 
     private renderHighlight() {
         const {canvas} = this.props;
-        const {targetElement, canLinkFrom, canDropOnElement, waitingForMetadata} = this.state;
+        const {targetElement, connectionsToTarget, waitingForMetadata} = this.state;
 
         if (!targetElement) { return null; }
 
         const {x, y, width, height} = boundsOf(targetElement, canvas.renderingState);
 
-        if (canLinkFrom === undefined || canDropOnElement === undefined || waitingForMetadata) {
+        if (connectionsToTarget === undefined || waitingForMetadata) {
             return (
                 <g transform={`translate(${x},${y})`}>
                     <rect width={width} height={height} fill={'white'} fillOpacity={0.5} />
@@ -490,23 +515,23 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
             );
         }
 
-        const stroke = (canLinkFrom && canDropOnElement) ? '#5cb85c' : '#c9302c';
+        const stroke = (connectionsToTarget && connectionsToTarget.length > 0) ? '#5cb85c' : '#c9302c';
         return (
             <rect x={x} y={y} width={width} height={height} fill={'transparent'} stroke={stroke} strokeWidth={3} />
         );
     }
 
     private renderCanDropIndicator() {
-        const {targetElement, canLinkFrom, canDropOnCanvas, waitingForMetadata} = this.state;
+        const {targetElement, connectionsToAny, waitingForMetadata} = this.state;
 
         if (targetElement) { return null; }
 
         const {x, y} = this.temporaryElement!.position;
 
         let indicator: React.ReactElement<any>;
-        if (canLinkFrom === undefined || canDropOnCanvas === undefined) {
+        if (connectionsToAny === undefined) {
             indicator = <Spinner size={1.2} position={{x: 0.5, y: -0.5}} />;
-        } else if (canLinkFrom && canDropOnCanvas) {
+        } else if (connectionsToAny.length > 0) {
             indicator = <path d='M0.5,0 L0.5,-1 M0,-0.5 L1,-0.5' strokeWidth={0.2} stroke='#5cb85c' />;
         } else {
             indicator = (

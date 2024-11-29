@@ -6,8 +6,8 @@ import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/e
 import { HashMap } from '../coreUtils/hashMap';
 
 import { ElementTypeIri } from '../data/model';
-import { MetadataApi } from '../data/metadataApi';
-import { ValidationApi } from '../data/validationApi';
+import { MetadataProvider } from '../data/metadataProvider';
+import { ValidationProvider } from '../data/validationProvider';
 import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
@@ -64,11 +64,11 @@ export interface WorkspaceProps {
      * 
      * If provided, switches editor into the graph authoring mode.
      */
-    metadataApi?: MetadataApi;
+    metadataProvider?: MetadataProvider;
     /**
      * Provides a strategy to validate changes to the data in the graph authoring mode.
      */
-    validationApi?: ValidationApi;
+    validationProvider?: ValidationProvider;
     /**
      * Provides a strategy to rename diagram links (change labels).
      */
@@ -137,8 +137,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const {
             history = new InMemoryHistory(),
-            metadataApi,
-            validationApi,
+            metadataProvider,
+            validationProvider,
             renameLinkProvider,
             authoringCommands = new EventSource(),
             typeStyleResolver,
@@ -165,8 +165,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const editor = new EditorController({
             model,
             authoringCommands,
-            metadataApi,
-            validationApi,
+            metadataProvider,
+            validationProvider,
         });
 
         const overlay = new OverlayController({
@@ -247,18 +247,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
             this.listener.listen(overlay.events, 'changeOpenedDialog', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorToggleDialog)
             );
-        }
-    }
-
-    /** @hidden */
-    componentDidUpdate(prevProps: WorkspaceProps) {
-        const {editor} = this.workspaceContext;
-
-        if (this.props.metadataApi !== prevProps.metadataApi) {
-            editor.setMetadataApi(this.props.metadataApi);
-        }
-        if (this.props.validationApi !== prevProps.validationApi) {
-            editor.setValidationApi(this.props.validationApi);
         }
     }
 

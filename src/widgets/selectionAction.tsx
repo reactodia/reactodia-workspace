@@ -180,7 +180,7 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     for (const element of elements) {
         if (element instanceof EntityElement) {
             totalEntities++;
-            if (AuthoringState.isNewElement(editor.authoringState, element.iri)) {
+            if (AuthoringState.isAddedEntity(editor.authoringState, element.iri)) {
                 newEntities++;
             }
         }
@@ -634,21 +634,21 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!(editor.metadataApi && targetData)) {
+        if (!(editor.metadataProvider && targetData)) {
             setCanLink(false);
             return;
         }
-        if (authoringEvent && authoringEvent.deleted) {
+        if (authoringEvent && authoringEvent.type === 'entityDelete') {
             setCanLink(false);
         } else {
             setCanLink(undefined);
             const signal = cancellation.signal;
             mapAbortedToNull(
-                editor.metadataApi.canLinkElement(targetData, signal),
+                editor.metadataProvider.canConnect(targetData, undefined, undefined, {signal}),
                 signal
-            ).then(canLink => {
-                if (canLink === null) { return; }
-                setCanLink(canLink);
+            ).then(connections => {
+                if (connections === null) { return; }
+                setCanLink(connections.length > 0);
             });
         }
         return () => cancellation.abort();

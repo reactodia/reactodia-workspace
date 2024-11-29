@@ -2,7 +2,10 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 
 import { ElementIri, LinkKey, LinkModel, hashLink, equalLinks } from '../data/model';
-import { ValidationApi, ValidationEvent, ElementError, LinkError } from '../data/validationApi';
+import {
+    ValidationProvider, ValidationEvent, ValidationResult, ValidatedElement, ValidatedLink,
+    ValidationSeverity,
+} from '../data/validationProvider';
 
 import { AuthoringState } from './authoringState';
 import { DataGraphStructure } from './dataDiagramModel';
@@ -36,7 +39,7 @@ export interface ElementValidation {
     /**
      * Validation errors for the entity.
      */
-    readonly errors: ReadonlyArray<ElementError>;
+    readonly items: ReadonlyArray<ValidatedElement>;
 }
 
 /**
@@ -50,7 +53,7 @@ export interface LinkValidation {
     /**
      * Validation errors for the relation.
      */
-    readonly errors: ReadonlyArray<LinkError>;
+    readonly items: ReadonlyArray<ValidatedLink>;
 }
 
 /**
@@ -60,8 +63,8 @@ export interface LinkValidation {
  */
 export namespace ValidationState {
     export const empty: ValidationState = createMutable();
-    export const emptyElement: ElementValidation = {loading: false, errors: []};
-    export const emptyLink: LinkValidation = {loading: false, errors: []};
+    export const emptyElement: ElementValidation = {loading: false, items: []};
+    export const emptyLink: LinkValidation = {loading: false, items: []};
 
     export function createMutable() {
         return {
@@ -70,24 +73,28 @@ export namespace ValidationState {
         };
     }
 
-    export function setElementErrors(
-        state: ValidationState, target: ElementIri, errors: ReadonlyArray<ElementError>
+    export function setElementItems(
+        state: ValidationState,
+        target: ElementIri,
+        items: ReadonlyArray<ValidatedElement>
     ): ValidationState {
         const elements = new Map(state.elements);
-        if (errors.length > 0) {
-            elements.set(target, {loading: false, errors});
+        if (items.length > 0) {
+            elements.set(target, {loading: false, items});
         } else {
             elements.delete(target);
         }
         return {...state, elements};
     }
 
-    export function setLinkErrors(
-        state: ValidationState, target: LinkModel, errors: ReadonlyArray<LinkError>
+    export function setLinkItems(
+        state: ValidationState,
+        target: LinkKey,
+        items: ReadonlyArray<ValidatedLink>
     ): ValidationState {
         const links = state.links.clone();
-        if (errors.length > 0) {
-            links.set(target, {loading: false, errors});
+        if (items.length > 0) {
+            links.set(target, {loading: false, items});
         } else {
             links.delete(target);
         }
@@ -121,7 +128,7 @@ export function changedElementsToValidate(
                 toValidate.add(entity.id);
 
                 // when we remove element incoming link are removed as well so we should update their sources
-                if ((current || previous)!.deleted) {
+                if ((current || previous)!.type === 'entityDelete') {
                     for (const link of graph.getElementLinks(element)) {
                         for (const relation of iterateRelationsOf(link)) {
                             if (relation.targetId === entity.id && relation.sourceId !== entity.id) {
@@ -139,7 +146,7 @@ export function changedElementsToValidate(
 
 export function validateElements(
     targets: ReadonlySet<ElementIri>,
-    validationApi: ValidationApi,
+    validationProvider: ValidationProvider,
     graph: DataGraphStructure,
     editor: EditorController,
     signal: AbortSignal | undefined
@@ -170,10 +177,10 @@ export function validateElements(
                     graph,
                     signal,
                 };
-                const result = mapAbortedToNull(validationApi.validate(event), signal);
+                const result = mapAbortedToNull(validationProvider.validate(event), signal);
 
-                const loadingElement: ElementValidation = {loading: true, errors: []};
-                const loadingLink: LinkValidation = {loading: true, errors: []};
+                const loadingElement: ElementValidation = {loading: true, items: []};
+                const loadingLink: LinkValidation = {loading: true, items: []};
                 newState.elements.set(entity.id, loadingElement);
                 outboundLinks.forEach(link => newState.links.set(link, loadingLink));
 
@@ -192,48 +199,71 @@ export function validateElements(
 }
 
 async function processValidationResult(
-    result: Promise<Array<ElementError | LinkError> | null>,
+    resultTask: Promise<ValidationResult | null>,
     previousElement: ElementValidation,
     previousLink: LinkValidation,
     e: ValidationEvent,
     editor: EditorController,
 ) {
-    let allErrors: Array<ElementError | LinkError> | null;
+    let result: ValidationResult | null;
     try {
-        allErrors = await result;
-        if (allErrors === null) {
+        result = await resultTask;
+        if (result === null) {
             // validation was cancelled
             return;
         }
     } catch (err) {
         console.error('Failed to validate element', e.target, err);
-        allErrors = [{
+        const items: ReadonlyArray<ValidatedElement | ValidatedLink> = [{
             type: 'element',
             target: e.target.id,
+            severity: 'error',
             message: 'Failed to validate element',
         }];
+        result = {items};
     }
 
-    const elementErrors: ElementError[] = [];
-    const linkErrors = new HashMap<LinkModel, LinkError[]>(hashLink, equalLinks);
-    e.outboundLinks.forEach(link => linkErrors.set(link, []));
+    const elementItems: ValidatedElement[] = [];
+    const linkItems = new HashMap<LinkKey, ValidatedLink[]>(hashLink, equalLinks);
+    e.outboundLinks.forEach(link => linkItems.set(link, []));
 
-    for (const error of allErrors) {
-        if (error.type === 'element' && error.target === e.target.id) {
-            elementErrors.push(error);
-        } else if (error.type === 'link' && linkErrors.has(error.target)) {
-            linkErrors.get(error.target)!.push(error);
+    for (const item of result.items) {
+        if (item.type === 'element' && item.target === e.target.id) {
+            elementItems.push(item);
+        } else if (item.type === 'link' && linkItems.has(item.target)) {
+            linkItems.get(item.target)!.push(item);
         }
     }
 
     let state = editor.validationState;
     if (state.elements.get(e.target.id) === previousElement) {
-        state = ValidationState.setElementErrors(state, e.target.id, elementErrors);
+        state = ValidationState.setElementItems(state, e.target.id, elementItems);
     }
-    linkErrors.forEach((errors, link) => {
+    linkItems.forEach((items, link) => {
         if (state.links.get(link) === previousLink) {
-            state = ValidationState.setLinkErrors(state, link, errors);
+            state = ValidationState.setLinkItems(state, link, items);
         }
     });
     editor.setValidationState(state);
+}
+
+const SEVERITY_INDEX = new Map<ValidationSeverity, number>([
+    ['info', 0],
+    ['warning', 1],
+    ['error', 2],
+]);
+
+export function getMaxSeverity(
+    items: ReadonlyArray<{ readonly severity: ValidationSeverity }>
+): ValidationSeverity {
+    let maxSeverity: ValidationSeverity = 'info';
+    let maxSeverityIndex = SEVERITY_INDEX.get(maxSeverity) ?? -1;
+    for (const {severity} of items) {
+        const index = SEVERITY_INDEX.get(severity) ?? -1;
+        if (index > maxSeverityIndex) {
+            maxSeverityIndex = index;
+            maxSeverity = severity;
+        }
+    }
+    return maxSeverity;
 }

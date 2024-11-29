@@ -76,7 +76,10 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         const validateElement = validateElementType(elementValue.value);
         const validateLink = validateLinkType(
-            linkValue.value.link, originalLink.data, this.context
+            linkValue.value.link,
+            originalLink.data,
+            this.context,
+            signal
         );
         Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
             if (signal.aborted) { return; }
@@ -174,16 +177,16 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 const previous = target.data;
 
                 let temporaryState = editor.temporaryState;
-                temporaryState = TemporaryState.deleteElement(temporaryState, previous);
-                temporaryState = TemporaryState.deleteLink(temporaryState, this.link.data);
+                temporaryState = TemporaryState.removeEntity(temporaryState, previous);
+                temporaryState = TemporaryState.removeRelation(temporaryState, this.link.data);
                 editor.setTemporaryState(temporaryState);
                 // Target IRI change may also update link data
                 const batch = model.history.startBatch();
                 batch.history.execute(changeEntityData(model, target.iri, elementValue.value));
                 batch.discard();
                 
-                temporaryState = TemporaryState.addElement(temporaryState, target.data);
-                temporaryState = TemporaryState.addLink(temporaryState, this.link.data);
+                temporaryState = TemporaryState.addEntity(temporaryState, target.data);
+                temporaryState = TemporaryState.addRelation(temporaryState, this.link.data);
                 editor.setTemporaryState(temporaryState);
             }
             if (linkValue && linkValue.validated && linkValue.allowChange) {
@@ -209,7 +212,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         const link = this.link;
 
         if (!elementValue.isNew) {
-            editor.setTemporaryState(TemporaryState.deleteElement(
+            editor.setTemporaryState(TemporaryState.removeEntity(
                 editor.temporaryState,
                 elementValue.value
             ));
@@ -224,7 +227,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             model.addElement(target);
             target.setExpanded(true);
             editor.setAuthoringState(
-                AuthoringState.addElement(editor.authoringState, target.data)
+                AuthoringState.addEntity(editor.authoringState, target.data)
             );
         } else {
             model.requestLinks({addedElements: [elementValue.value.id]});

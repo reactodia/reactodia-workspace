@@ -16,8 +16,14 @@ export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export { Debouncer, animateInterval } from './coreUtils/scheduler';
 
 export * from './data/model';
-export * from './data/metadataApi';
-export * from './data/validationApi';
+export {
+    MetadataProvider, MetadataCanConnect, MetadataCanModifyEntity, MetadataCanModifyRelation,
+    MetadataEntityTypeShape,
+} from './data/metadataProvider';
+export {
+    ValidationProvider, ValidationEvent, ValidationResult, ValidatedElement, ValidatedLink,
+    ValidationSeverity,
+} from './data/validationProvider';
 export * from './data/provider';
 export {
     TemplateProperties, PinnedProperties,
@@ -87,7 +93,10 @@ export {
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
 export {
-    AuthoringState, AuthoringEvent, AuthoringKind, ElementChange, LinkChange, TemporaryState,
+    AuthoringState, AuthoringEvent,
+    AuthoredEntity, AuthoredEntityAdd, AuthoredEntityChange, AuthoredEntityDelete,
+    AuthoredRelation, AuthoredRelationAdd, AuthoredRelationChange, AuthoredRelationDelete,
+    TemporaryState,
 } from './editor/authoringState';
 export { BuiltinDialogType } from './editor/builtinDialogType';
 export * from './editor/dataDiagramModel';

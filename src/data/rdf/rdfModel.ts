@@ -153,3 +153,20 @@ export function hashQuad(quad: Quad): number {
 export function equalQuads(a: Quad, b: Quad): boolean {
     return equalTerms(a, b);
 }
+
+/**
+ * Extracts local name for URI the same way as it's done in [RDF4J](https://github.com/eclipse-rdf4j/rdf4j).
+ */
+export function getLocalName(uri: string): string | undefined {
+    let index = uri.indexOf('#');
+    if (index < 0) {
+        index = uri.lastIndexOf('/');
+    }
+    if (index < 0) {
+        index = uri.lastIndexOf(':');
+    }
+    if (index < 0) {
+        return undefined;
+    }
+    return uri.substring(index + 1);
+}

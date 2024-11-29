@@ -53,7 +53,7 @@ export interface OpenedDialog {
     /**
      * Handler which will be called when dialog is closed.
      */
-    readonly onClose: () => void;
+    readonly onClose: (() => void) | undefined;
 }
 
 /**
@@ -284,7 +284,7 @@ export class OverlayController {
          * Callback which is called when dialog is closed for any reason
          * (e.g. when another dialog is opened).
          */
-        onClose: () => void;
+        onClose?: () => void;
     }): void {
         const {target, style, dialogType, content, holdSelection = false, onClose} = params;
         if (this._openedDialog && this._openedDialog.target !== target) {
@@ -302,7 +302,7 @@ export class OverlayController {
         const dialog = (
             <Dialog {...style}
                 target={target}
-                onClose={onClose}>
+                onHide={() => this.hideDialog()}>
                 {content}
             </Dialog>
         );
@@ -322,7 +322,7 @@ export class OverlayController {
         if (this._openedDialog) {
             const previous = this._openedDialog;
             this._openedDialog = undefined;
-            previous.onClose();
+            previous.onClose?.();
             this.view.setCanvasWidget('dialog', null);
             this.source.trigger('changeOpenedDialog', {source: this, previous});
         }

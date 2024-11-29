@@ -203,7 +203,7 @@ function equalTermArrays(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>)
     return true;
 }
 
-function equalProperties(
+export function equalProperties(
     a: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
     b: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> }
 ) {

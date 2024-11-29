@@ -149,11 +149,6 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             const virtualTarget = targets.length > 1
                 ? new VirtualTarget(targets, model, canvas)
                 : undefined;
-            
-            const onClose = () => {
-                virtualTarget?.removeFrom(model);
-                overlay.hideDialog();
-            };
 
             const placeTarget = virtualTarget ?? targets[0];
 
@@ -176,12 +171,12 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
                     <ConnectionsMenuInner {...props}
                         placeTarget={placeTarget}
                         targetIris={Array.from(targetIris)}
-                        onClose={onClose}
+                        onCancel={() => overlay.hideDialog()}
                         workspace={workspace}
                         canvas={canvas}
                     />
                 ),
-                onClose,
+                onClose: () => virtualTarget?.removeFrom(model),
             });
         });
         return () => listener.stopListening();
@@ -248,7 +243,7 @@ class VirtualTarget extends VoidElement {
 interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
     placeTarget: Element;
     targetIris: ReadonlyArray<ElementIri>;
-    onClose: () => void;
+    onCancel: () => void;
     workspace: WorkspaceContext;
     canvas: CanvasApi;
 }
@@ -585,7 +580,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         selectedObjects: ElementOnDiagram[],
         mode: ObjectPlacingMode
     ) => {
-        const {onClose} = this.props;
+        const {onCancel} = this.props;
         const {objects} = this.state;
 
         const addedElementsIris = selectedObjects.map(item => item.model.id);
@@ -593,7 +588,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const hasChosenLinkType = objects && linkTypeId !== this.ALL_RELATED_ELEMENTS_LINK.id;
 
         this.placeElements(addedElementsIris, hasChosenLinkType ? linkTypeId : undefined, mode);
-        onClose();
+        onCancel();
     };
 
     private placeElements(

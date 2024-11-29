@@ -13,7 +13,7 @@ import { DraggableHandle } from '../workspace/draggableHandle';
 
 export interface DialogProps extends DialogStyleProps {
     target: Element | Link;
-    onClose: () => void;
+    onHide: () => void;
     children: React.ReactNode;
 }
 
@@ -318,7 +318,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     };
 
     render() {
-        const {defaultSize = DEFAULT_SIZE, caption, onClose, resizableBy = 'all'} = this.props;
+        const {defaultSize = DEFAULT_SIZE, caption, onHide, resizableBy = 'all'} = this.props;
         const {x, y} = this.calculatePosition();
         const width = this.state.width || defaultSize.width;
         const height = this.state.height || defaultSize.height;
@@ -345,7 +345,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                             'reactodia-btn',
                             `${CLASS_NAME}__close-button`
                         )}
-                        onClick={() => onClose()}
+                        onClick={onHide}
                     />
                 </div>
                 {this.props.children}
