@@ -476,8 +476,12 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private shouldStartPanning(e: React.PointerEvent) {
-        const modifierPressed = e.ctrlKey || e.shiftKey || e.altKey;
-        return e.pointerType === 'mouse' && !modifierPressed;
+        const requireShift = this._pointerMode === 'selection';
+        return (
+            e.pointerType === 'mouse' &&
+            e.shiftKey === requireShift &&
+            !(e.ctrlKey || e.altKey)
+        );
     }
 
     private shouldStartElementMove(e: React.PointerEvent) {
@@ -502,6 +506,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         } else if (typeof target === 'undefined') {
             e.preventDefault();
             if (panningOrigin) {
+                this.area.classList.add(`${CLASS_NAME}--panning`);
                 this.area.scrollLeft = panningOrigin.scrollLeft - pageOffsetX;
                 this.area.scrollTop = panningOrigin.scrollTop - pageOffsetY;
             }
@@ -622,6 +627,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.movingState = undefined;
 
         if (movingState) {
+            this.area.classList.remove(`${CLASS_NAME}--panning`);
             document.removeEventListener('pointermove', this.onPointerMove);
             document.removeEventListener('pointerup', this.onPointerUp);
             document.removeEventListener('pointercancel', this.onPointerCancel);
