@@ -81,17 +81,31 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     private async fetchPossibleElementTypes() {
-        const {model, editor: {metadataApi}} = this.context;
+        const {model, editor: {metadataProvider}} = this.context;
         const {source} = this.props;
-        if (!metadataApi) {
+        if (!metadataProvider) {
             return;
         }
-        const elementTypes = await mapAbortedToNull(
-            metadataApi.typesOfElementsDraggedFrom(source, this.cancellation.signal),
+        const connections = await mapAbortedToNull(
+            metadataProvider.canConnect(
+                source,
+                undefined,
+                undefined,
+                {signal: this.cancellation.signal}
+            ),
             this.cancellation.signal
         );
-        if (elementTypes === null) { return; }
-        elementTypes.sort(makeElementTypeComparatorByLabel(model));
+        if (connections === null) {
+            return;
+        }
+        const elementTypeSet = new Set<ElementTypeIri>();
+        for (const {targetTypes} of connections) {
+            for (const type of targetTypes) {
+                elementTypeSet.add(type);
+            }
+        }
+        const elementTypes = Array.from(elementTypeSet)
+            .sort(makeElementTypeComparatorByLabel(model));
         this.setState({elementTypes});
     }
 
@@ -122,14 +136,16 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        const {editor: {metadataApi}} = this.context;
+        const {editor: {metadataProvider}} = this.context;
         const {onChange} = this.props;
-        const classId = (e.target as HTMLSelectElement).value as ElementTypeIri;
+        const elementTypeIri = (e.target as HTMLSelectElement).value as ElementTypeIri;
         const elementModel = await mapAbortedToNull(
-            metadataApi!.generateNewElement([classId], signal),
+            metadataProvider!.createEntity(elementTypeIri, {signal}),
             signal
         );
-        if (elementModel === null) { return; }
+        if (elementModel === null) {
+            return;
+        }
         this.setState({isLoading: false});
         onChange({
             value: elementModel,

@@ -6,6 +6,8 @@ import {
     useEventStore, useObservedProperty, useFrameDebouncedStore, useSyncStore,
 } from '../coreUtils/hooks';
 
+import type { MetadataCanModifyRelation } from '../data/metadataProvider';
+
 import { useCanvas } from '../diagram/canvasApi';
 import { Link } from '../diagram/elements';
 import { GraphStructure } from '../diagram/model';
@@ -118,12 +120,13 @@ const CLASS_NAME = 'reactodia-link-action';
  * @category Components
  */
 export function LinkAction(props: LinkActionProps) {
-    const {dockSide, dockIndex, className, title, onSelect, onMouseDown, children} = props;
+    const {dockSide, dockIndex, disabled, className, title, onSelect, onMouseDown, children} = props;
     const {getPosition} = useLinkActionContext();
     return (
         <button role='button'
             className={classnames(className, CLASS_NAME)}
             style={getPosition(dockSide, dockIndex)}
+            disabled={disabled}
             title={title}
             onClick={onSelect}
             onMouseDown={onMouseDown}>
@@ -179,12 +182,19 @@ export function LinkActionEdit(props: LinkActionEditProps) {
         editor.events, 'changeMode', () => editor.inAuthoringMode
     );
 
-    const canEdit = useCanEditLink(inAuthoringMode ? link : undefined, model, editor);
-    const linkIsDeleted = isDeletedLink(editor.authoringState, link);
+    const canModify = useCanModifyLink(inAuthoringMode ? link : undefined, model, editor);
+    const linkIsDeleted = useObservedProperty(
+        editor.events,
+        'changeAuthoringState',
+        () => (
+            link instanceof RelationLink &&
+            AuthoringState.isDeletedRelation(editor.authoringState, link.data)
+        )
+    );
 
     if (!(inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
         return null;
-    } else if (canEdit === undefined) {
+    } else if (canModify === undefined) {
         const {dockSide, dockIndex} = props;
         return (
             <LinkActionSpinner dockSide={dockSide}
@@ -200,50 +210,12 @@ export function LinkActionEdit(props: LinkActionEditProps) {
                 `${CLASS_NAME}__edit`
             )}
             title={title ?? (
-                canEdit ? 'Edit link' : 'Editing is unavailable for the selected link'
+                canModify.canChangeType ? 'Edit relation' : 'Cannot edit the relation'
             )}
-            disabled={!canEdit}
+            disabled={!canModify.canChangeType}
             onSelect={() => editor.authoringCommands.trigger('editRelation', {target: link})}
         />
     );
-}
-
-function useCanEditLink(
-    link: Link | undefined,
-    graph: GraphStructure,
-    editor: EditorController
-): boolean | undefined {
-    const [canEdit, setCanEdit] = React.useState<boolean | undefined>();
-
-    const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
-    const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
-    const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
-
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        if (!(editor.metadataApi && link instanceof RelationLink)) {
-            setCanEdit(false);
-            return;
-        }
-        if (isDeletedLink(authoringState, link)) {
-            setCanEdit(false);
-        } else {
-            setCanEdit(undefined);
-            const source = graph.getElement(link.sourceId) as EntityElement;
-            const target = graph.getElement(link.targetId) as EntityElement;
-            const signal = cancellation.signal;
-            mapAbortedToNull(
-                editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),
-                signal
-            ).then(canLink => {
-                if (canLink === null) { return; }
-                setCanEdit(canLink);
-            });
-        }
-        return () => cancellation.abort();
-    }, [link, authoringState]);
-
-    return canEdit;
 }
 
 /**
@@ -267,15 +239,19 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
     const {link} = useLinkActionContext();
     const {model, editor} = useWorkspace();
 
-    const canDelete = useCanDeleteLink(link, model, editor);
-    const linkIsDeleted = (
-        isDeletedByItself(editor.authoringState, link) ||
-        isSourceOrTargetDeleted(editor.authoringState, link)
+    const canModify = useCanModifyLink(link, model, editor);
+    const linkIsDeleted = useObservedProperty(
+        editor.events,
+        'changeAuthoringState',
+        () => (
+            link instanceof RelationLink &&
+            AuthoringState.isDeletedRelation(editor.authoringState, link.data)
+        )
     );
 
     if (!(editor.inAuthoringMode && link instanceof RelationLink) || linkIsDeleted) {
         return null;
-    } else if (canDelete === undefined) {
+    } else if (canModify === undefined) {
         const {dockSide, dockIndex} = props;
         return (
             <LinkActionSpinner dockSide={dockSide}
@@ -291,20 +267,20 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
                 `${CLASS_NAME}__delete`
             )}
             title={title ?? (
-                canDelete ? 'Delete link' : 'Deletion is unavailable for the selected link'
+                canModify.canDelete ? 'Delete relation' : 'Cannot delete the relation'
             )}
-            disabled={!canDelete}
+            disabled={!canModify.canDelete}
             onSelect={() => editor.deleteRelation(link.data)}
         />
     );
 }
 
-function useCanDeleteLink(
-    link: Link,
+function useCanModifyLink(
+    link: Link | undefined,
     graph: GraphStructure,
     editor: EditorController
-): boolean | undefined {
-    const [canDelete, setCanDelete] = React.useState<boolean | undefined>();
+): MetadataCanModifyRelation | undefined {
+    const [canModify, setCanModify] = React.useState<MetadataCanModifyRelation | undefined>();
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
     const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
@@ -312,29 +288,38 @@ function useCanDeleteLink(
 
     React.useEffect(() => {
         const cancellation = new AbortController();
-        if (!(editor.metadataApi && link instanceof RelationLink)) {
-            setCanDelete(false);
+        if (!(editor.metadataProvider && link instanceof RelationLink)) {
+            setCanModify({});
             return;
         }
         if (isSourceOrTargetDeleted(authoringState, link)) {
-            setCanDelete(false);
+            setCanModify({});
         } else {
-            setCanDelete(undefined);
+            setCanModify(undefined);
             const source = graph.getElement(link.sourceId) as EntityElement;
             const target = graph.getElement(link.targetId) as EntityElement;
             const signal = cancellation.signal;
             mapAbortedToNull(
-                editor.metadataApi.canDeleteLink(link.data, source.data, target.data, signal),
+                editor.metadataProvider.canModifyRelation(
+                    link.data, source.data, target.data, {signal}
+                ),
                 signal
-            ).then(canLink => {
-                if (canLink === null) { return; }
-                setCanDelete(canLink);
+            ).then(canModify => {
+                if (canModify === null) { return; }
+                setCanModify(canModify);
             });
         }
         return () => cancellation.abort();
     }, [link, authoringState]);
 
-    return canDelete;
+    return canModify;
+}
+
+function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boolean {
+    return (
+        AuthoringState.isDeletedEntity(state, link.data.sourceId) ||
+        AuthoringState.isDeletedEntity(state, link.data.targetId)
+    );
 }
 
 /**
@@ -365,6 +350,14 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
     );
+    const linkIsDeleted = useObservedProperty(
+        editor.events,
+        'changeAuthoringState',
+        () => (
+            link instanceof RelationLink &&
+            AuthoringState.isDeletedRelation(editor.authoringState, link.data)
+        )
+    );
 
     if (!(inAuthoringMode && link instanceof RelationLink)) {
         return null;
@@ -382,7 +375,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             title={title ?? (
                 dockSide === 'source' ? 'Move link source' : 'Move link target'
             )}
-            disabled={!isDeletedLink(editor.authoringState, link)}
+            disabled={linkIsDeleted}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 editor.authoringCommands.trigger('startDragEdit', {
@@ -454,30 +447,5 @@ export function LinkActionRename(props: LinkActionRenameProps) {
             title={title ?? 'Rename link'}
             onClick={() => editor.authoringCommands.trigger('renameLink', {target: link})}
         />
-    );
-}
-
-function isDeletedLink(state: AuthoringState, link: Link) {
-    return isDeletedByItself(state, link) || isSourceOrTargetDeleted(state, link);
-}
-
-function isDeletedByItself(state: AuthoringState, link: Link): boolean {
-    if (!(link instanceof RelationLink)) {
-        return false;
-    }
-    const event = state.links.get(link.data);
-    return event?.deleted || false;
-}
-
-function isSourceOrTargetDeleted(state: AuthoringState, link: Link): boolean {
-    if (!(link instanceof RelationLink)) {
-        return false;
-    }
-    const sourceEvent = state.elements.get(link.data.sourceId);
-    const targetEvent = state.elements.get(link.data.targetId);
-    return (
-        sourceEvent?.deleted ||
-        targetEvent?.deleted ||
-        false
     );
 }

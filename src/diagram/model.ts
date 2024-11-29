@@ -3,7 +3,6 @@ import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '..
 
 import { LinkTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
-import { getUriLocalName } from '../data/utils';
 
 import { LabelLanguageSelector } from './customization';
 import {
@@ -592,5 +591,5 @@ function defaultSelectLabel(
 
 function resolveLabel(label: Rdf.Literal | undefined, fallbackIri: string): string {
     if (label) { return label.value; }
-    return getUriLocalName(fallbackIri) || fallbackIri;
+    return Rdf.getLocalName(fallbackIri) || fallbackIri;
 }

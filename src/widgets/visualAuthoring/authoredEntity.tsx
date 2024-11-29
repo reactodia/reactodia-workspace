@@ -78,18 +78,15 @@ export function useAuthoredEntity(
         if (!entity) {
             setAllowedActions(AllowedActions.None);
         } else if (shouldLoad) {
-            if (!editor.metadataApi || (authoringEvent && authoringEvent.deleted)) {
+            if (!editor.metadataProvider || (authoringEvent && authoringEvent.type === 'entityDelete')) {
                 setAllowedActions(AllowedActions.None);
             } else {
                 mapAbortedToNull(
-                    Promise.all([
-                        editor.metadataApi.canEditElement(entity, cancellation.signal),
-                        editor.metadataApi.canDeleteElement(entity, cancellation.signal),
-                    ]),
+                    editor.metadataProvider.canModifyEntity(entity, {signal: cancellation.signal}),
                     cancellation.signal
-                ).then(result => {
-                    if (result === null) { return; }
-                    const [canEdit, canDelete] = result;
+                ).then(canModify => {
+                    if (canModify === null) { return; }
+                    const {canEdit, canDelete} = canModify;
                     setAllowedActions(
                         (canEdit ? AllowedActions.Edit : AllowedActions.None) |
                         (canDelete ? AllowedActions.Delete : AllowedActions.None)
@@ -105,7 +102,8 @@ export function useAuthoredEntity(
     }
 
     return {
-        editedIri: authoringEvent ? authoringEvent.newIri : undefined,
+        editedIri: authoringEvent && authoringEvent.type === 'entityChange'
+            ? authoringEvent.newIri : undefined,
         canEdit: allowedActions === undefined
             ? undefined : Boolean(allowedActions & AllowedActions.Edit),
         canDelete: allowedActions === undefined

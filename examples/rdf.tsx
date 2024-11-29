@@ -3,7 +3,7 @@ import * as N3 from 'n3';
 
 import * as Reactodia from '../src/workspace';
 
-import { ExampleMetadataApi, ExampleValidationApi } from './resources/exampleMetadataApi';
+import { ExampleMetadataProvider, ExampleValidationProvider } from './resources/exampleMetadata';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
@@ -19,7 +19,8 @@ function RdfExample() {
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model} = context;
+        const {model, editor} = context;
+        editor.setAuthoringMode(true);
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
@@ -41,15 +42,15 @@ function RdfExample() {
         }
     }, [turtleData]);
 
-    const [metadataApi] = React.useState(() => new ExampleMetadataApi());
-    const [validationApi] = React.useState(() => new ExampleValidationApi());
+    const [metadataProvider] = React.useState(() => new ExampleMetadataProvider());
+    const [validationProvider] = React.useState(() => new ExampleValidationProvider());
     const [renameLinkProvider] = React.useState(() => new RenameSubclassOfProvider());
 
     return (
         <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
-            metadataApi={metadataApi}
-            validationApi={validationApi}
+            metadataProvider={metadataProvider}
+            validationProvider={validationProvider}
             renameLinkProvider={renameLinkProvider}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>

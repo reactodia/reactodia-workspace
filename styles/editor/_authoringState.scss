@@ -1,5 +1,5 @@
 .reactodia-authoring-state {
-  &__item-error {
+  &__item-validation {
     align-self: flex-end;
     margin: 0px 5px;
     display: flex;
@@ -7,12 +7,27 @@
     cursor: help;
   }
 
-  &__item-error-icon {
+  &__item-validation-icon {
+    height: 15px;
+    width: 17px;
+  }
+
+  &--severity-info &__item-validation-icon {
+    background: cornflowerblue;
+    -webkit-mask: url("@codicons/info.svg");
+    mask: url("@codicons/info.svg");
+  }
+
+  &--severity-warning &__item-validation-icon {
+    background: orange;
+    -webkit-mask: url("@codicons/warning.svg");
+    mask: url("@codicons/warning.svg");
+  }
+
+  &--severity-error &__item-validation-icon {
     background: red;
     -webkit-mask: url("@codicons/warning.svg");
     mask: url("@codicons/warning.svg");
-    height: 15px;
-    width: 17px;
   }
 
   &__state-label {

@@ -148,6 +148,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
     componentWillUnmount() {
         this.listener.stopListening();
         this.delayedUpdate.dispose();
+        this.delayedMeasureLabels.dispose();
     }
 
     private scheduleUpdateAll = () => {

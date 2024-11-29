@@ -1,14 +1,17 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { EventObserver } from '../../coreUtils/events';
+
+import type { ValidationSeverity } from '../../data/validationProvider';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import { Vector } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import { ElementChange } from '../../editor/authoringState';
+import { AuthoredEntity } from '../../editor/authoringState';
 import { EntityElement } from '../../editor/dataElements';
-import { ElementValidation, LinkValidation } from '../../editor/validation';
+import { ElementValidation, LinkValidation, getMaxSeverity } from '../../editor/validation';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -34,7 +37,7 @@ interface ElementDecoratorInnerProps extends ElementDecoratorProps {
 }
 
 interface State {
-    state?: ElementChange;
+    state?: AuthoredEntity;
     validation?: ElementValidation;
     isTemporary?: boolean;
 }
@@ -112,7 +115,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
                     fill='url(#stripe-pattern)' />
             ];
         }
-        if (state && state.deleted) {
+        if (state && state.type === 'entityDelete') {
             const right = width;
             const bottom = height;
             return (
@@ -126,81 +129,81 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         return null;
     }
 
-    private renderErrorIcon(title: string, validation: LinkValidation | ElementValidation) {
-        return <div className={`${CLASS_NAME}__item-error`} title={title}>
-            {validation.loading
-                ? <HtmlSpinner width={15} height={17} />
-                : <div className={`${CLASS_NAME}__item-error-icon`} />}
-            {(!validation.loading && validation.errors.length > 0)
-                ? validation.errors.length : undefined}
-        </div>;
+    private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation) {
+        const severity = getMaxSeverity(validation.items);
+        return (
+            <div className={classnames(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
+                title={title}>
+                {validation.loading
+                    ? <HtmlSpinner width={15} height={17} />
+                    : <div className={`${CLASS_NAME}__item-validation-icon`} />}
+                {(!validation.loading && validation.items.length > 0)
+                    ? validation.items.length : undefined}
+            </div>
+        );
     }
 
-    private renderElementErrors() {
+    private renderElementValidations() {
         const {workspace: {model}} = this.props;
         const {validation} = this.state;
         if (!validation) {
             return null;
         }
-        const title = validation.errors.map(error => {
-            if (error.propertyType) {
-                const propertyType = model.getPropertyType(error.propertyType);
-                const source = model.locale.formatLabel(propertyType?.data?.label, error.propertyType);
-                return `${source}: ${error.message}`;
+        const title = validation.items.map(item => {
+            if (item.propertyType) {
+                const propertyType = model.getPropertyType(item.propertyType);
+                const source = model.locale.formatLabel(propertyType?.data?.label, item.propertyType);
+                return `${source}: ${item.message}`;
             } else {
-                return error.message;
+                return item.message;
             }
         }).join('\n');
 
-        return this.renderErrorIcon(title, validation);
+        return this.renderValidationIcon(title, validation);
     }
 
     private renderElementState() {
         const {target, workspace: {editor}} = this.props;
         const {state} = this.state;
         if (state) {
-            const onCancel = () => editor.discardChange(state);
-
-            let renderedState: React.ReactElement<any> | undefined;
             let statusText: string;
             let title: string;
 
-            if (state.deleted) {
-                statusText = 'Delete';
-                title = 'Revert deletion of the element';
-            } else if (!state.before) {
-                statusText = 'New';
-                title = 'Revert creation of the element';
-            } else {
-                statusText = 'Change';
-                title = 'Revert all changes in properties of the element';
+            switch (state.type) {
+                case 'entityAdd': {
+                    statusText = 'New';
+                    title = 'Revert creation of the element';
+                    break;
+                }
+                case 'entityChange': {
+                    statusText = 'Change';
+                    title = 'Revert all changes in properties of the element';
+                    break;
+                }
+                case 'entityDelete': {
+                    statusText = 'Delete';
+                    title = 'Revert deletion of the element';
+                    break;
+                }
             }
 
-            if (statusText && title) {
-                renderedState = (
-                    <span>
-                        <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
-                        [<span className={`${CLASS_NAME}__state-cancel`}
-                            onClick={onCancel} title={title}>cancel</span>]
-                    </span>
-                );
-            }
-
-            const renderedErrors = this.renderElementErrors();
-            if (renderedState || renderedErrors) {
-                return (
-                    <div className={`${CLASS_NAME}__state-indicator`}
-                        key={target.id}
-                        style={{left: 0, top: 0}}>
-                        <div className={`${CLASS_NAME}__state-indicator-container`}>
-                            <div className={`${CLASS_NAME}__state-indicator-body`}>
-                                {renderedState}
-                                {renderedErrors}
-                            </div>
+            return (
+                <div className={`${CLASS_NAME}__state-indicator`}
+                    key={target.id}
+                    style={{left: 0, top: 0}}>
+                    <div className={`${CLASS_NAME}__state-indicator-container`}>
+                        <div className={`${CLASS_NAME}__state-indicator-body`}>
+                            <span>
+                                <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
+                                [<span className={`${CLASS_NAME}__state-cancel`}
+                                    onClick={() => editor.discardChange(state)}
+                                    title={title}>cancel</span>]
+                            </span>
+                            {this.renderElementValidations()}
                         </div>
                     </div>
-                );
-            }
+                </div>
+            );
         }
         return null;
     }
@@ -232,5 +235,18 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
                 {state}
             </div>
         );
+    }
+}
+
+function getSeverityClass(severity: ValidationSeverity): string | undefined {
+    switch (severity) {
+        case 'info':
+            return `${CLASS_NAME}--severity-info`;
+        case 'warning':
+            return `${CLASS_NAME}--severity-warning`;
+        case 'error':
+            return `${CLASS_NAME}--severity-error`;
+        default:
+            return undefined;
     }
 }

@@ -10,7 +10,7 @@ import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelecto
 
 const CLASS_NAME = 'reactodia-edit-form';
 
-export interface EditLinkFormProps {
+export interface EditRelationFormProps {
     link: LinkModel;
     source: ElementModel;
     target: ElementModel;
@@ -24,13 +24,13 @@ interface State {
     isValidating?: boolean;
 }
 
-export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
+export class EditRelationForm extends React.Component<EditRelationFormProps, State> {
     static contextType = WorkspaceContext;
     declare readonly context: WorkspaceContext;
     
     private validationCancellation = new AbortController();
 
-    constructor(props: EditLinkFormProps, context: any) {
+    constructor(props: EditRelationFormProps, context: any) {
         super(props, context);
         this.state = {
             linkValue: {
@@ -45,7 +45,7 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
         this.validate();
     }
 
-    componentDidUpdate(prevProps: EditLinkFormProps, prevState: State) {
+    componentDidUpdate(prevProps: EditRelationFormProps, prevState: State) {
         const {linkValue} = this.state;
         if (!equalLinks(linkValue.value.link, prevState.linkValue.value.link)) {
             this.validate();
@@ -68,7 +68,12 @@ export class EditLinkForm extends React.Component<EditLinkFormProps, State> {
         this.validationCancellation = new AbortController();
         const signal = this.validationCancellation.signal;
 
-        validateLinkType(value.link, originalLink, this.context).then(error => {
+        validateLinkType(
+            value.link,
+            originalLink,
+            this.context,
+            signal,
+        ).then(error => {
             if (signal.aborted) { return; }
             this.setState(({linkValue}) => ({
                 linkValue: {...linkValue, ...error, validated: true},

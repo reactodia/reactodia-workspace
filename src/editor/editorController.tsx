@@ -1,7 +1,7 @@
 import { Events, EventSource, EventObserver, EventTrigger, PropertyChange } from '../coreUtils/events';
 
-import { MetadataApi } from '../data/metadataApi';
-import { ValidationApi } from '../data/validationApi';
+import { MetadataProvider } from '../data/metadataProvider';
+import { ValidationProvider } from '../data/validationProvider';
 import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
 
 import { Element, Link } from '../diagram/elements';
@@ -11,7 +11,7 @@ import { GraphStructure } from '../diagram/model';
 import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 
 import {
-    AuthoringState, AuthoringKind, AuthoringEvent, TemporaryState,
+    AuthoringState, AuthoringEvent, TemporaryState,
 } from './authoringState';
 import { DataDiagramModel } from './dataDiagramModel';
 import {
@@ -24,8 +24,8 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 export interface EditorProps {
     readonly model: DataDiagramModel;
     readonly authoringCommands: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
-    readonly metadataApi?: MetadataApi;
-    readonly validationApi?: ValidationApi;
+    readonly metadataProvider?: MetadataProvider;
+    readonly validationProvider?: ValidationProvider;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface EditorEvents {
     /**
      * Triggered on `inAuthoringMode` property change.
      */
-    changeMode: { readonly source: EditorController };
+    changeMode: PropertyChange<EditorController, boolean>;
     /**
      * Triggered on `authoringState` property change.
      */
@@ -70,8 +70,9 @@ export class EditorController {
     private readonly _authoringCommands:
         Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
 
-    private _metadataApi: MetadataApi | undefined;
-    private _validationApi: ValidationApi | undefined;
+    private _inAuthoringMode = false;
+    private _metadataProvider: MetadataProvider | undefined;
+    private _validationProvider: ValidationProvider | undefined;
     private _authoringState = AuthoringState.empty;
     private _validationState = ValidationState.empty;
     private _temporaryState = TemporaryState.empty;
@@ -80,11 +81,11 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, authoringCommands, metadataApi, validationApi} = props;
+        const {model, authoringCommands, metadataProvider, validationProvider} = props;
         this.model = model;
         this._authoringCommands = authoringCommands;
-        this._metadataApi = metadataApi;
-        this._validationApi = validationApi;
+        this._metadataProvider = metadataProvider;
+        this._validationProvider = validationProvider;
 
         this.listener.listen(this.events, 'changeValidationState', e => {
             for (const element of this.model.elements) {
@@ -122,56 +123,40 @@ export class EditorController {
     }
 
     /**
-     * Returns `true` if the diagram editor is in the graph authoring mode
-     * (i.e. has `metadataApi` set); otherwise `false`.
+     * Returns `true` if the editor is in the graph authoring mode;
+     * otherwise `false`.
      */
     get inAuthoringMode(): boolean {
-        return Boolean(this._metadataApi);
+        return this._inAuthoringMode && Boolean(this._metadataProvider);
     }
 
     /**
-     * Current strategy for the graph authoring mode.
-     */
-    get metadataApi(): MetadataApi | undefined {
-        return this._metadataApi;
-    }
-    /**
-     * Sets the strategy for the graph authoring mode.
+     * Toggles the graph authoring mode for the editor.
      *
-     * If set to a non-`undefined` value, the diagram editor switches to
-     * the graph authoring mode.
+     * Does nothing if `metadataProvider` is not set.
      */
-    setMetadataApi(value: MetadataApi | undefined): void {
-        const previous = this._metadataApi;
-        if (value === previous) { return; }
-        this._metadataApi = value;
-        if (Boolean(value) !== Boolean(previous)) {
-            // authoring mode changed
-            this.source.trigger('changeMode', {source: this});
-        }
-    }
-
-    /**
-     * Current strategy to validate data changes from the graph authoring.
-     */
-    get validationApi(): ValidationApi | undefined {
-        return this._validationApi;
-    }
-    /**
-     * Sets the strategy to validate data changes from the graph authoring.
-     *
-     * When changed, causes a re-validation of all data changes in the graph.
-     */
-    setValidationApi(value: ValidationApi | undefined): void {
-        const previous = this._validationApi;
-        if (value === previous) {
+    setAuthoringMode(value: boolean): void {
+        const previous = this._inAuthoringMode;
+        const next = value && Boolean(this._metadataProvider);
+        if (next === previous) {
             return;
         }
-        this._validationApi = value;
-        this.setValidationState(ValidationState.empty);
-        if (this._validationApi) {
-            this.validateChangedFrom(AuthoringState.empty);
-        }
+        this._inAuthoringMode = next;
+        this.source.trigger('changeMode', {source: this, previous});
+    }
+
+    /**
+     * Provides strategy for the graph authoring mode.
+     */
+    get metadataProvider(): MetadataProvider | undefined {
+        return this._metadataProvider;
+    }
+    
+    /**
+     * Provides strategy to validate data changes from the graph authoring.
+     */
+    get validationProvider(): ValidationProvider | undefined {
+        return this._validationProvider;
     }
 
     /**
@@ -233,7 +218,7 @@ export class EditorController {
     }
 
     private validateChangedFrom(previous: AuthoringState): void {
-        if (!this.validationApi) {
+        if (!this.validationProvider) {
             return;
         }
         const changedElements = changedElementsToValidate(
@@ -241,9 +226,19 @@ export class EditorController {
             this.authoringState,
             this.model
         );
+        this.revalidateEntities(changedElements);
+    }
+
+    /**
+     * Forces re-validation for the specified entities.
+     */
+    revalidateEntities(entities: ReadonlySet<ElementIri>): void {
+        if (!this.validationProvider) {
+            return;
+        }
         validateElements(
-            changedElements,
-            this.validationApi,
+            entities,
+            this.validationProvider,
             this.model,
             this,
             this.cancellation.signal
@@ -295,7 +290,7 @@ export class EditorController {
                 this.model.removeElement(item.id);
             } else if (item instanceof Link) {
                 for (const relation of iterateRelationsOf(item)) {
-                    if (AuthoringState.isNewLink(this.authoringState, relation)) {
+                    if (AuthoringState.isAddedRelation(this.authoringState, relation)) {
                         this.deleteRelation(relation);
                     }
                 }
@@ -312,7 +307,10 @@ export class EditorController {
         }
 
         if (discardedEntities.size > 0) {
-            const newState = AuthoringState.deleteNewLinksConnectedToElements(this.authoringState, discardedEntities);
+            const newState = AuthoringState.discardAddedRelations(
+                this.authoringState,
+                discardedEntities
+            );
             this.setAuthoringState(newState);
         }
 
@@ -332,12 +330,12 @@ export class EditorController {
 
         if (options.temporary) {
             this.setTemporaryState(
-                TemporaryState.addElement(this.temporaryState, element.data)
+                TemporaryState.addEntity(this.temporaryState, element.data)
             );
             batch.discard();
         } else {
             this.setAuthoringState(
-                AuthoringState.addElement(this._authoringState, element.data)
+                AuthoringState.addEntity(this._authoringState, element.data)
             );
             batch.store();
         }
@@ -361,10 +359,10 @@ export class EditorController {
 
         const batch = this.model.history.startBatch('Edit entity');
 
-        const newState = AuthoringState.changeElement(this._authoringState, oldData, newData);
+        const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
         const event = newState.elements.get(targetIri) || newState.elements.get(newData.id);
-        this.model.history.execute(changeEntityData(this.model, targetIri, event!.after));
+        this.model.history.execute(changeEntityData(this.model, targetIri, event!.data));
         this.setAuthoringState(newState);
 
         batch.store();
@@ -392,7 +390,7 @@ export class EditorController {
         for (const element of elements) {
             this.removeRelationsFromLinks(
                 this.model.getElementLinks(element),
-                relation => AuthoringState.isNewLink(state, relation)
+                relation => AuthoringState.isAddedRelation(state, relation)
             );
         }
 
@@ -400,7 +398,7 @@ export class EditorController {
         if (event) {
             this.discardChange(event);
         }
-        this.setAuthoringState(AuthoringState.deleteElement(state, oldData));
+        this.setAuthoringState(AuthoringState.deleteEntity(state, oldData));
         batch.store();
     }
 
@@ -428,12 +426,12 @@ export class EditorController {
         if (hasRelationOnDiagram(this.model, base.data)) {
             if (options.temporary) {
                 this.setTemporaryState(
-                    TemporaryState.addLink(this.temporaryState, base.data)
+                    TemporaryState.addRelation(this.temporaryState, base.data)
                 );
                 batch.discard();
             } else {
                 this.setAuthoringState(
-                    AuthoringState.addLink(this._authoringState, base.data)
+                    AuthoringState.addRelation(this._authoringState, base.data)
                 );
                 batch.store();
             }
@@ -454,14 +452,14 @@ export class EditorController {
         if (equalLinks(oldData, newData)) {
             this.model.history.execute(changeRelationData(this.model, oldData, newData));
             this.setAuthoringState(
-                AuthoringState.changeLink(this._authoringState, oldData, newData)
+                AuthoringState.changeRelation(this._authoringState, oldData, newData)
             );
         } else {
             let newState = this._authoringState;
-            newState = AuthoringState.deleteLink(newState, oldData);
-            newState = AuthoringState.addLink(newState, newData);
+            newState = AuthoringState.deleteRelation(newState, oldData);
+            newState = AuthoringState.addRelation(newState, newData);
 
-            if (AuthoringState.isNewLink(this._authoringState, oldData)) {
+            if (AuthoringState.isAddedRelation(this._authoringState, oldData)) {
                 this.removeRelationsFromLinks(
                     this.model.links,
                     relation => equalLinks(relation, oldData)
@@ -518,12 +516,12 @@ export class EditorController {
      */
     deleteRelation(model: LinkModel): void {
         const state = this.authoringState;
-        if (AuthoringState.isDeletedLink(state, model)) {
+        if (AuthoringState.isDeletedRelation(state, model)) {
             return;
         }
         const batch = this.model.history.startBatch('Delete link');
-        const newState = AuthoringState.deleteLink(state, model);
-        if (AuthoringState.isNewLink(state, model)) {
+        const newState = AuthoringState.deleteRelation(state, model);
+        if (AuthoringState.isAddedRelation(state, model)) {
             this.removeRelationsFromLinks(
                 this.model.links,
                 relation => equalLinks(relation, model)
@@ -576,12 +574,12 @@ export class EditorController {
         for (const cell of cells) {
             if (cell instanceof EntityElement) {
                 if (temporaryState.elements.has(cell.iri)) {
-                    nextTemporaryState = TemporaryState.deleteElement(nextTemporaryState, cell.data);
+                    nextTemporaryState = TemporaryState.removeEntity(nextTemporaryState, cell.data);
                     this.model.removeElement(cell.id);
                 }
             } else if (cell instanceof RelationLink) {
                 if (temporaryState.links.has(cell.data)) {
-                    nextTemporaryState = TemporaryState.deleteLink(nextTemporaryState, cell.data);
+                    nextTemporaryState = TemporaryState.removeRelation(nextTemporaryState, cell.data);
                     this.model.removeLink(cell.id);
                 }
             }
@@ -602,34 +600,35 @@ export class EditorController {
         if (newState === this._authoringState) { return; }
 
         const batch = this.model.history.startBatch('Discard change');
-        if (event.type === AuthoringKind.ChangeElement) {
-            if (event.deleted) {
-                /* nothing */
-            } else if (event.before) {
-                this.model.history.execute(
-                    changeEntityData(this.model, event.after.id, event.before)
-                );
-            } else {
-                for (const element of findEntities(this.model, event.after.id)) {
+        switch (event.type) {
+            case 'entityAdd': {
+                for (const element of findEntities(this.model, event.data.id)) {
                     if (element instanceof EntityElement) {
                         this.model.removeElement(element.id);
                     } else if (element instanceof EntityGroup) {
-                        this.discardItemFromGroup(element, event.after.id);
+                        this.discardItemFromGroup(element, event.data.id);
                     }
                 }
+                break;
             }
-        } else if (event.type === AuthoringKind.ChangeLink) {
-            if (event.deleted) {
-                /* nothing */
-            } else if (event.before) {
+            case 'entityChange': {
                 this.model.history.execute(
-                    changeRelationData(this.model, event.after, event.before)
+                    changeEntityData(this.model, event.data.id, event.before)
                 );
-            } else {
+                break;
+            }
+            case 'relationAdd': {
                 this.removeRelationsFromLinks(
                     this.model.links,
-                    relation => equalLinks(relation, event.after)
+                    relation => equalLinks(relation, event.data)
                 );
+                break;
+            }
+            case 'relationChange': {
+                this.model.history.execute(
+                    changeRelationData(this.model, event.data, event.before)
+                );
+                break;
             }
         }
         this.setAuthoringState(newState);

@@ -78,21 +78,44 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 
     private async fetchPossibleLinkTypes() {
-        const {model, editor: {metadataApi}} = this.context;
+        const {model, editor: {metadataProvider}} = this.context;
         const {source, target} = this.props;
-        if (!metadataApi) {
+        if (!metadataProvider) {
             return;
         }
-        const linkTypes = await mapAbortedToNull(
-            metadataApi.possibleLinkTypes(source, target, this.cancellation.signal),
+        const connections = await mapAbortedToNull(
+            metadataProvider.canConnect(
+                source,
+                target,
+                undefined,
+                {signal: this.cancellation.signal}
+            ),
             this.cancellation.signal
         );
-        if (linkTypes === null) { return; }
+        if (connections === null) {
+            return;
+        }
+
+        const inLinkSet = new Set<LinkTypeIri>();
+        const outLinkSet = new Set<LinkTypeIri>();
+        for (const {inLinks, outLinks} of connections) {
+            for (const linkType of inLinks) {
+                inLinkSet.add(linkType);
+            }
+            for (const linkType of outLinks) {
+                outLinkSet.add(linkType);
+            }
+        }
+
         const dataLinkTypes: DirectedDataLinkType[] = [];
-        linkTypes.forEach(({linkTypeIri, direction}) => {
-            dataLinkTypes.push({iri: linkTypeIri, direction});
-        });
+        for (const linkType of outLinkSet) {
+            dataLinkTypes.push({iri: linkType, direction: 'out'});
+        }
+        for (const linkType of inLinkSet) {
+            dataLinkTypes.push({iri: linkType, direction: 'in'});
+        }
         dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model));
+
         this.setState({dataLinkTypes: dataLinkTypes});
         this.listenToLinkLabels(dataLinkTypes.map(type => model.createLinkType(type.iri)));
     }
@@ -143,7 +166,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         );
         return (
             <div className={`${CLASS_NAME}__control-row`}>
-                <label>Link Type</label>
+                <label>Relation Type</label>
                 {
                     dataLinkTypes ? (
                         <select className='reactodia-form-control'
@@ -151,7 +174,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                             value={value}
                             onChange={this.onChangeType}
                             disabled={disabled}>
-                            <option value={-1} disabled={true}>Select link type</option>
+                            <option value={-1} disabled={true}>Select relation type</option>
                             {dataLinkTypes.map(this.renderPossibleLinkType)}
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
@@ -182,30 +205,33 @@ function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel) {
     };
 }
 
-export function validateLinkType(
+export async function validateLinkType(
     currentLink: LinkModel,
     originalLink: LinkModel,
-    {model, editor}: WorkspaceContext
+    {model, editor}: WorkspaceContext,
+    signal: AbortSignal | undefined
 ): Promise<Pick<LinkValue, 'error' | 'allowChange'>> {
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
-        return Promise.resolve({error: 'Required.', allowChange: true});
+        return {error: 'Required.', allowChange: true};
     }
     if (equalLinks(currentLink, originalLink)) {
-        return Promise.resolve({error: undefined, allowChange: true});
+        return {error: undefined, allowChange: true};
     }
     if (isRelationOnDiagram(model, currentLink) && !editor.temporaryState.links.has(currentLink)) {
-        return Promise.resolve({error: 'The link already exists.', allowChange: false});
+        return {error: 'The relation already exists.', allowChange: false};
     }
-    return model.dataProvider.links({
+
+    const links = await model.dataProvider.links({
         primary: [currentLink.sourceId],
         secondary: [currentLink.targetId],
         linkTypeIds: [currentLink.linkTypeId],
-    }).then((links): Pick<LinkValue, 'error' | 'allowChange'> => {
-        const alreadyExists = links.some(link => equalLinks(link, currentLink));
-        return alreadyExists
-            ? {error: 'The link already exists.', allowChange: false}
-            : {error: undefined, allowChange: true};
+        signal,
     });
+    if (links.some(link => equalLinks(link, currentLink))) {
+        return {error: 'The relation already exists.', allowChange: false};
+    }
+    
+    return {error: undefined, allowChange: true};
 }
 
 function isRelationOnDiagram(model: DataDiagramModel, target: LinkKey): boolean {
