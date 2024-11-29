@@ -115,7 +115,7 @@ export function Selection(props: SelectionProps) {
                 const requireShift = e.source.pointerMode !== 'selection';
                 const allowSelection = e.sourceEvent.shiftKey === requireShift;
                 if (
-                    (allowSelection || model.selection.length >= 1) &&
+                    (allowSelection || model.selection.length > 1) &&
                     e.target instanceof Element
                 ) {
                     e.sourceEvent.preventDefault();

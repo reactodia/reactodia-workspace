@@ -24,6 +24,10 @@
     }
   }
 
+  &--panning {
+    cursor: grabbing;
+  }
+
   &__widgets {
     position: absolute;
     left: 0;

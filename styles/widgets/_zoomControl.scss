@@ -30,4 +30,10 @@
       @include icon("@images/zoom-to-fit.svg");
     }
   }
+
+  &__selection-mode-button {
+    &::before {
+      @include codicon("inspect");
+    }
+  }
 }
