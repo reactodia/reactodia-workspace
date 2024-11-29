@@ -14,15 +14,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add ability to dock viewport canvas widgets to any side/corner without style overrides:
   * **[Breaking]** Add `dock` (required), `dockOffsetX`, `dockOffsetY` props to `Navigator`, `Toolbar` and `ZoomControl` widgets.
 - Allow to track canvas viewport bounds on the page with `CanvasMetrics.getViewportPageRect()` and `CanvasEvents.resize`.
-- Add `VisualAuthoring` canvas widget to configure and provide implementation for visual graph authoring:
-  * **[Breaking]** Require `VisualAuthoring` widget in be in the canvas for visual graph authoring;
-  * **[Breaking]** Move authoring-related methods from `OverlayController` to `EditorController.authoringCommands`.
+- **[Experimental]** Update metadata and validation provider contracts:
+  * Rename providers to `MetadataProvider` and `ValidationProvider` for consistency;
+  * Re-organize `MetadataProvider` contract to reduce slightly different variations to get similar metadata;
+  * Support severity in validation result items (previously known as errors);
+  * Ignore metadata and validation provider changes after mount;
+  * Add separate method to toggle authoring mode: `EditorController.setAuthoringMode()`.
+  * Update `AuthoringState` and `TemporaryState`: use separate event types for added, changed and removed events;
+- **[Experimental]** Add `VisualAuthoring` canvas widget to configure and provide implementation for visual graph authoring:
+  * Require `VisualAuthoring` widget in be in the canvas for visual graph authoring;
+  * Move authoring-related methods from `OverlayController` to `EditorController.authoringCommands`.
+- Allow to switch canvas pointer mode with `ZoomControl`:
+  * Disabled by default, can be enabled via `showPointerModeToggle` option.
 - Expose `dialogType` option in `OverlayController.showDialog()` and `BuiltinDialogType` for built-in dialog types.
 
 ### Changed
 - Auto-collapse `Navigator` when there is not enough space in the canvas viewport.
 - Change `LinkTypesToolbox` to only use links on the diagram instead of requesting connected links from a data provider.
 - Display inline entity badges with its type style in `InstancesSearch` and `LinksToolbox`.
+- Change cursor to "grabbed" style when panning the canvas.
 - Improve default look for the overlay dialogs with a dedicated header with caption and close button:
   * Allow to disable dialog resize in one or both axes via `DialogStyleProps.resizableBy` prop.
 - Improve styles for `ToolbarLanguageSelector`: remove extra background and border.
@@ -32,6 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Links caching in `IndexedDbCachedProvider.links()` not working due to native `crypto.subtle` being available only in secure contexts (e.g. HTTPS).
 - `OverlayController.startTask()` spinner not positioned at the center of the canvas horizontally.
 - `ClassTree` becoming stuck at loading instead of displaying a error when initialization fails.
+- Avoid flicking selection when making a click on an already selected element when `Selection` widget is used.
+- Ignored `disabled` option for `LinkAction`.
+- React warning for update after unmount in `EditLayer` > `LinkLayer`;
 
 ## [0.26.1] - 2024-11-26
 ### Fixed
