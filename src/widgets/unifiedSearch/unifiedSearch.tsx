@@ -403,7 +403,7 @@ function SearchToggle(props: {
                 </button>
             ) : (
                 <div className={`${CLASS_NAME}__search-icon`}
-                    onClick={() => setExpanded(true)}
+                    onClick={() => inputRef.current?.focus()}
                 />
             )}
         </div>

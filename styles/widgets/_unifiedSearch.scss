@@ -49,7 +49,8 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     align-self: center;
   
     border: none;
-    background: none;  
+    background: none;
+    cursor: text;
 
     &::before {
       @include codicon("search");
