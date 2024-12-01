@@ -124,7 +124,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         updateElementDecorator();
 
         listener.listen(overlay.events, 'changeOpenedDialog', ({previous}) => {
-            if (previous) {
+            if (previous && previous.target) {
                 editor.removeTemporaryCells([previous.target]);
             }
         });

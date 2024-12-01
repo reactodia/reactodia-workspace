@@ -5,7 +5,7 @@ import * as Rdf from '../data/rdf/rdfModel';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
-const CLASS_NAME = 'reactodia-edit-form';
+const FORM_CLASS = 'reactodia-form';
 
 export interface EditEntityFormProps {
     entity: ElementModel;
@@ -40,7 +40,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         const propertyType = model.getPropertyType(key);
         const label = model.locale.formatLabel(propertyType?.data?.label, key);
         return (
-            <div key={key} className={`${CLASS_NAME}__form-row`}>
+            <div key={key} className={`${FORM_CLASS}__row`}>
                 <label>
                     {label}
                     {
@@ -140,22 +140,22 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
 
     render() {
         return (
-            <div className={CLASS_NAME}>
-                <div className={`reactodia-scrollable ${CLASS_NAME}__body`}>
-                    <div className={`${CLASS_NAME}__form-row`}>
+            <div className={FORM_CLASS}>
+                <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
+                    <div className={`${FORM_CLASS}__row`}>
                         {this.renderIri()}
                     </div>
-                    <div className={`${CLASS_NAME}__form-row`}>
+                    <div className={`${FORM_CLASS}__row`}>
                         {this.renderType()}
                     </div>
-                    <div className={`${CLASS_NAME}__form-row`}>
+                    <div className={`${FORM_CLASS}__row`}>
                         {this.renderLabel()}
                     </div>
                     {this.renderProperties()}
                 </div>
-                <div className={`${CLASS_NAME}__controls`}>
+                <div className={`${FORM_CLASS}__controls`}>
                     <button type='button'
-                        className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+                        className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={() => this.props.onApply(this.state.elementModel)}>
                         Apply
                     </button>

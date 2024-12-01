@@ -12,7 +12,7 @@ import { WorkspaceContext } from '../workspace/workspaceContext';
 import { ElementTypeSelector, ElementValue, validateElementType } from './elementTypeSelector';
 import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
 
-const CLASS_NAME = 'reactodia-edit-form';
+const FORM_CLASS = 'reactodia-form';
 
 export interface FindOrCreateEntityFormProps {
     source: EntityElement;
@@ -96,8 +96,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         const {elementValue, linkValue, isValidating} = this.state;
         const isValid = !elementValue.error && !linkValue.error;
         return (
-            <div className={CLASS_NAME}>
-                <div className={`${CLASS_NAME}__body`}>
+            <div className={FORM_CLASS}>
+                <div className={`${FORM_CLASS}__body`}>
                     <ElementTypeSelector source={source.data}
                         elementValue={elementValue}
                         onChange={newState => {
@@ -135,7 +135,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                         />
                     )}
                     {isValidating ? (
-                        <div className={`${CLASS_NAME}__progress`}>
+                        <div className={`${FORM_CLASS}__progress`}>
                             <ProgressBar state='loading'
                                 title='Validating selected element and link types'
                                 height={10}
@@ -143,8 +143,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                         </div>
                     ) : null}
                 </div>
-                <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+                <div className={`${FORM_CLASS}__controls`}>
+                    <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={this.onApply}
                         disabled={elementValue.loading || !isValid || isValidating}>
                         Apply

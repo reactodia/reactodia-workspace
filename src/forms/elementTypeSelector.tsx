@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
@@ -38,7 +39,8 @@ interface State {
     existingElements: ReadonlyArray<ElementModel>;
 }
 
-const CLASS_NAME = 'reactodia-edit-form';
+const CLASS_NAME = 'reactodia-element-selector';
+const FORM_CLASS = 'reactodia-form';
 
 export class ElementTypeSelector extends React.Component<ElementTypeSelectorProps, State> {
     static contextType = WorkspaceContext;
@@ -169,7 +171,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
             return <HtmlSpinner width={20} height={20} />;
         }
         return (
-            <div className={`${CLASS_NAME}__control-row`}>
+            <div className={`${FORM_CLASS}__control-row`}>
                 <label>Entity Type</label>
                 {
                     elementTypes ? (
@@ -184,7 +186,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }
-                {elementValue.error ? <span className={`${CLASS_NAME}__control-error`}>{elementValue.error}</span> : ''}
+                {elementValue.error ? <span className={`${FORM_CLASS}__control-error`}>{elementValue.error}</span> : ''}
             </div>
         );
     }
@@ -236,7 +238,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     render() {
         const {searchString} = this.state;
         return (
-            <div className={`${CLASS_NAME}__form-row ${CLASS_NAME}__element-selector`}>
+            <div className={classnames(`${FORM_CLASS}__row`, CLASS_NAME)}>
                 <div className={`${CLASS_NAME}__search`}>
                     <span className={`${CLASS_NAME}__search-icon`} />
                     <input className={`reactodia-form-control ${CLASS_NAME}__search-input`}

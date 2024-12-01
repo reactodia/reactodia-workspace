@@ -1,6 +1,6 @@
 @import "../mixin/icons";
 
-.reactodia-edit-form {
+.reactodia-form {
   flex: auto;
   display: flex;
   flex-direction: column;
@@ -18,22 +18,41 @@
     padding: 8px;
     text-align: right;
     flex: 0 0 auto;
+
+    button + button {
+      margin-left: 5px;
+    }
   }
 
-  &__apply-button {
-    margin-right: 5px;
-  }
-
-  &__form-row {
+  &__row {
     display: block;
     margin-bottom: 8px;
   }
 
-  &__element-selector {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+  &__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
   }
+
+  &__control-row {
+    position: relative;
+    padding-bottom: 18px;
+  }
+
+  &__control-error {
+    color: red;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+}
+
+.reactodia-element-selector {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 
   &__search {
     flex-shrink: 0;
@@ -88,24 +107,5 @@
     &:after {
       right: 100%;
     }
-  }
-
-  &__progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-  }
-
-  &__control-row {
-    position: relative;
-    padding-bottom: 18px;
-  }
-
-  &__control-error {
-    color: red;
-    position: absolute;
-    bottom: 0;
-    left: 0;
   }
 }

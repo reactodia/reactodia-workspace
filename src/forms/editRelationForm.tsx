@@ -8,7 +8,7 @@ import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
 
-const CLASS_NAME = 'reactodia-edit-form';
+const FORM_CLASS = 'reactodia-form';
 
 export interface EditRelationFormProps {
     link: LinkModel;
@@ -87,8 +87,8 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
         const {linkValue, isValidating} = this.state;
         const isValid = !linkValue.error;
         return (
-            <div className={CLASS_NAME}>
-                <div className={`${CLASS_NAME}__body`}>
+            <div className={FORM_CLASS}>
+                <div className={`${FORM_CLASS}__body`}>
                     <LinkTypeSelector linkValue={linkValue}
                         source={source}
                         target={target}
@@ -97,7 +97,7 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
                         })}
                     />
                     {isValidating ? (
-                        <div className={`${CLASS_NAME}__progress`}>
+                        <div className={`${FORM_CLASS}__progress`}>
                             <ProgressBar state='loading'
                                 title='Validating selected link type'
                                 height={10}
@@ -105,8 +105,8 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
                         </div>
                     ) : null}
                 </div>
-                <div className={`${CLASS_NAME}__controls`}>
-                    <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+                <div className={`${FORM_CLASS}__controls`}>
+                    <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={() => this.props.onApply(linkValue.value.link)}
                         disabled={!isValid || isValidating}>
                         Apply
