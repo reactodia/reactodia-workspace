@@ -36,6 +36,10 @@ export interface BaseDefaultWorkspaceProps {
      */
     canvas?: CanvasProps;
     /**
+     * Additional widgets to pass as children to the `Canvas` component.
+     */
+    canvasWidgets?: ReadonlyArray<React.ReactElement>;
+    /**
      * Props for the `ConnectionMenu` canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
@@ -189,8 +193,9 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator,
-        visualAuthoring, zoomControl, menu, search, actions, mainToolbar, actionsToolbar,
+        canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
+        navigator, visualAuthoring, zoomControl,
+        menu, search, actions, mainToolbar, actionsToolbar,
         languages = [],
     } = props;
 
@@ -306,6 +311,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                         {actionsContent}
                     </Toolbar>
                 )}
+                {canvasWidgets}
             </Canvas>
         </WorkspaceRoot>
     );

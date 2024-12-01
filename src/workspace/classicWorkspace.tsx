@@ -80,8 +80,9 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
 export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     const {
         leftColumn, rightColumn,
-        canvas, connectionsMenu, dropOnCanvas, halo, haloLink, selection, navigator, zoomControl,
-        visualAuthoring, toolbar, classTree, instancesSearch, linkToolbox,
+        canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
+        navigator, zoomControl, visualAuthoring, toolbar,
+        classTree, instancesSearch, linkToolbox,
     } = props;
 
     const [connectionsMenuCommands] = React.useState(() =>
@@ -136,6 +137,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                         {navigator === null ? null : <Navigator dock='se' {...navigator} />}
                         {toolbar === null ? null : <ClassicToolbar dock='nw' {...toolbar} />}
                         {zoomControl === null ? null : <ZoomControl dock='sw' {...zoomControl} />}
+                        {canvasWidgets}
                     </Canvas>
                 </WorkspaceLayoutItem>
                 <WorkspaceLayoutColumn defaultSize={275}
