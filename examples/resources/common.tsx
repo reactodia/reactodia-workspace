@@ -66,7 +66,8 @@ export function ExampleToolbarMenu() {
             <Reactodia.ToolbarActionSave mode='layout'
                 onSelect={() => {
                     const diagram = model.exportLayout();
-                    window.location.hash = saveLayoutToLocalStorage(diagram);
+                    const layoutKey = saveLayoutToLocalStorage(diagram);
+                    setHashQueryParam('local-diagram', layoutKey);
                     window.location.reload();
                 }}>
                 Save diagram to local storage
@@ -90,11 +91,42 @@ export function ExampleToolbarMenu() {
     );
 }
 
-export function tryLoadLayoutFromLocalStorage(): Reactodia.SerializedDiagram | undefined {
-    if (window.location.hash.length > 1) {
+export function getHashQuery(): URLSearchParams | undefined {
+    const hash = window.location.hash;
+    if (hash.length > 1 && hash.includes('=')) {
         try {
-            const key = window.location.hash.substring(1);
-            const unparsedLayout = localStorage.getItem(key);
+            const hashQuery = new URLSearchParams(hash.substring(1));
+            return hashQuery;
+        } catch (e) {
+            /* ignore */
+        }
+    }
+    return undefined;
+}
+
+export function setHashQueryParam(paramName: string, paramValue: string | null): void {
+    const hashQuery = getHashQuery() ?? new URLSearchParams();
+    if (paramValue) {
+        hashQuery.set(paramName, paramValue);
+    } else {
+        hashQuery.delete(paramName);
+    }
+    window.location.hash = hashQuery.toString();
+}
+
+export function tryLoadLayoutFromLocalStorage(): Reactodia.SerializedDiagram | undefined {
+    let layoutKey: string | null = null;
+
+    const hashQuery = getHashQuery();
+    if (hashQuery) {
+        layoutKey = hashQuery.get('local-diagram');
+    } else if (window.location.hash.length > 1) {
+        layoutKey = window.location.hash.substring(1);
+    }
+
+    if (layoutKey) {
+        try {
+            const unparsedLayout = localStorage.getItem(layoutKey);
             const entry = unparsedLayout && JSON.parse(unparsedLayout);
             return entry;
         } catch (e) {
