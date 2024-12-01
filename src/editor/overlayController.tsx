@@ -13,7 +13,7 @@ import { DiagramModel } from '../diagram/model';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
-import { Dialog, DialogStyleProps } from '../widgets/dialog';
+import { Dialog, DialogProps, DialogStyleProps } from '../widgets/dialog';
 
 /** @hidden */
 export interface OverlayControllerProps {
@@ -40,7 +40,7 @@ export interface OpenedDialog {
     /**
      * Dialog target (anchor).
      */
-    readonly target: Element | Link;
+    readonly target?: Element | Link;
     /**
      * Well-known dialog type to check if a specific dialog is currently open.
      */
@@ -261,7 +261,7 @@ export class OverlayController {
         /**
          * Element or link to anchor dialog to.
          */
-        target: Element | Link;
+        target?: Element | Link;
         /**
          * Dialog style, placement and sizing options.
          */
@@ -299,14 +299,30 @@ export class OverlayController {
             onClose,
         };
 
-        const dialog = (
-            <Dialog {...style}
-                target={target}
-                onHide={() => this.hideDialog()}>
-                {content}
-            </Dialog>
-        );
-        this.view.setCanvasWidget('dialog', {element: dialog, attachment: 'overElements'});
+        const onHide = () => this.hideDialog();
+        if (target) {
+            this.view.setCanvasWidget('dialog', {
+                element: (
+                    <Dialog {...style}
+                        target={target}
+                        onHide={onHide}>
+                        {content}
+                    </Dialog>
+                ),
+                attachment: 'overElements'
+            });
+        } else {
+            this.view.setCanvasWidget('dialog', {
+                element: (
+                    <ViewportDialog {...style}
+                        onHide={onHide}>
+                        {content}
+                    </ViewportDialog>
+                ),
+                attachment: 'viewport',
+            });
+        }
+        
         this.source.trigger('changeOpenedDialog', {
             source: this,
             previous: previousDialog,
@@ -374,6 +390,28 @@ function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
             <svg width={size.width} height={size.height}>
                 <Spinner position={position} {...spinnerProps} />
             </svg>
+        </div>
+    );
+}
+
+function ViewportDialog(props: DialogProps) {
+    const {...dialogProps} = props;
+    const viewportSize = useViewportSize();
+    // TODO: somehow use --reactodia-viewport-dock-margin
+    const margin = 10;
+    const maxSize = React.useMemo(
+        (): Size => ({
+            width: viewportSize.width - margin * 2,
+            height: viewportSize.height - margin * 2,
+        }),
+        [viewportSize, margin]
+    );
+    return (
+        <div className='reactodia-viewport-dialog-overlay'>
+            <Dialog {...dialogProps}
+                centered={true}
+                maxSize={maxSize}
+            />
         </div>
     );
 }

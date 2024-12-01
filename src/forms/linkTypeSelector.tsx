@@ -13,7 +13,7 @@ import { LinkType, iterateRelationsOf } from '../editor/dataElements';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
-const CLASS_NAME = 'reactodia-edit-form';
+const FORM_CLASS = 'reactodia-form';
 
 export interface Value {
     link: LinkModel;
@@ -165,7 +165,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             iri === linkValue.value.link.linkTypeId && direction === linkValue.value.direction
         );
         return (
-            <div className={`${CLASS_NAME}__control-row`}>
+            <div className={`${FORM_CLASS}__control-row`}>
                 <label>Relation Type</label>
                 {
                     dataLinkTypes ? (
@@ -179,7 +179,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }
-                {linkValue.error ? <span className={`${CLASS_NAME}__control-error`}>{linkValue.error}</span> : ''}
+                {linkValue.error ? <span className={`${FORM_CLASS}__control-error`}>{linkValue.error}</span> : ''}
             </div>
         );
     }

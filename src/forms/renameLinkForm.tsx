@@ -6,7 +6,7 @@ import { Link } from '../diagram/elements';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-const CLASS_NAME = 'reactodia-edit-form';
+const FORM_CLASS = 'reactodia-form';
 
 export interface RenameLinkFormProps {
     link: Link;
@@ -39,9 +39,9 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
     };
 
     return (
-        <div className={CLASS_NAME}>
-            <div className={`${CLASS_NAME}__body`}>
-                <div className={`${CLASS_NAME}__form-row`}>
+        <div className={FORM_CLASS}>
+            <div className={`${FORM_CLASS}__body`}>
+                <div className={`${FORM_CLASS}__row`}>
                     <label>Label</label>
                     <input className='reactodia-form-control'
                         placeholder={defaultLabel}
@@ -50,8 +50,8 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                     />
                 </div>
             </div>
-            <div className={`${CLASS_NAME}__controls`}>
-                <button className={`reactodia-btn reactodia-btn-primary ${CLASS_NAME}__apply-button`}
+            <div className={`${FORM_CLASS}__controls`}>
+                <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                     onClick={onApply}>
                     Apply
                 </button>

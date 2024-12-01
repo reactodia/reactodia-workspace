@@ -12,8 +12,9 @@ import {
 import { DraggableHandle } from '../workspace/draggableHandle';
 
 export interface DialogProps extends DialogStyleProps {
-    target: Element | Link;
+    target?: Element | Link;
     onHide: () => void;
+    centered?: boolean;
     children: React.ReactNode;
 }
 
@@ -53,6 +54,12 @@ export interface DialogStyleProps {
      * Dialog caption which is displayed in its header.
      */
     caption: string;
+    /**
+     * Whether the dialog should display a close button in the header.
+     *
+     * @default true
+     */
+    closable?: boolean;
     offset?: Vector;
     calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
 }
@@ -90,7 +97,9 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     componentDidMount() {
         this.listenToTarget(this.props.target);
-        this.focusOn();
+        if (this.props.target) {
+            this.focusOn();
+        }
     }
 
     componentDidUpdate(prevProps: DialogProps) {
@@ -195,7 +204,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         return {y: y + LINK_OFFSET, x: x + LINK_OFFSET};
     }
 
-    private calculatePosition(): Vector {
+    private calculatePosition(): Vector | undefined {
         const {target, offset = {x: 0, y: 0}, calculatePosition} = this.props;
         const {canvas} = this.context;
 
@@ -211,9 +220,9 @@ export class Dialog extends React.Component<DialogProps, State> {
             return this.calculatePositionForElement(target);
         } else if (target instanceof Link) {
             return this.calculatePositionForLink(target);
+        } else {
+            return undefined;
         }
-
-        throw new Error('Unknown target type');
     }
 
     private getViewPortScrollablePoints(): {min: Vector; max: Vector} {
@@ -226,7 +235,7 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     private getDialogScrollablePoints(): {min: Vector; max: Vector} {
         const {defaultSize = DEFAULT_SIZE} = this.props;
-        const {x, y} = this.calculatePosition();
+        const {x, y} = this.calculatePosition() ?? {x: 0, y: 0};
         const min = {
             x: x - FOCUS_OFFSET,
             y: y - FOCUS_OFFSET,
@@ -272,10 +281,10 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private onStartDragging = (e: React.MouseEvent<HTMLDivElement>) => {
-        const {defaultSize = DEFAULT_SIZE} = this.props;
+        const {defaultSize = DEFAULT_SIZE, maxSize = MAX_SIZE} = this.props;
         this.startSize = {
-            x: this.state.width || defaultSize.width,
-            y: this.state.height || defaultSize.height,
+            x: Math.min(this.state.width || defaultSize.width, maxSize.width),
+            y: Math.min(this.state.height || defaultSize.height, maxSize.height),
         };
     };
 
@@ -301,32 +310,33 @@ export class Dialog extends React.Component<DialogProps, State> {
         return Math.max(minWidth, Math.min(maxWidth, width));
     }
 
-    private onDragHandleBottom = (e: MouseEvent, dx: number, dy: number) => {
-        const height = this.calculateHeight(this.startSize!.y + dy);
-        this.setState({height});
-    };
-
-    private onDragHandleRight = (e: MouseEvent, dx: number) => {
-        const width = this.calculateWidth(this.startSize!.x + dx);
-        this.setState({width});
-    };
-
-    private onDragHandleBottomRight = (e: MouseEvent, dx: number, dy: number) => {
-        const width = this.calculateWidth(this.startSize!.x + dx);
-        const height = this.calculateHeight(this.startSize!.y + dy);
-        this.setState({width, height});
+    private onDragHandle = (e: MouseEvent, dx: number, dy: number) => {
+        const factor = this.props.centered ? 2 : 1;
+        const width = dx ? this.calculateWidth(this.startSize!.x + dx * factor) : undefined;
+        const height = dy ? this.calculateHeight(this.startSize!.y + dy * factor) : undefined;
+        this.setState(state => ({
+            width: width ?? state.width,
+            height: height ?? state.height,
+        }));
     };
 
     render() {
-        const {defaultSize = DEFAULT_SIZE, caption, onHide, resizableBy = 'all'} = this.props;
-        const {x, y} = this.calculatePosition();
-        const width = this.state.width || defaultSize.width;
-        const height = this.state.height || defaultSize.height;
+        const {
+            defaultSize = DEFAULT_SIZE,
+            maxSize = MAX_SIZE,
+            caption,
+            onHide,
+            resizableBy = 'all',
+            closable = true,
+        } = this.props;
+        const position = this.calculatePosition();
+        const width = this.state.width ?? defaultSize.width;
+        const height = this.state.height ?? defaultSize.height;
         const style: React.CSSProperties = {
-            top: y,
-            left: x,
-            width,
-            height,
+            left: position?.x,
+            top: position?.y,
+            width: Math.min(width, maxSize.width),
+            height: Math.min(height, maxSize.height),
         };
 
         return (
@@ -340,27 +350,31 @@ export class Dialog extends React.Component<DialogProps, State> {
                         title={caption}>
                         {caption}
                     </div>
-                    <button title='Close'
-                        className={classnames(
-                            'reactodia-btn',
-                            `${CLASS_NAME}__close-button`
-                        )}
-                        onClick={onHide}
-                    />
+                    {closable ? (
+                        <button title='Close'
+                            className={classnames(
+                                'reactodia-btn',
+                                `${CLASS_NAME}__close-button`
+                            )}
+                            onClick={onHide}
+                        />
+                    ) : null}
                 </div>
                 {this.props.children}
                 {resizableBy === 'y' || resizableBy === 'all' ? (
                     <DraggableHandle
                         className={`${CLASS_NAME}__bottom-handle`}
+                        axis='y'
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandleBottom}>
+                        onDragHandle={this.onDragHandle}>
                     </DraggableHandle>
                 ) : null}
                 {resizableBy === 'x' || resizableBy === 'all' ? (
                     <DraggableHandle
                         className={`${CLASS_NAME}__right-handle`}
+                        axis='x'
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandleRight}>
+                        onDragHandle={this.onDragHandle}>
                     </DraggableHandle>
                 ): null}
                 {resizableBy === 'none' ? null : (
@@ -368,7 +382,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                         className={`${CLASS_NAME}__bottom-right-handle`}
                         axis={resizableBy}
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandleBottomRight}>
+                        onDragHandle={this.onDragHandle}>
                     </DraggableHandle>
                 )}
             </div>
