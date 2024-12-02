@@ -11,6 +11,7 @@ const configurations = examplesConfiguration(
 );
 
 const SERVE_PORT = process.env.SERVE_PORT ? Number(process.env.SERVE_PORT) : 10555;
+const SERVE_HOST = process.env.SERVE_HOST || 'localhost';
 const SPARQL_ENDPOINT = process.env.SPARQL_ENDPOINT;
 const WIKIDATA_ENDPOINT = process.env.WIKIDATA_ENDPOINT
   ?? 'https://query.wikidata.org/sparql';
@@ -42,5 +43,5 @@ app.use(createProxyMiddleware('/wikidata**', {
 }));
 
 // eslint-disable-next-line no-console
-console.log(`Running Webpack server at http://localhost:${SERVE_PORT}`);
-const server = app.listen(SERVE_PORT, 'localhost');
+console.log(`Running Webpack server at host: "${SERVE_HOST}", port: ${SERVE_PORT}`);
+const server = app.listen(SERVE_PORT, SERVE_HOST);
