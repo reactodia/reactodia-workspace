@@ -305,6 +305,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 cancellation.signal
             );
         } catch (error) {
+            console.error(error);
             this.setState({fetchedGraph: {dataProvider, fetchError: error}});
             return;
         }

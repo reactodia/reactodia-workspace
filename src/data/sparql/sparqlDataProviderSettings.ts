@@ -604,8 +604,8 @@ const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     fullTextSearch: {
         prefix: '',
         queryPattern:
-        ` OPTIONAL {?inst \${dataLabelProperty} ?search1}
-        FILTER regex(COALESCE(str(?search1), str(?extractedLabel)), "\${text}", "i")
+        `?inst \${dataLabelProperty} ?search1
+        FILTER regex(COALESCE(str(?search1)), "\${text}", "i")
         BIND(0 as ?score)
 `,
         extractLabel: true,

@@ -710,7 +710,7 @@ export class SparqlDataProvider implements DataProvider {
             throw new Error('Cannot execute refElementLink filter without refElement');
         }
 
-        let outerProjection = '?inst ?class ?label ?blankType';
+        let outerProjection = '?inst ?class ?label';
         let innerProjection = '?inst';
 
         let refQueryPart = '';
@@ -1046,10 +1046,8 @@ function resolveTemplate(template: string, values: { [key: string]: string | und
     let result = template;
     for (const replaceKey in values) {
         if (!Object.prototype.hasOwnProperty.call(values, replaceKey)) { continue; }
-        const replaceValue = values[replaceKey];
-        if (replaceValue) {
-            result = result.replace(new RegExp('\\${' + replaceKey + '}', 'g'), replaceValue);
-        }
+        const replaceValue = values[replaceKey] || '';
+        result = result.replace(new RegExp('\\${' + replaceKey + '}', 'g'), replaceValue);
     }
     return result;
 }

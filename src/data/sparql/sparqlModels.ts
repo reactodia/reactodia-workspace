@@ -13,7 +13,7 @@ interface SparqlBlank {
 }
 
 interface SparqlLiteral {
-    type: 'literal';
+    type: 'literal' | 'typed-literal';
     value: string;
     datatype?: string;
     'xml:lang': string;
@@ -46,7 +46,8 @@ export function mapSparqlResponseIntoRdfJs(
                         mapped[key] = factory.blankNode(term.value);
                         break;
                     }
-                    case 'literal': {
+                    case 'literal':
+                    case 'typed-literal': {
                         mapped[key] = factory.literal(
                             term.value,
                             term['xml:lang'] ? term['xml:lang'] :
