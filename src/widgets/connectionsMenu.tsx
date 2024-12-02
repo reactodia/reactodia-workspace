@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/model';
 import { generate128BitID } from '../data/utils';
@@ -12,6 +13,7 @@ import { changeLinkTypeVisibility, placeElementsAroundTarget } from '../diagram/
 import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
+import { HtmlSpinner } from '../diagram/spinner';
 
 import { BuiltinDialogType } from '../editor/builtinDialogType';
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
@@ -19,7 +21,6 @@ import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataEle
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
-import { ProgressBar, ProgressState } from '../widgets/progressBar';
 
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
@@ -249,12 +250,14 @@ interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
 }
 
 interface MenuState {
-    readonly loadingState: ProgressState;
-    readonly connections?: ConnectionsData;
-    readonly objects?: ObjectsData;
-    readonly filterKey: string;
     readonly panel: 'connections' | 'objects';
-    readonly sortMode: SortMode;
+    readonly connectionFilterKey: string;
+    readonly connectionSortMode: SortMode;
+    readonly objectFilterKey: string;
+    readonly loadingState: 'none' | 'loading' | 'error' | 'completed';
+    readonly connections?: ConnectionsData;
+    readonly connectionSuggestions: ConnectionSuggestions;
+    readonly objects?: ObjectsData;
 }
 
 type SortMode = 'alphabet' | 'smart';
@@ -301,6 +304,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
 
+    private readonly delayedUpdateAll = new Debouncer();
+    private suggestionCancellation = new AbortController();
+
+    private linksScrolledListRef = React.createRef<HTMLUListElement>();
+    private linksScrollPosition: number | undefined;
+
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
         const {workspace: {model}} = this.props;
@@ -310,24 +319,66 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         };
         this.state = {
             loadingState: 'none',
-            filterKey: '',
             panel: 'connections',
-            sortMode: 'alphabet',
+            connectionFilterKey: '',
+            connectionSortMode: 'alphabet',
+            objectFilterKey: '',
+            connectionSuggestions: {
+                filterKey: null,
+                scores: new Map(),
+            },
         };
     }
 
     private updateAll = () => this.forceUpdate();
 
+    private scheduleUpdateAll = () => {
+        this.delayedUpdateAll.call(this.updateAll);
+    };
+
     componentDidMount() {
         const {workspace: {model}} = this.props;
-        this.handler.listen(model.events, 'changeLanguage', this.updateAll);
+        this.handler.listen(model.events, 'changeLanguage', this.scheduleUpdateAll);
 
         this.loadLinks();
+        this.loadSuggestions();
+    }
+
+    getSnapshotBeforeUpdate(
+        prevProps: ConnectionsMenuInnerProps,
+        prevState: MenuState
+    ): number {
+        if (this.state.panel === 'objects' && prevState.panel === 'connections') {
+            if (this.linksScrolledListRef.current) {
+                this.linksScrollPosition = this.linksScrolledListRef.current.scrollTop;
+            }
+        }
+        return 0;
+    }
+
+    componentDidUpdate(
+        prevProps: Readonly<ConnectionsMenuInnerProps>,
+        prevState: Readonly<MenuState>
+    ): void {
+        if (!(
+            this.state.connectionFilterKey === prevState.connectionFilterKey &&
+            this.state.connectionSortMode === prevState.connectionSortMode
+        )) {
+            this.loadSuggestions();
+        }
+
+        if (this.state.panel === 'connections' && prevState.panel === 'objects') {
+            if (this.linksScrollPosition !== undefined && this.linksScrolledListRef.current) {
+                this.linksScrolledListRef.current.scrollTop = this.linksScrollPosition;
+            }
+        }
     }
 
     componentWillUnmount() {
         this.handler.stopListening();
         this.linkTypesListener.stopListening();
+        this.delayedUpdateAll.dispose();
+        this.suggestionCancellation.abort();
     }
 
     private async loadLinks() {
@@ -401,13 +452,13 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         if (connections) {
             for (const {id: linkTypeIri} of connections.links) {
                 const linkType = model.createLinkType(linkTypeIri);
-                this.linkTypesListener.listen(linkType.events, 'changeData', this.updateAll);
+                this.linkTypesListener.listen(linkType.events, 'changeData', this.scheduleUpdateAll);
             }
 
             const linkTypeIris = new Set(connections.links.map(link => link.id));
             this.linkTypesListener.listen(model.events, 'changeLinkVisibility', e => {
                 if (linkTypeIris.has(e.source)) {
-                    this.updateAll();
+                    this.scheduleUpdateAll();
                 }
             });
         }
@@ -462,8 +513,53 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         });
     }
 
+    private async loadSuggestions() {
+        const {targetIris, suggestProperties, workspace: {model}} = this.props;
+        const {
+            loadingState, panel, connectionFilterKey, connectionSortMode,
+            connections, connectionSuggestions,
+        } = this.state;
+
+        this.suggestionCancellation.abort();
+
+        if (
+            suggestProperties &&
+            targetIris.length === 1 &&
+            panel === 'connections' &&
+            loadingState === 'completed' &&
+            connections &&
+            (connectionFilterKey.length > 0 || connectionSortMode === 'smart') &&
+            connectionSuggestions.filterKey !== connectionFilterKey
+        ) {
+            const singleTargetIri = targetIris[0];
+            const lang = model.language;
+            const token = connectionFilterKey.trim();
+            const properties = connections.links.map(link => link.id);
+
+            this.suggestionCancellation = new AbortController();
+            const signal = this.suggestionCancellation.signal;
+    
+            const scoreList = await suggestProperties({
+                elementId: singleTargetIri, token, properties, lang, signal,
+            });
+            
+            const scores = new Map<LinkTypeIri, PropertyScore>();
+            for (const score of scoreList) {
+                scores.set(score.propertyIri as LinkTypeIri, score);
+            }
+            this.setState(state => ({
+                connectionSuggestions: {
+                    ...state.connectionSuggestions,
+                    filterKey: connectionFilterKey,
+                    scores,
+                }
+            }));
+        }
+    }
+
     render() {
-        const {loadingState, filterKey} = this.state;
+        const {panel, connectionFilterKey, objectFilterKey} = this.state;
+        const filterKey = panel === 'connections' ? connectionFilterKey : objectFilterKey;
         return (
             <div className={CLASS_NAME}>
                 {this.getBreadCrumbs()}
@@ -477,10 +573,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     />
                     {this.renderSortSwitches()}
                 </div>
-                <ProgressBar state={loadingState}
-                    title='Loading element connections'
-                    height={10}
-                />
                 {this.getBody()}
             </div>
         );
@@ -488,7 +580,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private onChangeFilter = (e: React.FormEvent<HTMLInputElement>) => {
         const filterKey = e.currentTarget.value;
-        this.setState({filterKey});
+        if (this.state.panel === 'connections') {
+            this.setState({connectionFilterKey: filterKey});
+        } else {
+            this.setState({objectFilterKey: filterKey});
+        }
     };
 
     private getBreadCrumbs() {
@@ -514,7 +610,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {workspace: {triggerWorkspaceEvent}} = this.props;
         const {objects} = this.state;
 
-        this.setState({filterKey: '',  panel: 'objects'});
+        this.setState({panel: 'objects', objectFilterKey: ''});
         const alreadyLoaded = (
             objects &&
             objects.chunk.linkType.id === chunk.linkType.id &&
@@ -528,38 +624,48 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     };
 
     private onCollapseLink = () => {
-        this.setState({filterKey: '',  panel: 'connections'});
+        this.setState({panel: 'connections', loadingState: 'completed'});
     };
 
     private getBody() {
         const {
-            targetIris, suggestProperties,instancesSearchCommands, workspace: {model},
+            targetIris, instancesSearchCommands, workspace: {model},
         } = this.props;
-        const {loadingState, objects, connections, filterKey, panel, sortMode} = this.state;
+        const {
+            panel, connectionFilterKey, connectionSortMode, objectFilterKey,
+            loadingState, objects, connections, connectionSuggestions,
+        } = this.state;
 
         if (loadingState === 'error') {
-            return <label className={`reactodia-label ${CLASS_NAME}__error`}>Error</label>;
+            return <LoadingSpinner error={true} />;
         } else if (objects && panel === 'objects') {
             return (
                 <ObjectsPanel
                     data={objects}
                     onMoveToFilter={this.onMoveToFilter}
                     model={model}
-                    filterKey={filterKey}
+                    filterKey={objectFilterKey}
                     loading={loadingState === 'loading'}
                     onPressAddSelected={this.onAddSelectedElements}
                 />
             );
         } else if (connections && panel === 'connections') {
-            if (loadingState === 'loading') {
-                return <label className={`reactodia-label ${CLASS_NAME}__loading`}>Loading...</label>;
+            if (
+                loadingState === 'loading' || (
+                    connectionSortMode === 'smart' &&
+                    connectionSuggestions.filterKey === null
+                )
+            ) {
+                return <LoadingSpinner />;
             }
             return (
                 <ConnectionsList
                     targetIris={targetIris}
                     data={connections}
+                    suggestions={connectionSuggestions}
                     model={model}
-                    filterKey={filterKey}
+                    filterKey={connectionFilterKey}
+                    sortMode={connectionSortMode}
                     allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                     onExpandLink={this.onExpandLink}
                     onMoveToFilter={
@@ -567,12 +673,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                             ? this.onMoveToFilter
                             : undefined
                     }
-                    propertySuggestionCall={suggestProperties}
-                    sortMode={sortMode}
+                    scrolledListRef={this.linksScrolledListRef}
                 />
             );
         } else {
-            return <div/>;
+            return <div />;
         }
     }
 
@@ -675,6 +780,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private renderSortSwitch(id: string, labelClass: string, title: string) {
+        const {connectionSortMode} = this.state;
         return (
             <div>
                 <input
@@ -684,7 +790,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     value={id}
                     className={`${CLASS_NAME}__sort-switch`}
                     onChange={this.onSortChange}
-                    checked={this.state.sortMode === id}
+                    checked={connectionSortMode === id}
                 />
                 <label htmlFor={id} title={title}
                     className={classnames(`${CLASS_NAME}__sort-switch-label`, labelClass)}>
@@ -694,11 +800,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onSortChange = (e: React.FormEvent<HTMLInputElement>) => {
+        const {connectionSortMode} = this.state;
         const value = (e.target as HTMLInputElement).value as SortMode;
 
-        if (this.state.sortMode === value) { return; }
-
-        this.setState({sortMode: value});
+        if (connectionSortMode !== value) {
+            this.setState({connectionSortMode: value});
+        }
     };
 }
 
@@ -707,70 +814,22 @@ interface ConnectionsListProps {
     data: ConnectionsData;
     model: DataDiagramModel;
     filterKey: string;
+    sortMode: SortMode;
+    suggestions: ConnectionSuggestions;
 
     allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
 
-    propertySuggestionCall?: PropertySuggestionHandler;
-    sortMode: SortMode;
+    scrolledListRef: React.RefObject<HTMLUListElement>;
 }
 
-interface ConnectionsListState {
+interface ConnectionSuggestions {
+    readonly filterKey: string | null;
     readonly scores: ReadonlyMap<LinkTypeIri, PropertyScore>;
 }
 
-class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsListState> {
-    private suggestionCancellation = new AbortController();
-
-    constructor(props: ConnectionsListProps) {
-        super(props);
-        this.state = {
-            scores: new Map(),
-        };
-        this.tryUpdateScores();
-    }
-
-    componentDidUpdate(prevProps: ConnectionsListProps) {
-        if (!(
-            this.props.filterKey === prevProps.filterKey &&
-            this.props.sortMode === prevProps.sortMode
-        )) {
-            this.tryUpdateScores();
-        }
-    }
-
-    componentWillUnmount() {
-        this.suggestionCancellation.abort();
-    }
-
-    private tryUpdateScores() {
-        const {propertySuggestionCall, filterKey, sortMode, targetIris, data, model} = this.props;
-        if (
-            propertySuggestionCall &&
-            (filterKey || sortMode === 'smart') &&
-            targetIris.length === 1
-        ) {
-            const singleTargetIri = targetIris[0];
-            const lang = model.language;
-            const token = filterKey.trim();
-            const properties = data.links.map(link => link.id);
-
-            this.suggestionCancellation.abort();
-            this.suggestionCancellation = new AbortController();
-            const signal = this.suggestionCancellation.signal;
-    
-            propertySuggestionCall({elementId: singleTargetIri, token, properties, lang, signal})
-                .then(scoreList => {
-                    const scores = new Map<LinkTypeIri, PropertyScore>();
-                    for (const score of scoreList) {
-                        scores.set(score.propertyIri as LinkTypeIri, score);
-                    }
-                    this.setState({scores});
-                });
-        }
-    }
-
+class ConnectionsList extends React.Component<ConnectionsListProps> {
     private isSmartMode(): boolean {
         return this.props.sortMode === 'smart' && !this.props.filterKey;
     }
@@ -783,8 +842,8 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     };
 
     private compareLinksByWeight = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {model} = this.props;
-        const {scores} = this.state;
+        const {model, suggestions} = this.props;
+        const {scores} = suggestions;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
 
@@ -810,8 +869,8 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private getProbableLinks() {
-        const {model, data} = this.props;
-        const {scores} = this.state;
+        const {model, data, suggestions} = this.props;
+        const {scores} = suggestions;
         const isSmartMode = this.isSmartMode();
         return (data.links ?? [])
             .map(link => model.getLinkType(link.id)?.data ?? link)
@@ -822,8 +881,8 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     }
 
     private getViews = (links: LinkTypeModel[], notSure?: boolean) => {
-        const {model, data} = this.props;
-        const {scores} = this.state;
+        const {model, data, suggestions} = this.props;
+        const {scores} = suggestions;
 
         const views: JSX.Element[] = [];
         const addView = (link: LinkTypeModel, direction: 'in' | 'out') => {
@@ -864,7 +923,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
     };
 
     render() {
-        const {model, allRelatedLink} = this.props;
+        const {model, allRelatedLink, scrolledListRef} = this.props;
         const isSmartMode = this.isSmartMode();
 
         const links = isSmartMode ? [] : this.getLinks();
@@ -874,7 +933,11 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
 
         let viewList: React.ReactElement<any> | React.ReactElement<any>[];
         if (views.length === 0 && probableViews.length === 0) {
-            viewList = <label className={`reactodia-label ${CLASS_NAME}__empty-label`}>List empty</label>;
+            viewList = (
+                <label className={`${CLASS_NAME}__links-no-results`}>
+                    No results
+                </label>
+            );
         } else {
             viewList = views;
             if (views.length > 1 || (isSmartMode && probableViews.length > 1)) {
@@ -898,20 +961,22 @@ class ConnectionsList extends React.Component<ConnectionsListProps, ConnectionsL
         if (probableViews.length !== 0) {
             probablePart = [
                 isSmartMode ? null : (
-                    <li key='probable-links'>
-                        <span className='reactodia-label'>Probably, you are looking for..</span>
+                    <li key='probable-links'
+                        className={`${CLASS_NAME}__links-probably-label`}>
+                        Probably, you are looking for...
                     </li>
                 ),
                 probableViews,
             ];
         }
         return (
-            <ul className={classnames(
-                'reactodia-scrollable',
-                `${CLASS_NAME}__links-list`,
-                views.length === 0 && probableViews.length === 0
-                    ? `${CLASS_NAME}__links-list-empty` : undefined
-            )}>
+            <ul ref={scrolledListRef}
+                className={classnames(
+                    'reactodia-scrollable',
+                    `${CLASS_NAME}__links-list`,
+                    views.length === 0 && probableViews.length === 0
+                        ? `${CLASS_NAME}__links-list-empty` : undefined
+                )}>
                 {viewList}{probablePart}
             </ul>
         );
@@ -1104,7 +1169,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         }
 
         return (
-            <div className={`reactodia-label ${CLASS_NAME}__objects-count`}>
+            <div className={`${CLASS_NAME}__objects-count`}>
                 <span>{countString}</span>
                 {extraCountInfo}
             </div>
@@ -1133,9 +1198,11 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 </label>
             </div>
             {this.props.loading ? (
-                <label className={`reactodia-label ${CLASS_NAME}__objects-loading`}>Loading...</label>
+                <div className={`${CLASS_NAME}__objects-loading`}>
+                    <LoadingSpinner />
+                </div>
             ) : objects.length === 0 ? (
-                <label className={`reactodia-label ${CLASS_NAME}__objects-loading`}>No available nodes</label>
+                <div className={`${CLASS_NAME}__objects-no-results`}>No results</div>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
@@ -1182,6 +1249,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             </div>
         </div>;
     }
+}
+
+function LoadingSpinner(props: { error?: boolean }) {
+    return (
+        <div className={`${CLASS_NAME}__spinner`}>
+            <HtmlSpinner width={30} height={30}
+                errorOccurred={Boolean(props.error)}
+            />
+        </div>
+    );
 }
 
 function selectNonPresented(objects: ReadonlyArray<ElementOnDiagram>) {

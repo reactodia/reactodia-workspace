@@ -74,16 +74,9 @@
     }
   }
 
-  &__loading,
-  &__error {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    font-size: x-large;
-    display: flex;
-    color: #cbcbcb;
-    align-items: center;
-    justify-content: center;
+  &__spinner {
+    align-self: center;
+    margin: auto;
   }
 
   &__links-list {
@@ -100,12 +93,17 @@
     align-items: center;
   }
   
-  &__empty-label {
+  &__links-no-results {
     width: 100%;
-    position: relative;
     font-size: x-large;
+    font-weight: 700;
     color: #cbcbcb;
     text-align: center;
+  }
+
+  &__links-probably-label {
+    font-weight: 700;
+    margin: 5px 0;
   }
 
   &__links-list-hr {
@@ -228,22 +226,25 @@
     }
   }
 
-  &__objects-loading {
-    border: 1px solid gray;
+  &__objects-loading,
+  &__objects-no-results {
     flex-grow: 1;
-    box-shadow: inset 0px 0px 23px -8px gray;
-    background-color: whitesmoke;
-    position: relative;
-    font-size: x-large;
     display: flex;
-    color: #cbcbcb;
     align-items: center;
     justify-content: center;
+    border: 1px solid #ccc;
     margin-bottom: 5px;
+  }
+  
+  &__objects-no-results {
+    position: relative;
+    font-size: x-large;
+    font-weight: 700;
+    color: #cbcbcb;
   }
 
   &__objects-list {
-    border: 1px solid gray;
+    border: 1px solid #ccc;
     height: 0;
     flex-grow: 1;
     overflow-x: hidden;
@@ -260,12 +261,11 @@
 
   &__objects-count {
     height: 25px;
-    float: left;
     padding: 0px 5px;
     font-size: larger;
     display: flex;
     align-items: center;
-    max-width: 60%;
+    font-weight: 700;
   }
 
   &__objects-extra {
