@@ -20,6 +20,7 @@ import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } fro
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
+import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/utility/searchInput';
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
@@ -139,6 +140,8 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
     const workspace = useWorkspace();
     const {canvas} = useCanvas();
 
+    const lastSortMode = React.useRef<SortMode>('alphabet');
+
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(commands, 'show', ({targets}) => {
@@ -169,9 +172,13 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
                     minSize: {width: 300, height: 250},
                 },
                 content: (
-                    <ConnectionsMenuInner {...props}
+                    <ConnectionsMenuContent {...props}
                         placeTarget={placeTarget}
                         targetIris={Array.from(targetIris)}
+                        initialMode={lastSortMode.current}
+                        onChangeMode={mode => {
+                            lastSortMode.current = mode;
+                        }}
                         onCancel={() => overlay.hideDialog()}
                         workspace={workspace}
                         canvas={canvas}
@@ -241,19 +248,39 @@ class VirtualTarget extends VoidElement {
     }
 }
 
-interface ConnectionsMenuInnerProps extends ConnectionsMenuProps {
+interface ConnectionsMenuContentProps extends ConnectionsMenuProps {
     placeTarget: Element;
     targetIris: ReadonlyArray<ElementIri>;
+    initialMode: SortMode;
+    onChangeMode: (mode: SortMode) => void;
     onCancel: () => void;
     workspace: WorkspaceContext;
     canvas: CanvasApi;
 }
 
+function ConnectionsMenuContent(props: ConnectionsMenuContentProps) {
+    const connectionSearch = useSearchInputStore({
+        initialValue: '',
+        // this timeout will only apply to property suggestions
+        submitTimeout: 200,
+    });
+    const objectSearch = useSearchInputStore({initialValue: ''});
+    return (
+        <ConnectionsMenuInner {...props}
+            connectionSearch={connectionSearch}
+            objectSearch={objectSearch}
+        />
+    );
+}
+
+interface ConnectionsMenuInnerProps extends ConnectionsMenuContentProps {
+    readonly connectionSearch: SearchInputStore;
+    readonly objectSearch: SearchInputStore;
+}
+
 interface MenuState {
     readonly panel: 'connections' | 'objects';
-    readonly connectionFilterKey: string;
     readonly connectionSortMode: SortMode;
-    readonly objectFilterKey: string;
     readonly loadingState: 'none' | 'loading' | 'error' | 'completed';
     readonly connections?: ConnectionsData;
     readonly connectionSuggestions: ConnectionSuggestions;
@@ -312,17 +339,16 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
-        const {workspace: {model}} = this.props;
+        const {targetIris, initialMode, suggestProperties, workspace: {model}} = this.props;
         this.ALL_RELATED_ELEMENTS_LINK = {
             id: 'urn:reactodia:allLinks' as LinkTypeIri,
             label: [model.factory.literal('All')],
         };
+        const allowSmartSort = Boolean(suggestProperties) && targetIris.length === 1;
         this.state = {
             loadingState: 'none',
             panel: 'connections',
-            connectionFilterKey: '',
-            connectionSortMode: 'alphabet',
-            objectFilterKey: '',
+            connectionSortMode: allowSmartSort ? initialMode : 'alphabet',
             connectionSuggestions: {
                 filterKey: null,
                 scores: new Map(),
@@ -337,11 +363,15 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     };
 
     componentDidMount() {
-        const {workspace: {model}} = this.props;
+        const {connectionSearch, objectSearch, workspace: {model}} = this.props;
         this.handler.listen(model.events, 'changeLanguage', this.scheduleUpdateAll);
+        this.handler.listen(connectionSearch.events, 'changeValue', this.updateAll);
+        this.handler.listen(connectionSearch.events, 'executeSearch', ({value}) => {
+            this.loadSuggestions(value);
+        });
+        this.handler.listen(objectSearch.events, 'changeValue', this.updateAll);
 
         this.loadLinks();
-        this.loadSuggestions();
     }
 
     getSnapshotBeforeUpdate(
@@ -360,13 +390,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         prevProps: Readonly<ConnectionsMenuInnerProps>,
         prevState: Readonly<MenuState>
     ): void {
-        if (!(
-            this.state.connectionFilterKey === prevState.connectionFilterKey &&
-            this.state.connectionSortMode === prevState.connectionSortMode
-        )) {
-            this.loadSuggestions();
-        }
-
         if (this.state.panel === 'connections' && prevState.panel === 'objects') {
             if (this.linksScrollPosition !== undefined && this.linksScrolledListRef.current) {
                 this.linksScrolledListRef.current.scrollTop = this.linksScrollPosition;
@@ -442,6 +465,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }, () => {
             this.resubscribeOnLinkTypeEvents();
             triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadLinks);
+            this.loadSuggestions('');
         });
     }
 
@@ -513,11 +537,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         });
     }
 
-    private async loadSuggestions() {
+    private async loadSuggestions(filterKey: string) {
         const {targetIris, suggestProperties, workspace: {model}} = this.props;
         const {
-            loadingState, panel, connectionFilterKey, connectionSortMode,
-            connections, connectionSuggestions,
+            loadingState, panel, connectionSortMode, connections, connectionSuggestions,
         } = this.state;
 
         this.suggestionCancellation.abort();
@@ -528,12 +551,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             panel === 'connections' &&
             loadingState === 'completed' &&
             connections &&
-            (connectionFilterKey.length > 0 || connectionSortMode === 'smart') &&
-            connectionSuggestions.filterKey !== connectionFilterKey
+            (filterKey.length > 0 || connectionSortMode === 'smart') &&
+            connectionSuggestions.filterKey !== filterKey
         ) {
             const singleTargetIri = targetIris[0];
             const lang = model.language;
-            const token = connectionFilterKey.trim();
+            const token = filterKey.trim();
             const properties = connections.links.map(link => link.id);
 
             this.suggestionCancellation = new AbortController();
@@ -550,7 +573,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             this.setState(state => ({
                 connectionSuggestions: {
                     ...state.connectionSuggestions,
-                    filterKey: connectionFilterKey,
+                    filterKey,
                     scores,
                 }
             }));
@@ -558,34 +581,22 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     render() {
-        const {panel, connectionFilterKey, objectFilterKey} = this.state;
-        const filterKey = panel === 'connections' ? connectionFilterKey : objectFilterKey;
+        const {connectionSearch, objectSearch} = this.props;
+        const {panel} = this.state;
         return (
             <div className={CLASS_NAME}>
                 {this.getBreadCrumbs()}
-                <div className={`${CLASS_NAME}__search-line`}>
-                    <input type='text'
-                        className={`search-input reactodia-form-control ${CLASS_NAME}__search-line-input`}
-                        name='reactodia-connection-menu-filter'
-                        value={filterKey}
-                        onChange={this.onChangeFilter}
-                        placeholder='Search for...'
-                    />
+                <SearchInput className={`${CLASS_NAME}__search`}
+                    store={panel === 'connections' ? connectionSearch : objectSearch}
+                    inputProps={{
+                        name: 'reactodia-connection-menu-filter',
+                    }}>
                     {this.renderSortSwitches()}
-                </div>
+                </SearchInput>
                 {this.getBody()}
             </div>
         );
     }
-
-    private onChangeFilter = (e: React.FormEvent<HTMLInputElement>) => {
-        const filterKey = e.currentTarget.value;
-        if (this.state.panel === 'connections') {
-            this.setState({connectionFilterKey: filterKey});
-        } else {
-            this.setState({objectFilterKey: filterKey});
-        }
-    };
 
     private getBreadCrumbs() {
         const {workspace: {model}} = this.props;
@@ -607,10 +618,13 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onExpandLink = (chunk: LinkDataChunk) => {
-        const {workspace: {triggerWorkspaceEvent}} = this.props;
+        const {objectSearch, workspace: {triggerWorkspaceEvent}} = this.props;
         const {objects} = this.state;
 
-        this.setState({panel: 'objects', objectFilterKey: ''});
+        this.setState(
+            {panel: 'objects'},
+            () => objectSearch.change({value: '', action: 'clear'})
+        );
         const alreadyLoaded = (
             objects &&
             objects.chunk.linkType.id === chunk.linkType.id &&
@@ -629,11 +643,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private getBody() {
         const {
-            targetIris, instancesSearchCommands, workspace: {model},
+            targetIris, instancesSearchCommands, connectionSearch, objectSearch, workspace: {model},
         } = this.props;
         const {
-            panel, connectionFilterKey, connectionSortMode, objectFilterKey,
-            loadingState, objects, connections, connectionSuggestions,
+            panel, connectionSortMode, loadingState, objects, connections, connectionSuggestions,
         } = this.state;
 
         if (loadingState === 'error') {
@@ -644,7 +657,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     data={objects}
                     onMoveToFilter={this.onMoveToFilter}
                     model={model}
-                    filterKey={objectFilterKey}
+                    filterKey={objectSearch.value}
                     loading={loadingState === 'loading'}
                     onPressAddSelected={this.onAddSelectedElements}
                 />
@@ -664,7 +677,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     data={connections}
                     suggestions={connectionSuggestions}
                     model={model}
-                    filterKey={connectionFilterKey}
+                    filterKey={connectionSearch.value}
                     sortMode={connectionSortMode}
                     allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                     onExpandLink={this.onExpandLink}
@@ -766,9 +779,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     };
 
     private renderSortSwitches() {
-        const {suggestProperties} = this.props;
+        const {targetIris, suggestProperties} = this.props;
         const {panel} = this.state;
-        if (!(panel === 'connections' && suggestProperties)) {
+        if (!(panel === 'connections' && suggestProperties && targetIris.length === 1)) {
             return null;
         }
         return (
@@ -800,11 +813,18 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onSortChange = (e: React.FormEvent<HTMLInputElement>) => {
+        const {onChangeMode, connectionSearch} = this.props;
         const {connectionSortMode} = this.state;
         const value = (e.target as HTMLInputElement).value as SortMode;
 
         if (connectionSortMode !== value) {
-            this.setState({connectionSortMode: value});
+            this.setState(
+                {connectionSortMode: value},
+                () => {
+                    onChangeMode(value);
+                    connectionSearch.change({value: connectionSearch.value, action: 'submit'});
+                }
+            );
         }
     };
 }

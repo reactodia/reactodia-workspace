@@ -25,15 +25,10 @@
     }
   }
 
-  &__search-line {
+  &__search {
     padding: 10px;
-    display: flex;
     align-items: center;
     flex: 0 0 auto;
-  }
-
-  &__search-line-input {
-    flex: 1 1 100%;
   }
 
   &__sort-switches {
