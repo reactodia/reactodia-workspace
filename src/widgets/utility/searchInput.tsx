@@ -9,13 +9,14 @@ export interface SearchInputProps {
     className?: string;
     inputProps?: React.HTMLProps<HTMLInputElement>;
     store: SearchInputStore;
+    children?: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-search-input';
 
 export function SearchInput(props: SearchInputProps) {
     const {
-        className, inputProps = {}, store,
+        className, inputProps = {}, store, children,
     } = props;
 
     const term = useObservedProperty(store.events, 'changeValue', () => store.value);
@@ -54,6 +55,7 @@ export function SearchInput(props: SearchInputProps) {
                     onClick={() => store.change({value: store.value, action: 'submit'})}>
                 </button>
             ) : null}
+            {children}
         </div>
     );
 }
