@@ -26,7 +26,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Move authoring-related methods from `OverlayController` to `EditorController.authoringCommands`.
 - Allow to switch canvas pointer mode with `ZoomControl`:
   * Disabled by default, can be enabled via `showPointerModeToggle` option.
-- Expose `dialogType` option in `OverlayController.showDialog()` and `BuiltinDialogType` for built-in dialog types.
+- Support overlay dialogs without target which displayed as blocking modal:
+  * Expose `dialogType` option in `OverlayController.showDialog()` and `BuiltinDialogType` for built-in dialog types;
+  * Add option to show dialog without a close button with `closable: false`.
 
 ### Changed
 - Auto-collapse `Navigator` when there is not enough space in the canvas viewport.
@@ -34,7 +36,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Display inline entity badges with its type style in `InstancesSearch` and `LinksToolbox`.
 - Change cursor to "grabbed" style when panning the canvas.
 - Improve default look for the overlay dialogs with a dedicated header with caption and close button:
-  * Allow to disable dialog resize in one or both axes via `DialogStyleProps.resizableBy` prop.
+  * Allow to disable dialog resize in one or both axes via `DialogStyleProps.resizableBy` prop;
+  * Improve `ConnectionsMenu` and `FindOrCreateEntity` style and UX.
 - Improve styles for `ToolbarLanguageSelector`: remove extra background and border.
 - Separate `frame` debounce mode in `Debouncer`, allow to change timeout after creation.
 
@@ -42,9 +45,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Links caching in `IndexedDbCachedProvider.links()` not working due to native `crypto.subtle` being available only in secure contexts (e.g. HTTPS).
 - `OverlayController.startTask()` spinner not positioned at the center of the canvas horizontally.
 - `ClassTree` becoming stuck at loading instead of displaying a error when initialization fails.
+- `SparqlDataProvider` compatibility with Virtuoso:
+  * Remove `?extractedLabel` from default text lookup pattern in `OwlRdfsSettings`;
+  * Fix keeping un-parametrized variable for `filterOnlyLanguages` if the corresponding setting is not set.
 - Avoid flicking selection when making a click on an already selected element when `Selection` widget is used.
 - Ignored `disabled` option for `LinkAction`.
-- React warning for update after unmount in `EditLayer` > `LinkLayer`;
+- Keep the size for properties stable in `StandardTemplate` to even when property labels are loaded.
+- React warning for update after unmount in `EditLayer` > `LinkLayer`.
 
 ## [0.26.1] - 2024-11-26
 ### Fixed
