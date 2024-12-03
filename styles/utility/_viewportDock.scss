@@ -4,6 +4,15 @@
   $dock-offset-y: calc(#{$dock-margin} + var(--reactodia-viewport-dock-offset-y, 0px));
 
   &--row-n,
+  &--row-s,
+  &--column-w,
+  &--column-e {
+    /* Make dock row/column clickable through invisible parts */
+    pointer-events: none;
+    > * { pointer-events: auto; }
+  }
+
+  &--row-n,
   &--row-s {
     position: absolute;
     left: 0;

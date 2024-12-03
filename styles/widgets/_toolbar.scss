@@ -6,7 +6,6 @@
   white-space: nowrap;
 
   /* Make transparent toolbar parts "click-through" while keeping buttons clickable */
-  &__dock { pointer-events: none; }
   pointer-events: none;
   > * {
     pointer-events: auto;
