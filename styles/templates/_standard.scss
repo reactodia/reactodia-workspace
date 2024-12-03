@@ -198,12 +198,13 @@ $standard-new-entity-stripe: white;
   }
 
   &__properties-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     white-space: nowrap;
   }
 
   &__properties-key {
     display: inline-block;
-    width: 50%;
     text-overflow: ellipsis;
     overflow: hidden;
     vertical-align: top;
@@ -211,7 +212,6 @@ $standard-new-entity-stripe: white;
 
   &__properties-values {
     display: inline-block;
-    width: 50%;
     text-overflow: ellipsis;
     overflow: hidden;
   }
