@@ -68,6 +68,7 @@ export function SparqlConnectionForm(props: {
                         type='input'
                         className='reactodia-form-control'
                         placeholder='SPARQL endpoint URL'
+                        autoFocus
                         value={settings.endpointUrl}
                         onChange={e => {
                             const endpointUrl = e.currentTarget.value;

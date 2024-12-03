@@ -45,6 +45,7 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                     <label>Label</label>
                     <input className='reactodia-form-control'
                         placeholder={defaultLabel}
+                        autoFocus
                         value={customLabel}
                         onChange={e => setCustomLabel((e.target as HTMLInputElement).value)}
                     />
