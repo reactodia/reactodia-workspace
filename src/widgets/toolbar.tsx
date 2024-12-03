@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
@@ -49,8 +50,7 @@ const CLASS_NAME = 'reactodia-toolbar';
 export function Toolbar(props: ToolbarProps) {
     const {dock, dockOffsetX, dockOffsetY, menu, children} = props;
     return (
-        <ViewportDock className={`${CLASS_NAME}__dock`}
-            dock={dock}
+        <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
             dockOffsetY={dockOffsetY}>
             <div className={CLASS_NAME}>
@@ -61,7 +61,11 @@ export function Toolbar(props: ToolbarProps) {
                     </DropdownMenu>
                 ) : null}
                 {children ? (
-                    <div className={`${CLASS_NAME}__quick-access-group reactodia-btn-group`}>
+                    <div className={classnames(
+                        `${CLASS_NAME}__quick-access-group`,
+                        'reactodia-btn-group',
+                        'reactodia-btn-group-sm'
+                    )}>
                         {children}
                     </div>
                 ) : null}
