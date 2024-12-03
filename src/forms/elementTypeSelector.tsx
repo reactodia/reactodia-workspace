@@ -6,16 +6,19 @@ import { EventObserver } from '../coreUtils/events';
 
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
 import { ElementModel, ElementTypeIri } from '../data/model';
+import { DataProviderLookupItem } from '../data/provider';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 
+import { NoSearchResults } from '../widgets/utility/noSearchResults';
+import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/utility/searchInput';
 import { createRequest } from '../widgets/instancesSearch';
 import { ListElementView } from '../widgets/listElementView';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 export interface ElementTypeSelectorProps {
     source: ElementModel;
@@ -32,33 +35,53 @@ export interface ElementValue {
     allowChange: boolean;
 }
 
+export function ElementTypeSelector(props: ElementTypeSelectorProps) {
+    const searchStore = useSearchInputStore({
+        initialValue: '',
+        submitTimeout: 200,
+    });
+    const workspace = useWorkspace();
+    return (
+        <ElementTypeSelectorInner {...props}
+            searchStore={searchStore}
+            workspace={workspace}
+        />
+    );
+}
+
+interface ElementTypeSelectorInnerProps extends ElementTypeSelectorProps {
+    searchStore: SearchInputStore;
+    workspace: WorkspaceContext;
+}
+
 interface State {
     elementTypes?: ReadonlyArray<ElementTypeIri>;
-    searchString: string;
-    isLoading?: boolean;
+    elementTypesState: 'none' | 'loading' | 'error';
     existingElements: ReadonlyArray<ElementModel>;
+    existingElementsState: 'none' | 'loading' | 'error';
 }
 
 const CLASS_NAME = 'reactodia-element-selector';
 const FORM_CLASS = 'reactodia-form';
 
-export class ElementTypeSelector extends React.Component<ElementTypeSelectorProps, State> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
-
+export class ElementTypeSelectorInner extends React.Component<ElementTypeSelectorInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
     private filterCancellation = new AbortController();
     private loadingItemCancellation = new AbortController();
 
-    constructor(props: ElementTypeSelectorProps, context: any) {
-        super(props, context);
-        this.state = {searchString: '', existingElements: []};
+    constructor(props: ElementTypeSelectorInnerProps) {
+        super(props);
+        this.state = {
+            elementTypesState: 'none',
+            existingElements: [],
+            existingElementsState: 'none',
+        };
     }
 
     componentDidMount() {
-        const {model} = this.context;
-        this.fetchPossibleElementTypes();
+        const {searchStore, workspace: {model}} = this.props;
+
         this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
             const {elementTypes} = this.state;
             const changeEvent = data.changeData;
@@ -66,13 +89,19 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                 this.forceUpdate();
             }
         });
-    }
+        this.listener.listen(searchStore.events, 'changeValue', ({source}) => {
+            if (source.value.length === 0) {
+                // Clear the search
+                this.searchExistingElements('');
+            } else {
+                this.forceUpdate();
+            }
+        });
+        this.listener.listen(searchStore.events, 'executeSearch', ({value}) => {
+            this.searchExistingElements(value);
+        });
 
-    componentDidUpdate(prevProps: ElementTypeSelectorProps, prevState: State) {
-        const {searchString} = this.state;
-        if (searchString !== prevState.searchString) {
-            this.searchExistingElements();
-        }
+        this.fetchPossibleElementTypes();
     }
 
     componentWillUnmount() {
@@ -83,8 +112,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     private async fetchPossibleElementTypes() {
-        const {model, editor: {metadataProvider}} = this.context;
-        const {source} = this.props;
+        const {source, workspace: {model, editor: {metadataProvider}}} = this.props;
         if (!metadataProvider) {
             return;
         }
@@ -111,44 +139,63 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
         this.setState({elementTypes});
     }
 
-    private searchExistingElements() {
-        const {model} = this.context;
-        const {searchString} = this.state;
-        this.setState({existingElements: []});
-        if (searchString.length > 0) {
-            this.setState({isLoading: true});
+    private async searchExistingElements(searchString: string) {
+        const {workspace: {model}} = this.props;
 
-            this.filterCancellation.abort();
+        this.filterCancellation.abort();
+        this.setState({existingElements: [], existingElementsState: 'none'});
+
+        if (searchString.length > 0) {
+            this.setState({existingElementsState: 'loading'});
             this.filterCancellation = new AbortController();
             const signal = this.filterCancellation.signal;
 
             const request = createRequest({text: searchString});
-            model.dataProvider.lookup(request).then(elements => {
-                if (signal.aborted) { return; }
-                const existingElements = elements.map(linked => linked.element);
-                this.setState({existingElements, isLoading: false});
-            });
+            let lookupItems: DataProviderLookupItem[] | null;
+            try {
+                lookupItems = await mapAbortedToNull(
+                    model.dataProvider.lookup(request),
+                    signal
+                );
+                if (lookupItems === null) {
+                    return;
+                }
+            } catch (err) {
+                console.error('Error looking up existing entities', err);
+                this.setState({existingElementsState: 'error'});
+                return;
+            }
+
+            const existingElements = lookupItems.map(linked => linked.element);
+            this.setState({existingElements, existingElementsState: 'none'});
         }
     }
 
     private onElementTypeChange = async (e: React.FormEvent<HTMLSelectElement>) => {
-        this.setState({isLoading: true});
+        this.setState({elementTypesState: 'loading'});
 
         this.loadingItemCancellation.abort();
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        const {editor: {metadataProvider}} = this.context;
-        const {onChange} = this.props;
+        const {onChange, workspace: {editor: {metadataProvider}}} = this.props;
         const elementTypeIri = (e.target as HTMLSelectElement).value as ElementTypeIri;
-        const elementModel = await mapAbortedToNull(
-            metadataProvider!.createEntity(elementTypeIri, {signal}),
-            signal
-        );
-        if (elementModel === null) {
+        let elementModel: ElementModel | null;
+        try {
+            elementModel = await mapAbortedToNull(
+                metadataProvider!.createEntity(elementTypeIri, {signal}),
+                signal
+            );
+            if (elementModel === null) {
+                return;
+            }
+        } catch (err) {
+            console.error('Error calling MetadataProvider.createEntity()', err);
+            this.setState({elementTypesState: 'error'});
             return;
         }
-        this.setState({isLoading: false});
+
+        this.setState({elementTypesState: 'none'});
         onChange({
             value: elementModel,
             isNew: true,
@@ -157,7 +204,7 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     };
 
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
-        const {model} = this.context;
+        const {workspace: {model}} = this.props;
         const type = model.getElementType(elementType);
         const label = model.locale.formatLabel(type?.data?.label, elementType);
         return <option key={elementType} value={elementType}>{label}</option>;
@@ -165,10 +212,14 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
 
     private renderElementTypeSelector() {
         const {elementValue} = this.props;
-        const {elementTypes, isLoading} = this.state;
+        const {elementTypes, elementTypesState} = this.state;
         const value = elementValue.value.types.length ? elementValue.value.types[0] : '';
-        if (isLoading) {
-            return <HtmlSpinner width={20} height={20} />;
+        if (elementTypesState !== 'none') {
+            return (
+                <HtmlSpinner width={20} height={20}
+                    errorOccurred={elementTypesState === 'error'}
+                />
+            );
         }
         return (
             <div className={`${FORM_CLASS}__control-row`}>
@@ -192,11 +243,16 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     private renderExistingElementsList() {
-        const {model, editor} = this.context;
-        const {elementValue} = this.props;
-        const {elementTypes, isLoading, existingElements} = this.state;
-        if (isLoading) {
-            return <HtmlSpinner width={20} height={20} />;
+        const {elementValue,  workspace: {model, editor}} = this.props;
+        const {elementTypes, existingElements, existingElementsState} = this.state;
+        if (existingElementsState !== 'none') {
+            return (
+                <div className={`${CLASS_NAME}__results-spinner`}>
+                    <HtmlSpinner width={30} height={30}
+                        errorOccurred={existingElementsState === 'error'}
+                    />
+                </div>
+            );
         }
         if (existingElements.length > 0) {
             return existingElements.map(element => {
@@ -216,12 +272,11 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
                 );
             });
         }
-        return <span>No results</span>;
+        return <NoSearchResults hasQuery={true} />;
     }
 
     private async onSelectExistingItem(data: ElementModel) {
-        const {model} = this.context;
-        const {onChange} = this.props;
+        const {onChange, workspace: {model}} = this.props;
 
         this.loadingItemCancellation.abort();
         this.loadingItemCancellation = new AbortController();
@@ -236,21 +291,20 @@ export class ElementTypeSelector extends React.Component<ElementTypeSelectorProp
     }
 
     render() {
-        const {searchString} = this.state;
+        const {searchStore} = this.props;
         return (
             <div className={classnames(`${FORM_CLASS}__row`, CLASS_NAME)}>
-                <div className={`${CLASS_NAME}__search`}>
+                <SearchInput store={searchStore}
+                    className={`${CLASS_NAME}__search`}
+                    inputProps={{
+                        className: `${CLASS_NAME}__search-input`,
+                        name: 'reactodia-element-type-selector-search',
+                        autoFocus: true,
+                    }}>
                     <span className={`${CLASS_NAME}__search-icon`} />
-                    <input className={`reactodia-form-control ${CLASS_NAME}__search-input`}
-                        placeholder='Search for...'
-                        name='reactodia-element-type-selector-search'
-                        autoFocus
-                        value={searchString}
-                        onChange={e => this.setState({searchString: (e.target as HTMLInputElement).value})}
-                    />
-                </div>
+                </SearchInput>
                 {
-                    searchString.length > 0 ? (
+                    searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}
                             role='listbox'
                             aria-label='Select an existing element to put on a diagram'>

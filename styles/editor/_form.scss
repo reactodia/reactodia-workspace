@@ -79,6 +79,14 @@
     overflow-y: scroll;
   }
 
+  &__results-spinner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
   &__separator {
     margin: 7px 0;
     overflow: hidden;
