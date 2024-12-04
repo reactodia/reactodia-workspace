@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Avoid flicking selection when making a click on an already selected element when `Selection` widget is used.
 - Ignored `disabled` option for `LinkAction`.
 - Keep the size for properties stable in `StandardTemplate` to even when property labels are loaded.
+- Fix `computeLayout()` considering hidden links for graph layout computation.
 - React warning for update after unmount in `EditLayer` > `LinkLayer`.
 
 ## [0.26.1] - 2024-11-26

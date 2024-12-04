@@ -159,7 +159,11 @@ export async function calculateLayout(params: {
     const links: LayoutLink[] = [];
 
     for (const link of model.links) {
-        if (Object.hasOwn(nodes, link.sourceId) && Object.hasOwn(nodes, link.targetId)) {
+        if (
+            Object.hasOwn(nodes, link.sourceId) &&
+            Object.hasOwn(nodes, link.targetId) &&
+            model.getLinkVisibility(link.typeId) !== 'hidden'
+        ) {
             links.push({
                 type: typeProvider?.getLinkType?.(link) ?? link.typeId,
                 source: link.sourceId,
