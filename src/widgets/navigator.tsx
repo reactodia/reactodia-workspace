@@ -39,15 +39,18 @@ export interface NavigatorProps {
     /**
      * Whether the navigator should be initially expanded.
      *
-     * @default true
+     * If specified as `auto` the navigator will expand or collapse
+     * when the canvas is resized depending on `autoCollapseFraction` property
+     * until manually expanded or collapsed.
+     *
+     * @default "auto"
      */
-    expanded?: boolean;
+    expanded?: boolean | 'auto';
     /**
      * Specifies a maximum allowed fraction of occupied canvas width or height
      * by the navigator before it will auto-collapse.
      *
-     * When the canvas is resized, the navigator will expand or collapse
-     * depending on this value.
+     * Only applicable if `expanded` is set to `auto`.
      *
      * @default 0.4
      */
@@ -150,6 +153,7 @@ interface NavigatorInnerProps extends NavigatorProps {
 
 interface State {
     expanded: boolean;
+    autoToggle: boolean;
     allowExpand: boolean;
 }
 
@@ -163,7 +167,7 @@ const CLASS_NAME = 'reactodia-navigator';
 const MIN_SCALE = 0.25;
 const MAX_SIZE_FRACTION = 0.9;
 
-const DEFAULT_EXPANDED = true;
+const DEFAULT_EXPANDED: boolean | 'auto' = 'auto';
 const DEFAULT_AUTO_COLLAPSE_FRACTION = 0.4;
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 160;
@@ -194,7 +198,8 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         super(props);
         const {expanded = DEFAULT_EXPANDED} = this.props;
         this.state = {
-            expanded,
+            expanded: Boolean(expanded),
+            autoToggle: expanded === 'auto',
             allowExpand: true,
         };
     }
@@ -426,7 +431,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
         } = this.props;
-        const {expanded, allowExpand} = this.state;
+        const {expanded, autoToggle, allowExpand} = this.state;
         const {clientWidth, clientHeight} = canvas.metrics.area;
         const strictExpanded = (
             width < clientWidth * MAX_SIZE_FRACTION &&
@@ -436,7 +441,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             width < clientWidth * autoCollapseFraction &&
             height < clientHeight * autoCollapseFraction
         );
-        if (expanded !== autoExpanded) {
+        if (autoToggle && expanded !== autoExpanded) {
             this.setState({
                 expanded: autoExpanded,
                 allowExpand: strictExpanded,
@@ -453,12 +458,13 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             height = DEFAULT_HEIGHT,
         } = this.props;
         const {expanded, allowExpand} = this.state;
+        const expandedWhenAllowed = expanded && allowExpand;
         return (
             <ViewportDock dock={dock}
                 dockOffsetX={dockOffsetX}
                 dockOffsetY={dockOffsetY}>
-                <div className={`${CLASS_NAME} ${CLASS_NAME}--${expanded ? 'expanded' : 'collapsed'}`}
-                    style={expanded ? {width, height} : undefined}>
+                <div className={`${CLASS_NAME} ${CLASS_NAME}--${expandedWhenAllowed ? 'expanded' : 'collapsed'}`}
+                    style={expandedWhenAllowed ? {width, height} : undefined}>
                     <canvas ref={this.onCanvasMount}
                         width={width}
                         height={height}
@@ -524,7 +530,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
     private onToggleClick = () => {
         this.setState(
-            state => ({expanded: !state.expanded}),
+            state => ({expanded: !state.expanded, autoToggle: false}),
             this.scheduleRedraw
         );
     };
