@@ -316,9 +316,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 isControlled ? `${CLASS_NAME}--controlled` : undefined,
                 className
             )}>
-            <ProgressBar state={progressState}
-                title='Querying for elements'
-            />
             <div className={`${CLASS_NAME}__criteria`}>
                 {this.renderCriteria()}
                 {isControlled ? null : (
@@ -330,6 +327,9 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                     />
                 )}
             </div>
+            <ProgressBar state={progressState}
+                title='Querying for elements'
+            />
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div className={`${CLASS_NAME}__rest reactodia-scrollable`} key={this.state.resultId}>
                 <SearchResults
