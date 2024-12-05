@@ -80,11 +80,9 @@ class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     }
 }
 
-interface ToolbarActionOpenTurtleGraphProps {
+function ToolbarActionOpenTurtleGraph(props: {
     onOpen: (turtleText: string) => void;
-}
-
-function ToolbarActionOpenTurtleGraph(props: ToolbarActionOpenTurtleGraphProps) {
+}) {
     const {onOpen} = props;
     return (
         <Reactodia.ToolbarActionOpen

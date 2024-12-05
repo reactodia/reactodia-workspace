@@ -56,12 +56,6 @@ function RdfExample() {
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
                 canvas={{
-                    elementTemplateResolver: types => {
-                        if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                            return Reactodia.ClassicTemplate;
-                        }
-                        return undefined;
-                    },
                     linkTemplateResolver: type => {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return Reactodia.DefaultLinkTemplate;
@@ -87,11 +81,9 @@ class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     }
 }
 
-interface ToolbarActionOpenTurtleGraphProps {
+function ToolbarActionOpenTurtleGraph(props: {
     onOpen: (turtleText: string) => void;
-}
-
-function ToolbarActionOpenTurtleGraph(props: ToolbarActionOpenTurtleGraphProps) {
+}) {
     const {onOpen} = props;
     return (
         <Reactodia.ToolbarActionOpen
