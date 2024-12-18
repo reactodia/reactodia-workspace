@@ -9,7 +9,9 @@ import {
 } from './dataFetcher';
 
 /**
- * Props for `WithFetchStatus` component.
+ * Props for {@link WithFetchStatus} component.
+ *
+ * @see {@link WithFetchStatus}
  */
 export interface WithFetchStatusProps<T extends FetchOperationTargetType> {
     /**
@@ -45,7 +47,7 @@ const CLASS_NAME = 'reactodia-fetch-status';
  *   - failed - `reactodia-fetch-status--error`.
  *
  * @category Components
- * @see FetchOperation
+ * @see {@link FetchOperation}
  */
 export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;

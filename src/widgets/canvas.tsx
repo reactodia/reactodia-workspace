@@ -13,28 +13,28 @@ import { EntityElement } from '../editor/dataElements';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
- * Props for `Canvas` component.
+ * Props for {@link Canvas} component.
  *
- * @see Canvas
+ * @see {@link Canvas}
  */
 export interface CanvasProps {
     /**
      * Custom provider to render diagram elements.
      *
-     * **Default** is to render elements with `StandardTemplate`.
+     * **Default** is to render elements with {@link StandardTemplate}.
      */
     elementTemplateResolver?: TypedElementResolver;
     /**
      * Custom provider to render diagram links of a specific type.
      *
-     * **Default** is to render links with `DefaultLinkTemplate` which uses
-     * `DefaultLinkPathTemplate` for the link itself.
+     * **Default** is to render links with {@link DefaultLinkTemplate} which uses
+     * {@link DefaultLinkPathTemplate} for the link itself.
      */
     linkTemplateResolver?: LinkTemplateResolver;
     /**
      * Custom provider to route (layout) diagram links on the diagram.
      *
-     * **Default** is an `DefaultLinkRouter` instance.
+     * **Default** is an {@link DefaultLinkRouter} instance.
      */
     linkRouter?: LinkRouter;
     /**
@@ -57,7 +57,7 @@ export interface CanvasProps {
     /**
      * Link URL to open on a click on the watermark image.
      *
-     * Only applicable if `watermarkSvg` is set.
+     * Only applicable if {@link watermarkSvg} is set.
      *
      * **Default** is no link on the watermark.
      */

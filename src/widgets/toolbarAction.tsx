@@ -18,7 +18,7 @@ const CLASS_NAME = 'reactodia-toolbar-action';
 /**
  * Base props for toolbar action components.
  *
- * @see ToolbarAction
+ * @see {@link ToolbarAction}
  */
 export interface ToolbarActionStyleProps {
     /**
@@ -36,9 +36,9 @@ export interface ToolbarActionStyleProps {
 }
 
 /**
- * Props for `ToolbarAction` component.
+ * Props for {@link ToolbarAction} component.
  *
- * @see ToolbarAction
+ * @see {@link ToolbarAction}
  */
 export interface ToolbarActionProps extends ToolbarActionStyleProps {
     /**
@@ -53,7 +53,7 @@ export interface ToolbarActionProps extends ToolbarActionStyleProps {
 }
 
 /**
- * Base component to display an action on the `Toolbar` itself or
+ * Base component to display an action on the {@link Toolbar} itself or
  * in the dropdown menu in a generic way.
  *
  * @category Components
@@ -83,9 +83,9 @@ export function ToolbarAction(props: ToolbarActionProps) {
 }
 
 /**
- * Props for `ToolbarActionOpen` component.
+ * Props for {@link ToolbarActionOpen} component.
  *
- * @see ToolbarActionOpen
+ * @see {@link ToolbarActionOpen}
  */
 export interface ToolbarActionOpenProps extends ToolbarActionStyleProps {
     /**
@@ -136,9 +136,9 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
 }
 
 /**
- * Props for `ToolbarActionSave` component.
+ * Props for {@link ToolbarActionSave} component.
  *
- * @see ToolbarActionSave
+ * @see {@link ToolbarActionSave}
  */
 export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'disabled'> {
     /**
@@ -195,9 +195,9 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
 }
 
 /**
- * Props for `ToolbarActionClearAll` component.
+ * Props for {@link ToolbarActionClearAll} component.
  *
- * @see ToolbarActionClearAll
+ * @see {@link ToolbarActionClearAll}
  */
 export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
 
@@ -226,9 +226,9 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
 }
 
 /**
- * Props for `ToolbarActionExport` component.
+ * Props for {@link ToolbarActionExport} component.
  *
- * @see ToolbarActionExport
+ * @see {@link ToolbarActionExport}
  */
 export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
     /**
@@ -241,7 +241,7 @@ export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
     /**
      * Exported file name without extension.
      *
-     * Only applicable when `kind` is `exportRaster` or `exportSvg`.
+     * Only applicable when {@link kind} is `exportRaster` or `exportSvg`.
      *
      * @default "diagram"
      */
@@ -249,7 +249,7 @@ export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
     /**
      * Export options (e.g. background color) for raster images.
      *
-     * Only applicable when `kind` is `exportRaster`.
+     * Only applicable when {@link kind} is `exportRaster`.
      *
      * @default {backgroundColor: "white"}
      */
@@ -319,9 +319,9 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
 }
 
 /**
- * Props for `ToolbarActionUndo` component.
+ * Props for {@link ToolbarActionUndo} component.
  *
- * @see ToolbarActionUndo
+ * @see {@link ToolbarActionUndo}
  */
 export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
@@ -359,9 +359,9 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
 }
 
 /**
- * Props for `ToolbarActionRedo` component.
+ * Props for {@link ToolbarActionRedo} component.
  *
- * @see ToolbarActionRedo
+ * @see {@link ToolbarActionRedo}
  */
 export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
@@ -399,9 +399,9 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
 }
 
 /**
- * Props for `ToolbarActionLayout` component.
+ * Props for {@link ToolbarActionLayout} component.
  *
- * @see ToolbarActionLayout
+ * @see {@link ToolbarActionLayout}
  */
 export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
 
@@ -438,9 +438,9 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
 }
 
 /**
- * Props for `ToolbarLanguageSelector` component.
+ * Props for {@link ToolbarLanguageSelector} component.
  *
- * @see ToolbarLanguageSelector
+ * @see {@link ToolbarLanguageSelector}
  */
 export interface ToolbarLanguageSelectorProps
     extends Pick<ToolbarActionStyleProps, 'className' | 'title'> {

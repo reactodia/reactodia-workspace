@@ -12,17 +12,17 @@ import { Graph, CellsChangedEvent } from './graph';
 import { CommandHistory, Command } from './history';
 
 /**
- * Event data for `DiagramModel` events.
+ * Event data for {@link DiagramModel} events.
  *
- * @see DiagramModel
+ * @see {@link DiagramModel}
  */
 export interface DiagramModelEvents {
     /**
-     * Triggered on `language` property change.
+     * Triggered on {@link DiagramModel.language} property change.
      */
     changeLanguage: PropertyChange<DiagramModel, string>;
     /**
-     * Triggered on `selection` property change.
+     * Triggered on {@link DiagramModel.selection} property change.
      */
     changeSelection: PropertyChange<DiagramModel, ReadonlyArray<Element | Link>>;
     /**
@@ -72,7 +72,7 @@ export interface GraphStructure {
      */
     get links(): ReadonlyArray<Link>;
     /**
-     * Gets an element by its `Element.id` in the graph if exists.
+     * Gets an element by its {@link Element.id} in the graph if exists.
      */
     getElement(elementId: string): Element | undefined;
     /**
@@ -82,7 +82,7 @@ export interface GraphStructure {
      */
     getElementLinks(element: Element): ReadonlyArray<Link>;
     /**
-     * Gets a link by its `Link.id` in the graph if exists.
+     * Gets a link by its {@link Link.id} in the graph if exists.
      */
     getLink(linkId: string): Link | undefined;
     /**
@@ -121,7 +121,8 @@ export interface DiagramModelOptions {
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via `history` and format the content using `locale`.
+ * via {@link DiagramModel.history history} and format the content using
+ * {@link DiagramModel.locale locale}.
  *
  * @category Core
  */
@@ -342,10 +343,10 @@ export class DiagramModel implements GraphStructure {
     /**
      * Adds the element to the diagram.
      *
-     * Throws an error if element with the same `Element.id` already exists
+     * Throws an error if element with the same {@link Element.id} already exists
      * in the graph.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     addElement(element: Element): void {
         this.history.execute(
@@ -358,7 +359,7 @@ export class DiagramModel implements GraphStructure {
      *
      * When element is removed, all connected links will be removed as well.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeElement(elementId: string): void {
         const element = this.getElement(elementId);
@@ -372,10 +373,10 @@ export class DiagramModel implements GraphStructure {
     /**
      * Adds the link to the diagram.
      *
-     * Throws an error if link with the same `Link.id` already exists
+     * Throws an error if link with the same {@link Link.id} already exists
      * in the graph or any of source or target is not in the graph.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     addLink(link: Link): void {
         this.history.execute(new AddLinkCommand(this.graph, link));
@@ -384,7 +385,7 @@ export class DiagramModel implements GraphStructure {
     /**
      * Removes the link with specified ID from the diagram if exists.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeLink(linkId: string): void {
         const link = this.graph.getLink(linkId);
@@ -495,7 +496,7 @@ export interface LocaleFormatter {
      * ```
      *
      * @param labels candidate literal with same or different language codes
-     * @param language target language code (defaults to the `DiagramModel.language`)
+     * @param language target language code (defaults to the {@link DiagramModel.language})
      * @returns selected literal or `undefined` if no suitable literal was found
      */
     selectLabel(
@@ -504,8 +505,9 @@ export interface LocaleFormatter {
     ): Rdf.Literal | undefined;
 
     /**
-     * Same as `selectLabel()` but uses local part of the `fallbackIRI` as a fallback
-     * to display an entity referred by IRI even if there is no suitable label to use.
+     * Same as {@link selectLabel selectLabel()} but uses local part of
+     * the `fallbackIri` as a fallback to display an entity referred by IRI
+     * even if there is no suitable label to use.
      *
      * **Example**:
      * ```ts

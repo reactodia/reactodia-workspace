@@ -5,7 +5,7 @@ import { EventSource, Events } from '../coreUtils/events';
  * which could be performed and reverted later if needed.
  *
  * @category Core
- * @see CommandHistory
+ * @see {@link CommandHistory}
  */
 export interface Command {
     /**
@@ -115,9 +115,9 @@ class CompoundCommand {
 }
 
 /**
- * Event data for `CommandHistory` events.
+ * Event data for {@link CommandHistory} events.
  *
- * @see CommandHistory
+ * @see {@link CommandHistory}
  */
 export interface CommandHistoryEvents {
     /**
@@ -205,7 +205,7 @@ export interface CommandHistory {
  * Provide the means to store or discard command batch.
  *
  * @category Core
- * @see CommandHistory.startBatch()
+ * @see {@link CommandHistory.startBatch}
  */
 export interface CommandBatch {
     /**

@@ -20,9 +20,9 @@ import {
 } from './mergeUtils';
 
 /**
- * Options for `CompositeDataProvider`.
+ * Options for {@link CompositeDataProvider}.
  *
- * @see CompositeDataProvider
+ * @see {@link CompositeDataProvider}
  */
 export interface CompositeDataProviderOptions {
     /**
@@ -34,7 +34,7 @@ export interface CompositeDataProviderOptions {
 /**
  * Combined data provider definition.
  *
- * @see CompositeDataProvider
+ * @see {@link CompositeDataProvider}
  */
 export interface DataProviderDefinition {
     /**

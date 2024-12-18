@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 /**
- * Props for `DraggableHandle` component.
+ * Props for {@link DraggableHandle} component.
  *
- * @see DraggableHandle
+ * @see {@link DraggableHandle}
  */
 export interface DraggableHandleProps extends React.HTMLAttributes<HTMLDivElement> {
     /**

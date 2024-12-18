@@ -5,7 +5,8 @@ import type { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../data/model
 import type { DataDiagramModel } from './dataDiagramModel';
 
 /**
- * Allows to subscribe to the changes to the data of multiple element types via `useKeyedSyncStore()`.
+ * Allows to subscribe to the changes to the data of multiple element types
+ * via {@link useKeyedSyncStore}.
  *
  * @category Core
  */
@@ -17,7 +18,8 @@ export const subscribeElementTypes: KeyedSyncStore<ElementTypeIri, DataDiagramMo
     };
 
 /**
- * Allows to subscribe to the changes to the data of multiple property types via `useKeyedSyncStore()`.
+ * Allows to subscribe to the changes to the data of multiple property types
+ * via {@link useKeyedSyncStore}.
  *
  * @category Core
  */
@@ -29,7 +31,8 @@ export const subscribePropertyTypes: KeyedSyncStore<PropertyTypeIri, DataDiagram
     };
 
 /**
- * Allows to subscribe to the changes to the data of multiple link types via `useKeyedSyncStore()`.
+ * Allows to subscribe to the changes to the data of multiple link types
+ * via {@link useKeyedSyncStore}.
  *
  * @category Core
  */

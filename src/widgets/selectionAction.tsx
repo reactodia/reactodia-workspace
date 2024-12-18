@@ -30,7 +30,7 @@ import type { InstancesSearchCommands } from './instancesSearch';
 /**
  * Base props for selection action components.
  *
- * @see SelectionAction
+ * @see {@link SelectionAction}
  */
 export interface SelectionActionStyleProps {
     /**
@@ -58,9 +58,9 @@ export interface SelectionActionStyleProps {
 }
 
 /**
- * Props for `SelectionAction` component.
+ * Props for {@link SelectionAction} component.
  *
- * @see SelectionAction
+ * @see {@link SelectionAction}
  */
 export interface SelectionActionProps extends SelectionActionStyleProps {
     /**
@@ -85,7 +85,7 @@ const CLASS_NAME = 'reactodia-selection-action';
 
 /**
  * Base component to display an action on the selected diagram elements
- * from `Halo` or `Selection`.
+ * from {@link Halo} or {@link Selection}.
  *
  * @category Components
  */
@@ -133,9 +133,9 @@ function getDockStyle(
 }
 
 /**
- * Props for `SelectionActionSpinner` component.
+ * Props for {@link SelectionActionSpinner} component.
  *
- * @see SelectionActionSpinner
+ * @see {@link SelectionActionSpinner}
  */
 export interface SelectionActionSpinnerProps extends SelectionActionStyleProps {}
 
@@ -157,9 +157,9 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
 }
 
 /**
- * Props for `SelectionActionRemove` component.
+ * Props for {@link SelectionActionRemove} component.
  *
- * @see SelectionActionRemove
+ * @see {@link SelectionActionRemove}
  */
 export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
 
@@ -205,9 +205,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
 }
 
 /**
- * Props for `SelectionActionZoomToFit` component.
+ * Props for {@link SelectionActionZoomToFit} component.
  *
- * @see SelectionActionZoomToFit
+ * @see {@link SelectionActionZoomToFit}
  */
 export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps {}
 
@@ -243,7 +243,9 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
 }
 
 /**
- * Props for `SelectionActionLayout` component.
+ * Props for {@link SelectionActionLayout} component.
+ *
+ * @see {@link SelectionActionLayout}
  */
 export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 
@@ -279,9 +281,9 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
 }
 
 /**
- * Props for `SelectionActionExpand` component.
+ * Props for {@link SelectionActionExpand} component.
  *
- * @see SelectionActionExpand
+ * @see {@link SelectionActionExpand}
  */
 export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 
@@ -357,9 +359,9 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
 }
 
 /**
- * Props for `SelectionActionAnchor` component.
+ * Props for {@link SelectionActionAnchor} component.
  *
- * @see SelectionActionAnchor
+ * @see {@link SelectionActionAnchor}
  */
 export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
     onSelect?: (target: EntityElement, e: React.MouseEvent<HTMLAnchorElement>) => void;
@@ -404,19 +406,19 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
 }
 
 /**
- * Props for `SelectionActionConnections` component.
+ * Props for {@link SelectionActionConnections} component.
  *
- * @see SelectionActionConnections
+ * @see {@link SelectionActionConnections}
  */
 export interface SelectionActionConnectionsProps extends SelectionActionStyleProps {
     /**
-     * Event bus to send commands to `ConnectionMenu` component.
+     * Event bus to send commands to {@link ConnectionMenu} component.
      */
     commands?: EventTrigger<ConnectionsMenuCommands>;
 }
 
 /**
- * Selection action component to open a `ConnectionsMenu` for the selected entities.
+ * Selection action component to open a {@link ConnectionsMenu} for the selected entities.
  *
  * @category Components
  */
@@ -463,17 +465,19 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
 }
 
 /**
- * Props for `SelectionActionAddToFilter` component.
+ * Props for {@link SelectionActionAddToFilter} component.
+ *
+ * @see {@link SelectionActionAddToFilter}
  */
 export interface SelectionActionAddToFilterProps extends SelectionActionStyleProps {
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     commands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
- * Selection action component to add the selected entity to the `InstancesSearch` filter.
+ * Selection action component to add the selected entity to the {@link InstancesSearch} filter.
  *
  * @category Components
  */
@@ -502,9 +506,9 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
 }
 
 /**
- * Props for `SelectionActionGroup` component.
+ * Props for {@link SelectionActionGroup} component.
  *
- * @see SelectionActionGroup
+ * @see {@link SelectionActionGroup}
  */
 export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
 
@@ -557,9 +561,9 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
 }
 
 /**
- * Props for `SelectionActionEstablishLink` component.
+ * Props for {@link SelectionActionEstablishLink} component.
  *
- * @see SelectionActionEstablishLink
+ * @see {@link SelectionActionEstablishLink}
  */
 export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {}
 

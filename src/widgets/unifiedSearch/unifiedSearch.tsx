@@ -17,9 +17,9 @@ import { DraggableHandle } from '../../workspace/draggableHandle';
 import { UnifiedSearchSectionContext } from './searchSection';
 
 /**
- * Props for `UnifiedSearch` component.
+ * Props for {@link UnifiedSearch} component.
  *
- * @see UnifiedSearch
+ * @see {@link UnifiedSearch}
  */
 export interface UnifiedSearchProps {
     /**
@@ -77,9 +77,9 @@ export interface UnifiedSearchProps {
 }
 
 /**
- * Section (provider) to search with in `UnifiedSearch`.
+ * Section (provider) to search with in {@link UnifiedSearch}.
  *
- * @see UnifiedSearchProps
+ * @see {@link UnifiedSearchProps}
  */
 export interface UnifiedSearchSection {
     /**
@@ -93,15 +93,15 @@ export interface UnifiedSearchSection {
     /**
      * Component to provide and display search results.
      *
-     * To access provided search context, use `useUnifiedSearchSection()` hook.
+     * To access provided search context, use {@link useUnifiedSearchSection} hook.
      */
     readonly component: React.ReactNode;
 }
 
 /**
- * Events for `UnifiedSearch` event bus.
+ * Events for {@link UnifiedSearch} event bus.
  *
- * @see UnifiedSearch
+ * @see {@link UnifiedSearch}
  */
 export interface UnifiedSearchCommands {
     /**
@@ -126,7 +126,7 @@ const CLASS_NAME = 'reactodia-unified-search';
  * Component to display a search input with a dropdown for results.
  *
  * One or many available search sections (providers) can be specified via
- * `UnifiedSearchProps.sections` option.
+ * {@link UnifiedSearchProps.sections sections} prop.
  *
  * @category Components
  */

@@ -323,9 +323,9 @@ function LinkView(props: LinkViewProps) {
 }
 
 /**
- * Props for `LinkPath` component.
+ * Props for {@link LinkPath} component.
  *
- * @see LinkPath
+ * @see {@link LinkPath}
  */
 export interface LinkPathProps {
     /**
@@ -367,9 +367,9 @@ export function LinkPath(props: LinkPathProps) {
 }
 
 /**
- * Props for `LinkLabel` component.
+ * Props for {@link LinkLabel} component.
  *
- * @see LinkLabel
+ * @see {@link LinkLabel}
  */
 export interface LinkLabelProps {
     /**
@@ -379,7 +379,7 @@ export interface LinkLabelProps {
     /**
      * Whether the label should be considered as primary one for the link.
      *
-     * Primary label bounds are available via `RenderingState.getLinkLabelBounds()`.
+     * Primary label bounds are available via {@link RenderingState.getLinkLabelBounds}.
      */
     primary?: boolean;
     /**
@@ -584,9 +584,9 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
 }
 
 /**
- * Props for `LinkVertices` component.
+ * Props for {@link LinkVertices} component.
  *
- * @see LinkVertices
+ * @see {@link LinkVertices}
  */
 export interface LinkVerticesProps {
     /**

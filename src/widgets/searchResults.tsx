@@ -15,9 +15,9 @@ import { ListElementView, startDragElements } from './listElementView';
 const CLASS_NAME = 'reactodia-search-results';
 
 /**
- * Props for `SearchResults` component.
+ * Props for {@link SearchResults} component.
  *
- * @see SearchResults
+ * @see {@link SearchResults}
  */
 export interface SearchResultsProps {
     /**
@@ -25,7 +25,7 @@ export interface SearchResultsProps {
      */
     items: ReadonlyArray<ElementModel>;
     /**
-     * Set of selected entities from `items`.
+     * Set of selected entities from {@link items}.
      */
     selection: ReadonlySet<ElementIri>;
     /**

@@ -146,7 +146,7 @@ export interface AuthoredRelationDelete {
 /**
  * A mutable clone of the graph authoring state.
  *
- * @see AuthoringState.clone()
+ * @see {@link AuthoringState.clone}
  */
 export interface MutableAuthoringState extends AuthoringState {
     readonly elements: Map<ElementIri, AuthoredEntity>;

@@ -2,9 +2,9 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 /**
- * Props for `WorkspaceRoot` component.
+ * Props for {@link WorkspaceRoot} component.
  *
- * @see WorkspaceRoot
+ * @see {@link WorkspaceRoot}
  */
 export interface WorkspaceRootProps {
     /**

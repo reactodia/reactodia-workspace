@@ -15,9 +15,9 @@ import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceConte
 import { DockDirection, ViewportDock } from './utility/viewportDock';
 
 /**
- * Props for `Navigator` component.
+ * Props for {@link Navigator} component.
  *
- * @see Navigator
+ * @see {@link Navigator}
  */
 export interface NavigatorProps {
     /**
@@ -40,8 +40,8 @@ export interface NavigatorProps {
      * Whether the navigator should be initially expanded.
      *
      * If specified as `auto` the navigator will expand or collapse
-     * when the canvas is resized depending on `autoCollapseFraction` property
-     * until manually expanded or collapsed.
+     * when the canvas is resized depending on {@link autoCollapseFraction}
+     * property until manually expanded or collapsed.
      *
      * @default "auto"
      */
@@ -50,7 +50,7 @@ export interface NavigatorProps {
      * Specifies a maximum allowed fraction of occupied canvas width or height
      * by the navigator before it will auto-collapse.
      *
-     * Only applicable if `expanded` is set to `auto`.
+     * Only applicable if {@link expanded} is set to `auto`.
      *
      * @default 0.4
      */

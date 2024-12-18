@@ -3,7 +3,8 @@
  * requests are made since initial one for the waiting time.
  *
  * If `timeout` is 'frame', then the timeout is assumed to be up until next
- * rendered frame (via `requestAnimationFrame()`).
+ * rendered frame via
+ * [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).
  *
  * @category Utilities
  */
@@ -106,7 +107,7 @@ export class BufferingQueue<Key extends string> {
 
 /**
  * Runs specified callback on each rendered frame for the `duration` interval
- * using `requestAnimationFrame()`.
+ * using [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).
  *
  * @category Utilities
  */

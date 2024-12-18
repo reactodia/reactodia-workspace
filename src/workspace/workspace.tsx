@@ -40,15 +40,15 @@ import {
 import { EntityElement } from '../workspace';
 
 /**
- * Props for `Workspace` component.
+ * Props for {@link Workspace} component.
  *
- * @see Workspace
+ * @see {@link Workspace}
  */
 export interface WorkspaceProps {
     /**
      * Overrides default command history implementation.
      *
-     * By default, it uses `InMemoryHistory` instance.
+     * By default, it uses {@link InMemoryHistory} instance.
      */
     history?: CommandHistory;
     /**
@@ -74,7 +74,7 @@ export interface WorkspaceProps {
      */
     renameLinkProvider?: RenameLinkProvider;
     /**
-     * Event bus to connect `VisualAuthoring` to other components.
+     * Event bus to connect {@link VisualAuthoring} to other components.
      *
      * If not specified, an internal instance will be automatically created.
      */
@@ -90,7 +90,7 @@ export interface WorkspaceProps {
     /**
      * Default function to compute diagram layout.
      *
-     * If not provided, uses synchronous fallback to `layoutForcePadded()`.
+     * If not provided, uses {@link blockingDefaultLayout} as a synchronous fallback.
      */
     defaultLayout?: LayoutFunction;
     /**
@@ -404,7 +404,7 @@ function hashTypeIris(types: ReadonlyArray<ElementTypeIri>, seed = 0): number {
 /**
  * Parameters which are passed to the workspace initialization callback.
  *
- * @see useLoadedWorkspace()
+ * @see {@link useLoadedWorkspace}
  */
 export interface LoadedWorkspaceParams {
     /**
@@ -420,7 +420,7 @@ export interface LoadedWorkspaceParams {
 /**
  * Result of the workspace initialization hook.
  *
- * @see useLoadedWorkspace()
+ * @see {@link useLoadedWorkspace}
  */
 export interface LoadedWorkspace {
     /**

@@ -284,6 +284,8 @@ function foreachNode<T extends Node>(nodeList: NodeListOf<T>, callback: (node: T
 
 /**
  * Options for exporting the canvas as raster image Base64-encoded into data URL.
+ *
+ * @see {@link toDataURL}
  */
 export interface ToDataURLOptions {
     /**

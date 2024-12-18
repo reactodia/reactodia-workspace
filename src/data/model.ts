@@ -40,7 +40,7 @@ export interface ElementTypeGraph {
  * "Subtype of" relation between derived element type and its base type.
  *
  * @category Data
- * @see ElementTypeGraph
+ * @see {@link ElementTypeGraph}
  */
 export type SubtypeEdge = readonly [derived: ElementTypeIri, base: ElementTypeIri];
 
@@ -116,11 +116,11 @@ export interface PropertyTypeModel {
  * Returns `true` if IRI represents an anonymous entity specific to the data provider;
  * otherwise `false`.
  *
- * The represented entity can only be decoded by a `DataProvider` with a support
+ * The represented entity can only be decoded by a {@link DataProvider} with a support
  * for the specific blank node subtype, determined by the IRI prefix, e.g.:
- *   - `urn:reactodia:blank:rdf:*` encodes RDF blank nodes from `RdfDataProvider;
+ *   - `urn:reactodia:blank:rdf:*` encodes RDF blank nodes from {@link RdfDataProvider};
  *   - `urn:reactodia:blank:sparql:*` encodes outer graph content for blank nodes
- *     from `SparqlDataProvider`;
+ *     from {@link SparqlDataProvider};
  *   - etc.
  *
  * @category Data
@@ -130,7 +130,7 @@ export function isEncodedBlank(iri: string): boolean {
 }
 
 /**
- * Computes a hash code for `SubtypeEdge` value.
+ * Computes a hash code for {@link SubtypeEdge} value.
  *
  * @category Data
  */
@@ -142,7 +142,7 @@ export function hashSubtypeEdge(edge: SubtypeEdge): number {
 }
 
 /**
- * Computes whether `SubtypeEdges` values are the same.
+ * Computes whether {@link SubtypeEdge} values are the same.
  *
  * @category Data
  */
@@ -153,7 +153,7 @@ export function equalSubtypeEdges(a: SubtypeEdge, b: SubtypeEdge): boolean {
 }
 
 /**
- * Computes whether `LinkKey` values are the same.
+ * Computes whether {@link LinkKey} values are the same.
  *
  * @category Data
  */
@@ -166,7 +166,7 @@ export function equalLinks(left: LinkKey, right: LinkKey) {
 }
 
 /**
- * Computes a hash code for `LinkKey` value.
+ * Computes a hash code for {@link LinkKey} value.
  *
  * @category Data
  */
@@ -179,7 +179,7 @@ export function hashLink(link: LinkKey): number {
 }
 
 /**
- * Computes whether `ElementModel` values are the same, including property values.
+ * Computes whether {@link ElementModel} values are the same, including property values.
  *
  * @category Data
  */

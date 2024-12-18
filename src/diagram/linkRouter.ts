@@ -5,7 +5,7 @@ import type { Link } from './elements';
 import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
 
 /**
- * Options for `DefaultLinkRouter`.
+ * Options for {@link DefaultLinkRouter}.
  */
 export interface DefaultLinkRouterOptions {
     /**

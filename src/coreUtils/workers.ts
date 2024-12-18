@@ -19,7 +19,7 @@ import type { WorkerCall, WorkerCallSuccess, WorkerCallError, WorkerConstructor 
  * ```
  *
  * @category Utilities
- * @see useWorker()
+ * @see {@link useWorker}
  */
 export function defineWorker<T extends WorkerConstructor<unknown[], unknown>>(
     workerFactory: () => Worker,
@@ -41,9 +41,9 @@ const WORKER_STATE = Symbol('WorkerDefinition.state');
 
 /**
  * Represents an opaque ref-counted Web Worker definition
- * created by `defineWorker()`.
+ * created by {@link defineWorker}.
  *
- * @see defineWorker()
+ * @see {@link defineWorker}
  */
 export interface WorkerDefinition<T> {
     /** @hidden */
@@ -64,7 +64,7 @@ interface RefCountedWorkerState<T> {
  * disposed when the last component using the hook is unmounted.
  *
  * @category Hooks
- * @see defineWorker()
+ * @see {@link defineWorker}
  */
 export function useWorker<T>(worker: WorkerDefinition<T>): T {
     React.useEffect(() => {

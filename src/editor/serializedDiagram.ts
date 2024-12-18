@@ -12,7 +12,7 @@ import {
 /**
  * Serialized diagram state in [JSON-LD](https://json-ld.org/) compatible format.
  *
- * @see serializeDiagram()
+ * @see {@link serializeDiagram}
  */
 export interface SerializedDiagram {
     '@context': any;
@@ -130,7 +130,7 @@ export function emptyDiagram(): SerializedDiagram {
 /**
  * Raw diagram state to serialize.
  *
- * @see deserializeDiagram()
+ * @see {@link deserializeDiagram}
  */
 export interface DeserializedDiagram {
     elements: ReadonlyArray<Element>;
@@ -141,7 +141,7 @@ export interface DeserializedDiagram {
 /**
  * Exports diagram model state for [JSON-LD](https://json-ld.org/) compatible serialization.
  *
- * @see deserializeDiagram()
+ * @see {@link deserializeDiagram}
  */
 export function serializeDiagram(diagram: DeserializedDiagram): SerializedDiagram {
     const {elements, links, linkTypeVisibility} = diagram;
@@ -243,7 +243,7 @@ export interface DeserializeDiagramOptions {
 /**
  * Imports diagram model state from the serialized form.
  *
- * @see serializeDiagram()
+ * @see {@link serializeDiagram}
  */
 export function deserializeDiagram(
     diagram: SerializedDiagram,

@@ -14,10 +14,10 @@ import {
  */
 class DefaultLayouts {
     /**
-     * Default layout algorithm, the same as `blockingDefaultLayout()`
+     * Default layout algorithm, the same as {@link blockingDefaultLayout}
      * but non-blocking due to being run in a worker.
      *
-     * @see blockingDefaultLayout()
+     * @see {@link blockingDefaultLayout}
      */
     async defaultLayout(
         graph: LayoutGraph,
