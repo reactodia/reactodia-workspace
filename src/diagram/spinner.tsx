@@ -1,9 +1,9 @@
 import * as React from 'react';
 
 /**
- * Props for `Spinner` component.
+ * Props for {@link Spinner} component.
  *
- * @see Spinner
+ * @see {@link Spinner}
  */
 export interface SpinnerProps {
     /**
@@ -55,10 +55,10 @@ export function Spinner(props: SpinnerProps) {
 }
 
 /**
- * Same as `Spinner` component but for non-SVG context.
+ * Same as {@link Spinner} component but for non-SVG context.
  *
  * @category Components
- * @see Spinner
+ * @see {@link Spinner}
  */
 export function HtmlSpinner(props: {
     /**

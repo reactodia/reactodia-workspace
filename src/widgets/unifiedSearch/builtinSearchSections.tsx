@@ -29,7 +29,7 @@ export function SearchSectionElementTypes(props: {
      */
     minSearchTermLength?: number;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }) {
@@ -68,7 +68,7 @@ export function SearchSectionEntities(props: {
      */
     minSearchTermLength?: number;
     /**
-     * Event bus to listen commands for `InstancesSearch` component.
+     * Event bus to listen commands for {@link InstancesSearch} component.
      */
     instancesSearchCommands: Events<InstancesSearchCommands> & EventTrigger<InstancesSearchCommands>;
 }) {
@@ -133,7 +133,7 @@ export function SearchSectionLinkTypes(props: {
      */
     minSearchTermLength?: number;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }) {

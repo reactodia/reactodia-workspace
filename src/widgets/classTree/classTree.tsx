@@ -28,9 +28,9 @@ import { TreeNode } from './treeModel';
 import { Forest } from './leaf';
 
 /**
- * Props for `ClassTree` component.
+ * Props for {@link ClassTree} component.
  *
- * @see ClassTree
+ * @see {@link ClassTree}
  */
 export interface ClassTreeProps {
     /**
@@ -57,7 +57,7 @@ export interface ClassTreeProps {
      */
     minSearchTermLength?: number;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
@@ -65,7 +65,7 @@ export interface ClassTreeProps {
 /**
  * Component to display an element type (class) tree for the workspace.
  *
- * Element type graph is loaded from `DataProvider` associated with
+ * Element type graph is loaded from {@link DataProvider} associated with
  * the diagram model.
  *
  * In graph authoring mode, the class tree can be used to create entity

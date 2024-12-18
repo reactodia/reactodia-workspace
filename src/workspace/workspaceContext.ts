@@ -53,31 +53,31 @@ export interface WorkspaceContext {
      *
      * A spinner overlay will be displayed if layout calculation will take too long (> 200ms).
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     readonly performLayout: (params: WorkspacePerformLayoutParams) => Promise<void>;
     /**
      * Groups **with animation** multiple elements into an entity group.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      *
-     * @see DataDiagramModel.group()
+     * @see {@link DataDiagramModel.group}
      */
     readonly group: (params: WorkspaceGroupParams) => Promise<EntityGroup>;
     /**
      * Ungroups **with animation** one or many entity groups into all contained elements.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      *
-     * @see DataDiagramModel.ungroupAll()
+     * @see {@link DataDiagramModel.ungroupAll}
      */
     readonly ungroupAll: (params: WorkspaceUngroupAllParams) => Promise<EntityElement[]>;
     /**
      * Ungroups **with animation** some entities from an entity group.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      *
-     * @see DataDiagramModel.ungroupSome()
+     * @see {@link DataDiagramModel.ungroupSome}
      */
     readonly ungroupSome: (params: WorkspaceUngroupSomeParams) => Promise<EntityElement[]>;
     /**
@@ -87,15 +87,15 @@ export interface WorkspaceContext {
 }
 
 /**
- * Options for `WorkspaceContext.performLayout()` method.
+ * Options for {@link WorkspaceContext.performLayout} method.
  *
- * @see WorkspaceContext.performLayout()
+ * @see {@link WorkspaceContext.performLayout}
  */
 export interface WorkspacePerformLayoutParams {
     /**
      * Target canvas to get element sizes from and perform layout algorithm on.
      *
-     * If not specified, uses the result from `SharedCanvasState.findAnyCanvas()`.
+     * If not specified, uses the result from {@link SharedCanvasState.findAnyCanvas}.
      * It is recommended to provide this value if possible for consistent
      * multi-canvas support.
      */
@@ -103,7 +103,7 @@ export interface WorkspacePerformLayoutParams {
     /**
      * Layout function to use when computing element positions.
      *
-     * Default is defined by `WorkspaceProps.defaultLayout`.
+     * Default is defined by {@link WorkspaceProps.defaultLayout}.
      */
     layoutFunction?: LayoutFunction;
     /**
@@ -129,9 +129,9 @@ export interface WorkspacePerformLayoutParams {
 }
 
 /**
- * Options for `WorkspaceContext.group()` method.
+ * Options for {@link WorkspaceContext.group} method.
  *
- * @see WorkspaceContext.group()
+ * @see {@link WorkspaceContext.group}
  */
 export interface WorkspaceGroupParams {
     /**
@@ -145,9 +145,9 @@ export interface WorkspaceGroupParams {
 }
 
 /**
- * Options for `WorkspaceContext.ungroupAll()` method.
+ * Options for {@link WorkspaceContext.ungroupAll} method.
  *
- * @see WorkspaceContext.ungroupAll()
+ * @see {@link WorkspaceContext.ungroupAll}
  */
 export interface WorkspaceUngroupAllParams {
     /**
@@ -161,9 +161,9 @@ export interface WorkspaceUngroupAllParams {
 }
 
 /**
- * Options for `WorkspaceContext.ungroupSome()` method.
+ * Options for {@link WorkspaceContext.ungroupSome} method.
  *
- * @see WorkspaceContext.ungroupSome()
+ * @see {@link WorkspaceContext.ungroupSome}
  */
 export interface WorkspaceUngroupSomeParams {
     /**

@@ -53,9 +53,9 @@ const DOCK_ALIGN_Y: Record<DockDirection, DockAlignment> = {
 };
 
 /**
- * Props for `ViewportDock` component.
+ * Props for {@link ViewportDock} component.
  *
- * @see ViewportDock
+ * @see {@link ViewportDock}
  */
 export interface ViewportDockProps {
     /**

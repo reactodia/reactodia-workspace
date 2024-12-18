@@ -9,9 +9,9 @@ import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
- * Props for `ListElementView` component.
+ * Props for {@link ListElementView} component.
  *
- * @see ListElementView
+ * @see {@link ListElementView}
  */
 export interface ListElementViewProps {
     /**

@@ -2,9 +2,9 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 /**
- * Props for `Dropdown` component.
+ * Props for {@link Dropdown} component.
  *
- * @see Dropdown
+ * @see {@link Dropdown}
  */
 export interface DropdownProps {
     /**
@@ -22,7 +22,7 @@ export interface DropdownProps {
     /**
      * Content to display when the dropdown is expanded.
      *
-     * @see DropdownItem
+     * @see {@link DropdownItem}
      */
     children: React.ReactNode;
     /**
@@ -71,9 +71,9 @@ export function Dropdown(props: DropdownProps) {
 }
 
 /**
- * Props for `DropdownMenu` component.
+ * Props for {@link DropdownMenu} component.
  *
- * @see DropdownMenu
+ * @see {@link DropdownMenu}
  */
 export interface DropdownMenuProps {
     /**
@@ -85,9 +85,7 @@ export interface DropdownMenuProps {
      */
     title?: string;
     /**
-     * `DropdownMenuItem` list items for the dropdown menu.
-     *
-     * @see DropdownItem
+     * {@link DropdownMenuItem} list items for the dropdown menu.
      */
     children: React.ReactNode;
 }
@@ -153,9 +151,9 @@ function DropdownMenuToggleButton(props: { title?: string }) {
 }
 
 /**
- * Props for `DropdownMenuItem` component.
+ * Props for {@link DropdownMenuItem} component.
  *
- * @see DropdownMenuItem
+ * @see {@link DropdownMenuItem}
  */
 export interface DropdownMenuItemProps {
     /**
@@ -217,7 +215,7 @@ export function DropdownMenuItem(props: DropdownMenuItemProps) {
  * React hook to check if a component is rendered inside a dropdown menu.
  *
  * @category Hooks
- * @see Dropdown
+ * @see {@link DropdownMenu}
  */
 export function useInsideDropdown(): boolean {
     const menuContext = React.useContext(DropdownMenuContext);

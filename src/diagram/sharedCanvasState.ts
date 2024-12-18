@@ -12,20 +12,20 @@ import { Element, Link } from './elements';
 import type { LayoutFunction } from './layout';
 
 /**
- * Event data for `SharedCanvasState` events.
+ * Event data for {@link SharedCanvasState} events.
  *
- * @see SharedCanvasState
+ * @see {@link SharedCanvasState}
  */
 export interface SharedCanvasStateEvents {
     /**
-     * Triggered on `highlighter` property change.
+     * Triggered on {@link SharedCanvasState.highlighter} property change.
      */
     changeHighlight: PropertyChange<
         SharedCanvasState,
         CellHighlighter | undefined
     >;
     /**
-     * Triggered on `widgets` property change.
+     * Triggered on {@link SharedCanvasState.widgets} property change.
      */
     changeWidgets: PropertyChange<
         SharedCanvasState,
@@ -54,6 +54,8 @@ export interface SharedCanvasStateEvents {
 
 /**
  * Event data for a request to find all canvases using this state.
+ *
+ * @see {@link SharedCanvasStateEvents.findCanvas}
  */
 export interface FindCanvasEvent {
     /**
@@ -269,7 +271,7 @@ export class SharedCanvasState {
  * A strategy to rename diagram links which stores changed link label
  * in the link template state.
  *
- * @see TemplateProperties.CustomLabel
+ * @see {@link TemplateProperties.CustomLabel}
  */
 export class RenameLinkToLinkStateProvider implements RenameLinkProvider {
     canRename(link: Link): boolean {

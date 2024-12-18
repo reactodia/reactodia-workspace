@@ -245,7 +245,7 @@ export function computePolyline(
  * Computes length of linear line geometry.
  *
  * @category Geometry
- * @see getPointAlongPolyline()
+ * @see {@link getPointAlongPolyline}
  */
 export function computePolylineLength(polyline: ReadonlyArray<Vector>): number {
     let previous: Vector;
@@ -264,7 +264,7 @@ export function computePolylineLength(polyline: ReadonlyArray<Vector>): number {
  * the the first or last point of the line will be returned correspondingly.
  *
  * @category Geometry
- * @see computePolylineLength()
+ * @see {@link computePolylineLength}
  */
 export function getPointAlongPolyline(polyline: ReadonlyArray<Vector>, offset: number): Vector {
     if (polyline.length === 0) {
@@ -298,7 +298,7 @@ export function getPointAlongPolyline(polyline: ReadonlyArray<Vector>, offset: n
  *
  * @returns index of start point for the closes line segment, or 0 if line is empty.
  * @category Geometry
- * @see getPointAlongPolyline()
+ * @see {@link getPointAlongPolyline}
  */
 export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, location: Vector): number {
     let minDistance = Infinity;

@@ -29,25 +29,25 @@ export interface EditorProps {
 }
 
 /**
- * Event data for `EditorController` events.
+ * Event data for {@link EditorController} events.
  *
- * @see EditorController
+ * @see {@link EditorController}
  */
 export interface EditorEvents {
     /**
-     * Triggered on `inAuthoringMode` property change.
+     * Triggered on {@link EditorController.inAuthoringMode} property change.
      */
     changeMode: PropertyChange<EditorController, boolean>;
     /**
-     * Triggered on `authoringState` property change.
+     * Triggered on {@link EditorController.authoringState} property change.
      */
     changeAuthoringState: PropertyChange<EditorController, AuthoringState>;
     /**
-     * Triggered on `validationState` property change.
+     * Triggered on {@link EditorController.validationState} property change.
      */
     changeValidationState: PropertyChange<EditorController, ValidationState>;
     /**
-     * Triggered on `temporaryState` property change.
+     * Triggered on {@link EditorController.temporaryState} property change.
      */
     changeTemporaryState: PropertyChange<EditorController, TemporaryState>;
 }
@@ -116,7 +116,7 @@ export class EditorController {
     }
 
     /**
-     * Event bus to connect `VisualAuthoring` to other components.
+     * Event bus to connect {@link VisualAuthoring} to other components.
      */
     get authoringCommands(): Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands> {
         return this._authoringCommands;
@@ -133,7 +133,7 @@ export class EditorController {
     /**
      * Toggles the graph authoring mode for the editor.
      *
-     * Does nothing if `metadataProvider` is not set.
+     * Does nothing if {@link metadataProvider} is not set.
      */
     setAuthoringMode(value: boolean): void {
         const previous = this._inAuthoringMode;
@@ -168,7 +168,7 @@ export class EditorController {
     /**
      * Sets graph authoring state.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     setAuthoringState(value: AuthoringState): void {
         const previous = this._authoringState;
@@ -259,7 +259,7 @@ export class EditorController {
      * Removes all selected diagram elements from the diagram
      * and discards any associated graph authoring state.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeSelectedElements() {
         const itemsToRemove = this.model.selection;
@@ -276,7 +276,7 @@ export class EditorController {
      * The links are only removed when its a new relation
      * added by the graph authoring.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeItems(items: ReadonlyArray<Element | Link>) {
         const batch = this.model.history.startBatch();
@@ -320,7 +320,7 @@ export class EditorController {
     /**
      * Creates a new entity with graph authoring.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createEntity(data: ElementModel, options: { temporary?: boolean } = {}): EntityElement {
         const batch = this.model.history.startBatch('Create new entity');
@@ -348,7 +348,7 @@ export class EditorController {
      * If no entities with target IRI found on the diagram,
      * no changes will be applied to the graph authoring state.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     changeEntity(targetIri: ElementIri, newData: ElementModel): void {
         const elements = findEntities(this.model, targetIri);
@@ -374,7 +374,7 @@ export class EditorController {
      * If no entities with target IRI found on the diagram,
      * no changes will be applied to the graph authoring state.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     deleteEntity(elementIri: ElementIri): void {
         const state = this.authoringState;
@@ -408,7 +408,7 @@ export class EditorController {
      * An error will be thrown if the relation with same identity
      * already exists on the diagram.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createRelation(base: RelationLink, options: { temporary?: boolean } = {}): RelationLink {
         const existingLink = this.model.findLink(base.typeId, base.sourceId, base.targetId);
@@ -445,7 +445,7 @@ export class EditorController {
     /**
      * Changes an existing relation with graph authoring.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     changeRelation(oldData: LinkModel, newData: LinkModel) {
         const batch = this.model.history.startBatch('Change link');
@@ -475,7 +475,7 @@ export class EditorController {
      * Changes an existing relation with graph authoring
      * by moving its source to another entity element.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     moveRelationSource(params: {
         link: RelationLink;
@@ -494,7 +494,7 @@ export class EditorController {
      * Changes an existing relation with graph authoring
      * by moving its target to another entity element.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     moveRelationTarget(params: {
         link: RelationLink;
@@ -512,7 +512,7 @@ export class EditorController {
     /**
      * Deletes an existing relation with graph authoring.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     deleteRelation(model: LinkModel): void {
         const state = this.authoringState;
@@ -534,7 +534,7 @@ export class EditorController {
     /**
      * Removes all diagram cells from the temporary state for the graph authoring.
      *
-     * @see temporaryState
+     * @see {@link temporaryState}
      */
     removeAllTemporaryCells(): void {
         const {temporaryState} = this;
@@ -564,7 +564,7 @@ export class EditorController {
      * Removes the specified diagram cells from the temporary state
      * for the graph authoring.
      *
-     * @see temporaryState
+     * @see {@link temporaryState}
      */
     removeTemporaryCells(cells: ReadonlyArray<Element | Link>) {
         const {temporaryState} = this;

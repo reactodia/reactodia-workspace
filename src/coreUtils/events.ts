@@ -1,13 +1,13 @@
 /**
  * Event listener callback for a specific event type.
  *
- * @see Events.on()
+ * @see {@link Events.on}
  */
 export type Listener<Data, Key extends keyof Data> = (data: Data[Key]) => void;
 /**
  * Event listener callback for all event types.
  *
- * @see Events.onAny()
+ * @see {@link Events.onAny}
  */
 export type AnyListener<Data> = (data: Partial<Data>) => void;
 /** @hidden */
@@ -31,7 +31,7 @@ export interface PropertyChange<Source, Value> {
 /**
  * Event data for combined (all) event types.
  *
- * @see Events.onAny()
+ * @see {@link Events.onAny}
  */
 export interface AnyEvent<Data> {
     readonly data: Partial<Data>;
@@ -44,8 +44,8 @@ export interface AnyEvent<Data> {
  * is an event type and its value type is event data.
  *
  * @category Core
- * @see EventTrigger
- * @see EventSource
+ * @see {@link EventTrigger}
+ * @see {@link EventSource}
  */
 export interface Events<out Data> {
     on<Key extends keyof Data>(eventKey: Key, listener: Listener<Data, Key>): void;
@@ -61,16 +61,16 @@ export interface Events<out Data> {
  * is an event type and its value type is event data.
  * 
  * @category Core
- * @see Events
- * @see EventSource
+ * @see {@link Events}
+ * @see {@link EventSource}
  */
 export interface EventTrigger<in Data> {
     trigger<Key extends keyof Data>(eventKey: Key, data: Data[Key]): void;
 }
 
 /**
- * Implements an event bus, exposing both an observable object (`Events`) and
- * event emitter (`EventTrigger`) sides.
+ * Implements an event bus, exposing both an observable object ({@link Events}) and
+ * event emitter ({@link EventTrigger}) sides.
  *
  * **Example**:
  * ```ts
@@ -146,7 +146,7 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
  * and unsubscribe from all of them at once.
  * 
  * @category Core
- * @see Events
+ * @see {@link Events}
  */
 export class EventObserver {
     private onDispose = new Set<Unsubscribe>();

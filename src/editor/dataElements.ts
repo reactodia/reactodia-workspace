@@ -17,21 +17,21 @@ import { Command } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
 /**
- * Event data for `EntityElement` events.
+ * Event data for {@link EntityElement} events.
  *
- * @see EntityElement
+ * @see {@link EntityElement}
  */
 export interface EntityElementEvents extends ElementEvents {
     /**
-     * Triggered on `data` property change.
+     * Triggered on {@link EntityElement.data} property change.
      */
     changeData: PropertyChange<EntityElement, ElementModel>;
 }
 
 /**
- * Properties for `EntityElement`.
+ * Properties for {@link EntityElement}.
  *
- * @see EntityElement
+ * @see {@link EntityElement}
  */
 export interface EntityElementProps extends ElementProps {
     data: ElementModel;
@@ -86,7 +86,7 @@ export class EntityElement extends Element {
 }
 
 /**
- * Command to set entity element data.
+ * Command to set {@link EntityElement.data entity element data}.
  *
  * @category Commands
  */
@@ -102,21 +102,21 @@ export function setEntityElementData(
 }
 
 /**
- * Event data for `EntityGroup` events.
+ * Event data for {@link EntityGroup} events.
  * 
- * @see EntityGroup
+ * @see {@link EntityGroup}
  */
 export interface EntityGroupEvents extends ElementEvents {
     /**
-     * Triggered on `items` property change.
+     * Triggered on {@link EntityGroup.items} property change.
      */
     changeItems: PropertyChange<EntityGroup, ReadonlyArray<EntityGroupItem>>;
 }
 
 /**
- * Properties for `EntityGroup`.
+ * Properties for {@link EntityGroup}.
  *
- * @see EntityGroup
+ * @see {@link EntityGroup}
  */
 export interface EntityGroupProps extends ElementProps {
     items?: ReadonlyArray<EntityGroupItem>;
@@ -171,7 +171,7 @@ export class EntityGroup extends Element {
 /**
  * Represents a single entity contained in the entity group.
  *
- * @see EntityGroup.items
+ * @see {@link EntityGroup.items}
  */
 export interface EntityGroupItem {
     readonly data: ElementModel;
@@ -179,7 +179,7 @@ export interface EntityGroupItem {
 }
 
 /**
- * Command to set entity group items.
+ * Command to set {@link EntityGroup.items entity group items}.
  *
  * @category Commands
  */
@@ -207,21 +207,21 @@ export function* iterateEntitiesOf(element: Element): Iterable<ElementModel> {
 }
 
 /**
- * Event data for `RelationLink` events.
+ * Event data for {@link RelationLink} events.
  *
- * @see RelationLink
+ * @see {@link RelationLink}
  */
 export interface RelationLinkEvents extends LinkEvents {
     /**
-     * Triggered on `data` property change.
+     * Triggered on {@link RelationLink.data} property change.
      */
     changeData: PropertyChange<RelationLink, LinkModel>;
 }
 
 /**
- * Properties for `RelationLink`.
+ * Properties for {@link RelationLink}.
  *
- * @see RelationLink
+ * @see {@link RelationLink}
  */
 export interface RelationLinkProps extends LinkProps {
     data: LinkModel;
@@ -278,7 +278,7 @@ export class RelationLink extends Link {
 }
 
 /**
- * Command to set relation relation link data.
+ * Command to set relation {@link RelationLink.data relation link data}.
  *
  * @category Commands
  */
@@ -294,21 +294,21 @@ export function setRelationLinkData(
 }
 
 /**
- * Event data for `RelationGroup` events.
+ * Event data for {@link RelationGroup} events.
  *
- * @see RelationGroup
+ * @see {@link RelationGroup}
  */
 export interface RelationGroupEvents extends LinkEvents {
     /**
-     * Triggered on `items` property change.
+     * Triggered on {@link RelationGroup.items} property change.
      */
     changeItems: PropertyChange<RelationGroup, ReadonlyArray<RelationGroupItem>>;
 }
 
 /**
- * Properties for `RelationGroup`.
+ * Properties for {@link RelationGroup}.
  *
- * @see RelationGroup
+ * @see {@link RelationGroup}
  */
 export interface RelationGroupProps extends LinkProps {
     typeId: LinkTypeIri;
@@ -390,7 +390,7 @@ export class RelationGroup extends Link {
 /**
  * Represents a single relation contained in the relation group.
  *
- * @see RelationGroup.items
+ * @see {@link RelationGroup.items}
  */
 export interface RelationGroupItem {
     readonly data: LinkModel;
@@ -398,7 +398,7 @@ export interface RelationGroupItem {
 }
 
 /**
- * Command to set relation group items.
+ * Command to set {@link RelationGroup.items relation group items}.
  *
  * @category Commands
  */
@@ -426,13 +426,13 @@ export function* iterateRelationsOf(link: Link): Iterable<LinkModel> {
 }
 
 /**
- * Event data for `ElementType` events.
+ * Event data for {@link ElementType} events.
  *
- * @see ElementType
+ * @see {@link ElementType}
  */
 export interface ElementTypeEvents {
     /**
-     * Triggered on `data` property change.
+     * Triggered on {@link ElementType.data} property change.
      */
     changeData: PropertyChange<ElementType, ElementTypeModel | undefined>;
 }
@@ -475,13 +475,13 @@ export class ElementType {
 }
 
 /**
- * Event data for `PropertyType` events.
+ * Event data for {@link PropertyType} events.
  *
- * @see PropertyType
+ * @see {@link PropertyType}
  */
 export interface PropertyTypeEvents {
     /**
-     * Triggered on `data` property change.
+     * Triggered on {@link PropertyType.data} property change.
      */
     changeData: PropertyChange<PropertyType, PropertyTypeModel | undefined>;
 }
@@ -524,13 +524,13 @@ export class PropertyType {
 }
 
 /**
- * Event data for `LinkType` events.
+ * Event data for {@link LinkType} events.
  *
- * @see LinkType
+ * @see {@link LinkType}
  */
 export interface LinkTypeEvents {
     /**
-     * Triggered on `data` property change.
+     * Triggered on {@link LinkType.data} property change.
      */
     changeData: PropertyChange<LinkType, LinkTypeModel | undefined>;
 }
@@ -573,7 +573,7 @@ export class LinkType {
 }
 
 /**
- * Command to replace data for all entities with target IRI on the diagram.
+ * Command to replace {@link EntityElement.data data} for all entities with target IRI on the diagram.
  *
  * If IRI in the new `data` is different from the `target`, the relations
  * connected to the entities will have their data changed as well to refer
@@ -658,7 +658,7 @@ function mapRelationEndpoint(relation: LinkModel, oldIri: ElementIri, newIri: El
 }
 
 /**
- * Command to replace data for all relations with same target identity.
+ * Command to replace {@link RelationLink.data data} for all relations with same target identity.
  *
  * The relation identity should be the same for both `oldData` and `newData`
  * otherwise an error wil be thrown.

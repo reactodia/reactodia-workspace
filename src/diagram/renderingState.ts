@@ -24,9 +24,9 @@ export interface RenderingStateOptions {
 }
 
 /**
- * Event data for `RenderingState` events.
+ * Event data for {@link RenderingState} events.
  *
- * @see RenderingState
+ * @see {@link RenderingState}
  */
 export interface RenderingStateEvents {
     /**
@@ -39,7 +39,7 @@ export interface RenderingStateEvents {
         readonly layer: RenderingLayer;
     };
     /**
-     * Triggered on `getLinkTemplates()` property change.
+     * Triggered on {@link RenderingState.getLinkTemplates} property change.
      */
     changeLinkTemplates: {
         /**
@@ -50,17 +50,19 @@ export interface RenderingStateEvents {
     /**
      * Triggered when an element size has changed.
      *
-     * Element size changes happen when rendering on `ElementSize` layer.
+     * Element size changes happen when rendering on
+     * {@link RenderingLayer.ElementSize ElementSize} layer.
      */
     changeElementSize: PropertyChange<Element, Size | undefined>;
     /**
      * Triggered when a primary label size for a link has changed.
      *
-     * Link label size changes happen when rendering on `LinkLabel` layer.
+     * Link label size changes happen when rendering on
+     * {@link RenderingLayer.LinkLabel LinkLabel} layer.
      */
     changeLinkLabelBounds: PropertyChange<Link, Rect | undefined>;
     /**
-     * Triggered on `getRoutings()` property change.
+     * Triggered on {@link RenderingState.getRoutings} property change.
      */
     changeRoutings: PropertyChange<RenderingState, RoutedLinks>;
 }

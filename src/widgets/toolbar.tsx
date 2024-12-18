@@ -7,9 +7,9 @@ import { DropdownMenu } from './utility/dropdown';
 import { DockDirection, ViewportDock } from './utility/viewportDock';
 
 /**
- * Props for `Toolbar` component.
+ * Props for {@link Toolbar} component.
  *
- * @see Toolbar
+ * @see {@link Toolbar}
  */
 export interface ToolbarProps {
     /**
@@ -29,13 +29,13 @@ export interface ToolbarProps {
      */
     dockOffsetY?: number;
     /**
-     * Main menu content, in a form of `ToolbarAction` elements.
+     * Main menu content, in a form of {@link ToolbarAction} elements.
      *
      * If not specified or `null`, the menu toggle button will be hidden.
      */
     menu?: React.ReactNode;
     /**
-     * Toolbar panel content, in a form of `ToolbarAction` or other elements.
+     * Toolbar panel content, in a form of {@link ToolbarAction} or other elements.
      */
     children: React.ReactNode;
 }

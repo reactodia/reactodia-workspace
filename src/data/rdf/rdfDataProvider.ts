@@ -13,9 +13,9 @@ import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 
 /**
- * Options for `RdfDataProvider`.
+ * Options for {@link RdfDataProvider}.
  *
- * @see RdfDataProvider
+ * @see {@link RdfDataProvider}
  */
 export interface RdfDataProviderOptions {
     /**
@@ -82,7 +82,8 @@ const RDFS_SUB_CLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
 const SCHEMA_THUMBNAIL_URL = 'https://schema.org/thumbnailUrl';
 
 /**
- * Provides graph data from in-memory RDF quad dataset.
+ * Provides graph data from in-memory [RDF/JS-compatible](https://rdf.js.org/data-model-spec/)
+ * graph dataset.
  *
  * @category Data
  */
