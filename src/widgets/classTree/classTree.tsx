@@ -53,7 +53,7 @@ export interface ClassTreeProps {
     /**
      * Minimum number of characters in the search term to initiate the search.
      *
-     * @default 1
+     * @default 2
      */
     minSearchTermLength?: number;
     /**
@@ -77,7 +77,7 @@ export function ClassTree(props: ClassTreeProps) {
     const {
         searchStore,
         searchTimeout = 200,
-        minSearchTermLength = 1,
+        minSearchTermLength = 2,
     } = props;
     const uncontrolledSearch = useSearchInputStore({
         initialValue: '',

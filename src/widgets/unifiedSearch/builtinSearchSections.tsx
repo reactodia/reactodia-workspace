@@ -25,7 +25,7 @@ export function SearchSectionElementTypes(props: {
     /**
      * Minimum number of characters in the search term to initiate the search.
      *
-     * @default 1
+     * @default 2
      */
     minSearchTermLength?: number;
     /**
@@ -33,7 +33,7 @@ export function SearchSectionElementTypes(props: {
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }) {
-    const {searchTimeout = 200, minSearchTermLength = 1, instancesSearchCommands} = props;
+    const {searchTimeout = 200, minSearchTermLength = 2, instancesSearchCommands} = props;
     const {searchStore, shouldRender} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,

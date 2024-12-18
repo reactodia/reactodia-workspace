@@ -158,6 +158,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         super(options);
         this._dataProvider = new EmptyDataProvider();
         this.fetcher = new DataFetcher(this.graph, this.dataGraph, this._dataProvider);
+        this.subscribeGraph();
     }
 
     protected override createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {

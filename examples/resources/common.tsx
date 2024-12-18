@@ -33,7 +33,7 @@ export function ExampleToolbarMenu() {
                         }
                     }
 
-                    const task = overlay.startTask({title: 'Importing a layout from file'});                    
+                    const task = overlay.startTask({title: 'Importing a layout from file'});
                     try {
                         const json = await file.text();
                         const diagramLayout = JSON.parse(json);
@@ -41,6 +41,7 @@ export function ExampleToolbarMenu() {
                             dataProvider: model.dataProvider,
                             diagram: diagramLayout,
                             preloadedElements,
+                            validateLinks: true,
                         });
                     } catch (err) {
                         task.setError(new Error(

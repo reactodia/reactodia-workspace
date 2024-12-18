@@ -98,11 +98,9 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
 
-        listener.listen(model.events, 'loadingSuccess', () => {
-            view.setCanvasWidget('states', {
-                element: <LinkStateWidget />,
-                attachment: 'overLinks',
-            });
+        view.setCanvasWidget('states', {
+            element: <LinkStateWidget />,
+            attachment: 'overLinks',
         });
 
         const authoringStateDecorator: ElementDecoratorResolver = element => {
@@ -129,7 +127,11 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             }
         });
 
-        return () => listener.stopListening();
+        return () => {
+            listener.stopListening();
+            view.setCanvasWidget('states', null);
+            view._setElementDecorator(undefined);
+        };
     }, []);
 
     React.useLayoutEffect(() => {

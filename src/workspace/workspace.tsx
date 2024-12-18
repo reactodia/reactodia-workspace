@@ -442,6 +442,8 @@ export interface LoadedWorkspace {
  * This function could be used to setup data provider, fetch initial data
  * or import existing diagram layout.
  *
+ * The command history is automatically reset when the initialization is done.
+ *
  * **Example**:
  * ```ts
  * const {getContext, onMount} = useLoadedWorkspace();
@@ -507,6 +509,10 @@ export function useLoadedWorkspace(
                     }
                 } finally {
                     task.end();
+                }
+
+                if (!controller.signal.aborted) {
+                    context.model.history.reset();
                 }
             })();
 
