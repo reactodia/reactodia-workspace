@@ -19,9 +19,9 @@ export interface ExternalSearchStore extends Pick<SearchInputStore, 'value' | 'c
 export const UnifiedSearchSectionContext = React.createContext<UnifiedSearchSectionContext | null>(null);
 
 /**
- * Options for `useUnifiedSearchSection()` hook.
+ * Options for {@link useUnifiedSearchSection} hook.
  *
- * @see useUnifiedSearchSection()
+ * @see {@link useUnifiedSearchSection}
  */
 export interface UseUnifiedSearchSectionOptions {
     /**
@@ -40,7 +40,7 @@ export interface UseUnifiedSearchSectionOptions {
 /**
  * Search context provided for its section.
  *
- * @see useUnifiedSearchSection()
+ * @see {@link useUnifiedSearchSection}
  */
 export interface UnifiedSearchSectionProvidedContext {
     /**

@@ -18,7 +18,7 @@ export interface LayoutGraph {
  * Represents basic graph node for a graph layout algorithm.
  *
  * @category Geometry
- * @see LayoutGraph
+ * @see {@link LayoutGraph}
  */
 export interface LayoutNode {
     readonly types: readonly ElementTypeIri[];
@@ -29,7 +29,7 @@ export interface LayoutNode {
  * Represents basic graph edge for a graph layout algorithm.
  *
  * @category Geometry
- * @see LayoutGraph
+ * @see {@link LayoutGraph}
  */
 export interface LayoutLink {
     readonly type: LinkTypeIri;
@@ -68,8 +68,8 @@ export interface LayoutTypeProvider {
  * Represents a result of performing a graph layout algorithm on a diagram.
  *
  * @category Geometry
- * @see calculateLayout()
- * @see applyLayout()
+ * @see {@link calculateLayout}
+ * @see {@link applyLayout}
  */
 export interface CalculatedLayout {
     positions: Map<string, Vector>;
@@ -79,7 +79,7 @@ export interface CalculatedLayout {
 
 /**
  * Computes a layout on the specified diagram elements using specified
- * graph layout algorithm function (`layoutFunction`).
+ * graph layout algorithm function ({@link LayoutFunction}).
  *
  * **Example**:
  * ```ts
@@ -95,7 +95,7 @@ export interface CalculatedLayout {
  * ```
  *
  * @category Geometry
- * @see applyLayout()
+ * @see {@link applyLayout}
  */
 export async function calculateLayout(params: {
     /**
@@ -192,7 +192,7 @@ export async function calculateLayout(params: {
  * Applies the computed graph layout to the diagram.
  *
  * @category Geometry
- * @see calculateLayout()
+ * @see {@link calculateLayout}
  */
 export function applyLayout(
     layout: CalculatedLayout,

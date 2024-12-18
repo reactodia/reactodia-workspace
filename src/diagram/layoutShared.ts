@@ -242,9 +242,9 @@ export function layoutPaddedBiasFree(
 }
 
 /**
- * Options for `blockingDefaultLayout()` function.
+ * Options for {@link blockingDefaultLayout} function.
  *
- * @see blockingDefaultLayout()
+ * @see {@link blockingDefaultLayout}
  */
 export interface DefaultLayoutOptions {
     /**
@@ -270,7 +270,7 @@ export interface DefaultLayoutOptions {
  * This function is computationally expensive and should be used only as fallback
  * when other ways to compute diagram layout is not available.
  * The recommended way is to use web workers via `@reactodia/workspace/layout.worker`
- * and `Reactodia.useWorker()`.
+ * and {@link useWorker Reactodia.useWorker()}`.
  *
  * @category Geometry
  */
@@ -294,6 +294,8 @@ export function blockingDefaultLayout(
 }
 
 /**
+ * Computes complete bounding box for the element bounds in the provided layout state.
+ *
  * @category Geometry
  */
 export function getContentFittingBoxForLayout(state: LayoutState): Rect {

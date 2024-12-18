@@ -10,9 +10,9 @@ import {
 } from '../model';
 
 /**
- * Options for `DecoratedDataProvider`.
+ * Options for {@link DecoratedDataProvider}.
  *
- * @see DecoratedDataProvider
+ * @see {@link DecoratedDataProvider}
  */
 export interface DecoratedDataProviderOptions {
     /**
@@ -28,7 +28,7 @@ export interface DecoratedDataProviderOptions {
 /**
  * Known data provider operation names.
  *
- * @see DecoratedDataProvider
+ * @see {@link DecoratedDataProvider}
  */
 export type DecoratedMethodName =
     | 'knownElementTypes'
@@ -44,7 +44,7 @@ export type DecoratedMethodName =
 /**
  * Callback to pass-through or alter requests to a data provider.
  *
- * @see DecoratedDataProvider
+ * @see {@link DecoratedDataProvider}
  */
 export type DataProviderDecorator = <P extends { signal?: AbortSignal }, R>(
     method: DecoratedMethodName,
@@ -147,7 +147,7 @@ export class DecoratedDataProvider implements DataProvider {
  * Data provider decorator which delays each request to the base provider.
  *
  * @category Data
- * @see DecoratedDataProvider
+ * @see {@link DecoratedDataProvider}
  */
 export function delayProviderDecorator(
     meanDelay: number,

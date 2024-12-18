@@ -61,9 +61,9 @@ export function SearchInput(props: SearchInputProps) {
 }
 
 /**
- * Options for `useSearchInputStore()` hook.
+ * Options for {@link useSearchInputStore} hook.
  *
- * @see useSearchInputStore()
+ * @see {@link useSearchInputStore}
  */
 export interface UseSearchInputStoreOptions<T> {
     /**
@@ -89,7 +89,7 @@ export interface UseSearchInputStoreOptions<T> {
 /**
  * Represents the state store for an abstract search input component.
  *
- * @see useSearchInputStore()
+ * @see {@link useSearchInputStore}
  */
 export interface SearchInputStore<T = string> {
     /**
@@ -129,17 +129,17 @@ export interface SearchInputStore<T = string> {
 }
 
 /**
- * Events date for `SearchInputStore` events.
+ * Events date for {@link SearchInputStore} events.
  *
- * @see SearchInputStore
+ * @see {@link SearchInputStore}
  */
 export interface SearchInputStoreEvents<T> {
     /**
-     * Triggered on `value` property change.
+     * Triggered on {@link SearchInputStore.value} property change.
      */
     changeValue: SearchInputStoreChangeValueEvent<T>;
     /**
-     * Triggered on `mode` property change.
+     * Triggered on {@link SearchInputStore.mode} property change.
      */
     changeMode: PropertyChange<SearchInputStore<T>, SearchInputStore['mode']>;
     /**
@@ -181,7 +181,7 @@ export interface SearchInputStoreChangeValueEvent<T> extends PropertyChange<Sear
     /**
      * Search query value change intent (action).
      *
-     * @see SearchInputStore.change()
+     * @see {@link SearchInputStore.change}
      */
     readonly action: 'input' | 'submit' | 'clear';
 }
@@ -191,7 +191,7 @@ export interface SearchInputStoreChangeValueEvent<T> extends PropertyChange<Sear
  *
  * **Experimental**: this feature are likely to change in the future.
  *
- * @returns stable `SearchInputStore` instance which will not change on re-renders
+ * @returns stable {@link SearchInputStore} instance which will not change on re-renders
  *
  * @category Hooks
  */

@@ -144,9 +144,9 @@ export interface PaperTransform {
 }
 
 /**
- * Props for `TransformedSvgCanvas` component.
+ * Props for {@link TransformedSvgCanvas} component.
  *
- * @see TransformedSvgCanvas
+ * @see {@link TransformedSvgCanvas}
  */
 export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement> {
     paperTransform: PaperTransform;

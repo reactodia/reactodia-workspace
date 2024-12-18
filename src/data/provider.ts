@@ -154,7 +154,7 @@ export interface DataProvider {
  * via some link type (`id`) in each direction.
  *
  * @category Data
- * @see DataProvider.connectedLinkStats()
+ * @see {@link DataProvider.connectedLinkStats}
  */
 export interface DataProviderLinkCount {
     /**
@@ -177,10 +177,10 @@ export interface DataProviderLinkCount {
 }
 
 /**
- * Parameters for `DataProvider.lookup()` operation.
+ * Parameters for {@link DataProvider.lookup} operation.
  *
  * @category Data
- * @see DataProvider.lookup()
+ * @see {@link DataProvider.lookup}
  */
 export interface DataProviderLookupParams {
     /**
@@ -232,7 +232,7 @@ export interface DataProviderLookupParams {
  * are used to connect it to other elements.
  *
  * @category Data
- * @see DataProvider.lookup()
+ * @see {@link DataProvider.lookup}
  */
 export interface DataProviderLookupItem {
     /**
@@ -240,15 +240,19 @@ export interface DataProviderLookupItem {
      */
     readonly element: ElementModel;
     /**
-     * Link types by which result `element` is linked from the lookup target (`refElementId`).
+     * Link types by which result `element` is linked from the lookup target
+     * ({@link DataProviderLookupParams.refElementId refElementId}).
      *
-     * Only applicable if `refElementId` is specified in `DataProvider.lookup()`.
+     * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}
+     * is specified in {@link DataProvider.lookup}.
      */
     readonly inLinks: ReadonlySet<LinkTypeIri>;
     /**
-     * Link types by which result `element` is linked to the lookup target (`refElementId`).
+     * Link types by which result `element` is linked to the lookup target
+     * ({@link DataProviderLookupParams.refElementId refElementId}).
      *
-     * Only applicable if `refElementId` is specified in `DataProvider.lookup()`.
+     * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}
+     * is specified in {@link DataProvider.lookup}.
      */
     readonly outLinks: ReadonlySet<LinkTypeIri>;
 }

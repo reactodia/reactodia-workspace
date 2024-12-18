@@ -44,29 +44,21 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
      */
     rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
     /**
-     * Props for the `ClassicToolbar` canvas widget.
+     * Props for the {@link ClassicToolbar} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see ClassicToolbar
      */
     toolbar?: Partial<ClassicToolbarProps> | null;
     /**
-     * Props for the `ClassTree` component.
-     *
-     * @see ClassTree
+     * Props for the {@link ClassTree} component.
      */
     classTree?: ClassTreeProps;
     /**
-     * Props for the `InstancesSearch` component.
-     *
-     * @see InstancesSearch
+     * Props for the {@link InstancesSearch} component.
      */
     instancesSearch?: Omit<InstancesSearchProps, 'commands'>;
     /**
-     * Props for the `LinkTypesToolbox` component.
-     *
-     * @see LinkTypesToolbox
+     * Props for the {@link LinkTypesToolbox} component.
      */
     linkToolbox?: LinkTypesToolboxProps;
 }
@@ -156,15 +148,15 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
 }
 
 /**
- * Props for `ClassicToolbar` component.
+ * Props for {@link ClassicToolbar} component.
  *
- * @see ClassicToolbar
+ * @see {@link ClassicToolbar}
  */
 export interface ClassicToolbarProps
     extends Pick<ToolbarProps, 'dock' | 'dockOffsetX' | 'dockOffsetY'>
 {
     /**
-     * Main menu content, in a form of `ToolbarAction` elements.
+     * Main menu content, in a form of {@link ToolbarAction} elements.
      *
      * If `null`, the menu toggle button will be hidden.
      *
@@ -180,7 +172,7 @@ export interface ClassicToolbarProps
      */
     menu?: React.ReactNode | null;
     /**
-     * Toolbar panel content, in a form of `ToolbarAction` or other elements.
+     * Toolbar panel content, in a form of {@link ToolbarAction} or other elements.
      *
      * If `null`, the panel will be hidden.
      *
@@ -208,7 +200,7 @@ export interface ClassicToolbarProps
  * for the classic workspace layout.
  *
  * @category Components
- * @see ClassicWorkspace
+ * @see {@link ClassicWorkspace}
  */
 export function ClassicToolbar(props: ClassicToolbarProps) {
     const {dock, dockOffsetX, dockOffsetY, menu, children, languages = []} = props;

@@ -38,9 +38,9 @@ import {
 import { DataGraph } from './dataGraph';
 
 /**
- * Event data for `DataDiagramModel` events.
+ * Event data for {@link DataDiagramModel} events.
  *
- * @see DataDiagramModel
+ * @see {@link DataDiagramModel}
  */
 export interface DataDiagramModelEvents extends DiagramModelEvents {
     /**
@@ -59,8 +59,8 @@ export interface DataDiagramModelEvents extends DiagramModelEvents {
     /**
      * Triggered on start of the diagram "create new" or "import" operations.
      *
-     * @see DataDiagramModel.createNewDiagram()
-     * @see DataDiagramModel.importLayout()
+     * @see {@link DataDiagramModel.createNewDiagram}
+     * @see {@link DataDiagramModel.importLayout}
      */
     loadingStart: { readonly source: DataDiagramModel };
     /**
@@ -76,7 +76,7 @@ export interface DataDiagramModelEvents extends DiagramModelEvents {
     };
 
     /**
-     * Triggered on `operations` property change.
+     * Triggered on {@link DataDiagramModel.operations} property change.
      */
     changeOperations: ChangeOperationsEvent;
     /**
@@ -103,30 +103,32 @@ export interface DataDiagramModelEvents extends DiagramModelEvents {
  */
 export interface DataGraphStructure extends GraphStructure {
     /**
-     * Gets an element type by its `ElementType.id` in the graph if exists.
+     * Gets an element type by its {@link ElementType.id} in the graph if exists.
      *
-     * Element types are added to the graph as requested by `createElementType()`
-     * so the data (e.g. labels) can be fetched from a data provider.
+     * Element types are added to the graph as requested by
+     * {@link DataDiagramModel.createElementType} so the data (e.g. labels) can be
+     * fetched from a data provider.
      *
-     * @see DataDiagramModel.createElementType()
+     * @see {@link DataDiagramModel.createElementType}
      */
     getElementType(elementTypeIri: ElementTypeIri): ElementType | undefined;
     /**
-     * Gets an link type by its `LinkType.id` in the graph if exists.
+     * Gets an link type by its {@link LinkType.id} in the graph if exists.
      *
-     * Link types are added to the graph as requested by `createLinkType()`
+     * Link types are added to the graph as requested by {@link DataDiagramModel.createLinkType}
      * so the data (e.g. labels) can be fetched from a data provider.
      *
-     * @see DataDiagramModel.createLinkType()
+     * @see {@link DataDiagramModel.createLinkType}
      */
     getLinkType(linkTypeIri: LinkTypeIri): LinkType | undefined;
     /**
-     * Gets an property type by its `PropertyType.id` in the graph if exists.
+     * Gets an property type by its {@link PropertyType.id} in the graph if exists.
      *
-     * Property types are added to the graph as requested by `createPropertyType()`
-     * so the data (e.g. labels) can be fetched from a data provider.
+     * Property types are added to the graph as requested by
+     * {@link DataDiagramModel.createPropertyType} so the data (e.g. labels) can be
+     * fetched from a data provider.
      *
-     * @see DataDiagramModel.createPropertyType()
+     * @see {@link DataDiagramModel.createPropertyType}
      */
     getPropertyType(propertyTypeIri: PropertyTypeIri): PropertyType | undefined;
 }
@@ -140,7 +142,8 @@ export interface DataDiagramModelOptions extends DiagramModelOptions {}
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via `history` and format the content using `locale`.
+ * via {@link DataDiagramModel.history history} and format the content using
+ * {@link DataDiagramModel.locale locale}.
  *
  * @category Core
  */
@@ -175,10 +178,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      *
      * This provider is used to fetch entity graph data on-demand.
      *
-     * By default, it is set to `EmptyDataProvider` instance without any graph data.
+     * By default, it is set to {@link EmptyDataProvider} instance without any graph data.
      *
-     * @see createNewDiagram()
-     * @see importLayout()
+     * @see {@link createNewDiagram}
+     * @see {@link importLayout}
      */
     get dataProvider(): DataProvider {
         return this._dataProvider;
@@ -241,7 +244,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * This method discards all current diagram state (elements, links and other data)
      * and resets the command history.
      *
-     * @see importLayout()
+     * @see {@link importLayout}
      */
     async createNewDiagram(params: {
         /**
@@ -267,8 +270,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * This method discards all current diagram state (elements, links and other data)
      * and resets the command history.
      *
-     * @see createNewDiagram()
-     * @see exportLayout()
+     * @see {@link createNewDiagram}
+     * @see {@link exportLayout}
      */
     async importLayout(params: {
         /**
@@ -390,7 +393,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * references to described entities and relations (via IRIs).
      * Additionally, link type visibility settings are exported as well.
      *
-     * @see importLayout()
+     * @see {@link importLayout}
      */
     exportLayout(): SerializedDiagram {
         const knownLinkTypes = new Set(this.graph.getLinks().map(link => link.typeId));
@@ -507,7 +510,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     /**
-     * @deprecated Use `requestLinks()` instead.
+     * @deprecated Use {@link DataDiagramModel.requestLinks} instead.
      */
     requestLinksOfType(linkTypeIds?: ReadonlyArray<LinkTypeIri>): Promise<void> {
         return this.requestLinks({linkTypes: linkTypeIds});
@@ -522,7 +525,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * If multiple entity elements with the same IRI is on the diagram,
      * the first one in the order will be returned.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createElement(elementIriOrModel: ElementIri | ElementModel): EntityElement {
         const elementIri = typeof elementIriOrModel === 'string'
@@ -577,9 +580,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * there could be multiple source or target elements with the same IRI.
      *
      * Each existing link for the same link model will be updated with the specified data,
-     * link state property `urn:reactodia:layoutOnly` will be discarded if set.
+     * link state property `urn:reactodia:layoutOnly` ({@link TemplateProperties.LayoutOnly})
+     * will be discarded if set.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
         const sources = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
@@ -729,7 +733,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * Relation links from/to specified elements are re-grouped to
      * form relation group links the same way.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
+     *
+     * @see {@link ungroupAll}
+     * @see {@link ungroupSome}
      */
     group(entities: ReadonlyArray<EntityElement>): EntityGroup {
         const batch = this.history.startBatch('Group entities');
@@ -788,7 +795,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * Relation links from/to ungrouped entities are re-grouped to
      * form relation group links the same way.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
+     *
+     * @see {@link group}
+     * @see {@link ungroupSome}
      */
     ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
         const batch = this.history.startBatch('Ungroup entities');
@@ -832,7 +842,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * Relation links from/to ungrouped entities are re-grouped to
      * form relation group links the same way.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
+     *
+     * @see {@link group}
+     * @see {@link ungroupAll}
      */
     ungroupSome(group: EntityGroup, entities: ReadonlySet<ElementIri>): EntityElement[] {
         const leftGrouped = group.items.filter(item => !entities.has(item.data.id));
@@ -883,7 +896,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * Re-creates a set of relations or relation groups to automatically
      * group relations with the same link type connected to entity groups.
      *
-     * The operation puts a command to the command history.
+     * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
         const batch = this.history.startBatch('Regroup relations');
@@ -915,10 +928,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 }
 
 /**
- * Options for `DataDiagramModel.requestLinks()`.
+ * Options for {@link DataDiagramModel.requestLinks}.
  *
- * @see DataDiagramModel.requestLinks()
- * @see restoreLinksBetweenElements()
+ * @see {@link DataDiagramModel.requestLinks}
+ * @see {@link restoreLinksBetweenElements}
  */
 export interface RequestLinksOptions {
     /**
@@ -1007,7 +1020,7 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
  * from a data provider.
  * 
  * @category Commands
- * @see DataDiagramModel.requestElementData()
+ * @see {@link DataDiagramModel.requestElementData}
  */
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
     return Command.effect('Fetch element data', () => {
@@ -1020,7 +1033,7 @@ export function requestElementData(model: DataDiagramModel, elementIris: Readonl
  * from a data provider.
  *
  * @category Commands
- * @see DataDiagramModel.requestLinks()
+ * @see {@link DataDiagramModel.requestLinks}
  */
 export function restoreLinksBetweenElements(
     model: DataDiagramModel,

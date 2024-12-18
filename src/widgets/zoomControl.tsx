@@ -9,9 +9,9 @@ import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { DockDirection, ViewportDock } from './utility/viewportDock';
 
 /**
- * Props for `ZoomControl` component.
+ * Props for {@link ZoomControl} component.
  *
- * @see ZoomControl
+ * @see {@link ZoomControl}
  */
 export interface ZoomControlProps {
     /**
@@ -39,7 +39,7 @@ export interface ZoomControlProps {
      * In `selection` mode the actions are exchanged.
      *
      * @default false
-     * @see CanvasApi.pointerMode
+     * @see {@link CanvasApi.pointerMode}
      */
     showPointerModeToggle?: boolean;
 }

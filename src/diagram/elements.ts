@@ -13,19 +13,19 @@ import { Vector, isPolylineEqual } from './geometry';
 export type Cell = Element | Link | LinkVertex;
 
 /**
- * Event data for `Element` events.
+ * Event data for{@link Element} events.
  */
 export interface ElementEvents {
     /**
-     * Triggered on `position` property change.
+     * Triggered on {@link Element.position} property change.
      */
     changePosition: PropertyChange<Element, Vector>;
     /**
-     * Triggered on `isExpanded` property change.
+     * Triggered on {@link Element.isExpanded} property change.
      */
     changeExpanded: PropertyChange<Element, boolean>;
     /**
-     * Triggered on `elementState` property change.
+     * Triggered on {@link Element.elementState} property change.
      */
     changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
     /**
@@ -35,23 +35,25 @@ export interface ElementEvents {
         /**
          * Event source (element).
          */
-        source: Element;
+        readonly source: Element;
     };
     /**
      * Triggered on a request to re-render element on a canvas.
+     *
+     * @see {@link Element.redraw}
      */
     requestedRedraw: {
         /**
          * Event source (element).
          */
-        source: Element;
+        readonly source: Element;
         /**
          * Element re-render level: which cached state should be invalidated
          * when redrawing it on a canvas.
          *
          * @default "render"
          */
-        level?: ElementRedrawLevel;
+        readonly level?: ElementRedrawLevel;
     };
 }
 
@@ -62,12 +64,12 @@ export interface ElementEvents {
  *     skipping element template render if template type has not changed;
  *   - `template` - full element render including its template component.
  *
- * @see Element.redraw()
+ * @see {@link Element.redraw}
  */
 export type ElementRedrawLevel = 'render' | 'template';
 
 /**
- * Properties for `Element`.
+ * Properties for {@link Element}.
  */
 export interface ElementProps {
     id?: string;
@@ -171,30 +173,32 @@ export class VoidElement extends Element {
 }
 
 /**
- * Event data for `Link` events.
+ * Event data for {@link Link} events.
  */
 export interface LinkEvents {
     /**
-     * Triggered on `vertices` property change.
+     * Triggered on {@link Link.vertices} property change.
      */
     changeVertices: PropertyChange<Link, ReadonlyArray<Vector>>;
     /**
-     * Triggered on `linkState` property change.
+     * Triggered on {@link Link.linkState} property change.
      */
     changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
     /**
      * Triggered on a request to re-render link on a canvas.
+     *
+     * @see {@link Link.redraw}
      */
     requestedRedraw: {
         /**
          * Event source (link).
          */
-        source: Link;
+        readonly source: Link;
     };
 }
 
 /**
- * Properties for `Link`.
+ * Properties for {@link Link}.
  */
 export interface LinkProps {
     id?: string;

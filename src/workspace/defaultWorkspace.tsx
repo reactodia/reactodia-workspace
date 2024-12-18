@@ -30,91 +30,73 @@ import { WorkspaceRoot } from './workspaceRoot';
 
 export interface BaseDefaultWorkspaceProps {
     /**
-     * Props for the `Canvas` component.
-     *
-     * @see Canvas
+     * Props for the {@link Canvas} component.
      */
     canvas?: CanvasProps;
     /**
-     * Additional widgets to pass as children to the `Canvas` component.
+     * Additional widgets to pass as children to the {@link Canvas} component.
      */
     canvasWidgets?: ReadonlyArray<React.ReactElement>;
     /**
-     * Props for the `ConnectionMenu` canvas widget.
+     * Props for the {@link ConnectionMenu} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see ConnectionsMenu
      */
     connectionsMenu?: Omit<ConnectionsMenuProps, 'commands'> | null;
     /**
-     * Props for the `DropOnCanvas` canvas widget.
+     * Props for the {@link DropOnCanvas} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see DropOnCanvas
      */
     dropOnCanvas?: DropOnCanvasProps | null;
     /**
-     * Props for the `Halo` canvas widget.
+     * Props for the {@link Halo} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see Halo
      */
     halo?: HaloProps | null;
     /**
-     * Props for the `HaloLink` canvas widget.
+     * Props for the {@link HaloLink} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see HaloLink
      */
     haloLink?: HaloLinkProps | null;
     /**
-     * Props for the `Selection` canvas widget.
+     * Props for the {@link Selection} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see Selection
      */
     selection?: SelectionProps | null;
     /**
-     * Props for the `Navigator` canvas widget.
+     * Props for the {@link Navigator} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see Navigator
      */
     navigator?: Partial<NavigatorProps> | null;
     /**
-     * Props for the `VisualAuthoring` context component.
-     *
-     * @see VisualAuthoring
+     * Props for the {@link VisualAuthoring} context component.
      */
     visualAuthoring?: Omit<VisualAuthoringProps, 'commands' | 'children'>;
     /**
-     * Props for the `ZoomControl` canvas widget.
+     * Props for the {@link ZoomControl} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see ZoomControl
      */
     zoomControl?: Partial<ZoomControlProps> | null;
     /**
-     * Event bus to connect `UnifiedSearch` to other components.
+     * Event bus to connect {@link UnifiedSearch} to other components.
      *
      * If not specified, an internal instance will be automatically created.
      */
     searchCommands?: Events<UnifiedSearchCommands> & EventTrigger<UnifiedSearchCommands>;
     /**
-     * Event bus to connect `ConnectionMenu` to other components.
+     * Event bus to connect {@link ConnectionMenu} to other components.
      *
      * If not specified, an internal instance will be automatically created.
      */
     connectionsMenuCommands?: Events<ConnectionsMenuCommands> & EventTrigger<ConnectionsMenuCommands>;
     /**
-     * Event bus to connect `InstancesSearch` to other components.
+     * Event bus to connect {@link InstancesSearch} to other components.
      *
      * If not specified, an internal instance will be automatically created.
      */
@@ -122,13 +104,13 @@ export interface BaseDefaultWorkspaceProps {
 }
 
 /**
- * Props for `DefaultWorkspace` component.
+ * Props for {@link DefaultWorkspace} component.
  *
- * @see DefaultWorkspace
+ * @see {@link DefaultWorkspace}
  */
 export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
     /**
-     * Main menu content, in a form of `ToolbarAction` elements.
+     * Main menu content, in a form of {@link ToolbarAction} elements.
      *
      * If specified as `null`, the menu toggle button will be hidden.
      *
@@ -141,20 +123,18 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
      *     <ToolbarActionExport kind='print' />
      * </>
      * ```
-     * @see ToolbarProps.menu
+     * @see {@link ToolbarProps.menu}
      */
     menu?: React.ReactNode | null;
     /**
-     * Props for the `UnifiedSearch` canvas widget.
+     * Props for the {@link UnifiedSearch} canvas widget.
      *
      * If specified as `null`, the component will not be rendered.
-     *
-     * @see UnifiedSearch
      */
     search?: UnifiedSearchProps | null;
     /**
      * Content for the secondary (actions) toolbar, in a form of
-     * `ToolbarAction` elements.
+     * {@link ToolbarAction} elements.
      *
      * If specified as `null`, the secondary toolbar will be hidden.
      *

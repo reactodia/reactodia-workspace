@@ -34,14 +34,14 @@ export class RestoreGeometry implements Command {
     ) {}
 
     /**
-     * Creates `RestoreGeometry` command with captured geometry for all diagram content.
+     * Creates {@link RestoreGeometry} command with captured geometry for all diagram content.
      */
     static capture(graph: GraphStructure): RestoreGeometry {
         return RestoreGeometry.capturePartial(graph.elements, graph.links);
     }
 
     /**
-     * Creates `RestoreGeometry` command with captured geometry for the specified
+     * Creates {@link RestoreGeometry} command with captured geometry for the specified
      * subset of a diagram content.
      */
     static capturePartial(
@@ -63,7 +63,7 @@ export class RestoreGeometry implements Command {
     }
 
     /**
-     * Creates a derived `RestoreGeometry` command by removing any geometry state
+     * Creates a derived {@link RestoreGeometry} command by removing any geometry state
      * which is equal to the current diagram content geometry state.
      *
      * This is useful to avoid adding a command without actual changes to the command history
@@ -120,7 +120,7 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
 }
 
 /**
- * Command to set element template state.
+ * Command to set {@link Element.elementState element template state}.
  *
  * @category Commands
  */

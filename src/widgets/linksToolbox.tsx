@@ -22,9 +22,9 @@ import type { InstancesSearchCommands } from './instancesSearch';
 import { highlightSubstring } from './listElementView';
 
 /**
- * Props for `LinkTypesToolbox` component.
+ * Props for {@link LinkTypesToolbox} component.
  *
- * @see LinkTypesToolbox
+ * @see {@link LinkTypesToolbox}
  */
 export interface LinkTypesToolboxProps {
     /**
@@ -58,7 +58,7 @@ export interface LinkTypesToolboxProps {
      */
     minSearchTermLength?: number;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }

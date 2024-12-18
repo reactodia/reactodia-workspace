@@ -50,7 +50,7 @@ export const LinkActionContext = React.createContext<LinkActionContext | null>(n
 /**
  * React hook to get rendering context for the link action.
  *
- * Throws an error if called outside `HaloLink` component.
+ * Throws an error if called outside {@link HaloLink} component.
  *
  * @category Hooks
  */
@@ -65,7 +65,7 @@ export function useLinkActionContext(): LinkActionContext {
 /**
  * Base props for link action components.
  *
- * @see LinkAction
+ * @see {@link LinkAction}
  */
 export interface LinkActionStyleProps {
     /**
@@ -73,7 +73,7 @@ export interface LinkActionStyleProps {
      */
     dockSide: 'source' | 'target';
     /**
-     * Place shift for the action button from the `dockSide` endpoint
+     * Place shift for the action button from the {@link dockSide} endpoint
      * towards another endpoint (e.g. `1` for one place towards link target
      * if `dockSide` is `source).
      */
@@ -89,9 +89,9 @@ export interface LinkActionStyleProps {
 }
 
 /**
- * Props for `LinkAction` component.
+ * Props for {@link LinkAction} component.
  *
- * @see LinkAction
+ * @see {@link LinkAction}
  */
 export interface LinkActionProps extends LinkActionStyleProps {
     /**
@@ -115,7 +115,7 @@ export interface LinkActionProps extends LinkActionStyleProps {
 const CLASS_NAME = 'reactodia-link-action';
 
 /**
- * Base component to display an action on the selected link from `HaloLink`.
+ * Base component to display an action on the selected link from {@link HaloLink}.
  *
  * @category Components
  */
@@ -136,9 +136,9 @@ export function LinkAction(props: LinkActionProps) {
 }
 
 /**
- * Props for `LinkActionSpinner` component.
+ * Props for {@link LinkActionSpinner} component.
  *
- * @see LinkActionSpinner
+ * @see {@link LinkActionSpinner}
  */
 export interface LinkActionSpinnerProps extends LinkActionStyleProps {}
 
@@ -160,16 +160,17 @@ export function LinkActionSpinner(props: LinkActionStyleProps) {
 }
 
 /**
- * Props for `LinkActionEdit` component.
+ * Props for {@link LinkActionEdit} component.
  *
- * @see LinkActionEdit
+ * @see {@link LinkActionEdit}
  */
 export interface LinkActionEditProps extends LinkActionStyleProps {}
 
 /**
  * Link action component to start editing the link.
  *
- * This action is visible only when graph authoring mode is active.
+ * This action is visible only when {@link EditorController.inAuthoringMode graph authoring mode}
+ * is active.
  *
  * @category Components
  */
@@ -219,16 +220,17 @@ export function LinkActionEdit(props: LinkActionEditProps) {
 }
 
 /**
- * Props for `LinkActionDelete` component.
+ * Props for {@link LinkActionDelete} component.
  *
- * @see LinkActionDelete
+ * @see {@link LinkActionDelete}
  */
 export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 
 /**
  * Link action component to delete the link.
  *
- * This action is visible only when graph authoring mode is active.
+ * This action is visible only when {@link EditorController.inAuthoringMode graph authoring mode}
+ * is active.
  *
  * Deleting a link adds a command to the command history.
  *
@@ -323,9 +325,9 @@ function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boo
 }
 
 /**
- * Props for `LinkActionMoveEndpoint` component.
+ * Props for {@link LinkActionMoveEndpoint} component.
  *
- * @see LinkActionMoveEndpoint
+ * @see {@link LinkActionMoveEndpoint}
  */
 export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 'dockIndex'> {}
 
@@ -333,9 +335,10 @@ export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 
  * Link action component to change the relation link by moving its endpoint
  * to another entity element.
  *
- * The changed endpoint is specified via `dockSide` prop.
+ * The changed endpoint is specified via {@link LinkActionStyleProps.dockSide dockSide} prop.
  *
- * This action is visible only when graph authoring mode is active.
+ * This action is visible only when {@link EditorController.inAuthoringMode graph authoring mode}
+ * is active.
  *
  * Changing a link adds a command to the command history.
  *
@@ -401,9 +404,9 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
 }
 
 /**
- * Props for `LinkActionRename` component.
+ * Props for {@link LinkActionRename} component.
  *
- * @see LinkActionRename
+ * @see {@link LinkActionRename}
  */
 export interface LinkActionRenameProps
     extends Pick<LinkActionStyleProps, 'className' | 'title'> {}
@@ -411,7 +414,7 @@ export interface LinkActionRenameProps
 /**
  * Link action component to rename a link (change its label).
  *
- * This action is visible only when `RenameLinkProvider.canRename()` returns `true`
+ * This action is visible only when {@link RenameLinkProvider.canRename} returns `true`
  * for the selected link.
  *
  * @category Components

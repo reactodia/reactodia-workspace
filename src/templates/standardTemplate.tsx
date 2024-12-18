@@ -24,9 +24,9 @@ import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAutho
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 /**
- * Props for `StandardTemplate` component.
+ * Props for {@link StandardTemplate} component.
  *
- * @see StandardTemplate
+ * @see {@link StandardTemplate}
  */
 export interface StandardTemplateProps extends TemplateProps {
     /**

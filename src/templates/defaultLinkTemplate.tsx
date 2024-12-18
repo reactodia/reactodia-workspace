@@ -18,9 +18,9 @@ import { useWorkspace } from '../workspace/workspaceContext';
 /**
  * Default link template.
  *
- * Uses `DefaultLinkPathTemplate` to display the link itself.
+ * Uses {@link DefaultLinkPathTemplate} to display the link itself.
  *
- * @see DefaultLinkPathTemplate
+ * @see {@link DefaultLinkPathTemplate}
  */
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
@@ -35,9 +35,9 @@ export const DefaultLinkTemplate: LinkTemplate = {
 const CLASS_NAME = 'reactodia-default-link';
 
 /**
- * Props for `DefaultLinkPathTemplate` component.
+ * Props for {@link DefaultLinkPathTemplate} component.
  *
- * @see DefaultLinkPathTemplate
+ * @see {@link DefaultLinkPathTemplate}
  */
 export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
     /**
@@ -51,7 +51,7 @@ export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
     /**
      * Additional props for the primary link label.
      *
-     * @see LinkLabelProps.primary
+     * @see {@link LinkLabelProps.primary}
      */
     primaryLabelProps?: CustomizedLinkLabelProps;
     /**
@@ -63,22 +63,22 @@ export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
      * Starting row shift when displaying relation link data properties.
      *
      * @default 1
-     * @see LinkLabelProps.line
+     * @see {@link LinkLabelProps.line}
      */
     propertyLabelStartLine?: number;
     /**
      * Additional labels to display for the link.
      *
      * When prepending labels for a relational link it is useful to specify
-     * `propertyLabelStartLine` to avoid overlapping prepended and data labels.
+     * {@link propertyLabelStartLine} to avoid overlapping prepended and data labels.
      */
     prependLabels?: React.ReactNode;
 }
 
 /**
- * Additional style props for the link labels in `DefaultLinkPathTemplate`.
+ * Additional style props for the link labels in {@link DefaultLinkPathTemplate}.
  *
- * @see DefaultLinkPathTemplateProps
+ * @see {@link DefaultLinkPathTemplateProps}
  */
 type CustomizedLinkLabelProps = Omit<
     LinkLabelProps,
@@ -94,7 +94,7 @@ type CustomizedLinkLabelProps = Omit<
  * The template supports the following template state:
  *   - layout only mark.
  *
- * `RenameLinkProvider` can be used to display a different label
+ * {@link RenameLinkProvider} can be used to display a different label
  * than the default one based on the relation data or the link type.
  *
  * @category Components

@@ -17,9 +17,9 @@ import {
 } from './selectionAction';
 
 /**
- * Props for `Halo` component.
+ * Props for {@link Halo} component.
  *
- * @see Halo
+ * @see {@link Halo}
  */
 export interface HaloProps {
     /**
@@ -29,15 +29,15 @@ export interface HaloProps {
      */
     margin?: number;
     /**
-     * Event bus to send commands to `ConnectionMenu` component.
+     * Event bus to send commands to {@link ConnectionMenu} component.
      */
     connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
     /**
-     * `SelectionAction` items representing available actions on the selected element.
+     * {@link SelectionAction} items representing available actions on the selected element.
      *
      * **Default**:
      * ```jsx

@@ -1,5 +1,5 @@
 /**
- * Dataset-schema specific settings for `SparqlDataProvider`.
+ * Dataset-schema specific settings for {@link SparqlDataProvider}.
  *
  * @category Data
  */
@@ -20,7 +20,7 @@ export interface SparqlDataProviderSettings {
     dataLabelProperty: string;
 
     /**
-     * Set of language tags to provide a FILTER for labels and other literal values.
+     * Set of language tags to provide a `FILTER` for labels and other literal values.
      */
     filterOnlyLanguages?: ReadonlyArray<string>;
 
@@ -159,7 +159,7 @@ export interface SparqlDataProviderSettings {
      * SELECT query to retrieve incoming/outgoing link types from specified element with statistics.
      *
      * If `?direction` binding is returned, it would be possible to avoid statistics query
-     * when `inexactCount` mode is requested.
+     * when `inexactCount` mode is requested in {@link DataProvider.connectedLinkStats}.
      *
      * Parametrized variables:
      *   - `${elementIri}`
@@ -190,8 +190,8 @@ export interface SparqlDataProviderSettings {
     linkTypesStatisticsQuery: string;
 
     /**
-     * SPARQL query pattern to restrict lookup results in case when `refElementLinkId`
-     * is not specified.
+     * SPARQL query pattern to restrict lookup results in case when
+     * {@link DataProviderLookupParams.refElementLinkId} is not specified.
      *
      * Available bindings:
      *   - `?link` link type

@@ -1,7 +1,9 @@
 import * as React from 'react';
 
 /**
- * Props for `ProgressBar` component.
+ * Props for {@link ProgressBar} component.
+ *
+ * @see {@link ProgressBar}
  */
 export interface ProgressBarProps {
     /**
