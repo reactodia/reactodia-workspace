@@ -24,9 +24,9 @@ import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
 /**
- * Props for `VisualAuthoring` component.
+ * Props for {@link VisualAuthoring} component.
  *
- * @see VisualAuthoring
+ * @see {@link VisualAuthoring}
  */
 export interface VisualAuthoringProps {
     /**
@@ -40,7 +40,7 @@ export interface VisualAuthoringProps {
  */
 export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
 /**
- * Parameters for `PropertyEditor`.
+ * Parameters for {@link PropertyEditor}.
  */
 export interface PropertyEditorOptions {
     /**
@@ -50,7 +50,7 @@ export interface PropertyEditorOptions {
     /**
      * Handler to submit changed entity data.
      *
-     * Changed data may have a different entity IRI (`ElementModel.id`)
+     * Changed data may have a different entity IRI ({@link ElementModel.id})
      * in case when the entity identity needs to be changed.
      */
     onSubmit: (newData: ElementModel) => void;
@@ -61,9 +61,9 @@ export interface PropertyEditorOptions {
 }
 
 /**
- * Events for `VisualAuthoring` event bus.
+ * Events for {@link VisualAuthoring} event bus.
  *
- * @see VisualAuthoring
+ * @see {@link VisualAuthoring}
  */
 export interface VisualAuthoringCommands {
     startDragEdit: {

@@ -22,13 +22,13 @@ export interface OverlayControllerProps {
 }
 
 /**
- * Event data for `OverlayController` events.
+ * Event data for {@link OverlayController} events.
  *
- * @see OverlayController
+ * @see {@link OverlayController}
  */
 export interface OverlayControllerEvents {
     /**
-     * Triggered on `openedDialog` property change.
+     * Triggered on {@link OverlayController.openedDialog} property change.
      */
     changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
 }
@@ -59,7 +59,7 @@ export interface OpenedDialog {
 /**
  * Nominal (branded) type for known overlay dialog type.
  *
- * @see OpenedDialog.knownType
+ * @see {@link OpenedDialog.knownType}
  */
 export type OverlayDialogType = string & { overlayDialogTypeBrand: void };
 
@@ -197,9 +197,9 @@ export class OverlayController {
     }
 
     /**
-     * Creates a task via `startTask()` for the operation defined by a Promise.
+     * Creates a task via {@link startTask} for the operation defined by a `Promise`.
      *
-     * @see startTask()
+     * @see {@link startTask}
      */
     showSpinnerWhile(operation: Promise<unknown>): void {
         const task = this.startTask();
@@ -255,7 +255,7 @@ export class OverlayController {
     /**
      * Shows on-canvas dialog anchored to the target element or link.
      *
-     * @see hideDialog()
+     * @see {@link hideDialog}
      */
     showDialog(params: {
         /**
@@ -332,7 +332,7 @@ export class OverlayController {
     /**
      * Closes currently open dialog if any is active.
      *
-     * @see showDialog()
+     * @see {@link showDialog}
      */
     hideDialog() {
         if (this._openedDialog) {
@@ -360,13 +360,13 @@ export interface OverlayTask {
      * will be started later.
      *
      * This method can be called multiple times and will not
-     * complete the task (i.e. `end()` method call is required).
+     * complete the task (i.e. {@link end end()} method call is required).
      */
     setError(error: unknown): void;
     /**
      * Completes the task and removes its representation from the overlay.
      *
-     * If the task is marked with error via `setError()`, that error
+     * If the task is marked with error via {@link setError setError()}, that error
      * will be kept displaying until another task is started later.
      */
     end(): void;

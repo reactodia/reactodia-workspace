@@ -29,9 +29,9 @@ import { highlightSubstring } from './listElementView';
 import { SearchResults } from './searchResults';
 
 /**
- * Props for `ConnectionsMenu` component.
+ * Props for {@link ConnectionsMenu} component.
  *
- * @see ConnectionsMenu
+ * @see {@link ConnectionsMenu}
  */
 export interface ConnectionsMenuProps {
     /**
@@ -49,15 +49,15 @@ export interface ConnectionsMenuProps {
      */
     suggestProperties?: PropertySuggestionHandler;
     /**
-     * Event bus to send commands to `InstancesSearch` component.
+     * Event bus to send commands to {@link InstancesSearch} component.
      */
     instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
- * Events for `ConnectionsMenu` event bus.
+ * Events for {@link ConnectionsMenu} event bus.
  *
- * @see ConnectionsMenu
+ * @see {@link ConnectionsMenu}
  */
 export interface ConnectionsMenuCommands {
     /**
@@ -80,14 +80,14 @@ export interface ConnectionsMenuCommands {
 /**
  * Provides smart suggestions when searching by the link type label.
  *
- * @see ConnectionsMenuProps.suggestProperties
+ * @see {@link ConnectionsMenuProps.suggestProperties}
  */
 export type PropertySuggestionHandler = (params: PropertySuggestionParams) => Promise<PropertyScore[]>;
 
 /**
  * Parameters for the smart link type suggestion handler.
  *
- * @see PropertySuggestionHandler
+ * @see {@link PropertySuggestionHandler}
  */
 export interface PropertySuggestionParams {
     /**
@@ -115,7 +115,7 @@ export interface PropertySuggestionParams {
 /**
  * Result entry for the smart link type suggestion handler.
  *
- * @see PropertySuggestionHandler
+ * @see {@link PropertySuggestionHandler}
  */
 export interface PropertyScore {
     /**

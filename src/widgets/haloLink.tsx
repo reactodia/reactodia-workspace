@@ -19,9 +19,9 @@ import {
 } from './linkAction';
 
 /**
- * Props for `HaloLink` component.
+ * Props for {@link HaloLink} component.
  *
- * @see HaloLink
+ * @see {@link HaloLink}
  */
 export interface HaloLinkProps {
     /**
@@ -37,13 +37,14 @@ export interface HaloLinkProps {
      */
     buttonSize?: number;
     /**
-     * Margin between link action buttons based on the `dockIndex` order.
+     * Margin between link action buttons based on
+     * the {@link LinkActionStyleProps.dockIndex dockIndex} order.
      *
      * @default 5
      */
     buttonMargin?: number;
     /**
-     * `LinkAction` items representing available actions on the selected link.
+     * {@link LinkAction} items representing available actions on the selected link.
      *
      * **Default**:
      * ```jsx

@@ -6,7 +6,8 @@ import type { Events } from './events';
 /**
  * Represents an event store which can be subscribed to listen its changes.
  *
- * This store exactly the same as accepted by `React.useSyncExternalStore()` hook.
+ * This store exactly the same as accepted by
+ * [React.useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore) hook.
  */
 export type SyncStore = (onChange: () => void) => (() => void);
 
@@ -14,8 +15,8 @@ export type SyncStore = (onChange: () => void) => (() => void);
  * Subscribes to a value which changes are tracked by the specified event.
  *
  * @category Hooks
- * @see useEventStore()
- * @see useSyncStore()
+ * @see {@link useEventStore}
+ * @see {@link useSyncStore}
  */
 export function useObservedProperty<E, K extends keyof E, R>(
     events: Events<E>,
@@ -56,7 +57,8 @@ export function useEventStore<E, K extends keyof E>(events: Events<E> | undefine
 
 /**
  * Transforms event store in a way that the result store debounces the changes
- * until the next rendered frame (via `requestAnimationFrame()`).
+ * until the next rendered frame via
+ * [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame).
  *
  * @category Hooks
  */
@@ -82,7 +84,8 @@ export function useFrameDebouncedStore(subscribe: SyncStore): SyncStore {
 }
 
 /**
- * Same as `React.useSyncExternalStore()` with a support shim for lower React versions.
+ * Same as [React.useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore)
+ * with a support shim for lower React versions.
  *
  * @category Hooks
  */
@@ -91,8 +94,8 @@ export function useSyncStore<R>(subscribe: SyncStore, getSnapshot: () => R): R {
 }
 
 /**
- * Same as `React.useSyncExternalStore()` with custom equality comparison
- * for snapshot values.
+ * Same as [React.useSyncExternalStore](https://react.dev/reference/react/useSyncExternalStore)
+ * with custom equality comparison for snapshot values.
  * 
  * Update will be skipped unless `equalResults()` called with previous and
  * current snapshot returns `false`.

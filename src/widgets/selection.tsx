@@ -21,9 +21,9 @@ import {
 } from './selectionAction';
 
 /**
- * Props for `Selection` component.
+ * Props for {@link Selection} component.
  *
- * @see Selection
+ * @see {@link Selection}
  */
 export interface SelectionProps {
     /**
@@ -39,11 +39,11 @@ export interface SelectionProps {
      */
     itemMargin?: number;
     /**
-     * Event bus to send commands to `ConnectionMenu` component.
+     * Event bus to send commands to {@link ConnectionMenu} component.
      */
     connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
     /**
-     * `SelectionAction` items representing available actions on the selected elements.
+     * {@link SelectionAction} items representing available actions on the selected elements.
      *
      * **Default**:
      * ```jsx

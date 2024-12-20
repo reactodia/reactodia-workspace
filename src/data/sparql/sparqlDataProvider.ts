@@ -40,13 +40,14 @@ import {
 } from './sparqlDataProviderSettings';
 
 /**
- * Options for `SparqlDataProvider`.
+ * Options for {@link SparqlDataProvider}.
  *
- * @see SparqlDataProvider
+ * @see {@link SparqlDataProvider}
  */
 export interface SparqlDataProviderOptions {
     /**
-     * RDF/JS-compatible term factory to create RDF terms.
+     * [RDF/JS-compatible term factory](https://rdf.js.org/data-model-spec/#datafactory-interface)
+     * to create RDF terms.
      */
     factory?: Rdf.DataFactory;
 
@@ -93,12 +94,14 @@ export interface SparqlDataProviderOptions {
     /**
      * Element property type IRIs to use to get image URLs for elements.
      *
-     * If needed, image URL extraction can be customized via `prepareImages`.
+     * If needed, image URL extraction can be customized via
+     * {@link SparqlDataProviderOptions.prepareImages prepareImages}.
      */
     imagePropertyUris?: ReadonlyArray<string>;
 
     /**
-     * Allows to extract/fetch image URLs externally instead of using `imagePropertyUris` option.
+     * Allows to extract/fetch image URLs externally instead of using
+     * {@link SparqlDataProviderOptions.imagePropertyUris imagePropertyUris} option.
      */
     prepareImages?: (
         elementInfo: Iterable<ElementModel>,
@@ -127,9 +130,9 @@ export type SparqlQueryFunction = (params: {
 }) => Promise<Response>;
 
 /**
- * Options for request chunking in `SparqlDataProvider`.
+ * Options for request chunking in {@link SparqlDataProvider}.
  *
- * @see SparqlDataProviderOptions.chunk
+ * @see {@link SparqlDataProviderOptions.chunk}
  */
 export interface SparqlProviderChunkOptions {
     /**
@@ -142,7 +145,7 @@ export interface SparqlProviderChunkOptions {
      */
     readonly maxSize: number;
     /**
-     * Unit of measure for `maxSize`:
+     * Unit of measure for {@link SparqlProviderChunkOptions.maxSize maxSize}:
      *   - `itemCount` - count of IRIs in the chunk;
      *   - `totalLength` - total length of IRIs with separators in the chunk.
      */

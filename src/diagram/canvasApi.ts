@@ -28,7 +28,7 @@ export interface CanvasApi {
      * 
      * Allows to convert between different canvas coordinate types.
      *
-     * This state can be captured to provide freezed state via `CanvasMetrics.snapshot()`.
+     * This state can be captured to provide freezed state via {@link CanvasMetrics.snapshot}.
      */
     readonly metrics: CanvasMetrics;
     /**
@@ -73,21 +73,21 @@ export interface CanvasApi {
      */
     setScale(value: number, options?: ScaleOptions): Promise<void>;
     /**
-     * Same as `setScale()` but relative to the current scale value.
+     * Same as {@link CanvasApi.setScale setScale()} but relative to the current scale value.
      *
-     * @see CanvasApi.setScale()
+     * @see {@link CanvasApi.setScale}
      */
     zoomBy(value: number, options?: ScaleOptions): Promise<void>;
     /**
-     * Same as `zoomBy()` with a positive zoom step value.
+     * Same as {@link CanvasApi.zoomBy zoomBy()} with a positive zoom step value.
      *
-     * @see CanvasApi.zoomBy()
+     * @see {@link CanvasApi.zoomBy}
      */
     zoomIn(scaleOptions?: ScaleOptions): Promise<void>;
     /**
-     * Same as `zoomBy()` with a negative zoom step value.
+     * Same as {@link CanvasApi.zoomBy zoomBy()} with a negative zoom step value.
      *
-     * @see CanvasApi.zoomBy()
+     * @see {@link CanvasApi.zoomBy}
      */
     zoomOut(scaleOptions?: ScaleOptions): Promise<void>;
     /**
@@ -95,13 +95,13 @@ export interface CanvasApi {
      *
      * If the diagram is empty, centers the viewport at the middle of the canvas.
      *
-     * @see CanvasApi.zoomToFitRect()
+     * @see {@link CanvasApi.zoomToFitRect}
      */
     zoomToFit(options?: ViewportOptions): Promise<void>;
     /**
      * Changes the viewport to fit specified rectangle area in paper coordinates if possible.
      *
-     * @see CanvasApi.zoomToFit()
+     * @see {@link CanvasApi.zoomToFit}
      */
     zoomToFitRect(paperRect: Rect, options?: ViewportOptions): Promise<void>;
     /**
@@ -120,7 +120,7 @@ export interface CanvasApi {
      * Returns `true` if there is an active animation for graph or links on the canvas;
      * otherwise `false`.
      *
-     * @see CanvasApi.animateGraph()
+     * @see {@link CanvasApi.animateGraph}
      */
     isAnimatingGraph(): boolean;
     /**
@@ -144,9 +144,9 @@ export interface CanvasApi {
 }
 
 /**
- * Event data for `CanvasApi` events.
+ * Event data for {@link CanvasApi} events.
  *
- * @see CanvasApi
+ * @see {@link CanvasApi}
  */
 export interface CanvasEvents {
     /**
@@ -185,15 +185,15 @@ export interface CanvasEvents {
      */
     resize: CanvasResizeEvent;
     /**
-     * Triggered on `isAnimatingGraph()` property change.
+     * Triggered on {@link CanvasApi.isAnimatingGraph} property change.
      */
     changeAnimatingGraph: PropertyChange<CanvasApi, boolean>;
     /**
-     * Triggered on `pointerMode` property change.
+     * Triggered on {@link CanvasApi.pointerMode} property change.
      */
     changePointerMode: PropertyChange<CanvasApi, CanvasPointerMode>;
     /**
-     * Triggered on `getScale()` property change.
+     * Triggered on {@link CanvasApi.getScale} property change.
      */
     changeScale: PropertyChange<CanvasApi, number>;
 }
@@ -396,7 +396,7 @@ export interface CanvasAreaMetrics {
 export type CanvasPointerMode = 'panning' | 'selection';
 
 /**
- * Options for `CanvasApi` methods affecting the viewport.
+ * Options for {@link CanvasApi} methods affecting the viewport.
  */
 export interface ViewportOptions {
     /**
@@ -417,7 +417,7 @@ export interface ViewportOptions {
 }
 
 /**
- * Options for `CanvasApi.centerTo()` method.
+ * Options for {@link CanvasApi.centerTo} method.
  */
 export interface CenterToOptions extends ViewportOptions {
     /**
@@ -427,7 +427,7 @@ export interface CenterToOptions extends ViewportOptions {
 }
 
 /**
- * Options for `CanvasApi` methods affecting canvas scale.
+ * Options for {@link CanvasApi} methods affecting canvas scale.
  */
 export interface ScaleOptions extends ViewportOptions {
     /**
@@ -487,7 +487,7 @@ export interface ZoomOptions {
 /**
  * Options for exporting diagram as SVG image.
  *
- * @see CanvasApi.exportSvg()
+ * @see {@link CanvasApi.exportSvg}
  */
 export interface ExportSvgOptions {
     /**
@@ -514,7 +514,7 @@ export interface ExportSvgOptions {
 /**
  * Options for exporting diagram as raster image (e.g. JPEG, PNG, etc).
  *
- * @see CanvasApi.exportRaster()
+ * @see {@link CanvasApi.exportRaster}
  */
 export interface ExportRasterOptions extends ExportSvgOptions, ToDataURLOptions {}
 

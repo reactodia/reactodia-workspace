@@ -30,9 +30,9 @@ const DIRECTION_IN_ICON = require('@images/direction-in.svg');
 const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
 
 /**
- * Props for `InstancesSearch` component.
+ * Props for {@link InstancesSearch} component.
  *
- * @see InstancesSearch
+ * @see {@link InstancesSearch}
  */
 export interface InstancesSearchProps {
     /**
@@ -79,7 +79,7 @@ export interface InstancesSearchProps {
 }
 
 /**
- * Events for `InstancesSearch` event bus.
+ * Events for {@link InstancesSearch} event bus.
  */
 export interface InstancesSearchCommands {
     /**
@@ -94,9 +94,9 @@ export interface InstancesSearchCommands {
 }
 
 /**
- * A filter criteria for the entity lookup from a `DataProvider`.
+ * A filter criteria for the entity lookup from a {@link DataProvider}.
  *
- * @see DataProviderLookupParams
+ * @see {@link DataProviderLookupParams}
  */
 export interface SearchCriteria {
     /**
@@ -114,13 +114,13 @@ export interface SearchCriteria {
     /**
      * Filter by connection link type.
      *
-     * Only applicable when `refElement` is set.
+     * Only applicable when {@link refElement} is set.
      */
     readonly refElementLink?: LinkTypeIri;
     /**
      * Reference element link type direction ('in' | 'out').
      * 
-     * Only when `refElementLink` is set.
+     * Only when {@link refElementLink} is set.
      */
     readonly linkDirection?: 'in' | 'out';
 }

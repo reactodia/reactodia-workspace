@@ -54,10 +54,10 @@ interface CommonWorkspaceLayoutProps {
 }
 
 /**
- * Props for `WorkspaceLayoutRow` and `WorkspaceLayoutColumn` components.
+ * Props for {@link WorkspaceLayoutRow} and {@link WorkspaceLayoutColumn} components.
  *
- * @see WorkspaceLayoutRow
- * @see WorkspaceLayoutColumn
+ * @see {@link WorkspaceLayoutRow}
+ * @see {@link WorkspaceLayoutColumn}
  */
 export interface WorkspaceLayoutContainerProps extends CommonWorkspaceLayoutProps {
     /**
@@ -78,8 +78,8 @@ type WorkspaceChild = React.ReactElement<WorkspaceLayoutContainerProps | Workspa
  * This component accepts only layout rows, columns or items as children.
  *
  * @category Components
- * @see WorkspaceLayoutColumn
- * @see WorkspaceLayoutItem
+ * @see {@link WorkspaceLayoutColumn}
+ * @see {@link WorkspaceLayoutItem}
  */
 export function WorkspaceLayoutRow(props: WorkspaceLayoutContainerProps) {
     return renderContainer(props, 'row');
@@ -91,17 +91,17 @@ export function WorkspaceLayoutRow(props: WorkspaceLayoutContainerProps) {
  * This component accepts only layout rows, columns or items as children.
  *
  * @category Components
- * @see WorkspaceLayoutRow
- * @see WorkspaceLayoutItem
+ * @see {@link WorkspaceLayoutRow}
+ * @see {@link WorkspaceLayoutItem}
  */
 export function WorkspaceLayoutColumn(props: WorkspaceLayoutContainerProps) {
     return renderContainer(props, 'column');
 }
 
 /**
- * Props for `WorkspaceLayoutItem` component.
+ * Props for {@link WorkspaceLayoutItem} component.
  *
- * @see WorkspaceLayoutItem
+ * @see {@link WorkspaceLayoutItem}
  */
 export interface WorkspaceLayoutItemProps extends CommonWorkspaceLayoutProps {
     /**
@@ -126,8 +126,8 @@ export interface WorkspaceLayoutItemProps extends CommonWorkspaceLayoutProps {
  * The item may be collapsed, in that case the children will not be rendered.
  *
  * @category Components
- * @see WorkspaceLayoutRow
- * @see WorkspaceLayoutColumn
+ * @see {@link WorkspaceLayoutRow}
+ * @see {@link WorkspaceLayoutColumn}
  */
 export function WorkspaceLayoutItem(props: WorkspaceLayoutItemProps) {
     return props.children;

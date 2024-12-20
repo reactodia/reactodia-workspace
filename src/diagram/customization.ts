@@ -75,13 +75,13 @@ export interface TypeStyle {
 export type ElementTemplate = React.ComponentType<TemplateProps>;
 
 /**
- * Props for a custom `ElementTemplate` component.
+ * Props for a custom {@link ElementTemplate} component.
  *
- * @see ElementTemplate
+ * @see {@link ElementTemplate}
  */
 export interface TemplateProps {
     /**
-     * Target element ID (`Element.id`).
+     * Target element ID ({@link Element.id}).
      */
     readonly elementId: string;
     /**
@@ -91,13 +91,13 @@ export interface TemplateProps {
     /**
      * Specifies whether element is in the expanded state.
      *
-     * Same as `element.isExpanded`.
+     * Same as {@link Element.isExpanded}.
      */
     readonly isExpanded: boolean;
     /**
      * Template-specific state for the element.
      *
-     * Same as `element.elementState`.
+     * Same as {@link Element.elementState}.
      */
     readonly elementState?: ElementTemplateState;
 }
@@ -123,7 +123,7 @@ export interface LinkTemplate {
 /**
  * Custom style for SVG path markers at link ends.
  *
- * @see LinkTemplate
+ * @see {@link LinkTemplate}
  */
 export interface LinkMarkerStyle {
     /**
@@ -155,7 +155,7 @@ export interface LinkMarkerStyle {
 /**
  * Props for custom link template rendering.
  *
- * @see LinkTemplate.renderLink()
+ * @see {@link LinkTemplate.renderLink}
  */
 export interface LinkTemplateProps {
     /**
@@ -201,7 +201,7 @@ export interface LinkRouter {
 }
 
 /**
- * Maps `Link.id` to the route data for that link.
+ * Maps {@link Link.id} to the route data for that link.
  */
 export type RoutedLinks = Map<string, RoutedLink>;
 
@@ -210,11 +210,11 @@ export type RoutedLinks = Map<string, RoutedLink>;
  */
 export interface RoutedLink {
     /**
-     * Target link ID (`Link.id`).
+     * Target link ID ({@link Link.id}).
      */
     readonly linkId: string;
     /**
-     * Override for the link vertices (`Link.vertices`).
+     * Override for the link vertices ({@link Link.vertices}).
      */
     readonly vertices: ReadonlyArray<Vector>;
     /**

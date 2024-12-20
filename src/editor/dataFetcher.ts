@@ -35,7 +35,7 @@ export interface ChangeOperationsEvent {
 /**
  * Describes the failed operation with its fail reason (error).
  *
- * @see ChangeOperationsEvent
+ * @see {@link ChangeOperationsEvent}
  */
 export interface FetchOperationFail {
     /**
@@ -51,7 +51,7 @@ export interface FetchOperationFail {
 /**
  * Describes a operation to fetch graph data from a data provider.
  *
- * @see DataProvider
+ * @see {@link DataProvider}
  */
 export type FetchOperation =
     | FetchOperationElement
@@ -63,14 +63,14 @@ export type FetchOperation =
 /**
  * A possible `type` value for an fetch operation with a set of targets.
  *
- * @see FetchOperation
+ * @see {@link FetchOperation}
  */
 export type FetchOperationTargetType = Exclude<FetchOperation['type'], 'link'>;
 
 /**
  * A type which maps fetch operation `type` to a target type for such operation.
  *
- * @see FetchOperation
+ * @see {@link FetchOperation}
  */
 export interface FetchOperationTypeToTarget {
     'element': ElementIri;

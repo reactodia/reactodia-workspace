@@ -2,9 +2,9 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 /**
- * Props for `GroupPaginator` component.
+ * Props for {@link GroupPaginator} component.
  *
- * @see GroupPaginator
+ * @see {@link GroupPaginator}
  */
 export interface GroupPaginatorProps {
     /**

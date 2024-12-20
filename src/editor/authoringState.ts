@@ -45,6 +45,8 @@ export type AuthoredRelation =
 
 /**
  * Represents added entity in the graph authoring state.
+ *
+ * @see {@link AuthoredEntity}
  */
 export interface AuthoredEntityAdd {
     /**
@@ -59,6 +61,8 @@ export interface AuthoredEntityAdd {
 
 /**
  * Represents changed entity in the graph authoring state.
+ *
+ * @see {@link AuthoredEntity}
  */
 export interface AuthoredEntityChange {
     /**
@@ -81,6 +85,8 @@ export interface AuthoredEntityChange {
 
 /**
  * Represents deleted entity in the graph authoring state.
+ *
+ * @see {@link AuthoredEntity}
  */
 export interface AuthoredEntityDelete {
     /**
@@ -95,6 +101,8 @@ export interface AuthoredEntityDelete {
 
 /**
  * Represents added relation in the graph authoring state.
+ *
+ * @see {@link AuthoredRelation}
  */
 export interface AuthoredRelationAdd {
     /**
@@ -109,6 +117,8 @@ export interface AuthoredRelationAdd {
 
 /**
  * Represents changed relation in the graph authoring state.
+ *
+ * @see {@link AuthoredRelation}
  */
 export interface AuthoredRelationChange {
     /**
@@ -131,6 +141,8 @@ export interface AuthoredRelationChange {
 
 /**
  * Represents deleted relation in the graph authoring state.
+ *
+ * @see {@link AuthoredRelation}
  */
 export interface AuthoredRelationDelete {
     /**
@@ -146,7 +158,7 @@ export interface AuthoredRelationDelete {
 /**
  * A mutable clone of the graph authoring state.
  *
- * @see AuthoringState.clone()
+ * @see {@link AuthoringState.clone}
  */
 export interface MutableAuthoringState extends AuthoringState {
     readonly elements: Map<ElementIri, AuthoredEntity>;

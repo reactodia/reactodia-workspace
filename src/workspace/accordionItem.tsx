@@ -19,7 +19,7 @@ export interface AccordionItemProps extends ParentProvidedProps {
 }
 
 /**
- * Props provided by `Accordion`.
+ * Props provided by {@link Accordion}.
  */
 interface ParentProvidedProps {
     collapsed?: boolean;

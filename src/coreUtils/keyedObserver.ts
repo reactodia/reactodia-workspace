@@ -50,13 +50,14 @@ export class KeyedObserver<Key extends string> {
 /**
  * Represents a per-key event store which can be subscribed to listen its changes.
  *
- * This store is similar to one accepted by `React.useSyncEventStore()` hook
- * but accepted by `useKeyedSyncStore()` instead.
+ * This store is similar to one accepted by
+ * [React.useSyncEventStore](https://react.dev/reference/react/useSyncExternalStore)
+ * hook but accepted by {@link useKeyedSyncStore} instead.
  *
  * Arbitrary `context` value can be made required by the store which is captured
  * on the initial subscription and its changes does not force a re-subscription.
  *
- * @see useKeyedSyncStore()
+ * @see {@link useKeyedSyncStore}
  */
 export type KeyedSyncStore<K, Context> = (
     key: K,
@@ -65,7 +66,8 @@ export type KeyedSyncStore<K, Context> = (
 ) => () => void;
 
 /**
- * Same as `React.useSyncExternalStore()` but for `KeyedSyncStore`.
+ * Same as [React.useSyncEventStore](https://react.dev/reference/react/useSyncExternalStore)
+ * but for {@link KeyedSyncStore} which supports per-key store subscription.
  *
  * @category Hooks
  */

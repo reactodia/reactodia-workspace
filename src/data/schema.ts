@@ -1,5 +1,4 @@
-import { ElementTypeIri, LinkTypeIri } from './model';
-import { generate128BitID } from './utils';
+import type { ElementTypeIri, LinkTypeIri } from './model';
 
 /**
  * [JSON-LD](https://json-ld.org/) context IRI (`@context` value) for the
@@ -23,45 +22,46 @@ export const PLACEHOLDER_ELEMENT_TYPE = 'urn:reactodia:newElement' as ElementTyp
 export const PLACEHOLDER_LINK_TYPE = 'urn:reactodia:newLink' as LinkTypeIri;
 
 /**
- * Well-known properties for element state (`Element.elementState`)
- * or link state (`Link.linkState`).
+ * Well-known properties for element state ({@link Element.elementState})
+ * or link state ({@link Link.linkState}).
  *
  * @category Constants
  */
-export namespace TemplateProperties {
+export enum TemplateProperties {
     /**
      * Element state property to mark some element data properties as "pinned",
      * i.e. displayed even if element is collapsed.
      *
-     * @see PinnedProperties
+     * @see {@link PinnedProperties}
      */
-    export const PinnedProperties = 'urn:reactodia:pinnedProperties';
+    PinnedProperties = 'urn:reactodia:pinnedProperties',
     /**
      * Link state property to change to name of a specific link only on the diagram
      * (instead of displaying link type label).
      */
-    export const CustomLabel = 'urn:reactodia:customLabel';
+    CustomLabel = 'urn:reactodia:customLabel',
     /**
      * Link state property to mark link as present only on the diagram but
      * missing from the data returned by a data provider.
      */
-    export const LayoutOnly = 'urn:reactodia:layoutOnly';
+    LayoutOnly = 'urn:reactodia:layoutOnly',
     /**
      * Element state property for selected page index when element is a group
      * of multiple items displayed with pagination.
      */
-    export const GroupPageIndex = 'urn:reactodia:groupPageIndex';
+    GroupPageIndex = 'urn:reactodia:groupPageIndex',
     /**
      * Element state property for selected page size when element is a group
      * of multiple items displayed with pagination.
      */
-    export const GroupPageSize = 'urn:reactodia:groupPageSize';
+    GroupPageSize = 'urn:reactodia:groupPageSize',
 }
 
 /**
- * Shape for a value of the template state property `PinnedProperties`.
+ * Shape for a value of the template state property
+ * {@link TemplateProperties.PinnedProperties}.
  *
- * @see TemplateProperties.PinnedProperties
+ * @see {@link TemplateProperties.PinnedProperties}
  */
 export interface PinnedProperties {
     readonly [propertyId: string]: boolean;

@@ -13,9 +13,9 @@ import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyR
 import { Sha256 } from './sha256';
 
 /**
- * Options for `IndexedDbCachedProvider`.
+ * Options for {@link IndexedDbCachedProvider}.
  *
- * @see IndexedDbCachedProvider
+ * @see {@link IndexedDbCachedProvider}
  */
 export interface IndexedDbCachedProviderOptions {
     /**
@@ -27,17 +27,17 @@ export interface IndexedDbCachedProviderOptions {
      */
     readonly dbName: string;
     /**
-     * Whether to cache missing results from the following `DataProvider` methods:
-     *  - `elements()`
-     *  - `elementTypes()`
-     *  - `linkTypes()`
-     *  - `propertyTypes()`
+     * Whether to cache missing results from the following {@link DataProvider} methods:
+     *  - {@link DataProvider.elements elements()}
+     *  - {@link DataProvider.elementTypes elementTypes()}
+     *  - {@link DataProvider.linkTypes linkTypes()}
+     *  - {@link DataProvider.propertyTypes propertyTypes()}
      *
      * @default true
      */
     readonly cacheMissing?: boolean;
     /**
-     * Whether to cache results from `DataProvider.links()`.
+     * Whether to cache results from {@link DataProvider.links}.
      *
      * If enabled, stores and updates a partial "mirror" of a previously-requested
      * graph links from previous requests to partially or fully return cached ones.
@@ -46,13 +46,15 @@ export interface IndexedDbCachedProviderOptions {
      */
     readonly cacheLinks?: boolean;
     /**
-     * Whether to cache results from `DataProvider.lookup()` with `text` requests.
+     * Whether to cache results from {@link DataProvider.lookup} with
+     * {@link DataProviderLookupParams.text text} requests.
      *
      * @default false
      */
     readonly cacheTextLookups?: boolean;
     /**
-     * Signal to close `IndexedDB` database and dispose the provider.
+     * Signal to close [IndexedDB database](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
+     * and dispose the provider.
      */
     readonly closeSignal: AbortSignal;
 }
@@ -139,7 +141,7 @@ interface LookupRecord {
 
 /**
  * Caches graph data returned from another data provider using
- * [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) storage.
+ * [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) storage.
  *
  * @category Data
  */

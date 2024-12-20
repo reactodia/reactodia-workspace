@@ -14,9 +14,9 @@ import { EntityElement } from '../editor/dataElements';
 import { WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 /**
- * Props for `DropOnCanvas` component.
+ * Props for {@link DropOnCanvas} component.
  *
- * @see DropOnCanvas
+ * @see {@link DropOnCanvas}
  */
 export interface DropOnCanvasProps {}
 
