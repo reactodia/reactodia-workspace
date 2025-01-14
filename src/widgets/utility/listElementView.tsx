@@ -2,11 +2,11 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { hcl } from 'd3-color';
 
-import { ElementModel } from '../data/model';
+import { ElementModel } from '../../data/model';
 
-import { DataDiagramModel } from '../editor/dataDiagramModel';
+import { DataDiagramModel } from '../../editor/dataDiagramModel';
 
-import { useWorkspace } from '../workspace/workspaceContext';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 /**
  * Props for {@link ListElementView} component.

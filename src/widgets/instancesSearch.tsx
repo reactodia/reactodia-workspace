@@ -22,9 +22,9 @@ import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/
 
 import { InlineEntity } from './utility/inlineEntity';
 import { NoSearchResults } from './utility/noSearchResults';
+import { ProgressBar, ProgressState } from './utility/progressBar';
 import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
-import { ProgressBar, ProgressState } from './progressBar';
-import { SearchResults } from './searchResults';
+import { SearchResults } from './utility/searchResults';
 
 const DIRECTION_IN_ICON = require('@images/direction-in.svg');
 const DIRECTION_OUT_ICON = require('@images/direction-out.svg');

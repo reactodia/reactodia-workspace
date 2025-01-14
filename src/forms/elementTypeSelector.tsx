@@ -13,10 +13,10 @@ import { HtmlSpinner } from '../diagram/spinner';
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
 
+import { ListElementView } from '../widgets/utility/listElementView';
 import { NoSearchResults } from '../widgets/utility/noSearchResults';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/utility/searchInput';
 import { createRequest } from '../widgets/instancesSearch';
-import { ListElementView } from '../widgets/listElementView';
 
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 

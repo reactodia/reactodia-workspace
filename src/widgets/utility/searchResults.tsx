@@ -1,14 +1,14 @@
 import * as React from 'react';
 
-import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
+import { EventObserver } from '../../coreUtils/events';
+import { Debouncer } from '../../coreUtils/scheduler';
 
-import { ElementModel, ElementIri } from '../data/model';
+import { ElementModel, ElementIri } from '../../data/model';
 
-import type { DataGraphStructure } from '../editor/dataDiagramModel';
-import { EntityElement, iterateEntitiesOf } from '../editor/dataElements';
+import type { DataGraphStructure } from '../../editor/dataDiagramModel';
+import { EntityElement, iterateEntitiesOf } from '../../editor/dataElements';
 
-import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 import { ListElementView, startDragElements } from './listElementView';
 

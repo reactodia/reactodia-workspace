@@ -137,6 +137,7 @@ export { ClassicTemplate } from './templates/classicTemplate';
 export {
     DefaultLinkTemplate, DefaultLinkPathTemplate, DefaultLinkPathTemplateProps,
 } from './templates/defaultLinkTemplate';
+export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
 export { StandardTemplate } from './templates/standardTemplate';
 export { SemanticTypeStyles } from './templates/typeStyles';
 export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
@@ -145,9 +146,14 @@ export {
     DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
 } from './widgets/utility/dropdown';
 export {
+    ListElementView, ListElementViewProps, highlightSubstring, startDragElements,
+} from './widgets/utility/listElementView';
+export { ProgressBar, ProgressBarProps, ProgressState } from './widgets/utility/progressBar';
+export {
     SearchInputStore, SearchInputStoreEvents, SearchInputStoreChangeValueEvent,
     UseSearchInputStoreOptions, useSearchInputStore,
 } from './widgets/utility/searchInput';
+export { SearchResults, SearchResultsProps } from './widgets/utility/searchResults';
 export {
     ViewportDock, ViewportDockProps, DockDirection,
 } from './widgets/utility/viewportDock';
@@ -158,7 +164,6 @@ export {
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
 } from './widgets/connectionsMenu';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
-export { GroupPaginator, GroupPaginatorProps } from './widgets/groupPaginator';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
 export {
@@ -174,12 +179,7 @@ export {
     LinkActionRename, LinkActionRenameProps,
 } from './widgets/linkAction';
 export { LinkTypesToolbox, LinkTypesToolboxProps } from './widgets/linksToolbox';
-export {
-    ListElementView, ListElementViewProps, highlightSubstring, startDragElements,
-} from './widgets/listElementView';
 export { Navigator, NavigatorProps } from './widgets/navigator';
-export { ProgressBar, ProgressBarProps, ProgressState } from './widgets/progressBar';
-export { SearchResults, SearchResultsProps } from './widgets/searchResults';
 export { Selection, SelectionProps } from './widgets/selection';
 export {
     SelectionAction, SelectionActionProps, SelectionActionStyleProps,

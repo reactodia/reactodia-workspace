@@ -25,8 +25,8 @@ import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
-import { highlightSubstring } from './listElementView';
-import { SearchResults } from './searchResults';
+import { highlightSubstring } from './utility/listElementView';
+import { SearchResults } from './utility/searchResults';
 
 /**
  * Props for {@link ConnectionsMenu} component.

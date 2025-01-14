@@ -4,7 +4,7 @@ import { ElementModel } from '../../data/model';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { formatEntityTitle } from '../listElementView';
+import { formatEntityTitle } from '../utility/listElementView';
 
 const CLASS_NAME = 'reactodia-inline-entity';
 

@@ -5,7 +5,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
 import { EntityElement, RelationLink, changeEntityData } from '../editor/dataElements';
 
-import { ProgressBar } from '../widgets/progressBar';
+import { ProgressBar } from '../widgets/utility/progressBar';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { ElementModel, LinkModel, equalLinks } from '../data/model';
 
-import { ProgressBar } from '../widgets/progressBar';
+import { ProgressBar } from '../widgets/utility/progressBar';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 

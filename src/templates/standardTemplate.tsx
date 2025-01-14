@@ -18,10 +18,10 @@ import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataEleme
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { GroupPaginator } from '../widgets/groupPaginator';
 import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
-
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+
+import { GroupPaginator } from './groupPaginator';
 
 /**
  * Props for {@link StandardTemplate} component.

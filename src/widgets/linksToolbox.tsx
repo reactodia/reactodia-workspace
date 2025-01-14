@@ -16,10 +16,10 @@ import { WithFetchStatus } from '../editor/withFetchStatus';
 import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { InlineEntity } from './utility/inlineEntity';
+import { highlightSubstring } from './utility/listElementView';
 import { NoSearchResults } from './utility/noSearchResults';
 import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
 import type { InstancesSearchCommands } from './instancesSearch';
-import { highlightSubstring } from './listElementView';
 
 /**
  * Props for {@link LinkTypesToolbox} component.

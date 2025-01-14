@@ -18,8 +18,8 @@ import { HtmlSpinner } from '../../diagram/spinner';
 import { DataDiagramModel } from '../../editor/dataDiagramModel';
 
 import { NoSearchResults } from '../utility/noSearchResults';
+import { ProgressBar, ProgressState } from '../utility/progressBar';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
-import { ProgressBar, ProgressState } from '../progressBar';
 import type { InstancesSearchCommands } from '../instancesSearch';
 
 import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';

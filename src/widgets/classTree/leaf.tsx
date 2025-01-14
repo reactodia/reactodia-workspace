@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { ElementTypeIri } from '../../data/model';
 import { WorkspaceContext } from '../../workspace/workspaceContext';
 
-import { highlightSubstring } from '../listElementView';
+import { highlightSubstring } from '../utility/listElementView';
 
 import { TreeNode } from './treeModel';
 
