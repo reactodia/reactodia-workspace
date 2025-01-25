@@ -325,7 +325,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
 [Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.1...HEAD
-[0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...v0.27.1
+[0.27.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.1...v0.27.0
 [0.26.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...v0.26.0
