@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
 
+## [0.27.1] - 2025-01-25
+### Fixed
+- Auto-reset command history as the last step in `useLoadedWorkspace()`.
+- Make diagram ready to use on mount without a required call to `createNewDiagram()` or `importLayout()` first (components which require a data provider may still wait for the explicit loading, e.g. `ClassTree`).
+- Properly re-initialize `VisualAuthoring` on mount/unmount.
+- Change default `ClassTree` minimum search term length to 2 as a workaround for performance issues on large element type trees.
+
 ## [0.27.0] - 2024-12-05
 ### Added
 - Introduce new search-centric default workspace layout with `UnifiedSearch`:
@@ -317,7 +324,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.1...HEAD
+[0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.1...v0.27.0
 [0.26.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...v0.26.1
 [0.26.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.25.1...v0.26.0

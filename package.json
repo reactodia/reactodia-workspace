@@ -1,6 +1,6 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.27.0-next.1",
+  "version": "0.27.1",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
   "scripts": {
     "build": "webpack",
     "build-examples": "webpack --config webpack.examples.config.js",
+    "build-pack": "npm run build && npm run typings && npm pack",
     "serve": "node ./webpackServe.js",
     "test": "vitest",
     "test-build": "npm run build && npm run build-examples",
