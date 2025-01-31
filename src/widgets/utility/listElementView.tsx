@@ -4,9 +4,7 @@ import { hcl } from 'd3-color';
 
 import { ElementModel } from '../../data/model';
 
-import { DataDiagramModel } from '../../editor/dataDiagramModel';
-
-import { useWorkspace } from '../../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 /**
  * Props for {@link ListElementView} component.
@@ -52,7 +50,8 @@ const CLASS_NAME = 'reactodia-list-element-view';
  * @category Components
  */
 export function ListElementView(props: ListElementViewProps) {
-    const {model, getElementTypeStyle} = useWorkspace();
+    const workspace = useWorkspace();
+    const {model, getElementTypeStyle} = workspace;
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
@@ -79,7 +78,7 @@ export function ListElementView(props: ListElementViewProps) {
         <li className={combinedClass}
             role='option'
             draggable={!disabled && Boolean(onDragStart)}
-            title={formatEntityTitle(element, model)}
+            title={formatEntityTitle(element, workspace)}
             style={{background: hcl(h, c, l).toString()}}
             onClick={onItemClick}
             onDragStart={onDragStart}>
@@ -148,14 +147,15 @@ export function highlightSubstring(
     return <span>{before}<span {...highlightProps}>{highlighted}</span>{after}</span>;
 }
 
-export function formatEntityTitle(entity: ElementModel, model: DataDiagramModel): string {
+export function formatEntityTitle(entity: ElementModel, workspace: WorkspaceContext): string {
+    const {model, translation: t} = workspace;
+
     const label = model.locale.formatLabel(entity.label, entity.id);
-    const iri = model.locale.formatIri(entity.id);
+    const entityIri = model.locale.formatIri(entity.id);
+    const entityTypes = model.locale.formatElementTypes(entity.types).join(', ');
 
-    let typeString = '';
-    if (entity.types.length > 0) {
-        typeString = `\nClasses: ${model.locale.formatElementTypes(entity.types).join(', ')}`;
-    }
+    const title = t.format('inline_entity', 'title', {entity: label, entityIri, entityTypes});
+    const titleExtra = t.format('inline_entity', 'title_extra', {entity: label, entityIri, entityTypes});
 
-    return `${label} ${iri}${typeString}`;
+    return `${title}${titleExtra ? `\n${titleExtra}` : ''}`;
 }

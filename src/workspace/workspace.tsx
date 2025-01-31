@@ -4,6 +4,8 @@ import { hcl } from 'd3-color';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
+import type { TranslationBundle } from '../coreUtils/i18n';
+import { TranslationProvider, makeTranslation } from '../coreUtils/i18nProvider';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
@@ -45,6 +47,10 @@ import { EntityElement } from '../workspace';
  * @see {@link Workspace}
  */
 export interface WorkspaceProps {
+    /**
+     * Provides a translation bundle for UI text strings in the workspace.
+     */
+    translation?: Partial<TranslationBundle>;
     /**
      * Overrides default command history implementation.
      *
@@ -136,6 +142,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         super(props);
 
         const {
+            translation: translationBundle = {},
             history = new InMemoryHistory(),
             metadataProvider,
             validationProvider,
@@ -147,6 +154,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
             defaultLayout,
             onWorkspaceEvent = () => {},
         } = this.props;
+
+        const translation = makeTranslation(translationBundle);
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
@@ -188,6 +197,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             view,
             editor,
             overlay,
+            translation,
             disposeSignal: this.cancellation.signal,
             getElementStyle: this.getElementStyle,
             getElementTypeStyle: this.getElementTypeStyle,
@@ -218,9 +228,11 @@ export class Workspace extends React.Component<WorkspaceProps> {
     render() {
         const {children} = this.props;
         return (
-            <WorkspaceContext.Provider value={this.workspaceContext}>
-                {children}
-            </WorkspaceContext.Provider>
+            <TranslationProvider translation={this.workspaceContext.translation}>
+                <WorkspaceContext.Provider value={this.workspaceContext}>
+                    {children}
+                </WorkspaceContext.Provider>
+            </TranslationProvider>
         );
     }
 
@@ -318,7 +330,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             canvas: targetCanvas, layoutFunction, selectedElements, animate, signal,
             zoomToFit = true,
         } = params;
-        const {model, view, overlay, disposeSignal} = this.workspaceContext;
+        const {model, view, overlay, translation: t, disposeSignal} = this.workspaceContext;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
         if (!canvas) {
@@ -328,7 +340,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         canvas.renderingState.syncUpdate();
 
         const task = overlay.startTask({
-            title: 'Computing graph layout',
+            title: t.text('workspace', 'graph_layout.task'),
             delay: 200,
         });
         let calculatedLayout: CalculatedLayout;
@@ -349,7 +361,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             task.end();
         }
 
-        const batch = model.history.startBatch('Graph layout');
+        const batch = model.history.startBatch(t.text('workspace', 'graph_layout.command'));
         batch.history.registerToUndo(RestoreGeometry.capture(model));
 
         for (const link of model.links) {

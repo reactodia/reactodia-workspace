@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { Events } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { useCanvas } from '../../diagram/canvasApi';
@@ -351,6 +352,7 @@ function SearchToggle(props: {
         inputRef, searchTerm, setSearchTerm, onSubmit, onClear, expanded, setExpanded,
         minWidth, panelSize,
     } = props;
+    const t = useTranslation();
 
     return (
         <div className={classnames(`${CLASS_NAME}__toggle`)}
@@ -361,7 +363,7 @@ function SearchToggle(props: {
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
                 style={{minWidth}}
-                placeholder='Search for...'
+                placeholder={t.text('unified_search', 'input.placeholder')}
                 name='reactodia-search'
                 value={searchTerm}
                 onClick={() => setExpanded(true)}
@@ -392,12 +394,14 @@ function SearchToggle(props: {
                 }}
             />
             {onClear ? (
-                <button type='button' title='Clear'
+                <button type='button'
+                    title={t.text('unified_search', 'input_clear.title')}
                     className={`${CLASS_NAME}__clear-button`}
                     onClick={onClear}>
                 </button>
             ) : expanded ? (
-                <button type='button' title='Close'
+                <button type='button'
+                    title={t.text('unified_search', 'input_collapse.title')}
                     className={`${CLASS_NAME}__collapse-button`}
                     onClick={() => setExpanded(false)}>
                 </button>

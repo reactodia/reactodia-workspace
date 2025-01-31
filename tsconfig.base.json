@@ -4,6 +4,7 @@
         "module": "ESNext",
         "moduleResolution": "node",
         "jsx": "react-jsx",
+        "resolveJsonModule": true,
         "importHelpers": true,
         "strict": true,
         "noImplicitAny": true,
@@ -11,6 +12,7 @@
         "sourceMap": true
     },
     "include": [
+      "./i18n/i18n.type-erasure.d.ts",
         "./src/**/*.ts",
         "./src/**/*.tsx",
         "./typings/typings.d.ts"

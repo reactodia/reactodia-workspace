@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import type { Translation } from '../coreUtils/i18n';
+
 import type { ElementIri, ElementTypeIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
@@ -34,6 +36,10 @@ export interface WorkspaceContext {
      * Controls UI overlays for the canvases, including dialogs and tasks.
      */
     readonly overlay: OverlayController;
+    /**
+     * Provides a translation for UI text strings.
+     */
+    readonly translation: Translation;
     /**
      * Cancellation signal that becomes aborted when the workspace is disposed.
      */

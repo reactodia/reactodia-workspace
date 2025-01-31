@@ -148,7 +148,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
             if (targets.length === 0) {
                 return;
             }
-            const {model, overlay} = workspace;
+            const {model, overlay, translation: t} = workspace;
 
             const virtualTarget = targets.length > 1
                 ? new VirtualTarget(targets, model, canvas)
@@ -167,7 +167,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
                 target: placeTarget,
                 dialogType: BuiltinDialogType.connectionsMenu,
                 style: {
-                    caption: 'Connections',
+                    caption: t.text('connections_menu', 'dialog.caption'),
                     defaultSize: {width: 310, height: 340},
                     minSize: {width: 300, height: 250},
                 },
@@ -339,10 +339,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     constructor(props: ConnectionsMenuInnerProps) {
         super(props);
-        const {targetIris, initialMode, suggestProperties, workspace: {model}} = this.props;
+        const {targetIris, initialMode, suggestProperties, workspace: {model, translation: t}} = this.props;
         this.ALL_RELATED_ELEMENTS_LINK = {
             id: 'urn:reactodia:allLinks' as LinkTypeIri,
-            label: [model.factory.literal('All')],
+            label: [model.factory.literal(t.text('connections_menu', 'all_link.label'))],
         };
         const allowSmartSort = Boolean(suggestProperties) && targetIris.length === 1;
         this.state = {
@@ -599,7 +599,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private getBreadCrumbs() {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, translation: t}} = this.props;
         const {objects, panel} = this.state;
         if (objects && panel === 'objects') {
             const {linkType, direction} = objects.chunk;
@@ -608,7 +608,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
-                    onClick={this.onCollapseLink}>Link types</a>
+                    onClick={this.onCollapseLink}>{t.text('connections_menu', 'breadcrumbs_root.label')}</a>
                 {'\u00A0' + '/' + '\u00A0'}
                 {localizedText} {direction ? `(${direction})` : null}
             </span>;
@@ -643,7 +643,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private getBody() {
         const {
-            targetIris, instancesSearchCommands, connectionSearch, objectSearch, workspace: {model},
+            targetIris, instancesSearchCommands, connectionSearch, objectSearch, workspace,
         } = this.props;
         const {
             panel, connectionSortMode, loadingState, objects, connections, connectionSuggestions,
@@ -656,7 +656,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                 <ObjectsPanel
                     data={objects}
                     onMoveToFilter={this.onMoveToFilter}
-                    model={model}
+                    workspace={workspace}
                     filterKey={objectSearch.value}
                     loading={loadingState === 'loading'}
                     onPressAddSelected={this.onAddSelectedElements}
@@ -676,7 +676,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     targetIris={targetIris}
                     data={connections}
                     suggestions={connectionSuggestions}
-                    model={model}
+                    workspace={workspace}
                     filterKey={connectionSearch.value}
                     sortMode={connectionSortMode}
                     allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
@@ -714,8 +714,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         linkTypeId: LinkTypeIri | undefined,
         mode: ObjectPlacingMode
     ): void {
-        const {placeTarget, workspace: {model, triggerWorkspaceEvent}, canvas} = this.props;
-        const batch = model.history.startBatch('Add connected elements');
+        const {
+            placeTarget,
+            canvas,
+            workspace: {model, translation: t, triggerWorkspaceEvent},
+        } = this.props;
+        const batch = model.history.startBatch(t.text('connections_menu', 'place_elements.command'));
 
         let placedElements: Element[] = [];
         switch (mode) {
@@ -779,15 +783,23 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     };
 
     private renderSortSwitches() {
-        const {targetIris, suggestProperties} = this.props;
+        const {targetIris, suggestProperties, workspace: {translation: t}} = this.props;
         const {panel} = this.state;
         if (!(panel === 'connections' && suggestProperties && targetIris.length === 1)) {
             return null;
         }
         return (
             <div className={`${CLASS_NAME}__sort-switches`}>
-                {this.renderSortSwitch('alphabet', `${CLASS_NAME}__sort-label-alpha`, 'Sort alphabetically')}
-                {this.renderSortSwitch('smart', `${CLASS_NAME}__sort-label-smart`, 'Smart sort')}
+                {this.renderSortSwitch(
+                    'alphabet',
+                    `${CLASS_NAME}__sort-label-alpha`,
+                    t.text('connections_menu', 'sort_alphabetically.title')
+                )}
+                {this.renderSortSwitch(
+                    'smart',
+                    `${CLASS_NAME}__sort-label-smart`,
+                    t.text('connections_menu', 'sort_smart.title')
+                )}
             </div>
         );
     }
@@ -832,10 +844,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 interface ConnectionsListProps {
     targetIris: ReadonlyArray<ElementIri>;
     data: ConnectionsData;
-    model: DataDiagramModel;
     filterKey: string;
     sortMode: SortMode;
     suggestions: ConnectionSuggestions;
+    workspace: WorkspaceContext;
 
     allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
@@ -855,14 +867,14 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     }
 
     private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {model} = this.props;
+        const {workspace: {model}} = this.props;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
         return aText.localeCompare(bText);
     };
 
     private compareLinksByWeight = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {model, suggestions} = this.props;
+        const {workspace: {model}, suggestions} = this.props;
         const {scores} = suggestions;
         const aText = model.locale.formatLabel(a.label, a.id);
         const bText = model.locale.formatLabel(b.label, b.id);
@@ -878,7 +890,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     };
 
     private getLinks() {
-        const {model, data, filterKey} = this.props;
+        const {workspace: {model}, data, filterKey} = this.props;
         return (data.links || [])
             .map(link => model.getLinkType(link.id)?.data ?? link)
             .filter(link => {
@@ -889,7 +901,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     }
 
     private getProbableLinks() {
-        const {model, data, suggestions} = this.props;
+        const {workspace: {model}, data, suggestions} = this.props;
         const {scores} = suggestions;
         const isSmartMode = this.isSmartMode();
         return (data.links ?? [])
@@ -901,7 +913,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     }
 
     private getViews = (links: LinkTypeModel[], notSure?: boolean) => {
-        const {model, data, suggestions} = this.props;
+        const {workspace, data, suggestions} = this.props;
         const {scores} = suggestions;
 
         const views: JSX.Element[] = [];
@@ -922,7 +934,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
                     key={`${direction}-${link.id}-${postfix}`}
                     link={link}
                     onExpandLink={this.props.onExpandLink}
-                    model={model}
+                    workspace={workspace}
                     count={inexact && count > 0 ? 'some' : count}
                     direction={direction}
                     filterKey={notSure ? '' : this.props.filterKey}
@@ -943,7 +955,8 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     };
 
     render() {
-        const {model, allRelatedLink, scrolledListRef} = this.props;
+        const {workspace, allRelatedLink, scrolledListRef} = this.props;
+        const {translation: t} = workspace;
         const isSmartMode = this.isSmartMode();
 
         const links = isSmartMode ? [] : this.getLinks();
@@ -955,7 +968,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
         if (views.length === 0 && probableViews.length === 0) {
             viewList = (
                 <label className={`${CLASS_NAME}__links-no-results`}>
-                    No results
+                    {t.text('connections_menu', 'links.no_results')}
                 </label>
             );
         } else {
@@ -969,7 +982,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
                         key={allRelatedLink.id}
                         link={allRelatedLink}
                         onExpandLink={this.props.onExpandLink}
-                        model={model}
+                        workspace={workspace}
                         count={inexact && totalCount > 0 ? 'some' : totalCount}
                         onMoveToFilter={this.props.onMoveToFilter}
                     />,
@@ -983,7 +996,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
                 isSmartMode ? null : (
                     <li key='probable-links'
                         className={`${CLASS_NAME}__links-probably-label`}>
-                        Probably, you are looking for...
+                        {t.text('connections_menu', 'links.suggest_similar')}
                     </li>
                 ),
                 probableViews,
@@ -1007,7 +1020,7 @@ interface LinkInPopupMenuProps {
     link: LinkTypeModel;
     count: number | 'some';
     direction?: 'in' | 'out';
-    model: DiagramModel;
+    workspace: WorkspaceContext;
     filterKey?: string;
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
@@ -1016,22 +1029,32 @@ interface LinkInPopupMenuProps {
 
 class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
     render() {
-        const {model, link, filterKey, direction, count, probability = 0} = this.props;
-        const fullText = model.locale.formatLabel(link.label, link.id);
+        const {
+            link, filterKey, direction, count, probability = 0,
+            workspace: {model, translation: t},
+        } = this.props;
+        const relation = model.locale.formatLabel(link.label, link.id);
+        const relationIri = model.locale.formatIri(link.id);
         const probabilityPercent = Math.round(probability * 100);
         const textLine = highlightSubstring(
-            fullText + (probabilityPercent > 0 ? ' (' + probabilityPercent + '%)' : ''),
+            relation + (probabilityPercent > 0 ? ` (${probabilityPercent}%)` : ''),
             filterKey
         );
-        const directionName =
-            direction === 'in' ? 'source' :
-            direction === 'out' ? 'target' :
-            'all connected';
+        const title = (
+            direction === 'in' ? t.format('connections_menu', 'link.source_title', {relation, relationIri}) :
+            direction === 'out' ? t.format('connections_menu', 'link.target_title', {relation, relationIri}) :
+            t.format('connections_menu', 'link.both_title', {relation, relationIri})
+        );
+        const navigateTitle = (
+            direction === 'in' ? t.format('connections_menu', 'link.source_navigate_title', {relation, relationIri}) :
+            direction === 'out' ? t.format('connections_menu', 'link.target_navigate_title', {relation, relationIri}) :
+            t.format('connections_menu', 'link.both_navigate_title', {relation, relationIri})
+        );
 
         return (
             <li data-linktypeid={link.id}
                 className={`${CLASS_NAME}__link`}
-                title={`${directionName} of "${fullText}" ${model.locale.formatIri(link.id)}`}
+                title={title}
                 onClick={() => this.onExpandLink()}>
                 {direction === 'in' || direction === 'out' ? (
                     <div className={`${CLASS_NAME}__link-direction`}>
@@ -1044,17 +1067,18 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
                 </WithFetchStatus>
                 {count === 'some' ? null : (
                     <span className={`reactodia-badge ${CLASS_NAME}__link-count`}>
-                        {count <= LINK_COUNT_PER_PAGE ? count : '100+'}
+                        {count <= LINK_COUNT_PER_PAGE ? count : `${LINK_COUNT_PER_PAGE}+`}
                     </span>
                 )}
                 {this.props.onMoveToFilter ? (
                     <div className={`${CLASS_NAME}__link-filter-button`}
                         onClick={this.onMoveToFilter}
-                        title='Set as filter in the Instances panel'
+                        title={t.text('connections_menu', 'link.move_to_filter.title')}
                     />
                 ) : null}
                 <div className={`${CLASS_NAME}__link-navigate-button`}
-                    title={`Navigate to ${directionName} "${fullText}" elements`} />
+                    title={navigateTitle}
+                />
             </li>
         );
     }
@@ -1086,7 +1110,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
 interface ObjectsPanelProps {
     data: ObjectsData;
     loading?: boolean;
-    model: DiagramModel;
+    workspace: WorkspaceContext;
     filterKey?: string;
     onPressAddSelected: (
         selectedObjects: ElementOnDiagram[],
@@ -1136,15 +1160,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     };
 
     private getFilteredObjects(): ReadonlyArray<ElementOnDiagram> {
-        if (!this.props.filterKey) {
-            return this.props.data.elements;
+        const {workspace: {model}, data, filterKey} = this.props;
+        if (!filterKey) {
+            return data.elements;
         }
-        const filterKey = this.props.filterKey.toLowerCase();
-        return this.props.data.elements.filter(element => {
-            const text = this.props.model.locale.formatLabel(
+        const loweredFilterKey = filterKey.toLowerCase();
+        return data.elements.filter(element => {
+            const text = model.locale.formatLabel(
                 element.model.label, element.model.id
             ).toLowerCase();
-            return text && text.indexOf(filterKey) >= 0;
+            return text && text.indexOf(loweredFilterKey) >= 0;
         });
     }
 
@@ -1164,25 +1189,29 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     };
 
     private renderCounter(activeObjCount: number) {
-        const {data: {chunk, elements}} = this.props;
-        const countString = `${activeObjCount}\u00A0of\u00A0${elements.length}`;
+        const {data: {chunk, elements}, workspace: {translation: t}} = this.props;
+        const countString = t.format('connections_menu', 'entities.counter_label', {
+            count: activeObjCount,
+            total: elements.length,
+        });
 
         let extraCountInfo: JSX.Element | null = null;
         if (chunk.expectedCount !== 'some') {
-            const wrongNodes =
+            const extraCount =
                 Math.min(LINK_COUNT_PER_PAGE, chunk.expectedCount) - elements.length;
-            const wrongNodesString = Math.abs(wrongNodes) > LINK_COUNT_PER_PAGE ?
-                `${LINK_COUNT_PER_PAGE}+` : Math.abs(wrongNodes).toString();
+            const extra = Math.abs(extraCount) > LINK_COUNT_PER_PAGE ?
+                `${LINK_COUNT_PER_PAGE}+` : Math.abs(extraCount).toString();
             extraCountInfo = (
                 <span className={`${CLASS_NAME}__objects-extra`}
-                    title={wrongNodes === 0
-                        ? undefined
-                        : (wrongNodes > 0 ? 'Unavailable nodes' : 'Extra nodes')
-                    }>
-                    {wrongNodes === 0 ? null : (
-                        wrongNodes < 0
-                            ? `\u00A0(${wrongNodesString})`
-                            : `\u00A0(${wrongNodesString})`
+                    title={extraCount === 0 ? undefined : (
+                        extraCount > 0
+                            ? t.format('connections_menu', 'entities.extra_title', {value: extra})
+                            : t.format('connections_menu', 'entities.missing_title', {value: extra})
+                    )}>
+                    {extraCount === 0 ? null : (
+                        extraCount > 0
+                            ? t.format('connections_menu', 'entities.extra_label', {value: extra})
+                            : t.format('connections_menu', 'entities.missing_label', {value: extra})
                     )}
                 </span>
             );
@@ -1197,7 +1226,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     }
 
     render() {
-        const {data, filterKey, onPressAddSelected, onMoveToFilter} = this.props;
+        const {data, filterKey, onPressAddSelected, onMoveToFilter, workspace: {translation: t}} = this.props;
         const {selection} = this.state;
         const objects = this.getFilteredObjects();
         const isAllSelected = allNonPresentedAreSelected(objects, selection);
@@ -1213,8 +1242,10 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         name='reactodia-connections-menu-select-all'
                         checked={isAllSelected && nonPresented.length > 0}
                         onChange={this.onSelectAll}
-                        disabled={nonPresented.length === 0} />
-                    Select All
+                        disabled={nonPresented.length === 0}
+                        title={t.text('connections_menu', 'select_all.title')}
+                    />
+                    {t.text('connections_menu', 'select_all.label')}
                 </label>
             </div>
             {this.props.loading ? (
@@ -1222,7 +1253,9 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     <LoadingSpinner />
                 </div>
             ) : objects.length === 0 ? (
-                <div className={`${CLASS_NAME}__objects-no-results`}>No results</div>
+                <div className={`${CLASS_NAME}__objects-no-results`}>
+                    {t.text('connections_menu', 'entities.no_results')}
+                </div>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
@@ -1235,11 +1268,15 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         onMoveToFilter ? (
                             <div className={`${CLASS_NAME}__move-to-filter`}
                                 onClick={() => onMoveToFilter(data.chunk)}>
-                                The list was truncated, for more data click here to use the filter panel
+                                {t.format('connections_menu', 'entities.truncated_results_expand', {
+                                    limit: LINK_COUNT_PER_PAGE,
+                                })}
                             </div>
                         ) : (
                             <div className={`${CLASS_NAME}__move-to-filter`}>
-                                The list was truncated.
+                                {t.format('connections_menu', 'entities.truncated_results', {
+                                    limit: LINK_COUNT_PER_PAGE,
+                                })}
                             </div>
                         )
                     ) : null}
@@ -1255,7 +1292,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     )}
                     disabled={this.props.loading || selectedItems.length <= 1}
                     onClick={() => onPressAddSelected(selectedItems, 'grouped')}>
-                    Add as group
+                    {t.text('connections_menu', 'entities.add_all')}
                 </button>
                 <button
                     className={classnames(
@@ -1264,7 +1301,10 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     )}
                     disabled={this.props.loading || nonPresented.length === 0}
                     onClick={() => onPressAddSelected(selectedItems, 'separately')}>
-                    {active.length > 0 ? 'Add selected' : 'Add all'}
+                    {active.length > 0
+                        ? t.text('connections_menu', 'entities.add_selected')
+                        : t.text('connections_menu', 'entities.add_all')
+                    }
                 </button>
             </div>
         </div>;

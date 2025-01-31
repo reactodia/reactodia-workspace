@@ -2,7 +2,6 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
-import { useObservedProperty } from '../coreUtils/hooks';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
@@ -143,18 +142,12 @@ export function InstancesSearch(props: InstancesSearchProps) {
         allowSubmit: term => term.length >= minSearchTermLength,
     });
     const effectiveSearchStore = searchStore ?? uncontrolledSearch;
-    const requireSubmit = useObservedProperty(
-        effectiveSearchStore.events,
-        'changeMode',
-        () => effectiveSearchStore.mode === 'explicit'
-    );
     const workspace = useWorkspace();
     return (
         <InstancesSearchInner {...props}
             isControlled={Boolean(searchStore)}
             searchStore={effectiveSearchStore}
             minSearchTermLength={minSearchTermLength}
-            requireSubmit={requireSubmit}
             workspace={workspace}
         />
     );
@@ -164,7 +157,6 @@ interface InstancesSearchInnerProps extends InstancesSearchProps {
     isControlled: boolean;
     searchStore: SearchInputStore;
     minSearchTermLength: number;
-    requireSubmit: boolean;
     workspace: WorkspaceContext;
 }
 
@@ -298,7 +290,10 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     private updateAll = () => this.forceUpdate();
 
     render() {
-        const {className, isControlled, searchStore, minSearchTermLength, requireSubmit} = this.props;
+        const {
+            className, isControlled, searchStore, minSearchTermLength,
+            workspace: {translation: t},
+        } = this.props;
 
         const progressState: ProgressState = (
             this.state.querying ? 'loading' :
@@ -328,10 +323,11 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 )}
             </div>
             <ProgressBar state={progressState}
-                title='Querying for elements'
+                title={t.text('search_entities', 'query_progress.title')}
             />
             {/* specify resultId as key to reset scroll position when loaded new search results */}
-            <div className={`${CLASS_NAME}__rest reactodia-scrollable`} key={this.state.resultId}>
+            <div key={this.state.resultId}
+                className={`${CLASS_NAME}__rest reactodia-scrollable`}>
                 <SearchResults
                     items={resultItems}
                     highlightText={this.state.criteria.text}
@@ -341,7 +337,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                         resultItems.length === 0 ? (
                             <NoSearchResults hasQuery={this.state.items !== undefined}
                                 minSearchTermLength={minSearchTermLength}
-                                requireSubmit={requireSubmit}
                             />
                         ) : null
                     }
@@ -351,8 +346,9 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                         className={`${CLASS_NAME}__load-more reactodia-btn reactodia-btn-primary`}
                         disabled={this.state.querying}
                         style={{display: this.state.moreItemsAvailable ? undefined : 'none'}}
+                        title={t.text('search_entities', 'show_more_results.title')}
                         onClick={() => this.queryItems(true)}>
-                        Show more
+                        {t.text('search_entities', 'show_more_results.label')}
                     </button>
                 </div>
             </div>
@@ -365,14 +361,16 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 <button type='button'
                     className={`${CLASS_NAME}__action reactodia-btn reactodia-btn-secondary`}
                     disabled={this.state.querying || this.state.selection.size <= 1}
+                    title={t.text('search_entities', 'add_group.title')}
                     onClick={() => this.placeSelectedItems('group')}>
-                    Add as group
+                    {t.text('search_entities', 'add_group.label')}
                 </button>
                 <button type='button'
                     className={`${CLASS_NAME}__action reactodia-btn reactodia-btn-primary`}
                     disabled={this.state.querying || this.state.selection.size === 0}
+                    title={t.text('search_entities', 'add_selected.title')}
                     onClick={() => this.placeSelectedItems('separately')}>
-                    Add selected
+                    {t.text('search_entities', 'add_selected.label')}
                 </button>
             </div>
         </div>;
@@ -383,7 +381,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     };
 
     private renderCriteria(): React.ReactElement<any> {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, translation: t}} = this.props;
         const {criteria} = this.state;
         const criterions: React.ReactElement<any>[] = [];
 
@@ -401,8 +399,14 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                         },
                         () => this.props.onChangeCriteria?.(this.state.criteria)
                     ))}
-                    Has type <span className={`${CLASS_NAME}__criterion-class`}
-                        title={criteria.elementType}>{elementTypeLabel}</span>
+                    {t.template('search_entities', 'criteria_has_type', {
+                        entityType: (
+                            <span className={`${CLASS_NAME}__criterion-class`}
+                                title={criteria.elementType}>
+                                {elementTypeLabel}
+                            </span>
+                        )
+                    })}
                 </div>
             );
         } else if (criteria.refElement) {
@@ -415,26 +419,43 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 linkTypeLabel = model.locale.formatLabel(linkTypeData?.data?.label, criteria.refElementLink);
             }
 
-            criterions.push(<div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
-                {this.renderRemoveCriterionButtons(() => this.setState(
-                    {
-                        criteria: {...criteria, refElement: undefined, refElementLink: undefined},
-                    },
-                    () => this.props.onChangeCriteria?.(this.state.criteria)
-                ))}
-                Connected to <InlineEntity target={refElementData} />
-                {criteria.refElementLink && <span>
-                    {' through '}
-                    <span className={`${CLASS_NAME}__criterion-link-type`}
-                        title={criteria.refElementLink}>{linkTypeLabel}</span>
-                    {criteria.linkDirection === 'in' && <span>
-                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_IN_ICON} />&nbsp;source
-                    </span>}
-                    {criteria.linkDirection === 'out' && <span>
-                        {' as '}<img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_OUT_ICON} />&nbsp;target
-                    </span>}
-                </span>}
-            </div>);
+            const entity = <InlineEntity target={refElementData} />;
+            const relationType = criteria.refElementLink ? (
+                <span className={`${CLASS_NAME}__criterion-link-type`}
+                    title={criteria.refElementLink}>
+                    {linkTypeLabel}
+                </span>
+            ) : undefined;
+            const sourceIcon = <img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_IN_ICON} />;
+            const targetIcon = <img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_OUT_ICON} />;
+
+            criterions.push(
+                <div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
+                    {this.renderRemoveCriterionButtons(() => this.setState(
+                        {
+                            criteria: {...criteria, refElement: undefined, refElementLink: undefined},
+                        },
+                        () => this.props.onChangeCriteria?.(this.state.criteria)
+                    ))}
+                    {!criteria.refElementLink ? (
+                        t.template('search_entities', 'criteria_connected', {
+                            entity, relationType, sourceIcon, targetIcon,
+                        })
+                    ) : criteria.linkDirection === 'in' ? (
+                        t.template('search_entities', 'criteria_connected_to_source', {
+                            entity, relationType, sourceIcon, targetIcon,
+                        })
+                    ) : criteria.linkDirection == 'out' ? (
+                        t.template('search_entities', 'criteria_connected_to_target', {
+                            entity, relationType, sourceIcon, targetIcon,
+                        })
+                    ) : (
+                        t.template('search_entities', 'criteria_connected_via', {
+                            entity, relationType, sourceIcon, targetIcon,
+                        })
+                    )}
+                </div>
+            );
         }
 
         return <div className={`${CLASS_NAME}__criterions`}>{criterions}</div>;
@@ -557,7 +578,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 
     private placeSelectedItems(mode: 'separately' | 'group'): void {
-        const {onAddElements, workspace: {model, view}} = this.props;
+        const {onAddElements, workspace: {model, view, translation: t}} = this.props;
         const canvas = view.findAnyCanvas();
         const {items, selection} = this.state;
 
@@ -565,7 +586,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             return;
         }
 
-        const batch = model.history.startBatch('Add selected elements');
+        const batch = model.history.startBatch(t.text('search_entities', 'place_elements.command'));
         const selectedEntities = items
             ? items.filter(item => selection.has(item.id))
             : Array.from(selection, EntityElement.placeholderData);

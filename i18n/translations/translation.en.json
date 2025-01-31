@@ -1,0 +1,161 @@
+{
+  "$schema": "../i18n.schema.json",
+  "classic_workspace": {
+    "class_tree_heading": "Classes",
+    "instances_heading": "Instances",
+    "connections_heading": "Connections"
+  },
+  "connections_menu": {
+    "all_link.label": "All",
+    "breadcrumbs_root.label": "Link types",
+    "dialog.caption": "Connections",
+    "entities.add_all": "Add all",
+    "entities.add_group": "Add as group",
+    "entities.add_selected": "Add selected",
+    "entities.counter_label": "{count}\u00A0of\u00A0${total}",
+    "entities.extra_label": "\u00A0({value})",
+    "entities.extra_title": "Extra entities",
+    "entities.missing_label": "\u00A0({value})",
+    "entities.missing_title": "Missing entities",
+    "entities.no_results": "No results",
+    "entities.truncated_results": "Only the first {limit} entities are shown",
+    "entities.truncated_results_expand": "Only the first {limit} entities are shown,\nclick here for the full results",
+    "link.both_navigate_title": "Navigate to all connected elements",
+    "link.both_title": "all connected",
+    "link.source_navigate_title": "Navigate to source \"{relation}\" elements",
+    "link.source_title": "source of \"{relation}\" {relationIri}",
+    "link.target_navigate_title": "Navigate to source \"{target}\" elements",
+    "link.target_title": "target of \"{relation}\" {relationIri}",
+    "link.move_to_filter.title": "Set as filter in the Instances panel",
+    "links.no_results": "No results",
+    "links.suggest_similar": "Probably, you are looking for...",
+    "place_elements.command": "Add connected elements",
+    "select_all.label": "Select All",
+    "select_all.title": "Select or unselect all entities",
+    "sort_alphabetically.title": "Sort alphabetically",
+    "sort_smart.title": "Smart sort"
+  },
+  "default_workspace": {
+    "search_section_types_title": "Types",
+    "search_section_entities_title": "Entities",
+    "search_section_link_types_title": "Links"
+  },
+  "drop_on_canvas": {
+    "drop.command": "Drag and drop onto diagram"
+  },
+  "inline_entity": {
+    "title": "{entity} {entityIri}",
+    "title_extra": "Types: {entityTypes}"
+  },
+  "link_action": {
+    "delete_relation.title": "Delete relation",
+    "delete_relation.title_on_disabled": "Cannot delete the relation",
+    "edit_relation.title": "Edit relation",
+    "edit_relation.title_on_disabled": "Cannot edit the relation",
+    "rename_link.title": "Rename link",
+    "move_relation.move_source_title": "Move link source",
+    "move_relation.move_target_title": "Move link target"
+  },
+  "navigator": {
+    "toggle_collapse.title": "Collapse navigator",
+    "toggle_expand.title": "Expand navigator"
+  },
+  "search_defaults": {
+    "empty_input_term": "Input a term to search.",
+    "input.placeholder": "Search for...",
+    "input_clear.title": "Clear the search",
+    "input_submit.title": "Search",
+    "input_term_too_short": "Input at least {termLength} characters to\u00A0search.",
+    "no_results": "No results found."
+  },
+  "search_element_types": {
+    "drag_create.title": "Click or drag to create new entity of this type",
+    "no_results": "No element types found.",
+    "refresh_progress.title": "Loading element type tree",
+    "show_only_creatable": "Show only constructible"
+  },
+  "search_entities": {
+    "add_group.label": "Add as group",
+    "add_group.title": "Place selected entities on the canvas as a group",
+    "add_selected.label": "Add selected",
+    "add_selected.title": "Place selected entities on the canvas",
+    "criteria_has_type": "Has type {entityType}",
+    "criteria_connected": "Connected to {entity}",
+    "criteria_connected_via": "Connected to {entity} through {relationType}",
+    "criteria_connected_to_source": "Connected to {entity} through {relationType} as {sourceIcon}\u00A0source",
+    "criteria_connected_to_target": "Connected to {entity} through {relationType} as {targetIcon}\u00A0target",
+    "place_elements.command": "Add selected elements",
+    "query_progress.title": "Querying for entities",
+    "show_more_results.label": "Show more",
+    "show_more_results.title": "Load more results"
+  },
+  "search_link_types": {
+    "add_to_filter.title": "Search for connected elements via the relation",
+    "heading_connected": "Connected to selected entities",
+    "heading_connected_on_single": "Connected to {entity}",
+    "heading_other": "Other links",
+    "no_results": "No links found.",
+    "switch_all.label": "Switch all",
+    "switch_hidden.title": "Hide links and labels",
+    "switch_visible.title": "Show links with labels",
+    "switch_without_label.title": "Show only lines for links (without labels)"
+  },
+  "selection_action": {
+    "add_to_filter.title": "Search for connected elements",
+    "anchor.title": "Jump to resource",
+    "connections.title": "Navigate to connected elements",
+    "expand.collapse_command": "Collapse elements",
+    "expand.expand_command": "Expand elements",
+    "expand.title": "Expand selected elements to reveal additional properties",
+    "expand.title_on_single": "Expand an element to reveal additional properties",
+    "establish_relation.title": "Establish link",
+    "establish_relation.title_on_disabled": "Establishing link is not allowed for the element",
+    "group.title": "Group entities",
+    "group.title_on_ungroup": "Ungroup entities",
+    "layout.title": "Layout selected elements using force-directed algorithm",
+    "remove.title": "Remove selected elements from the diagram",
+    "remove.title_on_new": "Discard new element",
+    "remove.title_on_single": "Remove an element from the diagram",
+    "zoom_to_fit.title": "Zoom to fit selected elements into view"
+  },
+  "toolbar": {
+    "menu_toggle.title": "Open menu"
+  },
+  "toolbar_action": {
+    "clear_all.command": "Clear all",
+    "clear_all.title": "Remove all elements and links from the diagram",
+    "clear_all.label": "Clear All",
+    "export_print.label": "Print",
+    "export_print.title": "Print the diagram",
+    "export_raster.label": "Export as PNG",
+    "export_raster.title": "Export the diagram as a PNG image",
+    "export_svg.label": "Export as SVG",
+    "export_svg.title": "Export the diagram as an SVG image",
+    "redo.label": "Redo",
+    "redo.title": "Redo last undone command",
+    "redo.with_command_title": "Redo: {command}",
+    "save_authoring.title": "Apply authored graph changes",
+    "save_layout.title": "Save diagram layout",
+    "language_selector.title": "Select language for the data (labels, properties, etc)",
+    "layout.label": "Layout",
+    "layout.title": "Layout diagram using force-directed algorithm",
+    "undo.label": "Undo",
+    "undo.title": "Undo last command",
+    "undo.with_command_title": "Undo: {command}"
+  },
+  "unified_search": {
+    "input.placeholder": "Search for...",
+    "input_clear.title": "Clear",
+    "input_collapse.title": "Close"
+  },
+  "workspace": {
+    "graph_layout.task": "Computing graph layout",
+    "graph_layout.command": "Graph layout"
+  },
+  "zoom_control": {
+    "pointer_mode.title": "Toggle selection mode:\nDrag pointer to select, Shift + Pointer to pan the canvas",
+    "zoom_in.title": "Zoom In",
+    "zoom_out.title": "Zoom Out",
+    "zoom_to_fit.title": "Fit to Screen"
+  }
+}

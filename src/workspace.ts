@@ -11,6 +11,7 @@ export {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
     useSyncStore, useSyncStoreWithComparator,
 } from './coreUtils/hooks';
+export { Translation, useTranslation } from './coreUtils/i18n';
 export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
 export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
 export { Debouncer, animateInterval } from './coreUtils/scheduler';

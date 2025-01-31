@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Group": { "type": "object" },
+    "Value": { "type": "string" }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "classic_workspace": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "class_tree_heading": { "$ref": "#/$defs/Value" },
+        "instances_heading": { "$ref": "#/$defs/Value" },
+        "connections_heading": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "connections_menu": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "all_link.label": { "$ref": "#/$defs/Value" },
+        "breadcrumbs_root.label": { "$ref": "#/$defs/Value" },
+        "dialog.caption": { "$ref": "#/$defs/Value" },
+        "entities.add_all": { "$ref": "#/$defs/Value" },
+        "entities.add_group": { "$ref": "#/$defs/Value" },
+        "entities.add_selected": { "$ref": "#/$defs/Value" },
+        "entities.counter_label": { "$ref": "#/$defs/Value" },
+        "entities.extra_label": { "$ref": "#/$defs/Value" },
+        "entities.extra_title": { "$ref": "#/$defs/Value" },
+        "entities.missing_label": { "$ref": "#/$defs/Value" },
+        "entities.missing_title": { "$ref": "#/$defs/Value" },
+        "entities.no_results": { "$ref": "#/$defs/Value" },
+        "entities.truncated_results": { "$ref": "#/$defs/Value" },
+        "entities.truncated_results_expand": { "$ref": "#/$defs/Value" },
+        "link.both_navigate_title": { "$ref": "#/$defs/Value" },
+        "link.both_title": { "$ref": "#/$defs/Value" },
+        "link.source_navigate_title": { "$ref": "#/$defs/Value" },
+        "link.source_title": { "$ref": "#/$defs/Value" },
+        "link.target_navigate_title": { "$ref": "#/$defs/Value" },
+        "link.target_title": { "$ref": "#/$defs/Value" },
+        "link.move_to_filter.title": { "$ref": "#/$defs/Value" },
+        "links.no_results": { "$ref": "#/$defs/Value" },
+        "links.suggest_similar": { "$ref": "#/$defs/Value" },
+        "place_elements.command": { "$ref": "#/$defs/Value" },
+        "select_all.label": { "$ref": "#/$defs/Value" },
+        "select_all.title": { "$ref": "#/$defs/Value" },
+        "sort_alphabetically.title": { "$ref": "#/$defs/Value" },
+        "sort_smart.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "default_workspace": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "search_section_types_title": { "$ref": "#/$defs/Value" },
+        "search_section_entities_title": { "$ref": "#/$defs/Value" },
+        "search_section_link_types_title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "drop_on_canvas": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "drop.command": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "inline_entity": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "$ref": "#/$defs/Value" },
+        "title_extra": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "link_action": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "delete_relation.title": { "$ref": "#/$defs/Value" },
+        "delete_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "edit_relation.title": { "$ref": "#/$defs/Value" },
+        "edit_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "rename_link.title": { "$ref": "#/$defs/Value" },
+        "move_relation.move_source_title": { "$ref": "#/$defs/Value" },
+        "move_relation.move_target_title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "navigator": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "toggle_collapse.title": { "$ref": "#/$defs/Value" },
+        "toggle_expand.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "search_defaults": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "empty_input_term": { "$ref": "#/$defs/Value" },
+        "input.placeholder": { "$ref": "#/$defs/Value" },
+        "input_clear.title": { "$ref": "#/$defs/Value" },
+        "input_submit.title": { "$ref": "#/$defs/Value" },
+        "input_term_too_short": { "$ref": "#/$defs/Value" },
+        "no_results": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "search_element_types": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "drag_create.title": { "$ref": "#/$defs/Value" },
+        "no_results": { "$ref": "#/$defs/Value" },
+        "refresh_progress.title": { "$ref": "#/$defs/Value" },
+        "show_only_creatable": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "search_entities": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "add_group.label": { "$ref": "#/$defs/Value" },
+        "add_group.title": { "$ref": "#/$defs/Value" },
+        "add_selected.label": { "$ref": "#/$defs/Value" },
+        "add_selected.title": { "$ref": "#/$defs/Value" },
+        "criteria_has_type": { "$ref": "#/$defs/Value" },
+        "criteria_connected": { "$ref": "#/$defs/Value" },
+        "criteria_connected_via": { "$ref": "#/$defs/Value" },
+        "criteria_connected_to_source": { "$ref": "#/$defs/Value" },
+        "criteria_connected_to_target": { "$ref": "#/$defs/Value" },
+        "place_elements.command": { "$ref": "#/$defs/Value" },
+        "query_progress.title": { "$ref": "#/$defs/Value" },
+        "show_more_results.label": { "$ref": "#/$defs/Value" },
+        "show_more_results.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "search_link_types": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "add_to_filter.title": { "$ref": "#/$defs/Value" },
+        "heading_connected": { "$ref": "#/$defs/Value" },
+        "heading_connected_on_single": { "$ref": "#/$defs/Value" },
+        "heading_other": { "$ref": "#/$defs/Value" },
+        "no_results": { "$ref": "#/$defs/Value" },
+        "switch_all.label": { "$ref": "#/$defs/Value" },
+        "switch_hidden.title": { "$ref": "#/$defs/Value" },
+        "switch_visible.title": { "$ref": "#/$defs/Value" },
+        "switch_without_label.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "selection_action": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "add_to_filter.title": { "$ref": "#/$defs/Value" },
+        "anchor.title": { "$ref": "#/$defs/Value" },
+        "connections.title": { "$ref": "#/$defs/Value" },
+        "establish_relation.title": { "$ref": "#/$defs/Value" },
+        "establish_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "expand.collapse_command": { "$ref": "#/$defs/Value" },
+        "expand.expand_command": { "$ref": "#/$defs/Value" },
+        "expand.title": { "$ref": "#/$defs/Value" },
+        "expand.title_on_single": { "$ref": "#/$defs/Value" },
+        "group.title": { "$ref": "#/$defs/Value" },
+        "group.title_on_ungroup": { "$ref": "#/$defs/Value" },
+        "layout.title": { "$ref": "#/$defs/Value" },
+        "remove.title": { "$ref": "#/$defs/Value" },
+        "remove.title_on_new": { "$ref": "#/$defs/Value" },
+        "remove.title_on_single": { "$ref": "#/$defs/Value" },
+        "zoom_to_fit.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "toolbar": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "menu_toggle.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "toolbar_action": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "clear_all.command": { "$ref": "#/$defs/Value" },
+        "clear_all.title": { "$ref": "#/$defs/Value" },
+        "clear_all.label": { "$ref": "#/$defs/Value" },
+        "export_print.label": { "$ref": "#/$defs/Value" },
+        "export_print.title": { "$ref": "#/$defs/Value" },
+        "export_raster.label": { "$ref": "#/$defs/Value" },
+        "export_raster.title": { "$ref": "#/$defs/Value" },
+        "export_svg.label": { "$ref": "#/$defs/Value" },
+        "export_svg.title": { "$ref": "#/$defs/Value" },
+        "redo.label": { "$ref": "#/$defs/Value" },
+        "redo.title": { "$ref": "#/$defs/Value" },
+        "redo.with_command_title": { "$ref": "#/$defs/Value" },
+        "save_authoring.title": { "$ref": "#/$defs/Value" },
+        "save_layout.title": { "$ref": "#/$defs/Value" },
+        "language_selector.title": { "$ref": "#/$defs/Value" },
+        "layout.label": { "$ref": "#/$defs/Value" },
+        "layout.title": { "$ref": "#/$defs/Value" },
+        "undo.label": { "$ref": "#/$defs/Value" },
+        "undo.title": { "$ref": "#/$defs/Value" },
+        "undo.with_command_title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "unified_search": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "input.placeholder": { "$ref": "#/$defs/Value" },
+        "input_clear.title": { "$ref": "#/$defs/Value" },
+        "input_collapse.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "workspace": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "graph_layout.command": { "$ref": "#/$defs/Value" },
+        "graph_layout.task": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "zoom_control": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "pointer_mode.title": { "$ref": "#/$defs/Value" },
+        "zoom_in.title": { "$ref": "#/$defs/Value" },
+        "zoom_out.title": { "$ref": "#/$defs/Value" },
+        "zoom_to_fit.title": { "$ref": "#/$defs/Value" }
+      }
+    }
+  }
+}

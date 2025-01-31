@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Events, EventSource, EventTrigger } from '../coreUtils/events';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { Canvas, CanvasProps } from '../widgets/canvas';
 import {
@@ -179,6 +180,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         languages = [],
     } = props;
 
+    const t = useTranslation();
     const [searchCommands] = React.useState(() =>
         props.searchCommands ?? new EventSource<UnifiedSearchCommands>()
     );
@@ -210,7 +212,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const defaultSections = React.useMemo((): readonly UnifiedSearchSection[] => [
         {
             key: 'elementTypes',
-            label: 'Types',
+            label: t.text('default_workspace', 'search_section_types_title'),
             component: (
                 <SearchSectionElementTypes
                     instancesSearchCommands={instancesSearchCommands}
@@ -219,7 +221,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         },
         {
             key: 'entities',
-            label: 'Entities',
+            label: t.text('default_workspace', 'search_section_entities_title'),
             component: (
                 <SearchSectionEntities
                     instancesSearchCommands={instancesSearchCommands}
@@ -228,7 +230,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         },
         {
             key: 'linkTypes',
-            label: 'Links',
+            label: t.text('default_workspace', 'search_section_link_types_title'),
             component: (
                 <SearchSectionLinkTypes
                     instancesSearchCommands={instancesSearchCommands}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { EventSource } from '../coreUtils/events';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
@@ -77,6 +78,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
         classTree, instancesSearch, linkToolbox,
     } = props;
 
+    const t = useTranslation();
     const [connectionsMenuCommands] = React.useState(() =>
         props.connectionsMenuCommands ?? new EventSource<ConnectionsMenuCommands>()
     );
@@ -89,12 +91,14 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
             <WorkspaceLayoutRow>
                 <WorkspaceLayoutColumn defaultSize={275}
                     {...leftColumn}>
-                    <WorkspaceLayoutItem id='classes' heading='Classes'>
+                    <WorkspaceLayoutItem id='classes'
+                        heading={t.text('classic_workspace', 'class_tree_heading')}>
                         <ClassTree {...classTree}
                             instancesSearchCommands={instancesSearchCommands}
                         />
                     </WorkspaceLayoutItem>
-                    <WorkspaceLayoutItem id='instances' heading='Instances'>
+                    <WorkspaceLayoutItem id='instances'
+                        heading={t.text('classic_workspace', 'instances_heading')}>
                         <InstancesSearch {...instancesSearch}
                             commands={instancesSearchCommands}
                         />
@@ -136,7 +140,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                     defaultCollapsed={true}
                     {...rightColumn}>
                     <WorkspaceLayoutItem id='connections'
-                        heading='Connections'>
+                        heading={t.text('classic_workspace', 'connections_heading')}>
                         <LinkTypesToolbox {...linkToolbox}
                             instancesSearchCommands={instancesSearchCommands}
                         />

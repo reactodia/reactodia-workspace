@@ -12,7 +12,8 @@ export function InlineEntity(props: {
     target: ElementModel;
 }) {
     const {target} = props;
-    const {model, getElementTypeStyle} = useWorkspace();
+    const workspace = useWorkspace();
+    const {model, getElementTypeStyle} = workspace;
     const label = model.locale.formatLabel(target.label, target.id);
     const {color} = getElementTypeStyle(target.types);
     const style = {
@@ -21,7 +22,7 @@ export function InlineEntity(props: {
     return (
         <span className={CLASS_NAME}
             style={style}
-            title={formatEntityTitle(target, model)}>
+            title={formatEntityTitle(target, workspace)}>
             <span className={`${CLASS_NAME}__label`}>
                 {label}
             </span>
