@@ -36,13 +36,17 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         key: PropertyTypeIri,
         values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
     ) {
-        const {model} = this.context;
+        const {model, translation: t} = this.context;
         const propertyType = model.getPropertyType(key);
-        const label = model.locale.formatLabel(propertyType?.data?.label, key);
+        const property = model.locale.formatLabel(propertyType?.data?.label, key);
+        const propertyIri = model.locale.formatIri(key);
         return (
             <div key={key} className={`${FORM_CLASS}__row`}>
-                <label>
-                    {label}
+                <label
+                    title={t.format(
+                        'visual_authoring', 'edit_entity.property.title', {property, propertyIri}
+                    )}>
+                    {t.format('visual_authoring', 'edit_entity.property.label', {property, propertyIri})}
                     {
                         values.map((term, index) => (
                             <input key={index}
@@ -70,12 +74,12 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     }
 
     private renderType() {
-        const {model} = this.context;
+        const {model, translation: t} = this.context;
         const {elementModel} = this.state;
         const label = model.locale.formatElementTypes(elementModel.types).join(', ');
         return (
             <label>
-                Type
+                {t.text('visual_authoring', 'edit_entity.type.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-type'
                     value={label}
@@ -99,10 +103,11 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     };
 
     private renderIri() {
+        const {translation: t} = this.context;
         const {elementModel} = this.state;
         return (
             <label>
-                IRI
+                {t.text('visual_authoring', 'edit_entity.iri.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-iri'
                     defaultValue={elementModel.id}
@@ -123,12 +128,12 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     };
 
     private renderLabel() {
-        const {model} = this.context;
+        const {model, translation: t} = this.context;
         const label = model.locale.selectLabel(this.state.elementModel.label);
         const text = label ? label.value : '';
         return (
             <label>
-                Label
+                {t.text('visual_authoring', 'edit_entity.label.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-label'
                     value={text}
@@ -139,6 +144,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     }
 
     render() {
+        const {translation: t} = this.context;
         return (
             <div className={FORM_CLASS}>
                 <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
@@ -156,13 +162,15 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                 <div className={`${FORM_CLASS}__controls`}>
                     <button type='button'
                         className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
+                        title={t.text('visual_authoring', 'dialog.apply.title')}
                         onClick={() => this.props.onApply(this.state.elementModel)}>
-                        Apply
+                        {t.text('visual_authoring', 'dialog.apply.label')}
                     </button>
                     <button type='button'
                         className='reactodia-btn reactodia-btn-default'
+                        title={t.text('visual_authoring', 'dialog.cancel.title')}
                         onClick={this.props.onCancel}>
-                        Cancel
+                        {t.text('visual_authoring', 'dialog.cancel.label')}
                     </button>
                 </div>
             </div>

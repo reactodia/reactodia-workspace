@@ -2,8 +2,10 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+import type { Translation } from '../coreUtils/i18n';
 
 import { PropertyTypeIri } from '../data/model';
+import type { LocaleFormatter } from '../diagram/model';
 import { TemplateProps, FormattedProperty } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
@@ -25,7 +27,7 @@ export function ClassicTemplate(props: TemplateProps) {
     const {element, isExpanded} = props;
     const data = element instanceof EntityElement ? element.data : undefined;
 
-    const {model, getElementTypeStyle} = useWorkspace();
+    const {model, translation: t, getElementTypeStyle} = useWorkspace();
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
     useKeyedSyncStore(
         subscribePropertyTypes,
@@ -42,7 +44,7 @@ export function ClassicTemplate(props: TemplateProps) {
 
     const typesLabel = types.length > 0
         ? model.locale.formatElementTypes(types).join(', ')
-        : 'Thing';
+        : t.text('standard_template', 'default_type');
     const label = model.locale.formatLabel(data?.label, data.id);
     const propertyList = model.locale.formatPropertyList(data?.properties ?? {});
 
@@ -58,7 +60,7 @@ export function ClassicTemplate(props: TemplateProps) {
         <div>
             <div className={`${CLASS_NAME}__expander`}>
                 <div className={`${CLASS_NAME}__iri-heading`}>
-                    IRI:
+                    {t.text('standard_template', 'iri.label')}
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
@@ -69,7 +71,7 @@ export function ClassicTemplate(props: TemplateProps) {
                 </div>
             </div>
             <hr className={`${CLASS_NAME}__divider`} />
-            {renderPropertyTable(propertyList)}
+            {renderPropertyTable(propertyList, model.locale, t)}
         </div>
     ) : null;
 
@@ -104,13 +106,18 @@ export function ClassicTemplate(props: TemplateProps) {
     );
 }
 
-function renderPropertyTable(propertyList: ReadonlyArray<FormattedProperty>) {
+function renderPropertyTable(
+    propertyList: ReadonlyArray<FormattedProperty>,
+    locale: LocaleFormatter,
+    t: Translation
+) {
     if (propertyList.length > 0) {
         return <div className={`${CLASS_NAME}__property-table`}>
             {propertyList.map(({propertyId, label, values}) => {
                 const renderedValues = values.map((term, index) => (
-                    <div className={`${CLASS_NAME}__property-value`}
-                        key={index} title={term.value}>
+                    <div key={index}
+                        className={`${CLASS_NAME}__property-value`}
+                        title={term.value}>
                         {term.value}
                     </div>
                 ));
@@ -118,7 +125,10 @@ function renderPropertyTable(propertyList: ReadonlyArray<FormattedProperty>) {
                     <div key={propertyId} className={`${CLASS_NAME}__property-row`}>
                         <WithFetchStatus type='propertyType' target={propertyId}>
                             <div className={`${CLASS_NAME}__property-label`}
-                                title={`${label} (${propertyId})`}>
+                                title={t.format('standard_template', 'property.title', {
+                                    property: label,
+                                    propertyIri: locale.formatIri(propertyId),
+                                })}>
                                 {label}
                             </div>
                         </WithFetchStatus>
@@ -130,6 +140,6 @@ function renderPropertyTable(propertyList: ReadonlyArray<FormattedProperty>) {
             })}
         </div>;
     } else {
-        return <div>no properties</div>;
+        return <div>{t.text('standard_template', 'no_properties')}</div>;
     }
 }

@@ -8,7 +8,6 @@ import { Debouncer } from '../coreUtils/scheduler';
 import type { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { Element, LinkTypeVisibility } from '../diagram/elements';
-import type { DiagramModel } from '../diagram/model';
 
 import { LinkType, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
@@ -230,9 +229,9 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
 
     render() {
         const {
-            className, isControlled, searchStore, minSearchTermLength,
-            workspace: {model, translation: t},
+            className, isControlled, searchStore, minSearchTermLength, workspace,
         } = this.props;
+        const {translation: t} = workspace;
         const {filteredLinks} = this.state;
 
         const connectedLinks = filteredLinks.links.filter(link =>
@@ -260,7 +259,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                     )}
                     <div className={`${CLASS_NAME}__switch-all`}>
                         <VisibilityControl
-                            onSetVisibility={mode => changeLinkTypeState(model, mode, filteredLinks.links)}
+                            onSetVisibility={mode => changeLinkTypeState(filteredLinks.links, mode, workspace)}
                             disabled={filteredLinks.links.length === 0}
                         />
                         <span>&nbsp;{t.text('search_link_types', 'switch_all.label')}</span>
@@ -312,13 +311,12 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     }
 
     private renderLinks(links: ReadonlyArray<LabelledLinkType>) {
-        const {instancesSearchCommands, workspace: {model}} = this.props;
+        const {instancesSearchCommands} = this.props;
         const {filteredLinks} = this.state;
         return (
             <ul className={`${CLASS_NAME}__links`}>
                 {links.map(link => (
                     <LinkInToolBox key={link.iri}
-                        model={model}
                         link={link}
                         onAddToFilter={
                             instancesSearchCommands && filteredLinks.selectionLinks.has(link.iri)
@@ -393,19 +391,19 @@ function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerPro
 }
 
 function LinkInToolBox(props: {
-    model: DiagramModel;
     link: LabelledLinkType;
     onAddToFilter?: (type: LinkTypeIri) => void;
     filterKey?: string;
 }) {
-    const {model, link, filterKey, onAddToFilter} = props;
-    const t = useTranslation();
+    const {link, filterKey, onAddToFilter} = props;
+    const workspace = useWorkspace();
+    const {model, translation: t} = workspace;
     return (
         <li data-linktypeid={link.iri}
             className={`${CLASS_NAME}__link-item`}>
             <VisibilityControl className={`${CLASS_NAME}__link-buttons`}
                 visibility={model.getLinkVisibility(link.iri)}
-                onSetVisibility={mode => changeLinkTypeState(model, mode, [link])}
+                onSetVisibility={mode => changeLinkTypeState([link], mode, workspace)}
             />
             <WithFetchStatus type='linkType' target={link.iri}>
                 <div className={`${CLASS_NAME}__link-title`}>
@@ -464,11 +462,12 @@ function VisibilityControl(props: {
 }
 
 function changeLinkTypeState(
-    model: DiagramModel,
+    linkTypes: ReadonlyArray<LabelledLinkType>,
     state: LinkTypeVisibility,
-    linkTypes: ReadonlyArray<LabelledLinkType>
+    workspace: WorkspaceContext
 ): void {
-    const batch = model.history.startBatch('Change link types visibility');
+    const {model, translation: t} = workspace;
+    const batch = model.history.startBatch(t.text('search_link_types', 'switch.command'));
     for (const linkType of linkTypes) {
         model.history.execute(changeLinkTypeVisibility(model, linkType.iri, state));
     }

@@ -1,5 +1,20 @@
 {
   "$schema": "../i18n.schema.json",
+  "authoring_state": {
+    "discard.label": "cancel",
+    "entity_add.label": "New",
+    "entity_add_revert.title": "Revert creation of the entity",
+    "entity_change.label": "Change",
+    "entity_change_revert.title": "Revert all changes in properties of the entity",
+    "entity_delete.label": "Delete",
+    "entity_delete_revert.title": "Revert deletion of the entity",
+    "relation_add.label": "New",
+    "relation_add_revert.title": "Revert creation of the relation",
+    "relation_change.label": "Change",
+    "relation_change_revert.title": "Revert all changes in properties of the relation",
+    "relation_delete.label": "Delete",
+    "relation_delete_revert.title": "Revert deletion of the relation"
+  },
   "classic_workspace": {
     "class_tree_heading": "Classes",
     "instances_heading": "Instances",
@@ -35,6 +50,14 @@
     "sort_alphabetically.title": "Sort alphabetically",
     "sort_smart.title": "Smart sort"
   },
+  "default_link_template": {
+    "group_source.title": "{value} source elements",
+    "group_source.value": "{value}",
+    "group_target.title": "{value} target elements",
+    "group_target.value": "{value}",
+    "label.title": "{relation} {relationIri}",
+    "property.title": "{property} {propertyIri}"
+  },
   "default_workspace": {
     "search_section_types_title": "Types",
     "search_section_entities_title": "Entities",
@@ -42,6 +65,12 @@
   },
   "drop_on_canvas": {
     "drop.command": "Drag and drop onto diagram"
+  },
+  "group_paginator": {
+    "current_page.label": "{page} of {pageCount}",
+    "go_next.title": "Go to the next page",
+    "go_previous.title": "Go to the previous page",
+    "page_size.title": "Number of items to display per page"
   },
   "inline_entity": {
     "title": "{entity} {entityIri}",
@@ -59,6 +88,10 @@
   "navigator": {
     "toggle_collapse.title": "Collapse navigator",
     "toggle_expand.title": "Expand navigator"
+  },
+  "overlay_controller": {
+    "multiple_tasks_in_progress": "",
+    "unknown_error": "Unknown error occurred"
   },
   "search_defaults": {
     "empty_input_term": "Input a term to search.",
@@ -95,6 +128,7 @@
     "heading_connected_on_single": "Connected to {entity}",
     "heading_other": "Other links",
     "no_results": "No links found.",
+    "switch.command": "Change link types visibility",
     "switch_all.label": "Switch all",
     "switch_hidden.title": "Hide links and labels",
     "switch_visible.title": "Show links with labels",
@@ -117,6 +151,22 @@
     "remove.title_on_new": "Discard new element",
     "remove.title_on_single": "Remove an element from the diagram",
     "zoom_to_fit.title": "Zoom to fit selected elements into view"
+  },
+  "standard_template": {
+    "blank_node": "(blank node)",
+    "default_type": "Thing",
+    "delete.label": "Delete",
+    "delete.title": "Delete entity",
+    "delete.title_on_disabled": "Cannot delete the entity",
+    "edit.label": "",
+    "edit.title": "Edit entity",
+    "edit.title_on_disabled": "Cannot edit the entity",
+    "group_item.title": "{entity}\nIRI:{entityIri}\nTypes: {entityTypes}",
+    "iri.label": "IRI:",
+    "iri.label_on_modified": "IRI\u00A0(edited):",
+    "no_properties": "no properties",
+    "property.title": "{property} {propertyIri}",
+    "ungroup.title": "Ungroup an entity"
   },
   "toolbar": {
     "menu_toggle.title": "Open menu"
@@ -148,9 +198,44 @@
     "input_clear.title": "Clear",
     "input_collapse.title": "Close"
   },
+  "visual_authoring": {
+    "dialog.apply.label": "Apply",
+    "dialog.apply.title": "Apply changes",
+    "dialog.cancel.label": "Cancel",
+    "dialog.cancel.title": "Cancel the dialog",
+    "edit_entity.dialog.caption": "Edit entity",
+    "edit_entity.iri.label": "IRI",
+    "edit_entity.label.label": "Label",
+    "edit_entity.property.label": "{property}",
+    "edit_entity.property.title": "{property} {propertyIri}",
+    "edit_entity.type.label": "Type",
+    "edit_relation.dialog.caption": "Edit relation",
+    "edit_relation.dialog.caption_on_new": "Establish new relation",
+    "edit_relation.validation_progress.title": "Validating selected link type",
+    "find_or_create.connect_command": "Link to an entity",
+    "find_or_create.create_command": "Create new entity",
+    "find_or_create.dialog.caption": "Establish New Connection",
+    "find_or_create.loading.label": "Loading entity...",
+    "find_or_create.validation_progress.title": "Validating selected element and link types",
+    "rename_link.dialog.caption": "Rename Link",
+    "rename_link.label.label": "Label",
+    "select_entity.entity_type.label": "{type}",
+    "select_entity.type.label": "Entity Type",
+    "select_entity.type.placeholder": "Select entity type",
+    "select_entity.results.aria_label": "Select an existing element to put on a diagram",
+    "select_entity.separator.label": "or create new entity",
+    "select_entity.validation.error_required": "Required.",
+    "select_relation.relation_type.label": "{relation} [{source} → {target}]",
+    "select_relation.type.label": "Relation Type",
+    "select_relation.type.placeholder": "Select relation type",
+    "select_relation.validation.error_duplicate": "The relation already exists.",
+    "select_relation.validation.error_required": "Required."
+  },
   "workspace": {
-    "graph_layout.task": "Computing graph layout",
-    "graph_layout.command": "Graph layout"
+    "group_entities.command": "Group entities",
+    "perform_layout.task": "Computing graph layout",
+    "perform_layout.command": "Graph layout",
+    "ungroup_entities.command": "Ungroup entities"
   },
   "zoom_control": {
     "pointer_mode.title": "Toggle selection mode:\nDrag pointer to select, Shift + Pointer to pan the canvas",

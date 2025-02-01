@@ -14,7 +14,7 @@ export async function groupEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityGroup> {
     const {model} = workspace;
-    const batch = model.history.startBatch('Group entities');
+    const batch = model.history.startBatch();
 
     const capturedGeometry = RestoreGeometry.capturePartial(elements, []);
 
@@ -62,7 +62,7 @@ export async function ungroupAllEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model, performLayout} = workspace;
-    const batch = model.history.startBatch('Ungroup entities');
+    const batch = model.history.startBatch();
 
     const ungrouped = model.ungroupAll(groups);
     await performLayout({
@@ -83,7 +83,7 @@ export async function ungroupSomeEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model} = workspace;
-    const batch = model.history.startBatch('Ungroup entities');
+    const batch = model.history.startBatch();
 
     const ungrouped = model.ungroupSome(group, entities);
 

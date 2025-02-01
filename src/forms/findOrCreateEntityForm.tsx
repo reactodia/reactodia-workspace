@@ -74,7 +74,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         this.validationCancellation = new AbortController();
         const signal = this.validationCancellation.signal;
 
-        const validateElement = validateElementType(elementValue.value);
+        const validateElement = validateElementType(elementValue.value, this.context);
         const validateLink = validateLinkType(
             linkValue.value.link,
             originalLink.data,
@@ -92,6 +92,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     render() {
+        const {translation: t} = this.context;
         const {source, originalLink} = this.props;
         const {elementValue, linkValue, isValidating} = this.state;
         const isValid = !elementValue.error && !linkValue.error;
@@ -122,7 +123,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                         }} />
                     {elementValue.loading ? (
                         <div style={{display: 'flex'}}>
-                            <HtmlSpinner width={20} height={20} />&nbsp;Loading entity...
+                            <HtmlSpinner width={20} height={20} />
+                            &nbsp;{t.text('visual_authoring', 'find_or_create.loading.label')}
                         </div>
                     ) : (
                         <LinkTypeSelector linkValue={linkValue}
@@ -137,7 +139,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     {isValidating ? (
                         <div className={`${FORM_CLASS}__progress`}>
                             <ProgressBar state='loading'
-                                title='Validating selected element and link types'
+                                title={t.text('visual_authoring', 'find_or_create.validation_progress.title')}
                                 height={10}
                             />
                         </div>
@@ -146,12 +148,14 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 <div className={`${FORM_CLASS}__controls`}>
                     <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={this.onApply}
-                        disabled={elementValue.loading || !isValid || isValidating}>
-                        Apply
+                        disabled={elementValue.loading || !isValid || isValidating}
+                        title={t.text('visual_authoring', 'dialog.apply.title')}>
+                        {t.text('visual_authoring', 'dialog.apply.label')}
                     </button>
                     <button className='reactodia-btn reactodia-btn-default'
-                        onClick={this.props.onCancel}>
-                        Cancel
+                        onClick={this.props.onCancel}
+                        title={t.text('visual_authoring', 'dialog.cancel.title')}>
+                        {t.text('visual_authoring', 'dialog.cancel.label')}
                     </button>
                 </div>
             </div>
@@ -206,7 +210,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     private onApply = () => {
-        const {model, editor} = this.context;
+        const {model, editor, translation: t} = this.context;
         const {source, target, onAfterApply} = this.props;
         const {elementValue, linkValue} = this.state;
         const link = this.link;
@@ -220,7 +224,9 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         editor.removeTemporaryCells([target, link]);
 
         const batch = model.history.startBatch(
-            elementValue.isNew ? 'Create new entity' : 'Link to entity'
+            elementValue.isNew
+                ? t.text('visual_authoring', 'find_or_create.create_command')
+                : t.text('visual_authoring', 'find_or_create.connect_command')
         );
 
         if (elementValue.isNew) {

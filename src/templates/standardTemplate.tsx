@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+import type { Translation } from '../coreUtils/i18n';
 
 import type * as Rdf from '../data/rdf/rdfModel';
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
@@ -91,7 +92,7 @@ const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const {data, isExpanded, elementState, target} = props;
     const workspace = useWorkspace();
-    const {model, editor, getElementTypeStyle} = workspace;
+    const {model, editor, translation: t, getElementTypeStyle} = workspace;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
     useKeyedSyncStore(
@@ -102,7 +103,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const entityContext = useAuthoredEntity(data, isExpanded);
 
     const label = formatEntityLabel(data, model.locale);
-    const typesLabel = formatEntityTypes(data, model.locale);
+    const typesLabel = formatEntityTypes(data, model.locale, t);
     const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
     const rootStyle = {
         '--reactodia-standard-entity-color': baseColor,
@@ -117,7 +118,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
 
     function renderTypes() {
         if (data.types.length === 0) {
-            return 'Thing';
+            return t.text('standard_template', 'default_type');
         }
         return data.types.map((typeIri, index) => {
             const type = model.getElementType(typeIri);
@@ -126,7 +127,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                 <React.Fragment key={typeIri}>
                     {index === 0 ? null : ', '}
                     <WithFetchStatus type='elementType' target={typeIri}>
-                        <span>{label}</span>
+                        <span title={typeIri}>{label}</span>
                     </WithFetchStatus>
                 </React.Fragment>
             );
@@ -147,11 +148,13 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
             <div>
                 <div className={`${CLASS_NAME}__iri`}>
                     <div className={`${CLASS_NAME}__iri-key`}>
-                        IRI{entityContext.editedIri ? '\u00A0(edited)' : ''}:
+                        {entityContext.editedIri
+                            ? t.text('standard_template', 'iri.label_on_modified')
+                            : t.text('standard_template', 'iri.label')}
                     </div>
                     <div className={`${CLASS_NAME}__iri-value`}>
                         {isEncodedBlank(finalIri)
-                            ? <span>(blank node)</span>
+                            ? <span>{t.text('standard_template', 'blank_node')}</span>
                             : <a href={finalIri}
                                 title={finalIri}
                                 data-iri-click-intent='openEntityIri'>
@@ -210,7 +213,10 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                     </div>
                     {pinnedProperties.length > 0 ? (
                         <div className={`${CLASS_NAME}__pinned-props`}>
-                            <PropertyList properties={pinnedProperties} />
+                            <PropertyList properties={pinnedProperties}
+                                locale={model.locale}
+                                translation={t}
+                            />
                         </div>
                     ) : null}
                 </div>
@@ -224,13 +230,17 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                     ) : null}
                     <div className={`${CLASS_NAME}__dropdown-content`}>
                         {renderIri()}
-                        <PropertyList properties={propertyList} />
+                        <PropertyList properties={propertyList}
+                            locale={model.locale}
+                            translation={t}
+                        />
                         {editor.inAuthoringMode ? <>
                             <hr className={`${CLASS_NAME}__hr`}
                                 data-reactodia-no-export='true'
                             />
                             <Actions target={target}
                                 entityContext={entityContext}
+                                translation={t}
                             />
                         </> : null}
                     </div>
@@ -323,14 +333,21 @@ interface StandardTemplateGroupItemProps extends TemplateProps {
 }
 
 function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
-    const {data, target, canvas, workspace: {model, editor, ungroupSome, getElementTypeStyle}} = props;
+    const {
+        data, target, canvas,
+        workspace: {model, editor, translation: t, ungroupSome, getElementTypeStyle},
+    } = props;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     const label = formatEntityLabel(data, model.locale);
     const iri = model.locale.formatIri(data.id);
-    const typesLabel = formatEntityTypes(data, model.locale);
-    const title = `${label}\nIRI:${iri}\nTypes: ${typesLabel}`;
+    const typesLabel = formatEntityTypes(data, model.locale, t);
+    const title = t.format('standard_template', 'group_item.title', {
+        entity: label,
+        entityIri: iri,
+        entityTypes: typesLabel,
+    });
 
     const authoringStatusClass = getEntityAuthoredStatusClass(data, editor.authoringState);
     const {color: baseColor} = getElementTypeStyle(data.types);
@@ -353,7 +370,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
                         'reactodia-btn reactodia-btn-default'
                     )}
                     data-reactodia-no-export='true'
-                    title='Ungroup an entity'
+                    title={t.text('standard_template', 'ungroup.title')}
                     onClick={() => ungroupSome({
                         group: target,
                         entities: new Set([data.id]),
@@ -377,10 +394,14 @@ function formatEntityLabel(data: ElementModel, locale: DataGraphLocaleFormatter)
     return locale.formatLabel(data.label, data.id);
 }
 
-function formatEntityTypes(data: ElementModel, locale: DataGraphLocaleFormatter): string {
+function formatEntityTypes(
+    data: ElementModel,
+    locale: DataGraphLocaleFormatter,
+    t: Translation
+): string {
     return data.types.length > 0
         ? locale.formatElementTypes(data.types).join(', ')
-        : 'Thing';
+        : t.text('standard_template', 'default_type');
 }
 
 function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
@@ -402,11 +423,13 @@ function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState)
 
 function PropertyList(props: {
     properties: ReadonlyArray<FormattedProperty>;
+    locale: DataGraphLocaleFormatter;
+    translation: Translation;
 }) {
-    const {properties} = props;
+    const {properties, locale, translation: t} = props;
 
     if (properties.length === 0) {
-        return <div>no properties</div>;
+        return <div>{t.text('standard_template', 'no_properties')}</div>;
     }
 
     return (
@@ -419,7 +442,10 @@ function PropertyList(props: {
                         className={`${CLASS_NAME}__properties-row`}>
                         <WithFetchStatus type='propertyType' target={propertyId}>
                             <div className={`${CLASS_NAME}__properties-key`}
-                                title={`${label} (${propertyId})`}>
+                                title={t.format('standard_template', 'property.title', {
+                                    property: label,
+                                    propertyIri: locale.formatIri(propertyId),
+                                })}>
                                 {label}
                             </div>
                         </WithFetchStatus>
@@ -446,10 +472,12 @@ function PropertyList(props: {
 function Actions(props: {
     target: Element;
     entityContext: AuthoredEntityContext;
+    translation: Translation;
 }) {
     const {
         target,
         entityContext: {canEdit, canDelete, onEdit, onDelete},
+        translation: t,
     } = props;
     const SPINNER_WIDTH = 15;
     const SPINNER_HEIGHT = 12;
@@ -461,24 +489,28 @@ function Actions(props: {
                     `${CLASS_NAME}__delete-button`,
                     'reactodia-btn reactodia-btn-default'
                 )}
-                title={canDelete ? 'Delete entity' : 'Deletion is unavailable for the selected element'}
+                title={canDelete
+                    ? t.text('standard_template', 'delete.title')
+                    : t.text('standard_template', 'delete.title_on_disabled')}
                 disabled={!canDelete}
                 onClick={onDelete}>
                 {canEdit === undefined
                     ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
-                    : 'Delete'}
+                    : t.text('standard_template', 'delete.label')}
             </button>
             <button type='button'
                 className={classnames(
                     `${CLASS_NAME}__edit-button`,
                     'reactodia-btn reactodia-btn-default'
                 )}
-                title={canEdit ? 'Edit entity' : 'Editing is unavailable for the selected element'}
+                title={canEdit
+                    ? t.text('standard_template', 'edit.title')
+                    : t.text('standard_template', 'edit.title_on_disabled')}
                 disabled={!canEdit}
                 onClick={() => onEdit(target)}>
                 {canEdit === undefined
                     ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
-                    : 'Edit'}
+                    : t.text('standard_template', 'edit.label')}
             </button>
         </div>
     );

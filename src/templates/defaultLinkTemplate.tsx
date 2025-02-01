@@ -107,7 +107,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
         propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
-    const {model, view: {renameLinkProvider}} = useWorkspace();
+    const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
 
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
     useKeyedSyncStore(
@@ -136,9 +136,10 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
                 textClass={classnames(textClass, primaryLabelProps?.textClass)}
                 rectClass={classnames(backgroundClass, primaryLabelProps?.rectClass)}
-                title={primaryLabelProps?.title
-                    ?? `${label} ${model.locale.formatIri(link.typeId)}`
-                }
+                title={primaryLabelProps?.title ?? t.format('default_link_template', 'label.title', {
+                    relation: label,
+                    relationIri: model.locale.formatIri(link.typeId),
+                })}
                 content={renamedLabel ? label : (
                     <WithFetchStatus type='linkType' target={link.typeId}>
                         <tspan>{label}</tspan>
@@ -155,9 +156,10 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
                     textClass={classnames(textClass, propertyLabelProps?.textClass)}
                     rectClass={classnames(backgroundClass, propertyLabelProps?.rectClass)}
-                    title={propertyLabelProps?.title
-                        ?? `${property.label} ${model.locale.formatIri(property.propertyId)}`
-                    }
+                    title={propertyLabelProps?.title ?? t.format('default_link_template', 'property.title', {
+                        property: property.label,
+                        propertyIri: model.locale.formatIri(property.propertyId),
+                    })}
                     content={<>
                         <WithFetchStatus type='propertyType' target={property.propertyId}>
                             <tspan>{property.label}:&nbsp;</tspan>
@@ -173,16 +175,24 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                         position={getPathPosition(0.1)}
                         textClass={textClass}
                         rectClass={backgroundClass}
-                        title={`${link.itemSources.size} source elements`}
-                        content={<>{link.itemSources.size}</>}
+                        title={t.format('default_link_template', 'group_source.title', {
+                            value: link.itemSources.size,
+                        })}
+                        content={t.format('default_link_template', 'group_source.value', {
+                            value: link.itemSources.size,
+                        })}
                     />
                     <LinkLabel className={`${CLASS_NAME}__target-count`}
                         link={link}
                         position={getPathPosition(0.9)}
                         textClass={textClass}
                         rectClass={backgroundClass}
-                        title={`${link.itemTargets.size} target elements`}
-                        content={<>{link.itemTargets.size}</>}
+                        title={t.format('default_link_template', 'group_target.title', {
+                            value: link.itemTargets.size,
+                        })}
+                        content={t.format('default_link_template', 'group_target.value', {
+                            value: link.itemTargets.size,
+                        })}
                     />
                 </>
             ) : null}
