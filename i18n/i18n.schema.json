@@ -70,6 +70,17 @@
         "sort_smart.title": { "$ref": "#/$defs/Value" }
       }
     },
+    "data_diagram_model": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "create_links.command": { "$ref": "#/$defs/Value" },
+        "group_entities.command": { "$ref": "#/$defs/Value" },
+        "import_layout.command": { "$ref": "#/$defs/Value" },
+        "regroup_relations.command": { "$ref": "#/$defs/Value" },
+        "ungroup_entities.command": { "$ref": "#/$defs/Value" }
+      }
+    },
     "default_link_template": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
@@ -96,6 +107,23 @@
       "additionalProperties": false,
       "properties": {
         "drop.command": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "editor_controller": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "discard_change.command": { "$ref": "#/$defs/Value" },
+        "entity_add.command": { "$ref": "#/$defs/Value" },
+        "entity_change.command": { "$ref": "#/$defs/Value" },
+        "entity_delete.command": { "$ref": "#/$defs/Value" },
+        "relation_add.command": { "$ref": "#/$defs/Value" },
+        "relation_change.command": { "$ref": "#/$defs/Value" },
+        "relation_delete.command": { "$ref": "#/$defs/Value" },
+        "relation_move_source.command": { "$ref": "#/$defs/Value" },
+        "relation_move_target.command": { "$ref": "#/$defs/Value" },
+        "remove_items.command": { "$ref": "#/$defs/Value" },
+        "set_authoring_state.command": { "$ref": "#/$defs/Value" }
       }
     },
     "group_paginator": {

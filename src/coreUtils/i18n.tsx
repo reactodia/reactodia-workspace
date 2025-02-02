@@ -5,7 +5,7 @@ import type DefaultTranslationBundle from '../../i18n/translations/translation.e
 export type TranslationBundle = Omit<typeof DefaultTranslationBundle, '$schema'>;
 
 /**
- * Provides and formats text strings for the UI elements.
+ * Provides i18n strings and templates for the UI elements.
  *
  * @group Core
  */

@@ -50,6 +50,13 @@
     "sort_alphabetically.title": "Sort alphabetically",
     "sort_smart.title": "Smart sort"
   },
+  "data_diagram_model": {
+    "create_links.command": "Create links",
+    "group_entities.command": "Group entities",
+    "import_layout.command": "Import layout",
+    "regroup_relations.command": "Regroup relations",
+    "ungroup_entities.command": "Ungroup entities"
+  },
   "default_link_template": {
     "group_source.title": "{value} source elements",
     "group_source.value": "{value}",
@@ -65,6 +72,19 @@
   },
   "drop_on_canvas": {
     "drop.command": "Drag and drop onto diagram"
+  },
+  "editor_controller": {
+    "discard_change.command": "Discard change",
+    "entity_add.command": "Create new entity",
+    "entity_change.command": "Edit entity",
+    "entity_delete.command": "Delete entity",
+    "relation_add.command": "Create new relation",
+    "relation_change.command": "Edit relation",
+    "relation_delete.command": "Delete relation",
+    "relation_move_source.command": "Move relation source",
+    "relation_move_target.command": "Move relation target",
+    "remove_items.command": "Remove diagram items",
+    "set_authoring_state.command": "Create, change or delete entities and relations"
   },
   "group_paginator": {
     "current_page.label": "{page} of {pageCount}",

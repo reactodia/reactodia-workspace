@@ -1,5 +1,6 @@
 import { moveComparator } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
+import { Translation } from '../coreUtils/i18n';
 
 import { LinkTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
@@ -112,7 +113,8 @@ export interface GraphStructure {
 
 /** @hidden */
 export interface DiagramModelOptions {
-    history: CommandHistory,
+    history: CommandHistory;
+    translation: Translation;
     selectLabelLanguage?: LabelLanguageSelector;
 }
 
@@ -143,6 +145,10 @@ export class DiagramModel implements GraphStructure {
     protected graphListener = new EventObserver();
 
     /**
+     * Provides i18n strings and templates.
+     */
+    protected readonly translation: Translation;
+    /**
      * Provides the mechanism to undo/redo commands on the diagram.
      */
     readonly history: CommandHistory;
@@ -153,7 +159,8 @@ export class DiagramModel implements GraphStructure {
 
     /** @hidden */
     constructor(options: DiagramModelOptions) {
-        const {history, selectLabelLanguage = defaultSelectLabel} = options;
+        const {history, translation, selectLabelLanguage = defaultSelectLabel} = options;
+        this.translation = translation;
         this.history = history;
         this.locale = this.createLocale(selectLabelLanguage);
     }
