@@ -6,7 +6,27 @@ import * as React from 'react';
 
 import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-translation.json';
 
+/**
+ * Translation strings bundle (content).
+ *
+ * **Example**:
+ * ```json
+ * {
+ *   "$schema": "../i18n.schema.json",
+ *   "my_component": {
+ *     "submit.label": "Submit data",
+ *     "submit.command": "Apply changes to the data",
+ *     ...
+ *   }
+ * }
+ * ```
+ */
 export type TranslationBundle = Omit<typeof DefaultTranslationBundle, '$schema'>;
+/**
+ * Key for a translation string.
+ *
+ * @see Translation
+ */
 export type TranslationKey = TranslationKeyOf<TranslationBundle>;
 
 /**
@@ -16,13 +36,21 @@ export type TranslationKey = TranslationKeyOf<TranslationBundle>;
  */
 export interface Translation {
     /**
-     * Gets a simple translated string.
+     * Gets a simple translation string.
      */
     text(key: TranslationKey): string;
+    /**
+     * Formats a translation string by replacing placeholders with
+     * provided values.
+     */
     format(
         key: TranslationKey,
         placeholders: Record<string, string | number | boolean>
     ): string;
+    /**
+     * Templates a translation string into React Fragment by replacing
+     * placeholders with provided React nodes (elements, etc).
+     */
     template(
         key: TranslationKey,
         parts: Record<string, React.ReactNode>

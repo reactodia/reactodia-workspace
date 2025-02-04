@@ -181,9 +181,8 @@ export class EditorController {
     }
 
     private updateAuthoringState(state: AuthoringState): Command {
-        const {translation: t} = this;
         const previous = this._authoringState;
-        return Command.create(t.text('editor_controller.set_authoring_state.command'), () => {
+        return Command.create({titleKey: 'editor_controller.set_authoring_state.command'}, () => {
             this._authoringState = state;
             this.source.trigger('changeAuthoringState', {source: this, previous});
             return this.updateAuthoringState(previous);
@@ -284,10 +283,10 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeItems(items: ReadonlyArray<Element | Link>) {
-        const {model, translation: t} = this;
-        const batch = model.history.startBatch(
-            t.text('editor_controller.remove_items.command')
-        );
+        const {model} = this;
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.remove_items.command',
+        });
         const entitiesToDiscard = new Set<ElementIri>();
 
         for (const item of items) {
@@ -331,10 +330,10 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createEntity(data: ElementModel, options: { temporary?: boolean } = {}): EntityElement {
-        const {model, translation: t} = this;
-        const batch = model.history.startBatch(
-            t.text('editor_controller.entity_add.command')
-        );
+        const {model} = this;
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.entity_add.command',
+        });
 
         const element = model.createElement(data);
         element.setExpanded(true);
@@ -362,7 +361,7 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     changeEntity(targetIri: ElementIri, newData: ElementModel): void {
-        const {model, translation: t} = this;
+        const {model} = this;
 
         const elements = findEntities(model, targetIri);
         const oldData = findAnyEntityData(elements, targetIri);
@@ -370,9 +369,9 @@ export class EditorController {
             return;
         }
 
-        const batch = model.history.startBatch(
-            t.text('editor_controller.entity_change.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.entity_change.command',
+        });
 
         const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
@@ -392,7 +391,7 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     deleteEntity(elementIri: ElementIri): void {
-        const {model, translation: t} = this;
+        const {model} = this;
 
         const elements = findEntities(model, elementIri);
         const oldData = findAnyEntityData(elements, elementIri);
@@ -401,9 +400,9 @@ export class EditorController {
         }
 
         const state = this.authoringState;
-        const batch = model.history.startBatch(
-            t.text('editor_controller.entity_delete.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.entity_delete.command',
+        });
 
         // Remove new connected links
         for (const element of elements) {
@@ -430,16 +429,16 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createRelation(base: RelationLink, options: { temporary?: boolean } = {}): RelationLink {
-        const {model, translation: t} = this;
+        const {model} = this;
 
         const existingLink = model.findLink(base.typeId, base.sourceId, base.targetId);
         if (existingLink) {
             throw Error('The relation with same (source IRI, target IRI, type) already exists');
         }
 
-        const batch = model.history.startBatch(
-            t.text('editor_controller.relation_add.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.relation_add.command',
+        });
 
         model.addLink(base);
         if (!options.temporary) {
@@ -471,11 +470,11 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     changeRelation(oldData: LinkModel, newData: LinkModel): void {
-        const {model, translation: t} = this;
+        const {model} = this;
 
-        const batch = model.history.startBatch(
-            t.text('editor_controller.relation_change.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.relation_change.command',
+        });
         if (equalLinks(oldData, newData)) {
             model.history.execute(changeRelationData(model, oldData, newData));
             this.setAuthoringState(
@@ -508,11 +507,11 @@ export class EditorController {
         link: RelationLink;
         newSource: EntityElement;
     }): RelationLink {
-        const {model, translation: t} = this;
+        const {model} = this;
         const {link, newSource} = params;
-        const batch = model.history.startBatch(
-            t.text('editor_controller.relation_move_source.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.relation_move_source.command',
+        });
         this.changeRelation(link.data, {...link.data, sourceId: newSource.iri});
         const newLink = model.findLink(link.typeId, newSource.id, link.targetId) as RelationLink;
         newLink.setVertices(link.vertices);
@@ -530,11 +529,11 @@ export class EditorController {
         link: RelationLink;
         newTarget: EntityElement;
     }): RelationLink {
-        const {model, translation: t} = this;
+        const {model} = this;
         const {link, newTarget} = params;
-        const batch = model.history.startBatch(
-            t.text('editor_controller.relation_move_target.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.relation_move_target.command',
+        });
         this.changeRelation(link.data, {...link.data, targetId: newTarget.iri});
         const newLink = model.findLink(link.typeId, link.sourceId, newTarget.id) as RelationLink;
         newLink.setVertices(link.vertices);
@@ -548,14 +547,14 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     deleteRelation(data: LinkModel): void {
-        const {model, translation: t} = this;
+        const {model} = this;
         const state = this.authoringState;
         if (AuthoringState.isDeletedRelation(state, data)) {
             return;
         }
-        const batch = model.history.startBatch(
-            t.text('editor_controller.relation_delete.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.relation_delete.command',
+        });
         const newState = AuthoringState.deleteRelation(state, data);
         if (AuthoringState.isAddedRelation(state, data)) {
             this.removeRelationsFromLinks(
@@ -632,14 +631,14 @@ export class EditorController {
      *   - changed entities and links have their data reverted back.
      */
     discardChange(event: AuthoringEvent): void {
-        const {model, translation: t} = this;
+        const {model} = this;
 
         const newState = AuthoringState.discard(this._authoringState, event);
         if (newState === this._authoringState) { return; }
 
-        const batch = model.history.startBatch(
-            t.text('editor_controller.discard_change.command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: 'editor_controller.discard_change.command',
+        });
         switch (event.type) {
             case 'entityAdd': {
                 for (const element of findEntities(model, event.data.id)) {

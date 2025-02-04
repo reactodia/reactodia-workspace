@@ -717,9 +717,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {
             placeTarget,
             canvas,
-            workspace: {model, translation: t, triggerWorkspaceEvent},
+            workspace: {model, triggerWorkspaceEvent},
         } = this.props;
-        const batch = model.history.startBatch(t.text('connections_menu.place_elements.command'));
+        const batch = model.history.startBatch({titleKey: 'connections_menu.place_elements.command'});
 
         let placedElements: Element[] = [];
         switch (mode) {

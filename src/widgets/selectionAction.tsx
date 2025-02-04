@@ -331,11 +331,11 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
                     const target = elements[0];
                     model.history.execute(setElementExpanded(target, !target.isExpanded));
                 } else {
-                    const batch = model.history.startBatch(
-                        allExpanded
-                            ? t.text('selection_action.expand.collapse_command')
-                            : t.text('selection_action.expand.expand_command')
-                    );
+                    const batch = model.history.startBatch({
+                        titleKey: allExpanded
+                            ? 'selection_action.expand.collapse_command'
+                            : 'selection_action.expand.expand_command',
+                    });
                     for (const element of elements) {
                         batch.history.execute(setElementExpanded(element, !allExpanded));
                     }

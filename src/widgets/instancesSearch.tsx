@@ -578,7 +578,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 
     private placeSelectedItems(mode: 'separately' | 'group'): void {
-        const {onAddElements, workspace: {model, view, translation: t}} = this.props;
+        const {onAddElements, workspace: {model, view}} = this.props;
         const canvas = view.findAnyCanvas();
         const {items, selection} = this.state;
 
@@ -586,7 +586,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             return;
         }
 
-        const batch = model.history.startBatch(t.text('search_entities.place_elements.command'));
+        const batch = model.history.startBatch({titleKey: 'search_entities.place_elements.command'});
         const selectedEntities = items
             ? items.filter(item => selection.has(item.id))
             : Array.from(selection, EntityElement.placeholderData);

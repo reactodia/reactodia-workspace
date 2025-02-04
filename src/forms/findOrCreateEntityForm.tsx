@@ -210,7 +210,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     private onApply = () => {
-        const {model, editor, translation: t} = this.context;
+        const {model, editor} = this.context;
         const {source, target, onAfterApply} = this.props;
         const {elementValue, linkValue} = this.state;
         const link = this.link;
@@ -223,11 +223,11 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         }
         editor.removeTemporaryCells([target, link]);
 
-        const batch = model.history.startBatch(
-            elementValue.isNew
-                ? t.text('visual_authoring.find_or_create.create_command')
-                : t.text('visual_authoring.find_or_create.connect_command')
-        );
+        const batch = model.history.startBatch({
+            titleKey: elementValue.isNew
+                ? 'visual_authoring.find_or_create.create_command'
+                : 'visual_authoring.find_or_create.connect_command',
+        });
 
         if (elementValue.isNew) {
             model.addElement(target);

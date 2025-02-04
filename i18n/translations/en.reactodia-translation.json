@@ -20,6 +20,23 @@
     "instances_heading": "Instances",
     "connections_heading": "Connections"
   },
+  "commands": {
+    "change_entity.title": "Change entity data",
+    "change_link_type_visibility.title": "Change link type visibility",
+    "change_relation.title": "Change relation data",
+    "collapse_element.title": "Collapse element",
+    "expand_element.title": "Expand element",
+    "place_elements_around.title": "Place elements",
+    "restore_geometry.title": "Move elements and links",
+    "restore_link_vertices.title": "Change link vertices",
+    "restore_viewport.title": "Set viewport",
+    "set_element_state.title": "Change element state",
+    "set_entity_data.title": "Set entity element data",
+    "set_entity_group_items.title": "Set entity group items",
+    "set_link_state.title": "Change link state",
+    "set_relation_data.title": "Set relation link data",
+    "set_relation_group_items.title": "Set relation group items"
+  },
   "connections_menu": {
     "all_link.label": "All",
     "breadcrumbs_root.label": "Link types",
@@ -55,6 +72,8 @@
     "group_entities.command": "Group entities",
     "import_layout.command": "Import layout",
     "regroup_relations.command": "Regroup relations",
+    "request_entities.command": "Request entity data",
+    "request_relations.command": "Request relations between entities",
     "ungroup_entities.command": "Ungroup entities"
   },
   "default_link_template": {

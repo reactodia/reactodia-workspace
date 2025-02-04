@@ -466,8 +466,8 @@ function changeLinkTypeState(
     state: LinkTypeVisibility,
     workspace: WorkspaceContext
 ): void {
-    const {model, translation: t} = workspace;
-    const batch = model.history.startBatch(t.text('search_link_types.switch.command'));
+    const {model} = workspace;
+    const batch = model.history.startBatch({titleKey: 'search_link_types.switch.command'});
     for (const linkType of linkTypes) {
         model.history.execute(changeLinkTypeVisibility(model, linkType.iri, state));
     }

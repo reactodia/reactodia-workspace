@@ -3,9 +3,10 @@ import classnames from 'classnames';
 import { saveAs } from 'file-saver';
 
 import { useObservedProperty } from '../coreUtils/hooks';
-import { useTranslation } from '../coreUtils/i18n';
+import { type Translation, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
+import type { Command } from '../diagram/history';
 import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
@@ -221,7 +222,9 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
             className={classnames(className, `${CLASS_NAME}__clear-all`)}
             title={title ?? t.text('toolbar_action.clear_all.title')}
             onSelect={() => {
-                const batch = model.history.startBatch(t.text('toolbar_action.clear_all.command'));
+                const batch = model.history.startBatch({
+                    titleKey: 'toolbar_action.clear_all.command',
+                });
                 editor.removeItems([...model.elements]);
                 batch.store();
             }}>
@@ -350,14 +353,15 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
                 ? undefined : undoStack[undoStack.length - 1];
         }
     );
+    const commandTitle = !title && undoCommand ? resolveCommandTitle(undoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__undo`)}
             disabled={!undoCommand}
             title={title ?? (
-                undoCommand && undoCommand.title
-                    ? t.format('toolbar_action.undo.with_command_title', {command: undoCommand.title})
-                    : t.text('toolbar_action.undo.title')
+                commandTitle === undefined
+                    ? t.text('toolbar_action.undo.title')
+                    : t.format('toolbar_action.undo.with_command_title', {command: commandTitle})
             )}
             onSelect={() => history.undo()}>
             {insideDropdown ? t.text('toolbar_action.undo.label') : null}
@@ -391,19 +395,31 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
                 ? undefined : redoStack[redoStack.length - 1];
         }
     );
+    const commandTitle = !title && redoCommand ? resolveCommandTitle(redoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__redo`)}
             disabled={!redoCommand}
             title={title ?? (
-                redoCommand && redoCommand.title
-                    ? t.format('toolbar_action.redo.with_command_title', {command: redoCommand.title})
-                    : t.text('toolbar_action.redo.title')
+                commandTitle === undefined
+                    ? t.text('toolbar_action.redo.title')
+                    : t.format('toolbar_action.redo.with_command_title', {command: commandTitle}) 
             )}
             onSelect={() => history.redo()}>
             {insideDropdown ? t.text('toolbar_action.redo.label') : null}
         </ToolbarAction>
     );
+}
+
+function resolveCommandTitle(command: Command, t: Translation): string | undefined {
+    if (command.metadata) {
+        if (command.metadata.title !== undefined) {
+            return command.metadata.title;
+        } else if (command.metadata.titleKey) {
+            return t.text(command.metadata.titleKey);
+        }
+    }
+    return command.title;
 }
 
 /**

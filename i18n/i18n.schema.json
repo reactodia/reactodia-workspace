@@ -36,6 +36,27 @@
         "connections_heading": { "$ref": "#/$defs/Value" }
       }
     },
+    "commands": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "change_entity.title": { "$ref": "#/$defs/Value" },
+        "change_link_type_visibility.title": { "$ref": "#/$defs/Value" },
+        "change_relation.title": { "$ref": "#/$defs/Value" },
+        "collapse_element.title": { "$ref": "#/$defs/Value" },
+        "expand_element.title": { "$ref": "#/$defs/Value" },
+        "place_elements_around.title": { "$ref": "#/$defs/Value" },
+        "restore_geometry.title": { "$ref": "#/$defs/Value" },
+        "restore_link_vertices.title": { "$ref": "#/$defs/Value" },
+        "restore_viewport.title": { "$ref": "#/$defs/Value" },
+        "set_element_state.title": { "$ref": "#/$defs/Value" },
+        "set_entity_data.title": { "$ref": "#/$defs/Value" },
+        "set_entity_group_items.title": { "$ref": "#/$defs/Value" },
+        "set_link_state.title": { "$ref": "#/$defs/Value" },
+        "set_relation_data.title": { "$ref": "#/$defs/Value" },
+        "set_relation_group_items.title": { "$ref": "#/$defs/Value" }
+      }
+    },
     "connections_menu": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
@@ -78,6 +99,8 @@
         "group_entities.command": { "$ref": "#/$defs/Value" },
         "import_layout.command": { "$ref": "#/$defs/Value" },
         "regroup_relations.command": { "$ref": "#/$defs/Value" },
+        "request_entities.command": { "$ref": "#/$defs/Value" },
+        "request_relations.command": { "$ref": "#/$defs/Value" },
         "ungroup_entities.command": { "$ref": "#/$defs/Value" }
       }
     },
