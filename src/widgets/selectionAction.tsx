@@ -196,9 +196,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             )}
             title={
                 title ? title :
-                singleNewEntity ? t.text('selection_action', 'remove.title_on_new') :
-                elements.length === 1 ? t.text('selection_action', 'remove.title_on_single') :
-                t.text('selection_action', 'remove.title')
+                singleNewEntity ? t.text('selection_action.remove.title_on_new') :
+                elements.length === 1 ? t.text('selection_action.remove.title_on_single') :
+                t.text('selection_action.remove.title')
             }
             onSelect={() => editor.removeSelectedElements()}
         />
@@ -229,7 +229,7 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__zoomToFit`)}
-            title={title ?? t.text('selection_action', 'zoom_to_fit.title')}
+            title={title ?? t.text('selection_action.zoom_to_fit.title')}
             onSelect={() => {
                 const links = new Set<Link>();
                 for (const element of elements) {
@@ -270,7 +270,7 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__layout`)}
-            title={title ?? t.text('selection_action', 'layout.title')}
+            title={title ?? t.text('selection_action.layout.title')}
             onSelect={() => {
                 performLayout({
                     canvas,
@@ -323,8 +323,8 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
             )}
             title={title ?? (
                 elements.length === 1
-                    ? t.text('selection_action', 'expand.title_on_single')
-                    : t.text('selection_action', 'expand.title')
+                    ? t.text('selection_action.expand.title_on_single')
+                    : t.text('selection_action.expand.title')
             )}
             onSelect={() => {
                 if (elements.length === 1) {
@@ -333,8 +333,8 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
                 } else {
                     const batch = model.history.startBatch(
                         allExpanded
-                            ? t.text('selection_action', 'expand.collapse_command')
-                            : t.text('selection_action', 'expand.expand_command')
+                            ? t.text('selection_action.expand.collapse_command')
+                            : t.text('selection_action.expand.expand_command')
                     );
                     for (const element of elements) {
                         batch.history.execute(setElementExpanded(element, !allExpanded));
@@ -398,7 +398,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
             )}
             style={getDockStyle(dockRow, dockColumn)}
             href={target.iri}
-            title={title ?? t.text('selection_action', 'anchor.title')}
+            title={title ?? t.text('selection_action.anchor.title')}
             onClick={e => {
                 if (onSelect) {
                     onSelect(target, e);
@@ -457,7 +457,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
                     ? `${CLASS_NAME}__navigate-close`
                     : `${CLASS_NAME}__navigate-open`
             )}
-            title={title ?? t.text('selection_action', 'connections.title')}
+            title={title ?? t.text('selection_action.connections.title')}
             onSelect={() => {
                 if (menuOpened) {
                     overlay.hideDialog();
@@ -501,7 +501,7 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__add-to-filter`)}
-            title={title ?? t.text('selection_action', 'add_to_filter.title')}
+            title={title ?? t.text('selection_action.add_to_filter.title')}
             onSelect={() => {
                 commands.trigger('setCriteria', {
                     criteria: {refElement: target.iri},
@@ -552,8 +552,8 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
             disabled={!(canGroup || canUngroup)}
             title={title ?? (
                 canUngroup
-                    ? t.text('selection_action', 'group.title_on_ungroup')
-                    : t.text('selection_action', 'group.title')
+                    ? t.text('selection_action.group.title_on_ungroup')
+                    : t.text('selection_action.group.title')
             )}
             onMouseDown={async () => {
                 if (canGroup) {
@@ -618,8 +618,8 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             disabled={!canLink}
             title={title ?? (
                 canLink
-                    ? t.text('selection_action', 'establish_relation.title')
-                    : t.text('selection_action', 'establish_relation.title_on_disabled')
+                    ? t.text('selection_action.establish_relation.title')
+                    : t.text('selection_action.establish_relation.title_on_disabled')
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);

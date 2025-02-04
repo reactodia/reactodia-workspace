@@ -33,7 +33,7 @@ export function SearchInput(props: SearchInputProps) {
                     'reactodia-form-control',
                     inputProps.className,
                 )}
-                placeholder={inputProps.placeholder ?? t.text('search_defaults', 'input.placeholder')}
+                placeholder={inputProps.placeholder ?? t.text('search_defaults.input.placeholder')}
                 value={term}
                 onChange={e => store.change({value: e.currentTarget.value, action: 'input'})}
                 onKeyUp={e => {
@@ -46,7 +46,7 @@ export function SearchInput(props: SearchInputProps) {
                 <div className={`${CLASS_NAME}__clear-container`}>
                     <button type='button'
                         className={`${CLASS_NAME}__clear`}
-                        title={t.text('search_defaults', 'input_clear.title')}
+                        title={t.text('search_defaults.input_clear.title')}
                         onClick={() => store.change({value: '', action: 'clear'})}>
                         <span aria-hidden='true'></span>
                     </button>
@@ -54,7 +54,7 @@ export function SearchInput(props: SearchInputProps) {
             ) : null}
             {mode === 'explicit' ? (
                 <button type='button'
-                    title={t.text('search_defaults', 'input_submit.title')}
+                    title={t.text('search_defaults.input_submit.title')}
                     className={classnames(`${CLASS_NAME}__submit`, 'reactodia-btn', 'reactodia-btn-default')}
                     onClick={() => store.change({value: store.value, action: 'submit'})}>
                 </button>

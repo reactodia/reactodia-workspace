@@ -192,13 +192,13 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                                     name='reactodia-class-tree-only-constructible'
                                     checked={showOnlyConstructible}
                                     onChange={this.onShowOnlyCreatableChange}
-                                /> {t.text('search_element_types', 'show_only_creatable')}
+                                /> {t.text('search_element_types.show_only_creatable')}
                             </label>
                         ) : null}
                     </div>
                 </div>
                 <ProgressBar state={refreshingState}
-                    title={t.text('search_element_types', 'refresh_progress.title')}
+                    title={t.text('search_element_types.refresh_progress.title')}
                 />
                 {fetchedGraph?.classTree ? (
                     <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
@@ -218,7 +218,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                                     minSearchTermLength={minSearchTermLength}
                                     message={
                                         roots.length === 0
-                                            ? t.text('search_element_types', 'no_results')
+                                            ? t.text('search_element_types.no_results')
                                             : undefined
                                     }
                                 />

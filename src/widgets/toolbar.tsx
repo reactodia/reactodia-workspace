@@ -59,7 +59,7 @@ export function Toolbar(props: ToolbarProps) {
             <div className={CLASS_NAME}>
                 {menu ? (
                     <DropdownMenu className={`${CLASS_NAME}__menu`}
-                        title={t.text('toolbar', 'menu_toggle.title')}>
+                        title={t.text('toolbar.menu_toggle.title')}>
                         {menu}
                     </DropdownMenu>
                 ) : null}

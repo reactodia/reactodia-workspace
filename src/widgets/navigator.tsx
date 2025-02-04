@@ -479,8 +479,8 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
                         className={`${CLASS_NAME}__toggle`}
                         title={
                             expanded
-                                ? t.text('navigator', 'toggle_collapse.title')
-                                : t.text('navigator', 'toggle_expand.title')
+                                ? t.text('navigator.toggle_collapse.title')
+                                : t.text('navigator.toggle_expand.title')
                         }
                         disabled={!allowExpand}
                         onClick={this.onToggleClick}>

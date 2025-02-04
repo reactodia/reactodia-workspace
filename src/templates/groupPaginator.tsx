@@ -55,24 +55,24 @@ export function GroupPaginator(props: GroupPaginatorProps) {
         <div className={CLASS_NAME}>
             <button type='button'
                 className={classnames('reactodia-btn', `${CLASS_NAME}__previous`)}
-                name={t.text('group_paginator', 'go_previous.title')}
+                name={t.text('group_paginator.go_previous.title')}
                 disabled={pageIndex <= 0}
                 onClick={() => onChangePage(pageIndex - 1)}
             />
             <div className={`${CLASS_NAME}__status`}>
-                {t.format('group_paginator', 'current_page.label', {
+                {t.format('group_paginator.current_page.label', {
                     page: pageIndex + 1,
                     pageCount,
                 })}
             </div>
             <button type='button'
                 className={classnames('reactodia-btn', `${CLASS_NAME}__next`)}
-                title={t.text('group_paginator', 'go_next.title')}
+                title={t.text('group_paginator.go_next.title')}
                 disabled={pageIndex >= lastPage}
                 onClick={() => onChangePage(pageIndex + 1)}
             />
             <select className={`${CLASS_NAME}__page-size`}
-                title={t.text('group_paginator', 'page_size.title')}
+                title={t.text('group_paginator.page_size.title')}
                 value={pageSize}
                 // Allow <select> to work inside element template
                 onPointerDown={e => e.stopPropagation()}

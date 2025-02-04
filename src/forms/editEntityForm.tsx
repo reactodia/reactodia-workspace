@@ -43,10 +43,14 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <div key={key} className={`${FORM_CLASS}__row`}>
                 <label
-                    title={t.format(
-                        'visual_authoring', 'edit_entity.property.title', {property, propertyIri}
-                    )}>
-                    {t.format('visual_authoring', 'edit_entity.property.label', {property, propertyIri})}
+                    title={t.format('visual_authoring.edit_entity.property.title', {
+                        property,
+                        propertyIri,
+                    })}>
+                    {t.format('visual_authoring.edit_entity.property.label', {
+                        property,
+                        propertyIri,
+                    })}
                     {
                         values.map((term, index) => (
                             <input key={index}
@@ -79,7 +83,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         const label = model.locale.formatElementTypes(elementModel.types).join(', ');
         return (
             <label>
-                {t.text('visual_authoring', 'edit_entity.type.label')}
+                {t.text('visual_authoring.edit_entity.type.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-type'
                     value={label}
@@ -107,7 +111,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         const {elementModel} = this.state;
         return (
             <label>
-                {t.text('visual_authoring', 'edit_entity.iri.label')}
+                {t.text('visual_authoring.edit_entity.iri.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-iri'
                     defaultValue={elementModel.id}
@@ -133,7 +137,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         const text = label ? label.value : '';
         return (
             <label>
-                {t.text('visual_authoring', 'edit_entity.label.label')}
+                {t.text('visual_authoring.edit_entity.label.label')}
                 <input className='reactodia-form-control'
                     name='reactodia-edit-entity-label'
                     value={text}
@@ -162,15 +166,15 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                 <div className={`${FORM_CLASS}__controls`}>
                     <button type='button'
                         className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                        title={t.text('visual_authoring', 'dialog.apply.title')}
+                        title={t.text('visual_authoring.dialog.apply.title')}
                         onClick={() => this.props.onApply(this.state.elementModel)}>
-                        {t.text('visual_authoring', 'dialog.apply.label')}
+                        {t.text('visual_authoring.dialog.apply.label')}
                     </button>
                     <button type='button'
                         className='reactodia-btn reactodia-btn-default'
-                        title={t.text('visual_authoring', 'dialog.cancel.title')}
+                        title={t.text('visual_authoring.dialog.cancel.title')}
                         onClick={this.props.onCancel}>
-                        {t.text('visual_authoring', 'dialog.cancel.label')}
+                        {t.text('visual_authoring.dialog.cancel.label')}
                     </button>
                 </div>
             </div>

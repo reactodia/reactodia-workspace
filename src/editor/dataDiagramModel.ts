@@ -446,7 +446,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         } = deserializeDiagram(diagram, {preloadedElements, markLinksAsLayoutOnly});
 
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'import_layout.command')
+            t.text('data_diagram_model.import_layout.command')
         );
 
         for (const [linkTypeIri, visibility] of linkTypeVisibility) {
@@ -599,7 +599,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             el instanceof EntityGroup && el.itemIris.has(data.targetId)
         );
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'create_links.command')
+            t.text('data_diagram_model.create_links.command')
         );
         const links: Array<RelationLink | RelationGroup> = [];
         for (const source of sources) {
@@ -747,7 +747,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     group(entities: ReadonlyArray<EntityElement>): EntityGroup {
         const {translation: t} = this;
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'group_entities.command')
+            t.text('data_diagram_model.group_entities.command')
         );
 
         const entityIds = new Set<ElementIri>();
@@ -812,7 +812,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
         const {translation: t} = this;
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'ungroup_entities.command')
+            t.text('data_diagram_model.ungroup_entities.command')
         );
 
         const ungrouped: EntityElement[] = [];
@@ -868,7 +868,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         }
 
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'ungroup_entities.command')
+            t.text('data_diagram_model.ungroup_entities.command')
         );
 
         const links = new Set<Link>();
@@ -917,7 +917,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
         const {translation: t} = this;
         const batch = this.history.startBatch(
-            t.text('data_diagram_model', 'regroup_relations.command')
+            t.text('data_diagram_model.regroup_relations.command')
         );
 
         for (const link of links) {

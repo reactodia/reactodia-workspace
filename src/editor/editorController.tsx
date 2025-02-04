@@ -183,7 +183,7 @@ export class EditorController {
     private updateAuthoringState(state: AuthoringState): Command {
         const {translation: t} = this;
         const previous = this._authoringState;
-        return Command.create(t.text('editor_controller', 'set_authoring_state.command'), () => {
+        return Command.create(t.text('editor_controller.set_authoring_state.command'), () => {
             this._authoringState = state;
             this.source.trigger('changeAuthoringState', {source: this, previous});
             return this.updateAuthoringState(previous);
@@ -286,7 +286,7 @@ export class EditorController {
     removeItems(items: ReadonlyArray<Element | Link>) {
         const {model, translation: t} = this;
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'remove_items.command')
+            t.text('editor_controller.remove_items.command')
         );
         const entitiesToDiscard = new Set<ElementIri>();
 
@@ -333,7 +333,7 @@ export class EditorController {
     createEntity(data: ElementModel, options: { temporary?: boolean } = {}): EntityElement {
         const {model, translation: t} = this;
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'entity_add.command')
+            t.text('editor_controller.entity_add.command')
         );
 
         const element = model.createElement(data);
@@ -371,7 +371,7 @@ export class EditorController {
         }
 
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'entity_change.command')
+            t.text('editor_controller.entity_change.command')
         );
 
         const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
@@ -402,7 +402,7 @@ export class EditorController {
 
         const state = this.authoringState;
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'entity_delete.command')
+            t.text('editor_controller.entity_delete.command')
         );
 
         // Remove new connected links
@@ -438,7 +438,7 @@ export class EditorController {
         }
 
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'relation_add.command')
+            t.text('editor_controller.relation_add.command')
         );
 
         model.addLink(base);
@@ -474,7 +474,7 @@ export class EditorController {
         const {model, translation: t} = this;
 
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'relation_change.command')
+            t.text('editor_controller.relation_change.command')
         );
         if (equalLinks(oldData, newData)) {
             model.history.execute(changeRelationData(model, oldData, newData));
@@ -511,7 +511,7 @@ export class EditorController {
         const {model, translation: t} = this;
         const {link, newSource} = params;
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'relation_move_source.command')
+            t.text('editor_controller.relation_move_source.command')
         );
         this.changeRelation(link.data, {...link.data, sourceId: newSource.iri});
         const newLink = model.findLink(link.typeId, newSource.id, link.targetId) as RelationLink;
@@ -533,7 +533,7 @@ export class EditorController {
         const {model, translation: t} = this;
         const {link, newTarget} = params;
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'relation_move_target.command')
+            t.text('editor_controller.relation_move_target.command')
         );
         this.changeRelation(link.data, {...link.data, targetId: newTarget.iri});
         const newLink = model.findLink(link.typeId, link.sourceId, newTarget.id) as RelationLink;
@@ -554,7 +554,7 @@ export class EditorController {
             return;
         }
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'relation_delete.command')
+            t.text('editor_controller.relation_delete.command')
         );
         const newState = AuthoringState.deleteRelation(state, data);
         if (AuthoringState.isAddedRelation(state, data)) {
@@ -638,7 +638,7 @@ export class EditorController {
         if (newState === this._authoringState) { return; }
 
         const batch = model.history.startBatch(
-            t.text('editor_controller', 'discard_change.command')
+            t.text('editor_controller.discard_change.command')
         );
         switch (event.type) {
             case 'entityAdd': {

@@ -262,7 +262,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                             onSetVisibility={mode => changeLinkTypeState(filteredLinks.links, mode, workspace)}
                             disabled={filteredLinks.links.length === 0}
                         />
-                        <span>&nbsp;{t.text('search_link_types', 'switch_all.label')}</span>
+                        <span>&nbsp;{t.text('search_link_types.switch_all.label')}</span>
                     </div>
                 </div>
                 <div className={`${CLASS_NAME}__rest`}>
@@ -272,11 +272,11 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                                 <div role='heading'
                                     className={`${CLASS_NAME}__links-heading`}>
                                     {filteredLinks.selection.length === 1 ? (
-                                        t.template('search_link_types', 'heading_connected_on_single', {
+                                        t.template('search_link_types.heading_connected_on_single', {
                                             entity: <InlineEntity target={filteredLinks.selection[0]} />,
                                         })
                                     ) : (
-                                        t.template('search_link_types', 'heading_connected', {
+                                        t.template('search_link_types.heading_connected', {
                                             count: filteredLinks.selection.length,
                                         })
                                     )}
@@ -287,7 +287,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                         {connectedLinks.length > 0 && otherLinks.length > 0 ? (
                             <div role='heading'
                                 className={`${CLASS_NAME}__links-heading`}>
-                                {t.template('search_link_types', 'heading_other', {
+                                {t.template('search_link_types.heading_other', {
                                     count: otherLinks.length,
                                 })}
                             </div>
@@ -300,7 +300,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                                 message={
                                     filteredLinks.diagramHasLink
                                         ? undefined
-                                        : t.text('search_link_types', 'no_results')
+                                        : t.text('search_link_types.no_results')
                                 }
                             />
                         ) : null}
@@ -412,7 +412,7 @@ function LinkInToolBox(props: {
             </WithFetchStatus>
             {onAddToFilter ? (
                 <div className={`${CLASS_NAME}__filter-button`}
-                    title={t.text('search_link_types', 'add_to_filter.title')}
+                    title={t.text('search_link_types.add_to_filter.title')}
                     onClick={() => onAddToFilter(link.iri)}
                 />
             ) : null}
@@ -430,7 +430,7 @@ function VisibilityControl(props: {
     const t = useTranslation();
     return (
         <div className={classnames(className, 'reactodia-btn-group reactodia-btn-group-xs')}>
-            <button title={t.text('search_link_types', 'switch_hidden.title')}
+            <button title={t.text('search_link_types.switch_hidden.title')}
                 className={classnames(
                     `${CLASS_NAME}__toggle-invisible`,
                     'reactodia-btn reactodia-btn-default',
@@ -439,7 +439,7 @@ function VisibilityControl(props: {
                 disabled={disabled}
                 onClick={() => onSetVisibility('hidden')}>
             </button>
-            <button title={t.text('search_link_types', 'switch_without_label.title')}
+            <button title={t.text('search_link_types.switch_without_label.title')}
                 className={classnames(
                     `${CLASS_NAME}__toggle-lines-only`,
                     'reactodia-btn reactodia-btn-default',
@@ -448,7 +448,7 @@ function VisibilityControl(props: {
                 disabled={disabled}
                 onClick={() => onSetVisibility('withoutLabel')}>
             </button>
-            <button title={t.text('search_link_types', 'switch_visible.title')}
+            <button title={t.text('search_link_types.switch_visible.title')}
                 className={classnames(
                     `${CLASS_NAME}__toggle-visible`,
                     'reactodia-btn reactodia-btn-default',
@@ -467,7 +467,7 @@ function changeLinkTypeState(
     workspace: WorkspaceContext
 ): void {
     const {model, translation: t} = workspace;
-    const batch = model.history.startBatch(t.text('search_link_types', 'switch.command'));
+    const batch = model.history.startBatch(t.text('search_link_types.switch.command'));
     for (const linkType of linkTypes) {
         model.history.execute(changeLinkTypeVisibility(model, linkType.iri, state));
     }

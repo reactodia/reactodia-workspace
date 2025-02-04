@@ -363,7 +363,7 @@ function SearchToggle(props: {
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
                 style={{minWidth}}
-                placeholder={t.text('unified_search', 'input.placeholder')}
+                placeholder={t.text('unified_search.input.placeholder')}
                 name='reactodia-search'
                 value={searchTerm}
                 onClick={() => setExpanded(true)}
@@ -395,13 +395,13 @@ function SearchToggle(props: {
             />
             {onClear ? (
                 <button type='button'
-                    title={t.text('unified_search', 'input_clear.title')}
+                    title={t.text('unified_search.input_clear.title')}
                     className={`${CLASS_NAME}__clear-button`}
                     onClick={onClear}>
                 </button>
             ) : expanded ? (
                 <button type='button'
-                    title={t.text('unified_search', 'input_collapse.title')}
+                    title={t.text('unified_search.input_collapse.title')}
                     className={`${CLASS_NAME}__collapse-button`}
                     onClick={() => setExpanded(false)}>
                 </button>

@@ -167,7 +167,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
                 target: placeTarget,
                 dialogType: BuiltinDialogType.connectionsMenu,
                 style: {
-                    caption: t.text('connections_menu', 'dialog.caption'),
+                    caption: t.text('connections_menu.dialog.caption'),
                     defaultSize: {width: 310, height: 340},
                     minSize: {width: 300, height: 250},
                 },
@@ -342,7 +342,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         const {targetIris, initialMode, suggestProperties, workspace: {model, translation: t}} = this.props;
         this.ALL_RELATED_ELEMENTS_LINK = {
             id: 'urn:reactodia:allLinks' as LinkTypeIri,
-            label: [model.factory.literal(t.text('connections_menu', 'all_link.label'))],
+            label: [model.factory.literal(t.text('connections_menu.all_link.label'))],
         };
         const allowSmartSort = Boolean(suggestProperties) && targetIris.length === 1;
         this.state = {
@@ -608,7 +608,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
-                    onClick={this.onCollapseLink}>{t.text('connections_menu', 'breadcrumbs_root.label')}</a>
+                    onClick={this.onCollapseLink}>{t.text('connections_menu.breadcrumbs_root.label')}</a>
                 {'\u00A0' + '/' + '\u00A0'}
                 {localizedText} {direction ? `(${direction})` : null}
             </span>;
@@ -719,7 +719,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             canvas,
             workspace: {model, translation: t, triggerWorkspaceEvent},
         } = this.props;
-        const batch = model.history.startBatch(t.text('connections_menu', 'place_elements.command'));
+        const batch = model.history.startBatch(t.text('connections_menu.place_elements.command'));
 
         let placedElements: Element[] = [];
         switch (mode) {
@@ -793,12 +793,12 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                 {this.renderSortSwitch(
                     'alphabet',
                     `${CLASS_NAME}__sort-label-alpha`,
-                    t.text('connections_menu', 'sort_alphabetically.title')
+                    t.text('connections_menu.sort_alphabetically.title')
                 )}
                 {this.renderSortSwitch(
                     'smart',
                     `${CLASS_NAME}__sort-label-smart`,
-                    t.text('connections_menu', 'sort_smart.title')
+                    t.text('connections_menu.sort_smart.title')
                 )}
             </div>
         );
@@ -968,7 +968,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
         if (views.length === 0 && probableViews.length === 0) {
             viewList = (
                 <label className={`${CLASS_NAME}__links-no-results`}>
-                    {t.text('connections_menu', 'links.no_results')}
+                    {t.text('connections_menu.links.no_results')}
                 </label>
             );
         } else {
@@ -996,7 +996,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
                 isSmartMode ? null : (
                     <li key='probable-links'
                         className={`${CLASS_NAME}__links-probably-label`}>
-                        {t.text('connections_menu', 'links.suggest_similar')}
+                        {t.text('connections_menu.links.suggest_similar')}
                     </li>
                 ),
                 probableViews,
@@ -1041,14 +1041,14 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
             filterKey
         );
         const title = (
-            direction === 'in' ? t.format('connections_menu', 'link.source_title', {relation, relationIri}) :
-            direction === 'out' ? t.format('connections_menu', 'link.target_title', {relation, relationIri}) :
-            t.format('connections_menu', 'link.both_title', {relation, relationIri})
+            direction === 'in' ? t.format('connections_menu.link.source_title', {relation, relationIri}) :
+            direction === 'out' ? t.format('connections_menu.link.target_title', {relation, relationIri}) :
+            t.format('connections_menu.link.both_title', {relation, relationIri})
         );
         const navigateTitle = (
-            direction === 'in' ? t.format('connections_menu', 'link.source_navigate_title', {relation, relationIri}) :
-            direction === 'out' ? t.format('connections_menu', 'link.target_navigate_title', {relation, relationIri}) :
-            t.format('connections_menu', 'link.both_navigate_title', {relation, relationIri})
+            direction === 'in' ? t.format('connections_menu.link.source_navigate_title', {relation, relationIri}) :
+            direction === 'out' ? t.format('connections_menu.link.target_navigate_title', {relation, relationIri}) :
+            t.format('connections_menu.link.both_navigate_title', {relation, relationIri})
         );
 
         return (
@@ -1073,7 +1073,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
                 {this.props.onMoveToFilter ? (
                     <div className={`${CLASS_NAME}__link-filter-button`}
                         onClick={this.onMoveToFilter}
-                        title={t.text('connections_menu', 'link.move_to_filter.title')}
+                        title={t.text('connections_menu.link.move_to_filter.title')}
                     />
                 ) : null}
                 <div className={`${CLASS_NAME}__link-navigate-button`}
@@ -1190,7 +1190,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
 
     private renderCounter(activeObjCount: number) {
         const {data: {chunk, elements}, workspace: {translation: t}} = this.props;
-        const countString = t.format('connections_menu', 'entities.counter_label', {
+        const countString = t.format('connections_menu.entities.counter_label', {
             count: activeObjCount,
             total: elements.length,
         });
@@ -1205,13 +1205,13 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 <span className={`${CLASS_NAME}__objects-extra`}
                     title={extraCount === 0 ? undefined : (
                         extraCount > 0
-                            ? t.format('connections_menu', 'entities.extra_title', {value: extra})
-                            : t.format('connections_menu', 'entities.missing_title', {value: extra})
+                            ? t.format('connections_menu.entities.extra_title', {value: extra})
+                            : t.format('connections_menu.entities.missing_title', {value: extra})
                     )}>
                     {extraCount === 0 ? null : (
                         extraCount > 0
-                            ? t.format('connections_menu', 'entities.extra_label', {value: extra})
-                            : t.format('connections_menu', 'entities.missing_label', {value: extra})
+                            ? t.format('connections_menu.entities.extra_label', {value: extra})
+                            : t.format('connections_menu.entities.missing_label', {value: extra})
                     )}
                 </span>
             );
@@ -1243,9 +1243,9 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         checked={isAllSelected && nonPresented.length > 0}
                         onChange={this.onSelectAll}
                         disabled={nonPresented.length === 0}
-                        title={t.text('connections_menu', 'select_all.title')}
+                        title={t.text('connections_menu.select_all.title')}
                     />
-                    {t.text('connections_menu', 'select_all.label')}
+                    {t.text('connections_menu.select_all.label')}
                 </label>
             </div>
             {this.props.loading ? (
@@ -1254,7 +1254,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 </div>
             ) : objects.length === 0 ? (
                 <div className={`${CLASS_NAME}__objects-no-results`}>
-                    {t.text('connections_menu', 'entities.no_results')}
+                    {t.text('connections_menu.entities.no_results')}
                 </div>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
@@ -1268,13 +1268,13 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         onMoveToFilter ? (
                             <div className={`${CLASS_NAME}__move-to-filter`}
                                 onClick={() => onMoveToFilter(data.chunk)}>
-                                {t.format('connections_menu', 'entities.truncated_results_expand', {
+                                {t.format('connections_menu.entities.truncated_results_expand', {
                                     limit: LINK_COUNT_PER_PAGE,
                                 })}
                             </div>
                         ) : (
                             <div className={`${CLASS_NAME}__move-to-filter`}>
-                                {t.format('connections_menu', 'entities.truncated_results', {
+                                {t.format('connections_menu.entities.truncated_results', {
                                     limit: LINK_COUNT_PER_PAGE,
                                 })}
                             </div>
@@ -1292,7 +1292,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     )}
                     disabled={this.props.loading || selectedItems.length <= 1}
                     onClick={() => onPressAddSelected(selectedItems, 'grouped')}>
-                    {t.text('connections_menu', 'entities.add_all')}
+                    {t.text('connections_menu.entities.add_all')}
                 </button>
                 <button
                     className={classnames(
@@ -1302,8 +1302,8 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     disabled={this.props.loading || nonPresented.length === 0}
                     onClick={() => onPressAddSelected(selectedItems, 'separately')}>
                     {active.length > 0
-                        ? t.text('connections_menu', 'entities.add_selected')
-                        : t.text('connections_menu', 'entities.add_all')
+                        ? t.text('connections_menu.entities.add_selected')
+                        : t.text('connections_menu.entities.add_all')
                     }
                 </button>
             </div>

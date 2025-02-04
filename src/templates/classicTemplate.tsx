@@ -44,7 +44,7 @@ export function ClassicTemplate(props: TemplateProps) {
 
     const typesLabel = types.length > 0
         ? model.locale.formatElementTypes(types).join(', ')
-        : t.text('standard_template', 'default_type');
+        : t.text('standard_template.default_type');
     const label = model.locale.formatLabel(data?.label, data.id);
     const propertyList = model.locale.formatPropertyList(data?.properties ?? {});
 
@@ -60,7 +60,7 @@ export function ClassicTemplate(props: TemplateProps) {
         <div>
             <div className={`${CLASS_NAME}__expander`}>
                 <div className={`${CLASS_NAME}__iri-heading`}>
-                    {t.text('standard_template', 'iri.label')}
+                    {t.text('standard_template.iri.label')}
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
@@ -125,7 +125,7 @@ function renderPropertyTable(
                     <div key={propertyId} className={`${CLASS_NAME}__property-row`}>
                         <WithFetchStatus type='propertyType' target={propertyId}>
                             <div className={`${CLASS_NAME}__property-label`}
-                                title={t.format('standard_template', 'property.title', {
+                                title={t.format('standard_template.property.title', {
                                     property: label,
                                     propertyIri: locale.formatIri(propertyId),
                                 })}>
@@ -140,6 +140,6 @@ function renderPropertyTable(
             })}
         </div>;
     } else {
-        return <div>{t.text('standard_template', 'no_properties')}</div>;
+        return <div>{t.text('standard_template.no_properties')}</div>;
     }
 }

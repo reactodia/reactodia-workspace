@@ -214,7 +214,7 @@ export class OverlayController {
             } catch (err) {
                 console.error(err);
                 task.setError(new Error(
-                    t.text('overlay_controller', 'unknown_error'),
+                    t.text('overlay_controller.unknown_error'),
                     {cause: err}
                 ));
             } finally {
@@ -240,7 +240,7 @@ export class OverlayController {
                     if (title === undefined) {
                         title = task.title;
                     } else {
-                        title = t.text('overlay_controller', 'multiple_tasks_in_progress');
+                        title = t.text('overlay_controller.multiple_tasks_in_progress');
                         break;
                     }
                 }

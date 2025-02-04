@@ -209,7 +209,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         const label = model.locale.formatLabel(type?.data?.label, elementType);
         return (
             <option key={elementType} value={elementType}>
-                {t.template('visual_authoring', 'select_entity.entity_type.label', {
+                {t.template('visual_authoring.select_entity.entity_type.label', {
                     type: label,
                     typeIri: elementType,
                 })}
@@ -230,7 +230,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         }
         return (
             <div className={`${FORM_CLASS}__control-row`}>
-                <label>{t.text('visual_authoring', 'select_entity.type.label')}</label>
+                <label>{t.text('visual_authoring.select_entity.type.label')}</label>
                 {
                     elementTypes ? (
                         <select className='reactodia-form-control'
@@ -238,7 +238,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                             value={value}
                             onChange={this.onElementTypeChange}>
                             <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>
-                                {t.text('visual_authoring', 'select_entity.type.placeholder')}
+                                {t.text('visual_authoring.select_entity.type.placeholder')}
                             </option>
                             {
                                 elementTypes.map(this.renderPossibleElementType)
@@ -316,14 +316,14 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                     searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}
                             role='listbox'
-                            aria-label={t.text('visual_authoring', 'select_entity.results.aria_label')}>
+                            aria-label={t.text('visual_authoring.select_entity.results.aria_label')}>
                             {this.renderExistingElementsList()}
                         </div>
                     ) : (
                         <div>
                             <div className={`${CLASS_NAME}__separator`}>
                                 <i className={`${CLASS_NAME}__separator-text`}>
-                                    {t.text('visual_authoring', 'select_entity.separator.label')}
+                                    {t.text('visual_authoring.select_entity.separator.label')}
                                 </i>
                             </div>
                             {this.renderElementTypeSelector()}
@@ -353,6 +353,6 @@ export function validateElementType(
     const isElementTypeSelected = element.types.indexOf(PLACEHOLDER_ELEMENT_TYPE) < 0;
     const error = isElementTypeSelected
         ? undefined
-        : t.text('visual_authoring', 'select_entity.validation.error_required');
+        : t.text('visual_authoring.select_entity.validation.error_required');
     return Promise.resolve({error, allowChange: true});
 }

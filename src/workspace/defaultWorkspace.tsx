@@ -212,7 +212,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const defaultSections = React.useMemo((): readonly UnifiedSearchSection[] => [
         {
             key: 'elementTypes',
-            label: t.text('default_workspace', 'search_section_types_title'),
+            label: t.text('default_workspace.search_section_types_title'),
             component: (
                 <SearchSectionElementTypes
                     instancesSearchCommands={instancesSearchCommands}
@@ -221,7 +221,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         },
         {
             key: 'entities',
-            label: t.text('default_workspace', 'search_section_entities_title'),
+            label: t.text('default_workspace.search_section_entities_title'),
             component: (
                 <SearchSectionEntities
                     instancesSearchCommands={instancesSearchCommands}
@@ -230,7 +230,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         },
         {
             key: 'linkTypes',
-            label: t.text('default_workspace', 'search_section_link_types_title'),
+            label: t.text('default_workspace.search_section_link_types_title'),
             component: (
                 <SearchSectionLinkTypes
                     instancesSearchCommands={instancesSearchCommands}

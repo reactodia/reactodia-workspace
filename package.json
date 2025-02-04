@@ -29,7 +29,7 @@
     "serve": "node ./webpackServe.js",
     "test": "vitest",
     "test-build": "npm run build && npm run build-examples",
-    "validate-translations": "ajv --strict=false --spec=draft2020 -s i18n/i18n.schema.json -d \"i18n/translations/translation.*.json\"",
+    "validate-translations": "ajv --strict=false --spec=draft2020 -s i18n/i18n.schema.json -d \"i18n/translations/*.json\"",
     "typings": "tsc --project tsconfig.typings.json --declaration --emitDeclarationOnly --outDir dist/typings",
     "lint": "eslint --ext .jx,.jsx,.ts,.tsx src/ examples/",
     "typecheck": "tsc --noEmit",

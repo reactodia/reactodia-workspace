@@ -1,27 +1,51 @@
 import * as React from 'react';
 
-import DefaultTranslationBundle from '../../i18n/translations/translation.en.json';
+import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-translation.json';
 
 import { Translation, TranslationBundle, TranslationContext } from './i18n';
 
 export function makeTranslation(bundle: Partial<TranslationBundle>): Translation {
-    const text: Translation['text'] = (group, key) => {
-        const bundleGroup = bundle[group] ?? DefaultTranslationBundle[group];
+    const text: Translation['text'] = (key) => {
+        const [group, leaf] = key.split('.', 2);
+        if (!(group && leaf)) {
+            throw new Error(`Reactodia: Invalid translation key: ${key}`);
+        }
         return (
-            bundleGroup[key] ?? DefaultTranslationBundle[group][key] ?? `${group as string}.${key as string}`
-        ) as string;
+            getString(bundle, group, leaf) ??
+            getString(DefaultTranslationBundle, group, leaf) ??
+            key
+        );
     };
     return {
         text,
-        format: (group, key, placeholders) => {
-            const template = text(group, key);
+        format: (key, placeholders) => {
+            const template = text(key);
             return formatPlaceholders(template, placeholders);
         },
-        template: (group, key, parts) => {
-            const template = text(group, key);
+        template: (key, parts) => {
+            const template = text(key);
             return templatePlaceholders(template, parts);
         },
     };
+}
+
+function getString(
+    bundle: Record<string, Record<string, string> | string | undefined>,
+    group: string,
+    leaf: string
+): string | undefined {
+    if (!Object.prototype.hasOwnProperty.call(bundle, group)) {
+        return undefined;
+    }
+    const bundleGroup = bundle[group];
+    if (!(
+        typeof bundleGroup === 'object' &&
+        bundleGroup &&
+        Object.prototype.hasOwnProperty.call(bundleGroup, leaf)
+    )) {
+        return undefined;
+    }
+    return bundleGroup[leaf];
 }
 
 function formatPlaceholders(template: string, values: Record<string, string | number | boolean>): string {

@@ -103,7 +103,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                     </a>
                     {creatableClasses.get(node.iri) ? (
                         <div role='button'
-                            title={t.text('search_element_types', 'drag_create.title')}
+                            title={t.text('search_element_types.drag_create.title')}
                             className={classnames(
                                 `${CLASS_NAME}__create-button`,
                                 'reactodia-btn reactodia-btn-default'

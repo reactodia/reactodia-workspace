@@ -1,8 +1,13 @@
+// Disable statically-typed translation keys when used externally:
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path='../../i18n/i18n.reactodia-translation.d.ts' preserve="true" />
+
 import * as React from 'react';
 
-import type DefaultTranslationBundle from '../../i18n/translations/translation.en.json';
+import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-translation.json';
 
 export type TranslationBundle = Omit<typeof DefaultTranslationBundle, '$schema'>;
+export type TranslationKey = TranslationKeyOf<TranslationBundle>;
 
 /**
  * Provides i18n strings and templates for the UI elements.
@@ -13,15 +18,13 @@ export interface Translation {
     /**
      * Gets a simple translated string.
      */
-    text<Group extends keyof TranslationBundle>(group: Group, key: keyof TranslationBundle[Group]): string;
-    format<Group extends keyof TranslationBundle>(
-        group: Group,
-        key: keyof TranslationBundle[Group],
+    text(key: TranslationKey): string;
+    format(
+        key: TranslationKey,
         placeholders: Record<string, string | number | boolean>
     ): string;
-    template<Group extends keyof TranslationBundle>(
-        group: Group,
-        key: keyof TranslationBundle[Group],
+    template(
+        key: TranslationKey,
         parts: Record<string, React.ReactNode>
     ): React.ReactNode;
 }
@@ -40,3 +43,11 @@ export function useTranslation(): Translation {
     }
     return translation;
 }
+
+type TranslationKeyOf<T> = DeepPath<T>;
+
+type DeepPath<T> = T extends object ? (
+    { 
+        [K in string & keyof T]: T[K] extends object ? `${K}.${DeepPath<T[K]>}` : K
+    }[string & keyof T]
+) : never;

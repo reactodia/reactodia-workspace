@@ -69,7 +69,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-in-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title={t.text('zoom_control', 'zoom_in.title')}
+                    title={t.text('zoom_control.zoom_in.title')}
                     onClick={() => canvas.zoomIn()}>
                 </button>
                 <button type='button'
@@ -77,7 +77,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-out-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title={t.text('zoom_control', 'zoom_out.title')}
+                    title={t.text('zoom_control.zoom_out.title')}
                     onClick={() => canvas.zoomOut()}>
                 </button>
                 <button type='button'
@@ -85,7 +85,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-fit-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title={t.text('zoom_control', 'zoom_to_fit.title')}
+                    title={t.text('zoom_control.zoom_to_fit.title')}
                     onClick={() => canvas.zoomToFit({animate: true})}>
                 </button>
                 {showPointerModeToggle ? (
@@ -95,7 +95,7 @@ export function ZoomControl(props: ZoomControlProps) {
                             'reactodia-btn reactodia-btn-default',
                             pointerMode === 'selection' ? 'active' : undefined
                         )}
-                        title={t.text('zoom_control', 'pointer_mode.title')}
+                        title={t.text('zoom_control.pointer_mode.title')}
                         onClick={() => canvas.setPointerMode(
                             pointerMode === 'panning' ? 'selection' : 'panning'
                         )}>

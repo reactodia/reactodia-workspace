@@ -124,7 +124,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     {elementValue.loading ? (
                         <div style={{display: 'flex'}}>
                             <HtmlSpinner width={20} height={20} />
-                            &nbsp;{t.text('visual_authoring', 'find_or_create.loading.label')}
+                            &nbsp;{t.text('visual_authoring.find_or_create.loading.label')}
                         </div>
                     ) : (
                         <LinkTypeSelector linkValue={linkValue}
@@ -139,7 +139,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     {isValidating ? (
                         <div className={`${FORM_CLASS}__progress`}>
                             <ProgressBar state='loading'
-                                title={t.text('visual_authoring', 'find_or_create.validation_progress.title')}
+                                title={t.text('visual_authoring.find_or_create.validation_progress.title')}
                                 height={10}
                             />
                         </div>
@@ -149,13 +149,13 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={this.onApply}
                         disabled={elementValue.loading || !isValid || isValidating}
-                        title={t.text('visual_authoring', 'dialog.apply.title')}>
-                        {t.text('visual_authoring', 'dialog.apply.label')}
+                        title={t.text('visual_authoring.dialog.apply.title')}>
+                        {t.text('visual_authoring.dialog.apply.label')}
                     </button>
                     <button className='reactodia-btn reactodia-btn-default'
                         onClick={this.props.onCancel}
-                        title={t.text('visual_authoring', 'dialog.cancel.title')}>
-                        {t.text('visual_authoring', 'dialog.cancel.label')}
+                        title={t.text('visual_authoring.dialog.cancel.title')}>
+                        {t.text('visual_authoring.dialog.cancel.label')}
                     </button>
                 </div>
             </div>
@@ -225,8 +225,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         const batch = model.history.startBatch(
             elementValue.isNew
-                ? t.text('visual_authoring', 'find_or_create.create_command')
-                : t.text('visual_authoring', 'find_or_create.connect_command')
+                ? t.text('visual_authoring.find_or_create.create_command')
+                : t.text('visual_authoring.find_or_create.connect_command')
         );
 
         if (elementValue.isNew) {

@@ -157,7 +157,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         }
         return (
             <option key={index} value={index}>
-                {t.template('visual_authoring', 'select_relation.relation_type.label', {
+                {t.template('visual_authoring.select_relation.relation_type.label', {
                     relation: label,
                     source: sourceLabel,
                     target: targetLabel,
@@ -175,7 +175,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         );
         return (
             <div className={`${FORM_CLASS}__control-row`}>
-                <label>{t.text('visual_authoring', 'select_relation.type.label')}</label>
+                <label>{t.text('visual_authoring.select_relation.type.label')}</label>
                 {
                     dataLinkTypes ? (
                         <select className='reactodia-form-control'
@@ -184,7 +184,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                             onChange={this.onChangeType}
                             disabled={disabled}>
                             <option value={-1} disabled={true}>
-                                {t.text('visual_authoring', 'select_relation.type.placeholder')}
+                                {t.text('visual_authoring.select_relation.type.placeholder')}
                             </option>
                             {dataLinkTypes.map(this.renderPossibleLinkType)}
                         </select>
@@ -225,7 +225,7 @@ export async function validateLinkType(
     const {model, editor, translation: t} = workspace;
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
         return {
-            error: t.text('visual_authoring', 'select_relation.validation.error_required'),
+            error: t.text('visual_authoring.select_relation.validation.error_required'),
             allowChange: true,
         };
     }
@@ -234,7 +234,7 @@ export async function validateLinkType(
     }
     if (isRelationOnDiagram(model, currentLink) && !editor.temporaryState.links.has(currentLink)) {
         return {
-            error: t.text('visual_authoring', 'select_relation.validation.error_duplicate'),
+            error: t.text('visual_authoring.select_relation.validation.error_duplicate'),
             allowChange: false,
         };
     }
@@ -247,7 +247,7 @@ export async function validateLinkType(
     });
     if (links.some(link => equalLinks(link, currentLink))) {
         return {
-            error: t.text('visual_authoring', 'select_relation.validation.error_duplicate'),
+            error: t.text('visual_authoring.select_relation.validation.error_duplicate'),
             allowChange: false,
         };
     }

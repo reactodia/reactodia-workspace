@@ -171,7 +171,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 target,
                 dialogType: BuiltinDialogType.editEntity,
                 style: {
-                    caption: t.text('visual_authoring', 'edit_entity.dialog.caption'),
+                    caption: t.text('visual_authoring.edit_entity.dialog.caption'),
                 },
                 content,
                 holdSelection: true,
@@ -198,7 +198,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 target,
                 dialogType: BuiltinDialogType.findOrCreateEntity,
                 style: {
-                    caption: t.text('visual_authoring', 'find_or_create.dialog.caption'),
+                    caption: t.text('visual_authoring.find_or_create.dialog.caption'),
                     minSize: {width: 250, height: 320},
                 },
                 content,
@@ -243,8 +243,8 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 />
             );
             const caption = editor.temporaryState.links.has(link.data)
-                ? t.text('visual_authoring', 'edit_relation.dialog.caption_on_new')
-                : t.text('visual_authoring', 'edit_relation.dialog.caption');
+                ? t.text('visual_authoring.edit_relation.dialog.caption_on_new')
+                : t.text('visual_authoring.edit_relation.dialog.caption');
             overlay.showDialog({
                 target: link,
                 dialogType: BuiltinDialogType.editRelation,
@@ -266,7 +266,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 style: {
                     defaultSize,
                     resizableBy: 'x',
-                    caption: t.text('visual_authoring', 'rename_link.dialog.caption'),
+                    caption: t.text('visual_authoring.rename_link.dialog.caption'),
                     offset: {x: 25, y: - defaultSize.height / 2},
                     calculatePosition: canvas => {
                         const bounds = canvas.renderingState.getLinkLabelBounds(link);

@@ -212,8 +212,8 @@ export function LinkActionEdit(props: LinkActionEditProps) {
             )}
             title={title ?? (
                 canModify.canChangeType
-                    ? t.text('link_action', 'edit_relation.title')
-                    : t.text('link_action', 'edit_relation.title_on_disabled')
+                    ? t.text('link_action.edit_relation.title')
+                    : t.text('link_action.edit_relation.title_on_disabled')
             )}
             disabled={!canModify.canChangeType}
             onSelect={() => editor.authoringCommands.trigger('editRelation', {target: link})}
@@ -272,8 +272,8 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
             )}
             title={title ?? (
                 canModify.canDelete
-                    ? t.text('link_action', 'delete_relation.title')
-                    : t.text('link_action', 'delete_relation.title_on_disabled')
+                    ? t.text('link_action.delete_relation.title')
+                    : t.text('link_action.delete_relation.title_on_disabled')
             )}
             disabled={!canModify.canDelete}
             onSelect={() => editor.deleteRelation(link.data)}
@@ -381,8 +381,8 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             )}
             title={title ?? (
                 dockSide === 'source'
-                    ? t.text('link_action', 'move_relation.move_source_title')
-                    : t.text('link_action', 'move_relation.move_target_title')
+                    ? t.text('link_action.move_relation.move_source_title')
+                    : t.text('link_action.move_relation.move_target_title')
             )}
             disabled={linkIsDeleted}
             onMouseDown={e => {
@@ -453,7 +453,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     return (
         <button className={classnames(className, `${CLASS_NAME}__rename`)}
             style={style}
-            title={title ?? t.text('link_action', 'rename_link.title')}
+            title={title ?? t.text('link_action.rename_link.title')}
             onClick={() => editor.authoringCommands.trigger('renameLink', {target: link})}
         />
     );

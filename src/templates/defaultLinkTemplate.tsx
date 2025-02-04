@@ -136,7 +136,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
                 textClass={classnames(textClass, primaryLabelProps?.textClass)}
                 rectClass={classnames(backgroundClass, primaryLabelProps?.rectClass)}
-                title={primaryLabelProps?.title ?? t.format('default_link_template', 'label.title', {
+                title={primaryLabelProps?.title ?? t.format('default_link_template.label.title', {
                     relation: label,
                     relationIri: model.locale.formatIri(link.typeId),
                 })}
@@ -156,7 +156,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
                     textClass={classnames(textClass, propertyLabelProps?.textClass)}
                     rectClass={classnames(backgroundClass, propertyLabelProps?.rectClass)}
-                    title={propertyLabelProps?.title ?? t.format('default_link_template', 'property.title', {
+                    title={propertyLabelProps?.title ?? t.format('default_link_template.property.title', {
                         property: property.label,
                         propertyIri: model.locale.formatIri(property.propertyId),
                     })}
@@ -175,10 +175,10 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                         position={getPathPosition(0.1)}
                         textClass={textClass}
                         rectClass={backgroundClass}
-                        title={t.format('default_link_template', 'group_source.title', {
+                        title={t.format('default_link_template.group_source.title', {
                             value: link.itemSources.size,
                         })}
-                        content={t.format('default_link_template', 'group_source.value', {
+                        content={t.format('default_link_template.group_source.value', {
                             value: link.itemSources.size,
                         })}
                     />
@@ -187,10 +187,10 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                         position={getPathPosition(0.9)}
                         textClass={textClass}
                         rectClass={backgroundClass}
-                        title={t.format('default_link_template', 'group_target.title', {
+                        title={t.format('default_link_template.group_target.title', {
                             value: link.itemTargets.size,
                         })}
-                        content={t.format('default_link_template', 'group_target.value', {
+                        content={t.format('default_link_template.group_target.value', {
                             value: link.itemTargets.size,
                         })}
                     />

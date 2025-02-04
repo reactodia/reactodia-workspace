@@ -42,7 +42,7 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
         <div className={FORM_CLASS}>
             <div className={`${FORM_CLASS}__body`}>
                 <div className={`${FORM_CLASS}__row`}>
-                    <label>{t.text('visual_authoring', 'rename_link.label.label')}</label>
+                    <label>{t.text('visual_authoring.rename_link.label.label')}</label>
                     <input className='reactodia-form-control'
                         placeholder={defaultLabel}
                         autoFocus
@@ -53,14 +53,14 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
             </div>
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                    title={t.text('visual_authoring', 'dialog.apply.title')}
+                    title={t.text('visual_authoring.dialog.apply.title')}
                     onClick={onApply}>
-                    {t.text('visual_authoring', 'dialog.apply.label')}
+                    {t.text('visual_authoring.dialog.apply.label')}
                 </button>
                 <button className='reactodia-btn reactodia-btn-default'
-                    title={t.text('visual_authoring', 'dialog.cancel.title')}
+                    title={t.text('visual_authoring.dialog.cancel.title')}
                     onClick={onFinish}>
-                    {t.text('visual_authoring', 'dialog.cancel.label')}
+                    {t.text('visual_authoring.dialog.cancel.label')}
                 </button>
             </div>
         </div>

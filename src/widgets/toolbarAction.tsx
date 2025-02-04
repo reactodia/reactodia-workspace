@@ -182,10 +182,10 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     let defaultTitle: string | undefined;
     if (mode === 'layout') {
         enabled = hasLayoutChanges && !canPersistChanges;
-        defaultTitle = t.text('toolbar_action', 'save_layout.title');
+        defaultTitle = t.text('toolbar_action.save_layout.title');
     } else if (mode === 'authoring') {
         enabled = canPersistChanges;
-        defaultTitle = t.text('toolbar_action', 'save_authoring.title');
+        defaultTitle = t.text('toolbar_action.save_authoring.title');
     }
 
     return (
@@ -219,13 +219,13 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__clear-all`)}
-            title={title ?? t.text('toolbar_action', 'clear_all.title')}
+            title={title ?? t.text('toolbar_action.clear_all.title')}
             onSelect={() => {
-                const batch = model.history.startBatch(t.text('toolbar_action', 'clear_all.command'));
+                const batch = model.history.startBatch(t.text('toolbar_action.clear_all.command'));
                 editor.removeItems([...model.elements]);
                 batch.store();
             }}>
-            {t.text('toolbar_action', 'clear_all.label')}
+            {t.text('toolbar_action.clear_all.label')}
         </ToolbarAction>
     );
 }
@@ -276,7 +276,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__export-image`)}
-                title={title ?? t.text('toolbar_action', 'export_raster.title')}
+                title={title ?? t.text('toolbar_action.export_raster.title')}
                 onSelect={() => {
                     const exportOptions: ExportRasterOptions = rasterOptions ?? {
                         backgroundColor: 'white',
@@ -286,28 +286,28 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         saveAs(blob, `${fileName}.png`);
                     });
                 }}>
-                {t.text('toolbar_action', 'export_raster.label')}
+                {t.text('toolbar_action.export_raster.label')}
             </ToolbarAction>
         );
     } else if (kind === 'exportSvg') {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__export-image`)}
-                title={title ?? t.text('toolbar_action', 'export_svg.title')}
+                title={title ?? t.text('toolbar_action.export_svg.title')}
                 onSelect={() => {
                     canvas.exportSvg({addXmlHeader: true}).then(svg => {
                         const blob = new Blob([svg], {type: 'image/svg+xml'});
                         saveAs(blob, `${fileName}.svg`);
                     });
                 }}>
-                {t.text('toolbar_action', 'export_svg.label')}
+                {t.text('toolbar_action.export_svg.label')}
             </ToolbarAction>
         );
     } else if (kind === 'print') {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__print`)}
-                title={title ?? t.text('toolbar_action', 'export_print.title')}
+                title={title ?? t.text('toolbar_action.export_print.title')}
                 onSelect={() => {
                     const printWindow = window.open('', undefined, 'width=1280,height=720')!;
                     canvas.exportSvg().then(svg => {
@@ -316,7 +316,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         printWindow.print();
                     });
                 }}>
-                {t.text('toolbar_action', 'export_print.label')}
+                {t.text('toolbar_action.export_print.label')}
             </ToolbarAction>
         );
     } else {
@@ -356,11 +356,11 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
             disabled={!undoCommand}
             title={title ?? (
                 undoCommand && undoCommand.title
-                    ? t.format('toolbar_action', 'undo.with_command_title', {command: undoCommand.title})
-                    : t.text('toolbar_action', 'undo.title')
+                    ? t.format('toolbar_action.undo.with_command_title', {command: undoCommand.title})
+                    : t.text('toolbar_action.undo.title')
             )}
             onSelect={() => history.undo()}>
-            {insideDropdown ? t.text('toolbar_action', 'undo.label') : null}
+            {insideDropdown ? t.text('toolbar_action.undo.label') : null}
         </ToolbarAction>
     );
 }
@@ -397,11 +397,11 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
             disabled={!redoCommand}
             title={title ?? (
                 redoCommand && redoCommand.title
-                    ? t.format('toolbar_action', 'redo.with_command_title', {command: redoCommand.title})
-                    : t.text('toolbar_action', 'redo.title')
+                    ? t.format('toolbar_action.redo.with_command_title', {command: redoCommand.title})
+                    : t.text('toolbar_action.redo.title')
             )}
             onSelect={() => history.redo()}>
-            {insideDropdown ? t.text('toolbar_action', 'redo.label') : null}
+            {insideDropdown ? t.text('toolbar_action.redo.label') : null}
         </ToolbarAction>
     );
 }
@@ -432,7 +432,7 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__layout`)}
-            title={title ?? t.text('toolbar_action', 'layout.title')}
+            title={title ?? t.text('toolbar_action.layout.title')}
             disabled={elementCount === 0}
             onSelect={() => {
                 performLayout({
@@ -440,7 +440,7 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
                     animate: true,
                 });
             }}>
-            {t.text('toolbar_action', 'layout.label')}
+            {t.text('toolbar_action.layout.label')}
         </ToolbarAction>
     );
 }
@@ -489,7 +489,7 @@ export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
     );
     return languages.length === 0 ? null : (
         <div className={classnames(className, `${CLASS_NAME}__language-selector`)}
-            title={title ?? t.text('toolbar_action', 'language_selector.title')}>
+            title={title ?? t.text('toolbar_action.language_selector.title')}>
             <label htmlFor='reactodia-language-selector' />
             <select id='reactodia-language-selector'
                 value={currentLanguage}

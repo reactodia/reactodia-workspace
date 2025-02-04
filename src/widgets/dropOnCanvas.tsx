@@ -37,7 +37,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
     
             const iris = tryParseDefaultDragAndDropData(e.sourceEvent);
             if (iris.length > 0) {
-                const batch = model.history.startBatch(t.text('drop_on_canvas', 'drop.command'));
+                const batch = model.history.startBatch(t.text('drop_on_canvas.drop.command'));
                 const placedElements = placeElements(iris, e.position, canvas, model);
                 const irisToLoad = placedElements.map(elem => elem.iri);
                 batch.history.execute(requestElementData(model, irisToLoad));

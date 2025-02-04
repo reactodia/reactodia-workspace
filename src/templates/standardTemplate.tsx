@@ -118,7 +118,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
 
     function renderTypes() {
         if (data.types.length === 0) {
-            return t.text('standard_template', 'default_type');
+            return t.text('standard_template.default_type');
         }
         return data.types.map((typeIri, index) => {
             const type = model.getElementType(typeIri);
@@ -149,12 +149,12 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                 <div className={`${CLASS_NAME}__iri`}>
                     <div className={`${CLASS_NAME}__iri-key`}>
                         {entityContext.editedIri
-                            ? t.text('standard_template', 'iri.label_on_modified')
-                            : t.text('standard_template', 'iri.label')}
+                            ? t.text('standard_template.iri.label_on_modified')
+                            : t.text('standard_template.iri.label')}
                     </div>
                     <div className={`${CLASS_NAME}__iri-value`}>
                         {isEncodedBlank(finalIri)
-                            ? <span>{t.text('standard_template', 'blank_node')}</span>
+                            ? <span>{t.text('standard_template.blank_node')}</span>
                             : <a href={finalIri}
                                 title={finalIri}
                                 data-iri-click-intent='openEntityIri'>
@@ -343,7 +343,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     const label = formatEntityLabel(data, model.locale);
     const iri = model.locale.formatIri(data.id);
     const typesLabel = formatEntityTypes(data, model.locale, t);
-    const title = t.format('standard_template', 'group_item.title', {
+    const title = t.format('standard_template.group_item.title', {
         entity: label,
         entityIri: iri,
         entityTypes: typesLabel,
@@ -370,7 +370,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
                         'reactodia-btn reactodia-btn-default'
                     )}
                     data-reactodia-no-export='true'
-                    title={t.text('standard_template', 'ungroup.title')}
+                    title={t.text('standard_template.ungroup.title')}
                     onClick={() => ungroupSome({
                         group: target,
                         entities: new Set([data.id]),
@@ -401,7 +401,7 @@ function formatEntityTypes(
 ): string {
     return data.types.length > 0
         ? locale.formatElementTypes(data.types).join(', ')
-        : t.text('standard_template', 'default_type');
+        : t.text('standard_template.default_type');
 }
 
 function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
@@ -429,7 +429,7 @@ function PropertyList(props: {
     const {properties, locale, translation: t} = props;
 
     if (properties.length === 0) {
-        return <div>{t.text('standard_template', 'no_properties')}</div>;
+        return <div>{t.text('standard_template.no_properties')}</div>;
     }
 
     return (
@@ -442,7 +442,7 @@ function PropertyList(props: {
                         className={`${CLASS_NAME}__properties-row`}>
                         <WithFetchStatus type='propertyType' target={propertyId}>
                             <div className={`${CLASS_NAME}__properties-key`}
-                                title={t.format('standard_template', 'property.title', {
+                                title={t.format('standard_template.property.title', {
                                     property: label,
                                     propertyIri: locale.formatIri(propertyId),
                                 })}>
@@ -490,13 +490,13 @@ function Actions(props: {
                     'reactodia-btn reactodia-btn-default'
                 )}
                 title={canDelete
-                    ? t.text('standard_template', 'delete.title')
-                    : t.text('standard_template', 'delete.title_on_disabled')}
+                    ? t.text('standard_template.delete.title')
+                    : t.text('standard_template.delete.title_on_disabled')}
                 disabled={!canDelete}
                 onClick={onDelete}>
                 {canEdit === undefined
                     ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
-                    : t.text('standard_template', 'delete.label')}
+                    : t.text('standard_template.delete.label')}
             </button>
             <button type='button'
                 className={classnames(
@@ -504,13 +504,13 @@ function Actions(props: {
                     'reactodia-btn reactodia-btn-default'
                 )}
                 title={canEdit
-                    ? t.text('standard_template', 'edit.title')
-                    : t.text('standard_template', 'edit.title_on_disabled')}
+                    ? t.text('standard_template.edit.title')
+                    : t.text('standard_template.edit.title_on_disabled')}
                 disabled={!canEdit}
                 onClick={() => onEdit(target)}>
                 {canEdit === undefined
                     ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
-                    : t.text('standard_template', 'edit.label')}
+                    : t.text('standard_template.edit.label')}
             </button>
         </div>
     );

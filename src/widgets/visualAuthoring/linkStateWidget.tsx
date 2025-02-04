@@ -137,18 +137,18 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
 
                 switch (state.type) {
                     case 'relationAdd': {
-                        statusText = t.text('authoring_state', 'relation_add.label');
-                        title = t.text('authoring_state', 'relation_add_revert.title');
+                        statusText = t.text('authoring_state.relation_add.label');
+                        title = t.text('authoring_state.relation_add_revert.title');
                         break;
                     }
                     case 'relationChange': {
-                        statusText = t.text('authoring_state', 'relation_change.label');
-                        title = t.text('authoring_state', 'relation_change_revert.title');
+                        statusText = t.text('authoring_state.relation_change.label');
+                        title = t.text('authoring_state.relation_change_revert.title');
                         break;
                     }
                     case 'relationDelete': {
-                        statusText = t.text('authoring_state', 'relation_delete.label');
-                        title = t.text('authoring_state', 'relation_delete_revert.title');
+                        statusText = t.text('authoring_state.relation_delete.label');
+                        title = t.text('authoring_state.relation_delete_revert.title');
                         break;
                     }
                 }
@@ -158,7 +158,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                         <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
                         [<span className={`${CLASS_NAME}__state-cancel`}
                             onClick={() => editor.discardChange(state)}
-                            title={title}>{t.text('authoring_state', 'discard.label')}</span>]
+                            title={title}>{t.text('authoring_state.discard.label')}</span>]
                     </span>
                 );
             }

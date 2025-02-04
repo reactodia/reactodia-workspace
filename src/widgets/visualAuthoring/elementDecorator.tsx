@@ -171,18 +171,18 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
 
             switch (state.type) {
                 case 'entityAdd': {
-                    statusText = t.text('authoring_state', 'entity_add.label');
-                    title = t.text('authoring_state', 'entity_add_revert.title');
+                    statusText = t.text('authoring_state.entity_add.label');
+                    title = t.text('authoring_state.entity_add_revert.title');
                     break;
                 }
                 case 'entityChange': {
-                    statusText = t.text('authoring_state', 'entity_change.label');
-                    title = t.text('authoring_state', 'entity_change_revert.title');
+                    statusText = t.text('authoring_state.entity_change.label');
+                    title = t.text('authoring_state.entity_change_revert.title');
                     break;
                 }
                 case 'entityDelete': {
-                    statusText = t.text('authoring_state', 'entity_delete.label');
-                    title = t.text('authoring_state', 'entity_delete_revert.title');
+                    statusText = t.text('authoring_state.entity_delete.label');
+                    title = t.text('authoring_state.entity_delete_revert.title');
                     break;
                 }
             }
@@ -197,7 +197,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
                                 <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
                                 [<span className={`${CLASS_NAME}__state-cancel`}
                                     onClick={() => editor.discardChange(state)}
-                                    title={title}>{t.text('authoring_state', 'discard.label')}</span>]
+                                    title={title}>{t.text('authoring_state.discard.label')}</span>]
                             </span>
                             {this.renderElementValidations()}
                         </div>
