@@ -4,7 +4,7 @@ import { hcl } from 'd3-color';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
-import type { TranslationBundle } from '../coreUtils/i18n';
+import { type TranslationBundle, TranslatedText } from '../coreUtils/i18n';
 import { TranslationProvider, makeTranslation } from '../coreUtils/i18nProvider';
 
 import { ElementTypeIri } from '../data/model';
@@ -363,7 +363,9 @@ export class Workspace extends React.Component<WorkspaceProps> {
             task.end();
         }
 
-        const batch = model.history.startBatch({titleKey: 'workspace.perform_layout.command'});
+        const batch = model.history.startBatch(
+            TranslatedText.text('workspace.perform_layout.command')
+        );
         batch.history.registerToUndo(RestoreGeometry.capture(model));
 
         for (const link of model.links) {
@@ -388,28 +390,16 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     };
 
-    private onGroup: WorkspaceContext['group'] = async ({elements, canvas}) => {
-        const {model} = this.workspaceContext;
-        const batch = model.history.startBatch({titleKey: 'workspace.group_entities.command'});
-        const result = await groupEntitiesAnimated(elements, canvas, this.workspaceContext);
-        batch.store();
-        return result;
+    private onGroup: WorkspaceContext['group'] = ({elements, canvas}) => {
+        return groupEntitiesAnimated(elements, canvas, this.workspaceContext);
     };
 
-    private onUngroupAll: WorkspaceContext['ungroupAll'] = async ({groups, canvas}) => {
-        const {model} = this.workspaceContext;
-        const batch = model.history.startBatch({titleKey: 'workspace.ungroup_entities.command'});
-        const result = await ungroupAllEntitiesAnimated(groups, canvas, this.workspaceContext);
-        batch.store();
-        return result;
+    private onUngroupAll: WorkspaceContext['ungroupAll'] = ({groups, canvas}) => {
+        return ungroupAllEntitiesAnimated(groups, canvas, this.workspaceContext);
     };
 
-    private onUngroupSome: WorkspaceContext['ungroupSome'] = async ({group, entities, canvas}) => {
-        const {model} = this.workspaceContext;
-        const batch = model.history.startBatch({titleKey: 'workspace.ungroup_entities.command'});
-        const result = await ungroupSomeEntitiesAnimated(group, entities, canvas, this.workspaceContext);
-        batch.store();
-        return result;
+    private onUngroupSome: WorkspaceContext['ungroupSome'] = ({group, entities, canvas}) => {
+        return ungroupSomeEntitiesAnimated(group, entities, canvas, this.workspaceContext);
     };
 }
 

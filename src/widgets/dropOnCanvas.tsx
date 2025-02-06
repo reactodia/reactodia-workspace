@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { EventObserver } from '../coreUtils/events';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementIri } from '../data/model';
 
@@ -37,7 +38,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
     
             const iris = tryParseDefaultDragAndDropData(e.sourceEvent);
             if (iris.length > 0) {
-                const batch = model.history.startBatch({titleKey: 'drop_on_canvas.drop.command'});
+                const batch = model.history.startBatch(TranslatedText.text('drop_on_canvas.drop.command'));
                 const placedElements = placeElements(iris, e.position, canvas, model);
                 const irisToLoad = placedElements.map(elem => elem.iri);
                 batch.history.execute(requestElementData(model, irisToLoad));

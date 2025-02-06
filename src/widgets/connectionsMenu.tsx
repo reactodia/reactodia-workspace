@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/model';
 import { generate128BitID } from '../data/utils';
@@ -719,7 +720,9 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             canvas,
             workspace: {model, triggerWorkspaceEvent},
         } = this.props;
-        const batch = model.history.startBatch({titleKey: 'connections_menu.place_elements.command'});
+        const batch = model.history.startBatch(
+            TranslatedText.text('connections_menu.place_elements.command')
+        );
 
         let placedElements: Element[] = [];
         switch (mode) {

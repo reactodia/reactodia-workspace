@@ -6,10 +6,12 @@ import { Translation, TranslationBundle, TranslationContext } from './i18n';
 
 export function makeTranslation(bundle: Partial<TranslationBundle>): Translation {
     const text: Translation['text'] = (key) => {
-        const [group, leaf] = key.split('.', 2);
-        if (!(group && leaf)) {
+        const dotIndex = key.indexOf('.');
+        if (!(dotIndex > 0 && dotIndex < key.length)) {
             throw new Error(`Reactodia: Invalid translation key: ${key}`);
         }
+        const group = key.substring(0, dotIndex);
+        const leaf = key.substring(dotIndex + 1);
         return (
             getString(bundle, group, leaf) ??
             getString(DefaultTranslationBundle, group, leaf) ??

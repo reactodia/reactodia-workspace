@@ -1,5 +1,6 @@
 import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import {
     ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeModel,
@@ -444,9 +445,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             linkTypeVisibility,
         } = deserializeDiagram(diagram, {preloadedElements, markLinksAsLayoutOnly});
 
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.import_layout.command'
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.import_layout.command')
+        );
 
         for (const [linkTypeIri, visibility] of linkTypeVisibility) {
             this.setLinkVisibility(linkTypeIri, visibility);
@@ -597,9 +598,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             el instanceof EntityElement && el.iri === data.targetId ||
             el instanceof EntityGroup && el.itemIris.has(data.targetId)
         );
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.create_links.command',
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.create_links.command')
+        );
         const links: Array<RelationLink | RelationGroup> = [];
         for (const source of sources) {
             for (const target of targets) {
@@ -744,9 +745,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * @see {@link ungroupSome}
      */
     group(entities: ReadonlyArray<EntityElement>): EntityGroup {
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.group_entities.command',
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.group_entities.command')
+        );
 
         const entityIds = new Set<ElementIri>();
         for (const entity of entities) {
@@ -808,9 +809,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * @see {@link ungroupSome}
      */
     ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.ungroup_entities.command',
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.ungroup_entities.command')
+        );
 
         const ungrouped: EntityElement[] = [];
         const links = new Set<Link>();
@@ -862,9 +863,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             return this.ungroupAll([group]);
         }
 
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.ungroup_entities.command',
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.ungroup_entities.command')
+        );
 
         const links = new Set<Link>();
         for (const link of this.getElementLinks(group)) {
@@ -910,9 +911,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
-        const batch = this.history.startBatch({
-            titleKey: 'data_diagram_model.regroup_relations.command',
-        });
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.regroup_relations.command')
+        );
 
         for (const link of links) {
             this.removeLink(link.id);
@@ -1036,9 +1037,10 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
  * @see {@link DataDiagramModel.requestElementData}
  */
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
-    return Command.effect({titleKey: 'data_diagram_model.request_entities.command'}, () => {
-        model.requestElementData(elementIris);
-    });
+    return Command.effect(
+        TranslatedText.text('data_diagram_model.request_entities.command'),
+        () => model.requestElementData(elementIris)
+    );
 }
 
 /**
@@ -1052,7 +1054,8 @@ export function restoreLinksBetweenElements(
     model: DataDiagramModel,
     options: RequestLinksOptions = {}
 ): Command {
-    return Command.effect({titleKey: 'data_diagram_model.request_relations.command'}, () => {
-        model.requestLinks(options);
-    });
+    return Command.effect(
+        TranslatedText.text('data_diagram_model.request_relations.command'),
+        () => model.requestLinks(options)
+    );
 }

@@ -3,7 +3,7 @@ import classnames from 'classnames';
 import { saveAs } from 'file-saver';
 
 import { useObservedProperty } from '../coreUtils/hooks';
-import { type Translation, useTranslation } from '../coreUtils/i18n';
+import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
 import type { Command } from '../diagram/history';
@@ -222,9 +222,9 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
             className={classnames(className, `${CLASS_NAME}__clear-all`)}
             title={title ?? t.text('toolbar_action.clear_all.title')}
             onSelect={() => {
-                const batch = model.history.startBatch({
-                    titleKey: 'toolbar_action.clear_all.command',
-                });
+                const batch = model.history.startBatch(
+                    TranslatedText.text('toolbar_action.clear_all.command')
+                );
                 editor.removeItems([...model.elements]);
                 batch.store();
             }}>
@@ -412,14 +412,11 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
 }
 
 function resolveCommandTitle(command: Command, t: Translation): string | undefined {
-    if (command.metadata) {
-        if (command.metadata.title !== undefined) {
-            return command.metadata.title;
-        } else if (command.metadata.titleKey) {
-            return t.text(command.metadata.titleKey);
-        }
+    if (typeof command.title === 'string' || typeof command.title === 'undefined') {
+        return command.title;
+    } else {
+        return command.title.resolve(t);
     }
-    return command.title;
 }
 
 /**

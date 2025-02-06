@@ -6,7 +6,7 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
-import { useTranslation } from '../coreUtils/i18n';
+import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -331,11 +331,11 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
                     const target = elements[0];
                     model.history.execute(setElementExpanded(target, !target.isExpanded));
                 } else {
-                    const batch = model.history.startBatch({
-                        titleKey: allExpanded
-                            ? 'selection_action.expand.collapse_command'
-                            : 'selection_action.expand.expand_command',
-                    });
+                    const batch = model.history.startBatch(
+                        allExpanded
+                            ? TranslatedText.text('selection_action.expand.collapse_command')
+                            : TranslatedText.text('selection_action.expand.expand_command')
+                    );
                     for (const element of elements) {
                         batch.history.execute(setElementExpanded(element, !allExpanded));
                     }

@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { TranslatedText } from '../coreUtils/i18n';
+
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
@@ -223,11 +225,11 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         }
         editor.removeTemporaryCells([target, link]);
 
-        const batch = model.history.startBatch({
-            titleKey: elementValue.isNew
-                ? 'visual_authoring.find_or_create.create_command'
-                : 'visual_authoring.find_or_create.connect_command',
-        });
+        const batch = model.history.startBatch(
+            elementValue.isNew
+                ? TranslatedText.text('visual_authoring.find_or_create.create_command')
+                : TranslatedText.text('visual_authoring.find_or_create.connect_command')
+        );
 
         if (elementValue.isNew) {
             model.addElement(target);

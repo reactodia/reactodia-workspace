@@ -407,7 +407,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
         const {model} = this.props;
         const restoreGeometry = RestoreGeometry.capture(model);
-        const batch = model.history.startBatch(restoreGeometry.metadata);
+        const batch = model.history.startBatch(restoreGeometry.title);
 
         let panningOrigin: PointerMoveState['panningOrigin'];
         let movingElementOrigin: PointerMoveState['movingElementOrigin'];

@@ -1,3 +1,5 @@
+import { TranslatedText } from '../coreUtils/i18n';
+
 import type { LinkTypeIri } from '../data/model';
 
 import type { CanvasApi } from './canvasApi';
@@ -7,7 +9,7 @@ import type {
 import {
     SizeProvider, Vector, boundsOf, isPolylineEqual, calculateAveragePosition,
 } from './geometry';
-import { Command, CommandMetadata } from './history';
+import { Command } from './history';
 import type { DiagramModel, GraphStructure } from './model';
 
 /**
@@ -26,9 +28,7 @@ import type { DiagramModel, GraphStructure } from './model';
  * @category Commands
  */
 export class RestoreGeometry implements Command {
-    readonly metadata: CommandMetadata = {
-        titleKey: 'commands.restore_geometry.title',
-    };
+    private static _title = TranslatedText.text('commands.restore_geometry.title');
 
     private constructor(
         private elementState: ReadonlyArray<{ element: Element; position: Vector }>,
@@ -56,8 +56,8 @@ export class RestoreGeometry implements Command {
         );
     }
 
-    get title(): string | undefined {
-        return this.metadata.title;
+    get title(): TranslatedText {
+        return RestoreGeometry._title;
     }
 
     /**
@@ -118,7 +118,7 @@ export class RestoreGeometry implements Command {
  */
 export function restoreCapturedLinkGeometry(link: Link): Command {
     const vertices = link.vertices;
-    return Command.create({titleKey: 'commands.restore_link_vertices.title'}, () => {
+    return Command.create(TranslatedText.text('commands.restore_link_vertices.title'), () => {
         const capturedInverse = restoreCapturedLinkGeometry(link);
         link.setVertices(vertices);
         return capturedInverse;
@@ -131,7 +131,7 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
  * @category Commands
  */
 export function setElementState(element: Element, state: ElementTemplateState | undefined): Command {
-    return Command.create({titleKey: 'commands.set_element_state.title'}, () => {
+    return Command.create(TranslatedText.text('commands.set_element_state.title'), () => {
         const previous = element.elementState;
         element.setElementState(state);
         return setElementState(element, previous);
@@ -145,11 +145,9 @@ export function setElementState(element: Element, state: ElementTemplateState | 
  */
 export function setElementExpanded(element: Element, expanded: boolean): Command {
     return Command.create(
-        {
-            titleKey: expanded
-                ? 'commands.expand_element.title'
-                : 'commands.collapse_element.title'
-        },
+        expanded
+            ? TranslatedText.text('commands.expand_element.title')
+            : TranslatedText.text('commands.collapse_element.title'),
         () => {
             element.setExpanded(expanded);
             return setElementExpanded(element, !expanded);
@@ -163,7 +161,7 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
  * @category Commands
  */
 export function setLinkState(link: Link, state: LinkTemplateState | undefined): Command {
-    return Command.create({titleKey: 'commands.set_link_state.title'}, () => {
+    return Command.create(TranslatedText.text('commands.set_link_state.title'), () => {
         const previous = link.linkState;
         link.setLinkState(state);
         return setLinkState(link, previous);
@@ -180,7 +178,7 @@ export function changeLinkTypeVisibility(
     linkTypeId: LinkTypeIri,
     visibility: LinkTypeVisibility
 ): Command {
-    return Command.create({titleKey: 'commands.change_link_type_visibility.title'}, () => {
+    return Command.create(TranslatedText.text('commands.change_link_type_visibility.title'), () => {
         const previous = model.getLinkVisibility(linkTypeId);
         model.setLinkVisibility(linkTypeId, visibility);
         return changeLinkTypeVisibility(model, linkTypeId, previous);
@@ -215,10 +213,10 @@ export function restoreViewport(canvas: CanvasApi): Command {
         canvas.centerTo(center, {scale});
     }
     const initialViewport = capture();
-    const command = Command.create({titleKey: 'commands.restore_viewport.title'}, () => {
+    const command = Command.create(TranslatedText.text('commands.restore_viewport.title'), () => {
         const revertedViewport = capture();
         apply(initialViewport);
-        return Command.create({titleKey: 'commands.restore_viewport.title'}, () => {
+        return Command.create(TranslatedText.text('commands.restore_viewport.title'), () => {
             apply(revertedViewport);
             return command;
         });
@@ -318,5 +316,5 @@ export function placeElementsAroundTarget(params: {
         return capturedGeometry.filterOutUnchanged();
     };
 
-    return Command.create({titleKey: 'commands.place_elements_around.title'}, commandBody);
+    return Command.create(TranslatedText.text('commands.place_elements_around.title'), commandBody);
 }

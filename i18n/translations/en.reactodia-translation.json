@@ -44,7 +44,7 @@
     "entities.add_all": "Add all",
     "entities.add_group": "Add as group",
     "entities.add_selected": "Add selected",
-    "entities.counter_label": "{count}\u00A0of\u00A0${total}",
+    "entities.counter_label": "{count}\u00A0of\u00A0{total}",
     "entities.extra_label": "\u00A0({value})",
     "entities.extra_title": "Extra entities",
     "entities.missing_label": "\u00A0({value})",

@@ -2,7 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { EventObserver, EventTrigger } from '../coreUtils/events';
-import { useTranslation } from '../coreUtils/i18n';
+import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import type { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
@@ -467,7 +467,7 @@ function changeLinkTypeState(
     workspace: WorkspaceContext
 ): void {
     const {model} = workspace;
-    const batch = model.history.startBatch({titleKey: 'search_link_types.switch.command'});
+    const batch = model.history.startBatch(TranslatedText.text('search_link_types.switch.command'));
     for (const linkType of linkTypes) {
         model.history.execute(changeLinkTypeVisibility(model, linkType.iri, state));
     }

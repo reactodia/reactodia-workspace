@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
 import { DataProviderLookupParams, DataProviderLookupItem } from '../data/provider';
@@ -586,7 +587,9 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             return;
         }
 
-        const batch = model.history.startBatch({titleKey: 'search_entities.place_elements.command'});
+        const batch = model.history.startBatch(
+            TranslatedText.text('search_entities.place_elements.command')
+        );
         const selectedEntities = items
             ? items.filter(item => selection.has(item.id))
             : Array.from(selection, EntityElement.placeholderData);

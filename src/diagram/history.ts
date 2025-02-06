@@ -1,5 +1,5 @@
 import { EventSource, Events } from '../coreUtils/events';
-import type { TranslationKey } from '../coreUtils/i18n';
+import type { TranslatedText } from '../coreUtils/i18n';
 
 /**
  * Represents an atomic change to the state tracked by the command history,
@@ -11,38 +11,14 @@ import type { TranslationKey } from '../coreUtils/i18n';
 export interface Command {
     /**
      * Command title to display in the UI.
-     *
-     * @deprecated Use {@link metadata} property with {@link CommandMetadata.title} instead.
      */
-    readonly title?: string;
-    /**
-     * Command metadata for the UI presentation.
-     */
-    readonly metadata?: CommandMetadata;
+    readonly title?: TranslatedText | string;
     /**
      * Performs the command action.
      *
      * @returns Inverse command to reverse changes done by the action.
      */
     invoke(): Command;
-}
-
-/**
- * Defines additional metadata for a command to display it in the UI.
- *
- * @see Command
- */
-export interface CommandMetadata {
-    /**
-     * Command title to display in the UI.
-     */
-    readonly title?: string;
-    /**
-     * Command title specified as a translation key.
-     *
-     * @see {@link Translation}
-     */
-    readonly titleKey?: TranslationKey;
 }
 
 /**
@@ -73,12 +49,10 @@ export namespace Command {
      * ```
      */
     export function create(
-        metadataOrTitle: string | CommandMetadata,
+        title: TranslatedText | string,
         action: CommandAction
     ): Command {
-        const metadata: CommandMetadata = typeof metadataOrTitle === 'string'
-            ? {title: metadataOrTitle} : metadataOrTitle;
-        return new SimpleCommand(metadata, action);
+        return new SimpleCommand(title, action);
     }
 
     /**
@@ -87,12 +61,10 @@ export namespace Command {
      * or vice-versa.
      */
     export function effect(
-        metadataOrTitle: string | CommandMetadata,
+        title: TranslatedText | string,
         body: () => void
     ): Command {
-        const metadata: CommandMetadata = typeof metadataOrTitle === 'string'
-            ? {title: metadataOrTitle} : metadataOrTitle;
-        return new EffectCommand(metadata, body);
+        return new EffectCommand(title, body);
     }
 
     /**
@@ -102,38 +74,28 @@ export namespace Command {
      * and the inverse command will use a reversed order of the sub-command inverses.
      */
     export function compound(
-        metadataOrTitle: CommandMetadata | string | undefined,
+        title: TranslatedText | string | undefined,
         commands: ReadonlyArray<Command>
     ): Command {
-        const metadata: CommandMetadata | undefined = typeof metadataOrTitle === 'string'
-            ? {title: metadataOrTitle} : metadataOrTitle;
-        return new CompoundCommand(metadata ?? {}, commands);
+        return new CompoundCommand(title, commands);
     }
 }
 
 class SimpleCommand implements Command {
     constructor(
-        readonly metadata: CommandMetadata,
+        readonly title: TranslatedText | string,
         readonly invoke: CommandAction
     ) {}
-
-    get title(): string | undefined {
-        return this.metadata.title;
-    }
 }
 
 class EffectCommand implements Command {
     private readonly skip: Command;
 
     constructor(
-        readonly metadata: CommandMetadata,
+        readonly title: TranslatedText | string,
         private readonly body: () => void
     ) {
-        this.skip = new SkippedEffect(metadata, this);
-    }
-
-    get title(): string | undefined {
-        return this.metadata.title;
+        this.skip = new SkippedEffect(title, this);
     }
 
     invoke(): Command {
@@ -145,13 +107,9 @@ class EffectCommand implements Command {
 
 class SkippedEffect implements Command {
     constructor(
-        readonly metadata: CommandMetadata,
+        readonly title: TranslatedText | string,
         private readonly effect: EffectCommand
     ) {}
-
-    get title(): string | undefined {
-        return undefined;
-    }
 
     invoke(): Command {
         return this.effect;
@@ -160,13 +118,9 @@ class SkippedEffect implements Command {
 
 class CompoundCommand {
     constructor(
-        readonly metadata: CommandMetadata,
+        readonly title: TranslatedText | string | undefined,
         private readonly commands: ReadonlyArray<Command>
     ) {}
-
-    get title(): string | undefined {
-        return this.metadata.title;
-    }
 
     invoke(): Command {
         const inverses: Command[] = [];
@@ -174,7 +128,7 @@ class CompoundCommand {
             inverses.push(command.invoke());
         }
         inverses.reverse();
-        return new CompoundCommand(this.metadata, inverses);
+        return new CompoundCommand(this.title, inverses);
     }
 }
 
@@ -262,7 +216,7 @@ export interface CommandHistory {
      * causes the new batch to become nested, which allows to use operations creating
      * command batches as part of a larger operation having its own top-level batch.
      */
-    startBatch(metadataOrTitle?: CommandMetadata | string): CommandBatch;
+    startBatch(title?: TranslatedText | string): CommandBatch;
 }
 
 /**
@@ -291,7 +245,7 @@ export interface CommandBatch {
 }
 
 interface InMemoryBatch extends CommandBatch {
-    readonly _metadata: CommandMetadata;
+    readonly _title: TranslatedText | string | undefined;
     readonly _inverses: Command[];
 }
 
@@ -364,11 +318,9 @@ export class InMemoryHistory implements CommandHistory {
         return this.batches.length === 0 ? undefined : this.batches[this.batches.length - 1];
     }
 
-    startBatch(metadataOrTitle?: CommandMetadata): CommandBatch {
-        const metadata: CommandMetadata | undefined = typeof metadataOrTitle === 'string'
-            ? {title: metadataOrTitle} : metadataOrTitle;
+    startBatch(title?: TranslatedText | string): CommandBatch {
         const batch: InMemoryBatch = {
-            _metadata: metadata ?? {},
+            _title: title,
             _inverses: [],
             history: this,
             store: () => {
@@ -383,7 +335,7 @@ export class InMemoryHistory implements CommandHistory {
                     }
                     if (other._inverses.length > 0) {
                         const commands = [...other._inverses].reverse();
-                        this.registerToUndo(Command.compound(batch._metadata, commands));
+                        this.registerToUndo(Command.compound(batch._title, commands));
                     }
                     if (other === batch) {
                         break;

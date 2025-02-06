@@ -1,3 +1,5 @@
+import { TranslatedText } from '../coreUtils/i18n';
+
 import { ElementIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
@@ -14,7 +16,9 @@ export async function groupEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityGroup> {
     const {model} = workspace;
-    const batch = model.history.startBatch();
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.group_entities.command')
+    );
 
     const capturedGeometry = RestoreGeometry.capturePartial(elements, []);
 
@@ -62,7 +66,9 @@ export async function ungroupAllEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model, performLayout} = workspace;
-    const batch = model.history.startBatch();
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.ungroup_entities.command')
+    );
 
     const ungrouped = model.ungroupAll(groups);
     await performLayout({
@@ -83,7 +89,9 @@ export async function ungroupSomeEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model} = workspace;
-    const batch = model.history.startBatch();
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.ungroup_entities.command')
+    );
 
     const ungrouped = model.ungroupSome(group, entities);
 
