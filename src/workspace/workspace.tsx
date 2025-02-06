@@ -4,8 +4,7 @@ import { hcl } from 'd3-color';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
-import { type TranslationBundle, TranslatedText } from '../coreUtils/i18n';
-import { TranslationProvider, makeTranslation } from '../coreUtils/i18nProvider';
+import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
@@ -13,14 +12,15 @@ import { ValidationProvider } from '../data/validationProvider';
 import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
-import {
-    TypeStyleResolver, LabelLanguageSelector, RenameLinkProvider,
-} from '../diagram/customization';
+import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
 } from '../diagram/layout';
 import { blockingDefaultLayout } from '../diagram/layoutShared';
+import {
+    DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
+} from '../diagram/locale';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
@@ -48,9 +48,9 @@ import { EntityElement } from '../workspace';
  */
 export interface WorkspaceProps {
     /**
-     * Provides a translation bundle for UI text strings in the workspace.
+     * Translation bundles in additional languages for UI text strings in the workspace.
      */
-    translation?: Partial<TranslationBundle>;
+    translations?: Readonly<Record<string, Partial<TranslationBundle>>>;
     /**
      * Overrides default command history implementation.
      *
@@ -142,7 +142,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         super(props);
 
         const {
-            translation: translationBundle = {},
+            translations = {},
             history = new InMemoryHistory(),
             metadataProvider,
             validationProvider,
@@ -155,7 +155,14 @@ export class Workspace extends React.Component<WorkspaceProps> {
             onWorkspaceEvent = () => {},
         } = this.props;
 
-        const translation = makeTranslation(translationBundle);
+        const translationBundles: Partial<TranslationBundle>[] = [DefaultTranslationBundle];
+        const additionalBundle = Object.prototype.hasOwnProperty.call(translations, defaultLanguage)
+            ? translations[defaultLanguage] : undefined;
+        if (additionalBundle) {
+            translationBundles.unshift(additionalBundle);
+        }
+
+        const translation = new DefaultTranslation(translationBundles, selectLabelLanguage);
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();

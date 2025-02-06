@@ -1,6 +1,6 @@
 import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
-import { TranslatedText } from '../coreUtils/i18n';
+import { Translation, TranslatedText } from '../coreUtils/i18n';
 
 import {
     ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeModel,
@@ -11,7 +11,7 @@ import { DataProvider } from '../data/provider';
 import * as Rdf from '../data/rdf/rdfModel';
 
 import { setLinkState } from '../diagram/commands';
-import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
+import { FormattedProperty } from '../diagram/customization';
 import { Link, LinkTypeVisibility } from '../diagram/elements';
 import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
@@ -165,8 +165,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         this.subscribeGraph();
     }
 
-    protected override createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {
-        return new ExtendedLocaleFormatter(this, selectLabelLanguage);
+    protected override createLocale(translation: Translation): this['locale'] {
+        return new ExtendedLocaleFormatter(this, translation);
     }
 
     private get extendedSource(): EventSource<DataDiagramModelEvents> {
@@ -986,21 +986,20 @@ export interface DataGraphLocaleFormatter extends LocaleFormatter {
 class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGraphLocaleFormatter {
     declare protected model: DataDiagramModel;
 
-    constructor(
-        model: DataDiagramModel,
-        selectLabelLanguage: LabelLanguageSelector
-    ) {
-        super(model, selectLabelLanguage);
+    constructor(model: DataDiagramModel, translation: Translation) {
+        super(model, translation);
     }
 
     formatElementTypes(
         types: ReadonlyArray<ElementTypeIri>,
         language?: string
     ): string[] {
-        return types.map(typeId => {
-            const type = this.model.getElementType(typeId);
-            return this.formatLabel(type?.data?.label, typeId, language);
-        }).sort();
+        const targetLanguage = language ?? this.model.language;
+        return this.translation.formatLabels(
+            types,
+            iri => this.model.getElementType(iri)?.data?.label,
+            targetLanguage
+        );
     }
 
     formatPropertyList(
@@ -1008,24 +1007,16 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
         language?: string
     ): FormattedProperty[] {
         const targetLanguage = language ?? this.model.language;
-        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
-        const propertyList = propertyIris.map((key): FormattedProperty => {
-            const property = this.model.getPropertyType(key);
-            const label = this.formatLabel(property?.data?.label, key);
-            const allValues = properties[key];
-            const localizedValues = allValues.filter(v =>
-                v.termType === 'NamedNode' ||
-                v.language === '' ||
-                v.language === targetLanguage
-            );
-            return {
-                propertyId: key,
-                label,
-                values: localizedValues.length === 0 ? allValues : localizedValues,
-            };
-        });
-        propertyList.sort((a, b) => a.label.localeCompare(b.label));
-        return propertyList;
+        const translated = this.translation.formatProperties(
+            properties as Readonly<Record<PropertyTypeIri, ReadonlyArray<Rdf.NamedNode | Rdf.Literal>>>,
+            iri => this.model.getPropertyType(iri)?.data?.label,
+            targetLanguage
+        );
+        return translated.map((property): FormattedProperty => ({
+            propertyId: property.iri as PropertyTypeIri,
+            label: property.label,
+            values: property.values,
+        }));
     }
 }
 
