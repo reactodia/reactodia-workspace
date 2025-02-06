@@ -34,6 +34,9 @@ export const DefaultLinkTemplate: LinkTemplate = {
 
 const CLASS_NAME = 'reactodia-default-link';
 
+const TEXT_CLASS = `${CLASS_NAME}__label-text`;
+const BACKGROUND_CLASS = `${CLASS_NAME}__label-background`;
+
 /**
  * Props for {@link DefaultLinkPathTemplate} component.
  *
@@ -103,30 +106,17 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     const {
         link, className, path, pathProps, markerSource, markerTarget, getPathPosition, route,
         primaryLabelProps,
-        propertyLabelProps,
-        propertyLabelStartLine = 1,
         prependLabels = null,
     } = props;
     const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
 
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
-    useKeyedSyncStore(
-        subscribePropertyTypes,
-        link instanceof RelationLink ? Object.keys(link.data.properties) as PropertyTypeIri[] : [],
-        model
-    );
 
     const renamedLabel = renameLinkProvider?.getLabel(link);
     let labelContent: JSX.Element | null = null;
     if (model.getLinkVisibility(link.typeId) === 'visible') {
-        const textClass = `${CLASS_NAME}__label-text`;
-        const backgroundClass = `${CLASS_NAME}__label-background`;
-
         const linkType = model.getLinkType(link.typeId);
-        const label = renamedLabel ?? model.locale.formatLabel(linkType?.data?.label, link.typeId);
-        const properties = link instanceof RelationLink
-            ? model.locale.formatPropertyList(link.data.properties)
-            : [];
+        const label = renamedLabel ?? t.formatLabel(linkType?.data?.label, link.typeId, model.language);
 
         labelContent = <>
             <LinkLabel {...primaryLabelProps}
@@ -134,11 +124,11 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 link={link}
                 position={getPathPosition(0.5)}
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
-                textClass={classnames(textClass, primaryLabelProps?.textClass)}
-                rectClass={classnames(backgroundClass, primaryLabelProps?.rectClass)}
+                textClass={classnames(TEXT_CLASS, primaryLabelProps?.textClass)}
+                rectClass={classnames(BACKGROUND_CLASS, primaryLabelProps?.rectClass)}
                 title={primaryLabelProps?.title ?? t.format('default_link_template.label.title', {
                     relation: label,
-                    relationIri: model.locale.formatIri(link.typeId),
+                    relationIri: t.formatIri(link.typeId),
                 })}
                 content={renamedLabel ? label : (
                     <WithFetchStatus type='linkType' target={link.typeId}>
@@ -147,34 +137,14 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 )}
             />
             {prependLabels}
-            {properties.map((property, index) => (
-                <LinkLabel key={property.propertyId}
-                    {...propertyLabelProps}
-                    link={link}
-                    position={getPathPosition(0.5)}
-                    line={propertyLabelStartLine + index}
-                    textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
-                    textClass={classnames(textClass, propertyLabelProps?.textClass)}
-                    rectClass={classnames(backgroundClass, propertyLabelProps?.rectClass)}
-                    title={propertyLabelProps?.title ?? t.format('default_link_template.property.title', {
-                        property: property.label,
-                        propertyIri: model.locale.formatIri(property.propertyId),
-                    })}
-                    content={<>
-                        <WithFetchStatus type='propertyType' target={property.propertyId}>
-                            <tspan>{property.label}:&nbsp;</tspan>
-                        </WithFetchStatus>
-                        {property.values.map(v => v.value).join(', ')}
-                    </>}
-                />
-            ))}
+            {link instanceof RelationLink ? <LinkProperties {...props} /> : null}
             {link instanceof RelationGroup ? (
                 <>
                     <LinkLabel className={`${CLASS_NAME}__source-count`}
                         link={link}
                         position={getPathPosition(0.1)}
-                        textClass={textClass}
-                        rectClass={backgroundClass}
+                        textClass={TEXT_CLASS}
+                        rectClass={BACKGROUND_CLASS}
                         title={t.format('default_link_template.group_source.title', {
                             value: link.itemSources.size,
                         })}
@@ -185,8 +155,8 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                     <LinkLabel className={`${CLASS_NAME}__target-count`}
                         link={link}
                         position={getPathPosition(0.9)}
-                        textClass={textClass}
-                        rectClass={backgroundClass}
+                        textClass={TEXT_CLASS}
+                        rectClass={BACKGROUND_CLASS}
                         title={t.format('default_link_template.group_target.title', {
                             value: link.itemTargets.size,
                         })}
@@ -227,4 +197,51 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
             )}
         </g>
     );
+}
+
+function LinkProperties(props: DefaultLinkPathTemplateProps) {
+    const {
+        link, getPathPosition, route, propertyLabelProps,
+        propertyLabelStartLine = 1,
+    } = props;
+    const {model, translation: t} = useWorkspace();
+    const {data} = link as RelationLink;
+
+    const propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
+
+    const properties = propertyIris.map(iri => {
+        const property = model.getPropertyType(iri);
+        const selectedValues = t.selectValues(data.properties[iri], model.language);
+        return {
+            iri,
+            label: t.formatLabel(property?.data?.label, iri, model.language),
+            values: selectedValues.length === 0 ? data.properties[iri] : selectedValues,
+        };
+    });
+    properties.sort((a, b) => a.label.localeCompare(b.label));
+
+    return <>
+        {properties.map((property, index) => (
+            <LinkLabel key={property.iri}
+                {...propertyLabelProps}
+                link={link}
+                position={getPathPosition(0.5)}
+                line={propertyLabelStartLine + index}
+                textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
+                textClass={classnames(TEXT_CLASS, propertyLabelProps?.textClass)}
+                rectClass={classnames(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
+                title={propertyLabelProps?.title ?? t.format('default_link_template.property.title', {
+                    property: property.label,
+                    propertyIri: t.formatIri(property.iri),
+                })}
+                content={<>
+                    <WithFetchStatus type='propertyType' target={property.iri}>
+                        <tspan>{property.label}:&nbsp;</tspan>
+                    </WithFetchStatus>
+                    {property.values.map(v => v.value).join(', ')}
+                </>}
+            />
+        ))}
+    </>;
 }

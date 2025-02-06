@@ -122,8 +122,7 @@ export interface DiagramModelOptions {
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via {@link DiagramModel.history history} and format the content using
- * {@link DiagramModel.locale locale}.
+ * via {@link DiagramModel.history history}.
  *
  * @category Core
  */
@@ -153,6 +152,8 @@ export class DiagramModel implements GraphStructure {
     readonly history: CommandHistory;
     /**
      * Provides the methods to format the content according to the current language.
+     *
+     * @deprecated Use {@link useTranslation} hook instead.
      */
     readonly locale: LocaleFormatter;
 
@@ -481,7 +482,7 @@ class RemoveLinkCommand implements Command {
  * Provides utility methods to format the diagram content according
  * to the current language.
  *
- * @category Core
+ * @deprecated Use {@link Translation} interface instead.
  */
 export interface LocaleFormatter {
     /**

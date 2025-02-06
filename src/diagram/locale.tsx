@@ -52,6 +52,17 @@ export class DefaultTranslation implements Translation {
         return selectLabelLanguage(labels, language);
     }
 
+    selectValues(
+        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>,
+        language: string
+    ): Array<Rdf.NamedNode | Rdf.Literal> {
+        return values.filter(v =>
+            v.termType === 'NamedNode' ||
+            v.language === '' ||
+            v.language === language
+        );
+    }
+
     formatLabel(
         labels: ReadonlyArray<Rdf.Literal> | undefined,
         fallbackIri: string,
@@ -66,44 +77,6 @@ export class DefaultTranslation implements Translation {
             return '(blank node)';
         }
         return `<${iri}>`;
-    }
-
-    formatLabels<Iri extends string>(
-        iris: ReadonlyArray<Iri>,
-        getLabels: (iri: Iri) => ReadonlyArray<Rdf.Literal> | undefined,
-        language: string
-    ): string[] {
-        const labelList = iris.map(iri => {
-            const labels = getLabels(iri);
-            return this.formatLabel(labels, iri, language);
-        });
-        labelList.sort();
-        return labelList;
-    }
-
-    formatProperties<Iri extends string>(
-        properties: Readonly<Record<Iri, ReadonlyArray<Rdf.NamedNode | Rdf.Literal>>>,
-        getLabels: (iri: Iri) => ReadonlyArray<Rdf.Literal> | undefined,
-        language: string
-    ): TranslatedProperty[] {
-        const propertyIris = Object.keys(properties) as Iri[];
-        const propertyList = propertyIris.map((iri): TranslatedProperty => {
-            const labels = getLabels(iri);
-            const label = this.formatLabel(labels, iri, language);
-            const allValues = properties[iri];
-            const localizedValues = allValues.filter(v =>
-                v.termType === 'NamedNode' ||
-                v.language === '' ||
-                v.language === language
-            );
-            return {
-                iri,
-                label,
-                values: localizedValues.length === 0 ? allValues : localizedValues,
-            };
-        });
-        propertyList.sort((a, b) => a.label.localeCompare(b.label));
-        return propertyList;
     }
 }
 

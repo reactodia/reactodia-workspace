@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
+import { Translation } from '../coreUtils/i18n';
 
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
 import { ElementModel, ElementTypeIri } from '../data/model';
@@ -112,7 +113,9 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 
     private async fetchPossibleElementTypes() {
-        const {source, workspace: {model, editor: {metadataProvider}}} = this.props;
+        const {
+            source, workspace: {model, editor: {metadataProvider}, translation: t},
+        } = this.props;
         if (!metadataProvider) {
             return;
         }
@@ -135,7 +138,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
             }
         }
         const elementTypes = Array.from(elementTypeSet)
-            .sort(makeElementTypeComparatorByLabel(model));
+            .sort(makeElementTypeComparatorByLabel(model, t));
         this.setState({elementTypes});
     }
 
@@ -206,7 +209,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
         const {workspace: {model, translation: t}} = this.props;
         const type = model.getElementType(elementType);
-        const label = model.locale.formatLabel(type?.data?.label, elementType);
+        const label = t.formatLabel(type?.data?.label, elementType, model.language);
         return (
             <option key={elementType} value={elementType}>
                 {t.template('visual_authoring.select_entity.entity_type.label', {
@@ -335,12 +338,12 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 }
 
-function makeElementTypeComparatorByLabel(model: DataDiagramModel) {
+function makeElementTypeComparatorByLabel(model: DataDiagramModel, t: Translation) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
         const typeA = model.getElementType(a);
         const typeB = model.getElementType(b);
-        const labelA = model.locale.formatLabel(typeA?.data?.label, a);
-        const labelB = model.locale.formatLabel(typeB?.data?.label, b);
+        const labelA = t.formatLabel(typeA?.data?.label, a, model.language);
+        const labelB = t.formatLabel(typeB?.data?.label, b, model.language);
         return labelA.localeCompare(labelB);
     };
 }

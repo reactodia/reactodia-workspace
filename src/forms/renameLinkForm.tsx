@@ -23,8 +23,8 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
     const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
 
     const defaultLabel = React.useMemo(
-        () => model.locale.formatLabel(linkTypeLabel, link.typeId),
-        [link, linkTypeLabel]
+        () => t.formatLabel(linkTypeLabel, link.typeId, model.language),
+        [link, linkTypeLabel, model.language]
     );
 
     const [customLabel, setCustomLabel] = React.useState(

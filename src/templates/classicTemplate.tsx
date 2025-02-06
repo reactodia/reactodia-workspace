@@ -2,14 +2,13 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import type { Translation } from '../coreUtils/i18n';
 
-import { PropertyTypeIri } from '../data/model';
-import type { LocaleFormatter } from '../diagram/model';
-import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { ElementModel, PropertyTypeIri } from '../data/model';
+import { TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
+import { formatEntityTypeList } from '../widgets/utility/listElementView';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-classic-template';
@@ -27,13 +26,9 @@ export function ClassicTemplate(props: TemplateProps) {
     const {element, isExpanded} = props;
     const data = element instanceof EntityElement ? element.data : undefined;
 
-    const {model, translation: t, getElementTypeStyle} = useWorkspace();
+    const workspace = useWorkspace();
+    const {model, translation: t, getElementTypeStyle} = workspace;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
-    useKeyedSyncStore(
-        subscribePropertyTypes,
-        (data && isExpanded) ? Object.keys(data.properties) as PropertyTypeIri[] : [],
-        model
-    );
 
     if (!data) {
         return null;
@@ -43,10 +38,9 @@ export function ClassicTemplate(props: TemplateProps) {
     const {color, icon} = getElementTypeStyle(types);
 
     const typesLabel = types.length > 0
-        ? model.locale.formatElementTypes(types).join(', ')
+        ?  formatEntityTypeList(data, workspace)
         : t.text('standard_template.default_type');
-    const label = model.locale.formatLabel(data?.label, data.id);
-    const propertyList = model.locale.formatPropertyList(data?.properties ?? {});
+    const label = t.formatLabel(data?.label, data.id, model.language);
 
     const image = data?.image ? (
         <div className={`${CLASS_NAME}__thumbnail`}>
@@ -71,7 +65,7 @@ export function ClassicTemplate(props: TemplateProps) {
                 </div>
             </div>
             <hr className={`${CLASS_NAME}__divider`} />
-            {renderPropertyTable(propertyList, model.locale, t)}
+            <PropertyList data={data} />
         </div>
     ) : null;
 
@@ -106,14 +100,29 @@ export function ClassicTemplate(props: TemplateProps) {
     );
 }
 
-function renderPropertyTable(
-    propertyList: ReadonlyArray<FormattedProperty>,
-    locale: LocaleFormatter,
-    t: Translation
-) {
-    if (propertyList.length > 0) {
+function PropertyList(props: {
+    data: ElementModel;
+}) {
+    const {data} = props;
+    const {model, translation: t} = useWorkspace();
+
+    const propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
+    
+    const properties = propertyIris.map(iri => {
+        const property = model.getPropertyType(iri);
+        const selectedValues = t.selectValues(data.properties[iri], model.language);
+        return {
+            iri,
+            label: t.formatLabel(property?.data?.label, iri, model.language),
+            values: selectedValues.length === 0 ? data.properties[iri] : selectedValues,
+        };
+    });
+    properties.sort((a, b) => a.label.localeCompare(b.label));
+
+    if (properties.length > 0) {
         return <div className={`${CLASS_NAME}__property-table`}>
-            {propertyList.map(({propertyId, label, values}) => {
+            {properties.map(({iri, label, values}) => {
                 const renderedValues = values.map((term, index) => (
                     <div key={index}
                         className={`${CLASS_NAME}__property-value`}
@@ -122,12 +131,12 @@ function renderPropertyTable(
                     </div>
                 ));
                 return (
-                    <div key={propertyId} className={`${CLASS_NAME}__property-row`}>
-                        <WithFetchStatus type='propertyType' target={propertyId}>
+                    <div key={iri} className={`${CLASS_NAME}__property-row`}>
+                        <WithFetchStatus type='propertyType' target={iri}>
                             <div className={`${CLASS_NAME}__property-label`}
                                 title={t.format('standard_template.property.title', {
                                     property: label,
-                                    propertyIri: locale.formatIri(propertyId),
+                                    propertyIri: t.formatIri(iri),
                                 })}>
                                 {label}
                             </div>

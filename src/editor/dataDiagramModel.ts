@@ -143,8 +143,7 @@ export interface DataDiagramModelOptions extends DiagramModelOptions {}
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via {@link DataDiagramModel.history history} and format the content using
- * {@link DataDiagramModel.locale locale}.
+ * via {@link DataDiagramModel.history history}.
  *
  * @category Core
  */
@@ -995,11 +994,12 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
         language?: string
     ): string[] {
         const targetLanguage = language ?? this.model.language;
-        return this.translation.formatLabels(
-            types,
-            iri => this.model.getElementType(iri)?.data?.label,
-            targetLanguage
-        );
+        const labelList = types.map(iri => {
+            const labels = this.model.getElementType(iri)?.data?.label;
+            return this.translation.formatLabel(labels, iri, targetLanguage);
+        });
+        labelList.sort();
+        return labelList;
     }
 
     formatPropertyList(
@@ -1007,16 +1007,20 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
         language?: string
     ): FormattedProperty[] {
         const targetLanguage = language ?? this.model.language;
-        const translated = this.translation.formatProperties(
-            properties as Readonly<Record<PropertyTypeIri, ReadonlyArray<Rdf.NamedNode | Rdf.Literal>>>,
-            iri => this.model.getPropertyType(iri)?.data?.label,
-            targetLanguage
-        );
-        return translated.map((property): FormattedProperty => ({
-            propertyId: property.iri as PropertyTypeIri,
-            label: property.label,
-            values: property.values,
-        }));
+        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
+        const propertyList = propertyIris.map((propertyId): FormattedProperty => {
+            const labels = this.model.getPropertyType(propertyId)?.data?.label;
+            const label = this.formatLabel(labels, propertyId, targetLanguage);
+            const allValues = properties[propertyId];
+            const localizedValues = this.translation.selectValues(allValues, targetLanguage);
+            return {
+                propertyId,
+                label,
+                values: localizedValues.length === 0 ? allValues : localizedValues,
+            };
+        });
+        propertyList.sort((a, b) => a.label.localeCompare(b.label));
+        return propertyList;
     }
 }
 

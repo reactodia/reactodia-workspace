@@ -2,23 +2,24 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import type { Translation } from '../coreUtils/i18n';
+import type { TranslatedProperty, Translation } from '../coreUtils/i18n';
 
 import type * as Rdf from '../data/rdf/rdfModel';
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { TemplateProps, FormattedProperty } from '../diagram/customization';
+import { TemplateProps } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
-import { DataGraphLocaleFormatter } from '../editor/dataDiagramModel';
+import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
+import { formatEntityTypeList } from '../widgets/utility/listElementView';
 import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
@@ -85,7 +86,7 @@ interface StandardTemplateBodyProps extends TemplateProps {
 }
 
 const CLASS_NAME = 'reactodia-standard-template';
-const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name';
+const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name' as PropertyTypeIri;
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
@@ -95,26 +96,16 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const {model, editor, translation: t, getElementTypeStyle} = workspace;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
-    useKeyedSyncStore(
-        subscribePropertyTypes,
-        (data && isExpanded) ? Object.keys(data.properties) as PropertyTypeIri[] : [],
-        model
-    );
     const entityContext = useAuthoredEntity(data, isExpanded);
 
-    const label = formatEntityLabel(data, model.locale);
-    const typesLabel = formatEntityTypes(data, model.locale, t);
+    const label = formatEntityLabel(data, model, t);
+    const typesLabel = formatEntityTypes(data, workspace);
     const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
     const rootStyle = {
         '--reactodia-standard-entity-color': baseColor,
     } as React.CSSProperties;
 
-    const propertyList = model.locale.formatPropertyList(data.properties);
-    const pinnedPropertyKeys = findPinnedProperties() ?? {};
-    const pinnedProperties = propertyList.filter(p => Boolean(
-        Object.prototype.hasOwnProperty.call(pinnedPropertyKeys, p.propertyId) &&
-        pinnedPropertyKeys[p.propertyId]
-    ));
+    const pinnedProperties = findPinnedProperties() ?? {};
 
     function renderTypes() {
         if (data.types.length === 0) {
@@ -122,7 +113,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
         }
         return data.types.map((typeIri, index) => {
             const type = model.getElementType(typeIri);
-            const label = model.locale.formatLabel(type?.data?.label, typeIri);
+            const label = t.formatLabel(type?.data?.label, typeIri, model.language);
             return (
                 <React.Fragment key={typeIri}>
                     {index === 0 ? null : ', '}
@@ -211,11 +202,10 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                             </WithFetchStatus>
                         </div>
                     </div>
-                    {pinnedProperties.length > 0 ? (
+                    {hasPinnedProperties(data, pinnedProperties) ? (
                         <div className={`${CLASS_NAME}__pinned-props`}>
-                            <PropertyList properties={pinnedProperties}
-                                locale={model.locale}
-                                translation={t}
+                            <PropertyList data={data}
+                                shouldInclude={iri => isPinnedProperty(iri, pinnedProperties)}
                             />
                         </div>
                     ) : null}
@@ -230,10 +220,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                     ) : null}
                     <div className={`${CLASS_NAME}__dropdown-content`}>
                         {renderIri()}
-                        <PropertyList properties={propertyList}
-                            locale={model.locale}
-                            translation={t}
-                        />
+                        <PropertyList data={data} />
                         {editor.inAuthoringMode ? <>
                             <hr className={`${CLASS_NAME}__hr`}
                                 data-reactodia-no-export='true'
@@ -333,16 +320,14 @@ interface StandardTemplateGroupItemProps extends TemplateProps {
 }
 
 function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
-    const {
-        data, target, canvas,
-        workspace: {model, editor, translation: t, ungroupSome, getElementTypeStyle},
-    } = props;
+    const {data, target, canvas, workspace} = props;
+    const {model, editor, translation: t, ungroupSome, getElementTypeStyle} = workspace;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
-    const label = formatEntityLabel(data, model.locale);
-    const iri = model.locale.formatIri(data.id);
-    const typesLabel = formatEntityTypes(data, model.locale, t);
+    const label = formatEntityLabel(data, model, t);
+    const iri = t.formatIri(data.id);
+    const typesLabel = formatEntityTypes(data, workspace);
     const title = t.format('standard_template.group_item.title', {
         entity: label,
         entityIri: iri,
@@ -382,26 +367,45 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     );
 }
 
-function formatEntityLabel(data: ElementModel, locale: DataGraphLocaleFormatter): string {
+function isPinnedProperty(iri: PropertyTypeIri, pinned: PinnedProperties): boolean {
+    return Boolean(
+        Object.prototype.hasOwnProperty.call(pinned, iri) &&
+        pinned[iri]
+    );
+}
+
+function hasPinnedProperties(data: ElementModel, pinned: PinnedProperties): boolean {
+    for (const iri in data.properties) {
+        if (Object.prototype.hasOwnProperty.call(data.properties, iri)) {
+            if (isPinnedProperty(iri as PropertyTypeIri, pinned)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function formatEntityLabel(data: ElementModel, model: DataDiagramModel, t: Translation): string {
     const foafName = Object.prototype.hasOwnProperty.call(data.properties, FOAF_NAME)
         ? data.properties[FOAF_NAME] : undefined;
     if (foafName) {
         const literals = foafName.filter((v): v is Rdf.Literal => v.termType === 'Literal');
         if (literals.length > 0) {
-            return locale.formatLabel(literals, data.id);
+            return t.formatLabel(literals, data.id, model.language);
         }
     }
-    return locale.formatLabel(data.label, data.id);
+    return t.formatLabel(data.label, data.id, model.language);
 }
 
 function formatEntityTypes(
     data: ElementModel,
-    locale: DataGraphLocaleFormatter,
-    t: Translation
+    workspace: WorkspaceContext
 ): string {
-    return data.types.length > 0
-        ? locale.formatElementTypes(data.types).join(', ')
-        : t.text('standard_template.default_type');
+    const {translation: t} = workspace;
+    if (data.types.length === 0) {
+        return t.text('standard_template.default_type');
+    }
+    return formatEntityTypeList(data, workspace);
 }
 
 function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
@@ -422,29 +426,47 @@ function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState)
 }
 
 function PropertyList(props: {
-    properties: ReadonlyArray<FormattedProperty>;
-    locale: DataGraphLocaleFormatter;
-    translation: Translation;
+    data: ElementModel;
+    shouldInclude?: (iri: PropertyTypeIri) => boolean;
 }) {
-    const {properties, locale, translation: t} = props;
+    const {data, shouldInclude} = props;
+    const {model, translation: t} = useWorkspace();
 
-    if (properties.length === 0) {
+    let propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    if (shouldInclude) {
+        propertyIris = propertyIris.filter(shouldInclude);
+    }
+
+    useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
+
+    if (propertyIris.length === 0) {
         return <div>{t.text('standard_template.no_properties')}</div>;
     }
+
+    const properties = propertyIris.map(iri => {
+        const property = model.getPropertyType(iri);
+        const selectedValues = t.selectValues(data.properties[iri], model.language);
+        return {
+            iri,
+            label: t.formatLabel(property?.data?.label, iri, model.language),
+            values: selectedValues.length === 0 ? data.properties[iri] : selectedValues,
+        };
+    });
+    properties.sort((a, b) => a.label.localeCompare(b.label));
 
     return (
         <div role='list'
             className={`${CLASS_NAME}__properties`}>
-            {properties.map(({propertyId, label, values}) => {
+            {properties.map(({iri, label, values}) => {
                 return (
-                    <div key={propertyId}
+                    <div key={iri}
                         role='listitem'
                         className={`${CLASS_NAME}__properties-row`}>
-                        <WithFetchStatus type='propertyType' target={propertyId}>
+                        <WithFetchStatus type='propertyType' target={iri}>
                             <div className={`${CLASS_NAME}__properties-key`}
                                 title={t.format('standard_template.property.title', {
                                     property: label,
-                                    propertyIri: locale.formatIri(propertyId),
+                                    propertyIri: t.formatIri(iri),
                                 })}>
                                 {label}
                             </div>

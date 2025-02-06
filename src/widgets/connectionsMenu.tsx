@@ -605,7 +605,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         if (objects && panel === 'objects') {
             const {linkType, direction} = objects.chunk;
             const {label} = model.getLinkType(linkType.id)?.data ?? linkType;
-            const localizedText = model.locale.formatLabel(label, linkType.id);
+            const localizedText = t.formatLabel(label, linkType.id, model.language);
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
                 <a className={`${CLASS_NAME}__breadcrumbs-link`}
@@ -870,17 +870,17 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     }
 
     private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {workspace: {model}} = this.props;
-        const aText = model.locale.formatLabel(a.label, a.id);
-        const bText = model.locale.formatLabel(b.label, b.id);
+        const {workspace: {model, translation: t}} = this.props;
+        const aText = t.formatLabel(a.label, a.id, model.language);
+        const bText = t.formatLabel(b.label, b.id, model.language);
         return aText.localeCompare(bText);
     };
 
     private compareLinksByWeight = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {workspace: {model}, suggestions} = this.props;
+        const {workspace: {model, translation: t}, suggestions} = this.props;
         const {scores} = suggestions;
-        const aText = model.locale.formatLabel(a.label, a.id);
-        const bText = model.locale.formatLabel(b.label, b.id);
+        const aText = t.formatLabel(a.label, a.id, model.language);
+        const bText = t.formatLabel(b.label, b.id, model.language);
 
         const aWeight = scores.has(a.id) ? scores.get(a.id)!.score : 0;
         const bWeight = scores.has(b.id) ? scores.get(b.id)!.score : 0;
@@ -893,11 +893,11 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
     };
 
     private getLinks() {
-        const {workspace: {model}, data, filterKey} = this.props;
+        const {workspace: {model, translation: t}, data, filterKey} = this.props;
         return (data.links || [])
             .map(link => model.getLinkType(link.id)?.data ?? link)
             .filter(link => {
-                const text = model.locale.formatLabel(link.label, link.id).toLowerCase();
+                const text = t.formatLabel(link.label, link.id, model.language).toLowerCase();
                 return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
             })
             .sort(this.compareLinks);
@@ -1036,8 +1036,8 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
             link, filterKey, direction, count, probability = 0,
             workspace: {model, translation: t},
         } = this.props;
-        const relation = model.locale.formatLabel(link.label, link.id);
-        const relationIri = model.locale.formatIri(link.id);
+        const relation = t.formatLabel(link.label, link.id, model.language);
+        const relationIri = t.formatIri(link.id);
         const probabilityPercent = Math.round(probability * 100);
         const textLine = highlightSubstring(
             relation + (probabilityPercent > 0 ? ` (${probabilityPercent}%)` : ''),
@@ -1163,14 +1163,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     };
 
     private getFilteredObjects(): ReadonlyArray<ElementOnDiagram> {
-        const {workspace: {model}, data, filterKey} = this.props;
+        const {workspace: {model, translation: t}, data, filterKey} = this.props;
         if (!filterKey) {
             return data.elements;
         }
         const loweredFilterKey = filterKey.toLowerCase();
         return data.elements.filter(element => {
-            const text = model.locale.formatLabel(
-                element.model.label, element.model.id
+            const text = t.formatLabel(
+                element.model.label,
+                element.model.id,
+                model.language
             ).toLowerCase();
             return text && text.indexOf(loweredFilterKey) >= 0;
         });

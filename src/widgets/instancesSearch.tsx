@@ -388,9 +388,10 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
 
         if (criteria.elementType) {
             const elementTypeInfo = model.getElementType(criteria.elementType);
-            const elementTypeLabel = model.locale.formatLabel(
+            const elementTypeLabel = t.formatLabel(
                 elementTypeInfo?.data?.label,
-                criteria.elementType
+                criteria.elementType,
+                model.language
             );
             criterions.push(
                 <div key='hasType' className={`${CLASS_NAME}__criterion`}>
@@ -417,7 +418,11 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             let linkTypeLabel: string | undefined;
             if (criteria.refElementLink) {
                 const linkTypeData = model.getLinkType(criteria.refElementLink);
-                linkTypeLabel = model.locale.formatLabel(linkTypeData?.data?.label, criteria.refElementLink);
+                linkTypeLabel = t.formatLabel(
+                    linkTypeData?.data?.label,
+                    criteria.refElementLink,
+                    model.language
+                );
             }
 
             const entity = <InlineEntity target={refElementData} />;

@@ -5,6 +5,7 @@ import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { Translation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
@@ -355,7 +356,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.refreshOperation = cancellation;
 
         this.setState((state, props) => {
-            const {workspace: {model, editor}} = props;
+            const {workspace: {model, editor, translation: t}} = props;
             const classTree = state.fetchedGraph?.classTree;
             if (!classTree) {
                 return {refreshingState: 'none'};
@@ -371,7 +372,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 }
             }
 
-            const roots = createRoots(classTree, model);
+            const roots = createRoots(classTree, model, t);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     };
@@ -514,7 +515,8 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
 function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
-    model: DataDiagramModel
+    model: DataDiagramModel,
+    t: Translation
 ): TreeNode[] {
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];
@@ -522,7 +524,7 @@ function createRoots(
             nodes.push({
                 iri: item.id,
                 data: item,
-                label: model.locale.formatLabel(item.label, item.id),
+                label: t.formatLabel(item.label, item.id, model.language),
                 derived: mapChildren(item.children),
             });
         }

@@ -144,7 +144,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
     }
 
     private renderElementValidations() {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, translation: t}} = this.props;
         const {validation} = this.state;
         if (!validation) {
             return null;
@@ -152,7 +152,11 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         const title = validation.items.map(item => {
             if (item.propertyType) {
                 const propertyType = model.getPropertyType(item.propertyType);
-                const source = model.locale.formatLabel(propertyType?.data?.label, item.propertyType);
+                const source = t.formatLabel(
+                    propertyType?.data?.label,
+                    item.propertyType,
+                    model.language
+                );
                 return `${source}: ${item.message}`;
             } else {
                 return item.message;

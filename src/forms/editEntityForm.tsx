@@ -38,8 +38,8 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     ) {
         const {model, translation: t} = this.context;
         const propertyType = model.getPropertyType(key);
-        const property = model.locale.formatLabel(propertyType?.data?.label, key);
-        const propertyIri = model.locale.formatIri(key);
+        const property = t.formatLabel(propertyType?.data?.label, key, model.language);
+        const propertyIri = t.formatIri(key);
         return (
             <div key={key} className={`${FORM_CLASS}__row`}>
                 <label
@@ -80,15 +80,20 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
     private renderType() {
         const {model, translation: t} = this.context;
         const {elementModel} = this.state;
-        const label = model.locale.formatElementTypes(elementModel.types).join(', ');
         return (
             <label>
                 {t.text('visual_authoring.edit_entity.type.label')}
-                <input className='reactodia-form-control'
-                    name='reactodia-edit-entity-type'
-                    value={label}
-                    disabled={true}
-                />
+                {elementModel.types.map(type => (
+                    <input key={type}
+                        className='reactodia-form-control'
+                        name='reactodia-edit-entity-type'
+                        title={type}
+                        value={t.formatLabel(
+                            model.getElementType(type)?.data?.label, type, model.language
+                        )}
+                        disabled={true}
+                    />
+                ))}
             </label>
         );
     }
@@ -133,7 +138,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
 
     private renderLabel() {
         const {model, translation: t} = this.context;
-        const label = model.locale.selectLabel(this.state.elementModel.label);
+        const label = t.selectLabel(this.state.elementModel.label, model.language);
         const text = label ? label.value : '';
         return (
             <label>

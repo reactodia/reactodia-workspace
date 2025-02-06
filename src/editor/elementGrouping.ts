@@ -15,7 +15,7 @@ export async function groupEntitiesAnimated(
     canvas: CanvasApi,
     workspace: WorkspaceContext
 ): Promise<EntityGroup> {
-    const {model} = workspace;
+    const {model, translation: t} = workspace;
     const batch = model.history.startBatch(
         TranslatedText.text('workspace.group_entities.command')
     );
@@ -42,8 +42,8 @@ export async function groupEntitiesAnimated(
     batch.history.registerToUndo(capturedGeometry);
 
     const sortedEntities = [...elements].sort((a, b) => {
-        const aLabel = model.locale.formatLabel(a.data.label, a.data.id);
-        const bLabel = model.locale.formatLabel(b.data.label, b.data.id);
+        const aLabel = t.formatLabel(a.data.label, a.data.id, model.language);
+        const bLabel = t.formatLabel(b.data.label, b.data.id, model.language);
         return aLabel.localeCompare(bLabel);
     });
 

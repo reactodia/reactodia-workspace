@@ -87,6 +87,22 @@ export interface Translation {
     ): Rdf.Literal | undefined;
 
     /**
+     * Selects a subset of RDF values for the target language.
+     *
+     * The value is included if matches at least one criteria:
+     *  - is a named node,
+     *  - is a literal without language,
+     *  - is a literal with language equal to the target language.
+     *
+     * Language code is specified as lowercase [BCP47](https://www.rfc-editor.org/rfc/rfc5646)
+     * string (examples: `en`, `en-gb`, etc).
+     */
+    selectValues(
+        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>,
+        language: string
+    ): Array<Rdf.NamedNode | Rdf.Literal>;
+
+    /**
      * Same as {@link selectLabel selectLabel()} but uses local part of
      * the `fallbackIri` as a fallback to display an entity referred by IRI
      * even if there is no suitable label to use.
@@ -116,26 +132,6 @@ export interface Translation {
      *   - anonymous element IRIs displayed as `(blank node)`.
      */
     formatIri(iri: string): string;
-
-    /**
-     * Formats an array of element types into a sorted labels
-     * to display in the UI.
-     */
-    formatLabels<Iri extends string>(
-        iris: ReadonlyArray<Iri>,
-        getLabels: (iri: Iri) => ReadonlyArray<Rdf.Literal> | undefined,
-        language: string
-    ): string[];
-
-    /**
-     * Formats a map of property values into a sorted list with labels
-     * to display in the UI.
-     */
-    formatProperties<Iri extends string>(
-        properties: Readonly<Record<Iri, ReadonlyArray<Rdf.NamedNode | Rdf.Literal>>>,
-        getLabels: (iri: Iri) => ReadonlyArray<Rdf.Literal> | undefined,
-        language: string
-    ): TranslatedProperty[];
 }
 
 /**
@@ -154,11 +150,11 @@ export type LabelLanguageSelector =
 /**
  * Property with translated label and filtered values to display in the UI.
  */
-export interface TranslatedProperty {
+export interface TranslatedProperty<Iri> {
     /**
      * Property IRI.
      */
-    readonly iri: string;
+    readonly iri: Iri;
     /**
      * Translated property label.
      */

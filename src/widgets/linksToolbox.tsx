@@ -346,7 +346,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
 function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerProps): State {
     const {
         trackSelected = DEFAULT_TRACK_SELECTED,
-        workspace: {model},
+        workspace: {model, translation: t},
     } = props;
 
     const allLinkTypeIris = new Set<LinkTypeIri>();
@@ -358,7 +358,7 @@ function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerPro
         .map((link): LabelledLinkType => ({
             iri: link.id,
             type: link,
-            label: model.locale.formatLabel(link.data?.label, link.id)
+            label: t.formatLabel(link.data?.label, link.id, model.language)
         }))
         .filter(link => link.label.toLowerCase().indexOf(term.toLowerCase()) >= 0)
         .sort((a, b) => {
