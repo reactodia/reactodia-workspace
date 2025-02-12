@@ -190,7 +190,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const editor = new EditorController({
             model,
-            translation,
             authoringCommands,
             metadataProvider,
             validationProvider,

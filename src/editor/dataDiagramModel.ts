@@ -588,7 +588,6 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
-        const {translation: t} = this;
         const sources = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
             el instanceof EntityElement && el.iri === data.sourceId ||
             el instanceof EntityGroup && el.itemIris.has(data.sourceId)

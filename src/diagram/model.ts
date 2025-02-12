@@ -143,10 +143,6 @@ export class DiagramModel implements GraphStructure {
     protected graphListener = new EventObserver();
 
     /**
-     * Provides i18n strings and templates.
-     */
-    protected readonly translation: Translation;
-    /**
      * Provides the mechanism to undo/redo commands on the diagram.
      */
     readonly history: CommandHistory;
@@ -160,7 +156,6 @@ export class DiagramModel implements GraphStructure {
     /** @hidden */
     constructor(options: DiagramModelOptions) {
         const {history, translation} = options;
-        this.translation = translation;
         this.history = history;
         this.locale = this.createLocale(translation);
     }

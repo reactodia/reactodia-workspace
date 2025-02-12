@@ -24,7 +24,6 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 /** @hidden */
 export interface EditorProps {
     readonly model: DataDiagramModel;
-    readonly translation: Translation;
     readonly authoringCommands: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
     readonly metadataProvider?: MetadataProvider;
     readonly validationProvider?: ValidationProvider;
@@ -69,7 +68,6 @@ export class EditorController {
     readonly events: Events<EditorEvents> = this.source;
 
     private readonly model: DataDiagramModel;
-    private readonly translation: Translation;
     private readonly _authoringCommands:
         Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
 
@@ -84,9 +82,8 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, translation, authoringCommands, metadataProvider, validationProvider} = props;
+        const {model, authoringCommands, metadataProvider, validationProvider} = props;
         this.model = model;
-        this.translation = translation;
         this._authoringCommands = authoringCommands;
         this._metadataProvider = metadataProvider;
         this._validationProvider = validationProvider;
