@@ -3,8 +3,10 @@ import classnames from 'classnames';
 import { saveAs } from 'file-saver';
 
 import { useObservedProperty } from '../coreUtils/hooks';
+import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
+import type { Command } from '../diagram/history';
 import { dataURLToBlob } from '../diagram/toSvg';
 
 import { AuthoringState } from '../editor/authoringState';
@@ -164,8 +166,8 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
  * @category Components
  */
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
-    const {className, mode, onSelect, children, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
+    const {className, title, mode, onSelect, children, ...otherProps} = props;
+    const {model, editor, translation: t} = useWorkspace();
     const hasLayoutChanges = useObservedProperty(
         model.history.events,
         'historyChanged',
@@ -178,17 +180,21 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     );
 
     let enabled = true;
+    let defaultTitle: string | undefined;
     if (mode === 'layout') {
         enabled = hasLayoutChanges && !canPersistChanges;
+        defaultTitle = t.text('toolbar_action.save_layout.title');
     } else if (mode === 'authoring') {
         enabled = canPersistChanges;
+        defaultTitle = t.text('toolbar_action.save_authoring.title');
     }
 
     return (
         <DropdownMenuItem {...otherProps}
             className={classnames(className, `${CLASS_NAME}__save`)}
             disabled={!enabled}
-            onSelect={onSelect}>
+            onSelect={onSelect}
+            title={title ?? defaultTitle}>
             {children}
         </DropdownMenuItem>
     );
@@ -210,17 +216,19 @@ export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
  */
 export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
+    const {model, editor, translation: t} = useWorkspace();
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__clear-all`)}
-            title={title ?? 'Remove all elements and links from the diagram'}
+            title={title ?? t.text('toolbar_action.clear_all.title')}
             onSelect={() => {
-                const batch = model.history.startBatch('Clear all');
+                const batch = model.history.startBatch(
+                    TranslatedText.text('toolbar_action.clear_all.command')
+                );
                 editor.removeItems([...model.elements]);
                 batch.store();
             }}>
-            Clear All
+            {t.text('toolbar_action.clear_all.label')}
         </ToolbarAction>
     );
 }
@@ -266,11 +274,12 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
         className, title, kind, fileName = 'diagram', rasterOptions, ...otherProps
     } = props;
     const {canvas} = useCanvas();
+    const t = useTranslation();
     if (kind === 'exportRaster') {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__export-image`)}
-                title={title ?? 'Export the diagram as a PNG image'}
+                title={title ?? t.text('toolbar_action.export_raster.title')}
                 onSelect={() => {
                     const exportOptions: ExportRasterOptions = rasterOptions ?? {
                         backgroundColor: 'white',
@@ -280,28 +289,28 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         saveAs(blob, `${fileName}.png`);
                     });
                 }}>
-                Export as PNG
+                {t.text('toolbar_action.export_raster.label')}
             </ToolbarAction>
         );
     } else if (kind === 'exportSvg') {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__export-image`)}
-                title={title ?? 'Export the diagram as an SVG image'}
+                title={title ?? t.text('toolbar_action.export_svg.title')}
                 onSelect={() => {
                     canvas.exportSvg({addXmlHeader: true}).then(svg => {
                         const blob = new Blob([svg], {type: 'image/svg+xml'});
                         saveAs(blob, `${fileName}.svg`);
                     });
                 }}>
-                Export as SVG
+                {t.text('toolbar_action.export_svg.label')}
             </ToolbarAction>
         );
     } else if (kind === 'print') {
         return (
             <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__print`)}
-                title={title ?? 'Print the diagram'}
+                title={title ?? t.text('toolbar_action.export_print.title')}
                 onSelect={() => {
                     const printWindow = window.open('', undefined, 'width=1280,height=720')!;
                     canvas.exportSvg().then(svg => {
@@ -310,7 +319,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         printWindow.print();
                     });
                 }}>
-                Print
+                {t.text('toolbar_action.export_print.label')}
             </ToolbarAction>
         );
     } else {
@@ -333,6 +342,7 @@ export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'd
 export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
     const {className, title, ...otherProps} = props;
     const {model: {history}} = useCanvas();
+    const t = useTranslation();
     const insideDropdown = useInsideDropdown();
     const undoCommand = useObservedProperty(
         history.events,
@@ -343,17 +353,18 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
                 ? undefined : undoStack[undoStack.length - 1];
         }
     );
+    const commandTitle = !title && undoCommand ? resolveCommandTitle(undoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__undo`)}
             disabled={!undoCommand}
             title={title ?? (
-                undoCommand && undoCommand.title
-                    ? `Undo: ${undoCommand.title}`
-                    : 'Undo last command'
+                commandTitle === undefined
+                    ? t.text('toolbar_action.undo.title')
+                    : t.text('toolbar_action.undo.title_named', {command: commandTitle})
             )}
             onSelect={() => history.undo()}>
-            {insideDropdown ? 'Undo' : null}
+            {insideDropdown ? t.text('toolbar_action.undo.label') : null}
         </ToolbarAction>
     );
 }
@@ -373,6 +384,7 @@ export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'd
 export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
     const {className, title, ...otherProps} = props;
     const {model: {history}} = useCanvas();
+    const t = useTranslation();
     const insideDropdown = useInsideDropdown();
     const redoCommand = useObservedProperty(
         history.events,
@@ -383,19 +395,28 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
                 ? undefined : redoStack[redoStack.length - 1];
         }
     );
+    const commandTitle = !title && redoCommand ? resolveCommandTitle(redoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__redo`)}
             disabled={!redoCommand}
             title={title ?? (
-                redoCommand && redoCommand.title
-                    ? `Redo: ${redoCommand.title}`
-                    : 'Redo last command'
+                commandTitle === undefined
+                    ? t.text('toolbar_action.redo.title')
+                    : t.text('toolbar_action.redo.title_named', {command: commandTitle}) 
             )}
             onSelect={() => history.redo()}>
-            {insideDropdown ? 'Redo' : null}
+            {insideDropdown ? t.text('toolbar_action.redo.label') : null}
         </ToolbarAction>
     );
+}
+
+function resolveCommandTitle(command: Command, t: Translation): string | undefined {
+    if (typeof command.title === 'string' || typeof command.title === 'undefined') {
+        return command.title;
+    } else {
+        return command.title.resolve(t);
+    }
 }
 
 /**
@@ -414,8 +435,8 @@ export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 
  */
 export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     const {className, title, ...otherProps} = props;
-    const {performLayout} = useWorkspace();
     const {model, canvas} = useCanvas();
+    const {translation: t, performLayout} = useWorkspace();
     const elementCount = useObservedProperty(
         model.events,
         'changeCells',
@@ -424,7 +445,7 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     return (
         <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__layout`)}
-            title={title ?? 'Layout diagram using force-directed algorithm'}
+            title={title ?? t.text('toolbar_action.layout.title')}
             disabled={elementCount === 0}
             onSelect={() => {
                 performLayout({
@@ -432,7 +453,7 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
                     animate: true,
                 });
             }}>
-            Layout
+            {t.text('toolbar_action.layout.label')}
         </ToolbarAction>
     );
 }
@@ -473,6 +494,7 @@ export interface WorkspaceLanguage {
 export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
     const {className, title, languages} = props;
     const {model} = useCanvas();
+    const t = useTranslation();
     const currentLanguage = useObservedProperty(
         model.events,
         'changeLanguage',
@@ -480,7 +502,7 @@ export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
     );
     return languages.length === 0 ? null : (
         <div className={classnames(className, `${CLASS_NAME}__language-selector`)}
-            title={title ?? 'Select language for the data (labels, properties, etc)'}>
+            title={title ?? t.text('toolbar_action.language_selector.title')}>
             <label htmlFor='reactodia-language-selector' />
             <select id='reactodia-language-selector'
                 value={currentLanguage}

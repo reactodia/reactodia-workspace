@@ -1,10 +1,10 @@
 import { moveComparator } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
+import { LabelLanguageSelector, Translation } from '../coreUtils/i18n';
 
-import { LinkTypeIri, isEncodedBlank } from '../data/model';
+import { LinkTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
-import { LabelLanguageSelector } from './customization';
 import {
     Element, ElementEvents, Link, LinkEvents, LinkTypeVisibility,
 } from './elements';
@@ -112,7 +112,8 @@ export interface GraphStructure {
 
 /** @hidden */
 export interface DiagramModelOptions {
-    history: CommandHistory,
+    history: CommandHistory;
+    translation: Translation;
     selectLabelLanguage?: LabelLanguageSelector;
 }
 
@@ -121,8 +122,7 @@ export interface DiagramModelOptions {
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via {@link DiagramModel.history history} and format the content using
- * {@link DiagramModel.locale locale}.
+ * via {@link DiagramModel.history history}.
  *
  * @category Core
  */
@@ -148,18 +148,20 @@ export class DiagramModel implements GraphStructure {
     readonly history: CommandHistory;
     /**
      * Provides the methods to format the content according to the current language.
+     *
+     * @deprecated Use {@link useTranslation} hook instead.
      */
     readonly locale: LocaleFormatter;
 
     /** @hidden */
     constructor(options: DiagramModelOptions) {
-        const {history, selectLabelLanguage = defaultSelectLabel} = options;
+        const {history, translation} = options;
         this.history = history;
-        this.locale = this.createLocale(selectLabelLanguage);
+        this.locale = this.createLocale(translation);
     }
 
-    protected createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {
-        return new DiagramLocaleFormatter(this, selectLabelLanguage);
+    protected createLocale(translation: Translation): this['locale'] {
+        return new DiagramLocaleFormatter(this, translation);
     }
 
     /**
@@ -475,7 +477,7 @@ class RemoveLinkCommand implements Command {
  * Provides utility methods to format the diagram content according
  * to the current language.
  *
- * @category Core
+ * @deprecated Use {@link Translation} interface instead.
  */
 export interface LocaleFormatter {
     /**
@@ -539,7 +541,7 @@ export interface LocaleFormatter {
 export class DiagramLocaleFormatter implements LocaleFormatter {
     constructor(
         protected readonly model: DiagramModel,
-        protected readonly selectLabelLanguage: LabelLanguageSelector
+        protected readonly translation: Translation
     ) {}
 
     selectLabel(
@@ -547,8 +549,7 @@ export class DiagramLocaleFormatter implements LocaleFormatter {
         language?: string
     ): Rdf.Literal | undefined {
         const targetLanguage = language ?? this.model.language;
-        const {selectLabelLanguage} = this;
-        return selectLabelLanguage(labels, targetLanguage);
+        return this.translation.selectLabel(labels, targetLanguage);
     }
 
     formatLabel(
@@ -556,42 +557,11 @@ export class DiagramLocaleFormatter implements LocaleFormatter {
         fallbackIri: string,
         language?: string
     ): string {
-        const label = labels ? this.selectLabel(labels, language) : undefined;
-        return resolveLabel(label, fallbackIri);
+        const targetLanguage = language ?? this.model.language;
+        return this.translation.formatLabel(labels, fallbackIri, targetLanguage);
     }
 
     formatIri(iri: string): string {
-        if (isEncodedBlank(iri)) {
-            return '(blank node)';
-        }
-        return `<${iri}>`;
+        return this.translation.formatIri(iri);
     }
-}
-
-function defaultSelectLabel(
-    texts: ReadonlyArray<Rdf.Literal>,
-    language: string
-): Rdf.Literal | undefined {
-    if (texts.length === 0) { return undefined; }
-    let defaultValue: Rdf.Literal | undefined;
-    let englishValue: Rdf.Literal | undefined;
-    for (const text of texts) {
-        if (text.language === language) {
-            return text;
-        } else if (text.language === '') {
-            defaultValue = text;
-        } else if (text.language === 'en') {
-            englishValue = text;
-        }
-    }
-    return (
-        defaultValue !== undefined ? defaultValue :
-        englishValue !== undefined ? englishValue :
-        texts[0]
-    );
-}
-
-function resolveLabel(label: Rdf.Literal | undefined, fallbackIri: string): string {
-    if (label) { return label.value; }
-    return Rdf.getLocalName(fallbackIri) || fallbackIri;
 }

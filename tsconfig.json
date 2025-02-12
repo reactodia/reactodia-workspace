@@ -1,10 +1,10 @@
 {
-    "extends": "./tsconfig.base.json",
-    "include": [
-        "./examples/**/*.ts",
-        "./examples/**/*.tsx",
-        "./src/**/*.ts",
-        "./src/**/*.tsx",
-        "./typings/typings.d.ts"
-    ]
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "./examples/**/*.ts",
+    "./examples/**/*.tsx",
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./typings/typings.d.ts"
+  ]
 }

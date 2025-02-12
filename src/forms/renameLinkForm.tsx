@@ -16,15 +16,15 @@ export interface RenameLinkFormProps {
 export function RenameLinkForm(props: RenameLinkFormProps) {
     const {link, onFinish} = props;
 
-    const {model, view: {renameLinkProvider}} = useWorkspace();
+    const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
 
     const linkType = model.getLinkType(link.typeId);
     const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
     const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
 
     const defaultLabel = React.useMemo(
-        () => model.locale.formatLabel(linkTypeLabel, link.typeId),
-        [link, linkTypeLabel]
+        () => t.formatLabel(linkTypeLabel, link.typeId, model.language),
+        [link, linkTypeLabel, model.language]
     );
 
     const [customLabel, setCustomLabel] = React.useState(
@@ -42,7 +42,7 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
         <div className={FORM_CLASS}>
             <div className={`${FORM_CLASS}__body`}>
                 <div className={`${FORM_CLASS}__row`}>
-                    <label>Label</label>
+                    <label>{t.text('visual_authoring.rename_link.label.label')}</label>
                     <input className='reactodia-form-control'
                         placeholder={defaultLabel}
                         autoFocus
@@ -53,11 +53,14 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
             </div>
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
+                    title={t.text('visual_authoring.dialog.apply.title')}
                     onClick={onApply}>
-                    Apply
+                    {t.text('visual_authoring.dialog.apply.label')}
                 </button>
-                <button className='reactodia-btn reactodia-btn-default' onClick={onFinish}>
-                    Cancel
+                <button className='reactodia-btn reactodia-btn-default'
+                    title={t.text('visual_authoring.dialog.cancel.title')}
+                    onClick={onFinish}>
+                    {t.text('visual_authoring.dialog.cancel.label')}
                 </button>
             </div>
         </div>

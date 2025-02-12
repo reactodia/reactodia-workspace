@@ -1,5 +1,6 @@
 import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
+import { Translation, TranslatedText } from '../coreUtils/i18n';
 
 import {
     ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeModel,
@@ -10,7 +11,7 @@ import { DataProvider } from '../data/provider';
 import * as Rdf from '../data/rdf/rdfModel';
 
 import { setLinkState } from '../diagram/commands';
-import { LabelLanguageSelector, FormattedProperty } from '../diagram/customization';
+import { FormattedProperty } from '../diagram/customization';
 import { Link, LinkTypeVisibility } from '../diagram/elements';
 import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
@@ -142,8 +143,7 @@ export interface DataDiagramModelOptions extends DiagramModelOptions {}
  * maintains selection and the current language to display the data.
  *
  * Additionally, the diagram model provides the means to undo/redo commands
- * via {@link DataDiagramModel.history history} and format the content using
- * {@link DataDiagramModel.locale locale}.
+ * via {@link DataDiagramModel.history history}.
  *
  * @category Core
  */
@@ -164,8 +164,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         this.subscribeGraph();
     }
 
-    protected override createLocale(selectLabelLanguage: LabelLanguageSelector): this['locale'] {
-        return new ExtendedLocaleFormatter(this, selectLabelLanguage);
+    protected override createLocale(translation: Translation): this['locale'] {
+        return new ExtendedLocaleFormatter(this, translation);
     }
 
     private get extendedSource(): EventSource<DataDiagramModelEvents> {
@@ -444,7 +444,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             linkTypeVisibility,
         } = deserializeDiagram(diagram, {preloadedElements, markLinksAsLayoutOnly});
 
-        const batch = this.history.startBatch('Import layout');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.import_layout.command')
+        );
 
         for (const [linkTypeIri, visibility] of linkTypeVisibility) {
             this.setLinkVisibility(linkTypeIri, visibility);
@@ -559,7 +561,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         let allowToCreate: boolean;
         const cancel = () => { allowToCreate = false; };
 
-        const batch = this.history.startBatch('Create loaded links');
+        const batch = this.history.startBatch();
         for (const linkModel of links) {
             // TODO: postpone creating link type until first render
             // the same way as with element types
@@ -594,7 +596,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             el instanceof EntityElement && el.iri === data.targetId ||
             el instanceof EntityGroup && el.itemIris.has(data.targetId)
         );
-        const batch = this.history.startBatch('Create links');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.create_links.command')
+        );
         const links: Array<RelationLink | RelationGroup> = [];
         for (const source of sources) {
             for (const target of targets) {
@@ -739,7 +743,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * @see {@link ungroupSome}
      */
     group(entities: ReadonlyArray<EntityElement>): EntityGroup {
-        const batch = this.history.startBatch('Group entities');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.group_entities.command')
+        );
 
         const entityIds = new Set<ElementIri>();
         for (const entity of entities) {
@@ -801,7 +807,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * @see {@link ungroupSome}
      */
     ungroupAll(groups: ReadonlyArray<EntityGroup>): EntityElement[] {
-        const batch = this.history.startBatch('Ungroup entities');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.ungroup_entities.command')
+        );
 
         const ungrouped: EntityElement[] = [];
         const links = new Set<Link>();
@@ -853,7 +861,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             return this.ungroupAll([group]);
         }
 
-        const batch = this.history.startBatch('Ungroup entities');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.ungroup_entities.command')
+        );
 
         const links = new Set<Link>();
         for (const link of this.getElementLinks(group)) {
@@ -899,7 +909,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     regroupLinks(links: ReadonlyArray<RelationLink | RelationGroup>): void {
-        const batch = this.history.startBatch('Regroup relations');
+        const batch = this.history.startBatch(
+            TranslatedText.text('data_diagram_model.regroup_relations.command')
+        );
 
         for (const link of links) {
             this.removeLink(link.id);
@@ -972,21 +984,21 @@ export interface DataGraphLocaleFormatter extends LocaleFormatter {
 class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGraphLocaleFormatter {
     declare protected model: DataDiagramModel;
 
-    constructor(
-        model: DataDiagramModel,
-        selectLabelLanguage: LabelLanguageSelector
-    ) {
-        super(model, selectLabelLanguage);
+    constructor(model: DataDiagramModel, translation: Translation) {
+        super(model, translation);
     }
 
     formatElementTypes(
         types: ReadonlyArray<ElementTypeIri>,
         language?: string
     ): string[] {
-        return types.map(typeId => {
-            const type = this.model.getElementType(typeId);
-            return this.formatLabel(type?.data?.label, typeId, language);
-        }).sort();
+        const targetLanguage = language ?? this.model.language;
+        const labelList = types.map(iri => {
+            const labels = this.model.getElementType(iri)?.data?.label;
+            return this.translation.formatLabel(labels, iri, targetLanguage);
+        });
+        labelList.sort();
+        return labelList;
     }
 
     formatPropertyList(
@@ -995,17 +1007,13 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
     ): FormattedProperty[] {
         const targetLanguage = language ?? this.model.language;
         const propertyIris = Object.keys(properties) as PropertyTypeIri[];
-        const propertyList = propertyIris.map((key): FormattedProperty => {
-            const property = this.model.getPropertyType(key);
-            const label = this.formatLabel(property?.data?.label, key);
-            const allValues = properties[key];
-            const localizedValues = allValues.filter(v =>
-                v.termType === 'NamedNode' ||
-                v.language === '' ||
-                v.language === targetLanguage
-            );
+        const propertyList = propertyIris.map((propertyId): FormattedProperty => {
+            const labels = this.model.getPropertyType(propertyId)?.data?.label;
+            const label = this.formatLabel(labels, propertyId, targetLanguage);
+            const allValues = properties[propertyId];
+            const localizedValues = this.translation.selectValues(allValues, targetLanguage);
             return {
-                propertyId: key,
+                propertyId,
                 label,
                 values: localizedValues.length === 0 ? allValues : localizedValues,
             };
@@ -1023,9 +1031,10 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
  * @see {@link DataDiagramModel.requestElementData}
  */
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
-    return Command.effect('Fetch element data', () => {
-        model.requestElementData(elementIris);
-    });
+    return Command.effect(
+        TranslatedText.text('data_diagram_model.request_entities.command'),
+        () => model.requestElementData(elementIris)
+    );
 }
 
 /**
@@ -1039,7 +1048,8 @@ export function restoreLinksBetweenElements(
     model: DataDiagramModel,
     options: RequestLinksOptions = {}
 ): Command {
-    return Command.effect('Restore links between elements', () => {
-        model.requestLinks(options);
-    });
+    return Command.effect(
+        TranslatedText.text('data_diagram_model.request_relations.command'),
+        () => model.requestLinks(options)
+    );
 }

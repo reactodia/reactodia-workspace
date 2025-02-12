@@ -12,8 +12,9 @@ export function InlineEntity(props: {
     target: ElementModel;
 }) {
     const {target} = props;
-    const {model, getElementTypeStyle} = useWorkspace();
-    const label = model.locale.formatLabel(target.label, target.id);
+    const workspace = useWorkspace();
+    const {model, translation: t, getElementTypeStyle} = workspace;
+    const label = t.formatLabel(target.label, target.id, model.language);
     const {color} = getElementTypeStyle(target.types);
     const style = {
         '--reactodia-inline-entity-color': color,
@@ -21,7 +22,7 @@ export function InlineEntity(props: {
     return (
         <span className={CLASS_NAME}
             style={style}
-            title={formatEntityTitle(target, model)}>
+            title={formatEntityTitle(target, workspace)}>
             <span className={`${CLASS_NAME}__label`}>
                 {label}
             </span>

@@ -5,6 +5,7 @@ import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
 import { EventObserver, EventTrigger } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { Translation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
@@ -90,11 +91,6 @@ export function ClassTree(props: ClassTreeProps) {
         'changeValue',
         () => normalizeSearchText(effectiveSearchStore.value)
     );
-    const requireSubmit = useObservedProperty(
-        effectiveSearchStore.events,
-        'changeMode',
-        () => effectiveSearchStore.mode === 'explicit'
-    );
     const workspace = useWorkspace();
     return (
         <ClassTreeInner {...props}
@@ -102,7 +98,6 @@ export function ClassTree(props: ClassTreeProps) {
             searchStore={effectiveSearchStore}
             normalizedTerm={normalizedTerm}
             minSearchTermLength={minSearchTermLength}
-            requireSubmit={requireSubmit}
             workspace={workspace}
         />
     );
@@ -113,7 +108,6 @@ interface ClassTreeInnerProps extends ClassTreeProps {
     searchStore: SearchInputStore;
     normalizedTerm: string;
     minSearchTermLength: number;
-    requireSubmit: boolean;
     workspace: WorkspaceContext;
 }
 
@@ -165,8 +159,8 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
     render() {
         const {
-            className, isControlled, searchStore, normalizedTerm, minSearchTermLength, requireSubmit,
-            workspace: {editor},
+            className, isControlled, searchStore, normalizedTerm, minSearchTermLength,
+            workspace: {editor, translation: t},
         } = this.props;
         const {
             fetchedGraph, refreshingState, appliedSearchText, roots, filteredRoots, selectedNode,
@@ -199,13 +193,13 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                                     name='reactodia-class-tree-only-constructible'
                                     checked={showOnlyConstructible}
                                     onChange={this.onShowOnlyCreatableChange}
-                                /> Show only constructible
+                                /> {t.text('search_element_types.show_only_creatable')}
                             </label>
                         ) : null}
                     </div>
                 </div>
                 <ProgressBar state={refreshingState}
-                    title='Loading element type tree'
+                    title={t.text('search_element_types.refresh_progress.title')}
                 />
                 {fetchedGraph?.classTree ? (
                     <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
@@ -223,8 +217,11 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                                 <NoSearchResults className={`${CLASS_NAME}__no-results`}
                                     hasQuery={filteredRoots !== roots}
                                     minSearchTermLength={minSearchTermLength}
-                                    requireSubmit={requireSubmit}
-                                    message={roots.length === 0 ? 'No classes found.' : undefined}
+                                    message={
+                                        roots.length === 0
+                                            ? t.text('search_element_types.no_results')
+                                            : undefined
+                                    }
                                 />
                             ) : null
                         }
@@ -359,7 +356,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.refreshOperation = cancellation;
 
         this.setState((state, props) => {
-            const {workspace: {model, editor}} = props;
+            const {workspace: {model, editor, translation: t}} = props;
             const classTree = state.fetchedGraph?.classTree;
             if (!classTree) {
                 return {refreshingState: 'none'};
@@ -375,7 +372,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                 }
             }
 
-            const roots = createRoots(classTree, model);
+            const roots = createRoots(classTree, model, t);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
         });
     };
@@ -518,7 +515,8 @@ function constructTree(graph: ElementTypeGraph): ClassTreeItem[] {
 
 function createRoots(
     classTree: ReadonlyArray<ClassTreeItem>,
-    model: DataDiagramModel
+    model: DataDiagramModel,
+    t: Translation
 ): TreeNode[] {
     const mapChildren = (children: Iterable<ClassTreeItem>): TreeNode[] => {
         const nodes: TreeNode[] = [];
@@ -526,7 +524,7 @@ function createRoots(
             nodes.push({
                 iri: item.id,
                 data: item,
-                label: model.locale.formatLabel(item.label, item.id),
+                label: t.formatLabel(item.label, item.id, model.language),
                 derived: mapChildren(item.children),
             });
         }

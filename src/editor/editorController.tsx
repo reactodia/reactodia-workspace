@@ -1,4 +1,5 @@
 import { Events, EventSource, EventObserver, EventTrigger, PropertyChange } from '../coreUtils/events';
+import { Translation, TranslatedText } from '../coreUtils/i18n';
 
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
@@ -178,7 +179,7 @@ export class EditorController {
 
     private updateAuthoringState(state: AuthoringState): Command {
         const previous = this._authoringState;
-        return Command.create('Create or delete entities and links', () => {
+        return Command.create(TranslatedText.text('editor_controller.set_authoring_state.command'), () => {
             this._authoringState = state;
             this.source.trigger('changeAuthoringState', {source: this, previous});
             return this.updateAuthoringState(previous);
@@ -279,7 +280,10 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     removeItems(items: ReadonlyArray<Element | Link>) {
-        const batch = this.model.history.startBatch();
+        const {model} = this;
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.remove_items.command')
+        );
         const entitiesToDiscard = new Set<ElementIri>();
 
         for (const item of items) {
@@ -323,9 +327,12 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createEntity(data: ElementModel, options: { temporary?: boolean } = {}): EntityElement {
-        const batch = this.model.history.startBatch('Create new entity');
+        const {model} = this;
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.entity_add.command')
+        );
 
-        const element = this.model.createElement(data);
+        const element = model.createElement(data);
         element.setExpanded(true);
 
         if (options.temporary) {
@@ -351,18 +358,22 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     changeEntity(targetIri: ElementIri, newData: ElementModel): void {
-        const elements = findEntities(this.model, targetIri);
+        const {model} = this;
+
+        const elements = findEntities(model, targetIri);
         const oldData = findAnyEntityData(elements, targetIri);
         if (!oldData) {
             return;
         }
 
-        const batch = this.model.history.startBatch('Edit entity');
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.entity_change.command')
+        );
 
         const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
         const event = newState.elements.get(targetIri) || newState.elements.get(newData.id);
-        this.model.history.execute(changeEntityData(this.model, targetIri, event!.data));
+        model.history.execute(changeEntityData(model, targetIri, event!.data));
         this.setAuthoringState(newState);
 
         batch.store();
@@ -377,19 +388,23 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     deleteEntity(elementIri: ElementIri): void {
-        const state = this.authoringState;
-        const elements = findEntities(this.model, elementIri);
+        const {model} = this;
+
+        const elements = findEntities(model, elementIri);
         const oldData = findAnyEntityData(elements, elementIri);
         if (!oldData) {
             return;
         }
 
-        const batch = this.model.history.startBatch('Delete entity');
+        const state = this.authoringState;
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.entity_delete.command')
+        );
 
         // Remove new connected links
         for (const element of elements) {
             this.removeRelationsFromLinks(
-                this.model.getElementLinks(element),
+                model.getElementLinks(element),
                 relation => AuthoringState.isAddedRelation(state, relation)
             );
         }
@@ -411,19 +426,23 @@ export class EditorController {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     createRelation(base: RelationLink, options: { temporary?: boolean } = {}): RelationLink {
-        const existingLink = this.model.findLink(base.typeId, base.sourceId, base.targetId);
+        const {model} = this;
+
+        const existingLink = model.findLink(base.typeId, base.sourceId, base.targetId);
         if (existingLink) {
             throw Error('The relation with same (source IRI, target IRI, type) already exists');
         }
 
-        const batch = this.model.history.startBatch('Create new link');
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.relation_add.command')
+        );
 
-        this.model.addLink(base);
+        model.addLink(base);
         if (!options.temporary) {
             this.model.createLinks(base.data);
         }
 
-        if (hasRelationOnDiagram(this.model, base.data)) {
+        if (hasRelationOnDiagram(model, base.data)) {
             if (options.temporary) {
                 this.setTemporaryState(
                     TemporaryState.addRelation(this.temporaryState, base.data)
@@ -447,10 +466,14 @@ export class EditorController {
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
-    changeRelation(oldData: LinkModel, newData: LinkModel) {
-        const batch = this.model.history.startBatch('Change link');
+    changeRelation(oldData: LinkModel, newData: LinkModel): void {
+        const {model} = this;
+
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.relation_change.command')
+        );
         if (equalLinks(oldData, newData)) {
-            this.model.history.execute(changeRelationData(this.model, oldData, newData));
+            model.history.execute(changeRelationData(model, oldData, newData));
             this.setAuthoringState(
                 AuthoringState.changeRelation(this._authoringState, oldData, newData)
             );
@@ -461,11 +484,11 @@ export class EditorController {
 
             if (AuthoringState.isAddedRelation(this._authoringState, oldData)) {
                 this.removeRelationsFromLinks(
-                    this.model.links,
+                    model.links,
                     relation => equalLinks(relation, oldData)
                 );
             }
-            this.model.createLinks(newData);
+            model.createLinks(newData);
             this.setAuthoringState(newState);
         }
         batch.store();
@@ -481,10 +504,13 @@ export class EditorController {
         link: RelationLink;
         newSource: EntityElement;
     }): RelationLink {
+        const {model} = this;
         const {link, newSource} = params;
-        const batch = this.model.history.startBatch('Move link to another element');
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.relation_move_source.command')
+        );
         this.changeRelation(link.data, {...link.data, sourceId: newSource.iri});
-        const newLink = this.model.findLink(link.typeId, newSource.id, link.targetId) as RelationLink;
+        const newLink = model.findLink(link.typeId, newSource.id, link.targetId) as RelationLink;
         newLink.setVertices(link.vertices);
         batch.store();
         return newLink;
@@ -500,10 +526,13 @@ export class EditorController {
         link: RelationLink;
         newTarget: EntityElement;
     }): RelationLink {
+        const {model} = this;
         const {link, newTarget} = params;
-        const batch = this.model.history.startBatch('Move link to another element');
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.relation_move_target.command')
+        );
         this.changeRelation(link.data, {...link.data, targetId: newTarget.iri});
-        const newLink = this.model.findLink(link.typeId, link.sourceId, newTarget.id) as RelationLink;
+        const newLink = model.findLink(link.typeId, link.sourceId, newTarget.id) as RelationLink;
         newLink.setVertices(link.vertices);
         batch.store();
         return newLink;
@@ -514,17 +543,20 @@ export class EditorController {
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
-    deleteRelation(model: LinkModel): void {
+    deleteRelation(data: LinkModel): void {
+        const {model} = this;
         const state = this.authoringState;
-        if (AuthoringState.isDeletedRelation(state, model)) {
+        if (AuthoringState.isDeletedRelation(state, data)) {
             return;
         }
-        const batch = this.model.history.startBatch('Delete link');
-        const newState = AuthoringState.deleteRelation(state, model);
-        if (AuthoringState.isAddedRelation(state, model)) {
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.relation_delete.command')
+        );
+        const newState = AuthoringState.deleteRelation(state, data);
+        if (AuthoringState.isAddedRelation(state, data)) {
             this.removeRelationsFromLinks(
-                this.model.links,
-                relation => equalLinks(relation, model)
+                model.links,
+                relation => equalLinks(relation, data)
             );
         }
         this.setAuthoringState(newState);
@@ -596,15 +628,19 @@ export class EditorController {
      *   - changed entities and links have their data reverted back.
      */
     discardChange(event: AuthoringEvent): void {
+        const {model} = this;
+
         const newState = AuthoringState.discard(this._authoringState, event);
         if (newState === this._authoringState) { return; }
 
-        const batch = this.model.history.startBatch('Discard change');
+        const batch = model.history.startBatch(
+            TranslatedText.text('editor_controller.discard_change.command')
+        );
         switch (event.type) {
             case 'entityAdd': {
-                for (const element of findEntities(this.model, event.data.id)) {
+                for (const element of findEntities(model, event.data.id)) {
                     if (element instanceof EntityElement) {
-                        this.model.removeElement(element.id);
+                        model.removeElement(element.id);
                     } else if (element instanceof EntityGroup) {
                         this.discardItemFromGroup(element, event.data.id);
                     }
@@ -612,20 +648,20 @@ export class EditorController {
                 break;
             }
             case 'entityChange': {
-                this.model.history.execute(
-                    changeEntityData(this.model, event.data.id, event.before)
+                model.history.execute(
+                    changeEntityData(model, event.data.id, event.before)
                 );
                 break;
             }
             case 'relationAdd': {
                 this.removeRelationsFromLinks(
-                    this.model.links,
+                    model.links,
                     relation => equalLinks(relation, event.data)
                 );
                 break;
             }
             case 'relationChange': {
-                this.model.history.execute(
+                model.history.execute(
                     changeRelationData(this.model, event.data, event.before)
                 );
                 break;

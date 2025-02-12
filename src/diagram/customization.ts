@@ -8,19 +8,6 @@ import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
 
 /**
- * Selects a single preferred literal for the target language out of several candidates.
- *
- * Language code is specified as lowercase [BCP47](https://www.rfc-editor.org/rfc/rfc5646)
- * string (examples: `en`, `en-gb`, etc).
- *
- * @param labels candidate literal with same or different language codes
- * @param language target language code
- * @returns selected literal or `undefined` if no suitable literal was found
- */
-export type LabelLanguageSelector =
-    (labels: ReadonlyArray<Rdf.Literal>, language: string) => Rdf.Literal | undefined;
-
-/**
  * Property with resolved label to display in the UI.
  */
 export interface FormattedProperty {

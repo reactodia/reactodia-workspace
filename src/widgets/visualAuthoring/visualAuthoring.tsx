@@ -93,7 +93,7 @@ export interface VisualAuthoringCommands {
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
     const {propertyEditor} = props;
-    const {model, view, editor, overlay} = useWorkspace();
+    const {model, view, editor, overlay, translation: t} = useWorkspace();
 
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
@@ -171,7 +171,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 target,
                 dialogType: BuiltinDialogType.editEntity,
                 style: {
-                    caption: 'Edit entity',
+                    caption: t.text('visual_authoring.edit_entity.dialog.caption'),
                 },
                 content,
                 holdSelection: true,
@@ -198,7 +198,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 target,
                 dialogType: BuiltinDialogType.findOrCreateEntity,
                 style: {
-                    caption: 'Establish New Connection',
+                    caption: t.text('visual_authoring.find_or_create.dialog.caption'),
                     minSize: {width: 250, height: 320},
                 },
                 content,
@@ -243,8 +243,8 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 />
             );
             const caption = editor.temporaryState.links.has(link.data)
-                ? 'Establish new relation'
-                : 'Edit relation';
+                ? t.text('visual_authoring.edit_relation.dialog.caption_new')
+                : t.text('visual_authoring.edit_relation.dialog.caption');
             overlay.showDialog({
                 target: link,
                 dialogType: BuiltinDialogType.editRelation,
@@ -266,7 +266,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 style: {
                     defaultSize,
                     resizableBy: 'x',
-                    caption: 'Rename Link',
+                    caption: t.text('visual_authoring.rename_link.dialog.caption'),
                     offset: {x: 25, y: - defaultSize.height / 2},
                     calculatePosition: canvas => {
                         const bounds = canvas.renderingState.getLinkLabelBounds(link);

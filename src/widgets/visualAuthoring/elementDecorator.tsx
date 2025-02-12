@@ -144,7 +144,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
     }
 
     private renderElementValidations() {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, translation: t}} = this.props;
         const {validation} = this.state;
         if (!validation) {
             return null;
@@ -152,7 +152,11 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         const title = validation.items.map(item => {
             if (item.propertyType) {
                 const propertyType = model.getPropertyType(item.propertyType);
-                const source = model.locale.formatLabel(propertyType?.data?.label, item.propertyType);
+                const source = t.formatLabel(
+                    propertyType?.data?.label,
+                    item.propertyType,
+                    model.language
+                );
                 return `${source}: ${item.message}`;
             } else {
                 return item.message;
@@ -163,7 +167,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
     }
 
     private renderElementState() {
-        const {target, workspace: {editor}} = this.props;
+        const {target, workspace: {editor, translation: t}} = this.props;
         const {state} = this.state;
         if (state) {
             let statusText: string;
@@ -171,18 +175,18 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
 
             switch (state.type) {
                 case 'entityAdd': {
-                    statusText = 'New';
-                    title = 'Revert creation of the element';
+                    statusText = t.text('authoring_state.entity_add.label');
+                    title = t.text('authoring_state.entity_add_revert.title');
                     break;
                 }
                 case 'entityChange': {
-                    statusText = 'Change';
-                    title = 'Revert all changes in properties of the element';
+                    statusText = t.text('authoring_state.entity_change.label');
+                    title = t.text('authoring_state.entity_change_revert.title');
                     break;
                 }
                 case 'entityDelete': {
-                    statusText = 'Delete';
-                    title = 'Revert deletion of the element';
+                    statusText = t.text('authoring_state.entity_delete.label');
+                    title = t.text('authoring_state.entity_delete_revert.title');
                     break;
                 }
             }
@@ -197,7 +201,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
                                 <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
                                 [<span className={`${CLASS_NAME}__state-cancel`}
                                     onClick={() => editor.discardChange(state)}
-                                    title={title}>cancel</span>]
+                                    title={title}>{t.text('authoring_state.discard.label')}</span>]
                             </span>
                             {this.renderElementValidations()}
                         </div>

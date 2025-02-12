@@ -1,18 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "es2022",
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "jsx": "react-jsx",
-        "importHelpers": true,
-        "strict": true,
-        "noImplicitAny": true,
-        "allowSyntheticDefaultImports": true,
-        "sourceMap": true
-    },
-    "include": [
-        "./src/**/*.ts",
-        "./src/**/*.tsx",
-        "./typings/typings.d.ts"
-    ]
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "importHelpers": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./typings/typings.d.ts"
+  ]
 }

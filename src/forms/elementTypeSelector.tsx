@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
+import { Translation } from '../coreUtils/i18n';
 
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
 import { ElementModel, ElementTypeIri } from '../data/model';
@@ -112,7 +113,9 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 
     private async fetchPossibleElementTypes() {
-        const {source, workspace: {model, editor: {metadataProvider}}} = this.props;
+        const {
+            source, workspace: {model, editor: {metadataProvider}, translation: t},
+        } = this.props;
         if (!metadataProvider) {
             return;
         }
@@ -135,7 +138,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
             }
         }
         const elementTypes = Array.from(elementTypeSet)
-            .sort(makeElementTypeComparatorByLabel(model));
+            .sort(makeElementTypeComparatorByLabel(model, t));
         this.setState({elementTypes});
     }
 
@@ -204,14 +207,21 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     };
 
     private renderPossibleElementType = (elementType: ElementTypeIri) => {
-        const {workspace: {model}} = this.props;
+        const {workspace: {model, translation: t}} = this.props;
         const type = model.getElementType(elementType);
-        const label = model.locale.formatLabel(type?.data?.label, elementType);
-        return <option key={elementType} value={elementType}>{label}</option>;
+        const label = t.formatLabel(type?.data?.label, elementType, model.language);
+        return (
+            <option key={elementType} value={elementType}>
+                {t.template('visual_authoring.select_entity.entity_type.label', {
+                    type: label,
+                    typeIri: elementType,
+                })}
+            </option>
+        );
     };
 
     private renderElementTypeSelector() {
-        const {elementValue} = this.props;
+        const {elementValue, workspace: {translation: t}} = this.props;
         const {elementTypes, elementTypesState} = this.state;
         const value = elementValue.value.types.length ? elementValue.value.types[0] : '';
         if (elementTypesState !== 'none') {
@@ -223,14 +233,16 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         }
         return (
             <div className={`${FORM_CLASS}__control-row`}>
-                <label>Entity Type</label>
+                <label>{t.text('visual_authoring.select_entity.type.label')}</label>
                 {
                     elementTypes ? (
                         <select className='reactodia-form-control'
                             name='reactodia-element-type-selector-select'
                             value={value}
                             onChange={this.onElementTypeChange}>
-                            <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>Select entity type</option>
+                            <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>
+                                {t.text('visual_authoring.select_entity.type.placeholder')}
+                            </option>
                             {
                                 elementTypes.map(this.renderPossibleElementType)
                             }
@@ -291,7 +303,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 
     render() {
-        const {searchStore} = this.props;
+        const {searchStore, workspace: {translation: t}} = this.props;
         return (
             <div className={classnames(`${FORM_CLASS}__row`, CLASS_NAME)}>
                 <SearchInput store={searchStore}
@@ -307,13 +319,15 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                     searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}
                             role='listbox'
-                            aria-label='Select an existing element to put on a diagram'>
+                            aria-label={t.text('visual_authoring.select_entity.results.aria_label')}>
                             {this.renderExistingElementsList()}
                         </div>
                     ) : (
                         <div>
                             <div className={`${CLASS_NAME}__separator`}>
-                                <i className={`${CLASS_NAME}__separator-text`}>or create new entity</i>
+                                <i className={`${CLASS_NAME}__separator-text`}>
+                                    {t.text('visual_authoring.select_entity.separator.label')}
+                                </i>
                             </div>
                             {this.renderElementTypeSelector()}
                         </div>
@@ -324,20 +338,24 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 }
 
-function makeElementTypeComparatorByLabel(model: DataDiagramModel) {
+function makeElementTypeComparatorByLabel(model: DataDiagramModel, t: Translation) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
         const typeA = model.getElementType(a);
         const typeB = model.getElementType(b);
-        const labelA = model.locale.formatLabel(typeA?.data?.label, a);
-        const labelB = model.locale.formatLabel(typeB?.data?.label, b);
+        const labelA = t.formatLabel(typeA?.data?.label, a, model.language);
+        const labelB = t.formatLabel(typeB?.data?.label, b, model.language);
         return labelA.localeCompare(labelB);
     };
 }
 
 export function validateElementType(
-    element: ElementModel
+    element: ElementModel,
+    workspace: WorkspaceContext
 ): Promise<Pick<ElementValue, 'error' | 'allowChange'>> {
+    const {translation: t} = workspace;
     const isElementTypeSelected = element.types.indexOf(PLACEHOLDER_ELEMENT_TYPE) < 0;
-    const error = !isElementTypeSelected ? 'Required.' : undefined;
+    const error = isElementTypeSelected
+        ? undefined
+        : t.text('visual_authoring.select_entity.validation.error_required');
     return Promise.resolve({error, allowChange: true});
 }

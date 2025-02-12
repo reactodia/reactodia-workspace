@@ -121,7 +121,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
     }
 
     private renderLinkStateLabels() {
-        const {workspace: {model, editor}} = this.props;
+        const {workspace: {model, editor, translation: t}} = this.props;
 
         const rendered: JSX.Element[] = [];
         for (const link of model.links) {
@@ -137,18 +137,18 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
 
                 switch (state.type) {
                     case 'relationAdd': {
-                        statusText = 'New';
-                        title = 'Revert creation of the link';
+                        statusText = t.text('authoring_state.relation_add.label');
+                        title = t.text('authoring_state.relation_add_revert.title');
                         break;
                     }
                     case 'relationChange': {
-                        statusText = 'Change';
-                        title = 'Revert all changes in properties of the link';
+                        statusText = t.text('authoring_state.relation_change.label');
+                        title = t.text('authoring_state.relation_change_revert.title');
                         break;
                     }
                     case 'relationDelete': {
-                        statusText = 'Delete';
-                        title = 'Revert deletion of the link';
+                        statusText = t.text('authoring_state.relation_delete.label');
+                        title = t.text('authoring_state.relation_delete_revert.title');
                         break;
                     }
                 }
@@ -158,7 +158,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
                         <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
                         [<span className={`${CLASS_NAME}__state-cancel`}
                             onClick={() => editor.discardChange(state)}
-                            title={title}>cancel</span>]
+                            title={title}>{t.text('authoring_state.discard.label')}</span>]
                     </span>
                 );
             }
@@ -167,7 +167,7 @@ class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps>
             if (renderedState || renderedValidations) {
                 const labelPosition = this.getLinkStateLabelPosition(link);
                 if (labelPosition) {
-                    const style = {left: labelPosition.x, top: labelPosition.y};
+                    const style: React.CSSProperties = {left: labelPosition.x, top: labelPosition.y};
                     rendered.push(
                         <div key={link.id}
                             className={`${CLASS_NAME}__state-indicator`}

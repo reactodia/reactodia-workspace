@@ -5,6 +5,7 @@ import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils
 import {
     useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
+import type { Translation } from '../coreUtils/i18n';
 
 import { CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex } from '../diagram/elements';
@@ -19,6 +20,7 @@ import { Dialog, DialogProps, DialogStyleProps } from '../widgets/dialog';
 export interface OverlayControllerProps {
     readonly model: DiagramModel;
     readonly view: SharedCanvasState;
+    readonly translation: Translation;
 }
 
 /**
@@ -75,6 +77,7 @@ export class OverlayController {
 
     private readonly model: DiagramModel;
     private readonly view: SharedCanvasState;
+    private readonly translation: Translation;
 
     private _openedDialog: OpenedDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
@@ -82,9 +85,10 @@ export class OverlayController {
 
     /** @hidden */
     constructor(props: OverlayControllerProps) {
-        const {model, view} = props;
+        const {model, view, translation} = props;
         this.model = model;
         this.view = view;
+        this.translation = translation;
 
         this.listener.listen(this.model.events, 'changeSelection', () => {
             const target = this.model.selection.length === 1 ? this.model.selection[0] : undefined;
@@ -202,13 +206,17 @@ export class OverlayController {
      * @see {@link startTask}
      */
     showSpinnerWhile(operation: Promise<unknown>): void {
+        const {translation: t} = this;
         const task = this.startTask();
         (async () => {
             try {
                 await operation;
             } catch (err) {
                 console.error(err);
-                task.setError(new Error('Unknown error occurred', {cause: err}));
+                task.setError(new Error(
+                    t.text('overlay_controller.unknown_error'),
+                    {cause: err}
+                ));
             } finally {
                 task.end();
             }
@@ -216,6 +224,7 @@ export class OverlayController {
     }
 
     private updateTaskSpinner(): void {
+        const {translation: t} = this;
         if (this._taskError) {
             const statusText = getErrorMessage(this._taskError.error);
             this.setSpinner({statusText, errorOccurred: true});
@@ -231,7 +240,7 @@ export class OverlayController {
                     if (title === undefined) {
                         title = task.title;
                     } else {
-                        title = 'Multiple tasks are in progress';
+                        title = t.text('overlay_controller.multiple_tasks_in_progress');
                         break;
                     }
                 }

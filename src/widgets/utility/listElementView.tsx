@@ -4,9 +4,7 @@ import { hcl } from 'd3-color';
 
 import { ElementModel } from '../../data/model';
 
-import { DataDiagramModel } from '../../editor/dataDiagramModel';
-
-import { useWorkspace } from '../../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 /**
  * Props for {@link ListElementView} component.
@@ -52,7 +50,8 @@ const CLASS_NAME = 'reactodia-list-element-view';
  * @category Components
  */
 export function ListElementView(props: ListElementViewProps) {
-    const {model, getElementTypeStyle} = useWorkspace();
+    const workspace = useWorkspace();
+    const {model, translation: t, getElementTypeStyle} = workspace;
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
@@ -66,7 +65,7 @@ export function ListElementView(props: ListElementViewProps) {
         className
     );
 
-    const localizedText = model.locale.formatLabel(element.label, element.id);
+    const localizedText = t.formatLabel(element.label, element.id, model.language);
 
     const onItemClick = (event: React.MouseEvent<any>) => {
         if (!disabled && onClick) {
@@ -79,7 +78,7 @@ export function ListElementView(props: ListElementViewProps) {
         <li className={combinedClass}
             role='option'
             draggable={!disabled && Boolean(onDragStart)}
-            title={formatEntityTitle(element, model)}
+            title={formatEntityTitle(element, workspace)}
             style={{background: hcl(h, c, l).toString()}}
             onClick={onItemClick}
             onDragStart={onDragStart}>
@@ -148,14 +147,28 @@ export function highlightSubstring(
     return <span>{before}<span {...highlightProps}>{highlighted}</span>{after}</span>;
 }
 
-export function formatEntityTitle(entity: ElementModel, model: DataDiagramModel): string {
-    const label = model.locale.formatLabel(entity.label, entity.id);
-    const iri = model.locale.formatIri(entity.id);
+export function formatEntityTitle(entity: ElementModel, workspace: WorkspaceContext): string {
+    const {model, translation: t} = workspace;
 
-    let typeString = '';
-    if (entity.types.length > 0) {
-        typeString = `\nClasses: ${model.locale.formatElementTypes(entity.types).join(', ')}`;
-    }
+    const label = t.formatLabel(entity.label, entity.id, model.language);
+    const entityIri = t.formatIri(entity.id);
+    const entityTypes = formatEntityTypeList(entity, workspace);
 
-    return `${label} ${iri}${typeString}`;
+    const title = t.text('inline_entity.title', {entity: label, entityIri, entityTypes});
+    const titleExtra = t.text('inline_entity.title_extra', {entity: label, entityIri, entityTypes});
+
+    return `${title}${titleExtra ? `\n${titleExtra}` : ''}`;
+}
+
+/**
+ * Formats an entity types into a sorted labels list to display in the UI.
+ */
+export function formatEntityTypeList(entity: ElementModel, workspace: WorkspaceContext): string {
+    const {model, translation: t} = workspace;
+    const labelList = entity.types.map(iri => {
+        const labels = model.getElementType(iri)?.data?.label;
+        return t.formatLabel(labels, iri, model.language);
+    });
+    labelList.sort();
+    return labelList.join(', ');
 }

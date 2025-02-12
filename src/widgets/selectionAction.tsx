@@ -6,6 +6,7 @@ import { EventObserver, EventTrigger } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
+import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -172,7 +173,7 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
  */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
+    const {model, editor, translation: t} = useWorkspace();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     
     let newEntities = 0;
@@ -195,9 +196,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             )}
             title={
                 title ? title :
-                singleNewEntity ? 'Delete new element' :
-                elements.length === 1 ? 'Remove an element from the diagram' :
-                'Remove selected elements from the diagram'
+                singleNewEntity ? t.text('selection_action.remove.title_new') :
+                elements.length === 1 ? t.text('selection_action.remove.title_single') :
+                t.text('selection_action.remove.title')
             }
             onSelect={() => editor.removeSelectedElements()}
         />
@@ -220,6 +221,7 @@ export interface SelectionActionZoomToFitProps extends SelectionActionStyleProps
 export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
+    const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
@@ -227,7 +229,7 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__zoomToFit`)}
-            title={title ?? 'Zoom to fit selected elements into view'}
+            title={title ?? t.text('selection_action.zoom_to_fit.title')}
             onSelect={() => {
                 const links = new Set<Link>();
                 for (const element of elements) {
@@ -259,8 +261,8 @@ export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
  */
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {className, title, ...otherProps} = props;
-    const {performLayout} = useWorkspace();
     const {model, canvas} = useCanvas();
+    const {translation: t, performLayout} = useWorkspace();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
@@ -268,7 +270,7 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__layout`)}
-            title={title ?? 'Layout selected elements using force-directed algorithm'}
+            title={title ?? t.text('selection_action.layout.title')}
             onSelect={() => {
                 performLayout({
                     canvas,
@@ -299,7 +301,7 @@ export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
  */
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
-    const {model} = useWorkspace();
+    const {model, translation: t} = useWorkspace();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
@@ -321,8 +323,8 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
             )}
             title={title ?? (
                 elements.length === 1
-                    ? 'Expand an element to reveal additional properties'
-                    : 'Expand all elements  to reveal additional properties'
+                    ? t.text('selection_action.expand.title_single')
+                    : t.text('selection_action.expand.title')
             )}
             onSelect={() => {
                 if (elements.length === 1) {
@@ -330,7 +332,9 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
                     model.history.execute(setElementExpanded(target, !target.isExpanded));
                 } else {
                     const batch = model.history.startBatch(
-                        allExpanded ? 'Collapse elements' : 'Expand elements'
+                        allExpanded
+                            ? TranslatedText.text('selection_action.expand.collapse_command')
+                            : TranslatedText.text('selection_action.expand.expand_command')
                     );
                     for (const element of elements) {
                         batch.history.execute(setElementExpanded(element, !allExpanded));
@@ -375,6 +379,7 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title, onSelect} = props;
     const {model, canvas} = useCanvas();
+    const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
         return null;
@@ -393,7 +398,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
             )}
             style={getDockStyle(dockRow, dockColumn)}
             href={target.iri}
-            title={title ?? 'Jump to resource'}
+            title={title ?? t.text('selection_action.anchor.title')}
             onClick={e => {
                 if (onSelect) {
                     onSelect(target, e);
@@ -424,7 +429,7 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
  */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, commands, ...otherProps} = props;
-    const {model, overlay} = useWorkspace();
+    const {model, overlay, translation: t} = useWorkspace();
 
     const menuOpened = useObservedProperty(
         overlay.events,
@@ -436,7 +441,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
 
     let entityCount = 0;
     for (const element of elements) {
-        for (const entity of iterateEntitiesOf(element)) {
+        for (const _entity of iterateEntitiesOf(element)) {
             entityCount++;
         }
     }
@@ -452,7 +457,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
                     ? `${CLASS_NAME}__navigate-close`
                     : `${CLASS_NAME}__navigate-open`
             )}
-            title={title ?? 'Navigate to connected elements'}
+            title={title ?? t.text('selection_action.connections.title')}
             onSelect={() => {
                 if (menuOpened) {
                     overlay.hideDialog();
@@ -484,6 +489,7 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, commands, ...otherProps} = props;
     const {model} = useCanvas();
+    const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (!(commands && elements.length === 1)) {
         return null;
@@ -495,7 +501,7 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     return (
         <SelectionAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__add-to-filter`)}
-            title={title ?? 'Search for connected elements'}
+            title={title ?? t.text('selection_action.add_to_filter.title')}
             onSelect={() => {
                 commands.trigger('setCriteria', {
                     criteria: {refElement: target.iri},
@@ -524,9 +530,9 @@ export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
  */
 export function SelectionActionGroup(props: SelectionActionGroupProps) {
     const {className, title, ...otherProps} = props;
-    const workspace = useWorkspace();
-    const {model} = workspace;
     const {canvas} = useCanvas();
+    const workspace = useWorkspace();
+    const {model, translation: t} = workspace;
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
 
@@ -545,7 +551,9 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
             )}
             disabled={!(canGroup || canUngroup)}
             title={title ?? (
-                canUngroup ? 'Ungroup entities': 'Group entities'
+                canUngroup
+                    ? t.text('selection_action.group.title_ungroup')
+                    : t.text('selection_action.group.title')
             )}
             onMouseDown={async () => {
                 if (canGroup) {
@@ -579,8 +587,8 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
  */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor} = useWorkspace();
     const {canvas} = useCanvas();
+    const {model, editor, translation: t} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -610,8 +618,8 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             disabled={!canLink}
             title={title ?? (
                 canLink
-                    ? 'Establish link'
-                    : 'Establishing link is not allowed for the element'
+                    ? t.text('selection_action.establish_relation.title')
+                    : t.text('selection_action.establish_relation.title_disabled')
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);

@@ -1,3 +1,5 @@
+import { TranslatedText } from '../coreUtils/i18n';
+
 import { ElementIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
@@ -13,8 +15,10 @@ export async function groupEntitiesAnimated(
     canvas: CanvasApi,
     workspace: WorkspaceContext
 ): Promise<EntityGroup> {
-    const {model} = workspace;
-    const batch = model.history.startBatch('Group entities');
+    const {model, translation: t} = workspace;
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.group_entities.command')
+    );
 
     const capturedGeometry = RestoreGeometry.capturePartial(elements, []);
 
@@ -38,8 +42,8 @@ export async function groupEntitiesAnimated(
     batch.history.registerToUndo(capturedGeometry);
 
     const sortedEntities = [...elements].sort((a, b) => {
-        const aLabel = model.locale.formatLabel(a.data.label, a.data.id);
-        const bLabel = model.locale.formatLabel(b.data.label, b.data.id);
+        const aLabel = t.formatLabel(a.data.label, a.data.id, model.language);
+        const bLabel = t.formatLabel(b.data.label, b.data.id, model.language);
         return aLabel.localeCompare(bLabel);
     });
 
@@ -62,7 +66,9 @@ export async function ungroupAllEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model, performLayout} = workspace;
-    const batch = model.history.startBatch('Ungroup entities');
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.ungroup_entities.command')
+    );
 
     const ungrouped = model.ungroupAll(groups);
     await performLayout({
@@ -83,7 +89,9 @@ export async function ungroupSomeEntitiesAnimated(
     workspace: WorkspaceContext
 ): Promise<EntityElement[]> {
     const {model} = workspace;
-    const batch = model.history.startBatch('Ungroup entities');
+    const batch = model.history.startBatch(
+        TranslatedText.text('workspace.ungroup_entities.command')
+    );
 
     const ungrouped = model.ungroupSome(group, entities);
 

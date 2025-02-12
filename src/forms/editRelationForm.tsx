@@ -83,6 +83,7 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
     }
 
     render() {
+        const {translation: t} = this.context;
         const {source, target} = this.props;
         const {linkValue, isValidating} = this.state;
         const isValid = !linkValue.error;
@@ -99,7 +100,7 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
                     {isValidating ? (
                         <div className={`${FORM_CLASS}__progress`}>
                             <ProgressBar state='loading'
-                                title='Validating selected link type'
+                                title={t.text('visual_authoring.edit_relation.validation_progress.title')}
                                 height={10}
                             />
                         </div>
@@ -108,12 +109,14 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
                 <div className={`${FORM_CLASS}__controls`}>
                     <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={() => this.props.onApply(linkValue.value.link)}
-                        disabled={!isValid || isValidating}>
-                        Apply
+                        disabled={!isValid || isValidating}
+                        title={t.text('visual_authoring.dialog.apply.title')}>
+                        {t.text('visual_authoring.dialog.apply.label')}
                     </button>
                     <button className='reactodia-btn reactodia-btn-default'
-                        onClick={this.props.onCancel}>
-                        Cancel
+                        onClick={this.props.onCancel}
+                        title={t.text('visual_authoring.dialog.cancel.title')}>
+                        {t.text('visual_authoring.dialog.cancel.label')}
                     </button>
                 </div>
             </div>

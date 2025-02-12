@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useObservedProperty } from '../coreUtils/hooks';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
@@ -54,6 +55,7 @@ const CLASS_NAME = 'reactodia-zoom-control';
 export function ZoomControl(props: ZoomControlProps) {
     const {dock, dockOffsetX, dockOffsetY, showPointerModeToggle} = props;
     const {canvas} = useCanvas();
+    const t = useTranslation();
     const pointerMode = useObservedProperty(
         canvas.events, 'changePointerMode', () => canvas.pointerMode
     );
@@ -67,7 +69,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-in-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title='Zoom In'
+                    title={t.text('zoom_control.zoom_in.title')}
                     onClick={() => canvas.zoomIn()}>
                 </button>
                 <button type='button'
@@ -75,7 +77,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-out-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title='Zoom Out'
+                    title={t.text('zoom_control.zoom_out.title')}
                     onClick={() => canvas.zoomOut()}>
                 </button>
                 <button type='button'
@@ -83,7 +85,7 @@ export function ZoomControl(props: ZoomControlProps) {
                         `${CLASS_NAME}__zoom-fit-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
-                    title='Fit to Screen'
+                    title={t.text('zoom_control.zoom_to_fit.title')}
                     onClick={() => canvas.zoomToFit({animate: true})}>
                 </button>
                 {showPointerModeToggle ? (
@@ -93,10 +95,7 @@ export function ZoomControl(props: ZoomControlProps) {
                             'reactodia-btn reactodia-btn-default',
                             pointerMode === 'selection' ? 'active' : undefined
                         )}
-                        title={
-                            'Toggle selection mode:\n' +
-                            'Drag pointer to select, Shift + Pointer to pan the canvas'
-                        }
+                        title={t.text('zoom_control.pointer_mode.title')}
                         onClick={() => canvas.setPointerMode(
                             pointerMode === 'panning' ? 'selection' : 'panning'
                         )}>

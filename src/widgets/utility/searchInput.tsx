@@ -3,6 +3,7 @@ import classnames from 'classnames';
 
 import { Events, EventSource, PropertyChange } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 export interface SearchInputProps {
@@ -19,6 +20,7 @@ export function SearchInput(props: SearchInputProps) {
         className, inputProps = {}, store, children,
     } = props;
 
+    const t = useTranslation();
     const term = useObservedProperty(store.events, 'changeValue', () => store.value);
     const mode = useObservedProperty(store.events, 'changeMode', () => store.mode);
 
@@ -31,7 +33,7 @@ export function SearchInput(props: SearchInputProps) {
                     'reactodia-form-control',
                     inputProps.className,
                 )}
-                placeholder={inputProps.placeholder ?? 'Search for...'}
+                placeholder={inputProps.placeholder ?? t.text('search_defaults.input.placeholder')}
                 value={term}
                 onChange={e => store.change({value: e.currentTarget.value, action: 'input'})}
                 onKeyUp={e => {
@@ -44,13 +46,15 @@ export function SearchInput(props: SearchInputProps) {
                 <div className={`${CLASS_NAME}__clear-container`}>
                     <button type='button'
                         className={`${CLASS_NAME}__clear`}
+                        title={t.text('search_defaults.input_clear.title')}
                         onClick={() => store.change({value: '', action: 'clear'})}>
                         <span aria-hidden='true'></span>
                     </button>
                 </div>
             ) : null}
             {mode === 'explicit' ? (
-                <button type='button' title='Search'
+                <button type='button'
+                    title={t.text('search_defaults.input_submit.title')}
                     className={classnames(`${CLASS_NAME}__submit`, 'reactodia-btn', 'reactodia-btn-default')}
                     onClick={() => store.change({value: store.value, action: 'submit'})}>
                 </button>

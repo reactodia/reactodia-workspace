@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
+import { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../data/model';
 import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
@@ -78,7 +79,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 
     private async fetchPossibleLinkTypes() {
-        const {model, editor: {metadataProvider}} = this.context;
+        const {model, editor: {metadataProvider}, translation: t} = this.context;
         const {source, target} = this.props;
         if (!metadataProvider) {
             return;
@@ -114,7 +115,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         for (const linkType of inLinkSet) {
             dataLinkTypes.push({iri: linkType, direction: 'in'});
         }
-        dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model));
+        dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model, t));
 
         this.setState({dataLinkTypes: dataLinkTypes});
         this.listenToLinkLabels(dataLinkTypes.map(type => model.createLinkType(type.iri)));
@@ -145,20 +146,29 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     private renderPossibleLinkType = (
         {iri, direction}: DirectedDataLinkType, index: number
     ) => {
-        const {model} = this.context;
+        const {model, translation: t} = this.context;
         const {source, target} = this.props;
         const data = model.getLinkType(iri);
-        const label = model.locale.formatLabel(data?.data?.label, iri);
+        const label = t.formatLabel(data?.data?.label, iri, model.language);
         let [sourceLabel, targetLabel] = [source, target].map(element =>
-            model.locale.formatLabel(element.label, element.id)
+            t.formatLabel(element.label, element.id, model.language)
         );
         if (direction === 'in') {
             [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
         }
-        return <option key={index} value={index}>{label} [{sourceLabel} &rarr; {targetLabel}]</option>;
+        return (
+            <option key={index} value={index}>
+                {t.template('visual_authoring.select_relation.relation_type.label', {
+                    relation: label,
+                    source: sourceLabel,
+                    target: targetLabel,
+                })}
+            </option>
+        );
     };
 
     render() {
+        const {translation: t} = this.context;
         const {linkValue, disabled} = this.props;
         const {dataLinkTypes} = this.state;
         const value = (dataLinkTypes ?? []).findIndex(({iri, direction}) =>
@@ -166,7 +176,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         );
         return (
             <div className={`${FORM_CLASS}__control-row`}>
-                <label>Relation Type</label>
+                <label>{t.text('visual_authoring.select_relation.type.label')}</label>
                 {
                     dataLinkTypes ? (
                         <select className='reactodia-form-control'
@@ -174,7 +184,9 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
                             value={value}
                             onChange={this.onChangeType}
                             disabled={disabled}>
-                            <option value={-1} disabled={true}>Select relation type</option>
+                            <option value={-1} disabled={true}>
+                                {t.text('visual_authoring.select_relation.type.placeholder')}
+                            </option>
                             {dataLinkTypes.map(this.renderPossibleLinkType)}
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
@@ -185,12 +197,12 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 }
 
-function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel) {
+function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: Translation) {
     return (a: DirectedDataLinkType, b: DirectedDataLinkType) => {
         const aData = model.getLinkType(a.iri);
         const bData = model.getLinkType(b.iri);
-        const labelA = model.locale.formatLabel(aData?.data?.label, a.iri);
-        const labelB = model.locale.formatLabel(bData?.data?.label, b.iri);
+        const labelA = t.formatLabel(aData?.data?.label, a.iri, model.language);
+        const labelB = t.formatLabel(bData?.data?.label, b.iri, model.language);
         const labelCompareResult = labelA.localeCompare(labelB);
         if (labelCompareResult !== 0) {
             return labelCompareResult;
@@ -208,17 +220,24 @@ function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel) {
 export async function validateLinkType(
     currentLink: LinkModel,
     originalLink: LinkModel,
-    {model, editor}: WorkspaceContext,
+    workspace: WorkspaceContext,
     signal: AbortSignal | undefined
 ): Promise<Pick<LinkValue, 'error' | 'allowChange'>> {
+    const {model, editor, translation: t} = workspace;
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
-        return {error: 'Required.', allowChange: true};
+        return {
+            error: t.text('visual_authoring.select_relation.validation.error_required'),
+            allowChange: true,
+        };
     }
     if (equalLinks(currentLink, originalLink)) {
         return {error: undefined, allowChange: true};
     }
     if (isRelationOnDiagram(model, currentLink) && !editor.temporaryState.links.has(currentLink)) {
-        return {error: 'The relation already exists.', allowChange: false};
+        return {
+            error: t.text('visual_authoring.select_relation.validation.error_duplicate'),
+            allowChange: false,
+        };
     }
 
     const links = await model.dataProvider.links({
@@ -228,7 +247,10 @@ export async function validateLinkType(
         signal,
     });
     if (links.some(link => equalLinks(link, currentLink))) {
-        return {error: 'The relation already exists.', allowChange: false};
+        return {
+            error: t.text('visual_authoring.select_relation.validation.error_duplicate'),
+            allowChange: false,
+        };
     }
     
     return {error: undefined, allowChange: true};

@@ -47,7 +47,7 @@ export class Leaf extends React.Component<LeafProps, State> {
     }
 
     render() {
-        const {getElementTypeStyle} = this.context;
+        const {translation: t, getElementTypeStyle} = this.context;
         const {node, ...otherProps} = this.props;
         const {selectedNode, searchText, creatableClasses} = otherProps;
         const {expanded} = this.state;
@@ -103,7 +103,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                     </a>
                     {creatableClasses.get(node.iri) ? (
                         <div role='button'
-                            title={'Click or drag to create new entity of this type'}
+                            title={t.text('search_element_types.drag_create.title')}
                             className={classnames(
                                 `${CLASS_NAME}__create-button`,
                                 'reactodia-btn reactodia-btn-default'

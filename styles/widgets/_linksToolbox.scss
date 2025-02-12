@@ -42,6 +42,8 @@
   &__links-heading {
     font-size: 14px;
     margin: 4px 6px;
+    font-weight: bold;
+    > * { font-weight: normal; }
   }
 
   &__links {

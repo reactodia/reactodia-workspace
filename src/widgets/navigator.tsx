@@ -456,6 +456,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             dock = 'se', dockOffsetX, dockOffsetY,
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
+            workspace: {translation: t}
         } = this.props;
         const {expanded, allowExpand} = this.state;
         const expandedWhenAllowed = expanded && allowExpand;
@@ -476,7 +477,11 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
                     />
                     <button type='button'
                         className={`${CLASS_NAME}__toggle`}
-                        title={expanded ? 'Collapse navigator' : 'Expand navigator'}
+                        title={
+                            expanded
+                                ? t.text('navigator.toggle_collapse.title')
+                                : t.text('navigator.toggle_expand.title')
+                        }
                         disabled={!allowExpand}
                         onClick={this.onToggleClick}>
                         <div className={`${CLASS_NAME}__toggle-icon`} />

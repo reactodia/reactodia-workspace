@@ -1,5 +1,6 @@
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
 import { ReadonlyHashSet, HashSet } from '../coreUtils/hashMap';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import {
     ElementIri, ElementModel, ElementTypeIri, ElementTypeModel,
@@ -94,7 +95,7 @@ export function setEntityElementData(
     entity: EntityElement,
     data: ElementModel
 ): Command {
-    return Command.create('Set entity element data', () => {
+    return Command.create(TranslatedText.text('commands.set_entity_data.title'), () => {
         const previous = entity.data;
         entity.setData(data);
         return setEntityElementData(entity, previous);
@@ -184,7 +185,7 @@ export interface EntityGroupItem {
  * @category Commands
  */
 export function setEntityGroupItems(group: EntityGroup, items: ReadonlyArray<EntityGroupItem>): Command {
-    return Command.create('Set entity group items', () => {
+    return Command.create(TranslatedText.text('commands.set_entity_group_items.title'), () => {
         const before = group.items;
         group.setItems(items);
         return setEntityGroupItems(group, before);
@@ -286,7 +287,7 @@ export function setRelationLinkData(
     relation: RelationLink,
     data: LinkModel
 ): Command {
-    return Command.create('Set relation link data', () => {
+    return Command.create(TranslatedText.text('commands.set_relation_data.title'), () => {
         const previous = relation.data;
         relation.setData(data);
         return setRelationLinkData(relation, previous);
@@ -403,7 +404,7 @@ export interface RelationGroupItem {
  * @category Commands
  */
 export function setRelationGroupItems(group: RelationGroup, items: ReadonlyArray<RelationGroupItem>): Command {
-    return Command.create('Set relation group items', () => {
+    return Command.create(TranslatedText.text('commands.set_relation_group_items.title'), () => {
         const before = group.items;
         group.setItems(items);
         return setRelationGroupItems(group, before);
@@ -582,7 +583,7 @@ export class LinkType {
  * @category Commands
  */
 export function changeEntityData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
-    const command = Command.create('Change entity data', () => {
+    const command = Command.create(TranslatedText.text('commands.change_entity.title'), () => {
         const previousIri = target;
         const newIri = data.id;
 
@@ -627,7 +628,7 @@ export function changeEntityData(model: DiagramModel, target: ElementIri, data: 
                 }
             }
         }
-        return Command.create('Revert element data', () => {
+        return Command.create(TranslatedText.text('commands.change_entity.title'), () => {
             for (const [element, previousData] of previousEntities) {
                 element.setData(previousData);
             }
@@ -669,7 +670,7 @@ export function changeRelationData(model: DiagramModel, oldData: LinkModel, newD
     if (!equalLinks(oldData, newData)) {
         throw new Error('Cannot change typeId, sourceId or targetId when changing link data');
     }
-    return Command.create('Change relation data', () => {
+    return Command.create(TranslatedText.text('commands.change_relation.title'), () => {
         for (const link of model.links) {
             if (link instanceof RelationLink && equalLinks(link.data, oldData)) {
                 link.setData(newData);

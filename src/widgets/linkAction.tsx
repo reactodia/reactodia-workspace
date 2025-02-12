@@ -177,7 +177,7 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor} = useWorkspace();
+    const {model, editor, translation: t} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -211,7 +211,9 @@ export function LinkActionEdit(props: LinkActionEditProps) {
                 `${CLASS_NAME}__edit`
             )}
             title={title ?? (
-                canModify.canChangeType ? 'Edit relation' : 'Cannot edit the relation'
+                canModify.canChangeType
+                    ? t.text('link_action.edit_relation.title')
+                    : t.text('link_action.edit_relation.title_disabled')
             )}
             disabled={!canModify.canChangeType}
             onSelect={() => editor.authoringCommands.trigger('editRelation', {target: link})}
@@ -239,7 +241,7 @@ export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 export function LinkActionDelete(props: LinkActionDeleteProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor} = useWorkspace();
+    const {model, editor, translation: t} = useWorkspace();
 
     const canModify = useCanModifyLink(link, model, editor);
     const linkIsDeleted = useObservedProperty(
@@ -269,7 +271,9 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
                 `${CLASS_NAME}__delete`
             )}
             title={title ?? (
-                canModify.canDelete ? 'Delete relation' : 'Cannot delete the relation'
+                canModify.canDelete
+                    ? t.text('link_action.delete_relation.title')
+                    : t.text('link_action.delete_relation.title_disabled')
             )}
             disabled={!canModify.canDelete}
             onSelect={() => editor.deleteRelation(link.data)}
@@ -348,7 +352,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {editor} = useWorkspace();
+    const {editor, translation: t} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -376,7 +380,9 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
                 `${CLASS_NAME}__endpoint`
             )}
             title={title ?? (
-                dockSide === 'source' ? 'Move link source' : 'Move link target'
+                dockSide === 'source'
+                    ? t.text('link_action.move_relation.move_source_title')
+                    : t.text('link_action.move_relation.move_target_title')
             )}
             disabled={linkIsDeleted}
             onMouseDown={e => {
@@ -423,7 +429,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkProvider}, editor} = useWorkspace();
+    const {view: {renameLinkProvider}, editor, translation: t} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -447,7 +453,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     return (
         <button className={classnames(className, `${CLASS_NAME}__rename`)}
             style={style}
-            title={title ?? 'Rename link'}
+            title={title ?? t.text('link_action.rename_link.title')}
             onClick={() => editor.authoringCommands.trigger('renameLink', {target: link})}
         />
     );

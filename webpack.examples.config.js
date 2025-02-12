@@ -16,6 +16,7 @@ module.exports = (env, argv) => {
   const EXAMPLES = [
     'index',
     'basic',
+    'i18n',
     'rdf',
     'rdfClassic',
     'sparql',

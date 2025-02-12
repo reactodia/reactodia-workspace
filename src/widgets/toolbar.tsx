@@ -1,6 +1,8 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { useTranslation } from '../coreUtils/i18n';
+
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
 import { DropdownMenu } from './utility/dropdown';
@@ -49,6 +51,7 @@ const CLASS_NAME = 'reactodia-toolbar';
  */
 export function Toolbar(props: ToolbarProps) {
     const {dock, dockOffsetX, dockOffsetY, menu, children} = props;
+    const t = useTranslation();
     return (
         <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
@@ -56,7 +59,7 @@ export function Toolbar(props: ToolbarProps) {
             <div className={CLASS_NAME}>
                 {menu ? (
                     <DropdownMenu className={`${CLASS_NAME}__menu`}
-                        title='Open menu'>
+                        title={t.text('toolbar.menu_toggle.title')}>
                         {menu}
                     </DropdownMenu>
                 ) : null}

@@ -4,6 +4,7 @@ import { hcl } from 'd3-color';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
+import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
@@ -11,14 +12,15 @@ import { ValidationProvider } from '../data/validationProvider';
 import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
-import {
-    TypeStyleResolver, LabelLanguageSelector, RenameLinkProvider,
-} from '../diagram/customization';
+import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
 } from '../diagram/layout';
 import { blockingDefaultLayout } from '../diagram/layoutShared';
+import {
+    DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
+} from '../diagram/locale';
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
@@ -88,6 +90,21 @@ export interface WorkspaceProps {
      */
     defaultLanguage?: string;
     /**
+     * Additional translation bundles for UI text strings in the workspace
+     * in order from higher to lower priority.
+     *
+     * @default []
+     * @see {@link useDefaultTranslation}
+     */
+    translations?: ReadonlyArray<Partial<TranslationBundle>>;
+    /**
+     * If set, disables translation fallback which (with default `en` language).
+     *
+     * @default true
+     * @see {@link translations}
+     */
+    useDefaultTranslation?: boolean;
+    /**
      * Default function to compute diagram layout.
      *
      * If not provided, uses {@link blockingDefaultLayout} as a synchronous fallback.
@@ -144,15 +161,24 @@ export class Workspace extends React.Component<WorkspaceProps> {
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
+            translations = [],
+            useDefaultTranslation = true,
             defaultLayout,
             onWorkspaceEvent = () => {},
         } = this.props;
+
+        const translationBundles: Partial<TranslationBundle>[] = [...translations];
+        if (useDefaultTranslation) {
+            translationBundles.push(DefaultTranslationBundle);
+        }
+
+        const translation = new DefaultTranslation(translationBundles, selectLabelLanguage);
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
         this.cachedGroupStyles = new WeakMap();
 
-        const model = new DataDiagramModel({history, selectLabelLanguage});
+        const model = new DataDiagramModel({history, translation, selectLabelLanguage});
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({
@@ -172,6 +198,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const overlay = new OverlayController({
             model,
             view,
+            translation,
         });
 
         this.layoutTypeProvider = {
@@ -188,6 +215,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             view,
             editor,
             overlay,
+            translation,
             disposeSignal: this.cancellation.signal,
             getElementStyle: this.getElementStyle,
             getElementTypeStyle: this.getElementTypeStyle,
@@ -218,9 +246,11 @@ export class Workspace extends React.Component<WorkspaceProps> {
     render() {
         const {children} = this.props;
         return (
-            <WorkspaceContext.Provider value={this.workspaceContext}>
-                {children}
-            </WorkspaceContext.Provider>
+            <TranslationProvider translation={this.workspaceContext.translation}>
+                <WorkspaceContext.Provider value={this.workspaceContext}>
+                    {children}
+                </WorkspaceContext.Provider>
+            </TranslationProvider>
         );
     }
 
@@ -318,7 +348,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             canvas: targetCanvas, layoutFunction, selectedElements, animate, signal,
             zoomToFit = true,
         } = params;
-        const {model, view, overlay, disposeSignal} = this.workspaceContext;
+        const {model, view, overlay, translation: t, disposeSignal} = this.workspaceContext;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
         if (!canvas) {
@@ -328,7 +358,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         canvas.renderingState.syncUpdate();
 
         const task = overlay.startTask({
-            title: 'Computing graph layout',
+            title: t.text('workspace.perform_layout.task'),
             delay: 200,
         });
         let calculatedLayout: CalculatedLayout;
@@ -349,7 +379,9 @@ export class Workspace extends React.Component<WorkspaceProps> {
             task.end();
         }
 
-        const batch = model.history.startBatch('Graph layout');
+        const batch = model.history.startBatch(
+            TranslatedText.text('workspace.perform_layout.command')
+        );
         batch.history.registerToUndo(RestoreGeometry.capture(model));
 
         for (const link of model.links) {

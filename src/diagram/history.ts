@@ -1,4 +1,5 @@
 import { EventSource, Events } from '../coreUtils/events';
+import type { TranslatedText } from '../coreUtils/i18n';
 
 /**
  * Represents an atomic change to the state tracked by the command history,
@@ -11,7 +12,7 @@ export interface Command {
     /**
      * Command title to display in the UI.
      */
-    readonly title?: string;
+    readonly title?: TranslatedText | string;
     /**
      * Performs the command action.
      *
@@ -47,7 +48,10 @@ export namespace Command {
      * }
      * ```
      */
-    export function create(title: string, action: CommandAction): Command {
+    export function create(
+        title: TranslatedText | string,
+        action: CommandAction
+    ): Command {
         return new SimpleCommand(title, action);
     }
 
@@ -56,7 +60,10 @@ export namespace Command {
      * i.e. performs an effect on the execution but skips it when being undone
      * or vice-versa.
      */
-    export function effect(title: string, body: () => void): Command {
+    export function effect(
+        title: TranslatedText | string,
+        body: () => void
+    ): Command {
         return new EffectCommand(title, body);
     }
 
@@ -66,14 +73,17 @@ export namespace Command {
      * When executed, sub-commands in be executed in the same order,
      * and the inverse command will use a reversed order of the sub-command inverses.
      */
-    export function compound(title: string | undefined, commands: ReadonlyArray<Command>): Command {
+    export function compound(
+        title: TranslatedText | string | undefined,
+        commands: ReadonlyArray<Command>
+    ): Command {
         return new CompoundCommand(title, commands);
     }
 }
 
 class SimpleCommand implements Command {
     constructor(
-        readonly title: string,
+        readonly title: TranslatedText | string,
         readonly invoke: CommandAction
     ) {}
 }
@@ -82,13 +92,10 @@ class EffectCommand implements Command {
     private readonly skip: Command;
 
     constructor(
-        readonly title: string,
+        readonly title: TranslatedText | string,
         private readonly body: () => void
     ) {
-        this.skip = {
-            title: 'Skipped effect: ' + title,
-            invoke: () => this,
-        };
+        this.skip = new SkippedEffect(title, this);
     }
 
     invoke(): Command {
@@ -98,9 +105,20 @@ class EffectCommand implements Command {
     }
 }
 
+class SkippedEffect implements Command {
+    constructor(
+        readonly title: TranslatedText | string,
+        private readonly effect: EffectCommand
+    ) {}
+
+    invoke(): Command {
+        return this.effect;
+    }
+}
+
 class CompoundCommand {
     constructor(
-        readonly title: string | undefined,
+        readonly title: TranslatedText | string | undefined,
         private readonly commands: ReadonlyArray<Command>
     ) {}
 
@@ -198,7 +216,7 @@ export interface CommandHistory {
      * causes the new batch to become nested, which allows to use operations creating
      * command batches as part of a larger operation having its own top-level batch.
      */
-    startBatch(title?: string): CommandBatch;
+    startBatch(title?: TranslatedText | string): CommandBatch;
 }
 
 /**
@@ -227,7 +245,7 @@ export interface CommandBatch {
 }
 
 interface InMemoryBatch extends CommandBatch {
-    readonly _title: string | undefined;
+    readonly _title: TranslatedText | string | undefined;
     readonly _inverses: Command[];
 }
 
@@ -300,7 +318,7 @@ export class InMemoryHistory implements CommandHistory {
         return this.batches.length === 0 ? undefined : this.batches[this.batches.length - 1];
     }
 
-    startBatch(title?: string): CommandBatch {
+    startBatch(title?: TranslatedText | string): CommandBatch {
         const batch: InMemoryBatch = {
             _title: title,
             _inverses: [],

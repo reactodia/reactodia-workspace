@@ -81,8 +81,6 @@ const DEFAULT_USE_DRAG_AND_DROP = true;
 const enum Direction { Up, Down }
 
 class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
-    declare readonly context: void;
-
     private readonly listener = new EventObserver();
     private readonly delayedChangeCells = new Debouncer();
 
@@ -99,7 +97,6 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
                 className={CLASS_NAME}
                 role='listbox'
                 aria-multiselectable={true}
-                aria-label='Select one or many elements'
                 tabIndex={-1}
                 onFocus={this.addKeyListener}
                 onBlur={this.removeKeyListener}>
