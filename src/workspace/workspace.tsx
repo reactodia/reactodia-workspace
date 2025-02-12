@@ -48,10 +48,6 @@ import { EntityElement } from '../workspace';
  */
 export interface WorkspaceProps {
     /**
-     * Translation bundles in additional languages for UI text strings in the workspace.
-     */
-    translations?: Readonly<Record<string, Partial<TranslationBundle>>>;
-    /**
      * Overrides default command history implementation.
      *
      * By default, it uses {@link InMemoryHistory} instance.
@@ -93,6 +89,21 @@ export interface WorkspaceProps {
      * Initial language to display the graph data with.
      */
     defaultLanguage?: string;
+    /**
+     * Additional translation bundles for UI text strings in the workspace
+     * in order from higher to lower priority.
+     *
+     * @default []
+     * @see {@link useDefaultTranslation}
+     */
+    translations?: ReadonlyArray<Partial<TranslationBundle>>;
+    /**
+     * If set, disables translation fallback which (with default `en` language).
+     *
+     * @default true
+     * @see {@link translations}
+     */
+    useDefaultTranslation?: boolean;
     /**
      * Default function to compute diagram layout.
      *
@@ -142,7 +153,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
         super(props);
 
         const {
-            translations = {},
             history = new InMemoryHistory(),
             metadataProvider,
             validationProvider,
@@ -151,15 +161,15 @@ export class Workspace extends React.Component<WorkspaceProps> {
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
+            translations = [],
+            useDefaultTranslation = true,
             defaultLayout,
             onWorkspaceEvent = () => {},
         } = this.props;
 
-        const translationBundles: Partial<TranslationBundle>[] = [DefaultTranslationBundle];
-        const additionalBundle = Object.prototype.hasOwnProperty.call(translations, defaultLanguage)
-            ? translations[defaultLanguage] : undefined;
-        if (additionalBundle) {
-            translationBundles.unshift(additionalBundle);
+        const translationBundles: Partial<TranslationBundle>[] = [...translations];
+        if (useDefaultTranslation) {
+            translationBundles.push(DefaultTranslationBundle);
         }
 
         const translation = new DefaultTranslation(translationBundles, selectLabelLanguage);

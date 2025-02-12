@@ -3,8 +3,7 @@ import * as React from 'react';
 import DefaultBundle from '../../i18n/translations/en.reactodia-translation.json';
 
 import {
-    LabelLanguageSelector, TranslatedProperty, Translation, TranslationKey, TranslationBundle,
-    TranslationContext,
+    LabelLanguageSelector, Translation, TranslationKey, TranslationBundle, TranslationContext,
 } from '../coreUtils/i18n';
 
 import { isEncodedBlank } from '../data/model';
@@ -18,7 +17,7 @@ export class DefaultTranslation implements Translation {
         protected readonly selectLabelLanguage: LabelLanguageSelector = defaultSelectLabel
     ) {}
 
-    text(key: TranslationKey): string {
+    private getString(key: TranslationKey): string {
         const dotIndex = key.indexOf('.');
         if (!(dotIndex > 0 && dotIndex < key.length)) {
             throw new Error(`Reactodia: Invalid translation key: ${key}`);
@@ -34,13 +33,13 @@ export class DefaultTranslation implements Translation {
         return key;
     }
 
-    format(key: TranslationKey, placeholders: Record<string, string | number | boolean>): string {
-        const template = this.text(key);
+    text(key: TranslationKey, placeholders?: Record<string, string | number | boolean>): string {
+        const template = this.getString(key);
         return formatPlaceholders(template, placeholders);
     }
 
     template(key: TranslationKey, parts: Record<string, React.ReactNode>): React.ReactNode {
-        const template = this.text(key);
+        const template = this.getString(key);
         return templatePlaceholders(template, parts);
     }
 
@@ -99,37 +98,54 @@ function getString(
     return bundleGroup[leaf];
 }
 
-function formatPlaceholders(template: string, values: Record<string, string | number | boolean>): string {
-    let result = template;
-    for (const replaceKey in values) {
-        if (!Object.prototype.hasOwnProperty.call(values, replaceKey)) {
-            continue;
-        }
-        const replaceValue = String(values[replaceKey] ?? '');
-        result = result.replace(new RegExp(`{${replaceKey}}`, 'g'), replaceValue);
+function formatPlaceholders(
+    template: string,
+    values: Record<string, string | number | boolean> | undefined
+): string {
+    if (!template.includes('{{')) {
+        return template;
     }
-    return result;
+    const parts = replacePlaceholders(template, placeholder => {
+        if (!(values && Object.prototype.hasOwnProperty.call(values, placeholder))) {
+            return '';
+        }
+        return values[placeholder] ?? '';
+    });
+    return parts.join('');
 }
 
 function templatePlaceholders(template: string, values: Record<string, React.ReactNode>): React.ReactNode {
-    const parts: React.ReactNode[] = [];
-    const templateRegex = /\{([a-zA-Z0-9_]+)\}/g;
+    const parts = replacePlaceholders(template, placeholder => {
+        if (!Object.prototype.hasOwnProperty.call(values, placeholder)) {
+            return null;
+        }
+        return values[placeholder] ?? null;
+    });
+    return React.createElement(React.Fragment, null, ...parts);
+}
+
+function replacePlaceholders<T>(
+    template: string,
+    replacer: (placeholder: string) => T
+): Array<string | T> {
+    const parts: Array<string | T> = [];
+    const templateRegex = /\{\{([a-zA-Z0-9_]+)\}\}/g;
     let lastIndex = 0;
     let result: RegExpExecArray | null;
     while ((result = templateRegex.exec(template))) {
-        const startIndex = templateRegex.lastIndex - result[0].length;
+        const [prefix, placeholder] = result;
+        const startIndex = templateRegex.lastIndex - prefix.length;
         if (startIndex != lastIndex) {
             parts.push(template.substring(lastIndex, startIndex));
         }
-        const part = Object.prototype.hasOwnProperty.call(values, result[1])
-            ? values[result[1]] : undefined;
-        parts.push(part ?? null);
+        const part = replacer(placeholder);
+        parts.push(part);
         lastIndex = templateRegex.lastIndex;
     }
     if (lastIndex < template.length) {
         parts.push(template.substring(lastIndex, template.length));
     }
-    return React.createElement(React.Fragment, null, ...parts);
+    return parts;
 }
 
 function defaultSelectLabel(

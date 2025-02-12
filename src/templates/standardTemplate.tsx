@@ -328,7 +328,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     const label = formatEntityLabel(data, model, t);
     const iri = t.formatIri(data.id);
     const typesLabel = formatEntityTypes(data, workspace);
-    const title = t.format('standard_template.group_item.title', {
+    const title = t.text('standard_template.group_item.title', {
         entity: label,
         entityIri: iri,
         entityTypes: typesLabel,
@@ -464,7 +464,7 @@ function PropertyList(props: {
                         className={`${CLASS_NAME}__properties-row`}>
                         <WithFetchStatus type='propertyType' target={iri}>
                             <div className={`${CLASS_NAME}__properties-key`}
-                                title={t.format('standard_template.property.title', {
+                                title={t.text('standard_template.property.title', {
                                     property: label,
                                     propertyIri: t.formatIri(iri),
                                 })}>

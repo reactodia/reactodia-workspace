@@ -154,8 +154,8 @@ export function formatEntityTitle(entity: ElementModel, workspace: WorkspaceCont
     const entityIri = t.formatIri(entity.id);
     const entityTypes = formatEntityTypeList(entity, workspace);
 
-    const title = t.format('inline_entity.title', {entity: label, entityIri, entityTypes});
-    const titleExtra = t.format('inline_entity.title_extra', {entity: label, entityIri, entityTypes});
+    const title = t.text('inline_entity.title', {entity: label, entityIri, entityTypes});
+    const titleExtra = t.text('inline_entity.title_extra', {entity: label, entityIri, entityTypes});
 
     return `${title}${titleExtra ? `\n${titleExtra}` : ''}`;
 }

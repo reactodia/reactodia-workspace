@@ -43,11 +43,11 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         return (
             <div key={key} className={`${FORM_CLASS}__row`}>
                 <label
-                    title={t.format('visual_authoring.edit_entity.property.title', {
+                    title={t.text('visual_authoring.edit_entity.property.title', {
                         property,
                         propertyIri,
                     })}>
-                    {t.format('visual_authoring.edit_entity.property.label', {
+                    {t.text('visual_authoring.edit_entity.property.label', {
                         property,
                         propertyIri,
                     })}

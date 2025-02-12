@@ -120,9 +120,12 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
-        "search_section_types_title": { "$ref": "#/$defs/Value" },
-        "search_section_entities_title": { "$ref": "#/$defs/Value" },
-        "search_section_link_types_title": { "$ref": "#/$defs/Value" }
+        "search_section_entities.label": { "$ref": "#/$defs/Value" },
+        "search_section_entities.title": { "$ref": "#/$defs/Value" },
+        "search_section_entity_types.label": { "$ref": "#/$defs/Value" },
+        "search_section_entity_types.title": { "$ref": "#/$defs/Value" },
+        "search_section_link_types.label": { "$ref": "#/$defs/Value" },
+        "search_section_link_types.title": { "$ref": "#/$defs/Value" }
       }
     },
     "drop_on_canvas": {

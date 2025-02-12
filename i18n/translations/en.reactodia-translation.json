@@ -44,20 +44,20 @@
     "entities.add_all": "Add all",
     "entities.add_group": "Add as group",
     "entities.add_selected": "Add selected",
-    "entities.counter_label": "{count}\u00A0of\u00A0{total}",
-    "entities.extra_label": "\u00A0({value})",
+    "entities.counter_label": "{{count}}\u00A0of\u00A0{{total}}",
+    "entities.extra_label": "\u00A0({{value}})",
     "entities.extra_title": "Extra entities",
-    "entities.missing_label": "\u00A0({value})",
+    "entities.missing_label": "\u00A0({{value}})",
     "entities.missing_title": "Missing entities",
     "entities.no_results": "No results",
-    "entities.truncated_results": "Only the first {limit} entities are shown",
-    "entities.truncated_results_expand": "Only the first {limit} entities are shown,\nclick here for the full results",
+    "entities.truncated_results": "Only the first {{limit}} entities are shown",
+    "entities.truncated_results_expand": "Only the first {{limit}} entities are shown,\nclick here for the full results",
     "link.both_navigate_title": "Navigate to all connected elements",
     "link.both_title": "all connected",
-    "link.source_navigate_title": "Navigate to source \"{relation}\" elements",
-    "link.source_title": "source of \"{relation}\" {relationIri}",
-    "link.target_navigate_title": "Navigate to source \"{target}\" elements",
-    "link.target_title": "target of \"{relation}\" {relationIri}",
+    "link.source_navigate_title": "Navigate to source \"{{relation}}\" elements",
+    "link.source_title": "source of \"{{relation}}\" {{relationIri}}",
+    "link.target_navigate_title": "Navigate to source \"{{target}}\" elements",
+    "link.target_title": "target of \"{{relation}}\" {{relationIri}}",
     "link.move_to_filter.title": "Set as filter in the Instances panel",
     "links.no_results": "No results",
     "links.suggest_similar": "Probably, you are looking for...",
@@ -77,17 +77,20 @@
     "ungroup_entities.command": "Ungroup entities"
   },
   "default_link_template": {
-    "group_source.title": "{value} source elements",
-    "group_source.value": "{value}",
-    "group_target.title": "{value} target elements",
-    "group_target.value": "{value}",
-    "label.title": "{relation} {relationIri}",
-    "property.title": "{property} {propertyIri}"
+    "group_source.title": "{{value}} source elements",
+    "group_source.value": "{{value}}",
+    "group_target.title": "{{value}} target elements",
+    "group_target.value": "{{value}}",
+    "label.title": "{{relation}} {{relationIri}}",
+    "property.title": "{{property}} {{propertyIri}}"
   },
   "default_workspace": {
-    "search_section_types_title": "Types",
-    "search_section_entities_title": "Entities",
-    "search_section_link_types_title": "Links"
+    "search_section_entities.label": "Entities",
+    "search_section_entities.title": "Entity lookup",
+    "search_section_entity_types.label": "Types",
+    "search_section_entity_types.title": "Entity type hierarchy",
+    "search_section_link_types.label": "Links",
+    "search_section_link_types.title": "Relation types on the diagram"
   },
   "drop_on_canvas": {
     "drop.command": "Drag and drop onto diagram"
@@ -106,14 +109,14 @@
     "set_authoring_state.command": "Create, change or delete entities and relations"
   },
   "group_paginator": {
-    "current_page.label": "{page} of {pageCount}",
+    "current_page.label": "{{page}} of {{pageCount}}",
     "go_next.title": "Go to the next page",
     "go_previous.title": "Go to the previous page",
     "page_size.title": "Number of items to display per page"
   },
   "inline_entity": {
-    "title": "{entity} {entityIri}",
-    "title_extra": "Types: {entityTypes}"
+    "title": "{{entity}} {{entityIri}}",
+    "title_extra": "Types: {{entityTypes}}"
   },
   "link_action": {
     "delete_relation.title": "Delete relation",
@@ -137,7 +140,7 @@
     "input.placeholder": "Search for...",
     "input_clear.title": "Clear the search",
     "input_submit.title": "Search",
-    "input_term_too_short": "Input at least {termLength} characters to\u00A0search.",
+    "input_term_too_short": "Input at least {{termLength}} characters to\u00A0search.",
     "no_results": "No results found."
   },
   "search_element_types": {
@@ -151,11 +154,11 @@
     "add_group.title": "Place selected entities on the canvas as a group",
     "add_selected.label": "Add selected",
     "add_selected.title": "Place selected entities on the canvas",
-    "criteria_has_type": "Has type {entityType}",
-    "criteria_connected": "Connected to {entity}",
-    "criteria_connected_via": "Connected to {entity} through {relationType}",
-    "criteria_connected_to_source": "Connected to {entity} through {relationType} as {sourceIcon}\u00A0source",
-    "criteria_connected_to_target": "Connected to {entity} through {relationType} as {targetIcon}\u00A0target",
+    "criteria_has_type": "Has type {{entityType}}",
+    "criteria_connected": "Connected to {{entity}}",
+    "criteria_connected_via": "Connected to {{entity}} through {{relationType}}",
+    "criteria_connected_to_source": "Connected to {{entity}} through {{relationType}} as {{sourceIcon}}\u00A0source",
+    "criteria_connected_to_target": "Connected to {{entity}} through {{relationType}} as {{targetIcon}}\u00A0target",
     "place_elements.command": "Add selected elements",
     "query_progress.title": "Querying for entities",
     "show_more_results.label": "Show more",
@@ -164,7 +167,7 @@
   "search_link_types": {
     "add_to_filter.title": "Search for connected elements via the relation",
     "heading_connected": "Connected to selected entities",
-    "heading_connected_on_single": "Connected to {entity}",
+    "heading_connected_on_single": "Connected to {{entity}}",
     "heading_other": "Other links",
     "no_results": "No links found.",
     "switch.command": "Change link types visibility",
@@ -200,11 +203,11 @@
     "edit.label": "",
     "edit.title": "Edit entity",
     "edit.title_on_disabled": "Cannot edit the entity",
-    "group_item.title": "{entity}\nIRI:{entityIri}\nTypes: {entityTypes}",
+    "group_item.title": "{{entity}}\nIRI:{{entityIri}}\nTypes: {{entityTypes}}",
     "iri.label": "IRI:",
     "iri.label_on_modified": "IRI\u00A0(edited):",
     "no_properties": "no properties",
-    "property.title": "{property} {propertyIri}",
+    "property.title": "{{property}} {{propertyIri}}",
     "ungroup.title": "Ungroup an entity"
   },
   "toolbar": {
@@ -222,7 +225,7 @@
     "export_svg.title": "Export the diagram as an SVG image",
     "redo.label": "Redo",
     "redo.title": "Redo last undone command",
-    "redo.with_command_title": "Redo: {command}",
+    "redo.with_command_title": "Redo: {{command}}",
     "save_authoring.title": "Apply authored graph changes",
     "save_layout.title": "Save diagram layout",
     "language_selector.title": "Select language for the data (labels, properties, etc)",
@@ -230,7 +233,7 @@
     "layout.title": "Layout diagram using force-directed algorithm",
     "undo.label": "Undo",
     "undo.title": "Undo last command",
-    "undo.with_command_title": "Undo: {command}"
+    "undo.with_command_title": "Undo: {{command}}"
   },
   "unified_search": {
     "input.placeholder": "Search for...",
@@ -245,8 +248,8 @@
     "edit_entity.dialog.caption": "Edit entity",
     "edit_entity.iri.label": "IRI",
     "edit_entity.label.label": "Label",
-    "edit_entity.property.label": "{property}",
-    "edit_entity.property.title": "{property} {propertyIri}",
+    "edit_entity.property.label": "{{property}}",
+    "edit_entity.property.title": "{{property}} {{propertyIri}}",
     "edit_entity.type.label": "Type",
     "edit_relation.dialog.caption": "Edit relation",
     "edit_relation.dialog.caption_on_new": "Establish new relation",
@@ -258,13 +261,13 @@
     "find_or_create.validation_progress.title": "Validating selected element and link types",
     "rename_link.dialog.caption": "Rename Link",
     "rename_link.label.label": "Label",
-    "select_entity.entity_type.label": "{type}",
+    "select_entity.entity_type.label": "{{type}}",
     "select_entity.type.label": "Entity Type",
     "select_entity.type.placeholder": "Select entity type",
     "select_entity.results.aria_label": "Select an existing element to put on a diagram",
     "select_entity.separator.label": "or create new entity",
     "select_entity.validation.error_required": "Required.",
-    "select_relation.relation_type.label": "{relation} [{source} → {target}]",
+    "select_relation.relation_type.label": "{{relation}} [{{source}} → {{target}}]",
     "select_relation.type.label": "Relation Type",
     "select_relation.type.placeholder": "Select relation type",
     "select_relation.validation.error_duplicate": "The relation already exists.",

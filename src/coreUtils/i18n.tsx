@@ -8,6 +8,8 @@ import type * as Rdf from '../data/rdf/rdfModel';
 
 import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-translation.json';
 
+type DefaultBundleData = Omit<typeof DefaultTranslationBundle, '$schema'>;
+
 /**
  * Translation strings bundle (content).
  *
@@ -23,13 +25,13 @@ import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-trans
  * }
  * ```
  */
-export type TranslationBundle = Omit<typeof DefaultTranslationBundle, '$schema'>;
+export type TranslationBundle = TranslationPartial<DefaultBundleData>;
 /**
  * Key for a translation string.
  *
  * @see Translation
  */
-export type TranslationKey = TranslationKeyOf<TranslationBundle>;
+export type TranslationKey = TranslationKeyOf<DefaultBundleData>;
 
 /**
  * Provides i18n strings and templates for the UI elements.
@@ -38,17 +40,12 @@ export type TranslationKey = TranslationKeyOf<TranslationBundle>;
  */
 export interface Translation {
     /**
-     * Gets a simple translation string without any formatting.
-     */
-    text(key: TranslationKey): string;
-
-    /**
      * Formats a translation string by replacing placeholders with
      * provided values.
      */
-    format(
+    text(
         key: TranslationKey,
-        placeholders: Record<string, string | number | boolean>
+        placeholders?: Record<string, string | number | boolean>
     ): string;
 
     /**
@@ -68,13 +65,15 @@ export interface Translation {
      *
      * **Example**:
      * ```ts
-     * model.setLanguage('de');
      * // Returns: Rdf.Literal { value = 'Apfel', language = 'de' }
-     * const name = model.locale.formatLabel([
-     *     model.factory.literal('Apple', 'en'),
-     *     model.factory.literal('Apfel', 'de'),
-     *     model.factory.literal('Яблоко', 'ru'),
-     * ]);
+     * const name = t.selectLabel(
+     *     [
+     *         model.factory.literal('Apple', 'en'),
+     *         model.factory.literal('Apfel', 'de'),
+     *         model.factory.literal('Яблоко', 'ru'),
+     *     ],
+     *     'de'
+     * );
      * ```
      *
      * @param labels candidate literal with same or different language codes
@@ -110,7 +109,7 @@ export interface Translation {
      * **Example**:
      * ```ts
      * // Returns: 'Apple'
-     * const name = model.locale.formatLabel(
+     * const name = t.formatLabel(
      *     [
      *         model.factory.literal('Apfel', 'de'),
      *         model.factory.literal('Яблоко', 'ru'),
@@ -180,6 +179,10 @@ export function useTranslation(): Translation {
     return translation;
 }
 
+type TranslationPartial<T> = {
+    [K in keyof T]?: Partial<T[K]>;
+};
+
 type TranslationKeyOf<T> = DeepPath<T>;
 
 type DeepPath<T> = T extends object ? (
@@ -196,27 +199,18 @@ type DeepPath<T> = T extends object ? (
 export class TranslatedText {
     private constructor(
         private readonly key: TranslationKey,
-        private readonly formatPlaceholders?: Record<string, string | number | boolean>
+        private readonly placeholders: Record<string, string | number | boolean> | undefined
     ) {}
-
-    /**
-     * Constructs a reference to simple translation string without any formatting.
-     *
-     * @see {@link Translation.text}
-     */
-    static text(key: TranslationKey): TranslatedText {
-        return new TranslatedText(key);
-    }
 
     /**
      * Constructs a reference to a translation string formatted with the provided
      * placeholders.
      *
-     * @see {@link Translation.format}
+     * @see {@link Translation.text}
      */
-    static format(
+    static text(
         key: TranslationKey,
-        placeholders: Record<string, string | number | boolean>
+        placeholders?: Record<string, string | number | boolean>
     ): TranslatedText {
         return new TranslatedText(key, placeholders);
     }
@@ -225,8 +219,6 @@ export class TranslatedText {
      * Resolves a translation string referenced by the current instance.
      */
     resolve(translation: Translation): string {
-        return this.formatPlaceholders
-            ? translation.format(this.key, this.formatPlaceholders)
-            : translation.text(this.key);
+        return translation.text(this.key, this.placeholders);
     }
 }

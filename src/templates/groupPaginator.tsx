@@ -60,7 +60,7 @@ export function GroupPaginator(props: GroupPaginatorProps) {
                 onClick={() => onChangePage(pageIndex - 1)}
             />
             <div className={`${CLASS_NAME}__status`}>
-                {t.format('group_paginator.current_page.label', {
+                {t.text('group_paginator.current_page.label', {
                     page: pageIndex + 1,
                     pageCount,
                 })}

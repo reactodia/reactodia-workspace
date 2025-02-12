@@ -90,7 +90,11 @@ export interface UnifiedSearchSection {
     /**
      * Section label to display in the search.
      */
-    readonly label: string;
+    readonly label: React.ReactNode;
+    /**
+     * Section title to display on hover.
+     */
+    readonly title?: string;
     /**
      * Component to provide and display search results.
      *
@@ -512,6 +516,7 @@ function SearchContent(props: SearchContentProps) {
                             'reactodia-btn-default',
                             section.key === activeSectionKey ? 'active' : undefined,
                         )}
+                        title={section.title}
                         onClick={() => onActivateSection(section.key)}>
                         {section.label}
                     </button>

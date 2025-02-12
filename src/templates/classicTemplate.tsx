@@ -134,7 +134,7 @@ function PropertyList(props: {
                     <div key={iri} className={`${CLASS_NAME}__property-row`}>
                         <WithFetchStatus type='propertyType' target={iri}>
                             <div className={`${CLASS_NAME}__property-label`}
-                                title={t.format('standard_template.property.title', {
+                                title={t.text('standard_template.property.title', {
                                     property: label,
                                     propertyIri: t.formatIri(iri),
                                 })}>

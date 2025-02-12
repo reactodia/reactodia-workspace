@@ -1044,14 +1044,14 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
             filterKey
         );
         const title = (
-            direction === 'in' ? t.format('connections_menu.link.source_title', {relation, relationIri}) :
-            direction === 'out' ? t.format('connections_menu.link.target_title', {relation, relationIri}) :
-            t.format('connections_menu.link.both_title', {relation, relationIri})
+            direction === 'in' ? t.text('connections_menu.link.source_title', {relation, relationIri}) :
+            direction === 'out' ? t.text('connections_menu.link.target_title', {relation, relationIri}) :
+            t.text('connections_menu.link.both_title', {relation, relationIri})
         );
         const navigateTitle = (
-            direction === 'in' ? t.format('connections_menu.link.source_navigate_title', {relation, relationIri}) :
-            direction === 'out' ? t.format('connections_menu.link.target_navigate_title', {relation, relationIri}) :
-            t.format('connections_menu.link.both_navigate_title', {relation, relationIri})
+            direction === 'in' ? t.text('connections_menu.link.source_navigate_title', {relation, relationIri}) :
+            direction === 'out' ? t.text('connections_menu.link.target_navigate_title', {relation, relationIri}) :
+            t.text('connections_menu.link.both_navigate_title', {relation, relationIri})
         );
 
         return (
@@ -1195,7 +1195,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
 
     private renderCounter(activeObjCount: number) {
         const {data: {chunk, elements}, workspace: {translation: t}} = this.props;
-        const countString = t.format('connections_menu.entities.counter_label', {
+        const countString = t.text('connections_menu.entities.counter_label', {
             count: activeObjCount,
             total: elements.length,
         });
@@ -1210,13 +1210,13 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 <span className={`${CLASS_NAME}__objects-extra`}
                     title={extraCount === 0 ? undefined : (
                         extraCount > 0
-                            ? t.format('connections_menu.entities.extra_title', {value: extra})
-                            : t.format('connections_menu.entities.missing_title', {value: extra})
+                            ? t.text('connections_menu.entities.extra_title', {value: extra})
+                            : t.text('connections_menu.entities.missing_title', {value: extra})
                     )}>
                     {extraCount === 0 ? null : (
                         extraCount > 0
-                            ? t.format('connections_menu.entities.extra_label', {value: extra})
-                            : t.format('connections_menu.entities.missing_label', {value: extra})
+                            ? t.text('connections_menu.entities.extra_label', {value: extra})
+                            : t.text('connections_menu.entities.missing_label', {value: extra})
                     )}
                 </span>
             );
@@ -1273,13 +1273,13 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         onMoveToFilter ? (
                             <div className={`${CLASS_NAME}__move-to-filter`}
                                 onClick={() => onMoveToFilter(data.chunk)}>
-                                {t.format('connections_menu.entities.truncated_results_expand', {
+                                {t.text('connections_menu.entities.truncated_results_expand', {
                                     limit: LINK_COUNT_PER_PAGE,
                                 })}
                             </div>
                         ) : (
                             <div className={`${CLASS_NAME}__move-to-filter`}>
-                                {t.format('connections_menu.entities.truncated_results', {
+                                {t.text('connections_menu.entities.truncated_results', {
                                     limit: LINK_COUNT_PER_PAGE,
                                 })}
                             </div>

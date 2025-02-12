@@ -18,8 +18,8 @@ export function NoSearchResults(props: {
     const t = useTranslation();
     const effectiveMessage = message ?? (
         hasQuery ? t.text('search_defaults.no_results') :
-        termLength <= 1 ? t.format('search_defaults.empty_input_term', {termLength}) :
-        t.format('search_defaults.input_term_too_short', {termLength})
+        termLength <= 1 ? t.text('search_defaults.empty_input_term', {termLength}) :
+        t.text('search_defaults.input_term_too_short', {termLength})
     );
     return (
         <div className={classnames(CLASS_NAME, className)}>
