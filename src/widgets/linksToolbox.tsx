@@ -272,7 +272,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                                 <div role='heading'
                                     className={`${CLASS_NAME}__links-heading`}>
                                     {filteredLinks.selection.length === 1 ? (
-                                        t.template('search_link_types.heading_connected_on_single', {
+                                        t.template('search_link_types.heading_connected_single', {
                                             entity: <InlineEntity target={filteredLinks.selection[0]} />,
                                         })
                                     ) : (

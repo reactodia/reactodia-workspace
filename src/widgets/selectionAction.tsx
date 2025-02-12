@@ -196,8 +196,8 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             )}
             title={
                 title ? title :
-                singleNewEntity ? t.text('selection_action.remove.title_on_new') :
-                elements.length === 1 ? t.text('selection_action.remove.title_on_single') :
+                singleNewEntity ? t.text('selection_action.remove.title_new') :
+                elements.length === 1 ? t.text('selection_action.remove.title_single') :
                 t.text('selection_action.remove.title')
             }
             onSelect={() => editor.removeSelectedElements()}
@@ -323,7 +323,7 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
             )}
             title={title ?? (
                 elements.length === 1
-                    ? t.text('selection_action.expand.title_on_single')
+                    ? t.text('selection_action.expand.title_single')
                     : t.text('selection_action.expand.title')
             )}
             onSelect={() => {
@@ -552,7 +552,7 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
             disabled={!(canGroup || canUngroup)}
             title={title ?? (
                 canUngroup
-                    ? t.text('selection_action.group.title_on_ungroup')
+                    ? t.text('selection_action.group.title_ungroup')
                     : t.text('selection_action.group.title')
             )}
             onMouseDown={async () => {
@@ -619,7 +619,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             title={title ?? (
                 canLink
                     ? t.text('selection_action.establish_relation.title')
-                    : t.text('selection_action.establish_relation.title_on_disabled')
+                    : t.text('selection_action.establish_relation.title_disabled')
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);

@@ -140,7 +140,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                 <div className={`${CLASS_NAME}__iri`}>
                     <div className={`${CLASS_NAME}__iri-key`}>
                         {entityContext.editedIri
-                            ? t.text('standard_template.iri.label_on_modified')
+                            ? t.text('standard_template.iri.label_modified')
                             : t.text('standard_template.iri.label')}
                     </div>
                     <div className={`${CLASS_NAME}__iri-value`}>
@@ -513,7 +513,7 @@ function Actions(props: {
                 )}
                 title={canDelete
                     ? t.text('standard_template.delete.title')
-                    : t.text('standard_template.delete.title_on_disabled')}
+                    : t.text('standard_template.delete.title_disabled')}
                 disabled={!canDelete}
                 onClick={onDelete}>
                 {canEdit === undefined
@@ -527,7 +527,7 @@ function Actions(props: {
                 )}
                 title={canEdit
                     ? t.text('standard_template.edit.title')
-                    : t.text('standard_template.edit.title_on_disabled')}
+                    : t.text('standard_template.edit.title_disabled')}
                 disabled={!canEdit}
                 onClick={() => onEdit(target)}>
                 {canEdit === undefined

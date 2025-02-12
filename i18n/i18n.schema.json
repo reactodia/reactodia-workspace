@@ -31,9 +31,9 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
-        "class_tree_heading": { "$ref": "#/$defs/Value" },
-        "instances_heading": { "$ref": "#/$defs/Value" },
-        "connections_heading": { "$ref": "#/$defs/Value" }
+        "class_tree.heading": { "$ref": "#/$defs/Value" },
+        "instances.heading": { "$ref": "#/$defs/Value" },
+        "connections.heading": { "$ref": "#/$defs/Value" }
       }
     },
     "commands": {
@@ -175,9 +175,9 @@
       "additionalProperties": false,
       "properties": {
         "delete_relation.title": { "$ref": "#/$defs/Value" },
-        "delete_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "delete_relation.title_disabled": { "$ref": "#/$defs/Value" },
         "edit_relation.title": { "$ref": "#/$defs/Value" },
-        "edit_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "edit_relation.title_disabled": { "$ref": "#/$defs/Value" },
         "rename_link.title": { "$ref": "#/$defs/Value" },
         "move_relation.move_source_title": { "$ref": "#/$defs/Value" },
         "move_relation.move_target_title": { "$ref": "#/$defs/Value" }
@@ -246,7 +246,7 @@
       "properties": {
         "add_to_filter.title": { "$ref": "#/$defs/Value" },
         "heading_connected": { "$ref": "#/$defs/Value" },
-        "heading_connected_on_single": { "$ref": "#/$defs/Value" },
+        "heading_connected_single": { "$ref": "#/$defs/Value" },
         "heading_other": { "$ref": "#/$defs/Value" },
         "no_results": { "$ref": "#/$defs/Value" },
         "switch.command": { "$ref": "#/$defs/Value" },
@@ -264,17 +264,17 @@
         "anchor.title": { "$ref": "#/$defs/Value" },
         "connections.title": { "$ref": "#/$defs/Value" },
         "establish_relation.title": { "$ref": "#/$defs/Value" },
-        "establish_relation.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "establish_relation.title_disabled": { "$ref": "#/$defs/Value" },
         "expand.collapse_command": { "$ref": "#/$defs/Value" },
         "expand.expand_command": { "$ref": "#/$defs/Value" },
         "expand.title": { "$ref": "#/$defs/Value" },
-        "expand.title_on_single": { "$ref": "#/$defs/Value" },
+        "expand.title_single": { "$ref": "#/$defs/Value" },
         "group.title": { "$ref": "#/$defs/Value" },
-        "group.title_on_ungroup": { "$ref": "#/$defs/Value" },
+        "group.title_ungroup": { "$ref": "#/$defs/Value" },
         "layout.title": { "$ref": "#/$defs/Value" },
         "remove.title": { "$ref": "#/$defs/Value" },
-        "remove.title_on_new": { "$ref": "#/$defs/Value" },
-        "remove.title_on_single": { "$ref": "#/$defs/Value" },
+        "remove.title_new": { "$ref": "#/$defs/Value" },
+        "remove.title_single": { "$ref": "#/$defs/Value" },
         "zoom_to_fit.title": { "$ref": "#/$defs/Value" }
       }
     },
@@ -286,13 +286,13 @@
         "default_type": { "$ref": "#/$defs/Value" },
         "delete.label": { "$ref": "#/$defs/Value" },
         "delete.title": { "$ref": "#/$defs/Value" },
-        "delete.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "delete.title_disabled": { "$ref": "#/$defs/Value" },
         "edit.label": { "$ref": "#/$defs/Value" },
         "edit.title": { "$ref": "#/$defs/Value" },
-        "edit.title_on_disabled": { "$ref": "#/$defs/Value" },
+        "edit.title_disabled": { "$ref": "#/$defs/Value" },
         "group_item.title": { "$ref": "#/$defs/Value" },
         "iri.label": { "$ref": "#/$defs/Value" },
-        "iri.label_on_modified": { "$ref": "#/$defs/Value" },
+        "iri.label_modified": { "$ref": "#/$defs/Value" },
         "no_properties": { "$ref": "#/$defs/Value" },
         "property.title": { "$ref": "#/$defs/Value" },
         "ungroup.title": { "$ref": "#/$defs/Value" }
@@ -320,7 +320,7 @@
         "export_svg.title": { "$ref": "#/$defs/Value" },
         "redo.label": { "$ref": "#/$defs/Value" },
         "redo.title": { "$ref": "#/$defs/Value" },
-        "redo.with_command_title": { "$ref": "#/$defs/Value" },
+        "redo.title_named": { "$ref": "#/$defs/Value" },
         "save_authoring.title": { "$ref": "#/$defs/Value" },
         "save_layout.title": { "$ref": "#/$defs/Value" },
         "language_selector.title": { "$ref": "#/$defs/Value" },
@@ -328,7 +328,7 @@
         "layout.title": { "$ref": "#/$defs/Value" },
         "undo.label": { "$ref": "#/$defs/Value" },
         "undo.title": { "$ref": "#/$defs/Value" },
-        "undo.with_command_title": { "$ref": "#/$defs/Value" }
+        "undo.title_named": { "$ref": "#/$defs/Value" }
       }
     },
     "unified_search": {
@@ -355,7 +355,7 @@
         "edit_entity.property.title": { "$ref": "#/$defs/Value" },
         "edit_entity.type.label": { "$ref": "#/$defs/Value" },
         "edit_relation.dialog.caption": { "$ref": "#/$defs/Value" },
-        "edit_relation.dialog.caption_on_new": { "$ref": "#/$defs/Value" },
+        "edit_relation.dialog.caption_new": { "$ref": "#/$defs/Value" },
         "edit_relation.validation_progress.title": { "$ref": "#/$defs/Value" },
         "find_or_create.connect_command": { "$ref": "#/$defs/Value" },
         "find_or_create.create_command": { "$ref": "#/$defs/Value" },

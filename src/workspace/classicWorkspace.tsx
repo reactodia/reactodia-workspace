@@ -92,13 +92,13 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                 <WorkspaceLayoutColumn defaultSize={275}
                     {...leftColumn}>
                     <WorkspaceLayoutItem id='classes'
-                        heading={t.text('classic_workspace.class_tree_heading')}>
+                        heading={t.text('classic_workspace.class_tree.heading')}>
                         <ClassTree {...classTree}
                             instancesSearchCommands={instancesSearchCommands}
                         />
                     </WorkspaceLayoutItem>
                     <WorkspaceLayoutItem id='instances'
-                        heading={t.text('classic_workspace.instances_heading')}>
+                        heading={t.text('classic_workspace.instances.heading')}>
                         <InstancesSearch {...instancesSearch}
                             commands={instancesSearchCommands}
                         />
@@ -140,7 +140,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                     defaultCollapsed={true}
                     {...rightColumn}>
                     <WorkspaceLayoutItem id='connections'
-                        heading={t.text('classic_workspace.connections_heading')}>
+                        heading={t.text('classic_workspace.connections.heading')}>
                         <LinkTypesToolbox {...linkToolbox}
                             instancesSearchCommands={instancesSearchCommands}
                         />

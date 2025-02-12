@@ -213,7 +213,7 @@ export function LinkActionEdit(props: LinkActionEditProps) {
             title={title ?? (
                 canModify.canChangeType
                     ? t.text('link_action.edit_relation.title')
-                    : t.text('link_action.edit_relation.title_on_disabled')
+                    : t.text('link_action.edit_relation.title_disabled')
             )}
             disabled={!canModify.canChangeType}
             onSelect={() => editor.authoringCommands.trigger('editRelation', {target: link})}
@@ -273,7 +273,7 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
             title={title ?? (
                 canModify.canDelete
                     ? t.text('link_action.delete_relation.title')
-                    : t.text('link_action.delete_relation.title_on_disabled')
+                    : t.text('link_action.delete_relation.title_disabled')
             )}
             disabled={!canModify.canDelete}
             onSelect={() => editor.deleteRelation(link.data)}

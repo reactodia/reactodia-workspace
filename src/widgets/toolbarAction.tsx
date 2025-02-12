@@ -361,7 +361,7 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
             title={title ?? (
                 commandTitle === undefined
                     ? t.text('toolbar_action.undo.title')
-                    : t.text('toolbar_action.undo.with_command_title', {command: commandTitle})
+                    : t.text('toolbar_action.undo.title_named', {command: commandTitle})
             )}
             onSelect={() => history.undo()}>
             {insideDropdown ? t.text('toolbar_action.undo.label') : null}
@@ -403,7 +403,7 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
             title={title ?? (
                 commandTitle === undefined
                     ? t.text('toolbar_action.redo.title')
-                    : t.text('toolbar_action.redo.with_command_title', {command: commandTitle}) 
+                    : t.text('toolbar_action.redo.title_named', {command: commandTitle}) 
             )}
             onSelect={() => history.redo()}>
             {insideDropdown ? t.text('toolbar_action.redo.label') : null}

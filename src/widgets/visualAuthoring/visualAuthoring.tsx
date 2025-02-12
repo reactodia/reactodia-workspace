@@ -243,7 +243,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 />
             );
             const caption = editor.temporaryState.links.has(link.data)
-                ? t.text('visual_authoring.edit_relation.dialog.caption_on_new')
+                ? t.text('visual_authoring.edit_relation.dialog.caption_new')
                 : t.text('visual_authoring.edit_relation.dialog.caption');
             overlay.showDialog({
                 target: link,

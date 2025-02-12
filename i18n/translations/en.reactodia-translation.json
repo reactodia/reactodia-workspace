@@ -16,9 +16,9 @@
     "relation_delete_revert.title": "Revert deletion of the relation"
   },
   "classic_workspace": {
-    "class_tree_heading": "Classes",
-    "instances_heading": "Instances",
-    "connections_heading": "Connections"
+    "class_tree.heading": "Classes",
+    "instances.heading": "Instances",
+    "connections.heading": "Connections"
   },
   "commands": {
     "change_entity.title": "Change entity data",
@@ -120,9 +120,9 @@
   },
   "link_action": {
     "delete_relation.title": "Delete relation",
-    "delete_relation.title_on_disabled": "Cannot delete the relation",
+    "delete_relation.title_disabled": "Cannot delete the relation",
     "edit_relation.title": "Edit relation",
-    "edit_relation.title_on_disabled": "Cannot edit the relation",
+    "edit_relation.title_disabled": "Cannot edit the relation",
     "rename_link.title": "Rename link",
     "move_relation.move_source_title": "Move link source",
     "move_relation.move_target_title": "Move link target"
@@ -167,7 +167,7 @@
   "search_link_types": {
     "add_to_filter.title": "Search for connected elements via the relation",
     "heading_connected": "Connected to selected entities",
-    "heading_connected_on_single": "Connected to {{entity}}",
+    "heading_connected_single": "Connected to {{entity}}",
     "heading_other": "Other links",
     "no_results": "No links found.",
     "switch.command": "Change link types visibility",
@@ -183,15 +183,15 @@
     "expand.collapse_command": "Collapse elements",
     "expand.expand_command": "Expand elements",
     "expand.title": "Expand selected elements to reveal additional properties",
-    "expand.title_on_single": "Expand an element to reveal additional properties",
+    "expand.title_single": "Expand an element to reveal additional properties",
     "establish_relation.title": "Establish link",
-    "establish_relation.title_on_disabled": "Establishing link is not allowed for the element",
+    "establish_relation.title_disabled": "Establishing link is not allowed for the element",
     "group.title": "Group entities",
-    "group.title_on_ungroup": "Ungroup entities",
+    "group.title_ungroup": "Ungroup entities",
     "layout.title": "Layout selected elements using force-directed algorithm",
     "remove.title": "Remove selected elements from the diagram",
-    "remove.title_on_new": "Discard new element",
-    "remove.title_on_single": "Remove an element from the diagram",
+    "remove.title_new": "Discard new element",
+    "remove.title_single": "Remove an element from the diagram",
     "zoom_to_fit.title": "Zoom to fit selected elements into view"
   },
   "standard_template": {
@@ -199,13 +199,13 @@
     "default_type": "Thing",
     "delete.label": "Delete",
     "delete.title": "Delete entity",
-    "delete.title_on_disabled": "Cannot delete the entity",
+    "delete.title_disabled": "Cannot delete the entity",
     "edit.label": "",
     "edit.title": "Edit entity",
-    "edit.title_on_disabled": "Cannot edit the entity",
+    "edit.title_disabled": "Cannot edit the entity",
     "group_item.title": "{{entity}}\nIRI:{{entityIri}}\nTypes: {{entityTypes}}",
     "iri.label": "IRI:",
-    "iri.label_on_modified": "IRI\u00A0(edited):",
+    "iri.label_modified": "IRI\u00A0(edited):",
     "no_properties": "no properties",
     "property.title": "{{property}} {{propertyIri}}",
     "ungroup.title": "Ungroup an entity"
@@ -225,7 +225,7 @@
     "export_svg.title": "Export the diagram as an SVG image",
     "redo.label": "Redo",
     "redo.title": "Redo last undone command",
-    "redo.with_command_title": "Redo: {{command}}",
+    "redo.title_named": "Redo: {{command}}",
     "save_authoring.title": "Apply authored graph changes",
     "save_layout.title": "Save diagram layout",
     "language_selector.title": "Select language for the data (labels, properties, etc)",
@@ -233,7 +233,7 @@
     "layout.title": "Layout diagram using force-directed algorithm",
     "undo.label": "Undo",
     "undo.title": "Undo last command",
-    "undo.with_command_title": "Undo: {{command}}"
+    "undo.title_named": "Undo: {{command}}"
   },
   "unified_search": {
     "input.placeholder": "Search for...",
@@ -252,7 +252,7 @@
     "edit_entity.property.title": "{{property}} {{propertyIri}}",
     "edit_entity.type.label": "Type",
     "edit_relation.dialog.caption": "Edit relation",
-    "edit_relation.dialog.caption_on_new": "Establish new relation",
+    "edit_relation.dialog.caption_new": "Establish new relation",
     "edit_relation.validation_progress.title": "Validating selected link type",
     "find_or_create.connect_command": "Link to an entity",
     "find_or_create.create_command": "Create new entity",
