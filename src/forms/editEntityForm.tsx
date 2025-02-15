@@ -1,11 +1,18 @@
+import classnames from 'classnames';
 import * as React from 'react';
+
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { subscribePropertyTypes } from '../editor/observedElement';
+import { WithFetchStatus } from '../editor/withFetchStatus';
+
+import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 const FORM_CLASS = 'reactodia-form';
+const CLASS_NAME = 'reactodia-edit-entity-form';
 
 export interface EditEntityFormProps {
     entity: ElementModel;
@@ -30,51 +37,6 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
         if (this.props.entity !== prevProps.entity) {
             this.setState({elementModel: this.props.entity});
         }
-    }
-
-    private renderProperty(
-        key: PropertyTypeIri,
-        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
-    ) {
-        const {model, translation: t} = this.context;
-        const propertyType = model.getPropertyType(key);
-        const property = t.formatLabel(propertyType?.data?.label, key, model.language);
-        const propertyIri = t.formatIri(key);
-        return (
-            <div key={key} className={`${FORM_CLASS}__row`}>
-                <label
-                    title={t.text('visual_authoring.edit_entity.property.title', {
-                        property,
-                        propertyIri,
-                    })}>
-                    {t.text('visual_authoring.edit_entity.property.label', {
-                        property,
-                        propertyIri,
-                    })}
-                    {
-                        values.map((term, index) => (
-                            <input key={index}
-                                name='reactodia-edit-entity-property'
-                                className='reactodia-form-control'
-                                defaultValue={term.value}
-                            />
-                        ))
-                    }
-                </label>
-            </div>
-        );
-    }
-
-    private renderProperties() {
-        const {properties} = this.props.entity;
-        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
-        return (
-            <div>
-                {propertyIris.map(iri => {
-                    return this.renderProperty(iri, properties[iri]);
-                })}
-            </div>
-        );
     }
 
     private renderType() {
@@ -154,8 +116,9 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
 
     render() {
         const {translation: t} = this.context;
+        const {elementModel} = this.state;
         return (
-            <div className={FORM_CLASS}>
+            <div className={classnames(FORM_CLASS, CLASS_NAME)}>
                 <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
                     <div className={`${FORM_CLASS}__row`}>
                         {this.renderIri()}
@@ -166,7 +129,9 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                     <div className={`${FORM_CLASS}__row`}>
                         {this.renderLabel()}
                     </div>
-                    {this.renderProperties()}
+                    <Properties data={elementModel}
+                        onChangeProperty={this.onChangeProperty}
+                    />
                 </div>
                 <div className={`${FORM_CLASS}__controls`}>
                     <button type='button'
@@ -176,7 +141,7 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
                         {t.text('visual_authoring.dialog.apply.label')}
                     </button>
                     <button type='button'
-                        className='reactodia-btn reactodia-btn-default'
+                        className='reactodia-btn reactodia-btn-secondary'
                         title={t.text('visual_authoring.dialog.cancel.title')}
                         onClick={this.props.onCancel}>
                         {t.text('visual_authoring.dialog.cancel.label')}
@@ -185,4 +150,134 @@ export class EditEntityForm extends React.Component<EditEntityFormProps, State> 
             </div>
         );
     }
+
+    private onChangeProperty = (
+        property: PropertyTypeIri,
+        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
+    ): void => {
+        this.setState(prevState => {
+            return {
+                elementModel: {
+                    ...prevState.elementModel,
+                    properties: {
+                        ...prevState.elementModel.properties,
+                        [property]: values,
+                    }
+                }
+            };
+        });
+    };
 }
+
+
+function Properties(props: {
+    data: ElementModel;
+    onChangeProperty: (
+        property: PropertyTypeIri,
+        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
+    ) => void;
+}) {
+    const {data, onChangeProperty} = props;
+    const {model, translation: t} = useWorkspace();
+
+    const propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
+
+    if (propertyIris.length === 0) {
+        return null;
+    }
+
+    const properties = propertyIris.map(iri => {
+        const property = model.getPropertyType(iri);
+        return {
+            iri,
+            label: t.formatLabel(property?.data?.label, iri, model.language),
+            values: data.properties[iri],
+        };
+    });
+    properties.sort((a, b) => a.label.localeCompare(b.label));
+
+    return (
+        <div role='list'
+            className={`${CLASS_NAME}__properties`}>
+            {properties.map(({iri, label, values}) => {
+                return (
+                    <div key={iri} className={`${FORM_CLASS}__row`}>
+                        <label
+                            title={t.text('visual_authoring.edit_entity.property.title', {
+                                property: label,
+                                propertyIri: iri,
+                            })}>
+                            <WithFetchStatus type='propertyType' target={iri}>
+                                <span>
+                                    {t.text('visual_authoring.edit_entity.property.label', {
+                                        property: label,
+                                        propertyIri: iri,
+                                    })}
+                                </span>
+                            </WithFetchStatus>
+                            <PropertyValues property={iri}
+                                values={values}
+                                onChange={onChangeProperty}
+                                factory={model.factory}
+                            />
+                        </label>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+function PropertyValuesInner(props: {
+    property: PropertyTypeIri;
+    values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+    onChange: (
+        property: PropertyTypeIri,
+        values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>
+    ) => void;
+    factory: Rdf.DataFactory;
+}) {
+    const {property, values, onChange, factory} = props;
+    return (
+        <>
+            {values.map((term, index) => (
+                <input key={index}
+                    name='reactodia-edit-entity-property'
+                    className={classnames('reactodia-form-control')}
+                    value={term.value}
+                    onChange={e => {
+                        const changedValue = e.currentTarget.value;
+                        const nextValues = [...values];
+                        nextValues[index] = setTermValue(term, changedValue, factory);
+                        onChange(property, nextValues);
+                    }}
+                />
+            ))}
+        </>
+    );
+}
+
+function setTermValue(
+    term: Rdf.NamedNode | Rdf.Literal,
+    value: string,
+    factory: Rdf.DataFactory
+): Rdf.NamedNode | Rdf.Literal {
+    if (term.termType === 'NamedNode') {
+        return factory.namedNode(value);
+    } else if (term.language) {
+        return factory.literal(value, term.language);
+    } else {
+        return factory.literal(value, term.datatype);
+    }
+}
+
+const PropertyValues = React.memo(
+    PropertyValuesInner,
+    (prevProps, nextProps) => (
+        prevProps.property === nextProps.property &&
+        prevProps.values === nextProps.values &&
+        prevProps.onChange === nextProps.onChange &&
+        prevProps.factory === nextProps.factory
+    )
+);
