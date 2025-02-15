@@ -132,7 +132,7 @@
     "toggle_expand.title": "Expand navigator"
   },
   "overlay_controller": {
-    "multiple_tasks_in_progress": "",
+    "multiple_tasks_in_progress": "Multiple tasks are in progress",
     "unknown_error": "Unknown error occurred"
   },
   "search_defaults": {
@@ -200,7 +200,7 @@
     "delete.label": "Delete",
     "delete.title": "Delete entity",
     "delete.title_disabled": "Cannot delete the entity",
-    "edit.label": "",
+    "edit.label": "Edit",
     "edit.title": "Edit entity",
     "edit.title_disabled": "Cannot edit the entity",
     "group_item.title": "{{entity}}\nIRI:{{entityIri}}\nTypes: {{entityTypes}}",

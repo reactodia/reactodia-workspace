@@ -516,7 +516,7 @@ function Actions(props: {
                     : t.text('standard_template.delete.title_disabled')}
                 disabled={!canDelete}
                 onClick={onDelete}>
-                {canEdit === undefined
+                {canDelete === undefined
                     ? <HtmlSpinner width={SPINNER_WIDTH} height={SPINNER_HEIGHT} />
                     : t.text('standard_template.delete.label')}
             </button>
