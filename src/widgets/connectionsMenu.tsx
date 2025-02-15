@@ -17,7 +17,7 @@ import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { BuiltinDialogType } from '../editor/builtinDialogType';
-import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
+import { requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -1297,7 +1297,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     )}
                     disabled={this.props.loading || selectedItems.length <= 1}
                     onClick={() => onPressAddSelected(selectedItems, 'grouped')}>
-                    {t.text('connections_menu.entities.add_all')}
+                    {t.text('connections_menu.entities.add_group')}
                 </button>
                 <button
                     className={classnames(
