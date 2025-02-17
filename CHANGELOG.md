@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+### Added
+- Support i18n for the UI components:
+  * Allow to provide custom bundles with translation strings and (optionally) disable the default one with `translations` and `useDefaultTranslation` properties for the `Workspace`;
+  * Provide `i18n/i18n.schema.json` JSON schema to validate partial translation bundles.
+- Ability to modify property values from "Edit entity" dialog (only changing existing values is currently supported without ability to add or remove one).
+
+### Changed
+- Deprecate `DiagramModel.locale` usage: use `Translation` object to perform locale-specific formatting instead.
+
+### Fixed
+- Fix incorrectly displayed relation in the "Edit relation" dialog when reversing the relation direction (e.g. a change from "Person isAuthorOf Book" to "Book isNamedAfter Person").
 
 ## [0.27.1] - 2025-01-25
 ### Fixed
