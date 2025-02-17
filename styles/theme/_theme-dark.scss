@@ -1,4 +1,4 @@
-@import "../mixin/theme";
+@import "./common";
 
 .reactodia-workspace[data-theme=dark] {
   @include theme-common;
@@ -15,13 +15,38 @@
   --reactodia-color-emphasis-900: var(--reactodia-color-gray-100);
   --reactodia-color-emphasis-1000: var(--reactodia-color-gray-0);
 
-  --reactodia-color-content: #e3e3e3;
-  --reactodia-color-content-inverse: var(--reactodia-color-emphasis-0);
+  --reactodia-color-primary-contrast-background: #102445;
+  --reactodia-color-primary-contrast-foreground: #ebf2fc;
+  --reactodia-color-secondary-contrast-background: #474748;
+  --reactodia-color-secondary-contrast-foreground: #fdfdfe;
+  --reactodia-color-success-contrast-background: #003100;
+  --reactodia-color-success-contrast-foreground: #e6f6e6;
+  --reactodia-color-info-contrast-background: #193c47;
+  --reactodia-color-info-contrast-foreground: #eef9fd;
+  --reactodia-color-warning-contrast-background: #4d3800;
+  --reactodia-color-warning-contrast-foreground: #fff8e6;
+  --reactodia-color-danger-contrast-background: #4b1113;
+  --reactodia-color-danger-contrast-foreground: #ffebec;
 
-  --reactodia-background-color: #1b1b1d;
-  --reactodia-background-surface-color: #242526;
+  --reactodia-color-content: #e3e3e3;
+  --reactodia-color-content-inverse: var(--reactodia-color-emphasis-1000);
+
+  --reactodia-color-background: #1b1b1d;
+  --reactodia-color-background-surface: #242526;
 
   --reactodia-icon-filter: invert(100%);
+
+  --reactodia-input-color: #ddd;
+  --reactodia-input-color-background: #393c3e;
+  --reactodia-input-color-background-disabled: #2f2f2f;
+  --reactodia-input-color-placeholder: #878787;
+
+  --reactodia-button-default-background-color: var(--reactodia-color-background-surface);
+  --reactodia-button-default-background-color-active: #a4a6a8;
+  --reactodia-button-default-background-color-focus: var(--reactodia-button-default-color);
+  --reactodia-button-default-border-color: #cccccc;
+  --reactodia-button-default-color: #ebedf0;
+  --reactodia-button-default-color-focus: var(--reactodia-color-background-surface);
 
   --reactodia-element-background-color: #242526;
   --reactodia-link-stroke-color: var(--reactodia-color-emphasis-1000);

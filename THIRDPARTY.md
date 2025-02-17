@@ -2,6 +2,7 @@ Third Party Libraries
 
 MIT License:
  - Twitter Bootstrap (modified CSS styles): https://github.com/twbs/bootstrap
+ - Infima styling framework (theme colors): https://infima.dev/
  - forge-sha256 (modified SHA-256 implementation): https://github.com/brillout/forge-sha256
 
 CC-BY-4.0

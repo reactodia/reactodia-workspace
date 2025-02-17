@@ -9,7 +9,6 @@
     fill: $reactodia-font-color-base;
     stroke: none;
     stroke-width: 0;
-    // font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
     font-size: inherit;
     font-weight: bold;
   }
@@ -20,7 +19,7 @@
   }
 
   &__label-background {
-    fill: $reactodia-background-color;
+    fill: $reactodia-color-background;
     stroke: none;
     stroke-width: 0;
   }

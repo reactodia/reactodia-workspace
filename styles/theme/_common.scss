@@ -1,0 +1,85 @@
+@mixin theme-common {
+  /*
+   * Default theme colors are based on Infima styling framework:
+   * https://infima.dev/
+   */
+  --reactodia-color-gray-0: #ffffff;
+  --reactodia-color-gray-100: #f5f6f7;
+  --reactodia-color-gray-200: #ebedf0;
+  --reactodia-color-gray-300: #dadde1;
+  --reactodia-color-gray-400: #ccd0d5;
+  --reactodia-color-gray-500: #bec3c9;
+  --reactodia-color-gray-600: #8d949e;
+  --reactodia-color-gray-700: #606770;
+  --reactodia-color-gray-800: #444950;
+  --reactodia-color-gray-900: #1c1e21;
+  --reactodia-color-gray-1000: #000000;
+
+  --reactodia-color-primary: #337ab7;
+  --reactodia-color-primary-dark: #306cce;
+  --reactodia-color-primary-darker: #2d66c3;
+  --reactodia-color-primary-darkest: #2554a0;
+  --reactodia-color-primary-light: #538ce9;
+  --reactodia-color-primary-lighter: #72a1ed;
+  --reactodia-color-primary-lightest: #9abcf2;
+  --reactodia-color-primary-contrast-background: #ebf2fc;
+  --reactodia-color-primary-contrast-foreground: #102445;
+
+  --reactodia-color-secondary: #ebedf0;
+  --reactodia-color-secondary-dark: #d4d5d8;
+  --reactodia-color-secondary-darker: #c8c9cc;
+  --reactodia-color-secondary-darkest: #a4a6a8;
+  --reactodia-color-secondary-light: #eef0f2;
+  --reactodia-color-secondary-lighter: #f1f2f5;
+  --reactodia-color-secondary-lightest: #f5f6f8;
+  --reactodia-color-secondary-contrast-background: #fdfdfe;
+  --reactodia-color-secondary-contrast-foreground: #474748;
+
+  --reactodia-color-success: #5cb85c;
+  --reactodia-color-success-dark: #009400;
+  --reactodia-color-success-darker: #008b00;
+  --reactodia-color-success-darkest: #007300;
+  --reactodia-color-success-light: #26b226;
+  --reactodia-color-success-lighter: #4dbf4d;
+  --reactodia-color-success-lightest: #80d280;
+  --reactodia-color-success-contrast-background: #e6f6e6;
+  --reactodia-color-success-contrast-foreground: #003100;
+
+  --reactodia-color-info: #54c7ec;
+  --reactodia-color-info-dark: #4cb3d4;
+  --reactodia-color-info-darker: #47a9c9;
+  --reactodia-color-info-darkest: #3b8ba5;
+  --reactodia-color-info-light: #6ecfef;
+  --reactodia-color-info-lighter: #87d8f2;
+  --reactodia-color-info-lightest: #aae3f6;
+  --reactodia-color-info-contrast-background: #eef9fd;
+  --reactodia-color-info-contrast-foreground: #193c47;
+
+  --reactodia-color-warning: #ffba00;
+  --reactodia-color-warning-dark: #e6a700;
+  --reactodia-color-warning-darker: #d99e00;
+  --reactodia-color-warning-darkest: #b38200;
+  --reactodia-color-warning-light: #ffc426;
+  --reactodia-color-warning-lighter: #ffcf4d;
+  --reactodia-color-warning-lightest: #ffdd80;
+  --reactodia-color-warning-contrast-background: #fff8e6;
+  --reactodia-color-warning-contrast-foreground: #4d3800;
+
+  --reactodia-color-danger: #c9302c;
+  --reactodia-color-danger-dark: #e13238;
+  --reactodia-color-danger-darker: #d53035;
+  --reactodia-color-danger-darkest: #af272b;
+  --reactodia-color-danger-light: #fb565b;
+  --reactodia-color-danger-lighter: #fb7478;
+  --reactodia-color-danger-lightest: #fd9c9f;
+  --reactodia-color-danger-contrast-background: #ffebec;
+  --reactodia-color-danger-contrast-foreground: #4b1113;
+
+  --reactodia-font-family-base: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  --reactodia-font-family-monospace:
+    'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  --reactodia-font-size-base: 87.5%;
+  --reactodia-line-height-base: 1.42857;
+
+  --reactodia-spacing-base: 1rem;
+}

@@ -26,19 +26,72 @@ $reactodia-color-emphasis-1000: var(--reactodia-color-emphasis-1000);
 $reactodia-color-white: var(--reactodia-color-gray-0);
 $reactodia-color-black: var(--reactodia-color-gray-1000);
 
-$reactodia-color-primary: var(--reactodia-color-gray-primary);
-$reactodia-color-secondary: var(--reactodia-color-gray-secondary);
-$reactodia-color-success: var(--reactodia-color-gray-success);
-$reactodia-color-info: var(--reactodia-color-gray-info);
-$reactodia-color-warning: var(--reactodia-color-gray-warning);
-$reactodia-color-danger: var(--reactodia-color-gray-danger);
+$reactodia-color-primary: var(--reactodia-color-primary);
+$reactodia-color-primary-dark: var(--reactodia-color-primary-dark);
+$reactodia-color-primary-darker: var(--reactodia-color-primary-darker);
+$reactodia-color-primary-darkest: var(--reactodia-color-primary-darkest);
+$reactodia-color-primary-light: var(--reactodia-color-primary-light);
+$reactodia-color-primary-lighter: var(--reactodia-color-primary-lighter);
+$reactodia-color-primary-lightest: var(--reactodia-color-primary-lightest);
+$reactodia-color-primary-contrast-background: var(--reactodia-color-primary-contrast-background);
+$reactodia-color-primary-contrast-foreground: var(--reactodia-color-primary-contrast-foreground);
 
-$reactodia-color-content: var(--reactodia-color-content, var(--reactodia-color-gray-900));
-$reactodia-color-content-inverse: var(--reactodia-color-content-inverse, var(--reactodia-color-gray-0));
+$reactodia-color-secondary: var(--reactodia-color-secondary);
+$reactodia-color-secondary-dark: var(--reactodia-color-secondary-dark);
+$reactodia-color-secondary-darker: var(--reactodia-color-secondary-darker);
+$reactodia-color-secondary-darkest: var(--reactodia-color-secondary-darkest);
+$reactodia-color-secondary-light: var(--reactodia-color-secondary-light);
+$reactodia-color-secondary-lighter: var(--reactodia-color-secondary-lighter);
+$reactodia-color-secondary-lightest: var(--reactodia-color-secondary-lightest);
+$reactodia-color-secondary-contrast-background: var(--reactodia-color-secondary-contrast-background);
+$reactodia-color-secondary-contrast-foreground: var(--reactodia-color-secondary-contrast-foreground);
+
+$reactodia-color-success: var(--reactodia-color-success);
+$reactodia-color-success-dark: var(--reactodia-color-success-dark);
+$reactodia-color-success-darker: var(--reactodia-color-success-darker);
+$reactodia-color-success-darkest: var(--reactodia-color-success-darkest);
+$reactodia-color-success-light: var(--reactodia-color-success-light);
+$reactodia-color-success-lighter: var(--reactodia-color-success-lighter);
+$reactodia-color-success-lightest: var(--reactodia-color-success-lightest);
+$reactodia-color-success-contrast-background: var(--reactodia-color-success-contrast-background);
+$reactodia-color-success-contrast-foreground: var(--reactodia-color-success-contrast-foreground);
+
+$reactodia-color-info: var(--reactodia-color-info);
+$reactodia-color-info-dark: var(--reactodia-color-info-dark);
+$reactodia-color-info-darker: var(--reactodia-color-info-darker);
+$reactodia-color-info-darkest: var(--reactodia-color-info-darkest);
+$reactodia-color-info-light: var(--reactodia-color-info-light);
+$reactodia-color-info-lighter: var(--reactodia-color-info-lighter);
+$reactodia-color-info-lightest: var(--reactodia-color-info-lightest);
+$reactodia-color-info-contrast-background: var(--reactodia-color-info-contrast-background);
+$reactodia-color-info-contrast-foreground: var(--reactodia-color-info-contrast-foreground);
+
+$reactodia-color-warning: var(--reactodia-color-warning);
+$reactodia-color-warning-dark: var(--reactodia-color-warning-dark);
+$reactodia-color-warning-darker: var(--reactodia-color-warning-darker);
+$reactodia-color-warning-darkest: var(--reactodia-color-warning-darkest);
+$reactodia-color-warning-light: var(--reactodia-color-warning-light);
+$reactodia-color-warning-lighter: var(--reactodia-color-warning-lighter);
+$reactodia-color-warning-lightest: var(--reactodia-color-warning-lightest);
+$reactodia-color-warning-contrast-background: var(--reactodia-color-warning-contrast-background);
+$reactodia-color-warning-contrast-foreground: var(--reactodia-color-warning-contrast-foreground);
+
+$reactodia-color-danger: var(--reactodia-color-danger);
+$reactodia-color-danger-dark: var(--reactodia-color-danger-dark);
+$reactodia-color-danger-darker: var(--reactodia-color-danger-darker);
+$reactodia-color-danger-darkest: var(--reactodia-color-danger-darkest);
+$reactodia-color-danger-light: var(--reactodia-color-danger-light);
+$reactodia-color-danger-lighter: var(--reactodia-color-danger-lighter);
+$reactodia-color-danger-lightest: var(--reactodia-color-danger-lightest);
+$reactodia-color-danger-contrast-background: var(--reactodia-color-danger-contrast-background);
+$reactodia-color-danger-contrast-foreground: var(--reactodia-color-danger-contrast-foreground);
+
+$reactodia-color-content: var(--reactodia-color-content);
+$reactodia-color-content-inverse: var(--reactodia-color-content-inverse);
 // $reactodia-color-content-secondary: var(--reactodia-color-content-secondary);
 
-$reactodia-background-color: var(--reactodia-background-color);
-$reactodia-background-surface-color: var(--reactodia-background-surface-color);
+$reactodia-color-background: var(--reactodia-color-background);
+$reactodia-color-background-surface: var(--reactodia-color-background-surface);
 
 $reactodia-icon-filter: var(--reactodia-icon-filter);
 
@@ -56,6 +109,21 @@ $reactodia-font-color-base-inverse:
 $reactodia-spacing-base: var(--reactodia-spacing-base);
 $reactodia-spacing-vertical: var(--reactodia-spacing-vertical, var(--reactodia-spacing-base));
 $reactodia-spacing-horizontal: var(--reactodia-spacing-horizontal, var(--reactodia-spacing-base));
+
+$reactodia-input-color: var(--reactodia-input-color, $reactodia-font-color-base);
+$reactodia-input-color-background:
+  var(--reactodia-input-color-background, var(--reactodia-color-background-surface));
+$reactodia-input-color-background-disabled:
+  var(--reactodia-input-color-background-disabled, var(--reactodia-color-emphasis-400));
+$reactodia-input-color-placeholder:
+  var(--reactodia-input-color-placeholder, var(--reactodia-color-emphasis-600));
+
+$reactodia-button-default-background-color: var(--reactodia-button-default-background-color);
+$reactodia-button-default-background-color-active: var(--reactodia-button-default-background-color-active);
+$reactodia-button-default-background-color-focus: var(--reactodia-button-default-background-color-focus);
+$reactodia-button-default-border-color: var(--reactodia-button-default-border-color);
+$reactodia-button-default-color: var(--reactodia-button-default-color);
+$reactodia-button-default-color-focus: var(--reactodia-button-default-color-focus);
 
 /* Canvas */
 $reactodia-element-background-color: var(--reactodia-element-background-color);

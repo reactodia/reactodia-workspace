@@ -1,7 +1,14 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-search-input {
   display: flex;
+
+  &__input {
+    &::placeholder {
+      color: $reactodia-input-color-placeholder;
+    }
+  }
 
   &__clear-container {
     width: 0;

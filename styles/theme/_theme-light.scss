@@ -1,4 +1,4 @@
-@import "../mixin/theme";
+@import "./common";
 
 .reactodia-workspace[data-theme=light] {
   @include theme-common;
@@ -18,8 +18,17 @@
   --reactodia-color-content: var(--reactodia-color-emphasis-900);
   --reactodia-color-content-inverse: var(--reactodia-color-emphasis-0);
 
-  --reactodia-background-color: var(--reactodia-color-emphasis-0);
-  --reactodia-background-surface-color: var(--reactodia-color-content-inverse);
+  --reactodia-color-background: var(--reactodia-color-emphasis-0);
+  --reactodia-color-background-surface: var(--reactodia-color-content-inverse);
+
+  --reactodia-input-color: #555;
+
+  --reactodia-button-default-background-color: var(--reactodia-color-background-surface);
+  --reactodia-button-default-background-color-active: #e0e0e0;
+  --reactodia-button-default-background-color-focus: #d4d4d4;
+  --reactodia-button-default-border-color: #cccccc;
+  --reactodia-button-default-color: #333333;
+  --reactodia-button-default-color-focus: var(--reactodia-button-default-color);
 
   --reactodia-element-background-color: #fafaf9;
   --reactodia-link-stroke-color: var(--reactodia-color-emphasis-1000);

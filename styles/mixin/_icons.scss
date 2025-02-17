@@ -1,12 +1,17 @@
+@import "../theme/variables";
+
 @mixin icon($url) {
-  background-image: url($url);
-  background-size: contain;
-  background-position: 0 0;
-  background-repeat: no-repeat;
+  -webkit-mask: url($url);
+  mask: url($url);
+  mask-size: contain;
+  mask-position: 0 0;
+  mask-repeat: no-repeat;
+  background-color: currentColor;
   content: '';
   display: block;
   height: 16px;
   width: 16px;
+  // filter: $reactodia-icon-filter;
 }
 
 @mixin codicon($name) {

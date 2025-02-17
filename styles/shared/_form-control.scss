@@ -1,14 +1,16 @@
+@import "../theme/variables";
+
 .reactodia-form-control {
   display: block;
   width: 100%;
   height: 34px;
   margin: 0;
   padding: 6px 12px;
-  font: inherit;
+  font-family: $reactodia-font-family-base;
+  line-height: $reactodia-line-height-base;
   font-size: 14px;
-  line-height: 1.42857143;
-  color: #555;
-  background: #fff;
+  color: $reactodia-input-color;
+  background-color: $reactodia-input-color-background;
   border: 1px solid #ccc;
   transition: border-color ease-in-out .15s;
 
@@ -18,7 +20,7 @@
   }
 
   &:disabled {
-    background-color: #eee;
+    background-color: $reactodia-input-color-background-disabled;
     cursor: not-allowed;
     opacity: 0.6;
   }

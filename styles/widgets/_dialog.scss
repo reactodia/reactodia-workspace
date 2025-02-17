@@ -4,7 +4,7 @@
 @import "../theme/variables";
 
 .reactodia-dialog {
-  background: $reactodia-background-surface-color;
+  background: $reactodia-color-background-surface;
   border: 1px solid #ccc;
   box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
   position: absolute;
@@ -28,6 +28,7 @@
     border: none;
     padding: 6px;
     background: none;
+    color: $reactodia-button-default-color;
 
     transition: background-color 0.3s;
   
@@ -36,7 +37,8 @@
     }
 
     &:hover {
-      background-color: #eeeeee;
+      color: $reactodia-button-default-color-focus;
+      background-color: $reactodia-button-default-background-color-focus;
     }
   }
 
