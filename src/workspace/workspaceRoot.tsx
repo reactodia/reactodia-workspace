@@ -1,6 +1,8 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { ColorSchemeContext } from '../coreUtils/colorScheme';
+
 /**
  * Props for {@link WorkspaceRoot} component.
  *
@@ -20,16 +22,16 @@ export interface WorkspaceRootProps {
      */
     children: React.ReactNode;
     /**
-     * Specifies a theme for the components.
+     * Sets a color scheme for the UI components.
      *
      * If set to `auto`, the component will track the following places in order:
      *  - `<html data-theme="...">` attribute in case it is set to `dark`;
      *  - `(prefers-color-scheme: dark)` media query matches;
-     *  - fallback to the default `light` theme otherwise.
+     *  - fallback to the default `light` color scheme otherwise.
      *
      * @default "auto"
      */
-    theme?: 'auto' | 'light' | 'dark';
+    colorScheme?: 'auto' | 'light' | 'dark';
 }
 
 const CLASS_NAME = 'reactodia-workspace';
@@ -40,24 +42,26 @@ const CLASS_NAME = 'reactodia-workspace';
  * @category Components
  */
 export function WorkspaceRoot(props: WorkspaceRootProps) {
-    const {theme = 'auto'} = props;
+    const {colorScheme = 'auto'} = props;
 
-    const htmlTheme = useAutoTheme(theme === 'auto');
-    let effectiveTheme = theme;
-    if (effectiveTheme === 'auto') {
-        effectiveTheme = htmlTheme === 'dark' ? 'dark' : 'light';
+    const preferredColorScheme = usePreferredColorScheme(colorScheme === 'auto');
+    let effectiveColorScheme = colorScheme;
+    if (effectiveColorScheme === 'auto') {
+        effectiveColorScheme = preferredColorScheme === 'dark' ? 'dark' : 'light';
     }
 
     return (
-        <div className={classnames(CLASS_NAME, props.className)}
-            style={props.style}
-            data-theme={effectiveTheme}>
-            {props.children}
-        </div>
+        <ColorSchemeContext.Provider value={effectiveColorScheme}>
+            <div className={classnames(CLASS_NAME, props.className)}
+                style={props.style}
+                data-theme={effectiveColorScheme}>
+                {props.children}
+            </div>
+        </ColorSchemeContext.Provider>
     );
 }
 
-function useAutoTheme(track: boolean): string {
+function usePreferredColorScheme(track: boolean): string {
     const html = document.querySelector('html');
 
     const [theme, setTheme] = React.useState(() => (

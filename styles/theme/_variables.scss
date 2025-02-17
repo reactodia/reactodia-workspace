@@ -95,7 +95,7 @@ $theme-background-color-surface: var(--reactodia-background-color-surface);
 
 /* Text and fonts */
 $theme-font-family-base: var(--reactodia-font-family-base);
-$theme-font-family-monospace: var(--reactodia-font-family-base);
+$theme-font-family-monospace: var(--reactodia-font-family-monospace);
 $theme-font-size-base: var(--reactodia-font-size-base);
 $theme-line-height-base: var(--reactodia-line-height-base);
 $theme-font-color-base: var(--reactodia-font-color-base);
@@ -153,6 +153,17 @@ $theme-link-stroke-color: var(--reactodia-link-stroke-color);
 $theme-selection-icon-filter: var(--reactodia-selection-icon-filter);
 $theme-selection-multiple-box-shadow: var(--reactodia-selection-multiple-box-shadow);
 $theme-selection-single-box-shadow: var(--reactodia-selection-single-box-shadow);
+
+/* Navigator */
+$theme-navigator-background-fill: var(--reactodia-navigator-background-fill);
+$theme-navigator-scrollable-pane-fill: var(--reactodia-navigator-scrollable-pane-fill);
+$theme-navigator-viewport-fill: var(--reactodia-navigator-viewport-fill);
+$theme-navigator-viewport-stroke-color: var(--reactodia-navigator-viewport-stroke-color);
+$theme-navigator-viewport-stroke-width: var(--reactodia-navigator-viewport-stroke-width);
+$theme-navigator-viewport-stroke-dash: var(--reactodia-navigator-viewport-stroke-dash);
+$theme-navigator-overflow-stroke-color: var(--reactodia-navigator-overflow-stroke-color);
+$theme-navigator-overflow-stroke-width: var(--reactodia-navigator-overflow-stroke-width);
+$theme-navigator-overflow-stroke-dash: var(--reactodia-navigator-overflow-stroke-dash);
 
 /* Menu and Toolbar */
 $theme-toolbar-height: var(--reactodia-toolbar-height);

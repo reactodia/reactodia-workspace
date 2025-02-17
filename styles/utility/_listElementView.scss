@@ -21,7 +21,7 @@
   &__label {
     background: $theme-element-background-color;
     border-radius: 0 2px 2px 0;
-    font-family: "Andale Mono", sans-serif;
+    font-family: $theme-font-family-base;
     font-size: 15px;
     min-height: 1.3em;
     padding-left: 7px;

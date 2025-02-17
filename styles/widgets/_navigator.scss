@@ -5,8 +5,9 @@
   display: block;
   overflow: hidden;
 
-  background: #fff;
-  border: 1px solid #ddd;
+  background: $theme-navigator-background-fill;
+  border: $theme-border-width-base solid $theme-border-color-base;
+  border-radius: 2px;
   box-shadow: $theme-canvas-box-shadow;
 
   $transition: 0.3s;
@@ -53,8 +54,8 @@
   &__toggle-icon {
     width: 18px;
     height: 18px;
-    background-size: 18px 18px;
-    background-repeat: no-repeat;
+    mask-size: 18px 18px;
+    mask-repeat: no-repeat;
   }
   &--expanded &__toggle-icon {
     @include codicon("diff-removed");

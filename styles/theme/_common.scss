@@ -100,5 +100,12 @@
 
   --reactodia-selection-single-box-shadow: 0 0 5px 0 #d8956d inset;
 
+  --reactodia-navigator-scrollable-pane-fill: var(--reactodia-navigator-background-fill);
+  --reactodia-navigator-viewport-fill: var(--reactodia-canvas-background-color);
+  --reactodia-navigator-viewport-stroke-width: 2;
+  --reactodia-navigator-overflow-stroke-color: var(--reactodia-navigator-viewport-stroke-color);
+  --reactodia-navigator-overflow-stroke-width: 2;
+  --reactodia-navigator-overflow-stroke-dash: 5 5;
+
   --reactodia-toolbar-height: 30px;
 }
