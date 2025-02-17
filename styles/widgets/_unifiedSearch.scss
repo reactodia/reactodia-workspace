@@ -6,17 +6,17 @@ $searchButtonPadding: 8px;
 $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
 .reactodia-unified-search {
-  border: $theme-input-border-width solid #ccc;
+  border: $theme-input-border-width solid $theme-input-border-color;
   border-radius: $theme-input-border-radius;
   background-color: $theme-background-color-surface;
   transition: border-color ease-in-out 0.15s;
 
   &:focus-within {
-    border-color: #66afe9;
+    border-color: $theme-input-border-color-focus;
   }
 
   &.reactodia-dropdown--expanded {
-    box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+    box-shadow: $theme-canvas-box-shadow;
   }
 
   &__toggle {
@@ -78,12 +78,19 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     color: $theme-button-default-color;
     background: 0 0;
     border: 0;
+    border-radius: $theme-input-border-radius;
+    border-top-left-radius: unset;
     transition: background-color 0.3s;
 
     &:hover {
       color: $theme-button-default-color-focus;
       background-color: $theme-button-default-background-color-focus;
     }
+  }
+
+  .reactodia-dropdown--expanded &__collapse-button,
+  .reactodia-dropdown--expanded &__clear-button {
+    border-bottom-right-radius: unset;
   }
 
   &__collapse-button::after {

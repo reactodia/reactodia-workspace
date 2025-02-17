@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-link-action {
   $button-size: var(--reactodia-link-button-size);
   $button-margin: var(--reactodia-link-button-margin);
@@ -34,6 +36,7 @@
   }
 
   &__endpoint {
+    color: $theme-color-primary;
     background: transparent;
   }
 

@@ -31,11 +31,12 @@
 
   &__handle {
     opacity: 0;
+    transition: opacity 0.3s;
     cursor: pointer;
-    > circle { fill: gray; }
-    > path { stroke: white; }
+    > circle { fill: $theme-color-emphasis-500; }
+    > path { stroke: $theme-color-emphasis-200; }
     &:hover {
-      > circle { fill: black; }
+      > circle { fill: $theme-color-emphasis-900; }
     }
   }
   .reactodia-link:hover &__handle {
@@ -44,7 +45,7 @@
 }
 
 .reactodia-link-marker {
-  &__path {
+  &__path:not([fill]) {
     fill: $theme-link-stroke-color;
   }
 }

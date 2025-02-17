@@ -17,7 +17,7 @@
   }
 
   &--expanded &__content {
-    box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+    box-shadow: $theme-canvas-box-shadow;
   }
 
   &--collapsed &__content {
@@ -47,6 +47,7 @@
     list-style: none;
     display: flex;
     flex-direction: column;
+    background-color: $theme-background-color-surface;
   }
 
   .reactodia-dropdown-menu-item {
@@ -66,7 +67,7 @@
 .reactodia-dropdown-menu-item {
   & ~ & {
     margin-top: calc(-1 * $theme-button-border-width);
-    border-top-color: #eee;
+    border-top-color: $theme-button-default-border-color;
   }
   &--disabled, &--disabled:hover {
     color: $theme-button-default-color;

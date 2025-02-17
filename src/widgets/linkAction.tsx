@@ -399,9 +399,9 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
                 style={{transform: `rotate(${angle}deg)`}}>
                 <g transform={`scale(${buttonSize})`}>
                     {dockSide === 'source' ? (
-                        <circle r={0.5} cx={0.5} cy={0.5} fill='#198AD3' />
+                        <circle r={0.5} cx={0.5} cy={0.5} fill='currentColor' />
                     ) : (
-                        <polygon points={'0,0.5 1,1 1,0'} fill='#198AD3' />
+                        <polygon points={'0,0.5 1,1 1,0'} fill='currentColor' />
                     )}
                 </g>
             </svg>

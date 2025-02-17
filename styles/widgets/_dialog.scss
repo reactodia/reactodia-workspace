@@ -5,9 +5,9 @@
 
 .reactodia-dialog {
   background: $theme-background-color-surface;
-  border: $theme-dialog-border-width solid #ccc;
+  border: $theme-dialog-border-width solid $theme-dialog-border-color;
   border-radius: $theme-dialog-border-radius;
-  box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+  box-shadow: $theme-canvas-box-shadow;
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -26,10 +26,13 @@
   }
 
   &__close-button {
-    border: none;
     padding: 6px;
     background: none;
     color: $theme-button-default-color;
+
+    border: none;
+    border-top-left-radius: unset;
+    border-bottom-right-radius: unset;
 
     transition: background-color 0.3s;
   

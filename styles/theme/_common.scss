@@ -71,24 +71,32 @@
   --reactodia-font-color-base: var(--reactodia-color-content);
   --reactodia-font-color-base-inverse: var(--reactodia-color-content-inverse);
 
-  --reactodia-spacing-base: 1rem;
+  --reactodia-spacing-base: 5px;
   --reactodia-spacing-vertical: var(--reactodia-spacing-base);
   --reactodia-spacing-horizontal: var(--reactodia-spacing-base);
 
   --reactodia-border-radius-base: unset;
   --reactodia-border-width-base: 1px;
 
+  --reactodia-input-border-color: var(--reactodia-border-color-base);
+  --reactodia-input-border-color-focus: var(--reactodia-color-primary-lighter);
   --reactodia-input-border-radius: var(--reactodia-border-radius-base);
   --reactodia-input-border-width: var(--reactodia-border-width-base);
 
   --reactodia-button-border-radius: var(--reactodia-border-radius-base);
   --reactodia-button-border-width: var(--reactodia-border-width-base);
+  --reactodia-button-default-border-color: var(--reactodia-border-color-base);
 
   --reactodia-tree-background-color-active: rgba(101, 166, 255, 0.3);
   --reactodia-tree-background-color-focus: rgba(189, 217, 255, 0.3);
   --reactodia-tree-border-color-active: rgba(115, 211, 255, 0.5);;
   --reactodia-tree-border-color-focus: rgba(115, 211, 255, 0.3);
 
+  --reactodia-dialog-border-color: var(--reactodia-border-color-base);
   --reactodia-dialog-border-radius: var(--reactodia-border-radius-base);
   --reactodia-dialog-border-width: var(--reactodia-border-width-base);
+
+  --reactodia-canvas-background-color: var(--reactodia-background-color);
+
+  --reactodia-selection-single-box-shadow: 0 0 5px 0 #d8956d inset;
 }

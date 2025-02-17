@@ -10,6 +10,11 @@
     }
   }
 
+  &--has-submit &__input {
+    border-top-right-radius: unset;
+    border-bottom-right-radius: unset;
+  }
+
   &__clear-container {
     width: 0;
     overflow: visible;
@@ -25,6 +30,8 @@
     color: $theme-button-default-color;
     background: transparent;
     border: 0;
+    border-top-right-radius: $theme-input-border-radius;
+    border-bottom-right-radius: $theme-input-border-radius;
     transition: background-color 0.3s;
 
     &:hover {
@@ -37,8 +44,15 @@
     }
   }
 
+  &--has-submit &__clear {
+    border-top-right-radius: unset;
+    border-bottom-right-radius: unset;
+  }
+
   &__submit  {
     margin-left: -1px;
+    border-top-left-radius: unset;
+    border-bottom-left-radius: unset;
 
     &::before {
       @include codicon("search");

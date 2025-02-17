@@ -108,21 +108,37 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         const {state, isTemporary} = this.state;
         const {width, height} = canvas.renderingState.getElementSize(target) ?? {width: 0, height: 0};
         if (isTemporary) {
-            return [
-                <rect key={`${target.id}-opacity`} x={0} y={0} width={width} height={height}
-                    fill='rgba(255, 255, 255, 0.5)' />,
-                <rect key={`${target.id}-stripes`} x={0} y={0} width={width} height={height}
-                    fill='url(#stripe-pattern)' />
-            ];
+            return (
+                <>
+                    <rect className={`${CLASS_NAME}__outline-overlay`}
+                        x={0} y={0}
+                        width={width}
+                        height={height}
+                    />
+                    <rect x={0} y={0}
+                        width={width}
+                        height={height}
+                        fill='url(#stripe-pattern)'
+                    />
+                </>
+            );
         }
         if (state && state.type === 'entityDelete') {
             const right = width;
             const bottom = height;
             return (
                 <g key={target.id}>
-                    <rect x={0} y={0} width={width} height={height} fill='white' fillOpacity={0.5} />
-                    <line x1={0} y1={0} x2={right} y2={bottom} stroke='red' />
-                    <line x1={right} y1={0} x2={0} y2={bottom} stroke='red' />
+                    <rect className={`${CLASS_NAME}__outline-overlay`}
+                        x={0} y={0}
+                        width={width}
+                        height={height}
+                    />
+                    <line className={`${CLASS_NAME}__outline-cross-line`}
+                        x1={0} y1={0} x2={right} y2={bottom}
+                    />
+                    <line className={`${CLASS_NAME}__outline-cross-line`}
+                        x1={right} y1={0} x2={0} y2={bottom}
+                    />
                 </g>
             );
         }
@@ -225,12 +241,18 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         return (
             <div style={{position: 'absolute', transform}}>
                 {outlines ? (
-                    <svg width={size.width} height={size.height}
-                        style={{position: 'absolute', pointerEvents: 'none', overflow: 'visible'}}>
+                    <svg className={`${CLASS_NAME}__element-outlines`}
+                        width={size.width}
+                        height={size.height}>
                         <defs>
-                            <pattern id='stripe-pattern' patternUnits='userSpaceOnUse' width={13} height={13}
+                            <pattern id='stripe-pattern'
+                                patternUnits='userSpaceOnUse'
+                                width={13}
+                                height={13}
                                 patternTransform='rotate(45)'>
-                                <line x1={0} y={0} x2={0} y2={13} stroke='#ddd' strokeWidth={10} strokeOpacity={0.2} />
+                                <line className={`${CLASS_NAME}__outline-stripe-line`}
+                                    x1={0} y={0} x2={0} y2={13}
+                                />
                             </pattern>
                         </defs>
                         {this.renderElementOutlines()}

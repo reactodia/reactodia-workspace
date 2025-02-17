@@ -30,7 +30,7 @@
   }
 
   &--vertical {
-    border-top: 1px solid lightgray;
+    border-top: $theme-border-width-base solid $theme-border-color-base;
 
     &:first-child {
       border-top-width: 0;
@@ -38,7 +38,7 @@
   }
 
   &--horizontal {
-    border-right: 1px solid lightgray;
+    border-right: $theme-border-width-base solid $theme-border-color-base;
 
     &:last-child {
       border-right-width: 0;

@@ -1,4 +1,27 @@
+@import "../theme/variables";
+
 .reactodia-authoring-state {
+  &__element-outlines {
+    position: absolute;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  &__outline-overlay {
+    fill: $theme-color-emphasis-0;
+    fill-opacity: 0.3;
+  }
+
+  &__outline-stripe-line {
+    stroke: $theme-color-emphasis-300;
+    stroke-width: 10;
+    stroke-opacity: 0.2;
+  }
+
+  &__outline-cross-line {
+    stroke: $theme-color-danger;
+  }
+
   &__item-validation {
     align-self: flex-end;
     margin: 0px 5px;
@@ -13,19 +36,19 @@
   }
 
   &--severity-info &__item-validation-icon {
-    background: cornflowerblue;
+    background: $theme-color-info;
     -webkit-mask: url("@codicons/info.svg");
     mask: url("@codicons/info.svg");
   }
 
   &--severity-warning &__item-validation-icon {
-    background: orange;
+    background: $theme-color-warning;
     -webkit-mask: url("@codicons/warning.svg");
     mask: url("@codicons/warning.svg");
   }
 
   &--severity-error &__item-validation-icon {
-    background: red;
+    background: $theme-color-danger;
     -webkit-mask: url("@codicons/warning.svg");
     mask: url("@codicons/warning.svg");
   }
@@ -36,7 +59,7 @@
   }
 
   &__state-cancel {
-    color: #3f87a6;
+    color: $theme-color-primary;
     cursor: pointer;
     &:hover {
       text-decoration: underline;
@@ -55,7 +78,8 @@
     display: flex;
     align-items: center;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 5px;
+    background: $theme-canvas-overlay-color;
+    border-radius: 2px;
+    border-left: 5px solid transparent;
   }
 }

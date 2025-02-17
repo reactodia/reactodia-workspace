@@ -1,6 +1,8 @@
 @import "../mixin/icons";
 @import "../theme/variables";
 
+$no-results-color: $theme-color-emphasis-400;
+
 .reactodia-connections-menu {
   flex: auto;
   display: flex;
@@ -79,7 +81,7 @@
     padding: 5px;
     overflow-x: hidden;
     overflow-y: auto;
-    border-top: 1px solid #dbdbdb;
+    border-top: 1px solid $theme-border-color-base;
     flex-grow: 1;
     margin: 0;
   }
@@ -93,7 +95,7 @@
     width: 100%;
     font-size: x-large;
     font-weight: 700;
-    color: #cbcbcb;
+    color: $no-results-color;
     text-align: center;
   }
 
@@ -104,7 +106,7 @@
 
   &__links-list-hr {
     border: 0;
-    border-top: 1px solid #eee;
+    border-top: 1px solid $theme-border-color-base;
     height: 0;
     margin-top: 6px;
     margin-bottom: 6px;
@@ -117,6 +119,7 @@
     align-items: center;
     margin-bottom: 4px;
     background: $theme-color-emphasis-200;
+    border-radius: 2px;
 
     &:hover {
       background-color: $theme-color-emphasis-400;
@@ -239,7 +242,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #ccc;
+    border: 1px solid $no-results-color;
     margin-bottom: 5px;
   }
   
@@ -247,11 +250,12 @@
     position: relative;
     font-size: x-large;
     font-weight: 700;
-    color: #cbcbcb;
+    color: $no-results-color;
   }
 
   &__objects-list {
-    border: 1px solid #ccc;
+    border: $theme-border-width-base solid $theme-border-color-base;
+    border-radius: $theme-border-radius-base;
     height: 0;
     flex-grow: 1;
     overflow-x: hidden;
@@ -276,7 +280,7 @@
   }
 
   &__objects-extra {
-    color: gray;
+    color: $theme-color-emphasis-600;
     cursor: help;
   }
 
@@ -290,7 +294,7 @@
     padding-bottom: 2px;
 
     &:not(:last-child) {
-      margin-right: 5px;
+      margin-right: $theme-spacing-horizontal;
     }
   }
 }

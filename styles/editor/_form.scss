@@ -1,4 +1,5 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-form {
   flex: auto;
@@ -14,13 +15,13 @@
   }
 
   &__controls {
-    border-top: 1px solid #ccc;
+    border-top: 1px solid $theme-border-color-base;
     padding: 8px;
     text-align: right;
     flex: 0 0 auto;
 
     button + button {
-      margin-left: 5px;
+      margin-left: $theme-spacing-horizontal;
     }
   }
 
@@ -42,7 +43,7 @@
   }
 
   &__control-error {
-    color: red;
+    color: $theme-color-danger;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -94,7 +95,7 @@
   }
 
   &__separator-text {
-    color: #555;
+    color: $theme-border-color-base;
     display: inline-block;
     font-size: 13px;
     position: relative;

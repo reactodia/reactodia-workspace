@@ -98,7 +98,7 @@
 
   &__rest {
     padding: 10px 10px 0 10px;
-    border-top: 1px solid rgb(221, 221, 221);
+    border-top: 1px solid $theme-border-color-base;
   }
 
   &__results {
@@ -106,11 +106,6 @@
     padding-top: 10px;
     margin: 0 10px 0 10px;
     outline: none;
-  }
-
-  &[data-state='finished'] &__results:empty:before {
-    content: 'No items correspond to the specified criteria.';
-    font-style: italic;
   }
 
   &__rest-end { margin: 5px 0 10px 0; }
@@ -130,14 +125,16 @@
   &__actions {
     display: flex;
     justify-content: flex-end;
+    gap: $theme-spacing-horizontal;
     height: 40px;
-    border-top: 1px solid rgb(221, 221, 221);
+    border-top: 1px solid $theme-border-color-base;
     transition: height 200ms 0ms;
   }
 
   &__actions-hidden {
     height: 0;
     padding: 0;
+    visibility: hidden;
   }
 
   &__action {

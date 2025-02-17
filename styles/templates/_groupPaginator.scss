@@ -21,8 +21,8 @@
   &__status {
     flex: 60px 0 0;
     text-align: center;
-    border-top: 1px solid #f1f1f3;
-    border-bottom: 1px solid #f1f1f3;
+    border-top: $theme-button-border-width solid $theme-button-default-border-color;
+    border-bottom: $theme-button-border-width solid $theme-button-default-border-color;
   }
 
   &__page-size {

@@ -35,7 +35,7 @@
     opacity: 80%;
   }
 
-  &__path {
+  &__path:not([stroke]) {
     stroke: $theme-link-stroke-color;
   }
 }

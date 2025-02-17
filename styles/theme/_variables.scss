@@ -109,12 +109,15 @@ $theme-spacing-horizontal: var(--reactodia-spacing-horizontal);
 /* Borders */
 $theme-border-width-base: var(--reactodia-border-width-base);
 $theme-border-radius-base: var(--reactodia-border-radius-base);
+$theme-border-color-base: var(--reactodia-border-color-base);
 
 /* Input */
 $theme-input-color: var(--reactodia-input-color);
 $theme-input-color-placeholder: var(--reactodia-input-color-placeholder);
 $theme-input-background-color: var(--reactodia-input-background-color);
 $theme-input-background-color-disabled: var(--reactodia-input-background-color-disabled);
+$theme-input-border-color: var(--reactodia-input-border-color);
+$theme-input-border-color-focus: var(--reactodia-input-border-color-focus);
 $theme-input-border-radius: var(--reactodia-input-border-radius);
 $theme-input-border-width: var(--reactodia-input-border-width);
 
@@ -135,12 +138,18 @@ $theme-tree-border-color-active: var(--reactodia-tree-border-color-active);
 $theme-tree-border-color-focus: var(--reactodia-tree-border-color-focus);
 
 /* Dialog */
+$theme-dialog-border-color: var(--reactodia-dialog-border-color);
 $theme-dialog-border-radius: var(--reactodia-dialog-border-radius);
 $theme-dialog-border-width: var(--reactodia-dialog-border-width);
 
 /* Canvas */
+$theme-canvas-background-color: var(--reactodia-canvas-background-color);
+$theme-canvas-box-shadow: var(--reactodia-canvas-box-shadow);
 $theme-canvas-overlay-color: var(--reactodia-canvas-overlay-color);
 $theme-element-background-color: var(--reactodia-element-background-color);
 $theme-link-stroke-color: var(--reactodia-link-stroke-color);
 
+/* Halo and Selection */
 $theme-selection-icon-filter: var(--reactodia-selection-icon-filter);
+$theme-selection-multiple-box-shadow: var(--reactodia-selection-multiple-box-shadow);
+$theme-selection-single-box-shadow: var(--reactodia-selection-single-box-shadow);

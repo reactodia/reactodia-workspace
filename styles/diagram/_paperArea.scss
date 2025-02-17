@@ -7,7 +7,7 @@
   display: flex;
   position: relative;
   cursor: default;
-  background: $theme-background-color;
+  background-color: $theme-canvas-background-color;
 
   &__area {
     flex: auto;

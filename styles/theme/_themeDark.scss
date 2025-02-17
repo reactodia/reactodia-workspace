@@ -1,6 +1,8 @@
 @import "./common";
 
 .reactodia-workspace[data-theme=dark] {
+  color-scheme: dark;
+
   @include theme-common;
 
   --reactodia-color-emphasis-0: var(--reactodia-color-gray-1000);
@@ -35,6 +37,8 @@
   --reactodia-background-color: #1b1b1d;
   --reactodia-background-color-surface: #242526;
 
+  --reactodia-border-color-base: #555;
+
   --reactodia-input-color: #ddd;
   --reactodia-input-color-placeholder: #878787;
   --reactodia-input-background-color: #393c3e;
@@ -43,13 +47,14 @@
   --reactodia-button-default-background-color: var(--reactodia-background-color-surface);
   --reactodia-button-default-background-color-active: #a4a6a8;
   --reactodia-button-default-background-color-focus: var(--reactodia-button-default-color);
-  --reactodia-button-default-border-color: #cccccc;
   --reactodia-button-default-color: #ebedf0;
   --reactodia-button-default-color-focus: var(--reactodia-background-color-surface);
 
+  --reactodia-canvas-box-shadow: 0 4px 15px 7px rgba(170, 170, 170, 0.05);
   --reactodia-canvas-overlay-color: rgba(0, 0, 0, 0.7);
   --reactodia-element-background-color: #242526;
   --reactodia-link-stroke-color: var(--reactodia-color-emphasis-1000);
 
   --reactodia-selection-icon-filter: invert(100%);
+  --reactodia-selection-multiple-box-shadow: 0 0 7px 7px rgba(170, 170, 170, 0.13);
 }

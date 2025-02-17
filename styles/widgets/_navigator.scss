@@ -1,4 +1,5 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-navigator {
   display: block;
@@ -6,7 +7,7 @@
 
   background: #fff;
   border: 1px solid #ddd;
-  box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+  box-shadow: $theme-canvas-box-shadow;
 
   $transition: 0.3s;
   transition: width $transition, height $transition;
