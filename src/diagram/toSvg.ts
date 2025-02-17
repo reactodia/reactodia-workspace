@@ -51,6 +51,7 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         removeByCssSelectors = [],
         borderPadding = DEFAULT_BORDER_PADDING,
     } = options;
+    const cssPropertyValues = captureCustomCssPropertyValues(options.paper);
     const {svgClone, imageBounds} = clonePaperSvg(options, FOREIGN_OBJECT_SIZE_PADDING);
 
     const paddedWidth = bbox.width + 2 * borderPadding.x;
@@ -108,7 +109,10 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         const exportedCssText = extractCSSFromDocument(svgClone);
 
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `<style>${exportedCssText}</style>`;
+        defs.innerHTML = (
+            `<style>${serializeCssPropertyValues(cssPropertyValues)}</style>\n` +
+            `<style>${exportedCssText}</style>`
+        );
         svgClone.insertBefore(defs, svgClone.firstChild);
 
         for (const selector of removeByCssSelectors) {
@@ -143,29 +147,44 @@ function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {
 }
 
 function extractCSSFromDocument(targetSubtree: Element): string {
-    const exportedRules = new Set<CSSStyleRule>();
+    const exportedParts: string[] = [];
+
+    const visitedRules = new Set<CSSRule>();
+    const visitRule = (rule: CSSRule): void => {
+        if (visitedRules.has(rule)) {
+            return;
+        }
+        visitedRules.add(rule);
+        if (rule instanceof CSSStyleRule) {
+            const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
+            if (targetSubtree.querySelector(selectorWithoutPseudo)) {
+                exportedParts.push(rule.cssText);
+            }
+        } else if (rule instanceof CSSLayerBlockRule) {
+            for (const subRule of rule.cssRules) {
+                visitRule(subRule);
+            }
+        }
+    };
+
     for (let i = 0; i < document.styleSheets.length; i++) {
         let rules: CSSRuleList;
         try {
             const cssSheet = document.styleSheets[i] as CSSStyleSheet;
             rules = cssSheet.cssRules || cssSheet.rules;
-            if (!rules) { continue; }
-        } catch (e) { continue; }
-
-        for (let j = 0; j < rules.length; j++) {
-            const rule = rules[j];
-            if (rule instanceof CSSStyleRule) {
-                const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
-                if (targetSubtree.querySelector(selectorWithoutPseudo)) {
-                    exportedRules.add(rule);
-                }
+            if (!rules) {
+                continue;
             }
+        } catch (e) {
+            continue;
+        }
+
+        for (const rule of rules) {
+            visitRule(rule);
         }
     }
 
-    const exportedCssTexts: string[] = [];
-    exportedRules.forEach(rule => exportedCssTexts.push(rule.cssText));
-    return exportedCssTexts.join('\n');
+    return exportedParts.join('\n');
 }
 
 function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
@@ -190,7 +209,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
     viewport.removeAttribute('transform');
     viewport.setAttribute('class', 'reactodia-exported-canvas');
 
-    const imageBounds: { [path: string]: Bounds } = {};
+    const imageBounds: { [path: string]: Bounds } = Object.create(null);
 
     for (const element of model.elements) {
         const modelId = element.id;
@@ -274,6 +293,27 @@ function loadCrossOriginImage(src: string): Promise<HTMLImageElement> {
     });
     image.src = src;
     return promise;
+}
+
+function captureCustomCssPropertyValues(element: Element): Map<string, string> {
+    const styles = getComputedStyle(element);
+    const propertyValues = new Map<string, string>();
+    for (const property of styles) {
+        if (property.startsWith('--')) {
+            const value = styles.getPropertyValue(property);
+            propertyValues.set(property, value);
+        }
+    }
+    return propertyValues;
+}
+
+function serializeCssPropertyValues(propertyValues: ReadonlyMap<string, string>) {
+    const parts: string[] = [':root {\n'];
+    for (const [property, value] of propertyValues) {
+        parts.push('  ', property, ': ', value, ';\n');
+    }
+    parts.push('}\n');
+    return parts.join('');
 }
 
 function foreachNode<T extends Node>(nodeList: NodeListOf<T>, callback: (node: T, index: number) => void) {
