@@ -23,6 +23,8 @@
 .reactodia-link-vertices {
   &__vertex {
     cursor: all-scroll;
+  }
+  &__vertex:not([fill]) {
     fill: $theme-link-stroke-color;
   }
   .reactodia-link:not(:hover) &__vertex {

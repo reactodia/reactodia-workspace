@@ -1,0 +1,7 @@
+@import "../theme/variables";
+
+.reactodia-edit-entity-form {
+  .reactodia-form-control + .reactodia-form-control {
+    margin-top: $theme-spacing-vertical;
+  }
+}

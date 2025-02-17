@@ -57,7 +57,7 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                     onClick={onApply}>
                     {t.text('visual_authoring.dialog.apply.label')}
                 </button>
-                <button className='reactodia-btn reactodia-btn-default'
+                <button className='reactodia-btn reactodia-btn-secondary'
                     title={t.text('visual_authoring.dialog.cancel.title')}
                     onClick={onFinish}>
                     {t.text('visual_authoring.dialog.cancel.label')}

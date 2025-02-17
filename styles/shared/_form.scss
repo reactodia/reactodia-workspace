@@ -1,0 +1,51 @@
+@import "../mixin/icons";
+@import "../theme/variables";
+
+.reactodia-form {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+
+  &__body {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 8px;
+  }
+
+  &__controls {
+    border-top: 1px solid $theme-border-color-base;
+    padding: 8px;
+    text-align: right;
+    flex: 0 0 auto;
+
+    button + button {
+      margin-left: $theme-spacing-horizontal;
+    }
+  }
+
+  &__row {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  &__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  &__control-row {
+    position: relative;
+    padding-bottom: 18px;
+  }
+
+  &__control-error {
+    color: $theme-color-danger;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+}

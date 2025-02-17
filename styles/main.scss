@@ -2,6 +2,7 @@
   @import "shared/badge";
   @import "shared/btn";
   @import "shared/btn-group";
+  @import "shared/form";
   @import "shared/form-control";
 
   @import "diagram/elementLayer";
@@ -10,7 +11,8 @@
   @import "diagram/spinner";
 
   @import "editor/authoringState";
-  @import "editor/form";
+  @import "editor/editEntityForm";
+  @import "editor/elementSelector";
   @import "editor/loadingWidget";
   @import "editor/withFetchStatus";
 

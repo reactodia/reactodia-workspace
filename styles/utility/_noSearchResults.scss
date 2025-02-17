@@ -1,5 +1,7 @@
+@import "../theme/variables";
+
 .reactodia-no-search-results {
   text-align: center;
   font-style: italic;
-  color: #757575;
+  color: $theme-color-gray-700;
 }
