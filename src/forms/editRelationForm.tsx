@@ -51,7 +51,9 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
             this.validate();
         }
         if (linkValue !== prevState.linkValue && linkValue.validated && linkValue.allowChange) {
-            this.props.onChange(linkValue.value.link);
+            if (!equalLinks(this.props.link, linkValue.value.link)) {
+                this.props.onChange(linkValue.value.link);
+            }
         }
     }
 
