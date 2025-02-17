@@ -118,7 +118,6 @@
     &::before {
       @include codicon("chevron-down");
       margin-right: 5px;
-      filter: invert(100%);
     }
   }
 

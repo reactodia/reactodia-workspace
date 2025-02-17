@@ -212,7 +212,8 @@ $no-results-color: $theme-color-emphasis-400;
     user-select: none;
   
     &:hover {
-      background-color: #e6e6e6;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
   }
 

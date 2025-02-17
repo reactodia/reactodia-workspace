@@ -26,7 +26,7 @@
   }
 
   &__button {
-    background-color: #ccc;
+    background-color: $theme-color-gray-400;
     background-position: 50%;
     background-repeat: no-repeat;
     background-size: 65%;
@@ -52,7 +52,7 @@
     background: white url("@codicons/edit.svg") no-repeat;
     background-size: 80%;
     background-position: center;
-    filter: #{"invert()"};
+    filter: invert(100%) $theme-selection-icon-filter;
 
     position: absolute;
     margin-left: 5px;
