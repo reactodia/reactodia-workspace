@@ -16,7 +16,6 @@ module.exports = (env, argv) => {
   const EXAMPLES = [
     'index',
     'basic',
-    'design',
     'i18n',
     'rdf',
     'rdfClassic',
