@@ -120,7 +120,7 @@
     &:hover {
       cursor: pointer;
       opacity: 1;
-      transition: opacity 0.3s;
+      transition: opacity $theme-transition-duration;
     }
   }
 

@@ -16,7 +16,7 @@
   }
 
   &--vertical:not(&--resizing) > .reactodia-accordion-item {
-    transition: height 0.3s ease-in-out;
+    transition: height $theme-transition-duration ease-in-out;
   }
 }
 
@@ -78,7 +78,7 @@
     margin-top: -10px;
     width: 20px;
     z-index: $z-index-accordion-handle-button;
-    transition: 0.3s;
+    transition: $theme-transition-duration;
 
     display: flex;
     align-items: center;
@@ -91,8 +91,7 @@
       content: '';
       height: 16px;
       width: 16px;
-      // opacity: 0.3;
-      transition: opacity filter 0.3s;
+      transition: opacity filter $theme-transition-duration;
       color: $theme-color-emphasis-700;
       background-color: currentColor;
     }

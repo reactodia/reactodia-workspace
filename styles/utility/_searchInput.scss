@@ -32,7 +32,7 @@
     border: 0;
     border-top-right-radius: $theme-input-border-radius;
     border-bottom-right-radius: $theme-input-border-radius;
-    transition: background-color 0.3s;
+    transition: background-color $theme-transition-duration;
 
     &:hover {
       color: $theme-button-default-color-focus;

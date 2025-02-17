@@ -80,7 +80,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     border: 0;
     border-radius: $theme-input-border-radius;
     border-top-left-radius: unset;
-    transition: background-color 0.3s;
+    transition: background-color $theme-transition-duration;
 
     &:hover {
       color: $theme-button-default-color-focus;
@@ -143,7 +143,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     border-width: $theme-button-border-width;
     border-style: solid;
 
-    transition: background-color 0.3s;
+    transition: background-color $theme-transition-duration;
   }
 
   &__section {

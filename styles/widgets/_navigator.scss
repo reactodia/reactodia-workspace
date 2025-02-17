@@ -10,8 +10,9 @@
   border-radius: 2px;
   box-shadow: $theme-canvas-box-shadow;
 
-  $transition: 0.3s;
-  transition: width $transition, height $transition;
+  transition:
+    width $theme-transition-duration,
+    height $theme-transition-duration;
 
   &--collapsed {
     width: 24px;
@@ -19,7 +20,7 @@
   }
 
   > canvas {
-    transition: opacity $transition;
+    transition: opacity $theme-transition-duration;
   }
   &--expanded > canvas { opacity: 1; }
   &--collapsed > canvas { opacity: 0; }
@@ -32,7 +33,7 @@
     padding: 4px;
 
     opacity: 0.5;
-    transition: opacity 0.3s;
+    transition: opacity $theme-transition-duration;
 
     &:not(:disabled):hover {
       opacity: 1;

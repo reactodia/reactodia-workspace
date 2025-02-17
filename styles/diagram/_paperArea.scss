@@ -45,7 +45,7 @@
     right: 25px;
     cursor: pointer;
     opacity: 0.3;
-    transition: opacity 0.3s;
+    transition: opacity $theme-transition-duration;
 
     &:hover {
       opacity: 0.5;
@@ -74,7 +74,7 @@
 
 .reactodia-exported-watermark {
   opacity: 0.3;
-  transition: opacity 0.3s;
+  transition: opacity $theme-transition-duration;
 }
 
 .reactodia-exported-canvas {

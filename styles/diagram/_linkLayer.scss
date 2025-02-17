@@ -33,7 +33,7 @@
 
   &__handle {
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity $theme-transition-duration;
     cursor: pointer;
     > circle { fill: $theme-color-emphasis-500; }
     > path { stroke: $theme-color-emphasis-200; }

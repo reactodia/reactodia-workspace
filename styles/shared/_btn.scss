@@ -16,7 +16,7 @@
   border: $theme-button-border-width solid transparent;
   border-radius: $theme-button-border-radius;
   text-transform: none;
-  transition: background-color 0.3s;
+  transition: background-color $theme-transition-duration;
 
   -webkit-user-select: none;
   user-select: none;

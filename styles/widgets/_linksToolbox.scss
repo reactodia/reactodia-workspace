@@ -72,11 +72,6 @@
     margin-bottom: 2px;
   }
 
-  &__link-item:hover &__filter-button {
-    opacity: 1.0;
-    transition: opacity 200ms 0ms;
-  }
-
   &__filter-button {
     display: none;
     float: right;
@@ -91,7 +86,11 @@
     
     cursor: pointer;
     opacity: 0.4;
-    transition: opacity 200ms 0ms;
+    transition: opacity $theme-transition-duration;
+  }
+
+  &__link-item:hover &__filter-button {
+    opacity: 1.0;
   }
 
   &__no-results {

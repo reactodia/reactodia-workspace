@@ -46,11 +46,11 @@
   &--loading,
   &--error {
     /* property name | duration | delay */
-    transition: height 300ms 300ms;
+    transition: height $theme-transition-duration 300ms;
   }
 
   &--completed {
     /* property name | duration | delay */
-    transition: height 200ms 0ms;
+    transition: height $theme-transition-duration 0ms;
   }
 }

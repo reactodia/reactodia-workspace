@@ -34,7 +34,7 @@
     border-top-left-radius: unset;
     border-bottom-right-radius: unset;
 
-    transition: background-color 0.3s;
+    transition: background-color $theme-transition-duration;
   
     &::before {
       @include codicon("close");
