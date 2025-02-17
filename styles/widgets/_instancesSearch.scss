@@ -1,4 +1,5 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-instances-search {
   flex: auto;
@@ -29,30 +30,50 @@
   }
 
   &__criterion-class {
-    border: black 1px dashed;
-    background: rgb(255, 210, 33);
+    border: $reactodia-color-primary 1px dashed;
+    color: $reactodia-color-primary-contrast-foreground;
+    background-color: $reactodia-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-element {
-    border: black 1px dashed;
-    background: rgb(255, 131, 92);
+    border: $reactodia-color-primary 1px dashed;
+    color: $reactodia-color-primary-contrast-foreground;
+    background-color: $reactodia-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-link-type {
-    border: black 1px dashed;
-    background: rgb(202, 255, 206);
+    border: $reactodia-color-primary 1px dashed;
+    color: $reactodia-color-primary-contrast-foreground;
+    background-color: $reactodia-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
-  &__link-direction {
+  &__link-direction-in,
+  &__link-direction-out {
+    display: inline-block;
+    width: 1em;
     height: 1em;
     opacity: 0.5;
     vertical-align: middle;
+    mask-position: 0 0;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+  }
+
+  &__link-direction-in {
+    -webkit-mask-image: url("@images/direction-in.svg");
+    mask-image: url("@images/direction-in.svg");
+  }
+
+  &__link-direction-out {
+    -webkit-mask-image: url("@images/direction-out.svg");
+    mask-image: url("@images/direction-out.svg");
   }
 
   &__criterion-remove {

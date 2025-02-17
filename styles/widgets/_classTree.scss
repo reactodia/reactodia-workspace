@@ -63,13 +63,13 @@
     border: 1px solid;
     border-color: transparent;
     &:hover {
-      background: #dcebff91;
-      border-color: #ccefff;
+      background: $reactodia-tree-background-color-focus;
+      border-color: $reactodia-tree-border-color-focus;
       cursor: pointer;
     }
     &--selected {
-      background-color: #beebff;
-      border-color: #8edcff;
+      background-color: $reactodia-tree-background-color-active;
+      border-color: $reactodia-tree-border-color-active;
     }
   }
 
@@ -87,6 +87,7 @@
     @include codicon("symbol-method");
     width: 20px;
     height: 20px;
+    color: var(--reactodia-element-style-color);
   }
 
   &__label {

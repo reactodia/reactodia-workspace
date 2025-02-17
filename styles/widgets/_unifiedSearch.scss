@@ -7,7 +7,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
 .reactodia-unified-search {
   border: 1px solid #ccc;
-  background-color: $reactodia-color-background-surface;
+  background-color: $reactodia-background-color-surface;
   transition: border-color ease-in-out 0.15s;
 
   &:focus-within {
@@ -31,7 +31,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     margin: 0;
     padding: 6px #{12px + $searchButtonTotal} 6px 12px;
     color: $reactodia-input-color;
-    background-color: $reactodia-color-background-surface;
+    background-color: $reactodia-background-color-surface;
     border: none;
 
     &::placeholder {

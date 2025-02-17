@@ -10,7 +10,7 @@
   &__content {
     position: absolute;
     opacity: 1;
-    background: $reactodia-color-background-surface;
+    background: $reactodia-background-color-surface;
     display: flex;
     flex-direction: column;
 
@@ -32,7 +32,6 @@
 .reactodia-dropdown-menu {
   .reactodia-dropdown--expanded &__toggle {
     border-bottom: none;
-    background-color: #bfbfbf;
   }
 
   &__toggle {

@@ -1,7 +1,9 @@
+@import "../theme/variables";
+
 .reactodia-list-element-view {
   position: relative;
   display: block;
-  background: #808080;
+  background: var(--reactodia-element-style-color);
   padding: 1px 1px 1px 10px;
   border-radius: 2px;
   margin: 0 0 2px 0;
@@ -17,7 +19,7 @@
   }
 
   &__label {
-    background: white;
+    background: $reactodia-element-background-color;
     border-radius: 0 2px 2px 0;
     font-family: "Andale Mono", sans-serif;
     font-size: 15px;
@@ -25,6 +27,10 @@
     padding-left: 7px;
     padding-right: 5px;
     overflow-wrap: break-word;
+  }
+
+  &--selected &__label {
+    color: $reactodia-color-content-contrast;
   }
 }
 

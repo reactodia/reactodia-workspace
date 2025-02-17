@@ -42,7 +42,8 @@
   }
 
   &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
-    background-color: $reactodia-color-secondary-darker;
+    color: $reactodia-button-default-color;
+    background-color: $reactodia-input-background-color-disabled;
   }
 }
 

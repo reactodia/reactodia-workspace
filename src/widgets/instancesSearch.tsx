@@ -26,9 +26,6 @@ import { ProgressBar, ProgressState } from './utility/progressBar';
 import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
 import { SearchResults } from './utility/searchResults';
 
-const DIRECTION_IN_ICON = require('@images/direction-in.svg');
-const DIRECTION_OUT_ICON = require('@images/direction-out.svg');
-
 /**
  * Props for {@link InstancesSearch} component.
  *
@@ -432,8 +429,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                     {linkTypeLabel}
                 </span>
             ) : undefined;
-            const sourceIcon = <img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_IN_ICON} />;
-            const targetIcon = <img className={`${CLASS_NAME}__link-direction`} src={DIRECTION_OUT_ICON} />;
+            const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
+            const targetIcon = <span className={`${CLASS_NAME}__link-direction-out`} />;
 
             criterions.push(
                 <div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>

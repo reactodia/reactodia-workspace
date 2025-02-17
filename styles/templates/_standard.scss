@@ -1,6 +1,7 @@
 @import "../mixin/icons";
 @import "../theme/variables";
 
+$standard-template-color: var(--reactodia-element-style-color);
 $standard-template-background: $reactodia-element-background-color;
 $standard-new-entity-stripe: white;
 
@@ -20,15 +21,15 @@ $standard-new-entity-stripe: white;
   &__main {
     border-radius: 2px;
     border: 1px solid;
-    border-color: var(--reactodia-standard-entity-color);
-    background-color: var(--reactodia-standard-entity-color);
+    border-color: $standard-template-color;
+    background-color: $standard-template-color;
   }
 
   &__body {
     margin-left: 8px;
     border-radius: 0 2px 2px 0;
     border-left: 1px solid;
-    border-left-color: var(--reactodia-standard-entity-color);
+    border-left-color: $standard-template-color;
     padding: 3px 0;
     background: $standard-template-background;
   }
@@ -68,12 +69,12 @@ $standard-new-entity-stripe: white;
 
   &__item-stripe {
     width: 6px;
-    background: var(--reactodia-standard-entity-color);
+    background: $standard-template-color
   }
 
   &--new &__item-stripe {
     background: $standard-new-entity-stripe;
-    border: 1px solid var(--reactodia-standard-entity-color);
+    border: 1px solid $standard-template-color;
   }
 
   &__item-body {
@@ -119,7 +120,7 @@ $standard-new-entity-stripe: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: var(--reactodia-standard-entity-color);
+    color: $standard-template-color;
   }
 
   &__thumbnail-image {
@@ -135,7 +136,7 @@ $standard-new-entity-stripe: white;
 
   &__photo {
     border-bottom: 1px solid;
-    border-color: var(--reactodia-standard-entity-color);
+    border-color: $standard-template-color;
   }
 
   &__photo-image {
@@ -227,13 +228,13 @@ $standard-new-entity-stripe: white;
 
   &__pinned-props {
     border-top: 1px solid;
-    border-color: var(--reactodia-standard-entity-color);
+    border-color: $standard-template-color;
     margin: 0 5px;
   }
 
   &__dropdown {
     border: 1px solid;
-    border-color: var(--reactodia-standard-entity-color);
+    border-color: $standard-template-color;
     border-radius: 2px;
     background-color: $standard-template-background;
     margin-top: 5px;

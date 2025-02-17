@@ -102,7 +102,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     const typesLabel = formatEntityTypes(data, workspace);
     const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
     const rootStyle = {
-        '--reactodia-standard-entity-color': baseColor,
+        '--reactodia-element-style-color': baseColor,
     } as React.CSSProperties;
 
     const pinnedProperties = findPinnedProperties() ?? {};
@@ -337,7 +337,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     const authoringStatusClass = getEntityAuthoredStatusClass(data, editor.authoringState);
     const {color: baseColor} = getElementTypeStyle(data.types);
     const itemStyle = {
-        '--reactodia-standard-entity-color': baseColor,
+        '--reactodia-element-style-color': baseColor,
     } as React.CSSProperties;
 
     return (

@@ -88,36 +88,31 @@ $reactodia-color-danger-contrast-foreground: var(--reactodia-color-danger-contra
 
 $reactodia-color-content: var(--reactodia-color-content);
 $reactodia-color-content-inverse: var(--reactodia-color-content-inverse);
-// $reactodia-color-content-secondary: var(--reactodia-color-content-secondary);
+$reactodia-color-content-contrast: var(--reactodia-color-content-contrast);
 
-$reactodia-color-background: var(--reactodia-color-background);
-$reactodia-color-background-surface: var(--reactodia-color-background-surface);
-
-$reactodia-icon-filter: var(--reactodia-icon-filter);
+$reactodia-background-color: var(--reactodia-background-color);
+$reactodia-background-color-surface: var(--reactodia-background-color-surface);
 
 /* Text and fonts */
 $reactodia-font-family-base: var(--reactodia-font-family-base);
 $reactodia-font-family-monospace: var(--reactodia-font-family-base);
 $reactodia-font-size-base: var(--reactodia-font-size-base);
 $reactodia-line-height-base: var(--reactodia-line-height-base);
-$reactodia-font-color-base: var(--reactodia-font-color-base, var(--reactodia-color-content));
-$reactodia-font-color-base-inverse:
-  var(--reactodia-font-color-base-inverse, var(--reactodia-color-content-inverse));
-// $reactodia-font-color-secondary: var(--reactodia-color-content-secondary);
+$reactodia-font-color-base: var(--reactodia-font-color-base);
+$reactodia-font-color-base-inverse: var(--reactodia-font-color-base-inverse);
 
 /* Spacing */
 $reactodia-spacing-base: var(--reactodia-spacing-base);
-$reactodia-spacing-vertical: var(--reactodia-spacing-vertical, var(--reactodia-spacing-base));
-$reactodia-spacing-horizontal: var(--reactodia-spacing-horizontal, var(--reactodia-spacing-base));
+$reactodia-spacing-vertical: var(--reactodia-spacing-vertical);
+$reactodia-spacing-horizontal: var(--reactodia-spacing-horizontal);
 
-$reactodia-input-color: var(--reactodia-input-color, $reactodia-font-color-base);
-$reactodia-input-color-background:
-  var(--reactodia-input-color-background, var(--reactodia-color-background-surface));
-$reactodia-input-color-background-disabled:
-  var(--reactodia-input-color-background-disabled, var(--reactodia-color-emphasis-400));
-$reactodia-input-color-placeholder:
-  var(--reactodia-input-color-placeholder, var(--reactodia-color-emphasis-600));
+/* Input */
+$reactodia-input-color: var(--reactodia-input-color);
+$reactodia-input-color-placeholder: var(--reactodia-input-color-placeholder);
+$reactodia-input-background-color: var(--reactodia-input-background-color);
+$reactodia-input-background-color-disabled: var(--reactodia-input-background-color-disabled);
 
+/* Button */
 $reactodia-button-default-background-color: var(--reactodia-button-default-background-color);
 $reactodia-button-default-background-color-active: var(--reactodia-button-default-background-color-active);
 $reactodia-button-default-background-color-focus: var(--reactodia-button-default-background-color-focus);
@@ -125,6 +120,14 @@ $reactodia-button-default-border-color: var(--reactodia-button-default-border-co
 $reactodia-button-default-color: var(--reactodia-button-default-color);
 $reactodia-button-default-color-focus: var(--reactodia-button-default-color-focus);
 
+/* Tree */
+$reactodia-tree-background-color-active: var(--reactodia-tree-background-color-active);
+$reactodia-tree-background-color-focus: var(--reactodia-tree-background-color-focus);
+$reactodia-tree-border-color-active: var(--reactodia-tree-border-color-active);
+$reactodia-tree-border-color-focus: var(--reactodia-tree-border-color-focus);
+
 /* Canvas */
 $reactodia-element-background-color: var(--reactodia-element-background-color);
 $reactodia-link-stroke-color: var(--reactodia-link-stroke-color);
+
+$reactodia-selection-icon-filter: var(--reactodia-selection-icon-filter);

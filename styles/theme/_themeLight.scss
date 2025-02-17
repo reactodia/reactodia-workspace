@@ -15,15 +15,32 @@
   --reactodia-color-emphasis-900: var(--reactodia-color-gray-900);
   --reactodia-color-emphasis-1000: var(--reactodia-color-gray-1000);
 
+  --reactodia-color-primary-contrast-background: #ebf2fc;
+  --reactodia-color-primary-contrast-foreground: #102445;
+  --reactodia-color-secondary-contrast-background: #fdfdfe;
+  --reactodia-color-secondary-contrast-foreground: #474748;
+  --reactodia-color-success-contrast-background: #e6f6e6;
+  --reactodia-color-success-contrast-foreground: #003100;
+  --reactodia-color-info-contrast-background: #eef9fd;
+  --reactodia-color-info-contrast-foreground: #193c47;
+  --reactodia-color-warning-contrast-background: #fff8e6;
+  --reactodia-color-warning-contrast-foreground: #4d3800;
+  --reactodia-color-danger-contrast-background: #ffebec;
+  --reactodia-color-danger-contrast-foreground: #4b1113;
+
   --reactodia-color-content: var(--reactodia-color-emphasis-900);
   --reactodia-color-content-inverse: var(--reactodia-color-emphasis-0);
+  --reactodia-color-content-contrast: var(--reactodia-color-content);
 
-  --reactodia-color-background: var(--reactodia-color-emphasis-0);
-  --reactodia-color-background-surface: var(--reactodia-color-content-inverse);
+  --reactodia-background-color: var(--reactodia-color-emphasis-0);
+  --reactodia-background-color-surface: var(--reactodia-color-content-inverse);
 
   --reactodia-input-color: #555;
+  --reactodia-input-color-placeholder: var(--reactodia-color-emphasis-600);
+  --reactodia-input-background-color: var(--reactodia-background-color-surface);
+  --reactodia-input-background-color-disabled: var(--reactodia-color-emphasis-400);
 
-  --reactodia-button-default-background-color: var(--reactodia-color-background-surface);
+  --reactodia-button-default-background-color: var(--reactodia-background-color-surface);
   --reactodia-button-default-background-color-active: #e0e0e0;
   --reactodia-button-default-background-color-focus: #d4d4d4;
   --reactodia-button-default-border-color: #cccccc;

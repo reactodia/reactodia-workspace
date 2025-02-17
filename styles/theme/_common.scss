@@ -22,8 +22,6 @@
   --reactodia-color-primary-light: #538ce9;
   --reactodia-color-primary-lighter: #72a1ed;
   --reactodia-color-primary-lightest: #9abcf2;
-  --reactodia-color-primary-contrast-background: #ebf2fc;
-  --reactodia-color-primary-contrast-foreground: #102445;
 
   --reactodia-color-secondary: #ebedf0;
   --reactodia-color-secondary-dark: #d4d5d8;
@@ -32,8 +30,6 @@
   --reactodia-color-secondary-light: #eef0f2;
   --reactodia-color-secondary-lighter: #f1f2f5;
   --reactodia-color-secondary-lightest: #f5f6f8;
-  --reactodia-color-secondary-contrast-background: #fdfdfe;
-  --reactodia-color-secondary-contrast-foreground: #474748;
 
   --reactodia-color-success: #5cb85c;
   --reactodia-color-success-dark: #009400;
@@ -42,8 +38,6 @@
   --reactodia-color-success-light: #26b226;
   --reactodia-color-success-lighter: #4dbf4d;
   --reactodia-color-success-lightest: #80d280;
-  --reactodia-color-success-contrast-background: #e6f6e6;
-  --reactodia-color-success-contrast-foreground: #003100;
 
   --reactodia-color-info: #54c7ec;
   --reactodia-color-info-dark: #4cb3d4;
@@ -52,8 +46,6 @@
   --reactodia-color-info-light: #6ecfef;
   --reactodia-color-info-lighter: #87d8f2;
   --reactodia-color-info-lightest: #aae3f6;
-  --reactodia-color-info-contrast-background: #eef9fd;
-  --reactodia-color-info-contrast-foreground: #193c47;
 
   --reactodia-color-warning: #ffba00;
   --reactodia-color-warning-dark: #e6a700;
@@ -62,8 +54,6 @@
   --reactodia-color-warning-light: #ffc426;
   --reactodia-color-warning-lighter: #ffcf4d;
   --reactodia-color-warning-lightest: #ffdd80;
-  --reactodia-color-warning-contrast-background: #fff8e6;
-  --reactodia-color-warning-contrast-foreground: #4d3800;
 
   --reactodia-color-danger: #c9302c;
   --reactodia-color-danger-dark: #e13238;
@@ -72,14 +62,21 @@
   --reactodia-color-danger-light: #fb565b;
   --reactodia-color-danger-lighter: #fb7478;
   --reactodia-color-danger-lightest: #fd9c9f;
-  --reactodia-color-danger-contrast-background: #ffebec;
-  --reactodia-color-danger-contrast-foreground: #4b1113;
 
   --reactodia-font-family-base: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   --reactodia-font-family-monospace:
     'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
   --reactodia-font-size-base: 87.5%;
   --reactodia-line-height-base: 1.42857;
+  --reactodia-font-color-base: var(--reactodia-color-content);
+  --reactodia-font-color-base-inverse: var(--reactodia-color-content-inverse);
 
   --reactodia-spacing-base: 1rem;
+  --reactodia-spacing-vertical: var(--reactodia-spacing-base);
+  --reactodia-spacing-horizontal: var(--reactodia-spacing-base);
+
+  --reactodia-tree-background-color-active: rgba(101, 166, 255, 0.3);
+  --reactodia-tree-background-color-focus: rgba(189, 217, 255, 0.3);
+  --reactodia-tree-border-color-active: rgba(115, 211, 255, 0.5);;
+  --reactodia-tree-border-color-focus: rgba(115, 211, 255, 0.3);
 }
