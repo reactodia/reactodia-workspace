@@ -1,9 +1,12 @@
-import { DiagramModel } from './model';
+import type { ColorSchemeApi } from '../coreUtils/colorScheme';
+
+import type { DiagramModel } from './model';
 import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
 
 export interface ToSVGOptions {
     model: DiagramModel;
     sizeProvider: SizeProvider;
+    colorSchemeApi: ColorSchemeApi;
     paper: SVGSVGElement;
     contentBox: Rect;
     getOverlaidElement: (id: string) => HTMLElement;
@@ -44,15 +47,31 @@ export function toSVG(options: ToSVGOptions): Promise<string> {
         });
 }
 
-function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
+async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
     const {
+        colorSchemeApi,
         contentBox: bbox,
         watermarkSvg,
         removeByCssSelectors = [],
         borderPadding = DEFAULT_BORDER_PADDING,
     } = options;
-    const cssPropertyValues = captureCustomCssPropertyValues(options.paper);
-    const {svgClone, imageBounds} = clonePaperSvg(options, FOREIGN_OBJECT_SIZE_PADDING);
+
+    let cssPropertyValues!: ReturnType<typeof captureCustomCssPropertyValues>;
+    let clonedPaperSvg!: ReturnType<typeof clonePaperSvg>;
+    colorSchemeApi.actInColorScheme('light', () => {
+        cssPropertyValues = captureCustomCssPropertyValues(options.paper);
+        clonedPaperSvg = clonePaperSvg(options, FOREIGN_OBJECT_SIZE_PADDING);
+    });
+
+    const {svgClone, imageBounds} = clonedPaperSvg;
+    for (const selector of removeByCssSelectors) {
+        for (const node of svgClone.querySelectorAll(selector)) {
+            node.remove();
+        }
+    }
+
+    // Workaround to include only library-related stylesheets
+    const exportedCssText = extractCSSFromDocument(svgClone);
 
     const paddedWidth = bbox.width + 2 * borderPadding.x;
     const paddedHeight = bbox.height + 2 * borderPadding.y;
@@ -77,11 +96,8 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         addWatermark(svgClone, viewBox, watermarkSvg);
     }
 
-    const images: HTMLImageElement[] = [];
-    const nodes = svgClone.querySelectorAll('img');
-    foreachNode(nodes, node => images.push(node));
-
-    const convertingImages = Promise.all(images.map(img => {
+    const images = Array.from(svgClone.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
         const exportKey = img.getAttribute('export-key');
         img.removeAttribute('export-key');
         if (exportKey) {
@@ -92,37 +108,25 @@ function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
                 return Promise.resolve();
             }
             return exportAsDataUri(img).then(dataUri => {
-                // check for empty svg data URI which happens when mockJointXHR catches an exception
                 if (dataUri && dataUri !== 'data:image/svg+xml,') {
                     img.src = dataUri;
                 }
             }).catch(err => {
-                console.warn('Failed to export image: ' + img.src, err);
+                console.warn('Reactodia: Failed to export image: ' + img.src, err);
             });
         } else {
             return Promise.resolve();
         }
     }));
 
-    return convertingImages.then(() => {
-        // workaround to include only library-related stylesheets
-        const exportedCssText = extractCSSFromDocument(svgClone);
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = (
+        `<style>${serializeCssPropertyValues(cssPropertyValues)}</style>\n` +
+        `<style>${exportedCssText}</style>`
+    );
+    svgClone.insertBefore(defs, svgClone.firstChild);
 
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = (
-            `<style>${serializeCssPropertyValues(cssPropertyValues)}</style>\n` +
-            `<style>${exportedCssText}</style>`
-        );
-        svgClone.insertBefore(defs, svgClone.firstChild);
-
-        for (const selector of removeByCssSelectors) {
-            for (const node of svgClone.querySelectorAll(selector)) {
-                node.remove();
-            }
-        }
-
-        return svgClone;
-    });
+    return svgClone;
 }
 
 function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {

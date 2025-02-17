@@ -2,6 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { delay } from '../coreUtils/async';
+import type { ColorSchemeApi } from '../coreUtils/colorScheme';
 import { EventObserver, Events, EventSource } from '../coreUtils/events';
 import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/scheduler';
 
@@ -27,6 +28,7 @@ import {
 export interface PaperAreaProps {
     model: DiagramModel;
     renderingState: MutableRenderingState;
+    colorSchemeApi: ColorSchemeApi;
     zoomOptions?: ZoomOptions;
     hideScrollBars?: boolean;
     watermarkSvg?: string;
@@ -832,7 +834,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {
-        const {model, renderingState} = this.props;
+        const {model, renderingState, colorSchemeApi} = this.props;
         const {
             removeByCssSelectors = [],
         } = baseOptions;
@@ -843,6 +845,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         return {
             model,
             sizeProvider: renderingState,
+            colorSchemeApi,
             paper: svg,
             contentBox: this.getContentFittingBox(),
             getOverlaidElement: id => this.area.querySelector(`[data-element-id='${id}']`) as HTMLElement,

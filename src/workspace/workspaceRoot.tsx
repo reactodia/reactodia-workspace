@@ -1,7 +1,8 @@
-import * as React from 'react';
 import classnames from 'classnames';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 
-import { ColorSchemeContext } from '../coreUtils/colorScheme';
+import { ColorScheme, ColorSchemeContext, ColorSchemeApi } from '../coreUtils/colorScheme';
 
 /**
  * Props for {@link WorkspaceRoot} component.
@@ -45,19 +46,35 @@ export function WorkspaceRoot(props: WorkspaceRootProps) {
     const {colorScheme = 'auto'} = props;
 
     const preferredColorScheme = usePreferredColorScheme(colorScheme === 'auto');
+    
     let effectiveColorScheme = colorScheme;
     if (effectiveColorScheme === 'auto') {
         effectiveColorScheme = preferredColorScheme === 'dark' ? 'dark' : 'light';
     }
 
+    const [actedColorScheme, setActedColorScheme] = React.useState<ColorScheme | undefined>();
+    if (actedColorScheme !== undefined) {
+        effectiveColorScheme = actedColorScheme;
+    }
+
+    const colorSchemeApi = React.useMemo<ColorSchemeApi>(() => ({
+        actInColorScheme: (scheme, action) => {
+            ReactDOM.flushSync(() => setActedColorScheme(scheme));
+            action();
+            ReactDOM.flushSync(() => setActedColorScheme(undefined));
+        }
+    }), [setActedColorScheme]);
+
     return (
-        <ColorSchemeContext.Provider value={effectiveColorScheme}>
-            <div className={classnames(CLASS_NAME, props.className)}
-                style={props.style}
-                data-theme={effectiveColorScheme}>
-                {props.children}
-            </div>
-        </ColorSchemeContext.Provider>
+        <ColorSchemeApi.Provider value={colorSchemeApi}>
+            <ColorSchemeContext.Provider value={effectiveColorScheme}>
+                <div className={classnames(CLASS_NAME, props.className)}
+                    style={props.style}
+                    data-theme={effectiveColorScheme}>
+                    {props.children}
+                </div>
+            </ColorSchemeContext.Provider>
+        </ColorSchemeApi.Provider>
     );
 }
 
