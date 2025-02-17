@@ -1,5 +1,6 @@
 @import "../mixin/icons";
 @import "../mixin/z-index";
+@import "../theme/variables";
 
 .reactodia-dropdown {
   position: relative;
@@ -9,7 +10,6 @@
   &__content {
     position: absolute;
     opacity: 1;
-    background: white;
     display: flex;
     flex-direction: column;
 
@@ -17,7 +17,7 @@
   }
 
   &--expanded &__content {
-    box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+    box-shadow: $theme-canvas-box-shadow;
   }
 
   &--collapsed &__content {
@@ -31,7 +31,8 @@
 .reactodia-dropdown-menu {
   .reactodia-dropdown--expanded &__toggle {
     border-bottom: none;
-    background-color: #bfbfbf;
+    border-bottom-left-radius: unset;
+    border-bottom-right-radius: unset;
   }
 
   &__toggle {
@@ -46,16 +47,31 @@
     list-style: none;
     display: flex;
     flex-direction: column;
+    background-color: $theme-background-color-surface;
+  }
+
+  .reactodia-dropdown-menu-item {
+    border-radius: unset;
+  }
+
+  .reactodia-dropdown-menu-item:first-child {
+    border-top-right-radius: $theme-button-border-radius;
+  }
+
+  .reactodia-dropdown-menu-item:last-child {
+    border-bottom-left-radius: $theme-button-border-radius;
+    border-bottom-right-radius: $theme-button-border-radius;
   }
 }
 
 .reactodia-dropdown-menu-item {
   & ~ & {
-    margin-top: -1px;
-    border-top-color: #eee;
+    margin-top: calc(-1 * $theme-button-border-width);
+    border-top-color: $theme-button-default-border-color;
   }
   &--disabled, &--disabled:hover {
-    background-color: #e0e0e0;
+    color: $theme-button-default-color;
+    background-color: $theme-input-background-color-disabled;
     cursor: not-allowed;
     opacity: .65;
   }

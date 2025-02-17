@@ -1,7 +1,19 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-search-input {
   display: flex;
+
+  &__input {
+    &::placeholder {
+      color: $theme-input-color-placeholder;
+    }
+  }
+
+  &--has-submit &__input {
+    border-top-right-radius: unset;
+    border-bottom-right-radius: unset;
+  }
 
   &__clear-container {
     width: 0;
@@ -15,12 +27,16 @@
     left: -33px;
     padding: 8px;
     cursor: pointer;
-    background: 0 0;
+    color: $theme-button-default-color;
+    background: transparent;
     border: 0;
-    transition: background-color 0.3s;
+    border-top-right-radius: $theme-input-border-radius;
+    border-bottom-right-radius: $theme-input-border-radius;
+    transition: background-color $theme-transition-duration;
 
     &:hover {
-      background-color: #eeeeee;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
 
     &::after {
@@ -28,8 +44,15 @@
     }
   }
 
+  &--has-submit &__clear {
+    border-top-right-radius: unset;
+    border-bottom-right-radius: unset;
+  }
+
   &__submit  {
     margin-left: -1px;
+    border-top-left-radius: unset;
+    border-bottom-left-radius: unset;
 
     &::before {
       @include codicon("search");

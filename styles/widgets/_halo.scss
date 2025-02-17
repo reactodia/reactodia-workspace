@@ -1,8 +1,10 @@
+@import "../theme/variables";
+
 .reactodia-halo {
   position: absolute;
   pointer-events: none;
 
   border: 1.5px dashed #d8956d;
   border-radius: 2px;
-  box-shadow: 0 0 5px 0 #d8956d inset;
+  box-shadow: $theme-selection-single-box-shadow;
 }

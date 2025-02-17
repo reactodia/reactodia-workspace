@@ -139,11 +139,16 @@ export function useDropdownMenu(): DropdownMenuContext {
 
 function DropdownMenuToggleButton(props: { title?: string }) {
     const {title} = props;
-    const {setExpanded} = useDropdownMenu();
+    const {expanded, setExpanded} = useDropdownMenu();
 
     return (
         <button type='button'
-            className={`${MENU_CLASS_NAME}__toggle reactodia-btn reactodia-btn-default`}
+            className={classnames(
+                `${MENU_CLASS_NAME}__toggle`,
+                'reactodia-btn',
+                'reactodia-btn-default',
+                expanded ? 'active' : undefined
+            )}
             title={title}
             onClick={() => setExpanded(value => !value)}
         />

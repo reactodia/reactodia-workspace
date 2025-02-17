@@ -1,11 +1,13 @@
 @import "../mixin/icons";
 @import "../mixin/draggable-handle";
 @import "../mixin/z-index";
+@import "../theme/variables";
 
 .reactodia-dialog {
-  background: #fff;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+  background: $theme-background-color-surface;
+  border: $theme-dialog-border-width solid $theme-dialog-border-color;
+  border-radius: $theme-dialog-border-radius;
+  box-shadow: $theme-canvas-box-shadow;
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -24,18 +26,23 @@
   }
 
   &__close-button {
-    border: none;
     padding: 6px;
     background: none;
+    color: $theme-button-default-color;
 
-    transition: background-color 0.3s;
+    border: none;
+    border-top-left-radius: unset;
+    border-bottom-right-radius: unset;
+
+    transition: background-color $theme-transition-duration;
   
     &::before {
       @include codicon("close");
     }
 
     &:hover {
-      background-color: #eeeeee;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
   }
 
@@ -64,5 +71,5 @@
   align-items: center;
   justify-content: center;
   
-  background: rgba(255, 255, 255, 0.55);
+  background-color: $theme-canvas-overlay-color;
 }

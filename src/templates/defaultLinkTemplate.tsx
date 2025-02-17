@@ -27,7 +27,6 @@ export const DefaultLinkTemplate: LinkTemplate = {
         d: 'M0,0 L0,8 L9,4 z',
         width: 9,
         height: 8,
-        fill: 'black',
     },
     renderLink: props => <DefaultLinkPathTemplate {...props} />,
 };
@@ -170,7 +169,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     }
 
     const {linkState} = link;
-    const stroke = pathProps?.stroke ?? 'black';
+    const stroke = pathProps?.stroke;
     return (
         <g
             className={classnames(

@@ -1,4 +1,7 @@
 @import "../mixin/icons";
+@import "../theme/variables";
+
+$no-results-color: $theme-color-emphasis-400;
 
 .reactodia-connections-menu {
   flex: auto;
@@ -10,13 +13,13 @@
     padding-bottom: 0px;
     overflow: hidden;
     text-overflow: ellipsis;
-    height: 27px;
-    min-height: 27px;
+    height: 30px;
+    min-height: 30px;
     flex-grow: 0;
   }
 
   &__breadcrumbs-link {
-    color: #337ab7;
+    color: $theme-color-primary;
     cursor: pointer;
     text-decoration: none;
   
@@ -41,7 +44,7 @@
   }
 
   &__sort-switch:checked + &__sort-switch-label {
-    color: #337ab7;
+    color: $theme-color-primary-light;
     opacity: 1;
   }
 
@@ -78,7 +81,7 @@
     padding: 5px;
     overflow-x: hidden;
     overflow-y: auto;
-    border-top: 1px solid #dbdbdb;
+    border-top: 1px solid $theme-border-color-base;
     flex-grow: 1;
     margin: 0;
   }
@@ -92,7 +95,7 @@
     width: 100%;
     font-size: x-large;
     font-weight: 700;
-    color: #cbcbcb;
+    color: $no-results-color;
     text-align: center;
   }
 
@@ -103,7 +106,7 @@
 
   &__links-list-hr {
     border: 0;
-    border-top: 1px solid #eee;
+    border-top: 1px solid $theme-border-color-base;
     height: 0;
     margin-top: 6px;
     margin-bottom: 6px;
@@ -115,40 +118,48 @@
     padding: 0 5px 0 0;
     align-items: center;
     margin-bottom: 4px;
-    background: #f7f7f7;
+    background: $theme-color-emphasis-200;
+    border-radius: 2px;
 
     &:hover {
-      background-color: #e2e2e2;
+      background-color: $theme-color-emphasis-400;
     }
   }
 
   &__link-direction {
     flex-shrink: 0;
-    background: rgba(219, 219, 219, 0.35);
     min-height: 30px;
     padding: 5px 0px 5px 10px;
     display: flex;
     align-items: center;
   }
 
-  &__link-direction-in {
-    background: url("@images/direction-in.svg") 0 0 no-repeat;
+  &__link:not(:hover) &__link-direction {
+    background: $theme-color-emphasis-300;
+  }
+
+  &__link-direction-in,
+  &__link-direction-out {
+    mask-position: 0 0;
+    mask-size: contain;
+    mask-repeat: no-repeat;
     flex-shrink: 0;
     width: 20px;
     height: 20px;
-    margin: 0 14px 0 0;
-    background-size: contain;
     opacity: 0.5;
+    background-color: currentColor;
+  }
+
+  &__link-direction-in {
+    -webkit-mask-image: url("@images/direction-in.svg");
+    mask-image: url("@images/direction-in.svg");
+    margin: 0 14px 0 0;
   }
   
   &__link-direction-out {
-    background: url("@images/direction-out.svg") 0 0 no-repeat;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    -webkit-mask-image: url("@images/direction-out.svg");
+    mask-image: url("@images/direction-out.svg");
     margin: 0 8px 0 6px;
-    background-size: contain;
-    opacity: 0.5;
   }
 
   &__link-title {
@@ -167,24 +178,28 @@
   &__link-navigate-button {
     flex-shrink: 0;
     float: right;
-    background-image: url("@codicons/chevron-right.svg");
+    -webkit-mask-image: url("@codicons/chevron-right.svg");
+    mask-image: url("@codicons/chevron-right.svg");
+    mask-size: cover;
     width: 20px;
     height: 20px;
     opacity: 0.5;
     margin-left: 10px;
     min-width: 16px;
-    background-size: cover;
+    background-color: currentColor;
     &:hover { opacity: 1; }
   }
 
   &__link-filter-button {
     flex-shrink: 0;
-    background-image: url("@images/add-to-filter.svg");
-    background-size: 20px 20px;
+    -webkit-mask-image: url("@images/add-to-filter.svg");
+    mask-image: url("@images/add-to-filter.svg");
+    mask-size: 20px 20px;
     width: 20px;
     height: 20px;
     opacity: 0.4;
     margin-left: 10px;
+    background-color: currentColor;
     &:hover { opacity: 1; }
   }
   
@@ -197,7 +212,8 @@
     user-select: none;
   
     &:hover {
-      background-color: #e6e6e6;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
   }
 
@@ -227,7 +243,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #ccc;
+    border: 1px solid $no-results-color;
     margin-bottom: 5px;
   }
   
@@ -235,11 +251,12 @@
     position: relative;
     font-size: x-large;
     font-weight: 700;
-    color: #cbcbcb;
+    color: $no-results-color;
   }
 
   &__objects-list {
-    border: 1px solid #ccc;
+    border: $theme-border-width-base solid $theme-border-color-base;
+    border-radius: $theme-border-radius-base;
     height: 0;
     flex-grow: 1;
     overflow-x: hidden;
@@ -264,7 +281,7 @@
   }
 
   &__objects-extra {
-    color: gray;
+    color: $theme-color-emphasis-600;
     cursor: help;
   }
 
@@ -278,7 +295,7 @@
     padding-bottom: 2px;
 
     &:not(:last-child) {
-      margin-right: 5px;
+      margin-right: $theme-spacing-horizontal;
     }
   }
 }

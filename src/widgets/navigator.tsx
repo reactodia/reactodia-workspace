@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { Debouncer } from '../coreUtils/scheduler';
+import { useColorScheme } from '../coreUtils/colorScheme';
 import { EventObserver } from '../coreUtils/events';
+import { Debouncer } from '../coreUtils/scheduler';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
@@ -76,32 +77,38 @@ export interface NavigatorProps {
     /**
      * CSS color for the minimap underlying background.
      *
-     * @default "#F5F5F5"
+     * **Default** is set by `--reactodia-navigator-background-fill` CSS property.
      */
     backgroundFill?: string;
     /**
      * CSS color for the scrollable pane background.
      *
-     * @default "#F5F5F5"
+     * **Default** is set by `--reactodia-navigator-scrollable-pane-fill` CSS property.
      */
     scrollablePaneFill?: string;
     /**
      * CSS color for the viewport area background.
      *
-     * @default "#FFFFFF"
+     * **Default** is set by `--reactodia-navigator-viewport-fill` CSS property.
      */
     viewportFill?: string;
     /**
      * Stroke style for the viewport area border.
      *
-     * @default {color: "#EEEEEE", width: 2}
+     * **Default** is set by these CSS properties:
+     *  - `color` by `--reactodia-navigator-viewport-stroke-color`
+     *  - `width` by `--reactodia-navigator-viewport-stroke-width`
+     *  - `dash` by `--reactodia-navigator-viewport-stroke-dash`
      */
     viewportStroke?: NavigatorStrokeStyle;
     /**
      * Stroke style for the viewport area overflow border
      * (displayed when the viewport is cutoff at the minimap border).
      *
-     * @default {color: "#EEEEEE", width: 2, dash: [5, 5]}
+     * **Default** is set by these CSS properties:
+     *  - `color` by `--reactodia-navigator-overflow-stroke-color`
+     *  - `width` by `--reactodia-navigator-overflow-stroke-width`
+     *  - `dash` by `--reactodia-navigator-overflow-stroke-dash`
      */
     overflowStroke?: NavigatorStrokeStyle;
 }
@@ -138,10 +145,12 @@ export interface NavigatorStrokeStyle {
 export function Navigator(props: NavigatorProps) {
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
+    const colorScheme = useColorScheme();
     return (
         <NavigatorInner {...props}
             canvas={canvas}
             workspace={workspace}
+            colorScheme={colorScheme}
         />
     );
 }
@@ -149,6 +158,7 @@ export function Navigator(props: NavigatorProps) {
 interface NavigatorInnerProps extends NavigatorProps {
     canvas: CanvasApi;
     workspace: WorkspaceContext;
+    colorScheme: ReturnType<typeof useColorScheme>;
 }
 
 interface State {
@@ -172,18 +182,14 @@ const DEFAULT_AUTO_COLLAPSE_FRACTION = 0.4;
 const DEFAULT_WIDTH = 300;
 const DEFAULT_HEIGHT = 160;
 const DEFAULT_SCALE_PADDING = 0.2;
-const DEFAULT_BACKGROUND_FILL = '#F5F5F5';
-const DEFAULT_SCROLLABLE_PANE_FILL = '#F5F5F5';
-const DEFAULT_VIEWPORT_FILL = '#FFFFFF';
-const DEFAULT_VIEWPORT_STROKE: NavigatorStrokeStyle = {
-    color: '#EEEEEE',
-    width: 2,
-};
-const DEFAULT_OVERFLOW_STROKE: NavigatorStrokeStyle = {
-    color: '#EEEEEE',
-    width: 2,
-    dash: [5, 5],
-};
+
+type DrawStyle = Required<Pick<NavigatorProps,
+    | 'backgroundFill'
+    | 'scrollablePaneFill'
+    | 'viewportFill'
+    | 'viewportStroke'
+    | 'overflowStroke'
+>>;
 
 class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     private readonly delayedRedraw = new Debouncer();
@@ -220,8 +226,9 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         this.onCheckSize();
     }
 
-    shouldComponentUpdate(nextProps: NavigatorProps, nextState: State) {
+    shouldComponentUpdate(nextProps: NavigatorInnerProps, nextState: State) {
         return !(
+            nextProps.colorScheme === this.props.colorScheme &&
             nextProps.dock === this.props.dock &&
             nextProps.dockOffsetX === this.props.dockOffsetX &&
             nextProps.dockOffsetY === this.props.dockOffsetY &&
@@ -229,6 +236,12 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             nextProps.height === this.props.height &&
             nextState === this.state
         );
+    }
+
+    componentDidUpdate(prevProps: NavigatorInnerProps) {
+        if (this.props.colorScheme !== prevProps.colorScheme) {
+            this.scheduleRedraw();
+        }
     }
 
     componentWillUnmount() {
@@ -250,15 +263,15 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             workspace: {model},
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
-            backgroundFill = DEFAULT_BACKGROUND_FILL,
-            scrollablePaneFill = DEFAULT_SCROLLABLE_PANE_FILL,
         } = this.props;
-        const pt = canvas.metrics.getTransform();
 
+        const pt = canvas.metrics.getTransform();
         this.calculateTransform(pt);
 
+        const style = computeDrawStyle(this.props, this.canvas);
+
         const ctx = this.canvas.getContext('2d')!;
-        ctx.fillStyle = backgroundFill;
+        ctx.fillStyle = style.backgroundFill;
         ctx.clearRect(0, 0, width, height);
         ctx.fillRect(0, 0, width, height);
 
@@ -272,7 +285,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
         const start = canvasFromPaneCoords(paneStart, pt, this.transform);
         const end = canvasFromPaneCoords(paneEnd, pt, this.transform);
-        ctx.fillStyle = scrollablePaneFill;
+        ctx.fillStyle = style.scrollablePaneFill;
         ctx.fillRect(start.x, start.y, end.x - start.x, end.y - start.y);
 
         ctx.save();
@@ -290,18 +303,18 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             height: y1 - y0,
         };
 
-        this.fillViewport(ctx, viewportRect);
-        this.drawElements(ctx, pt);
-        this.strokeViewport(ctx, viewportRect);
+        this.fillViewport(ctx, viewportRect, style);
+        this.drawElements(ctx, pt, style);
+        this.strokeViewport(ctx, viewportRect, style);
 
         ctx.restore();
     };
 
-    private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform) {
+    private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform, style: DrawStyle) {
         const {canvas, workspace: {model}} = this.props;
-        model.elements.forEach(element => {
+        for (const element of model.elements) {
             const {x, y, width, height} = boundsOf(element, canvas.renderingState);
-            ctx.fillStyle = this.chooseElementColor(element);
+            ctx.fillStyle = this.chooseElementColor(element, style);
 
             const {x: x1, y: y1} = canvasFromPaperCoords({x, y}, pt, this.transform);
             const {x: x2, y: y2} = canvasFromPaperCoords({
@@ -310,10 +323,10 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             }, pt, this.transform);
 
             ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
-        });
+        }
     }
 
-    private chooseElementColor(element: Element): string {
+    private chooseElementColor(element: Element, style: DrawStyle): string {
         const {canvas, workspace: {getElementStyle}} = this.props;
         const {highlighter} = canvas.renderingState.shared;
         const isBlurred = highlighter && !highlighter(element);
@@ -324,12 +337,8 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         return color;
     }
 
-    private fillViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect): void {
-        const {
-            viewportFill = DEFAULT_VIEWPORT_FILL
-        } = this.props;
-
-        ctx.fillStyle = viewportFill;
+    private fillViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect, style: DrawStyle): void {
+        ctx.fillStyle = style.viewportFill;
         ctx.fillRect(
             viewportRect.x,
             viewportRect.y,
@@ -338,12 +347,10 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         );
     }
 
-    private strokeViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect): void {
+    private strokeViewport(ctx: CanvasRenderingContext2D, viewportRect: Rect, style: DrawStyle): void {
         const {
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
-            viewportStroke = DEFAULT_VIEWPORT_STROKE,
-            overflowStroke = DEFAULT_OVERFLOW_STROKE,
         } = this.props;
 
         const {x: x1, y: y1} = viewportRect;
@@ -351,7 +358,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         const y2 = y1 + viewportRect.height;
 
         // draw visible viewport rectangle
-        setCanvasStroke(ctx, viewportStroke);
+        setCanvasStroke(ctx, style.viewportStroke);
         ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
         // draw "out of area" viewport borders
@@ -377,7 +384,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             ctx.lineTo(x2, endY);
         }
 
-        setCanvasStroke(ctx, overflowStroke);
+        setCanvasStroke(ctx, style.overflowStroke);
         ctx.stroke();
     }
 
@@ -542,6 +549,46 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 }
 
 defineCanvasWidget(Navigator, element => ({element, attachment: 'viewport'}));
+
+function computeDrawStyle(props: NavigatorProps, styleSource: HTMLElement): DrawStyle {
+    const {
+        backgroundFill,
+        scrollablePaneFill,
+        viewportFill,
+        viewportStroke,
+        overflowStroke,
+    } = props;
+
+    const computedStyle = getComputedStyle(styleSource);
+    return {
+        backgroundFill: backgroundFill ??
+            computedStyle.getPropertyValue('--reactodia-navigator-background-fill'),
+        scrollablePaneFill: scrollablePaneFill ??
+            computedStyle.getPropertyValue('--reactodia-navigator-scrollable-pane-fill'),
+        viewportFill: viewportFill ??
+            computedStyle.getPropertyValue('--reactodia-navigator-viewport-fill'),
+        viewportStroke: viewportStroke ?? parseStrokeFromPropertyValues(
+            computedStyle.getPropertyValue('--reactodia-navigator-viewport-stroke-color'),
+            computedStyle.getPropertyValue('--reactodia-navigator-viewport-stroke-width'),
+            computedStyle.getPropertyValue('--reactodia-navigator-viewport-stroke-dash')
+        ),
+        overflowStroke: overflowStroke ?? parseStrokeFromPropertyValues(
+            computedStyle.getPropertyValue('--reactodia-navigator-overflow-stroke-color'),
+            computedStyle.getPropertyValue('--reactodia-navigator-overflow-stroke-width'),
+            computedStyle.getPropertyValue('--reactodia-navigator-overflow-stroke-dash')
+        ),
+    };
+}
+
+function parseStrokeFromPropertyValues(color: string, width: string, dash: string): NavigatorStrokeStyle {
+    const widthNumber = Number(width);
+    const dashArray = dash.split(' ').map(v => Number(v));
+    return {
+        color: color ? color : undefined,
+        width: Number.isFinite(widthNumber) ? widthNumber : undefined,
+        dash: dashArray.every(v => Number.isFinite(v)) ? dashArray : undefined,
+    };
+}
 
 function setCanvasStroke(canvas: CanvasRenderingContext2D, stroke: NavigatorStrokeStyle): void {
     const {color = 'transparent', width = 1, dash = []} = stroke;

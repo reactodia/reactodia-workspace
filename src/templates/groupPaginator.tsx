@@ -54,7 +54,7 @@ export function GroupPaginator(props: GroupPaginatorProps) {
     return (
         <div className={CLASS_NAME}>
             <button type='button'
-                className={classnames('reactodia-btn', `${CLASS_NAME}__previous`)}
+                className={classnames('reactodia-btn', 'reactodia-btn-default', `${CLASS_NAME}__previous`)}
                 name={t.text('group_paginator.go_previous.title')}
                 disabled={pageIndex <= 0}
                 onClick={() => onChangePage(pageIndex - 1)}
@@ -66,7 +66,7 @@ export function GroupPaginator(props: GroupPaginatorProps) {
                 })}
             </div>
             <button type='button'
-                className={classnames('reactodia-btn', `${CLASS_NAME}__next`)}
+                className={classnames('reactodia-btn', 'reactodia-btn-default', `${CLASS_NAME}__next`)}
                 title={t.text('group_paginator.go_next.title')}
                 disabled={pageIndex >= lastPage}
                 onClick={() => onChangePage(pageIndex + 1)}

@@ -115,7 +115,7 @@ export class EditRelationForm extends React.Component<EditRelationFormProps, Sta
                         title={t.text('visual_authoring.dialog.apply.title')}>
                         {t.text('visual_authoring.dialog.apply.label')}
                     </button>
-                    <button className='reactodia-btn reactodia-btn-default'
+                    <button className='reactodia-btn reactodia-btn-secondary'
                         onClick={this.props.onCancel}
                         title={t.text('visual_authoring.dialog.cancel.title')}>
                         {t.text('visual_authoring.dialog.cancel.label')}

@@ -1,4 +1,4 @@
-$toolbarHeight: 30px;
+@import "../theme/variables";
 
 .reactodia-toolbar-action {
   &__open {
@@ -60,27 +60,29 @@ $toolbarHeight: 30px;
   &__language-selector {
     float: left;
     position: relative;
-    height: $toolbarHeight;
-    background: white;
-    border: 1px solid #ccc;
+    height: $theme-toolbar-height;
+    background: $theme-button-default-background-color;
+    border: $theme-button-border-width solid $theme-button-default-border-color;
+    border-radius: $theme-button-border-radius;
     padding: 0 5px;
 
     display: flex;
     align-items: center;
 
     &:focus-within {
-      border-color: #66afe9;
+      border-color: $theme-input-border-color-focus;
     }
 
     select {
-      height: $toolbarHeight;
-      background: none;
+      height: $theme-toolbar-height;
+      background-color: $theme-button-default-background-color;
       border: none;
       outline: none;
       color: inherit;
       margin: 0;
       font: inherit;
       line-height: inherit;
+      height: calc($theme-toolbar-height - 4px);
     }
 
     label {

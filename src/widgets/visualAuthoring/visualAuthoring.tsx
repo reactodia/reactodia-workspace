@@ -19,7 +19,7 @@ import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { EditLayer, DragEditOperation } from './editLayer';
+import { DragEditLayer, DragEditOperation } from './editLayer';
 import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
@@ -139,14 +139,14 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
 
         listener.listen(editor.authoringCommands, 'startDragEdit', ({operation}) => {
             const onFinishEditing = () => {
-                view.setCanvasWidget('editLayer', null);
+                view.setCanvasWidget('dragEditLayer', null);
             };
-            const editLayer = (
-                <EditLayer operation={operation}
+            const dragEditLayer = (
+                <DragEditLayer operation={operation}
                     onFinishEditing={onFinishEditing}
                 />
             );
-            view.setCanvasWidget('editLayer', {element: editLayer, attachment: 'overElements'});
+            view.setCanvasWidget('dragEditLayer', {element: dragEditLayer, attachment: 'overElements'});
         });
 
         listener.listen(editor.authoringCommands, 'editEntity', ({target}) => {

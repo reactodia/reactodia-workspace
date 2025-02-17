@@ -513,6 +513,7 @@ function SearchContent(props: SearchContentProps) {
                     <button key={section.key}
                         className={classnames(
                             `${CLASS_NAME}__section-tab`,
+                            'reactodia-btn',
                             'reactodia-btn-default',
                             section.key === activeSectionKey ? 'active' : undefined,
                         )}

@@ -1,6 +1,7 @@
 @import "shared/badge";
 @import "shared/btn";
 @import "shared/btn-group";
+@import "shared/form";
 @import "shared/form-control";
 
 @import "diagram/elementLayer";
@@ -9,9 +10,14 @@
 @import "diagram/spinner";
 
 @import "editor/authoringState";
-@import "editor/form";
+@import "editor/dragEditLayer";
+@import "editor/editEntityForm";
+@import "editor/elementSelector";
 @import "editor/loadingWidget";
 @import "editor/withFetchStatus";
+
+@import "theme/themeDark";
+@import "theme/themeLight";
 
 @import "utility/dropdown";
 @import "utility/inlineEntity";
@@ -44,5 +50,5 @@
 
 @import "templates/classic";
 @import "templates/defaultLink";
-@import "templates/group-paginator";
+@import "templates/groupPaginator";
 @import "templates/standard";

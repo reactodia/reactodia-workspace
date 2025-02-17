@@ -1,13 +1,14 @@
+@import "../theme/variables";
+
 .reactodia-default-link {
   &--group .reactodia-link-path {
     stroke-width: 2px;
   }
 
   &__label-text {
-    fill: black;
+    fill: $theme-font-color-base;
     stroke: none;
     stroke-width: 0;
-    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
     font-size: inherit;
     font-weight: bold;
   }
@@ -18,19 +19,24 @@
   }
 
   &__label-background {
-    fill: white;
+    fill: $theme-background-color;
     stroke: none;
     stroke-width: 0;
   }
 
   &__source-count &__label-text,
   &__target-count &__label-text {
-    fill: gray;
+    fill: $theme-color-emphasis-600;
     font-size: 12px;
   }
 
   &__source-count &__label-background,
   &__target-count &__label-background {
     opacity: 80%;
+  }
+
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
+  &__path:not([stroke]) {
+    stroke: $theme-link-stroke-color;
   }
 }

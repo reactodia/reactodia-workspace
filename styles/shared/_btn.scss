@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-btn {
   display: inline-block;
   padding: 6px 12px;
@@ -11,9 +13,10 @@
   touch-action: manipulation;
   cursor: pointer;
   background-image: none;
-  border: 1px solid transparent;
+  border: $theme-button-border-width solid transparent;
+  border-radius: $theme-button-border-radius;
   text-transform: none;
-  transition: background-color 0.3s;
+  transition: background-color $theme-transition-duration;
 
   -webkit-user-select: none;
   user-select: none;
@@ -24,71 +27,95 @@
   }
 }
 
-
 .reactodia-btn-default {
-  background-color: #fff;
-  border-color: #ccc;
-  color: #333;
+  color: $theme-button-default-color;
+  background-color: $theme-button-default-background-color;
+  border-color: $theme-button-default-border-color;
 
   &:hover {
-    background-color: #e0e0e0;
+    color: $theme-button-default-color-focus;
+    background-color: $theme-button-default-background-color-focus;
+  }
+
+  &:active, &.active {
+    color: $theme-button-default-color-focus;
+    background-color: $theme-button-default-background-color-active;
+  }
+
+  &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
+    color: $theme-button-default-color;
+    background-color: $theme-input-background-color-disabled;
+  }
+}
+
+@mixin reactodia-button($foreground, $normal, $dark, $darker, $darkest) {
+  color: $foreground;
+  background-color: $normal;
+  border-color: $darker;
+
+  &:hover, &:focus, &:active {
+    background-color: $dark;
+  }
+
+  &:hover, &:focus {
+    border-color: $darkest;
   }
 
   &.active {
-    background-color: #e0e0e0;
-    border-color: #dbdbdb;
+    border-color: $darker;
   }
 
-  &.active:hover {
-    background-color: #d4d4d4;
-    border-color: #8c8c8c;
-  }
-
-  &[disabled], &[disabled]:hover, &[disabled].active, &[disabled].active:hover {
-    background-color: #e0e0e0;
+  &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
+    background-color: $dark;
   }
 }
 
 .reactodia-btn-primary {
-  color: rgb(255, 255, 255);
-  background-color: rgb(51, 122, 183);
-  border-color: #245580;
+  @include reactodia-button(
+    $theme-color-emphasis-0,
+    $theme-color-primary,
+    $theme-color-primary-dark,
+    $theme-color-primary-darker,
+    $theme-color-primary-darkest
+  );
+}
 
-  &:hover, &:focus, &:active {
-    background-color: #265a88;
-  }
-
-  &:hover, &:focus {
-    border-color: #204d74;
-  }
-
-  &.active {
-    border-color: #245580;
-  }
-
-  &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
-    background-color: #265a88;
-  }
+.reactodia-btn-secondary {
+  @include reactodia-button(
+    $theme-color-gray-900,
+    $theme-color-secondary,
+    $theme-color-secondary-dark,
+    $theme-color-secondary-darker,
+    $theme-color-secondary-darkest
+  );
 }
 
 .reactodia-btn-success {
-  background-color: #5cb85c;
-  border-color: #5cb85c;
-  color: #fff;
-  transition: 0.3s;
+  @include reactodia-button(
+    $theme-color-emphasis-0,
+    $theme-color-success,
+    $theme-color-success-dark,
+    $theme-color-success-darker,
+    $theme-color-success-darkest
+  );
+}
 
-  &:hover {
-    background: darken(#5cb85c, 8%);
-  }
+.reactodia-btn-warning {
+  @include reactodia-button(
+    $theme-color-emphasis-0,
+    $theme-color-warning,
+    $theme-color-warning-dark,
+    $theme-color-warning-darker,
+    $theme-color-warning-darkest
+  );
 }
 
 .reactodia-btn-danger {
-  background-color: #c9302c;
-  border-color: #c9302c;
-  color: #fff;
-  transition: 0.3s;
-
-  &:hover {
-    background: darken(#c9302c, 8%);
-  }
+  @include reactodia-button(
+    $theme-color-emphasis-0,
+    $theme-color-danger,
+    $theme-color-danger-dark,
+    $theme-color-danger-darker,
+    $theme-color-danger-darkest
+  );
 }

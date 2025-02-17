@@ -2,6 +2,7 @@ require('../styles/main.scss');
 
 export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
 export { moveComparator, shallowArrayEqual } from './coreUtils/collections';
+export { useColorScheme } from './coreUtils/colorScheme';
 export {
     Listener, AnyListener, AnyEvent, PropertyChange,
     Events, EventTrigger, EventObserver, EventSource,

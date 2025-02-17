@@ -1,4 +1,5 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-links-toolbox {
   flex: auto;
@@ -15,16 +16,10 @@
   }
 
   &__rest {
-    border-top: 1px solid #dddddd;
+    border-top: 1px solid $theme-border-color-base;
     flex: auto;
     display: flex;
     flex-direction: column;
-  }
-
-  &__toggle-invisible,
-  &__toggle-lines-only,
-  &__toggle-visible {
-    border-color: rgb(195, 195, 195);
   }
 
   &__toggle-invisible::before {
@@ -67,7 +62,6 @@
 
   &__link-title {
     font-size: 16px;
-    color: black;
     display: inline;
   }
 
@@ -78,22 +72,25 @@
     margin-bottom: 2px;
   }
 
-  &__link-item:hover &__filter-button {
-    opacity: 1.0;
-    transition: opacity 200ms 0ms;
-  }
-
   &__filter-button {
     display: none;
     float: right;
-    background-image: url("@images/add-to-filter.svg");
-    background-size: 20px 20px;
     width: 20px;
     height: 20px;
     margin: 3px;
+  
+    -webkit-mask-image: url("@images/add-to-filter.svg");
+    mask-image: url("@images/add-to-filter.svg");
+    mask-size: 20px 20px;
+    background-color: currentColor;
+    
     cursor: pointer;
     opacity: 0.4;
-    transition: opacity 200ms 0ms;
+    transition: opacity $theme-transition-duration;
+  }
+
+  &__link-item:hover &__filter-button {
+    opacity: 1.0;
   }
 
   &__no-results {

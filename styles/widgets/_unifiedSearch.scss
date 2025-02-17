@@ -1,26 +1,37 @@
 @import "../mixin/draggable-handle";
+@import "../theme/variables";
 
 $searchButtonWidth: 16px;
 $searchButtonPadding: 8px;
 $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
 .reactodia-unified-search {
-  border: 1px solid #ccc;
-  background: #fff;
+  border: $theme-input-border-width solid $theme-input-border-color;
+  border-radius: $theme-input-border-radius;
+  background-color: $theme-background-color-surface;
   transition: border-color ease-in-out 0.15s;
 
   &:focus-within {
-    border-color: #66afe9;
+    border-color: $theme-input-border-color-focus;
   }
 
   &.reactodia-dropdown--expanded {
-    box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+    box-shadow: $theme-canvas-box-shadow;
   }
 
   &__toggle {
     height: 28px;
     display: flex;
     align-items: stretch;
+
+    /* Match outer border radius */
+    border: $theme-input-border-width solid transparent;
+    border-radius: $theme-input-border-radius;
+  }
+
+  .reactodia-dropdown__content {
+    border-bottom-left-radius: $theme-input-border-radius;
+    border-bottom-right-radius: $theme-input-border-radius;
   }
 
   &__search-input {
@@ -29,14 +40,13 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     display: block;
     margin: 0;
     padding: 6px #{12px + $searchButtonTotal} 6px 12px;
-    font: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    font-size: 14px;
-    line-height: 1.42857143;
-    background: white;
-    color: #555;
+    color: $theme-input-color;
+    background-color: $theme-background-color-surface;
     border: none;
+
+    &::placeholder {
+      color: $theme-input-color-placeholder;
+    }
 
     &:focus {
       outline: 0;
@@ -65,13 +75,22 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     padding: 6px;
     align-self: center;
   
+    color: $theme-button-default-color;
     background: 0 0;
     border: 0;
-    transition: background-color 0.3s;
+    border-radius: $theme-input-border-radius;
+    border-top-left-radius: unset;
+    transition: background-color $theme-transition-duration;
 
     &:hover {
-      background-color: #eeeeee;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
+  }
+
+  .reactodia-dropdown--expanded &__collapse-button,
+  .reactodia-dropdown--expanded &__clear-button {
+    border-bottom-right-radius: unset;
   }
 
   &__collapse-button::after {
@@ -121,10 +140,10 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     cursor: pointer;
     user-select: none;
 
-    border-width: 1px;
+    border-width: $theme-button-border-width;
     border-style: solid;
 
-    transition: background-color 0.3s;
+    transition: background-color $theme-transition-duration;
   }
 
   &__section {

@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-selection-action {
   $buttonWidth: 20px;
   $buttonHeight: 20px;
@@ -16,8 +18,10 @@
   width: $buttonWidth;
   height: $buttonHeight;
 
+  filter: $theme-selection-icon-filter;
+
   opacity: 0.5;
-  transition: opacity 0.3s;
+  transition: opacity $theme-transition-duration;
   &:hover {
     opacity: 1;
   }

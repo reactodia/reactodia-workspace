@@ -1,4 +1,5 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-instances-search {
   flex: auto;
@@ -29,30 +30,50 @@
   }
 
   &__criterion-class {
-    border: black 1px dashed;
-    background: rgb(255, 210, 33);
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-element {
-    border: black 1px dashed;
-    background: rgb(255, 131, 92);
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-link-type {
-    border: black 1px dashed;
-    background: rgb(202, 255, 206);
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
-  &__link-direction {
+  &__link-direction-in,
+  &__link-direction-out {
+    display: inline-block;
+    width: 1em;
     height: 1em;
     opacity: 0.5;
     vertical-align: middle;
+    mask-position: 0 0;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+  }
+
+  &__link-direction-in {
+    -webkit-mask-image: url("@images/direction-in.svg");
+    mask-image: url("@images/direction-in.svg");
+  }
+
+  &__link-direction-out {
+    -webkit-mask-image: url("@images/direction-out.svg");
+    mask-image: url("@images/direction-out.svg");
   }
 
   &__criterion-remove {
@@ -77,7 +98,7 @@
 
   &__rest {
     padding: 10px 10px 0 10px;
-    border-top: 1px solid rgb(221, 221, 221);
+    border-top: 1px solid $theme-border-color-base;
   }
 
   &__results {
@@ -85,11 +106,6 @@
     padding-top: 10px;
     margin: 0 10px 0 10px;
     outline: none;
-  }
-
-  &[data-state='finished'] &__results:empty:before {
-    content: 'No items correspond to the specified criteria.';
-    font-style: italic;
   }
 
   &__rest-end { margin: 5px 0 10px 0; }
@@ -102,21 +118,22 @@
     &::before {
       @include codicon("chevron-down");
       margin-right: 5px;
-      filter: invert(100%);
     }
   }
 
   &__actions {
     display: flex;
     justify-content: flex-end;
+    gap: $theme-spacing-horizontal;
     height: 40px;
-    border-top: 1px solid rgb(221, 221, 221);
+    border-top: 1px solid $theme-border-color-base;
     transition: height 200ms 0ms;
   }
 
   &__actions-hidden {
     height: 0;
     padding: 0;
+    visibility: hidden;
   }
 
   &__action {

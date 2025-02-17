@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { ColorSchemeApi } from '../coreUtils/colorScheme';
+
 import type { ZoomOptions } from '../diagram/canvasApi';
 import type {
     LinkRouter, LinkTemplateResolver, ElementTemplate,
@@ -103,10 +105,13 @@ export function Canvas(props: CanvasProps) {
         linkRouter,
     }));
 
+    const colorSchemeApi = React.useContext(ColorSchemeApi);
+
     return (
         <div className={CLASS_NAME}>
             <PaperArea model={model}
                 renderingState={renderingState}
+                colorSchemeApi={colorSchemeApi}
                 zoomOptions={zoomOptions}
                 hideScrollBars={!showScrollbars}
                 watermarkSvg={watermarkSvg}

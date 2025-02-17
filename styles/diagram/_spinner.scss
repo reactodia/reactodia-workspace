@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-spinner {
   &__arrow {
     animation-name: reactodia-spinner-rotation;
@@ -6,7 +8,12 @@
     animation-iteration-count: infinite;
   }
 
+  &__text {
+    color: $theme-font-color-base;
+  }
+
   &[data-error='true'] &__arrow {
+    color: $theme-color-danger;
     animation-iteration-count: 1;
   }
 }

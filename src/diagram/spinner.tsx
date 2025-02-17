@@ -46,10 +46,15 @@ export function Spinner(props: SpinnerProps) {
             transform={`translate(${position.x},${position.y})`}>
             <g className={`${CLASS_NAME}__arrow`}>
                 <path d={pathGeometry} transform={`scale(0.02)scale(${size})`}
-                    fill='none' stroke={errorOccurred ? 'red' : 'black'}
+                    fill='none' stroke='currentColor'
                     strokeWidth='3' strokeLinecap='round' />
             </g>
-            <text style={{dominantBaseline: 'middle'}} x={size / 2 + textLeftMargin}>{statusText}</text>
+            <text className={`${CLASS_NAME}__text`}
+                style={{dominantBaseline: 'middle'}}
+                fill='currentColor'
+                x={size / 2 + textLeftMargin}>
+                {statusText}
+            </text>
         </g>
     );
 }

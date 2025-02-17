@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-btn-group {
   position: relative;
   display: inline-block;
@@ -19,11 +21,22 @@
   .reactodia-btn + .reactodia-btn-group,
   .reactodia-btn-group + .reactodia-btn,
   .reactodia-btn-group + .reactodia-btn-group {
-    margin-left: -1px;
+    margin-left: calc(-1 * $theme-button-border-width);
+  }
+
+  > .reactodia-btn {
+    border-radius: unset;
   }
 
   > .reactodia-btn:first-child {
     margin-left: 0;
+    border-top-left-radius: $theme-button-border-radius;
+    border-bottom-left-radius: $theme-button-border-radius;
+  }
+
+  > .reactodia-btn:last-child {
+    border-top-right-radius: $theme-button-border-radius;
+    border-bottom-right-radius: $theme-button-border-radius;
   }
 
   &-sm > .reactodia-btn {

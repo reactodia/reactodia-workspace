@@ -1,3 +1,4 @@
+import classnames from 'classnames';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
@@ -20,7 +21,7 @@ import { EntityElement, RelationLink } from '../../editor/dataElements';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
-export interface EditLayerProps {
+export interface DragEditLayerProps {
     operation: DragEditOperation;
     onFinishEditing: () => void;
 }
@@ -66,18 +67,18 @@ export interface DragEditMoveEndpoint {
     readonly point: Vector;
 }
 
-export function EditLayer(props: EditLayerProps) {
+export function DragEditLayer(props: DragEditLayerProps) {
     const workspace = useWorkspace();
     const {canvas} = useCanvas();
     return (
-        <EditLayerInner {...props}
+        <DragEditLayerInner {...props}
             workspace={workspace}
             canvas={canvas}
         />
     );
 }
 
-interface EditLayerInnerProps extends EditLayerProps {
+interface DragEditLayerInnerProps extends DragEditLayerProps {
     workspace: WorkspaceContext;
     canvas: CanvasApi;
 }
@@ -89,7 +90,9 @@ interface State {
     waitingForMetadata?: boolean;
 }
 
-class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
+const CLASS_NAME = 'reactodia-drag-edit-layer';
+
+class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
 
@@ -99,7 +102,7 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
     private temporaryElement: VoidElement | undefined;
     private oldLink: RelationLink | undefined;
 
-    constructor(props: EditLayerInnerProps) {
+    constructor(props: DragEditLayerInnerProps) {
         super(props);
         this.state = {};
     }
@@ -484,7 +487,8 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         const transform = canvas.metrics.getTransform();
         const renderingState = canvas.renderingState as MutableRenderingState;
         return (
-            <TransformedSvgCanvas paperTransform={transform} style={{overflow: 'visible'}}>
+            <TransformedSvgCanvas paperTransform={transform}
+                className={CLASS_NAME}>
                 <LinkMarkers renderingState={renderingState} />
                 {this.renderHighlight()}
                 {this.renderCanDropIndicator()}
@@ -509,15 +513,29 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         if (connectionsToTarget === undefined || waitingForMetadata) {
             return (
                 <g transform={`translate(${x},${y})`}>
-                    <rect width={width} height={height} fill={'white'} fillOpacity={0.5} />
-                    <Spinner size={30} position={{x: width / 2, y: height / 2}}/>
+                    <rect className={`${CLASS_NAME}__highlight-overlay`}
+                        width={width}
+                        height={height}
+                    />
+                    <Spinner size={30}
+                        position={{x: width / 2, y: height / 2}}
+                    />
                 </g>
             );
         }
 
-        const stroke = (connectionsToTarget && connectionsToTarget.length > 0) ? '#5cb85c' : '#c9302c';
+        const allowToConnect = connectionsToTarget && connectionsToTarget.length > 0;
         return (
-            <rect x={x} y={y} width={width} height={height} fill={'transparent'} stroke={stroke} strokeWidth={3} />
+            <rect
+                className={
+                    allowToConnect
+                        ? `${CLASS_NAME}__highlight-allow`
+                        : `${CLASS_NAME}__highlight-deny`
+                }
+                x={x} y={y}
+                width={width}
+                height={height}
+            />
         );
     }
 
@@ -532,19 +550,28 @@ class EditLayerInner extends React.Component<EditLayerInnerProps, State> {
         if (connectionsToAny === undefined) {
             indicator = <Spinner size={1.2} position={{x: 0.5, y: -0.5}} />;
         } else if (connectionsToAny.length > 0) {
-            indicator = <path d='M0.5,0 L0.5,-1 M0,-0.5 L1,-0.5' strokeWidth={0.2} stroke='#5cb85c' />;
+            indicator = (
+                <path className={`${CLASS_NAME}__drop-allow`}
+                    d='M0.5,0 L0.5,-1 M0,-0.5 L1,-0.5'
+                    strokeWidth={0.2}
+                />
+            );
         } else {
             indicator = (
-                <g>
-                    <circle cx='0.5' cy='-0.5' r='0.5' fill='none' strokeWidth={0.2} stroke='#c9302c' />
-                    <path d='M0.5,0 L0.5,-1' strokeWidth={0.2} stroke='#c9302c' transform='rotate(-45 0.5 -0.5)' />
+                <g className={`${CLASS_NAME}__drop-deny`}>
+                    <circle cx='0.5' cy='-0.5' r='0.5' fill='none' strokeWidth={0.2} />
+                    <path d='M0.5,0 L0.5,-1' strokeWidth={0.2} transform='rotate(-45 0.5 -0.5)' />
                 </g>
             );
         }
 
         return (
             <g transform={`translate(${x} ${y})scale(40)`}>
-                <rect x={-0.5} y={-0.5} width={1} height={1} fill='rgba(0, 0, 0, 0.1)' rx={0.25} ry={0.25} />
+                <rect className={`${CLASS_NAME}__drop-underlay`}
+                    x={-0.5} y={-0.5}
+                    width={1} height={1}
+                    rx={0.25} ry={0.25}
+                />
                 {waitingForMetadata
                     ? <Spinner size={0.8} />
                     : <g transform={`translate(${0.5}, -${0.5})scale(${0.25})`}>{indicator}</g>}

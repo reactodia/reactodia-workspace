@@ -25,7 +25,12 @@ export function SearchInput(props: SearchInputProps) {
     const mode = useObservedProperty(store.events, 'changeMode', () => store.mode);
 
     return (
-        <div className={classnames(CLASS_NAME, className)}>
+        <div
+            className={classnames(
+                CLASS_NAME,
+                mode === 'explicit' ? `${CLASS_NAME}--has-submit` : undefined,
+                className
+            )}>
             <input {...inputProps}
                 type={inputProps.type ?? 'text'}
                 className={classnames(

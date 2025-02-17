@@ -56,14 +56,19 @@ export function ListElementView(props: ListElementViewProps) {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
 
-    const {h, c, l} = hcl(getElementTypeStyle(element.types).color);
-    const frontColor = (selected && !disabled) ? hcl(h, c, l * 1.2) : hcl('white');
+    const {color: elementColor} = getElementTypeStyle(element.types);
+    const {h, c, l} = hcl(elementColor);
+    const frontColor = (selected && !disabled) ? hcl(h, c, l * 1.2).toString() : undefined;
 
     const combinedClass = classnames(
         CLASS_NAME,
+        selected ? `${CLASS_NAME}--selected` : undefined,
         disabled ? `${CLASS_NAME}--disabled` : undefined,
         className
     );
+    const providedStyle = {
+        '--reactodia-element-style-color': elementColor,
+    } as React.CSSProperties;
 
     const localizedText = t.formatLabel(element.label, element.id, model.language);
 
@@ -79,10 +84,11 @@ export function ListElementView(props: ListElementViewProps) {
             role='option'
             draggable={!disabled && Boolean(onDragStart)}
             title={formatEntityTitle(element, workspace)}
-            style={{background: hcl(h, c, l).toString()}}
+            style={providedStyle}
             onClick={onItemClick}
             onDragStart={onDragStart}>
-            <div className={`${CLASS_NAME}__label`} style={{background: frontColor.toString()}}>
+            <div className={`${CLASS_NAME}__label`}
+                style={{background: frontColor}}>
                 {highlightSubstring(localizedText, highlightText)}
             </div>
         </li>

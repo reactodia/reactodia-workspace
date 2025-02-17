@@ -1,0 +1,37 @@
+@import "../theme/variables";
+
+.reactodia-drag-edit-layer {
+  overflow: visible;
+
+  &__highlight-overlay {
+    fill: $theme-color-emphasis-0;
+    fill-opacity: 0.3;
+  }
+
+  &__highlight-allow,
+  &__highlight-deny {
+    stroke-width: 3;
+    fill: transparent;
+  }
+
+  &__highlight-allow {
+    stroke: $theme-color-success;
+  }
+
+  &__highlight-deny {
+    stroke: $theme-color-danger;
+  }
+
+  &__drop-underlay {
+    fill: $theme-color-emphasis-1000;
+    fill-opacity: 0.1;
+  }
+
+  &__drop-allow {
+    stroke: $theme-color-success;
+  }
+
+  &__drop-deny > * {
+    stroke: $theme-color-danger;
+  }
+}

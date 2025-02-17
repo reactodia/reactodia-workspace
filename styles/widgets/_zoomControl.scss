@@ -1,16 +1,28 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
 .reactodia-zoom-control {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
+  box-shadow: $theme-canvas-box-shadow;
 
   .reactodia-btn {
     padding: 3px;
+    border-radius: unset;
   }
 
   .reactodia-btn + .reactodia-btn {
-    margin-top: -1px;
+    margin-top: calc(-1 * $theme-button-border-width);
+  }
+
+  > .reactodia-btn:first-child {
+    border-top-left-radius: $theme-button-border-radius;
+    border-top-right-radius: $theme-button-border-radius;
+  }
+
+  > .reactodia-btn:last-child {
+    border-bottom-left-radius: $theme-button-border-radius;
+    border-bottom-right-radius: $theme-button-border-radius;
   }
 
   &__zoom-in-button {
