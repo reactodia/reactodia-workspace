@@ -68,7 +68,14 @@ export function WorkspaceRoot(props: WorkspaceRootProps) {
     return (
         <ColorSchemeApi.Provider value={colorSchemeApi}>
             <ColorSchemeContext.Provider value={effectiveColorScheme}>
-                <div className={classnames(CLASS_NAME, props.className)}
+                <div
+                    className={classnames(
+                        CLASS_NAME,
+                        props.className,
+                        effectiveColorScheme === 'dark'
+                            ? 'reactodia-workspace-dark'
+                            : 'reactodia-workspace-light'
+                    )}
                     style={props.style}
                     data-theme={effectiveColorScheme}>
                     {props.children}
@@ -79,19 +86,19 @@ export function WorkspaceRoot(props: WorkspaceRootProps) {
 }
 
 function usePreferredColorScheme(track: boolean): string {
-    const html = document.querySelector('html');
+    const html = document.documentElement;
 
     const [theme, setTheme] = React.useState(() => (
-        html?.getAttribute('data-theme') ??
+        html.getAttribute('data-theme') ??
         window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : ''
     ));
 
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         if (track) {
             const preferDarkTheme = window.matchMedia('(prefers-color-scheme: dark)');
             const updateTheme = () => {
                 setTheme(
-                    html?.getAttribute('data-theme') ??
+                    html.getAttribute('data-theme') ??
                     (preferDarkTheme.matches ? 'dark' : '')
                 );
             };

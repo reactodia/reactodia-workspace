@@ -20,6 +20,23 @@
             padding: 2px 10px;
             z-index: 100;
         }
+        #reactodia-example-color-scheme-toggle {
+            position: absolute;
+            top: 40px;
+            right: 15px;
+            padding: 2px 10px;
+            z-index: 100;
+        }
+        #reactodia-example-border-radius-toggle {
+            position: absolute;
+            top: 40px;
+            right: 60px;
+            padding: 2px 10px;
+            z-index: 100;
+        }
+        :root[data-border-radius] {
+            --reactodia-border-radius-base: 4px;
+        }
     </style>
     <body>
         <select id="reactodia-example-selector"
@@ -29,11 +46,57 @@
                 <option value="<%- key %>.html"><%- key %></option>
             <% } %>
         </select>
+        <button id="reactodia-example-color-scheme-toggle"
+            title="Toggle light or dark color scheme">
+        </button>
+        <button id="reactodia-example-border-radius-toggle"
+            title="Toggle global border radius style">
+        </button>
         <script>
+            // Example selector
             var pathname = window.location.pathname;
             var separatorIndex = pathname.lastIndexOf('/');
             var page = separatorIndex >= 0 ? pathname.substring(separatorIndex + 1) : pathname;
             document.getElementById('reactodia-example-selector').value = page || 'index.html';
+
+            // Color scheme toggle
+            var colorSchemeToggle = document.getElementById('reactodia-example-color-scheme-toggle');
+            colorSchemeToggle.addEventListener('click', () => {
+                document.documentElement.setAttribute('data-theme', isDarkColorScheme() ? 'light' : 'dark');
+                updateColorSchemeToggle();
+            });
+            updateColorSchemeToggle();
+
+            function updateColorSchemeToggle() {
+                colorSchemeToggle.innerText = isDarkColorScheme() ? '☽' : '☼';
+            }
+
+            function isDarkColorScheme() {
+                return (
+                    document.documentElement.getAttribute('data-theme') === 'dark' ||
+                    window.matchMedia('(prefers-color-scheme: dark)').matches
+                );
+            }
+
+            // Border radius toggle
+            var borderRadiusToggle = document.getElementById('reactodia-example-border-radius-toggle');
+            borderRadiusToggle.addEventListener('click', () => {
+                if (hasBorderRadius()) {
+                    document.documentElement.removeAttribute('data-border-radius');
+                } else {
+                    document.documentElement.setAttribute('data-border-radius', 'true');
+                }
+                updateBorderRadiusToggle();
+            });
+            updateBorderRadiusToggle();
+
+            function updateBorderRadiusToggle() {
+                borderRadiusToggle.innerText = hasBorderRadius() ? '○' : '□';
+            }
+
+            function hasBorderRadius() {
+                return document.documentElement.hasAttribute('data-border-radius');
+            }
         </script>
     </body>
 </html>

@@ -33,24 +33,25 @@
   &__item-validation-icon {
     height: 15px;
     width: 17px;
+    mask-repeat: no-repeat;
   }
 
   &--severity-info &__item-validation-icon {
     background: $theme-color-info;
-    -webkit-mask: url("@codicons/info.svg");
-    mask: url("@codicons/info.svg");
+    -webkit-mask-image: url("@codicons/info.svg");
+    mask-image: url("@codicons/info.svg");
   }
 
   &--severity-warning &__item-validation-icon {
     background: $theme-color-warning;
-    -webkit-mask: url("@codicons/warning.svg");
-    mask: url("@codicons/warning.svg");
+    -webkit-mask-image: url("@codicons/warning.svg");
+    mask-image: url("@codicons/warning.svg");
   }
 
   &--severity-error &__item-validation-icon {
     background: $theme-color-danger;
-    -webkit-mask: url("@codicons/warning.svg");
-    mask: url("@codicons/warning.svg");
+    -webkit-mask-image: url("@codicons/warning.svg");
+    mask-image: url("@codicons/warning.svg");
   }
 
   &__state-label {

@@ -24,6 +24,7 @@
   &__vertex {
     cursor: all-scroll;
   }
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__vertex:not([fill]) {
     fill: $theme-link-stroke-color;
   }
@@ -47,6 +48,7 @@
 }
 
 .reactodia-link-marker {
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__path:not([fill]) {
     fill: $theme-link-stroke-color;
   }

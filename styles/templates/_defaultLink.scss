@@ -35,6 +35,7 @@
     opacity: 80%;
   }
 
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__path:not([stroke]) {
     stroke: $theme-link-stroke-color;
   }
