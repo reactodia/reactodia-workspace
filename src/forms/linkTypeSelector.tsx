@@ -158,7 +158,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         }
         return (
             <option key={index} value={index}>
-                {t.template('visual_authoring.select_relation.relation_type.label', {
+                {t.text('visual_authoring.select_relation.relation_type.label', {
                     relation: label,
                     source: sourceLabel,
                     target: targetLabel,

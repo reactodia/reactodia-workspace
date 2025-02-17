@@ -212,7 +212,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         const label = t.formatLabel(type?.data?.label, elementType, model.language);
         return (
             <option key={elementType} value={elementType}>
-                {t.template('visual_authoring.select_entity.entity_type.label', {
+                {t.text('visual_authoring.select_entity.entity_type.label', {
                     type: label,
                     typeIri: elementType,
                 })}
