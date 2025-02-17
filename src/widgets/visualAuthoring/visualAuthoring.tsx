@@ -19,7 +19,7 @@ import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { DragEditLayer, DragEditOperation } from './editLayer';
+import { DragEditLayer, DragEditOperation } from './dragEditLayer';
 import { ElementDecorator } from './elementDecorator';
 import { LinkStateWidget } from './linkStateWidget';
 
