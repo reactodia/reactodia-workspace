@@ -9,57 +9,59 @@ import './design.css';
 
 function DesignExample() {
     return (
-        <div className='design-overrides'>
+        <div className='design-example'>
             <Reactodia.Workspace>
                 <Reactodia.WorkspaceRoot>
                     <section>
                         <h2>Colors</h2>
                         <h3>Grays</h3>
                         <p>
-                            <div className='design-boxes'>
-                                <div style={{background: 'var(--reactodia-color-gray-0)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-100)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-200)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-300)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-400)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-500)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-600)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-700)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-800)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-900)'}} />
-                                <div style={{background: 'var(--reactodia-color-gray-1000)'}} />
-                            </div>
+                            <ColorBoxes
+                                colors={Array.from(
+                                    {length: 11},
+                                    (_, i) => `var(--reactodia-color-gray-${i * 100})`)
+                                }
+                            />
                         </p>
                         <h3>Emphasis</h3>
                         <p>
-                            <div className='design-boxes'>
-                                <div style={{background: 'var(--reactodia-color-emphasis-0)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-100)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-200)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-300)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-400)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-500)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-600)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-700)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-800)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-900)'}} />
-                                <div style={{background: 'var(--reactodia-color-emphasis-1000)'}} />
-                            </div>
+                            <ColorBoxes
+                                colors={Array.from(
+                                    {length: 11},
+                                    (_, i) => `var(--reactodia-color-emphasis-${i * 100})`)
+                                }
+                            />
                         </p>
-                        <h3>Other (primary, secondary, success, info, warning, danger)</h3>
+                        <h3>Primary, secondary, success, info, warning, danger</h3>
                         <p>
-                            <div className='design-boxes'>
-                                <div style={{background: 'var(--reactodia-color-primary)'}} />
-                                <div style={{background: 'var(--reactodia-color-secondary)'}} />
-                                <div style={{background: 'var(--reactodia-color-success)'}} />
-                                <div style={{background: 'var(--reactodia-color-info)'}} />
-                                <div style={{background: 'var(--reactodia-color-warning)'}} />
-                                <div style={{background: 'var(--reactodia-color-danger)'}} />
-                            </div>
+                            {['primary', 'secondary', 'success', 'info', 'warning', 'danger'].map(type =>
+                                <ColorBoxes key={type}
+                                    colors={[
+                                        `var(--reactodia-color-${type}-lightest`,
+                                        `var(--reactodia-color-${type}-lighter`,
+                                        `var(--reactodia-color-${type}-light`,
+                                        `var(--reactodia-color-${type}`,
+                                        `var(--reactodia-color-${type}-dark`,
+                                        `var(--reactodia-color-${type}-darker`,
+                                        `var(--reactodia-color-${type}-darkest`,
+                                        `var(--reactodia-color-${type}-contrast-background`,
+                                        `var(--reactodia-color-${type}-contrast-foreground`,
+                                    ]}
+                                />
+                            )}
                         </p>
                     </section>
                 </Reactodia.WorkspaceRoot>
             </Reactodia.Workspace>
+        </div>
+    );
+}
+
+function ColorBoxes(props: { colors: readonly string[] }) {
+    const {colors} = props;
+    return (
+        <div className='design-boxes'>
+            {colors.map(color => <div key={color} style={{background: color}} />)}
         </div>
     );
 }

@@ -5,7 +5,8 @@
 
 .reactodia-dialog {
   background: $theme-background-color-surface;
-  border: 1px solid #ccc;
+  border: $theme-dialog-border-width solid #ccc;
+  border-radius: $theme-dialog-border-radius;
   box-shadow: 0 4px 15px 7px rgba(51, 51, 51, 0.05);
   position: absolute;
   display: flex;
@@ -67,5 +68,5 @@
   align-items: center;
   justify-content: center;
   
-  background: rgba(255, 255, 255, 0.55);
+  background-color: $theme-canvas-overlay-color;
 }

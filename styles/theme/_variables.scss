@@ -134,7 +134,12 @@ $theme-tree-background-color-focus: var(--reactodia-tree-background-color-focus)
 $theme-tree-border-color-active: var(--reactodia-tree-border-color-active);
 $theme-tree-border-color-focus: var(--reactodia-tree-border-color-focus);
 
+/* Dialog */
+$theme-dialog-border-radius: var(--reactodia-dialog-border-radius);
+$theme-dialog-border-width: var(--reactodia-dialog-border-width);
+
 /* Canvas */
+$theme-canvas-overlay-color: var(--reactodia-canvas-overlay-color);
 $theme-element-background-color: var(--reactodia-element-background-color);
 $theme-link-stroke-color: var(--reactodia-link-stroke-color);
 

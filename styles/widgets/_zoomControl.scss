@@ -11,7 +11,7 @@
   }
 
   .reactodia-btn + .reactodia-btn {
-    margin-top: -1px;
+    margin-top: calc(-1 * $theme-button-border-width);
   }
 
   > .reactodia-btn:first-child {

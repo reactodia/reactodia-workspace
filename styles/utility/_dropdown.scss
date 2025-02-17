@@ -65,7 +65,7 @@
 
 .reactodia-dropdown-menu-item {
   & ~ & {
-    margin-top: -1px;
+    margin-top: calc(-1 * $theme-button-border-width);
     border-top-color: #eee;
   }
   &--disabled, &--disabled:hover {

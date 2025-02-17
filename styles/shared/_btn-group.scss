@@ -21,7 +21,7 @@
   .reactodia-btn + .reactodia-btn-group,
   .reactodia-btn-group + .reactodia-btn,
   .reactodia-btn-group + .reactodia-btn-group {
-    margin-left: -1px;
+    margin-left: calc(-1 * $theme-button-border-width);
   }
 
   > .reactodia-btn {

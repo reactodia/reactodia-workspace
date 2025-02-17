@@ -1,5 +1,5 @@
-.design-overrides {
-  display: contents;
+.design-example {
+  overflow: scroll;
 }
 
 .design-boxes {
