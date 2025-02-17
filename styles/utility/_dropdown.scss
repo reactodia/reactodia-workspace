@@ -55,7 +55,8 @@
     border-top-color: #eee;
   }
   &--disabled, &--disabled:hover {
-    background-color: #e0e0e0;
+    color: $theme-button-default-color;
+    background-color: $theme-input-background-color-disabled;
     cursor: not-allowed;
     opacity: .65;
   }

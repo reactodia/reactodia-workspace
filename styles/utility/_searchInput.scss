@@ -22,12 +22,14 @@
     left: -33px;
     padding: 8px;
     cursor: pointer;
-    background: 0 0;
+    color: $theme-button-default-color;
+    background: transparent;
     border: 0;
     transition: background-color 0.3s;
 
     &:hover {
-      background-color: #eeeeee;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
 
     &::after {
