@@ -6,7 +6,7 @@
   }
 
   &__label-text {
-    fill: $reactodia-font-color-base;
+    fill: $theme-font-color-base;
     stroke: none;
     stroke-width: 0;
     font-size: inherit;
@@ -19,7 +19,7 @@
   }
 
   &__label-background {
-    fill: $reactodia-background-color;
+    fill: $theme-background-color;
     stroke: none;
     stroke-width: 0;
   }
@@ -36,6 +36,6 @@
   }
 
   &__path {
-    stroke: $reactodia-link-stroke-color;
+    stroke: $theme-link-stroke-color;
   }
 }

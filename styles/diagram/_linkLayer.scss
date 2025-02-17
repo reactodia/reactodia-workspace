@@ -15,7 +15,7 @@
     fill: none;
   }
   .reactodia-link:hover &__wrap {
-    stroke: $reactodia-color-emphasis-400;
+    stroke: $theme-color-emphasis-400;
     opacity: 0.44;
   }
 }
@@ -23,7 +23,7 @@
 .reactodia-link-vertices {
   &__vertex {
     cursor: all-scroll;
-    fill: $reactodia-link-stroke-color;
+    fill: $theme-link-stroke-color;
   }
   .reactodia-link:not(:hover) &__vertex {
     fill: transparent;
@@ -45,6 +45,6 @@
 
 .reactodia-link-marker {
   &__path {
-    fill: $reactodia-link-stroke-color;
+    fill: $theme-link-stroke-color;
   }
 }

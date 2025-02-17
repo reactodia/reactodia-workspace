@@ -7,7 +7,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
 .reactodia-unified-search {
   border: 1px solid #ccc;
-  background-color: $reactodia-background-color-surface;
+  background-color: $theme-background-color-surface;
   transition: border-color ease-in-out 0.15s;
 
   &:focus-within {
@@ -30,12 +30,12 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     display: block;
     margin: 0;
     padding: 6px #{12px + $searchButtonTotal} 6px 12px;
-    color: $reactodia-input-color;
-    background-color: $reactodia-background-color-surface;
+    color: $theme-input-color;
+    background-color: $theme-background-color-surface;
     border: none;
 
     &::placeholder {
-      color: $reactodia-input-color-placeholder;
+      color: $theme-input-color-placeholder;
     }
 
     &:focus {
@@ -65,14 +65,14 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     padding: 6px;
     align-self: center;
   
-    color: $reactodia-button-default-color;
+    color: $theme-button-default-color;
     background: 0 0;
     border: 0;
     transition: background-color 0.3s;
 
     &:hover {
-      color: $reactodia-button-default-color-focus;
-      background-color: $reactodia-button-default-background-color-focus;
+      color: $theme-button-default-color-focus;
+      background-color: $theme-button-default-background-color-focus;
     }
   }
 

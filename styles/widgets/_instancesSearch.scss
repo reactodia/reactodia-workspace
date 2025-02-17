@@ -30,25 +30,25 @@
   }
 
   &__criterion-class {
-    border: $reactodia-color-primary 1px dashed;
-    color: $reactodia-color-primary-contrast-foreground;
-    background-color: $reactodia-color-primary-contrast-background;
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-element {
-    border: $reactodia-color-primary 1px dashed;
-    color: $reactodia-color-primary-contrast-foreground;
-    background-color: $reactodia-color-primary-contrast-background;
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-link-type {
-    border: $reactodia-color-primary 1px dashed;
-    color: $reactodia-color-primary-contrast-foreground;
-    background-color: $reactodia-color-primary-contrast-background;
+    border: $theme-color-primary 1px dashed;
+    color: $theme-color-primary-contrast-foreground;
+    background-color: $theme-color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }

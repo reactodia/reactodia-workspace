@@ -63,13 +63,13 @@
     border: 1px solid;
     border-color: transparent;
     &:hover {
-      background: $reactodia-tree-background-color-focus;
-      border-color: $reactodia-tree-border-color-focus;
+      background: $theme-tree-background-color-focus;
+      border-color: $theme-tree-border-color-focus;
       cursor: pointer;
     }
     &--selected {
-      background-color: $reactodia-tree-background-color-active;
-      border-color: $reactodia-tree-border-color-active;
+      background-color: $theme-tree-background-color-active;
+      border-color: $theme-tree-border-color-active;
     }
   }
 
@@ -92,7 +92,7 @@
 
   &__label {
     margin-left: 5px;
-    color: $reactodia-font-color-base;
+    color: $theme-font-color-base;
   }
 
   &__highlighted-term {

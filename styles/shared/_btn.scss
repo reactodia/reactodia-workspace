@@ -27,23 +27,23 @@
 }
 
 .reactodia-btn-default {
-  color: $reactodia-button-default-color;
-  background-color: $reactodia-button-default-background-color;
-  border-color: $reactodia-button-default-border-color;
+  color: $theme-button-default-color;
+  background-color: $theme-button-default-background-color;
+  border-color: $theme-button-default-border-color;
 
   &:hover {
-    color: $reactodia-button-default-color-focus;
-    background-color: $reactodia-button-default-background-color-focus;
+    color: $theme-button-default-color-focus;
+    background-color: $theme-button-default-background-color-focus;
   }
 
   &:active, &.active {
-    color: $reactodia-button-default-color-focus;
-    background-color: $reactodia-button-default-background-color-active;
+    color: $theme-button-default-color-focus;
+    background-color: $theme-button-default-background-color-active;
   }
 
   &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
-    color: $reactodia-button-default-color;
-    background-color: $reactodia-input-background-color-disabled;
+    color: $theme-button-default-color;
+    background-color: $theme-input-background-color-disabled;
   }
 }
 
@@ -71,50 +71,50 @@
 
 .reactodia-btn-primary {
   @include reactodia-button(
-    $reactodia-color-emphasis-0,
-    $reactodia-color-primary,
-    $reactodia-color-primary-dark,
-    $reactodia-color-primary-darker,
-    $reactodia-color-primary-darkest
+    $theme-color-emphasis-0,
+    $theme-color-primary,
+    $theme-color-primary-dark,
+    $theme-color-primary-darker,
+    $theme-color-primary-darkest
   );
 }
 
 .reactodia-btn-secondary {
   @include reactodia-button(
-    $reactodia-color-gray-900,
-    $reactodia-color-secondary,
-    $reactodia-color-secondary-dark,
-    $reactodia-color-secondary-darker,
-    $reactodia-color-secondary-darkest
+    $theme-color-gray-900,
+    $theme-color-secondary,
+    $theme-color-secondary-dark,
+    $theme-color-secondary-darker,
+    $theme-color-secondary-darkest
   );
 }
 
 .reactodia-btn-success {
   @include reactodia-button(
-    $reactodia-color-emphasis-0,
-    $reactodia-color-success,
-    $reactodia-color-success-dark,
-    $reactodia-color-success-darker,
-    $reactodia-color-success-darkest
+    $theme-color-emphasis-0,
+    $theme-color-success,
+    $theme-color-success-dark,
+    $theme-color-success-darker,
+    $theme-color-success-darkest
   );
 }
 
 .reactodia-btn-warning {
   @include reactodia-button(
-    $reactodia-color-emphasis-0,
-    $reactodia-color-warning,
-    $reactodia-color-warning-dark,
-    $reactodia-color-warning-darker,
-    $reactodia-color-warning-darkest
+    $theme-color-emphasis-0,
+    $theme-color-warning,
+    $theme-color-warning-dark,
+    $theme-color-warning-darker,
+    $theme-color-warning-darkest
   );
 }
 
 .reactodia-btn-danger {
   @include reactodia-button(
-    $reactodia-color-emphasis-0,
-    $reactodia-color-danger,
-    $reactodia-color-danger-dark,
-    $reactodia-color-danger-darker,
-    $reactodia-color-danger-darkest
+    $theme-color-emphasis-0,
+    $theme-color-danger,
+    $theme-color-danger-dark,
+    $theme-color-danger-darker,
+    $theme-color-danger-darkest
   );
 }

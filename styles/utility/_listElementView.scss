@@ -19,7 +19,7 @@
   }
 
   &__label {
-    background: $reactodia-element-background-color;
+    background: $theme-element-background-color;
     border-radius: 0 2px 2px 0;
     font-family: "Andale Mono", sans-serif;
     font-size: 15px;
@@ -30,7 +30,7 @@
   }
 
   &--selected &__label {
-    color: $reactodia-color-content-contrast;
+    color: $theme-color-content-contrast;
   }
 }
 

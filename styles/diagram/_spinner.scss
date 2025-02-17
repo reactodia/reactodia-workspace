@@ -9,11 +9,11 @@
   }
 
   &__text {
-    color: $reactodia-font-color-base;
+    color: $theme-font-color-base;
   }
 
   &[data-error='true'] &__arrow {
-    color: $reactodia-color-danger;
+    color: $theme-color-danger;
     animation-iteration-count: 1;
   }
 }
