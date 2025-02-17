@@ -1,0 +1,28 @@
+@mixin theme-common {
+  --reactodia-color-gray-0: #ffffff;
+  --reactodia-color-gray-100: #f5f6f7;
+  --reactodia-color-gray-200: #ebedf0;
+  --reactodia-color-gray-300: #dadde1;
+  --reactodia-color-gray-400: #ccd0d5;
+  --reactodia-color-gray-500: #bec3c9;
+  --reactodia-color-gray-600: #8d949e;
+  --reactodia-color-gray-700: #606770;
+  --reactodia-color-gray-800: #444950;
+  --reactodia-color-gray-900: #1c1e21;
+  --reactodia-color-gray-1000: #000000;
+
+  --reactodia-color-primary: #337ab7;
+  --reactodia-color-secondary: #ebedf0;
+  --reactodia-color-success: #5cb85c;
+  --reactodia-color-info: #54c7ec;
+  --reactodia-color-warning: #ffba00;
+  --reactodia-color-danger: #c9302c;
+
+  --reactodia-font-family-base: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  --reactodia-font-family-monospace:
+    'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  --reactodia-font-size-base: 87.5%;
+  --reactodia-line-height-base: 1.42857;
+
+  --reactodia-spacing-base: 1rem;
+}

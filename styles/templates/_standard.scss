@@ -1,6 +1,7 @@
 @import "../mixin/icons";
+@import "../theme/variables";
 
-$standard-template-background: #fafaf9;
+$standard-template-background: $reactodia-element-background-color;
 $standard-new-entity-stripe: white;
 
 .reactodia-standard-template {
@@ -234,7 +235,7 @@ $standard-new-entity-stripe: white;
     border: 1px solid;
     border-color: var(--reactodia-standard-entity-color);
     border-radius: 2px;
-    background-color: white;
+    background-color: $standard-template-background;
     margin-top: 5px;
   }
 

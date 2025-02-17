@@ -1,0 +1,19 @@
+.design-overrides {
+  display: contents;
+}
+
+.design-boxes {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-gap: 10px;
+}
+
+.design-boxes > * {
+  width: 64px;
+  height: 64px;
+}
+
+.reactodia-workspace {
+  background-color: var(--reactodia-color-emphasis-0);
+  --reactodia-color-primary: magenta;
+}

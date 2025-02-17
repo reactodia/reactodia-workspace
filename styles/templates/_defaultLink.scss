@@ -1,13 +1,15 @@
+@import "../theme/variables";
+
 .reactodia-default-link {
   &--group .reactodia-link-path {
     stroke-width: 2px;
   }
 
   &__label-text {
-    fill: black;
+    fill: $reactodia-font-color-base;
     stroke: none;
     stroke-width: 0;
-    font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    // font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
     font-size: inherit;
     font-weight: bold;
   }
@@ -18,7 +20,7 @@
   }
 
   &__label-background {
-    fill: white;
+    fill: $reactodia-background-color;
     stroke: none;
     stroke-width: 0;
   }
@@ -32,5 +34,9 @@
   &__source-count &__label-background,
   &__target-count &__label-background {
     opacity: 80%;
+  }
+
+  &__path {
+    stroke: $reactodia-link-stroke-color;
   }
 }

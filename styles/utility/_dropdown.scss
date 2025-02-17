@@ -1,5 +1,6 @@
 @import "../mixin/icons";
 @import "../mixin/z-index";
+@import "../theme/variables";
 
 .reactodia-dropdown {
   position: relative;
@@ -9,7 +10,7 @@
   &__content {
     position: absolute;
     opacity: 1;
-    background: white;
+    background: $reactodia-background-surface-color;
     display: flex;
     flex-direction: column;
 

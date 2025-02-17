@@ -1,48 +1,53 @@
-@import "shared/badge";
-@import "shared/btn";
-@import "shared/btn-group";
-@import "shared/form-control";
+@layer reactodia {
+  @import "shared/badge";
+  @import "shared/btn";
+  @import "shared/btn-group";
+  @import "shared/form-control";
 
-@import "diagram/elementLayer";
-@import "diagram/linkLayer";
-@import "diagram/paperArea";
-@import "diagram/spinner";
+  @import "diagram/elementLayer";
+  @import "diagram/linkLayer";
+  @import "diagram/paperArea";
+  @import "diagram/spinner";
 
-@import "editor/authoringState";
-@import "editor/form";
-@import "editor/loadingWidget";
-@import "editor/withFetchStatus";
+  @import "editor/authoringState";
+  @import "editor/form";
+  @import "editor/loadingWidget";
+  @import "editor/withFetchStatus";
 
-@import "utility/dropdown";
-@import "utility/inlineEntity";
-@import "utility/listElementView";
-@import "utility/noSearchResults";
-@import "utility/progressBar";
-@import "utility/searchInput";
-@import "utility/searchResults";
-@import "utility/viewportDock";
+  @import "theme/theme-dark";
+  @import "theme/theme-light";
 
-@import "widgets/canvas";
-@import "widgets/classTree";
-@import "widgets/connectionsMenu";
-@import "widgets/dialog";
-@import "widgets/halo";
-@import "widgets/haloLink";
-@import "widgets/instancesSearch";
-@import "widgets/linkAction";
-@import "widgets/linksToolbox";
-@import "widgets/navigator";
-@import "widgets/selection";
-@import "widgets/selectionAction";
-@import "widgets/toolbar";
-@import "widgets/toolbarAction";
-@import "widgets/unifiedSearch";
-@import "widgets/zoomControl";
+  @import "utility/dropdown";
+  @import "utility/inlineEntity";
+  @import "utility/listElementView";
+  @import "utility/noSearchResults";
+  @import "utility/progressBar";
+  @import "utility/searchInput";
+  @import "utility/searchResults";
+  @import "utility/viewportDock";
 
-@import "workspace/accordion";
-@import "workspace/workspace";
+  @import "widgets/canvas";
+  @import "widgets/classTree";
+  @import "widgets/connectionsMenu";
+  @import "widgets/dialog";
+  @import "widgets/halo";
+  @import "widgets/haloLink";
+  @import "widgets/instancesSearch";
+  @import "widgets/linkAction";
+  @import "widgets/linksToolbox";
+  @import "widgets/navigator";
+  @import "widgets/selection";
+  @import "widgets/selectionAction";
+  @import "widgets/toolbar";
+  @import "widgets/toolbarAction";
+  @import "widgets/unifiedSearch";
+  @import "widgets/zoomControl";
 
-@import "templates/classic";
-@import "templates/defaultLink";
-@import "templates/group-paginator";
-@import "templates/standard";
+  @import "workspace/accordion";
+  @import "workspace/workspace";
+
+  @import "templates/classic";
+  @import "templates/defaultLink";
+  @import "templates/group-paginator";
+  @import "templates/standard";
+}

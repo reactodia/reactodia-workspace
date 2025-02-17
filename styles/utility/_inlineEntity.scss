@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 .reactodia-inline-entity {
   border: 1px solid var(--reactodia-inline-entity-color);
   background: var(--reactodia-inline-entity-color);
@@ -6,7 +8,7 @@
   line-height: 1.3;
 
   &__label {
-    background: white;
+    background: $reactodia-element-background-color;
     padding: 0 2px;
   }
 }

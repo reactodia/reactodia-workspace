@@ -1,0 +1,28 @@
+@import "../mixin/theme";
+
+.reactodia-workspace[data-theme=dark] {
+  @include theme-common;
+
+  --reactodia-color-emphasis-0: var(--reactodia-color-gray-1000);
+  --reactodia-color-emphasis-100: var(--reactodia-color-gray-900);
+  --reactodia-color-emphasis-200: var(--reactodia-color-gray-800);
+  --reactodia-color-emphasis-300: var(--reactodia-color-gray-700);
+  --reactodia-color-emphasis-400: var(--reactodia-color-gray-600);
+  --reactodia-color-emphasis-500: var(--reactodia-color-gray-500);
+  --reactodia-color-emphasis-600: var(--reactodia-color-gray-400);
+  --reactodia-color-emphasis-700: var(--reactodia-color-gray-300);
+  --reactodia-color-emphasis-800: var(--reactodia-color-gray-200);
+  --reactodia-color-emphasis-900: var(--reactodia-color-gray-100);
+  --reactodia-color-emphasis-1000: var(--reactodia-color-gray-0);
+
+  --reactodia-color-content: #e3e3e3;
+  --reactodia-color-content-inverse: var(--reactodia-color-emphasis-0);
+
+  --reactodia-background-color: #1b1b1d;
+  --reactodia-background-surface-color: #242526;
+
+  --reactodia-icon-filter: invert(100%);
+
+  --reactodia-element-background-color: #242526;
+  --reactodia-link-stroke-color: var(--reactodia-color-emphasis-1000);
+}

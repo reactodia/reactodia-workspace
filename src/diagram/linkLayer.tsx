@@ -799,6 +799,8 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
             return;
         }
 
+        const className = 'reactodia-link-marker';
+        marker.setAttribute('class', className);
         marker.setAttribute('id', linkMarkerKey(linkTypeIndex, isStartMarker));
         marker.setAttribute('markerWidth', String(width));
         marker.setAttribute('markerHeight', String(height));
@@ -810,6 +812,7 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
         marker.setAttribute('markerUnits', 'userSpaceOnUse');
 
         const path = document.createElementNS(SVG_NAMESPACE, 'path');
+        path.setAttribute('class', `${className}__path`);
         path.setAttribute('d', d);
         if (style.fill !== undefined) { path.setAttribute('fill', style.fill); }
         if (style.stroke !== undefined) { path.setAttribute('stroke', style.stroke); }
