@@ -11,7 +11,8 @@
   font-size: 14px;
   color: $theme-input-color;
   background-color: $theme-input-background-color;
-  border: 1px solid #ccc;
+  border: $theme-input-border-width solid #ccc;
+  border-radius: $theme-input-border-radius;
   transition: border-color ease-in-out .15s;
 
   &:focus {

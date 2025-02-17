@@ -6,7 +6,8 @@ $searchButtonPadding: 8px;
 $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
 .reactodia-unified-search {
-  border: 1px solid #ccc;
+  border: $theme-input-border-width solid #ccc;
+  border-radius: $theme-input-border-radius;
   background-color: $theme-background-color-surface;
   transition: border-color ease-in-out 0.15s;
 
@@ -22,6 +23,15 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     height: 28px;
     display: flex;
     align-items: stretch;
+
+    /* Match outer border radius */
+    border: $theme-input-border-width solid transparent;
+    border-radius: $theme-input-border-radius;
+  }
+
+  .reactodia-dropdown__content {
+    border-bottom-left-radius: $theme-input-border-radius;
+    border-bottom-right-radius: $theme-input-border-radius;
   }
 
   &__search-input {
@@ -123,7 +133,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     cursor: pointer;
     user-select: none;
 
-    border-width: 1px;
+    border-width: $theme-button-border-width;
     border-style: solid;
 
     transition: background-color 0.3s;

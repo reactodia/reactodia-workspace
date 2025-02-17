@@ -75,6 +75,15 @@
   --reactodia-spacing-vertical: var(--reactodia-spacing-base);
   --reactodia-spacing-horizontal: var(--reactodia-spacing-base);
 
+  --reactodia-border-radius-base: unset;
+  --reactodia-border-width-base: 1px;
+
+  --reactodia-input-border-radius: var(--reactodia-border-radius-base);
+  --reactodia-input-border-width: var(--reactodia-border-width-base);
+
+  --reactodia-button-border-radius: var(--reactodia-border-radius-base);
+  --reactodia-button-border-width: var(--reactodia-border-width-base);
+
   --reactodia-tree-background-color-active: rgba(101, 166, 255, 0.3);
   --reactodia-tree-background-color-focus: rgba(189, 217, 255, 0.3);
   --reactodia-tree-border-color-active: rgba(115, 211, 255, 0.5);;

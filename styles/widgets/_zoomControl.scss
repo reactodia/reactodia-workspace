@@ -7,10 +7,21 @@
 
   .reactodia-btn {
     padding: 3px;
+    border-radius: unset;
   }
 
   .reactodia-btn + .reactodia-btn {
     margin-top: -1px;
+  }
+
+  > .reactodia-btn:first-child {
+    border-top-left-radius: $theme-button-border-radius;
+    border-top-right-radius: $theme-button-border-radius;
+  }
+
+  > .reactodia-btn:last-child {
+    border-bottom-left-radius: $theme-button-border-radius;
+    border-bottom-right-radius: $theme-button-border-radius;
   }
 
   &__zoom-in-button {

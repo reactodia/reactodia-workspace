@@ -10,7 +10,6 @@
   &__content {
     position: absolute;
     opacity: 1;
-    background: $theme-background-color-surface;
     display: flex;
     flex-direction: column;
 
@@ -32,6 +31,8 @@
 .reactodia-dropdown-menu {
   .reactodia-dropdown--expanded &__toggle {
     border-bottom: none;
+    border-bottom-left-radius: unset;
+    border-bottom-right-radius: unset;
   }
 
   &__toggle {
@@ -46,6 +47,19 @@
     list-style: none;
     display: flex;
     flex-direction: column;
+  }
+
+  .reactodia-dropdown-menu-item {
+    border-radius: unset;
+  }
+
+  .reactodia-dropdown-menu-item:first-child {
+    border-top-right-radius: $theme-button-border-radius;
+  }
+
+  .reactodia-dropdown-menu-item:last-child {
+    border-bottom-left-radius: $theme-button-border-radius;
+    border-bottom-right-radius: $theme-button-border-radius;
   }
 }
 

@@ -106,13 +106,21 @@ $theme-spacing-base: var(--reactodia-spacing-base);
 $theme-spacing-vertical: var(--reactodia-spacing-vertical);
 $theme-spacing-horizontal: var(--reactodia-spacing-horizontal);
 
+/* Borders */
+$theme-border-width-base: var(--reactodia-border-width-base);
+$theme-border-radius-base: var(--reactodia-border-radius-base);
+
 /* Input */
 $theme-input-color: var(--reactodia-input-color);
 $theme-input-color-placeholder: var(--reactodia-input-color-placeholder);
 $theme-input-background-color: var(--reactodia-input-background-color);
 $theme-input-background-color-disabled: var(--reactodia-input-background-color-disabled);
+$theme-input-border-radius: var(--reactodia-input-border-radius);
+$theme-input-border-width: var(--reactodia-input-border-width);
 
 /* Button */
+$theme-button-border-radius: var(--reactodia-button-border-radius);
+$theme-button-border-width: var(--reactodia-button-border-width);
 $theme-button-default-background-color: var(--reactodia-button-default-background-color);
 $theme-button-default-background-color-active: var(--reactodia-button-default-background-color-active);
 $theme-button-default-background-color-focus: var(--reactodia-button-default-background-color-focus);
