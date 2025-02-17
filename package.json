@@ -1,6 +1,6 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.27.1",
+  "version": "0.28.0-next",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
@@ -103,6 +103,7 @@
     "dist/workspace.js",
     "dist/typings",
     "i18n/translations",
+    "i18n/i18n.reactodia-translation.d.ts",
     "i18n/i18n.schema.json",
     "images",
     "src",

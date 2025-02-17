@@ -80,14 +80,14 @@ export class DefaultTranslation implements Translation {
 }
 
 function getString(
-    bundle: Record<string, Record<string, string> | string | undefined>,
+    bundle: Partial<TranslationBundle>,
     group: string,
     leaf: string
 ): string | undefined {
     if (!Object.prototype.hasOwnProperty.call(bundle, group)) {
         return undefined;
     }
-    const bundleGroup = bundle[group];
+    const bundleGroup = (bundle as Record<string, Record<string, string>>)[group];
     if (!(
         typeof bundleGroup === 'object' &&
         bundleGroup &&
