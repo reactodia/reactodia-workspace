@@ -1,6 +1,6 @@
 require('../styles/main.scss');
 
-export { AbortScope, mapAbortedToNull, raceAbortSignal, delay } from './coreUtils/async';
+export { AbortScope, mapAbortedToNull, delay } from './coreUtils/async';
 export { moveComparator, shallowArrayEqual } from './coreUtils/collections';
 export { useColorScheme } from './coreUtils/colorScheme';
 export {

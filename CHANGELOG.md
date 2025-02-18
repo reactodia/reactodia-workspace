@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Fix incorrectly displayed relation in the "Edit relation" dialog when reversing the relation direction (e.g. a change from "Person isAuthorOf Book" to "Book isNamedAfter Person").
 
+### Removed
+- Unused `raceAbortSignal()` function.
+
 ## [0.27.1] - 2025-01-25
 ### Fixed
 - Auto-reset command history as the last step in `useLoadedWorkspace()`.

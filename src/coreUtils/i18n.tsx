@@ -36,7 +36,7 @@ export type TranslationKey = TranslationKeyOf<DefaultBundleData>;
 /**
  * Provides i18n strings and templates for the UI elements.
  *
- * @group Core
+ * @category Core
  */
 export interface Translation {
     /**
@@ -169,7 +169,7 @@ export const TranslationContext = React.createContext<Translation | null>(null);
 /**
  * Gets current translation data for the UI elements.
  *
- * @group Hooks
+ * @category Hooks
  */
 export function useTranslation(): Translation {
     const translation = React.useContext(TranslationContext);
