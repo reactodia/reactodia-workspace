@@ -19,10 +19,6 @@ export interface WorkspaceRootProps {
      */
     style?: React.CSSProperties;
     /**
-     * Component children.
-     */
-    children: React.ReactNode;
-    /**
      * Sets a color scheme for the UI components.
      *
      * If set to `auto`, the component will track the following places in order:
@@ -33,6 +29,10 @@ export interface WorkspaceRootProps {
      * @default "auto"
      */
     colorScheme?: 'auto' | 'light' | 'dark';
+    /**
+     * Component children.
+     */
+    children: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-workspace';
@@ -90,7 +90,7 @@ function usePreferredColorScheme(track: boolean): string {
 
     const [theme, setTheme] = React.useState(() => (
         html.getAttribute('data-theme') ??
-        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : ''
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : '')
     ));
 
     React.useLayoutEffect(() => {

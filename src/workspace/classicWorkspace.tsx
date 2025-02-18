@@ -72,7 +72,7 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     const {
-        leftColumn, rightColumn,
+        colorScheme, leftColumn, rightColumn,
         canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, zoomControl, visualAuthoring, toolbar,
         classTree, instancesSearch, linkToolbox,
@@ -87,7 +87,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     );
 
     return (
-        <WorkspaceRoot>
+        <WorkspaceRoot colorScheme={colorScheme}>
             <WorkspaceLayoutRow>
                 <WorkspaceLayoutColumn defaultSize={275}
                     {...leftColumn}>

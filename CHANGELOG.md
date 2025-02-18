@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Define a basic design system with CSS custom properties for colors, fonts, borders, spacing and transitions;
   * Support base `border-radius` on inputs, buttons, panels, etc if provided via `--reactodia-border-radius-base`;
   * Change `StandardTemplate` to use a common CSS property for entity color:  `--reactodia-element-style-color` (previously was `--reactodia-standard-entity-color`);
-  * Force specific color scheme (theme) via `colorSchema` property on `WorkspaceRoot` with default `auto` mode;
+  * Force specific color scheme (theme) via `colorSchema` property on `WorkspaceRoot` and `DefaultWorkspace` with default `auto` mode;
   * Expose `useColorScheme()` hook to observe current color scheme for the workspace.
   * Exporting the diagram (to SVG/PNG or printing it) always exports if the workspace is using the light theme.
 - Ability to modify property values from "Edit entity" dialog (only changing existing values is currently supported without ability to add or remove one).

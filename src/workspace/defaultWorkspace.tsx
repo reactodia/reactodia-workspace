@@ -31,6 +31,17 @@ import { WorkspaceRoot } from './workspaceRoot';
 
 export interface BaseDefaultWorkspaceProps {
     /**
+     * Sets a color scheme for the UI components.
+     *
+     * If set to `auto`, the component will track the following places in order:
+     *  - `<html data-theme="...">` attribute in case it is set to `dark`;
+     *  - `(prefers-color-scheme: dark)` media query matches;
+     *  - fallback to the default `light` color scheme otherwise.
+     *
+     * @default "auto"
+     */
+    colorScheme?: 'auto' | 'light' | 'dark';
+    /**
      * Props for the {@link Canvas} component.
      */
     canvas?: CanvasProps;
@@ -174,6 +185,7 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
+        colorScheme,
         canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, visualAuthoring, zoomControl,
         menu, search, actions, mainToolbar, actionsToolbar,
@@ -243,7 +255,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     ], [instancesSearchCommands]);
 
     return (
-        <WorkspaceRoot>
+        <WorkspaceRoot colorScheme={colorScheme}>
             <Canvas {...canvas}>
                 <VisualAuthoring {...visualAuthoring} />
                 {connectionsMenu === null ? null : (
