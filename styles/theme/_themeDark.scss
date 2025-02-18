@@ -50,6 +50,10 @@
   --reactodia-button-default-color: #ebedf0;
   --reactodia-button-default-color-focus: var(--reactodia-background-color-surface);
 
+  --reactodia-draggable-handle-corner-color: rgba(255, 255, 255, 0.38);
+  --reactodia-draggable-handle-corner-color-focus: rgba(255, 255, 255, 0.5);
+  --reactodia-draggable-handle-side-color: #fff;
+
   --reactodia-canvas-box-shadow: 0 4px 15px 7px rgba(170, 170, 170, 0.05);
   --reactodia-canvas-overlay-color: rgba(0, 0, 0, 0.7);
   --reactodia-element-background-color: #242526;

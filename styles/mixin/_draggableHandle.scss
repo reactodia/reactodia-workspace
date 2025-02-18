@@ -1,3 +1,5 @@
+@import "../theme/variables";
+
 @mixin draggable-handle-se {
   position: absolute;
   bottom: 0;
@@ -6,7 +8,7 @@
   height: 0;
   border-style: solid;
   border-width: 0 0 10px 10px;
-  border-color: transparent transparent rgba(0, 0, 0, 0.38) transparent;
+  border-color: transparent transparent $theme-draggable-handle-corner-color transparent;
   cursor: nwse-resize;
 
   &::before {
@@ -18,18 +20,18 @@
     height: 0;
     border-style: solid;
     border-width: 0 0 5px 5px;
-    border-color: transparent transparent rgba(0, 0, 0, 0.38) transparent;
+    border-color: transparent transparent $theme-draggable-handle-corner-color transparent;
   }
 
   &:hover {
-    border-color: transparent transparent rgba(0, 0, 0, 0.5) transparent;
+    border-color: transparent transparent $theme-draggable-handle-corner-color-focus transparent;
   }
 }
 
 @mixin _draggable-handle-side {
   position: absolute;
   opacity: 0;
-  background-color: black;
+  background-color: $theme-draggable-handle-side-color;
 
   &:hover {
     opacity: 0.1;
