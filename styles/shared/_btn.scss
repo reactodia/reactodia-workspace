@@ -4,22 +4,24 @@
   display: inline-block;
   padding: 6px 12px;
   margin-bottom: 0;
+
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.42857143;
+  line-height: var(--reactodia-line-height-base);
+  text-transform: none;
   text-align: center;
-  white-space: nowrap;
   vertical-align: middle;
-  touch-action: manipulation;
-  cursor: pointer;
+  white-space: nowrap;
+  
   background-image: none;
   border: $theme-button-border-width solid transparent;
   border-radius: $theme-button-border-radius;
-  text-transform: none;
   transition: background-color $theme-transition-duration;
 
+  touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+  cursor: pointer;
 
   &[disabled] {
     cursor: not-allowed;
@@ -53,16 +55,14 @@
   background-color: $normal;
   border-color: $darker;
 
-  &:hover, &:focus, &:active {
+  &:hover {
+    border-color: $darkest;
     background-color: $dark;
   }
 
-  &:hover, &:focus {
-    border-color: $darkest;
-  }
-
-  &.active {
+  &:active, &.active {
     border-color: $darker;
+    background-color: $darkest;
   }
 
   &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
@@ -97,6 +97,16 @@
     $theme-color-success-dark,
     $theme-color-success-darker,
     $theme-color-success-darkest
+  );
+}
+
+.reactodia-btn-info {
+  @include reactodia-button(
+    $theme-color-emphasis-0,
+    $theme-color-info,
+    $theme-color-info-dark,
+    $theme-color-info-darker,
+    $theme-color-info-darkest
   );
 }
 
