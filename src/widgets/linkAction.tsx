@@ -37,7 +37,7 @@ export interface LinkActionContext {
     readonly getPosition: (
         side: 'source' | 'target',
         index: number
-    ) => { top: number; left: number };
+    ) => Pick<React.CSSProperties, 'top' | 'left'>;
     /**
      * Calculates a link line angle at the action button position
      * in degrees.

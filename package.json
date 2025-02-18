@@ -99,8 +99,11 @@
   },
   "files": [
     "dist/layout.worker.js",
+    "dist/layout.worker.js.map",
     "dist/worker-protocol.js",
+    "dist/worker-protocol.js.map",
     "dist/workspace.js",
+    "dist/workspace.js.map",
     "dist/typings",
     "i18n/translations",
     "i18n/i18n.reactodia-translation.d.ts",

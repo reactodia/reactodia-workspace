@@ -1,11 +1,11 @@
-/**
+/*!
  * SHA-256 implementation adopted from https://github.com/brillout/forge-sha256
  *
  * Commit: 6ad5535e0be2385fdc53f1d9ce2b172365c70333
  * Date: Jul 5, 2017
  */
 
-/*
+/*!
 The MIT License (MIT)
 
 Copyright (c) 2015-2017 Romuald Brillout and contributors

@@ -53,6 +53,7 @@ const mainConfig = {
     'react-dom',
     'webcola',
   ],
+  devtool: 'source-map',
 };
 
 /**
@@ -82,6 +83,7 @@ const workerConfig = {
     ],
   },
   externals: mainConfig.externals,
+  devtool: mainConfig.devtool,
 };
 
 module.exports = [mainConfig, workerConfig];
