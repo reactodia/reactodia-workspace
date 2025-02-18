@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Deprecate `DiagramModel.locale` usage: use `Translation` object to perform locale-specific formatting instead.
 
 ### Fixed
+- Disallow selection of already present but grouped entities in `ConnectionsMenu` and place them again onto the canvas.
 - Fix incorrectly displayed relation in the "Edit relation" dialog when reversing the relation direction (e.g. a change from "Person isAuthorOf Book" to "Book isNamedAfter Person").
 
 ### Removed

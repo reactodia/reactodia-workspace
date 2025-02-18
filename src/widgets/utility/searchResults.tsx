@@ -91,7 +91,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
 
     render(): React.ReactElement<any> {
         const {items, footer, workspace: {model}} = this.props;
-        const presentOnDiagram = computePresentOnDiagramEntities(model);
+        const presentOnDiagram = getAllPresentEntities(model);
         return (
             <ul ref={this.onRootMount}
                 className={CLASS_NAME}
@@ -253,7 +253,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
 
     private selectRange(start: number, end: number): Set<ElementIri> {
         const {items, workspace: {model}} = this.props;
-        const presentOnDiagram = computePresentOnDiagramEntities(model);
+        const presentOnDiagram = getAllPresentEntities(model);
         const selection = new Set<ElementIri>();
         for (let i = start; i <= end; i++) {
             const selectedModel = items[i];
@@ -269,7 +269,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
         if (items.length === 0) {
             return startIndex;
         }
-        const presentOnDiagram = computePresentOnDiagramEntities(model);
+        const presentOnDiagram = getAllPresentEntities(model);
         const indexDelta = direction === Direction.Up ? -1 : 1;
         for (let step = 1; step < items.length; step++) {
             let nextIndex = startIndex + step * indexDelta;
@@ -307,7 +307,7 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
     }
 }
 
-function computePresentOnDiagramEntities(graph: DataGraphStructure): Set<ElementIri> {
+export function getAllPresentEntities(graph: DataGraphStructure): Set<ElementIri> {
     const presentOnDiagram = new Set<ElementIri>();
     for (const element of graph.elements) {
         for (const entity of iterateEntitiesOf(element)) {

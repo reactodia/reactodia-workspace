@@ -27,7 +27,7 @@ import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
 
 import { highlightSubstring } from './utility/listElementView';
-import { SearchResults } from './utility/searchResults';
+import { SearchResults, getAllPresentEntities } from './utility/searchResults';
 
 /**
  * Props for {@link ConnectionsMenu} component.
@@ -303,7 +303,7 @@ interface ConnectionCount {
 
 interface ObjectsData {
     readonly chunk: LinkDataChunk;
-    readonly elements: ReadonlyArray<ElementOnDiagram>;
+    readonly elements: ReadonlyArray<ElementModel>;
 }
 
 interface LinkDataChunk {
@@ -316,11 +316,6 @@ interface LinkDataChunk {
     readonly direction?: 'in' | 'out';
     readonly expectedCount: number | 'some';
     readonly pageCount: number;
-}
-
-interface ElementOnDiagram {
-    readonly model: ElementModel;
-    readonly presentOnDiagram: boolean;
 }
 
 const CLASS_NAME = 'reactodia-connections-menu';
@@ -519,17 +514,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
 
-        const displayedEntities = new Set<ElementIri>();
-        for (const element of model.elements) {
-            if (element instanceof EntityElement) {
-                displayedEntities.add(element.iri);
-            }
-        }
-        const elements = Array.from(loadedElements.values(), element => ({
-            model: element,
-            presentOnDiagram: displayedEntities.has(element.id),
-        }));
-
+        const elements = Array.from(loadedElements.values());
         this.setState({
             loadingState: 'completed',
             objects: {chunk, elements},
@@ -695,14 +680,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }
     }
 
-    private onAddSelectedElements = (
-        selectedObjects: ElementOnDiagram[],
-        mode: ObjectPlacingMode
-    ) => {
+    private onAddSelectedElements = (selected: ElementModel[], mode: ObjectPlacingMode) => {
         const {onCancel} = this.props;
         const {objects} = this.state;
 
-        const addedElementsIris = selectedObjects.map(item => item.model.id);
+        const addedElementsIris = selected.map(item => item.id);
         const linkTypeId = objects ? objects.chunk.linkType.id : undefined;
         const hasChosenLinkType = objects && linkTypeId !== this.ALL_RELATED_ELEMENTS_LINK.id;
 
@@ -1115,10 +1097,7 @@ interface ObjectsPanelProps {
     loading?: boolean;
     workspace: WorkspaceContext;
     filterKey?: string;
-    onPressAddSelected: (
-        selectedObjects: ElementOnDiagram[],
-        mode: ObjectPlacingMode
-    ) => void;
+    onPressAddSelected: (selected: ElementModel[], mode: ObjectPlacingMode) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
 }
 
@@ -1152,41 +1131,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
         };
     }
 
-    private onSelectAll = () => {
-        const objects = this.props.data.elements;
-        if (objects.length === 0) { return; }
-        const allSelected = allNonPresentedAreSelected(objects, this.state.selection);
-        const newSelection = allSelected
-            ? new Set<ElementIri>()
-            : selectNonPresented(this.props.data.elements);
-        this.updateSelection(newSelection);
-    };
-
-    private getFilteredObjects(): ReadonlyArray<ElementOnDiagram> {
+    private getFilteredObjects(): ReadonlyArray<ElementModel> {
         const {workspace: {model, translation: t}, data, filterKey} = this.props;
         if (!filterKey) {
             return data.elements;
         }
         const loweredFilterKey = filterKey.toLowerCase();
         return data.elements.filter(element => {
-            const text = t.formatLabel(
-                element.model.label,
-                element.model.id,
-                model.language
-            ).toLowerCase();
+            const text = t.formatLabel(element.label, element.id, model.language).toLowerCase();
             return text && text.indexOf(loweredFilterKey) >= 0;
         });
-    }
-
-    private getItems(list: ReadonlyArray<ElementOnDiagram>) {
-        const added: { [id: string]: true } = {};
-        const result: ElementModel[] = [];
-        for (const obj of list) {
-            if (added[obj.model.id]) { continue; }
-            added[obj.model.id] = true;
-            result.push(obj.model);
-        }
-        return result;
     }
 
     private updateSelection = (newSelection: ReadonlySet<ElementIri>) => {
@@ -1202,8 +1156,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
 
         let extraCountInfo: JSX.Element | null = null;
         if (chunk.expectedCount !== 'some') {
-            const extraCount =
-                Math.min(LINK_COUNT_PER_PAGE, chunk.expectedCount) - elements.length;
+            const extraCount = elements.length - Math.min(LINK_COUNT_PER_PAGE, chunk.expectedCount);
             const extra = Math.abs(extraCount) > LINK_COUNT_PER_PAGE ?
                 `${LINK_COUNT_PER_PAGE}+` : Math.abs(extraCount).toString();
             extraCountInfo = (
@@ -1231,13 +1184,20 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     }
 
     render() {
-        const {data, filterKey, onPressAddSelected, onMoveToFilter, workspace: {translation: t}} = this.props;
+        const {
+            data, filterKey, onPressAddSelected, onMoveToFilter,
+            workspace: {model, translation: t},
+        } = this.props;
         const {selection} = this.state;
         const objects = this.getFilteredObjects();
-        const isAllSelected = allNonPresentedAreSelected(objects, selection);
 
-        const nonPresented = objects.filter(el => !el.presentOnDiagram);
-        const active = nonPresented.filter(el => selection.has(el.model.id));
+        const presentEntities = getAllPresentEntities(model);
+        const isAllSelected = objects.every(item =>
+            presentEntities.has(item.id) || selection.has(item.id)
+        );
+
+        const nonPresented = objects.filter(item => !presentEntities.has(item.id));
+        const active = nonPresented.filter(item => selection.has(item.id));
         const selectedItems = active.length > 0 ? active : nonPresented;
 
         return <div className={`${CLASS_NAME}__objects`}>
@@ -1246,12 +1206,16 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     <input type='checkbox'
                         name='reactodia-connections-menu-select-all'
                         checked={isAllSelected && nonPresented.length > 0}
-                        onChange={this.onSelectAll}
+                        onChange={() => this.updateSelection(new Set<ElementIri>(
+                            isAllSelected ? [] : nonPresented.map(item => item.id)
+                        ))}
                         disabled={nonPresented.length === 0}
                         title={t.text('connections_menu.select_all.title')}
                     />
                     {t.text('connections_menu.select_all.label')}
                 </label>
+                <div className={`${CLASS_NAME}__objects-spacer`} aria-hidden='true' />
+                {this.renderCounter(active.length)}
             </div>
             {this.props.loading ? (
                 <div className={`${CLASS_NAME}__objects-loading`}>
@@ -1264,7 +1228,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             ) : (
                 <div className={`${CLASS_NAME}__objects-list`}>
                     <SearchResults
-                        items={this.getItems(objects)}
+                        items={objects}
                         selection={this.state.selection}
                         onSelectionChanged={this.updateSelection}
                         highlightText={filterKey}
@@ -1288,8 +1252,6 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                 </div>
             )}
             <div className={`${CLASS_NAME}__objects-statusbar`}>
-                {this.renderCounter(active.length)}
-                <div className={`${CLASS_NAME}__objects-spacer`} aria-hidden='true' />
                 <button
                     className={classnames(
                         `${CLASS_NAME}__objects-add-button`,
@@ -1324,25 +1286,4 @@ function LoadingSpinner(props: { error?: boolean }) {
             />
         </div>
     );
-}
-
-function selectNonPresented(objects: ReadonlyArray<ElementOnDiagram>) {
-    const selection = new Set<ElementIri>();
-    for (const object of objects) {
-        if (object.presentOnDiagram) { continue; }
-        selection.add(object.model.id);
-    }
-    return selection;
-}
-
-function allNonPresentedAreSelected(
-    objects: ReadonlyArray<ElementOnDiagram>,
-    selection: ReadonlySet<ElementIri>
-): boolean {
-    let allSelected = true;
-    for (const object of objects) {
-        if (object.presentOnDiagram) { continue; }
-        allSelected = allSelected && selection.has(object.model.id);
-    }
-    return allSelected;
 }

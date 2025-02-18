@@ -266,18 +266,10 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__objects-statusbar {
+    display: flex;
+    justify-content: flex-end;
     height: 25px;
     white-space: nowrap;
-    display: flex;
-  }
-
-  &__objects-count {
-    height: 25px;
-    padding: 0px 5px;
-    font-size: larger;
-    display: flex;
-    align-items: center;
-    font-weight: 700;
   }
 
   &__objects-extra {
