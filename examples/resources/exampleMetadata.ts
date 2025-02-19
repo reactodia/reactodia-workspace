@@ -10,6 +10,8 @@ const owl = vocabulary('http://www.w3.org/2002/07/owl#', [
 ]);
 
 const rdfs = vocabulary('http://www.w3.org/2000/01/rdf-schema#', [
+    'comment',
+    'seeAlso',
     'subClassOf',
     'subPropertyOf',
 ]);
@@ -19,13 +21,19 @@ const SIMULATED_DELAY: number = 200; /* ms */
 export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
     private readonly propertyTypes = [owl.AnnotationProperty, owl.DatatypeProperty, owl.ObjectProperty];
     private readonly editableTypes = new Set([owl.Class, ...this.propertyTypes]);
+    private readonly literalLanguages: ReadonlyArray<string> = ['de', 'en', 'es', 'ru', 'zh'];
+
+    getLiteralLanguages(): ReadonlyArray<string> {
+        return this.literalLanguages;
+    }
 
     async createEntity(
         type: Reactodia.ElementTypeIri,
         options: { readonly signal?: AbortSignal }
     ): Promise<Reactodia.ElementModel> {
-        await delay(SIMULATED_DELAY, options.signal);
-        const random32BitDigits = Math.floor((1 + Math.random()) * 0x100000000).toString(16).substring(1);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
+        const random32BitDigits = Math.floor((1 + Math.random()) * 0x100000000)
+            .toString(16).substring(1);
         const typeLabel = Reactodia.Rdf.getLocalName(type) ?? 'Entity';
         return {
             id: `${type}_${random32BitDigits}` as Reactodia.ElementIri,
@@ -41,7 +49,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         linkType: Reactodia.LinkTypeIri,
         options: { readonly signal?: AbortSignal }
     ): Promise<Reactodia.LinkModel> {
-        await delay(SIMULATED_DELAY, options.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
         return {
             sourceId: source.id,
             targetId: target.id,
@@ -56,7 +64,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         linkType: Reactodia.LinkTypeIri | undefined,
         options: { readonly signal?: AbortSignal }
     ): Promise<Reactodia.MetadataCanConnect[]> {
-        await delay(SIMULATED_DELAY, options.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
 
         const connections: Reactodia.MetadataCanConnect[] = [];
         const addConnections = (
@@ -106,7 +114,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         entity: Reactodia.ElementModel,
         options: { readonly signal?: AbortSignal; }
     ): Promise<Reactodia.MetadataCanModifyEntity> {
-        await delay(SIMULATED_DELAY, options.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
         const editable = entity.types.some(type => this.editableTypes.has(type));
         return {
             canChangeIri: entity.types.includes(owl.Class),
@@ -121,7 +129,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         target: Reactodia.ElementModel,
         options: { readonly signal?: AbortSignal; }
     ): Promise<Reactodia.MetadataCanModifyRelation> {
-        await delay(SIMULATED_DELAY, options.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
         switch (link.linkTypeId) {
             case owl.domain:
             case owl.range:
@@ -138,21 +146,28 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         }
     }
 
-    async getEntityTypeShape(
-        type: Reactodia.ElementTypeIri,
+    async getEntityShape(
+        types: ReadonlyArray<Reactodia.ElementTypeIri>,
         options: { readonly signal?: AbortSignal; }
-    ): Promise<Reactodia.MetadataEntityTypeShape> {
-        await delay(SIMULATED_DELAY, options.signal);
-        return {
-            properties: [],
-        };
+    ): Promise<Reactodia.MetadataEntityShape> {
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
+        const properties = new Map<Reactodia.PropertyTypeIri, Reactodia.MetadataPropertyShape>();
+        if (types.some(type => this.editableTypes.has(type))) {
+            properties.set(rdfs.comment, {
+                valueShape: {termType: 'Literal'},
+            });
+            properties.set(rdfs.seeAlso, {
+                valueShape: {termType: 'NamedNode'},
+            });
+        }
+        return {properties};
     }
 
     async filterConstructibleTypes(
         types: ReadonlySet<Reactodia.ElementTypeIri>,
         options: { readonly signal?: AbortSignal }
     ): Promise<ReadonlySet<Reactodia.ElementTypeIri>> {
-        await delay(SIMULATED_DELAY, options.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
         return new Set(Array.from(types).filter(type => this.editableTypes.has(type)));
     }
 }
@@ -193,26 +208,15 @@ export class ExampleValidationProvider implements Reactodia.ValidationProvider {
             }
         }
 
-        await delay(SIMULATED_DELAY, event.signal);
+        await Reactodia.delay(SIMULATED_DELAY, {signal: event.signal});
         return {items};
     }
 }
 
-async function delay(amountMs: number, ct: AbortSignal | undefined) {
-    ct?.throwIfAborted();
-    await waitTimeout(amountMs);
-    ct?.throwIfAborted();
-}
-
-function waitTimeout(amountMs: number): Promise<void> {
-    if (amountMs === 0) {
-        return Promise.resolve();
-    }
-    return new Promise(resolve => setTimeout(resolve, amountMs));
-}
-
 type VocabularyKeyType<K extends string> =
-    K extends Capitalize<K> ? Reactodia.ElementTypeIri : Reactodia.LinkTypeIri;
+    K extends Capitalize<K>
+        ? Reactodia.ElementTypeIri
+        : Reactodia.LinkTypeIri & Reactodia.PropertyTypeIri;
 type Vocabulary<Keys extends string[]> = {
     readonly [K in Keys[number]]: VocabularyKeyType<K>;
 };
@@ -226,5 +230,5 @@ function vocabulary<const Keys extends string[]>(prefix: string, keys: Keys): Vo
 }
 
 function hasType(model: Reactodia.ElementModel | undefined, type: Reactodia.ElementTypeIri) {
-    return Boolean(!model || model.types.find(t => t === type));
+    return Boolean(!model || model.types.includes(type));
 }
