@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * Force specific color scheme (theme) via `colorSchema` property on `WorkspaceRoot` and `DefaultWorkspace` with default `auto` mode;
   * Expose `useColorScheme()` hook to observe current color scheme for the workspace.
   * Exporting the diagram (to SVG/PNG or printing it) always exports if the workspace is using the light theme.
-- Ability to modify property values from "Edit entity" dialog (only changing existing values is currently supported without ability to add or remove one).
+- Ability to add, remove or modify property values in the "Edit entity" dialog:
+  * **[Experimental]** Change `MetadataApi.getElementTypeShape()` into `getElementShape()` with a more specific contract, add `getLiteralLanguages()`.
 
 ### Changed
 - Deprecate `DiagramModel.locale` usage: use `Translation` object to perform locale-specific formatting instead.

@@ -1,4 +1,7 @@
-import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel } from './model';
+import type * as Rdf from './rdf/rdfModel';
+import type {
+    ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel,
+} from './model';
 
 /**
  * Provides a strategy to visual graph authoring: which parts of the graph
@@ -9,6 +12,8 @@ import { ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel }
  * @category Core
  */
 export interface MetadataProvider {
+    getLiteralLanguages(): ReadonlyArray<string>;
+
     createEntity(
         type: ElementTypeIri,
         options: { readonly signal?: AbortSignal }
@@ -40,10 +45,10 @@ export interface MetadataProvider {
         options: { readonly signal?: AbortSignal }
     ): Promise<MetadataCanModifyEntity>;
 
-    getEntityTypeShape(
-        type: ElementTypeIri,
+    getEntityShape(
+        types: ReadonlyArray<ElementTypeIri>,
         options: { readonly signal?: AbortSignal }
-    ): Promise<MetadataEntityTypeShape>;
+    ): Promise<MetadataEntityShape>;
 
     filterConstructibleTypes(
         types: ReadonlySet<ElementTypeIri>,
@@ -68,6 +73,17 @@ export interface MetadataCanModifyRelation {
     readonly canDelete?: boolean;
 }
 
-export interface MetadataEntityTypeShape {
-    readonly properties: PropertyTypeIri[];
+export interface MetadataEntityShape {
+    readonly properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
 }
+
+export interface MetadataPropertyShape {
+    readonly valueShape: MetadataValueShape;
+}
+
+export type MetadataValueShape =
+    | { readonly termType: 'NamedNode' }
+    | {
+        readonly termType: 'Literal';
+        readonly datatype?: Rdf.NamedNode;
+    };

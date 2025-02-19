@@ -10,6 +10,8 @@ const owl = vocabulary('http://www.w3.org/2002/07/owl#', [
 ]);
 
 const rdfs = vocabulary('http://www.w3.org/2000/01/rdf-schema#', [
+    'comment',
+    'seeAlso',
     'subClassOf',
     'subPropertyOf',
 ]);
@@ -19,6 +21,11 @@ const SIMULATED_DELAY: number = 200; /* ms */
 export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
     private readonly propertyTypes = [owl.AnnotationProperty, owl.DatatypeProperty, owl.ObjectProperty];
     private readonly editableTypes = new Set([owl.Class, ...this.propertyTypes]);
+    private readonly literalLanguages: ReadonlyArray<string> = ['de', 'en', 'es', 'ru', 'zh'];
+
+    getLiteralLanguages(): ReadonlyArray<string> {
+        return this.literalLanguages;
+    }
 
     async createEntity(
         type: Reactodia.ElementTypeIri,
@@ -138,14 +145,21 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
         }
     }
 
-    async getEntityTypeShape(
-        type: Reactodia.ElementTypeIri,
+    async getEntityShape(
+        types: ReadonlyArray<Reactodia.ElementTypeIri>,
         options: { readonly signal?: AbortSignal; }
-    ): Promise<Reactodia.MetadataEntityTypeShape> {
+    ): Promise<Reactodia.MetadataEntityShape> {
         await delay(SIMULATED_DELAY, options.signal);
-        return {
-            properties: [],
-        };
+        const properties = new Map<Reactodia.PropertyTypeIri, Reactodia.MetadataPropertyShape>();
+        if (types.some(type => this.editableTypes.has(type))) {
+            properties.set(rdfs.comment, {
+                valueShape: {termType: 'Literal'},
+            });
+            properties.set(rdfs.seeAlso, {
+                valueShape: {termType: 'NamedNode'},
+            });
+        }
+        return {properties};
     }
 
     async filterConstructibleTypes(
@@ -212,7 +226,9 @@ function waitTimeout(amountMs: number): Promise<void> {
 }
 
 type VocabularyKeyType<K extends string> =
-    K extends Capitalize<K> ? Reactodia.ElementTypeIri : Reactodia.LinkTypeIri;
+    K extends Capitalize<K>
+        ? Reactodia.ElementTypeIri
+        : Reactodia.LinkTypeIri & Reactodia.PropertyTypeIri;
 type Vocabulary<Keys extends string[]> = {
     readonly [K in Keys[number]]: VocabularyKeyType<K>;
 };

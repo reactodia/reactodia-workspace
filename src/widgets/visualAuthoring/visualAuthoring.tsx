@@ -172,6 +172,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 dialogType: BuiltinDialogType.editEntity,
                 style: {
                     caption: t.text('visual_authoring.edit_entity.dialog.caption'),
+                    defaultSize: {width: 340, height: 400},
                 },
                 content,
                 holdSelection: true,

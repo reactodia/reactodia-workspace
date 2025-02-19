@@ -1,7 +1,13 @@
+@import "../mixin/icons";
 @import "../theme/variables";
 
 .reactodia-edit-entity-form {
-  .reactodia-form-control + .reactodia-form-control {
+  &--loading {
+    align-items: center;
+    justify-content: center;
+  }
+
+  label .reactodia-form-control + .reactodia-form-control {
     margin-top: $theme-spacing-vertical;
   }
 }

@@ -23,6 +23,9 @@
 
   &::before {
     @include codicon($name);
+  }
+
+  &:not(:empty)::before {
     margin-right: 3px;
   }
 }

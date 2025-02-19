@@ -1,0 +1,25 @@
+.reactodia-text-property-input {
+  &__row {
+    display: flex;
+    gap: $theme-spacing-horizontal;
+  }
+
+  &__row + &__row {
+    margin-top: $theme-spacing-vertical;
+  }
+
+  &__language {
+    width: unset;
+    padding: unset;
+  }
+  
+  &__value-remove {
+    @include codicon-button("trash");
+    padding: 6px 4px;
+  }
+
+  &__value-add {
+    @include codicon-button("add");
+    padding: 6px;
+  }
+}
