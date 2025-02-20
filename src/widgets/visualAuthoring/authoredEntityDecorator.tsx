@@ -15,23 +15,23 @@ import { ElementValidation, LinkValidation, getMaxSeverity } from '../../editor/
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
-export interface ElementDecoratorProps {
+export interface AuthoredEntityDecoratorProps {
     target: EntityElement;
     position: Vector;
 }
 
-export function ElementDecorator(props: ElementDecoratorProps) {
+export function AuthoredEntityDecorator(props: AuthoredEntityDecoratorProps) {
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
     return (
-        <ElementDecoratorInner {...props}
+        <AuthoredEntityDecoratorInner {...props}
             canvas={canvas}
             workspace={workspace}
         />
     );
 }
 
-interface ElementDecoratorInnerProps extends ElementDecoratorProps {
+interface AuthoredEntityDecoratorInnerProps extends AuthoredEntityDecoratorProps {
     canvas: CanvasApi;
     workspace: WorkspaceContext;
 }
@@ -44,10 +44,10 @@ interface State {
 
 const CLASS_NAME = 'reactodia-authoring-state';
 
-class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, State> {
+class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecoratorInnerProps, State> {
     private readonly listener = new EventObserver();
 
-    constructor(props: ElementDecoratorInnerProps) {
+    constructor(props: AuthoredEntityDecoratorInnerProps) {
         super(props);
         const {target, workspace: {editor}} = this.props;
         this.state = {
@@ -94,7 +94,7 @@ class ElementDecoratorInner extends React.Component<ElementDecoratorInnerProps, 
         this.listener.stopListening();
     }
 
-    shouldComponentUpdate(nextProps: ElementDecoratorProps, nextState: State) {
+    shouldComponentUpdate(nextProps: AuthoredEntityDecoratorProps, nextState: State) {
         return (
             this.state.state !== nextState.state ||
             this.state.validation !== nextState.validation ||

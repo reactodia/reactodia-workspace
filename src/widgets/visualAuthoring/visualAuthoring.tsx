@@ -19,8 +19,8 @@ import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { ElementDecorator } from './authoredEntityDecorator';
-import { LinkStateWidget } from './authoredRelationOverlay';
+import { AuthoredEntityDecorator } from './authoredEntityDecorator';
+import { AuthoredRelationOverlay } from './authoredRelationOverlay';
 import { DragEditLayer, DragEditOperation } from './dragEditLayer';
 
 /**
@@ -99,14 +99,14 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         const listener = new EventObserver();
 
         view.setCanvasWidget('states', {
-            element: <LinkStateWidget />,
+            element: <AuthoredRelationOverlay />,
             attachment: 'overLinks',
         });
 
-        const authoringStateDecorator: ElementDecoratorResolver = element => {
+        const authoringDecorator: ElementDecoratorResolver = element => {
             if (element instanceof EntityElement) {
                 return (
-                    <ElementDecorator target={element}
+                    <AuthoredEntityDecorator target={element}
                         position={element.position}
                     />
                 );
@@ -115,7 +115,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         };
         const updateElementDecorator = () => {
             view._setElementDecorator(
-                editor.inAuthoringMode ? authoringStateDecorator : undefined
+                editor.inAuthoringMode ? authoringDecorator : undefined
             );
         };
         listener.listen(editor.events, 'changeMode', () => updateElementDecorator());

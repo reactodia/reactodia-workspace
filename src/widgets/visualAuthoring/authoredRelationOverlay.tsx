@@ -23,14 +23,14 @@ import { LinkValidation, ElementValidation, getMaxSeverity } from '../../editor/
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
-export interface LinkStateWidgetProps {
+export interface AuthoredRelationOverlayProps {
     /**
      * @default 5
      */
     linkLabelMargin?: number;
 }
 
-export function LinkStateWidget(props: LinkStateWidgetProps) {
+export function AuthoredRelationOverlay(props: AuthoredRelationOverlayProps) {
     const workspace = useWorkspace();
     const {canvas} = useCanvas();
     return (
@@ -41,7 +41,7 @@ export function LinkStateWidget(props: LinkStateWidgetProps) {
     );
 }
 
-interface LinkStateWidgetInternalProps extends LinkStateWidgetProps {
+interface AuthoredRelationOverlayInnerProps extends AuthoredRelationOverlayProps {
     workspace: WorkspaceContext;
     canvas: CanvasApi;
 }
@@ -49,7 +49,7 @@ interface LinkStateWidgetInternalProps extends LinkStateWidgetProps {
 const CLASS_NAME = 'reactodia-authoring-state';
 const DEFAULT_LINK_LABEL_MARGIN = 5;
 
-class LinkStateWidgetInner extends React.Component<LinkStateWidgetInternalProps> {
+class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerProps> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
