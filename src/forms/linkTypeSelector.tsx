@@ -10,40 +10,34 @@ import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { LinkType, iterateRelationsOf } from '../editor/dataElements';
+import { EntityElement, LinkType, RelationLink, iterateRelationsOf } from '../editor/dataElements';
 
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
-const FORM_CLASS = 'reactodia-form';
+export interface LinkTypeSelectorProps {
+    link: ExtendedLink;
+    onChange: (link: ExtendedLink) => void;
+    disabled?: boolean;
+    error?: React.ReactNode | null;
+}
 
-export interface Value {
-    link: LinkModel;
+export interface ExtendedLink {
+    base: Omit<LinkModel, 'sourceId' | 'targetId'>;
+    source: ElementModel;
+    target: ElementModel;
     direction: LinkDirection;
 }
 
-export interface LinkValue {
-    value: Value;
-    error?: string;
-    validated: boolean;
-    allowChange: boolean;
+interface State {
+    linkTypes?: ReadonlyArray<DirectedLinkType>;
 }
 
-interface DirectedDataLinkType {
+interface DirectedLinkType {
     readonly iri: LinkTypeIri;
     readonly direction: LinkDirection;
 }
 
-export interface LinkTypeSelectorProps {
-    linkValue: LinkValue;
-    source: ElementModel;
-    target: ElementModel;
-    onChange: (value: Value) => void;
-    disabled?: boolean;
-}
-
-interface State {
-    dataLinkTypes?: ReadonlyArray<DirectedDataLinkType>;
-}
+const FORM_CLASS = 'reactodia-form';
 
 export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, State> {
     static contextType = WorkspaceContext;
@@ -54,9 +48,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     constructor(props: LinkTypeSelectorProps, context: any) {
         super(props, context);
-        this.state = {
-            dataLinkTypes: [],
-        };
+        this.state = {};
     }
 
     private updateAll = () => this.forceUpdate();
@@ -66,9 +58,12 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 
     componentDidUpdate(prevProps: LinkTypeSelectorProps) {
-        const {source, target} = this.props;
-        if (prevProps.source !== source || prevProps.target !== target) {
-            this.setState({dataLinkTypes: undefined});
+        const {link} = this.props;
+        if (!(
+            link.source.id === prevProps.link.source.id &&
+            link.target.id === prevProps.link.target.id
+        )) {
+            this.setState({linkTypes: undefined});
             this.fetchPossibleLinkTypes();
         }
     }
@@ -80,14 +75,14 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     private async fetchPossibleLinkTypes() {
         const {model, editor: {metadataProvider}, translation: t} = this.context;
-        const {source, target} = this.props;
+        const {link} = this.props;
         if (!metadataProvider) {
             return;
         }
         const connections = await mapAbortedToNull(
             metadataProvider.canConnect(
-                source,
-                target,
+                link.source,
+                link.target,
                 undefined,
                 {signal: this.cancellation.signal}
             ),
@@ -108,7 +103,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             }
         }
 
-        const dataLinkTypes: DirectedDataLinkType[] = [];
+        const dataLinkTypes: DirectedLinkType[] = [];
         for (const linkType of outLinkSet) {
             dataLinkTypes.push({iri: linkType, direction: 'out'});
         }
@@ -117,7 +112,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         }
         dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model, t));
 
-        this.setState({dataLinkTypes: dataLinkTypes});
+        this.setState({linkTypes: dataLinkTypes});
         this.listenToLinkLabels(dataLinkTypes.map(type => model.createLinkType(type.iri)));
     }
 
@@ -128,29 +123,28 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     }
 
     private onChangeType = (e: React.FormEvent<HTMLSelectElement>) => {
-        const {link: originalLink, direction: originalDirection} = this.props.linkValue.value;
-        const index = parseInt(e.currentTarget.value, 10);
-        const {iri, direction} = this.state.dataLinkTypes![index];
-        let link: LinkModel = {...originalLink, linkTypeId: iri};
-        // switches source and target if the direction has changed
-        if (originalDirection !== direction) {
-            link = {
-                ...link,
-                sourceId: originalLink.targetId,
-                targetId: originalLink.sourceId,
-            };
-        }
-        this.props.onChange({link, direction});
+        const {link} = this.props;
+        const index = Number(e.currentTarget.value);
+        const {iri, direction} = this.state.linkTypes![index];
+        const changedLink: ExtendedLink = {
+            ...link,
+            base: {
+                ...link.base,
+                linkTypeId: iri,
+            },
+            direction,
+        };
+        this.props.onChange(changedLink);
     };
 
     private renderPossibleLinkType = (
-        {iri, direction}: DirectedDataLinkType, index: number
+        {iri, direction}: DirectedLinkType, index: number
     ) => {
         const {model, translation: t} = this.context;
-        const {source, target} = this.props;
+        const {link} = this.props;
         const data = model.getLinkType(iri);
         const label = t.formatLabel(data?.data?.label, iri, model.language);
-        let [sourceLabel, targetLabel] = [source, target].map(element =>
+        let [sourceLabel, targetLabel] = [link.source, link.target].map(element =>
             t.formatLabel(element.label, element.id, model.language)
         );
         if (direction === 'in') {
@@ -169,36 +163,36 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     render() {
         const {translation: t} = this.context;
-        const {linkValue, disabled} = this.props;
-        const {dataLinkTypes} = this.state;
-        const value = (dataLinkTypes ?? []).findIndex(({iri, direction}) =>
-            iri === linkValue.value.link.linkTypeId && direction === linkValue.value.direction
+        const {link, disabled, error} = this.props;
+        const {linkTypes} = this.state;
+        const selectedIndex = (linkTypes ?? []).findIndex(({iri, direction}) =>
+            iri === link.base.linkTypeId && direction === link.direction
         );
         return (
             <div className={`${FORM_CLASS}__control-row`}>
                 <label>{t.text('visual_authoring.select_relation.type.label')}</label>
                 {
-                    dataLinkTypes ? (
+                    linkTypes ? (
                         <select className='reactodia-form-control'
                             name='reactodia-link-type-selector-select'
-                            value={value}
+                            value={selectedIndex}
                             onChange={this.onChangeType}
                             disabled={disabled}>
                             <option value={-1} disabled={true}>
                                 {t.text('visual_authoring.select_relation.type.placeholder')}
                             </option>
-                            {dataLinkTypes.map(this.renderPossibleLinkType)}
+                            {linkTypes.map(this.renderPossibleLinkType)}
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }
-                {linkValue.error ? <span className={`${FORM_CLASS}__control-error`}>{linkValue.error}</span> : ''}
+                {error ? <span className={`${FORM_CLASS}__control-error`}>{error}</span> : null}
             </div>
         );
     }
 }
 
 function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: Translation) {
-    return (a: DirectedDataLinkType, b: DirectedDataLinkType) => {
+    return (a: DirectedLinkType, b: DirectedLinkType) => {
         const aData = model.getLinkType(a.iri);
         const bData = model.getLinkType(b.iri);
         const labelA = t.formatLabel(aData?.data?.label, a.iri, model.language);
@@ -217,12 +211,47 @@ function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: T
     };
 }
 
+export function dataFromExtendedLink(link: ExtendedLink): LinkModel {
+    return {
+        ...link.base,
+        sourceId: link.direction === 'out' ? link.source.id : link.target.id,
+        targetId: link.direction === 'out' ? link.target.id : link.source.id,
+    };
+}
+
+export function relationFromExtendedLink(
+    link: ExtendedLink,
+    source: EntityElement,
+    target: EntityElement
+): RelationLink {
+    let [finalSource, finalTarget] = [source, target];
+    if (link.direction === 'in') {
+        [finalSource, finalTarget] = [finalTarget, finalSource];
+    }
+    return new RelationLink({
+        sourceId: finalSource.id,
+        targetId: finalTarget.id,
+        data: {
+            ...link.base,
+            sourceId: finalSource.iri,
+            targetId: finalTarget.iri,
+        }
+    });
+}
+
+export interface ValidatedLink {
+    link: ExtendedLink;
+    error?: string;
+    validated: boolean;
+    allowChange: boolean;
+}
+
 export async function validateLinkType(
     currentLink: LinkModel,
     originalLink: LinkModel,
     workspace: WorkspaceContext,
     signal: AbortSignal | undefined
-): Promise<Pick<LinkValue, 'error' | 'allowChange'>> {
+): Promise<Pick<ValidatedLink, 'error' | 'allowChange'>> {
     const {model, editor, translation: t} = workspace;
     if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
         return {
@@ -233,10 +262,10 @@ export async function validateLinkType(
     if (equalLinks(currentLink, originalLink)) {
         return {error: undefined, allowChange: true};
     }
-    if (isRelationOnDiagram(model, currentLink) && !editor.temporaryState.links.has(currentLink)) {
+    if (isRelationOnDiagram(model, currentLink)) {
         return {
             error: t.text('visual_authoring.select_relation.validation.error_duplicate'),
-            allowChange: false,
+            allowChange: editor.temporaryState.links.has(currentLink),
         };
     }
 

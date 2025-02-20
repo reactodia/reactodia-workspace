@@ -1,127 +1,147 @@
 import * as React from 'react';
 
-import { ElementModel, LinkModel, equalLinks } from '../data/model';
+import { LinkModel, equalLinks, equalProperties } from '../data/model';
+
+import { EntityElement, RelationLink } from '../editor/dataElements';
 
 import { ProgressBar } from '../widgets/utility/progressBar';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace } from '../workspace/workspaceContext';
 
-import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
+import {
+    LinkTypeSelector, ValidatedLink, dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
+} from './linkTypeSelector';
 
 const FORM_CLASS = 'reactodia-form';
 
 export interface EditRelationFormProps {
-    link: LinkModel;
-    source: ElementModel;
-    target: ElementModel;
-    onChange: (entity: LinkModel) => void;
-    onApply: (entity: LinkModel) => void;
+    originalLink: RelationLink;
+    source: EntityElement;
+    target: EntityElement;
+    onChangeTarget: (newTarget: RelationLink) => void;
+    onAfterApply: () => void;
     onCancel: () => void;
 }
 
-interface State {
-    linkValue: LinkValue;
-    isValidating?: boolean;
+export function EditRelationForm(props: EditRelationFormProps) {
+    const [version, setVersion] = React.useState(0);
+    React.useLayoutEffect(() => {
+        // Reset the form completely on source/target changes
+        setVersion(previous => previous + 1);
+    }, [props.source, props.target]);
+    return <EditRelationFormInner key={version} {...props} />;
 }
 
-export class EditRelationForm extends React.Component<EditRelationFormProps, State> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
-    
-    private validationCancellation = new AbortController();
+function EditRelationFormInner(props: EditRelationFormProps) {
+    const {originalLink, source, target, onChangeTarget, onAfterApply, onCancel} = props;
+    const workspace = useWorkspace();
+    const {editor, translation: t} = workspace;
 
-    constructor(props: EditRelationFormProps, context: any) {
-        super(props, context);
-        this.state = {
-            linkValue: {
-                value: {link: props.link, direction: 'out'},
-                validated: true,
-                allowChange: true,
-            },
-        };
-    }
+    const [value, setValue] = React.useState((): ValidatedLink => ({
+        link: {
+            base: props.originalLink.data,
+            source: props.source.data,
+            target: props.target.data,
+            direction: 'out',
+        },
+        validated: true,
+        allowChange: true,
+    }));
 
-    componentDidMount() {
-        this.validate();
-    }
+    const [validating, setValidating] = React.useState(false);
+    const lastValidated = React.useRef<LinkModel | undefined>(undefined);
 
-    componentDidUpdate(prevProps: EditRelationFormProps, prevState: State) {
-        const {linkValue} = this.state;
-        if (!equalLinks(linkValue.value.link, prevState.linkValue.value.link)) {
-            this.validate();
+    React.useEffect(() => {
+        const toValidate = dataFromExtendedLink(value.link);
+        if (!lastValidated.current || !equalLinks(toValidate, lastValidated.current)) {
+            const cancellation = new AbortController();
+            setValidating(true);
+            validateLinkType(
+                toValidate,
+                originalLink.data,
+                workspace,
+                cancellation.signal,
+            ).then(error => {
+                if (cancellation.signal.aborted) { return; }
+                lastValidated.current = toValidate;
+                setValue(previous => ({
+                    ...previous,
+                    ...error,
+                    validated: true,
+                }));
+                setValidating(false);
+            });
+            return () => cancellation.abort();
         }
-        if (linkValue !== prevState.linkValue && linkValue.validated && linkValue.allowChange) {
-            if (!equalLinks(this.props.link, linkValue.value.link)) {
-                this.props.onChange(linkValue.value.link);
+    }, [value.link]);
+
+    React.useEffect(() => {
+        if (
+            editor.temporaryState.links.has(originalLink.data) &&
+            value.validated &&
+            value.allowChange
+        ) {
+            const toApply = dataFromExtendedLink(value.link);
+            if (!equalLinks(originalLink.data, toApply)) {
+                const linkBase = relationFromExtendedLink(value.link, source, target);
+                const recreatedTarget = editor.createRelation(linkBase, {temporary: true});
+                onChangeTarget(recreatedTarget);
             }
         }
-    }
+    }, [value]);
 
-    componentWillUnmount() {
-        this.validationCancellation.abort();
-    }
+    const onApply = () => {
+        const toApply = dataFromExtendedLink(value.link);
 
-    private validate() {
-        const {link: originalLink} = this.props;
-        const {linkValue: {value}} = this.state;
-        this.setState({isValidating: true});
+        if (editor.temporaryState.links.has(originalLink.data)) {
+            editor.removeTemporaryCells([originalLink]);
+            const linkBase = relationFromExtendedLink(value.link, source, target);
+            editor.createRelation(linkBase);
+        } else if (!(
+            equalLinks(originalLink.data, toApply) &&
+            equalProperties(originalLink.data.properties, toApply.properties)
+        )) {
+            editor.changeRelation(originalLink.data, toApply);
+        }
 
-        this.validationCancellation.abort();
-        this.validationCancellation = new AbortController();
-        const signal = this.validationCancellation.signal;
+        onAfterApply();
+    };
 
-        validateLinkType(
-            value.link,
-            originalLink,
-            this.context,
-            signal,
-        ).then(error => {
-            if (signal.aborted) { return; }
-            this.setState(({linkValue}) => ({
-                linkValue: {...linkValue, ...error, validated: true},
-                isValidating: false,
-            }));
-        });
-    }
-
-    render() {
-        const {translation: t} = this.context;
-        const {source, target} = this.props;
-        const {linkValue, isValidating} = this.state;
-        const isValid = !linkValue.error;
-        return (
-            <div className={FORM_CLASS}>
-                <div className={`${FORM_CLASS}__body`}>
-                    <LinkTypeSelector linkValue={linkValue}
-                        source={source}
-                        target={target}
-                        onChange={value => this.setState({
-                            linkValue: {value, error: undefined, validated: false, allowChange: false},
-                        })}
-                    />
-                    {isValidating ? (
-                        <div className={`${FORM_CLASS}__progress`}>
-                            <ProgressBar state='loading'
-                                title={t.text('visual_authoring.edit_relation.validation_progress.title')}
-                                height={10}
-                            />
-                        </div>
-                    ) : null}
-                </div>
-                <div className={`${FORM_CLASS}__controls`}>
-                    <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                        onClick={() => this.props.onApply(linkValue.value.link)}
-                        disabled={!isValid || isValidating}
-                        title={t.text('visual_authoring.dialog.apply.title')}>
-                        {t.text('visual_authoring.dialog.apply.label')}
-                    </button>
-                    <button className='reactodia-btn reactodia-btn-secondary'
-                        onClick={this.props.onCancel}
-                        title={t.text('visual_authoring.dialog.cancel.title')}>
-                        {t.text('visual_authoring.dialog.cancel.label')}
-                    </button>
-                </div>
+    const linkIsValid = !value.error;
+    return (
+        <div className={FORM_CLASS}>
+            <div className={`${FORM_CLASS}__body`}>
+                <LinkTypeSelector link={value.link}
+                    error={value.error}
+                    onChange={link => setValue({
+                        link,
+                        error: undefined,
+                        validated: false,
+                        allowChange: false,
+                    })}
+                />
+                {validating ? (
+                    <div className={`${FORM_CLASS}__progress`}>
+                        <ProgressBar state='loading'
+                            title={t.text('visual_authoring.edit_relation.validation_progress.title')}
+                            height={10}
+                        />
+                    </div>
+                ) : null}
             </div>
-        );
-    }
+            <div className={`${FORM_CLASS}__controls`}>
+                <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
+                    onClick={onApply}
+                    disabled={!linkIsValid || validating}
+                    title={t.text('visual_authoring.dialog.apply.title')}>
+                    {t.text('visual_authoring.dialog.apply.label')}
+                </button>
+                <button className='reactodia-btn reactodia-btn-secondary'
+                    onClick={onCancel}
+                    title={t.text('visual_authoring.dialog.cancel.title')}>
+                    {t.text('visual_authoring.dialog.cancel.label')}
+                </button>
+            </div>
+        </div>
+    );
 }

@@ -208,38 +208,17 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         });
 
         listener.listen(editor.authoringCommands, 'editRelation', ({target: link}) => {
-            const source = (model.getElement(link.sourceId) as EntityElement).data;
-            const target = (model.getElement(link.targetId) as EntityElement).data;
             const content = (
-                <EditRelationForm link={link.data}
-                    source={source}
-                    target={target}
-                    onChange={data => {
-                        if (editor.temporaryState.links.has(link.data)) {
-                            // Close current dialog before opening a new one to avoid
-                            // target temporary link removal
-                            overlay.hideDialog();
-
-                            const newLink = link.withDirection(data);
-                            const recreatedTarget = editor.createRelation(newLink, {temporary: true});
-                            editor.authoringCommands.trigger('editRelation', {
-                                target: recreatedTarget,
-                            });
-                        }
-                    }}
-                    onApply={data => {
-                        if (editor.temporaryState.links.has(link.data)) {
-                            editor.removeTemporaryCells([link]);
-                            const newLink = link.withDirection(data);
-                            editor.createRelation(newLink);
-                        } else if (!(
-                            equalLinks(link.data, data) &&
-                            equalProperties(link.data.properties, data.properties)
-                        )) {
-                            editor.changeRelation(link.data, data);
-                        }
+                <EditRelationForm originalLink={link}
+                    source={model.getElement(link.sourceId) as EntityElement}
+                    target={model.getElement(link.targetId) as EntityElement}
+                    onChangeTarget={newTarget => {
+                        // Close current dialog before opening a new one to avoid
+                        // target temporary link removal
                         overlay.hideDialog();
+                        editor.authoringCommands.trigger('editRelation', {target: newTarget});
                     }}
+                    onAfterApply={() => overlay.hideDialog()}
                     onCancel={() => overlay.hideDialog()}
                 />
             );

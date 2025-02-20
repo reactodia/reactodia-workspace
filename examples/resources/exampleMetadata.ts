@@ -5,12 +5,12 @@ const owl = vocabulary('http://www.w3.org/2002/07/owl#', [
     'AnnotationProperty',
     'DatatypeProperty',
     'ObjectProperty',
-    'domain',
-    'range',
 ]);
 
 const rdfs = vocabulary('http://www.w3.org/2000/01/rdf-schema#', [
     'comment',
+    'domain',
+    'range',
     'seeAlso',
     'subClassOf',
     'subPropertyOf',
@@ -90,7 +90,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
 
             const targetPropertyTypes = this.propertyTypes.filter(type => hasType(target, type));
             if (targetPropertyTypes.length > 0) {
-                addConnections(targetPropertyTypes, [], [owl.domain, owl.range]);
+                addConnections(targetPropertyTypes, [], [rdfs.domain, rdfs.range]);
             }
         }
 
@@ -103,7 +103,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
             }
 
             if (hasType(target, owl.Class)) {
-                addConnections([owl.Class], [owl.domain, owl.range], []);
+                addConnections([owl.Class], [rdfs.domain, rdfs.range], []);
             }
         }
 
@@ -131,8 +131,8 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
     ): Promise<Reactodia.MetadataCanModifyRelation> {
         await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
         switch (link.linkTypeId) {
-            case owl.domain:
-            case owl.range:
+            case rdfs.domain:
+            case rdfs.range:
             case rdfs.subClassOf:
             case rdfs.subPropertyOf: {
                 return {

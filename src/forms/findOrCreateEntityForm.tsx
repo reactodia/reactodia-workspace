@@ -12,9 +12,9 @@ import { ProgressBar } from '../widgets/utility/progressBar';
 import { WorkspaceContext } from '../workspace/workspaceContext';
 
 import { ElementTypeSelector, ElementValue, validateElementType } from './elementTypeSelector';
-import { LinkTypeSelector, LinkValue, validateLinkType } from './linkTypeSelector';
-
-const FORM_CLASS = 'reactodia-form';
+import {
+    LinkTypeSelector, ValidatedLink, dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
+} from './linkTypeSelector';
 
 export interface FindOrCreateEntityFormProps {
     source: EntityElement;
@@ -27,9 +27,11 @@ export interface FindOrCreateEntityFormProps {
 
 interface State {
     elementValue: ElementValue;
-    linkValue: LinkValue;
+    linkValue: ValidatedLink;
     isValidating?: boolean;
 }
+
+const FORM_CLASS = 'reactodia-form';
 
 export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFormProps, State> {
     static contextType = WorkspaceContext;
@@ -41,7 +43,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
     constructor(props: FindOrCreateEntityFormProps, context: any) {
         super(props, context);
-        const {target, initialTargetIsNew, originalLink} = this.props;
+        const {source, target, initialTargetIsNew, originalLink} = this.props;
         this.link = originalLink;
         this.state = {
             elementValue: {
@@ -52,7 +54,12 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 allowChange: true,
             },
             linkValue: {
-                value: {link: originalLink.data, direction: 'out'},
+                link: {
+                    base: originalLink.data,
+                    source: source.data,
+                    target: target.data,
+                    direction: 'out',
+                },
                 validated: true,
                 allowChange: true,
             },
@@ -78,7 +85,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         const validateElement = validateElementType(elementValue.value, this.context);
         const validateLink = validateLinkType(
-            linkValue.value.link,
+            dataFromExtendedLink(linkValue.link),
             originalLink.data,
             this.context,
             signal
@@ -114,8 +121,10 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                                     allowChange: false,
                                 },
                                 linkValue: {
-                                    value: {
-                                        link: {...originalLink.data, targetId: newState.value.id},
+                                    link: {
+                                        base: originalLink.data,
+                                        source: source.data,
+                                        target: newState.value,
                                         direction: 'out',
                                     },
                                     validated: false,
@@ -129,11 +138,10 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                             &nbsp;{t.text('visual_authoring.find_or_create.loading.label')}
                         </div>
                     ) : (
-                        <LinkTypeSelector linkValue={linkValue}
-                            source={source.data}
-                            target={elementValue.value}
-                            onChange={value => this.setElementOrLink({
-                                linkValue: {value, error: undefined, validated: false, allowChange: false},
+                        <LinkTypeSelector link={linkValue.link}
+                            error={linkValue.error}
+                            onChange={link => this.setElementOrLink({
+                                linkValue: {link, error: undefined, validated: false, allowChange: false},
                             })}
                             disabled={elementValue.error !== undefined}
                         />
@@ -166,7 +174,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
     private setElementOrLink({elementValue, linkValue}: {
         elementValue?: ElementValue;
-        linkValue?: LinkValue;
+        linkValue?: ValidatedLink;
     }) {
         const {model, editor} = this.context;
         this.setState(state => ({
@@ -197,16 +205,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             }
             if (linkValue && linkValue.validated && linkValue.allowChange) {
                 editor.removeTemporaryCells([this.link]);
-                const newLink = new RelationLink({
-                    sourceId: source.id,
-                    targetId: target.id,
-                    data: {
-                        ...linkValue.value.link,
-                        sourceId: source.iri,
-                        targetId: target.iri,
-                    }
-                }).withDirection(linkValue.value.link);
-                this.link = editor.createRelation(newLink, {temporary: true});
+                const linkBase = relationFromExtendedLink(linkValue.link, source, target);
+                this.link = editor.createRelation(linkBase, {temporary: true});
             }
         });
     }
@@ -241,16 +241,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             model.requestLinks({addedElements: [elementValue.value.id]});
         }
 
-        const newLink = new RelationLink({
-            sourceId: source.id,
-            targetId: target.id,
-            data: {
-                ...link.data,
-                sourceId: source.iri,
-                targetId: target.iri,
-            }
-        }).withDirection(linkValue.value.link);
-        editor.createRelation(newLink);
+        const linkBase = relationFromExtendedLink(linkValue.link, source, target);
+        editor.createRelation(linkBase);
 
         batch.store();
 
