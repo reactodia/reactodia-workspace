@@ -19,9 +19,9 @@ import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
+import { ElementDecorator } from './authoredEntityDecorator';
+import { LinkStateWidget } from './authoredRelationOverlay';
 import { DragEditLayer, DragEditOperation } from './dragEditLayer';
-import { ElementDecorator } from './elementDecorator';
-import { LinkStateWidget } from './linkStateWidget';
 
 /**
  * Props for {@link VisualAuthoring} component.
