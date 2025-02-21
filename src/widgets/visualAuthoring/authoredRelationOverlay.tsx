@@ -199,31 +199,30 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
                 const path = this.calculateLinkPath(link);
                 rendered.push(
                     <path key={link.id}
-                        d={path} fill='none' stroke='grey'
-                        strokeWidth={5} strokeOpacity={0.5} strokeDasharray='8 8'
+                        className={`${CLASS_NAME}__link-temporary`}
+                        d={path}
                     />
                 );
             } else {
                 const event = editor.authoringState.links.get(link.data);
                 const isDeletedLink = AuthoringState.isDeletedRelation(editor.authoringState, link.data);
-                const isUncertainLink = (
+                const hasUncertainEndpoints = (
                     AuthoringState.hasEntityChangedIri(editor.authoringState, link.data.sourceId) ||
                     AuthoringState.hasEntityChangedIri(editor.authoringState, link.data.targetId)
                 );
-                if (event || isDeletedLink || isUncertainLink) {
+                if (event || isDeletedLink || hasUncertainEndpoints) {
                     const path = this.calculateLinkPath(link);
-                    let color: string | undefined;
-                    if (isDeletedLink) {
-                        color = 'red';
-                    } else if (isUncertainLink) {
-                        color = 'blue';
-                    } else if (event) {
-                        color = event.type === 'relationChange' ? 'blue' : 'green';
-                    }
+                    const className = (
+                        isDeletedLink ? `${CLASS_NAME}__link-deleted` :
+                        event?.type === 'relationAdd' ? `${CLASS_NAME}__link-added` :
+                        event?.type === 'relationChange' ? `${CLASS_NAME}__link-changed` :
+                        hasUncertainEndpoints ? `${CLASS_NAME}__link-uncertain` :
+                        `${CLASS_NAME}__link-changed`
+                    );
                     rendered.push(
                         <path key={link.id}
-                            d={path} fill={'none'} stroke={color}
-                            strokeWidth={5} strokeOpacity={0.5}
+                            className={className}
+                            d={path}
                         />
                     );
                 }
@@ -248,7 +247,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         }
     }
 
-    private renderLinkValidations(key: LinkKey) {
+    private renderLinkValidations(key: LinkKey): JSX.Element | null {
         const {workspace: {editor}} = this.props;
         const {validationState} = editor;
 
@@ -256,12 +255,8 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         if (!validation) {
             return null;
         }
+
         const title = validation.items.map(item => item.message).join('\n');
-
-        return this.renderValidationIcon(title, validation);
-    }
-
-    private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation): JSX.Element {
         const severity = getMaxSeverity(validation.items);
         return (
             <div className={classnames(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}

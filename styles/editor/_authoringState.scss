@@ -22,9 +22,43 @@
     stroke: $theme-color-danger;
   }
 
+  &__link-temporary,
+  &__link-added,
+  &__link-changed,
+  &__link-deleted,
+  &__link-uncertain {
+    stroke-width: 5;
+    stroke-opacity: 0.5;
+    fill: none;
+  }
+
+  &__link-temporary {
+    stroke: $theme-color-gray-600;
+    stroke-dasharray: 8 8;
+  }
+
+  &__link-added {
+    stroke: $theme-color-success;
+  }
+
+  &__link-changed {
+    stroke: $theme-color-primary;
+  }
+
+  &__link-deleted {
+    stroke: $theme-color-danger;
+  }
+
+  &__link-uncertain {
+    stroke: $theme-color-primary;
+  }
+
+  &__item-validation:not(:first-child) {
+    margin-left: 5px;
+  }
+
   &__item-validation {
     align-self: flex-end;
-    margin: 0px 5px;
     display: flex;
     align-items: center;
     cursor: help;
@@ -79,9 +113,8 @@
     display: flex;
     align-items: center;
     bottom: 0;
-    background: $theme-canvas-overlay-color;
+    background: $theme-canvas-underlay-color;
     border-radius: 2px;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
+    padding: 1px;
   }
 }
