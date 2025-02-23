@@ -3,7 +3,7 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { useObservedProperty } from '../../coreUtils/hooks';
 
-import { ElementModel } from '../../data/model';
+import { ElementIri, ElementModel } from '../../data/model';
 
 import { Element } from '../../diagram/elements';
 
@@ -19,7 +19,7 @@ export interface AuthoredEntityContext {
      * The new IRI if entity IRI has changed in the entity data,
      * otherwise `undefined`.
      */
-    editedIri?: string;
+    editedIri?: ElementIri;
     /**
      * Whether its allowed to change the entity data.
      */

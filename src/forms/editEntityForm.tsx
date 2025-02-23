@@ -65,7 +65,7 @@ export function EditEntityForm(props: {
 
     const onChangeIri = React.useCallback((e: React.FormEvent<HTMLInputElement>) => {
         const target = (e.target as HTMLInputElement);
-        const iri = target.value as ElementIri;
+        const iri: ElementIri = target.value;
         setData(previous => ({...previous, id: iri}));
     }, []);
 
@@ -186,7 +186,7 @@ function Properties(props: {
     const {model, translation: t} = useWorkspace();
 
     const extendedProperties = new Map(properties);
-    for (const propertyIri of Object.keys(data) as PropertyTypeIri[]) {
+    for (const propertyIri of Object.keys(data)) {
         if (!extendedProperties.has(propertyIri)) {
             extendedProperties.set(propertyIri, DEFAULT_PROPERTY_SHAPE);
         }

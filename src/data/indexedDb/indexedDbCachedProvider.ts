@@ -752,10 +752,10 @@ export class IndexedDbCachedProvider implements DataProvider {
             return this.baseProvider.lookup(params);
         }
         const key: LookupKey = [
-            params.elementTypeId ?? ('' as ElementTypeIri),
-            params.refElementId ?? ('' as ElementIri),
-            params.refElementLinkId ?? ('' as LinkTypeIri),
-            params.linkDirection ?? ('' as LookupLinkDirectionKey),
+            params.elementTypeId ?? '',
+            params.refElementId ?? '',
+            params.refElementLinkId ?? '',
+            params.linkDirection ?? '',
             params.text ?? '',
             (
                 params.limit === undefined ? '' :

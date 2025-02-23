@@ -212,7 +212,7 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         for (const link of settings.linkConfigurations) {
-            this.linkById.set(link.id as LinkTypeIri, link);
+            this.linkById.set(link.id, link);
             const predicate = isDirectLink(link) ? link.path : link.id;
             multimapArrayAdd(this.linkByPredicate, predicate, link);
         }

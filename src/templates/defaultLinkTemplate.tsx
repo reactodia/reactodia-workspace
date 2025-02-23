@@ -206,7 +206,7 @@ function LinkProperties(props: DefaultLinkPathTemplateProps) {
     const {model, translation: t} = useWorkspace();
     const {data} = link as RelationLink;
 
-    const propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    const propertyIris: PropertyTypeIri[] = Object.keys(data.properties);
     useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
 
     const properties = propertyIris.map(iri => {

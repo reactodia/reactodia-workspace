@@ -6,19 +6,19 @@ import * as Rdf from './rdf/rdfModel';
 /**
  * Nominal (branded) type for element (graph node) IRI, i.e. unique ID string.
  */
-export type ElementIri = string & { readonly elementBrand: void };
+export type ElementIri = string & { readonly __iriBrand?: 'element' };
 /**
  * Nominal (branded) type for element (graph node) type IRI, i.e. unique ID string.
  */
-export type ElementTypeIri = string & { readonly classBrand: void };
+export type ElementTypeIri = string & { readonly __iriBrand?: 'elementType' };
 /**
  * Nominal (branded) type for link (graph edge) type IRI, i.e. unique ID string.
  */
-export type LinkTypeIri = string & { readonly linkTypeBrand: void };
+export type LinkTypeIri = string & { readonly __iriBrand?: 'linkType' };
 /**
  * Nominal (branded) type for property type IRI, i.e. unique ID string.
  */
-export type PropertyTypeIri = string & { readonly propertyTypeBrand: void };
+export type PropertyTypeIri = string & { readonly __iriBrand?: 'propertyType' };
 
 /**
  * Link (graph edge) direction: `in` for incoming, `out` for outgoing.

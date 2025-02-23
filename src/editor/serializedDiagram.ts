@@ -254,7 +254,7 @@ export function deserializeDiagram(
     if (linkTypeOptions) {
         for (const setting of linkTypeOptions) {
             const {visible = true, showLabel = true} = setting;
-            const linkTypeId = setting.property as LinkTypeIri;
+            const linkTypeId: LinkTypeIri = setting.property;
             const visibility: LinkTypeVisibility = (
                 visible && showLabel ? 'visible' :
                 visible && !showLabel ? 'withoutLabel' :

@@ -337,7 +337,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         super(props);
         const {targetIris, initialMode, suggestProperties, workspace: {model, translation: t}} = this.props;
         this.ALL_RELATED_ELEMENTS_LINK = {
-            id: 'urn:reactodia:allLinks' as LinkTypeIri,
+            id: 'urn:reactodia:allLinks',
             label: [model.factory.literal(t.text('connections_menu.all_link.label'))],
         };
         const allowSmartSort = Boolean(suggestProperties) && targetIris.length === 1;
@@ -554,7 +554,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             
             const scores = new Map<LinkTypeIri, PropertyScore>();
             for (const score of scoreList) {
-                scores.set(score.propertyIri as LinkTypeIri, score);
+                scores.set(score.propertyIri, score);
             }
             this.setState(state => ({
                 connectionSuggestions: {

@@ -1,11 +1,10 @@
-import classnames from 'classnames';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { EventObserver } from '../../coreUtils/events';
 
 import { MetadataCanConnect } from '../../data/metadataProvider';
-import { ElementIri, ElementModel, ElementTypeIri, LinkTypeIri } from '../../data/model';
+import { ElementModel, ElementTypeIri, LinkTypeIri } from '../../data/model';
 import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../../data/schema';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
@@ -148,7 +147,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             data: {
                 linkTypeId: PLACEHOLDER_LINK_TYPE,
                 sourceId: source.iri,
-                targetId: '' as ElementIri,
+                targetId: '',
                 properties: {},
             },
         });
@@ -173,8 +172,8 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             targetId: mode === 'moveTarget' ? temporaryElement.id : targetId,
             data: {
                 ...data,
-                sourceId: mode === 'moveSource' ? ('' as ElementIri) : data.sourceId,
-                targetId: mode === 'moveTarget' ? ('' as ElementIri) : data.targetId,
+                sourceId: mode === 'moveSource' ? '' : data.sourceId,
+                targetId: mode === 'moveTarget' ? '' : data.targetId,
             },
             vertices,
             linkState,

@@ -3,7 +3,7 @@ import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkTypeModel, ElementTypeModel, ElementTypeGraph, ElementModel, LinkModel, PropertyTypeModel,
+    LinkTypeModel, ElementTypeGraph, ElementModel, LinkModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
 } from '../model';
@@ -33,7 +33,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
 
     for (const binding of response.results.bindings) {
         if (!isRdfIri(binding.class)) { continue; }
-        const classIri = binding.class.value as ElementTypeIri;
+        const classIri: ElementTypeIri = binding.class.value;
 
         let node = nodes.get(classIri);
         if (!node) {
@@ -43,7 +43,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
 
         appendLabel(node.label, binding.label);
         if (binding.parent) {
-            const parentIri = binding.parent.value as ElementTypeIri;
+            const parentIri: ElementTypeIri = binding.parent.value;
             edges.add([classIri, parentIri]);
         }
         if (binding.instcount) {
@@ -54,7 +54,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
     // ensuring parent will always be there
     for (const binding of response.results.bindings) {
         if (binding.parent) {
-            const parentIri = binding.parent.value as ElementTypeIri;
+            const parentIri: ElementTypeIri = binding.parent.value;
             if (!nodes.has(parentIri)) {
                 nodes.set(parentIri, createEmptyModel(parentIri));
             }
@@ -63,7 +63,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
 
     function createEmptyModel(iri: ElementTypeIri): MutableClassModel {
         return {
-            id: iri as ElementTypeIri,
+            id: iri,
             label: [],
             count: undefined,
         };
@@ -81,7 +81,7 @@ export function collectClassInfo(
 ): void {
     for (const binding of response.results.bindings) {
         if (!binding.class) { continue; }
-        const id = binding.class.value as ElementTypeIri;
+        const id: ElementTypeIri = binding.class.value;
         const model = result.get(id);
         if (model) {
             appendLabel(model.label, binding.label);
@@ -113,13 +113,13 @@ export function collectPropertyInfo(
     result: Map<PropertyTypeIri, MutablePropertyModel>
 ): void {
     for (const binding of response.results.bindings) {
-        const propertyTypeId = binding.property.value as PropertyTypeIri;
+        const propertyTypeId: PropertyTypeIri = binding.property.value;
         const existing = result.get(propertyTypeId);
         if (existing) {
             appendLabel(existing.label, binding.label);
         } else {
             result.set(propertyTypeId, {
-                id: binding.property.value as PropertyTypeIri,
+                id: binding.property.value,
                 label: binding.label ? [binding.label] : [],
             });
         }
@@ -137,7 +137,7 @@ export function collectLinkTypes(
     result: Map<LinkTypeIri, MutableLinkType>
 ): void {
     for (const binding of response.results.bindings) {
-        const linkTypeId = binding.link.value as LinkTypeIri;
+        const linkTypeId: LinkTypeIri = binding.link.value;
         const existing = result.get(linkTypeId);
         if (existing) {
             appendLabel(existing.label, binding.label);
@@ -171,7 +171,7 @@ export function triplesToElementBinding(
         if (!isRdfIri(t.subject)) {
             continue;
         }
-        const subject = t.subject.value as ElementIri;
+        const subject: ElementIri = t.subject.value;
         if (!elements.has(subject)) {
             elements.set(subject, createAndPushBinding(t));
         }
@@ -230,7 +230,7 @@ export function getElementsInfo(
 
     for (const binding of response.results.bindings) {
         if (!isRdfIri(binding.inst)) { continue; }
-        const iri = binding.inst.value as ElementIri;
+        const iri: ElementIri = binding.inst.value;
         let model = instances.get(iri);
         if (!model) {
             model = emptyElementInfo(iri);
@@ -282,7 +282,7 @@ export function enrichElementsWithImages(
         if (!isRdfIri(binding.inst)) {
             continue;
         }
-        const elementInfo = elements.get(binding.inst.value as ElementIri);
+        const elementInfo = elements.get(binding.inst.value);
         if (elementInfo) {
             (elementInfo as MutableElementModel).image = binding.image.value;
         }
@@ -295,8 +295,8 @@ export function collectElementTypes(
 ): void {
     for (const binding of response.results.bindings) {
         if (isRdfIri(binding.inst) && isRdfIri(binding.class)) {
-            const element = binding.inst.value as ElementIri;
-            const type = binding.class.value as ElementTypeIri;
+            const element: ElementIri = binding.inst.value;
+            const type: ElementTypeIri = binding.class.value;
             multimapAdd(result, element, type);
         }
     }
@@ -319,9 +319,9 @@ export function getLinksInfo(
 
     for (const binding of bindings) {
         const model: MutableLinkModel = {
-            sourceId: binding.source.value as ElementIri,
-            linkTypeId: binding.type.value as LinkTypeIri,
-            targetId: binding.target.value as ElementIri,
+            sourceId: binding.source.value,
+            linkTypeId: binding.type.value,
+            targetId: binding.target.value,
             properties: {},
         };
         const existing = links.get(model);
@@ -339,7 +339,7 @@ export function getLinksInfo(
                 for (const linkConfig of linkConfigs) {
                     if (typeMatchesDomain(linkConfig, types.get(model.sourceId))) {
                         const mappedModel: MutableLinkModel = isDirectLink(linkConfig)
-                            ? {...model, linkTypeId: linkConfig.id as LinkTypeIri} : model;
+                            ? {...model, linkTypeId: linkConfig.id} : model;
                         links.set(mappedModel, mappedModel);
                     }
                 }
@@ -387,10 +387,10 @@ export function getConnectedLinkTypes(
             for (const linkConfig of linkConfigs) {
                 const mappedLinkType = isDirectLink(linkConfig)
                     ? linkConfig.id : binding.link.value;
-                pushLinkType(mappedLinkType as LinkTypeIri, binding.direction);
+                pushLinkType(mappedLinkType, binding.direction);
             }
         } else if (openWorldLinks) {
-            pushLinkType(binding.link.value as LinkTypeIri, binding.direction);
+            pushLinkType(binding.link.value, binding.direction);
         }
     }
     return Array.from(linkTypes.values());
@@ -425,7 +425,7 @@ export function getFilteredData(
             continue;
         }
 
-        const iri = binding.inst.value as ElementIri;
+        const iri: ElementIri = binding.inst.value;
         let model = instances.get(iri);
         if (!model) {
             model = emptyElementInfo(iri);
@@ -434,7 +434,7 @@ export function getFilteredData(
         enrichElement(model, binding);
 
         if (isRdfIri(binding.classAll)) {
-            multimapAdd(resultTypes, iri, binding.classAll.value as ElementTypeIri);
+            multimapAdd(resultTypes, iri, binding.classAll.value);
         }
 
         if (!openWorldLinks && binding.link && binding.direction) {
@@ -512,11 +512,11 @@ function* translateLinkPredicates(
         if (matched) {
             for (const link of matched) {
                 if (typeMatchesDomain(link, types)) {
-                    yield link.id as LinkTypeIri;
+                    yield link.id;
                 }
             }
         } else if (openWorldLinks) {
-            yield predicate as LinkTypeIri;
+            yield predicate;
         }
     }
 }
@@ -543,7 +543,7 @@ function typeMatchesDomain(
         return false;
     } else {
         for (const type of config.domain) {
-            if (types.has(type as ElementTypeIri)) {
+            if (types.has(type)) {
                 return true;
             }
         }
@@ -554,8 +554,8 @@ function typeMatchesDomain(
 export function enrichElement(element: MutableElementModel, binding: ElementBinding) {
     if (!element) { return; }
     appendLabel(element.label, binding.label);
-    if (binding.class && element.types.indexOf(binding.class.value as ElementTypeIri) < 0) {
-        element.types.push(binding.class.value as ElementTypeIri);
+    if (binding.class && element.types.indexOf(binding.class.value) < 0) {
+        element.types.push(binding.class.value);
     }
     if (binding.propType && binding.propValue && binding.propType.value !== LABEL_PREDICATE) {
         appendProperty(element.properties, binding.propType, binding.propValue);
@@ -597,7 +597,7 @@ function parseCount(countLiteral: Rdf.Literal): number {
 
 function getLinkCount(sLinkType: LinkCountBinding): DataProviderLinkCount {
     return {
-        id: sLinkType.link.value as LinkTypeIri,
+        id: sLinkType.link.value,
         inCount: parseCount(sLinkType.inCount),
         outCount: parseCount(sLinkType.outCount),
     };
@@ -615,7 +615,7 @@ function emptyElementInfo(id: ElementIri): MutableElementModel {
 
 function getLinkTypeInfo(binding: LinkTypeBinding): MutableLinkType {
     return {
-        id: binding.link.value as LinkTypeIri,
+        id: binding.link.value,
         label: binding.label ? [binding.label] : [],
         count: binding.instcount ? parseCount(binding.instcount) : undefined,
     };

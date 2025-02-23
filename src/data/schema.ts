@@ -13,13 +13,13 @@ export const DIAGRAM_CONTEXT_URL_V1 = 'https://ontodia.org/context/v1.json';
  *
  * @category Constants
  */
-export const PLACEHOLDER_ELEMENT_TYPE = 'urn:reactodia:newElement' as ElementTypeIri;
+export const PLACEHOLDER_ELEMENT_TYPE: ElementTypeIri = 'urn:reactodia:newElement';
 /**
  * Link type for an newly created temporary relation in graph authoring mode.
  *
  * @category Constants
  */
-export const PLACEHOLDER_LINK_TYPE = 'urn:reactodia:newLink' as LinkTypeIri;
+export const PLACEHOLDER_LINK_TYPE: LinkTypeIri = 'urn:reactodia:newLink';
 
 /**
  * Well-known properties for element state ({@link Element.elementState})

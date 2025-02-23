@@ -157,7 +157,7 @@ export class RdfDataProvider implements DataProvider {
         for (const baseType of this.elementTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
                 if (isResourceTerm(t.subject)) {
-                    const elementTypeId = this.encodeTerm(t.subject) as ElementTypeIri;
+                    const elementTypeId: ElementTypeIri = this.encodeTerm(t.subject);
                     if (!typeCounts.has(elementTypeId)) {
                         typeCounts.set(elementTypeId, 0);
                     }
@@ -168,17 +168,17 @@ export class RdfDataProvider implements DataProvider {
         if (this.elementSubtypePredicate) {
             for (const t of this.dataset.iterateMatches(null, this.elementSubtypePredicate, null)) {
                 if (isResourceTerm(t.subject) && isResourceTerm(t.object)) {
-                    const derivedTypeId = this.encodeTerm(t.subject) as ElementTypeIri;
+                    const derivedTypeId: ElementTypeIri = this.encodeTerm(t.subject);
                     if (!typeCounts.has(derivedTypeId)) {
                         typeCounts.set(derivedTypeId, 0);
                     }
-                    const baseTypeId = this.encodeTerm(t.object) as ElementTypeIri;
+                    const baseTypeId: ElementTypeIri = this.encodeTerm(t.object);
                     if (!typeCounts.has(baseTypeId)) {
                         typeCounts.set(baseTypeId, 0);
                     }
                     foundEdges.add([
-                        this.encodeTerm(t.subject) as ElementTypeIri,
-                        this.encodeTerm(t.object) as ElementTypeIri
+                        this.encodeTerm(t.subject),
+                        this.encodeTerm(t.object),
                     ]);
                 }
             }
@@ -214,7 +214,7 @@ export class RdfDataProvider implements DataProvider {
         for (const baseType of this.linkTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
                 if (isResourceTerm(t.subject)) {
-                    const linkTypeId = this.encodeTerm(t.subject) as LinkTypeIri;
+                    const linkTypeId: LinkTypeIri = this.encodeTerm(t.subject);
                     if (!linkCounts.has(linkTypeId)) {
                         linkCounts.set(linkTypeId, 0);
                     }
@@ -360,9 +360,9 @@ export class RdfDataProvider implements DataProvider {
             ) {
                 const properties = findProperties(this.dataset, t);
                 links.push({
-                    sourceId: this.encodeTerm(t.subject) as ElementIri,
-                    targetId: this.encodeTerm(t.object) as ElementIri,
-                    linkTypeId: this.encodeTerm(t.predicate) as LinkTypeIri,
+                    sourceId: this.encodeTerm(t.subject),
+                    targetId: this.encodeTerm(t.object),
+                    linkTypeId: this.encodeTerm(t.predicate),
                     properties,
                 });
             }
@@ -381,7 +381,7 @@ export class RdfDataProvider implements DataProvider {
         const outCounts = new Map<LinkTypeIri, number>();
         for (const t of this.dataset.iterateMatches(elementIri, null, null)) {
             if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.object)) {
-                const linkTypeIri = this.encodeTerm(t.predicate) as LinkTypeIri;
+                const linkTypeIri: LinkTypeIri = this.encodeTerm(t.predicate);
                 outCounts.set(linkTypeIri, (outCounts.get(linkTypeIri) ?? 0) + 1);
             }
         }
@@ -389,7 +389,7 @@ export class RdfDataProvider implements DataProvider {
         const inCounts = new Map<LinkTypeIri, number>();
         for (const t of this.dataset.iterateMatches(null, null, elementIri)) {
             if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.subject)) {
-                const linkTypeIri = this.encodeTerm(t.predicate) as LinkTypeIri;
+                const linkTypeIri: LinkTypeIri = this.encodeTerm(t.predicate);
                 inCounts.set(linkTypeIri, (inCounts.get(linkTypeIri) ?? 0) + 1);
             }
         }
@@ -440,7 +440,7 @@ export class RdfDataProvider implements DataProvider {
                             item = {term};
                             items.set(term, item);
                         }
-                        const predicate = this.encodeTerm(t.predicate) as LinkTypeIri;
+                        const predicate: LinkTypeIri = this.encodeTerm(t.predicate);
                         if (!item.outLinks) {
                             item.outLinks = new Set();
                         }
@@ -457,7 +457,7 @@ export class RdfDataProvider implements DataProvider {
                             item = {term};
                             items.set(term, item);
                         }
-                        const predicate = this.encodeTerm(t.predicate) as LinkTypeIri;
+                        const predicate: LinkTypeIri = this.encodeTerm(t.predicate);
                         if (!item.inLinks) {
                             item.inLinks = new Set();
                         }
@@ -523,7 +523,7 @@ export class RdfDataProvider implements DataProvider {
                 ? findFirstIriOrLiteral(this.dataset, item.term, this.imagePredicate)
                 : undefined;
             const model: ElementModel = {
-                id: this.encodeTerm(item.term) as ElementIri,
+                id: this.encodeTerm(item.term),
                 types: findTypes(this.dataset, item.term, this.typePredicate),
                 label: labels,
                 image: imageTerm ? imageTerm.value : undefined,
@@ -543,7 +543,7 @@ export class RdfDataProvider implements DataProvider {
         const instanceCounts = new Map<ElementTypeIri, number>();
         for (const t of this.dataset.iterateMatches(null, this.typePredicate, null)) {
             if (isResourceTerm(t.object)) {
-                const elementTypeId = this.encodeTerm(t.object) as ElementTypeIri;
+                const elementTypeId: ElementTypeIri = this.encodeTerm(t.object);
                 instanceCounts.set(elementTypeId, (instanceCounts.get(elementTypeId) ?? 0) + 1);
             }
         }
@@ -557,7 +557,7 @@ export class RdfDataProvider implements DataProvider {
         const linkStats = new Map<LinkTypeIri, number>();
         for (const t of this.dataset) {
             if (t.predicate.termType === 'NamedNode') {
-                const linkTypeId = this.encodeTerm(t.predicate) as LinkTypeIri;
+                const linkTypeId: LinkTypeIri = this.encodeTerm(t.predicate);
                 if (!linkTypeSet || linkTypeSet.has(linkTypeId)) {
                     linkStats.set(linkTypeId, (linkStats.get(linkTypeId) ?? 0) + 1);
                 }
@@ -601,7 +601,7 @@ function findTypes(
     const typeSet = new Set<ElementTypeIri>();
     for (const t of dataset.iterateMatches(subject, predicate, null)) {
         if (isResourceTerm(t.object)) {
-            const typeId = encodeTerm(t.object) as ElementTypeIri;
+            const typeId: ElementTypeIri = encodeTerm(t.object);
             typeSet.add(typeId);
         }
     }

@@ -192,19 +192,19 @@ export class MockDataProvider extends EmptyDataProvider {
 }
 
 export function element(key: string): ElementIri {
-    return `element:${key}` as ElementIri;
+    return `element:${key}`;
 }
 
 export function elementType(key: string): ElementTypeIri {
-    return `element-type:${key}` as ElementTypeIri;
+    return `element-type:${key}`;
 }
 
 export function linkType(key: string): LinkTypeIri {
-    return `link-type:${key}` as LinkTypeIri;
+    return `link-type:${key}`;
 }
 
 export function propertyType(key: string): PropertyTypeIri {
-    return `property-type:${key}` as PropertyTypeIri;
+    return `property-type:${key}`;
 }
 
 export function missing<T extends string>(iri: T): T {

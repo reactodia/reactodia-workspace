@@ -2,7 +2,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import type { TranslatedProperty, Translation } from '../coreUtils/i18n';
+import type { Translation } from '../coreUtils/i18n';
 
 import type * as Rdf from '../data/rdf/rdfModel';
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
@@ -86,7 +86,7 @@ interface StandardTemplateBodyProps extends TemplateProps {
 }
 
 const CLASS_NAME = 'reactodia-standard-template';
-const FOAF_NAME = 'http://xmlns.com/foaf/0.1/name' as PropertyTypeIri;
+const FOAF_NAME: PropertyTypeIri = 'http://xmlns.com/foaf/0.1/name';
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
@@ -377,7 +377,7 @@ function isPinnedProperty(iri: PropertyTypeIri, pinned: PinnedProperties): boole
 function hasPinnedProperties(data: ElementModel, pinned: PinnedProperties): boolean {
     for (const iri in data.properties) {
         if (Object.prototype.hasOwnProperty.call(data.properties, iri)) {
-            if (isPinnedProperty(iri as PropertyTypeIri, pinned)) {
+            if (isPinnedProperty(iri, pinned)) {
                 return true;
             }
         }
@@ -432,7 +432,7 @@ function PropertyList(props: {
     const {data, shouldInclude} = props;
     const {model, translation: t} = useWorkspace();
 
-    let propertyIris = Object.keys(data.properties) as PropertyTypeIri[];
+    let propertyIris: PropertyTypeIri[] = Object.keys(data.properties);
     if (shouldInclude) {
         propertyIris = propertyIris.filter(shouldInclude);
     }

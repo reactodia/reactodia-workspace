@@ -73,7 +73,7 @@ function tryParseDefaultDragAndDropData(e: DragEvent): ElementIri[] {
             try {
                 iris = JSON.parse(iriString);
             } catch (e) {
-                iris = [(decode ? decodeURI(iriString) : iriString) as ElementIri];
+                iris = [(decode ? decodeURI(iriString) : iriString)];
             }
             return iris.length === 0 ? undefined : iris;
         } catch (e) {

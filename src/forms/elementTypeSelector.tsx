@@ -182,7 +182,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         const signal = this.loadingItemCancellation.signal;
 
         const {onChange, workspace: {editor: {metadataProvider}}} = this.props;
-        const elementTypeIri = (e.target as HTMLSelectElement).value as ElementTypeIri;
+        const elementTypeIri: ElementTypeIri = (e.target as HTMLSelectElement).value;
         let elementModel: ElementModel | null;
         try {
             elementModel = await mapAbortedToNull(

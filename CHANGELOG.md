@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Deprecate `DiagramModel.locale` usage: use `Translation` object to perform locale-specific formatting instead.
+- Relax assignment compatibility for branded IRI types (`ElementIri`, `ElementTypeIri`, `LinkTypeIri`, `PropertyTypeIri`) to allow assignment from a raw `string` type but not between them.
 
 ### Fixed
 - Disallow selection of already present but grouped entities in `ConnectionsMenu` and place them again onto the canvas.

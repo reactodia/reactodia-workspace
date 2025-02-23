@@ -421,7 +421,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     private setLinkSettings(settings: ReadonlyArray<SerializedLinkOptions>) {
         for (const setting of settings) {
             const {visible = true, showLabel = true} = setting;
-            const linkTypeId = setting.property as LinkTypeIri;
+            const linkTypeId: LinkTypeIri = setting.property;
             const visibility: LinkTypeVisibility = (
                 visible && showLabel ? 'visible' :
                 visible && !showLabel ? 'withoutLabel' :
@@ -1006,7 +1006,7 @@ class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGrap
         language?: string
     ): FormattedProperty[] {
         const targetLanguage = language ?? this.model.language;
-        const propertyIris = Object.keys(properties) as PropertyTypeIri[];
+        const propertyIris: PropertyTypeIri[] = Object.keys(properties);
         const propertyList = propertyIris.map((propertyId): FormattedProperty => {
             const labels = this.model.getPropertyType(propertyId)?.data?.label;
             const label = this.formatLabel(labels, propertyId, targetLanguage);
