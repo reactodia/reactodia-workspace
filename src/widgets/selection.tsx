@@ -86,7 +86,7 @@ export function Selection(props: SelectionProps) {
         let origin: PageOrigin | undefined;
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerDown', e => {
-            const requireShift = e.source.pointerMode !== 'selection';
+            const requireShift = e.source.pointerMode === 'panning';
             const allowSelection = e.sourceEvent.shiftKey === requireShift;
             if (!e.target && !e.panning && allowSelection) {
                 e.sourceEvent.preventDefault();
@@ -112,7 +112,7 @@ export function Selection(props: SelectionProps) {
             moveListener?.stopListening();
             setHighlightedBox(undefined);
             if (e.triggerAsClick) {
-                const requireShift = e.source.pointerMode !== 'selection';
+                const requireShift = e.source.pointerMode === 'panning';
                 const allowSelection = e.sourceEvent.shiftKey === requireShift;
                 if (
                     (allowSelection || model.selection.length > 1) &&
@@ -201,6 +201,9 @@ function applySelection(
     ));
     if (newlySelected.length > 0) {
         model.setSelection([...model.selection, ...newlySelected]);
+        if (canvas.pointerMode === 'selectionOnce') {
+            canvas.setPointerMode('panning');
+        }
     }
 }
 

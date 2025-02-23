@@ -387,13 +387,15 @@ export interface CanvasAreaMetrics {
 /**
  * Action on moving pointer with pressed main button:
  *   - `panning` - pans the viewport over canvas;
- *   - `selection` - starts selection of the cells on canvas.
+ *   - `selection` - starts selection of the cells on canvas;
+ *   - `selectionOnce` - same as `selection` with auto-reset to `panning`
+ *     after selection is made.
  *
  * This mode may be changed to another while `Shift` button is being held
  * (this should be implemented separately when the property value is used
  * in other components).
  */
-export type CanvasPointerMode = 'panning' | 'selection';
+export type CanvasPointerMode = 'panning' | 'selection' | 'selectionOnce';
 
 /**
  * Options for {@link CanvasApi} methods affecting the viewport.

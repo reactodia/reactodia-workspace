@@ -34,15 +34,18 @@ export interface ZoomControlProps {
     /**
      * Whether to display canvas pointer mode toggle.
      *
-     * In `panning` mode moving the pointer with pressed main button pans the canvas
-     * area unless the Shift is held: in that case it selects the elements instead.
+     * If set to `selectionOnce`, the selection mode will switch back to `panning`
+     * after the selection is made.
      *
-     * In `selection` mode the actions are exchanged.
+     * Canvas pointer modes: 
+     *  - `panning`: moving the pointer with pressed main button pans the canvas
+     * area unless the Shift is held: in that case it selects the elements instead,
+     *  - `selection`: the actions are exchanged.
      *
-     * @default false
+     * @default "selectionOnce"
      * @see {@link CanvasApi.pointerMode}
      */
-    showPointerModeToggle?: boolean;
+    showPointerModeToggle?: boolean | 'selectionOnce';
 }
 
 const CLASS_NAME = 'reactodia-zoom-control';
@@ -53,12 +56,14 @@ const CLASS_NAME = 'reactodia-zoom-control';
  * @category Components
  */
 export function ZoomControl(props: ZoomControlProps) {
-    const {dock, dockOffsetX, dockOffsetY, showPointerModeToggle} = props;
+    const {dock, dockOffsetX, dockOffsetY, showPointerModeToggle = 'selectionOnce'} = props;
     const {canvas} = useCanvas();
     const t = useTranslation();
     const pointerMode = useObservedProperty(
         canvas.events, 'changePointerMode', () => canvas.pointerMode
     );
+    const selectionPointerMode = showPointerModeToggle === 'selectionOnce'
+        ? 'selectionOnce' : 'selection';
     return (
         <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
@@ -93,11 +98,11 @@ export function ZoomControl(props: ZoomControlProps) {
                         className={classnames(
                             `${CLASS_NAME}__selection-mode-button`,
                             'reactodia-btn reactodia-btn-default',
-                            pointerMode === 'selection' ? 'active' : undefined
+                            pointerMode === 'panning' ? undefined : 'active'
                         )}
                         title={t.text('zoom_control.pointer_mode.title')}
                         onClick={() => canvas.setPointerMode(
-                            pointerMode === 'panning' ? 'selection' : 'panning'
+                            pointerMode === 'panning' ? selectionPointerMode : 'panning'
                         )}>
                     </button>
                 ) : null}

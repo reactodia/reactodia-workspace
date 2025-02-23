@@ -478,7 +478,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private shouldStartPanning(e: React.PointerEvent) {
-        const requireShift = this._pointerMode === 'selection';
+        const requireShift = this._pointerMode !== 'panning';
         return (
             e.pointerType === 'mouse' &&
             e.shiftKey === requireShift &&
