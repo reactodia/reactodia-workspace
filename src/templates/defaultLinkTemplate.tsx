@@ -33,6 +33,7 @@ export const DefaultLinkTemplate: LinkTemplate = {
 
 const CLASS_NAME = 'reactodia-default-link';
 
+const PROPERTY_CLASS = `${CLASS_NAME}__property`;
 const TEXT_CLASS = `${CLASS_NAME}__label-text`;
 const BACKGROUND_CLASS = `${CLASS_NAME}__label-background`;
 
@@ -228,6 +229,7 @@ function LinkProperties(props: DefaultLinkPathTemplateProps) {
                 position={getPathPosition(0.5)}
                 line={propertyLabelStartLine + index}
                 textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
+                className={classnames(PROPERTY_CLASS, propertyLabelProps?.className)}
                 textClass={classnames(TEXT_CLASS, propertyLabelProps?.textClass)}
                 rectClass={classnames(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
                 title={propertyLabelProps?.title ?? t.text('default_link_template.property.title', {

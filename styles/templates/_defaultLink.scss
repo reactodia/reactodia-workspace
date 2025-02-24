@@ -18,6 +18,12 @@
     font-weight: normal;
   }
 
+  &__property &__label-text {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 90%;
+  }
+
   &__label-background {
     fill: $theme-canvas-background-color;
     stroke: none;
