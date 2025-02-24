@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Disallow selection of already present but grouped entities in `ConnectionsMenu` and place them again onto the canvas.
 - Fix incorrect handling of a relation in the "Edit relation" dialog when reversing the its direction (e.g. a change from "Person isAuthorOf Book" to "Book isNamedAfter Person"), including validation against duplicate relations and the displayed direction.
+- Error when trying to render a `ToolbarActionOpen` or `ToolbarActionSave` in the toolbar instead of a dropdown menu.
 
 ### Removed
 - Unused `raceAbortSignal()` function.

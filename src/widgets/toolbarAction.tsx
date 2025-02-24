@@ -115,13 +115,13 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
     const inputRef = React.useRef<HTMLInputElement | null>(null);
     return (
         <>
-            <DropdownMenuItem {...otherProps}
+            <ToolbarAction {...otherProps}
                 className={classnames(className, `${CLASS_NAME}__open`)}
                 onSelect={() => {
                     inputRef.current?.click();
                 }}>
                 {children}
-            </DropdownMenuItem>
+            </ToolbarAction>
             <input ref={inputRef}
                 type='file'
                 className={`${CLASS_NAME}__open-input`}
@@ -190,13 +190,13 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     }
 
     return (
-        <DropdownMenuItem {...otherProps}
+        <ToolbarAction {...otherProps}
             className={classnames(className, `${CLASS_NAME}__save`)}
             disabled={!enabled}
             onSelect={onSelect}
             title={title ?? defaultTitle}>
             {children}
-        </DropdownMenuItem>
+        </ToolbarAction>
     );
 }
 
@@ -262,6 +262,10 @@ export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
      * @default {backgroundColor: "white"}
      */
     rasterOptions?: ExportRasterOptions;
+    /**
+     * Action content.
+     */
+    children?: React.ReactNode;
 }
 
 /**
@@ -271,7 +275,8 @@ export interface ToolbarActionExportProps extends ToolbarActionStyleProps {
  */
 export function ToolbarActionExport(props: ToolbarActionExportProps) {
     const {
-        className, title, kind, fileName = 'diagram', rasterOptions, ...otherProps
+        className, title, kind, fileName = 'diagram', rasterOptions, children,
+        ...otherProps
     } = props;
     const {canvas} = useCanvas();
     const t = useTranslation();
@@ -289,7 +294,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         saveAs(blob, `${fileName}.png`);
                     });
                 }}>
-                {t.text('toolbar_action.export_raster.label')}
+                {children ?? t.text('toolbar_action.export_raster.label')}
             </ToolbarAction>
         );
     } else if (kind === 'exportSvg') {
@@ -303,7 +308,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         saveAs(blob, `${fileName}.svg`);
                     });
                 }}>
-                {t.text('toolbar_action.export_svg.label')}
+                {children ?? t.text('toolbar_action.export_svg.label')}
             </ToolbarAction>
         );
     } else if (kind === 'print') {
@@ -319,7 +324,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                         printWindow.print();
                     });
                 }}>
-                {t.text('toolbar_action.export_print.label')}
+                {children ?? t.text('toolbar_action.export_print.label')}
             </ToolbarAction>
         );
     } else {
