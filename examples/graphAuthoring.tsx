@@ -10,29 +10,49 @@ const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
-function RdfClassicExample() {
+function GraphAuthoringExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
+    const [searchCommands] = React.useState(() =>
+        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
+    );
+
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model, editor} = context;
+        const {model, editor, performLayout} = context;
         editor.setAuthoringMode(true);
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
-            dataProvider.addGraph(new N3.Parser().parse(turtleData));
+            dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
         } catch (err) {
             throw new Error('Error parsing RDF graph data', {cause: err});
         }
     
         const diagram = tryLoadLayoutFromLocalStorage();
-        model.importLayout({
+        await model.importLayout({
             diagram,
             dataProvider,
             validateLinks: true,
             signal,
         });
-    }, [turtleData]);
+
+        if (!diagram) {
+            const elements = [
+                model.createElement('http://www.w3.org/ns/org#Organization'),
+                model.createElement('http://www.w3.org/ns/org#FormalOrganization'),
+                model.createElement('http://www.w3.org/ns/org#hasMember'),
+                model.createElement('http://www.w3.org/ns/org#hasSubOrganization'),
+                model.createElement('http://www.w3.org/ns/org#subOrganizationOf'),
+                model.createElement('http://www.w3.org/ns/org#unitOf'),
+            ];
+            model.history.execute(Reactodia.setElementExpanded(elements[0], true));
+            await Promise.all([
+                model.requestElementData(elements.map(el => el.iri)),
+                model.requestLinks(),
+            ]);
+            await performLayout({signal});
+        }
+    }, []);
 
     const [metadataProvider] = React.useState(() => new ExampleMetadataProvider());
     const [validationProvider] = React.useState(() => new ExampleValidationProvider());
@@ -46,14 +66,8 @@ function RdfClassicExample() {
             renameLinkProvider={renameLinkProvider}
             typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
-            <Reactodia.ClassicWorkspace
+            <Reactodia.DefaultWorkspace
                 canvas={{
-                    elementTemplateResolver: types => {
-                        if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                            return Reactodia.ClassicTemplate;
-                        }
-                        return undefined;
-                    },
                     linkTemplateResolver: type => {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return Reactodia.DefaultLinkTemplate;
@@ -61,14 +75,8 @@ function RdfClassicExample() {
                         return Reactodia.OntologyLinkTemplates(type); 
                     },
                 }}
-                toolbar={{
-                    menu: (
-                        <>
-                            <ToolbarActionOpenTurtleGraph onOpen={setTurtleData} />
-                            <ExampleToolbarMenu />
-                        </>
-                    ),
-                }}
+                menu={<ExampleToolbarMenu />}
+                searchCommands={searchCommands}
             />
         </Reactodia.Workspace>
     );
@@ -80,20 +88,4 @@ class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     }
 }
 
-function ToolbarActionOpenTurtleGraph(props: {
-    onOpen: (turtleText: string) => void;
-}) {
-    const {onOpen} = props;
-    return (
-        <Reactodia.ToolbarActionOpen
-            fileAccept='.ttl'
-            onSelect={async file => {
-                const turtleText = await file.text();
-                onOpen(turtleText);
-            }}>
-            Load RDF (Turtle) data
-        </Reactodia.ToolbarActionOpen>
-    );
-}
-
-mountOnLoad(<RdfClassicExample />);
+mountOnLoad(<GraphAuthoringExample />);

@@ -16,9 +16,10 @@ module.exports = (env, argv) => {
   const EXAMPLES = [
     'index',
     'basic',
+    'classicWorkspace',
+    'graphAuthoring',
     'i18n',
-    'rdf',
-    'rdfClassic',
+    'rdfExplorer',
     'sparql',
     'stressTest',
     'styleCustomization',
