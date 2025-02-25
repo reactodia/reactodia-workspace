@@ -118,7 +118,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
                 <React.Fragment key={typeIri}>
                     {index === 0 ? null : ', '}
                     <WithFetchStatus type='elementType' target={typeIri}>
-                        <span title={typeIri}>{label}</span>
+                        <span>{label}</span>
                     </WithFetchStatus>
                 </React.Fragment>
             );
