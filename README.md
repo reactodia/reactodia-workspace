@@ -22,9 +22,7 @@ import * as React from 'react';
 import * as Reactodia from '@reactodia/workspace';
 import * as N3 from 'n3';
 
-const GRAPH_DATA =
-    'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
-    'master/examples/resources/orgOntology.ttl';
+const GRAPH_DATA = 'https://reactodia.github.io/resources/orgOntology.ttl';
 
 // Use background Web Worker to compute graph layout
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
