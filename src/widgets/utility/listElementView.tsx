@@ -2,7 +2,11 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { hcl } from 'd3-color';
 
+import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
+
 import { ElementModel } from '../../data/model';
+
+import { subscribeElementTypes } from '../../editor/observedElement';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -55,6 +59,8 @@ export function ListElementView(props: ListElementViewProps) {
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
+
+    useKeyedSyncStore(subscribeElementTypes, element.types, model);
 
     const {color: elementColor} = getElementTypeStyle(element.types);
     const {h, c, l} = hcl(elementColor);
