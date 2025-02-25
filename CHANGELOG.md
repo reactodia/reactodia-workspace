@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Latest]
+
+## [0.28.0] - 2025-02-26
 ### Added
 - Support i18n for the UI components:
   * Allow to provide custom bundles with translation strings and (optionally) disable the default one with `translations` and `useDefaultTranslation` properties for the `Workspace`;
@@ -350,7 +352,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.1...HEAD
+[Latest]: https://github.com/reactodia/reactodia-workspace/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.1...v0.28.0
 [0.27.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.1...v0.27.0
 [0.26.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.0...v0.26.1
