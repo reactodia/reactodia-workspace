@@ -43,7 +43,7 @@ interface MeasurableLabel {
 
 const CLASS_NAME = 'reactodia-link-layer';
 
-export class LinkLayer extends React.Component<LinkLayerProps> {
+export class LinkLayer extends React.Component<LinkLayerProps, { version: number }> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
@@ -63,6 +63,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
         this.providedContext = {
             scheduleLabelMeasure: this.scheduleLabelMeasure,
         };
+        this.state = {version: 0};
     }
 
     componentDidMount() {
@@ -107,6 +108,10 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
             for (const link of model.links.filter(link => link.typeId === e.source)) {
                 this.scheduleUpdateLink(link.id);
             }
+        });
+        this.listener.listen(model.events, 'discardGraph', () => {
+            this.setState(state => ({version: state.version + 1}));
+            this.scheduleUpdateAll();
         });
         this.listener.listen(renderingState.shared.events, 'changeHighlight', this.scheduleUpdateAll);
         this.listener.listen(renderingState.events, 'changeElementSize', e => {
@@ -223,6 +228,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
 
     render() {
         const {model, links, renderingState} = this.props;
+        const {version} = this.state;
         const {memoizedLinks} = this;
 
         const shouldUpdate = this.popShouldUpdatePredicate();
@@ -234,7 +240,7 @@ export class LinkLayer extends React.Component<LinkLayerProps> {
 
         return (
             <LinkLayerContext.Provider value={this.providedContext}>
-                <g className={CLASS_NAME}>
+                <g key={version} className={CLASS_NAME}>
                     {links.map(link => {
                         let linkView = memoizedLinks.get(link);
                         if (!linkView) {

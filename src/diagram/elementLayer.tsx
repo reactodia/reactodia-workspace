@@ -19,6 +19,7 @@ export interface ElementLayerProps {
 }
 
 interface State {
+    readonly version: number;
     readonly elementStates: ReadonlyMap<string, ElementState>;
 }
 
@@ -63,6 +64,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         super(props);
         const {model, renderingState} = this.props;
         this.state = {
+            version: 0,
             elementStates: applyRedrawRequests(
                 model,
                 renderingState.shared,
@@ -74,7 +76,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
 
     render() {
         const {style, model, renderingState} = this.props;
-        const {elementStates} = this.state;
+        const {version, elementStates} = this.state;
         const {memoizedElements} = this;
 
         const elementsToRender: ElementState[] = [];
@@ -86,7 +88,8 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         }
 
         return (
-            <div className='reactodia-element-layer'
+            <div key={version}
+                className='reactodia-element-layer'
                 style={style}>
                 {elementsToRender.map(state => {
                     let overlaidElement = memoizedElements.get(state);
@@ -155,6 +158,13 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         this.listener.listen(model.events, 'changeLanguage', () => {
             this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
         });
+        this.listener.listen(model.events, 'discardGraph', () => {
+            this.setState((state) => ({
+                version: state.version,
+                elementStates: new Map(),
+            }));
+            this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
+        });
         this.listener.listen(renderingState.shared.events, 'changeHighlight', () => {
             this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
         });
@@ -192,7 +202,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     }
 
     private redrawElements = () => {
-        this.setState((state, props): State => ({
+        this.setState((state, props) => ({
             elementStates: applyRedrawRequests(
                 props.model,
                 props.renderingState.shared,
