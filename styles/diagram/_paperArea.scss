@@ -1,4 +1,5 @@
 @import "../mixin/defaults";
+@import "../mixin/zIndex";
 @import "../theme/variables";
 
 .reactodia-paper-area {
@@ -13,6 +14,7 @@
     flex: auto;
     overflow: scroll;
     touch-action: pan-x pan-y;
+    will-change: scroll-position;
   }
 
   &--hide-scrollbars &__area {
@@ -27,6 +29,16 @@
 
   &--panning {
     cursor: grabbing;
+    
+    /* Avoid unnecessary "Hit test" when panning in Chrome/Edge */
+    &::before {
+      display: block;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      content: ' ';
+      z-index: $z-index-panning-overlay;
+    }
   }
 
   &__widgets {
