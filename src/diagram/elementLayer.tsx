@@ -35,6 +35,7 @@ enum RedrawFlags {
     Render = 2,
     RecomputeTemplate = Render | 4,
     RecomputeBlurred = Render | 8,
+    Discard = ScanCell | RecomputeTemplate | RecomputeBlurred | 16,
 }
 
 interface RedrawBatch {
@@ -159,11 +160,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
         });
         this.listener.listen(model.events, 'discardGraph', () => {
-            this.setState((state) => ({
-                version: state.version,
-                elementStates: new Map(),
-            }));
-            this.requestRedrawAll(RedrawFlags.RecomputeTemplate);
+            this.requestRedrawAll(RedrawFlags.Discard);
         });
         this.listener.listen(renderingState.shared.events, 'changeHighlight', () => {
             this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
@@ -202,11 +199,18 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     }
 
     private redrawElements = () => {
+        const committedBatch = this.redrawBatch;
+        this.redrawBatch = {
+            forAll: RedrawFlags.None,
+            requests: new Map<string, RedrawFlags>(),
+        };
         this.setState((state, props) => ({
+            version: committedBatch.forAll === RedrawFlags.Discard
+                ? (state.version + 1) : state.version,
             elementStates: applyRedrawRequests(
                 props.model,
                 props.renderingState.shared,
-                this.redrawBatch,
+                committedBatch,
                 state.elementStates
             )
         }));
