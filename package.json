@@ -1,6 +1,6 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.28.0",
+  "version": "0.28.1-next",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
     "name": "Alexey Morozov",
     "url": "https://github.com/AlexeyMz"
   },
-  "license": "LGPL-2.1",
+  "license": "LGPL-2.1-or-later",
   "bugs": {
     "url": "https://github.com/reactodia/reactodia-workspace/issues"
   },
@@ -114,7 +114,8 @@
     "styles",
     "typings",
     "CHANGELOG.md",
-    "LICENSE",
+    "LICENSE.md",
+    "NOTICE.md",
     "package.json",
     "README.md",
     "THIRDPARTY.md",
