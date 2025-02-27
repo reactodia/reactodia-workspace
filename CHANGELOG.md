@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [0.28.1] - 2025-02-28
 #### 🐛 Fixed
 - Fix missing elements on load when rendering in React strict mode (regression in v0.28.0).
 
@@ -367,7 +369,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.28.1...HEAD
+[0.28.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.28.0...v0.28.1
 [0.28.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.1...v0.28.0
 [0.27.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.27.0...v0.27.1
 [0.27.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.26.1...v0.27.0
