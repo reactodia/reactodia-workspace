@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver, Events } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
@@ -304,7 +304,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         const actionsAreHidden = this.state.querying || this.state.selection.size === 0;
 
         return <div
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 isControlled ? `${CLASS_NAME}--controlled` : undefined,
                 className
@@ -351,7 +351,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 </div>
             </div>
             <div
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__actions`,
                     actionsAreHidden ? `${CLASS_NAME}__actions-hidden` : undefined
                 )}
@@ -467,7 +467,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     private renderRemoveCriterionButtons(onClick: () => void) {
         return <div className={`${CLASS_NAME}__criterion-remove reactodia-btn-group reactodia-btn-group-xs`}>
             <button type='button' title='Remove criteria'
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__criterion-remove-button`,
                     'reactodia-btn reactodia-btn-default'
                 )}

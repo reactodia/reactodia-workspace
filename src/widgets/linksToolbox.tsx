@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver, EventTrigger } from '../coreUtils/events';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
@@ -243,7 +243,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
 
         return (
             <div
-                className={classnames(
+                className={cx(
                     CLASS_NAME,
                     isControlled ? `${CLASS_NAME}--controlled` : undefined,
                     className
@@ -429,9 +429,9 @@ function VisibilityControl(props: {
     const {className, visibility, onSetVisibility, disabled} = props;
     const t = useTranslation();
     return (
-        <div className={classnames(className, 'reactodia-btn-group reactodia-btn-group-xs')}>
+        <div className={cx(className, 'reactodia-btn-group reactodia-btn-group-xs')}>
             <button title={t.text('search_link_types.switch_hidden.title')}
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__toggle-invisible`,
                     'reactodia-btn reactodia-btn-default',
                     visibility === 'hidden' ? 'active' : undefined
@@ -440,7 +440,7 @@ function VisibilityControl(props: {
                 onClick={() => onSetVisibility('hidden')}>
             </button>
             <button title={t.text('search_link_types.switch_without_label.title')}
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__toggle-lines-only`,
                     'reactodia-btn reactodia-btn-default',
                     visibility === 'withoutLabel' ? 'active' : undefined
@@ -449,7 +449,7 @@ function VisibilityControl(props: {
                 onClick={() => onSetVisibility('withoutLabel')}>
             </button>
             <button title={t.text('search_link_types.switch_visible.title')}
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__toggle-visible`,
                     'reactodia-btn reactodia-btn-default',
                     visibility === 'visible' ? 'active' : undefined

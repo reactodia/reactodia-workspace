@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -94,7 +94,7 @@ export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithF
         return children;
     } else {
         return React.cloneElement(children, {
-            className: classnames(children.props.className, (
+            className: cx(children.props.className, (
                 status === Status.Loading ? `${CLASS_NAME}--loading` :
                 status === Status.Error ? `${CLASS_NAME}--error` :
                 undefined

@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver } from '../../coreUtils/events';
 import { Debouncer } from '../../coreUtils/scheduler';
@@ -259,7 +259,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         const title = validation.items.map(item => item.message).join('\n');
         const severity = getMaxSeverity(validation.items);
         return (
-            <div className={classnames(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
+            <div className={cx(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
                 title={title}>
                 {validation.loading
                     ? <HtmlSpinner width={15} height={17} />

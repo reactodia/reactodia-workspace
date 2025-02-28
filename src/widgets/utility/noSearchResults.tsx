@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useTranslation } from '../../coreUtils/i18n';
 
@@ -22,7 +22,7 @@ export function NoSearchResults(props: {
         t.text('search_defaults.input_term_too_short', {termLength})
     );
     return (
-        <div className={classnames(CLASS_NAME, className)}>
+        <div className={cx(CLASS_NAME, className)}>
             {effectiveMessage}
         </div>
     );

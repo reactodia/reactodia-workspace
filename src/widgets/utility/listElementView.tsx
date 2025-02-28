@@ -1,6 +1,6 @@
-import * as React from 'react';
-import classnames from 'classnames';
+import cx from 'clsx';
 import { hcl } from 'd3-color';
+import * as React from 'react';
 
 import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
@@ -66,7 +66,7 @@ export function ListElementView(props: ListElementViewProps) {
     const {h, c, l} = hcl(elementColor);
     const frontColor = (selected && !disabled) ? hcl(h, c, l * 1.2).toString() : undefined;
 
-    const combinedClass = classnames(
+    const combinedClass = cx(
         CLASS_NAME,
         selected ? `${CLASS_NAME}--selected` : undefined,
         disabled ? `${CLASS_NAME}--disabled` : undefined,

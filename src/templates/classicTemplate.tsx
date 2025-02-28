@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
@@ -71,7 +71,7 @@ export function ClassicTemplate(props: TemplateProps) {
 
     return (
         <div
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 isExpanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}

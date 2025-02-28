@@ -1,4 +1,4 @@
-import classnames from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -69,7 +69,7 @@ export function WorkspaceRoot(props: WorkspaceRootProps) {
         <ColorSchemeApi.Provider value={colorSchemeApi}>
             <ColorSchemeContext.Provider value={effectiveColorScheme}>
                 <div
-                    className={classnames(
+                    className={cx(
                         CLASS_NAME,
                         props.className,
                         effectiveColorScheme === 'dark'

@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 /**
  * Props for {@link Dropdown} component.
@@ -57,7 +57,7 @@ export function Dropdown(props: DropdownProps) {
 
     return (
         <nav ref={menuRef}
-            className={classnames(
+            className={cx(
                 className,
                 CLASS_NAME,
                 expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
@@ -107,7 +107,7 @@ export function DropdownMenu(props: DropdownMenuProps) {
     const onClickOutside = React.useCallback(() => setExpanded(false), [setExpanded]);
     return (
         <DropdownMenuContext.Provider value={providedContext}>
-            <Dropdown className={classnames(className, MENU_CLASS_NAME)}
+            <Dropdown className={cx(className, MENU_CLASS_NAME)}
                 expanded={expanded}
                 toggle={
                     <DropdownMenuToggleButton title={title} />
@@ -143,7 +143,7 @@ function DropdownMenuToggleButton(props: { title?: string }) {
 
     return (
         <button type='button'
-            className={classnames(
+            className={cx(
                 `${MENU_CLASS_NAME}__toggle`,
                 'reactodia-btn',
                 'reactodia-btn-default',
@@ -203,7 +203,7 @@ export function DropdownMenuItem(props: DropdownMenuItemProps) {
 
     return (
         <li role='menuitem'
-            className={classnames(
+            className={cx(
                 className,
                 ITEM_CLASS_NAME,
                 disabled ? `${ITEM_CLASS_NAME}--disabled` : undefined,

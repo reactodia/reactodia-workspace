@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver, EventTrigger } from '../coreUtils/events';
@@ -97,7 +97,7 @@ export function SelectionAction(props: SelectionActionProps) {
     } = props;
     return (
         <button type='button'
-            className={classnames(CLASS_NAME, getDockClass(dock), className)}
+            className={cx(CLASS_NAME, getDockClass(dock), className)}
             style={getDockStyle(dockRow, dockColumn)}
             title={title}
             disabled={disabled}
@@ -149,7 +149,7 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
     const {dock, dockRow, dockColumn, className, title} = props;
     return (
         <div role='button'
-            className={classnames(className, getDockClass(dock), `${CLASS_NAME}__spinner`)}
+            className={cx(className, getDockClass(dock), `${CLASS_NAME}__spinner`)}
             style={getDockStyle(dockRow, dockColumn)}
             title={title}>
             <HtmlSpinner width={20} height={20} />
@@ -190,7 +190,7 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const singleNewEntity = newEntities === 1 && totalEntities === 1;
     return (
         <SelectionAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 singleNewEntity ? `${CLASS_NAME}__delete` : `${CLASS_NAME}__remove`
             )}
@@ -228,7 +228,7 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     }
     return (
         <SelectionAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__zoomToFit`)}
+            className={cx(className, `${CLASS_NAME}__zoomToFit`)}
             title={title ?? t.text('selection_action.zoom_to_fit.title')}
             onSelect={() => {
                 const links = new Set<Link>();
@@ -269,7 +269,7 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     }
     return (
         <SelectionAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__layout`)}
+            className={cx(className, `${CLASS_NAME}__layout`)}
             title={title ?? t.text('selection_action.layout.title')}
             onSelect={() => {
                 performLayout({
@@ -317,7 +317,7 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
 
     return (
         <SelectionAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 allExpanded ? `${CLASS_NAME}__collapse` : `${CLASS_NAME}__expand`
             )}
@@ -390,7 +390,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     }
     return (
         <a role='button'
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 getDockClass(dock),
                 className,
@@ -451,7 +451,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
     }
     return (
         <SelectionAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 menuOpened
                     ? `${CLASS_NAME}__navigate-close`
@@ -500,7 +500,7 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     }
     return (
         <SelectionAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__add-to-filter`)}
+            className={cx(className, `${CLASS_NAME}__add-to-filter`)}
             title={title ?? t.text('selection_action.add_to_filter.title')}
             onSelect={() => {
                 commands.trigger('setCriteria', {
@@ -545,7 +545,7 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
 
     return (
         <SelectionAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 canUngroup ? `${CLASS_NAME}__ungroup` : `${CLASS_NAME}__group`
             )}
@@ -611,7 +611,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
     }
     return (
         <SelectionAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 `${CLASS_NAME}__establish-link`
             )}

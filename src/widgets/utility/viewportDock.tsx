@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 /**
  * Compass-like direction for the dock side:
@@ -95,13 +95,13 @@ export function ViewportDock(props: ViewportDockProps) {
     } as React.CSSProperties;
     return (
         <div
-            className={classnames(
+            className={cx(
                 VIEWPORT_WIDGET_CLASS,
                 DOCK_CONTAINER_CLASS[dock] ?? `${VIEWPORT_WIDGET_CLASS}--corner`
             )}
             style={style}>
             {React.cloneElement(children, {
-                className: classnames(
+                className: cx(
                     children.props.className,
                     DOCK_DIRECTION_CLASS[dock]
                 ),

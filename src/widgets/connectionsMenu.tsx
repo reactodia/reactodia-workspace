@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
@@ -803,7 +803,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     checked={connectionSortMode === id}
                 />
                 <label htmlFor={id} title={title}
-                    className={classnames(`${CLASS_NAME}__sort-switch-label`, labelClass)}>
+                    className={cx(`${CLASS_NAME}__sort-switch-label`, labelClass)}>
                 </label>
             </div>
         );
@@ -989,7 +989,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
         }
         return (
             <ul ref={scrolledListRef}
-                className={classnames(
+                className={cx(
                     'reactodia-scrollable',
                     `${CLASS_NAME}__links-list`,
                     views.length === 0 && probableViews.length === 0
@@ -1253,7 +1253,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             )}
             <div className={`${CLASS_NAME}__objects-statusbar`}>
                 <button
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__objects-add-button`,
                         'reactodia-btn reactodia-btn-secondary'
                     )}
@@ -1262,7 +1262,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     {t.text('connections_menu.entities.add_group')}
                 </button>
                 <button
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__objects-add-button`,
                         'reactodia-btn reactodia-btn-primary'
                     )}

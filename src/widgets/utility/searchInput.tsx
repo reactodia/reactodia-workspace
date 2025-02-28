@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { Events, EventSource, PropertyChange } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
@@ -26,14 +26,14 @@ export function SearchInput(props: SearchInputProps) {
 
     return (
         <div
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 mode === 'explicit' ? `${CLASS_NAME}--has-submit` : undefined,
                 className
             )}>
             <input {...inputProps}
                 type={inputProps.type ?? 'text'}
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__input`,
                     'reactodia-form-control',
                     inputProps.className,
@@ -60,7 +60,7 @@ export function SearchInput(props: SearchInputProps) {
             {mode === 'explicit' ? (
                 <button type='button'
                     title={t.text('search_defaults.input_submit.title')}
-                    className={classnames(`${CLASS_NAME}__submit`, 'reactodia-btn', 'reactodia-btn-default')}
+                    className={cx(`${CLASS_NAME}__submit`, 'reactodia-btn', 'reactodia-btn-default')}
                     onClick={() => store.change({value: store.value, action: 'submit'})}>
                 </button>
             ) : null}

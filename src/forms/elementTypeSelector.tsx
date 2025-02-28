@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
@@ -305,7 +305,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     render() {
         const {searchStore, workspace: {translation: t}} = this.props;
         return (
-            <div className={classnames(`${FORM_CLASS}__row`, CLASS_NAME)}>
+            <div className={cx(`${FORM_CLASS}__row`, CLASS_NAME)}>
                 <SearchInput store={searchStore}
                     className={`${CLASS_NAME}__search`}
                     inputProps={{

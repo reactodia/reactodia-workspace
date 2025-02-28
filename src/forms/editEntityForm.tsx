@@ -1,4 +1,4 @@
-import classnames from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
@@ -96,7 +96,7 @@ export function EditEntityForm(props: {
 
     if (!shape) {
         return (
-            <div className={classnames(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
+            <div className={cx(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
                 <HtmlSpinner width={30} height={30}
                     errorOccurred={Boolean(error)}
                 />
@@ -105,7 +105,7 @@ export function EditEntityForm(props: {
     }
 
     return (
-        <div className={classnames(FORM_CLASS, CLASS_NAME)}>
+        <div className={cx(FORM_CLASS, CLASS_NAME)}>
             <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
                 <div className={`${FORM_CLASS}__row`}>
                     <label>

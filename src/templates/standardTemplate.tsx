@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import type { Translation } from '../coreUtils/i18n';
@@ -182,7 +182,7 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
 
     return (
         <div style={rootStyle}
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 `${CLASS_NAME}--standalone`,
                 getEntityAuthoredStatusClass(data, editor.authoringState)
@@ -275,7 +275,7 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
     const fillerCount = pageCount === 1 ? 0 : pageOffset + pageSize - items.length;
 
     return (
-        <div className={classnames(CLASS_NAME, `${CLASS_NAME}--group`)}
+        <div className={cx(CLASS_NAME, `${CLASS_NAME}--group`)}
             style={groupStyle}
             role='list'>
             {pageItems.map(item => (
@@ -341,7 +341,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
     } as React.CSSProperties;
 
     return (
-        <div className={classnames(`${CLASS_NAME}__item`, authoringStatusClass)}
+        <div className={cx(`${CLASS_NAME}__item`, authoringStatusClass)}
             style={itemStyle}
             role='listitem'>
             <div className={`${CLASS_NAME}__item-stripe`} aria-hidden='true' />
@@ -350,7 +350,7 @@ function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
                     <div className={`${CLASS_NAME}__label`} title={title}>{label}</div>
                 </WithFetchStatus>
                 <button type='button'
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__ungroup-one-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
@@ -507,7 +507,7 @@ function Actions(props: {
         <div className={`${CLASS_NAME}__actions`}
             data-reactodia-no-export='true'>
             <button type='button'
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__delete-button`,
                     'reactodia-btn reactodia-btn-default'
                 )}
@@ -521,7 +521,7 @@ function Actions(props: {
                     : t.text('standard_template.delete.label')}
             </button>
             <button type='button'
-                className={classnames(
+                className={cx(
                     `${CLASS_NAME}__edit-button`,
                     'reactodia-btn reactodia-btn-default'
                 )}

@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { Events } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
@@ -359,7 +359,7 @@ function SearchToggle(props: {
     const t = useTranslation();
 
     return (
-        <div className={classnames(`${CLASS_NAME}__toggle`)}
+        <div className={cx(`${CLASS_NAME}__toggle`)}
             style={{
                 width: panelSize?.width,
             }}>
@@ -511,7 +511,7 @@ function SearchContent(props: SearchContentProps) {
             <div className={`${CLASS_NAME}__section-tabs`}>
                 {sections.map(section => (
                     <button key={section.key}
-                        className={classnames(
+                        className={cx(
                             `${CLASS_NAME}__section-tab`,
                             'reactodia-btn',
                             'reactodia-btn-default',
@@ -527,7 +527,7 @@ function SearchContent(props: SearchContentProps) {
                 <UnifiedSearchSectionContext.Provider key={section.key}
                     value={section.context}>
                     <div
-                        className={classnames(
+                        className={cx(
                             `${CLASS_NAME}__section`,
                             section.context.isSectionActive
                                 ? `${CLASS_NAME}__section--active` : undefined

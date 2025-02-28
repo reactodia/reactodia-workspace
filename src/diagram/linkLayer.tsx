@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
@@ -322,7 +322,7 @@ function LinkView(props: LinkViewProps) {
         <g data-link-id={link.id}
             data-source-id={link.sourceId}
             data-target-id={link.targetId}
-            className={classnames(LINK_CLASS, isBlurred ? `${LINK_CLASS}--blurred` : undefined)}>
+            className={cx(LINK_CLASS, isBlurred ? `${LINK_CLASS}--blurred` : undefined)}>
             {renderedLink}
         </g>
     );
@@ -363,7 +363,7 @@ export function LinkPath(props: LinkPathProps) {
     const {path, pathProps, markerSource, markerTarget} = props;
     return <>
         <path {...pathProps}
-            className={classnames(LINK_PATH_CLASS, pathProps?.className)}
+            className={cx(LINK_PATH_CLASS, pathProps?.className)}
             d={path}
             markerStart={markerSource}
             markerEnd={markerTarget}
@@ -494,7 +494,7 @@ export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> i
 
         return (
             <g style={transform ? {transform} : undefined}
-                className={classnames(
+                className={cx(
                     LINK_LABEL_CLASS,
                     primary ? `${LINK_LABEL_CLASS}--primary` : undefined,
                     className
@@ -637,7 +637,7 @@ export function LinkVertices(props: LinkVerticesProps) {
         return null;
     }
 
-    const vertexClass = classnames(`${LINK_VERTICES_CLASS}__vertex`, className);
+    const vertexClass = cx(`${LINK_VERTICES_CLASS}__vertex`, className);
 
     const onRemoveLinkVertex = (vertexIndex: number) => {
         const link = model.getLink(linkId);

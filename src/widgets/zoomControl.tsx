@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useObservedProperty } from '../coreUtils/hooks';
 import { useTranslation } from '../coreUtils/i18n';
@@ -65,7 +65,7 @@ export function ZoomControl(props: ZoomControlProps) {
             dockOffsetY={dockOffsetY}>
             <div className={CLASS_NAME}>
                 <button type='button'
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__zoom-in-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
@@ -73,7 +73,7 @@ export function ZoomControl(props: ZoomControlProps) {
                     onClick={() => canvas.zoomIn()}>
                 </button>
                 <button type='button'
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__zoom-out-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
@@ -81,7 +81,7 @@ export function ZoomControl(props: ZoomControlProps) {
                     onClick={() => canvas.zoomOut()}>
                 </button>
                 <button type='button'
-                    className={classnames(
+                    className={cx(
                         `${CLASS_NAME}__zoom-fit-button`,
                         'reactodia-btn reactodia-btn-default'
                     )}
@@ -90,7 +90,7 @@ export function ZoomControl(props: ZoomControlProps) {
                 </button>
                 {showPointerModeToggle ? (
                     <button type='button'
-                        className={classnames(
+                        className={cx(
                             `${CLASS_NAME}__selection-mode-button`,
                             'reactodia-btn reactodia-btn-default',
                             pointerMode === 'selection' ? 'active' : undefined

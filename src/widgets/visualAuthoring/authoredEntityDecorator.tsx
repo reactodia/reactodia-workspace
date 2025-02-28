@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver } from '../../coreUtils/events';
 
@@ -148,7 +148,7 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
     private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation) {
         const severity = getMaxSeverity(validation.items);
         return (
-            <div className={classnames(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
+            <div className={cx(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
                 title={title}>
                 {validation.loading
                     ? <HtmlSpinner width={15} height={17} />

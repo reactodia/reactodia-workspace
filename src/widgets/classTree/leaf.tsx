@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { ElementTypeIri } from '../../data/model';
 import { WorkspaceContext } from '../../workspace/workspaceContext';
@@ -64,7 +64,7 @@ export class Leaf extends React.Component<LeafProps, State> {
         } as React.CSSProperties;
 
         const selected = Boolean(selectedNode && selectedNode.iri === node.iri);
-        const bodyClass = classnames(
+        const bodyClass = cx(
             `${CLASS_NAME}__body`,
             selected ? `${CLASS_NAME}__body--selected` : undefined
         );
@@ -108,7 +108,7 @@ export class Leaf extends React.Component<LeafProps, State> {
                     {creatableClasses.get(node.iri) ? (
                         <div role='button'
                             title={t.text('search_element_types.drag_create.title')}
-                            className={classnames(
+                            className={cx(
                                 `${CLASS_NAME}__create-button`,
                                 'reactodia-btn reactodia-btn-default'
                             )}

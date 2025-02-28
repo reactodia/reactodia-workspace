@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import {
@@ -124,7 +124,7 @@ export function LinkAction(props: LinkActionProps) {
     const {getPosition} = useLinkActionContext();
     return (
         <button role='button'
-            className={classnames(className, CLASS_NAME)}
+            className={cx(className, CLASS_NAME)}
             style={getPosition(dockSide, dockIndex)}
             disabled={disabled}
             title={title}
@@ -151,7 +151,7 @@ export function LinkActionSpinner(props: LinkActionStyleProps) {
     const {dockSide, dockIndex, className, title} = props;
     const {buttonSize, getPosition} = useLinkActionContext();
     return (
-        <div className={classnames(className, `${CLASS_NAME}__spinner`)}
+        <div className={cx(className, `${CLASS_NAME}__spinner`)}
             style={getPosition(dockSide, dockIndex)}
             title={title}>
             <HtmlSpinner width={buttonSize} height={buttonSize} />
@@ -205,7 +205,7 @@ export function LinkActionEdit(props: LinkActionEditProps) {
     }
     return (
         <LinkAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 `${CLASS_NAME}__button`,
                 `${CLASS_NAME}__edit`
@@ -265,7 +265,7 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
     }
     return (
         <LinkAction {...otherProps}
-            className={classnames(
+            className={cx(
                 className,
                 `${CLASS_NAME}__button`,
                 `${CLASS_NAME}__delete`
@@ -375,7 +375,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
         <LinkAction {...otherProps}
             dockSide={dockSide}
             dockIndex={0}
-            className={classnames(
+            className={cx(
                 className,
                 `${CLASS_NAME}__endpoint`
             )}
@@ -451,7 +451,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
         top: top - size.height / 2,
     };
     return (
-        <button className={classnames(className, `${CLASS_NAME}__rename`)}
+        <button className={cx(className, `${CLASS_NAME}__rename`)}
             style={style}
             title={title ?? t.text('link_action.rename_link.title')}
             onClick={() => editor.authoringCommands.trigger('renameLink', {target: link})}

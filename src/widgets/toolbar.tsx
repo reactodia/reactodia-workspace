@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useTranslation } from '../coreUtils/i18n';
 
@@ -64,7 +64,7 @@ export function Toolbar(props: ToolbarProps) {
                     </DropdownMenu>
                 ) : null}
                 {children ? (
-                    <div className={classnames(
+                    <div className={cx(
                         `${CLASS_NAME}__quick-access-group`,
                         'reactodia-btn-group',
                         'reactodia-btn-group-sm'

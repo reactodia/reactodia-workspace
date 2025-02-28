@@ -1,6 +1,6 @@
-import * as React from 'react';
-import classnames from 'classnames';
+import cx from 'clsx';
 import { saveAs } from 'file-saver';
+import * as React from 'react';
 
 import { useObservedProperty } from '../coreUtils/hooks';
 import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
@@ -72,7 +72,7 @@ export function ToolbarAction(props: ToolbarActionProps) {
         </DropdownMenuItem>
     ) : (
         <button type='button'
-            className={classnames(
+            className={cx(
                 className,
                 'reactodia-btn reactodia-btn-default'
             )}
@@ -116,7 +116,7 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
     return (
         <>
             <ToolbarAction {...otherProps}
-                className={classnames(className, `${CLASS_NAME}__open`)}
+                className={cx(className, `${CLASS_NAME}__open`)}
                 onSelect={() => {
                     inputRef.current?.click();
                 }}>
@@ -191,7 +191,7 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
 
     return (
         <ToolbarAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__save`)}
+            className={cx(className, `${CLASS_NAME}__save`)}
             disabled={!enabled}
             onSelect={onSelect}
             title={title ?? defaultTitle}>
@@ -219,7 +219,7 @@ export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     const {model, editor, translation: t} = useWorkspace();
     return (
         <ToolbarAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__clear-all`)}
+            className={cx(className, `${CLASS_NAME}__clear-all`)}
             title={title ?? t.text('toolbar_action.clear_all.title')}
             onSelect={() => {
                 const batch = model.history.startBatch(
@@ -283,7 +283,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
     if (kind === 'exportRaster') {
         return (
             <ToolbarAction {...otherProps}
-                className={classnames(className, `${CLASS_NAME}__export-image`)}
+                className={cx(className, `${CLASS_NAME}__export-image`)}
                 title={title ?? t.text('toolbar_action.export_raster.title')}
                 onSelect={() => {
                     const exportOptions: ExportRasterOptions = rasterOptions ?? {
@@ -300,7 +300,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
     } else if (kind === 'exportSvg') {
         return (
             <ToolbarAction {...otherProps}
-                className={classnames(className, `${CLASS_NAME}__export-image`)}
+                className={cx(className, `${CLASS_NAME}__export-image`)}
                 title={title ?? t.text('toolbar_action.export_svg.title')}
                 onSelect={() => {
                     canvas.exportSvg({addXmlHeader: true}).then(svg => {
@@ -314,7 +314,7 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
     } else if (kind === 'print') {
         return (
             <ToolbarAction {...otherProps}
-                className={classnames(className, `${CLASS_NAME}__print`)}
+                className={cx(className, `${CLASS_NAME}__print`)}
                 title={title ?? t.text('toolbar_action.export_print.title')}
                 onSelect={() => {
                     const printWindow = window.open('', undefined, 'width=1280,height=720')!;
@@ -361,7 +361,7 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
     const commandTitle = !title && undoCommand ? resolveCommandTitle(undoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__undo`)}
+            className={cx(className, `${CLASS_NAME}__undo`)}
             disabled={!undoCommand}
             title={title ?? (
                 commandTitle === undefined
@@ -403,7 +403,7 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
     const commandTitle = !title && redoCommand ? resolveCommandTitle(redoCommand, t) : undefined;
     return (
         <ToolbarAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__redo`)}
+            className={cx(className, `${CLASS_NAME}__redo`)}
             disabled={!redoCommand}
             title={title ?? (
                 commandTitle === undefined
@@ -449,7 +449,7 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     );
     return (
         <ToolbarAction {...otherProps}
-            className={classnames(className, `${CLASS_NAME}__layout`)}
+            className={cx(className, `${CLASS_NAME}__layout`)}
             title={title ?? t.text('toolbar_action.layout.title')}
             disabled={elementCount === 0}
             onSelect={() => {
@@ -506,7 +506,7 @@ export function ToolbarLanguageSelector(props: ToolbarLanguageSelectorProps) {
         () => model.language
     );
     return languages.length === 0 ? null : (
-        <div className={classnames(className, `${CLASS_NAME}__language-selector`)}
+        <div className={cx(className, `${CLASS_NAME}__language-selector`)}
             title={title ?? t.text('toolbar_action.language_selector.title')}>
             <label htmlFor='reactodia-language-selector' />
             <select id='reactodia-language-selector'

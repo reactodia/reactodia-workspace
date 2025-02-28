@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { delay } from '../coreUtils/async';
 import type { ColorSchemeApi } from '../coreUtils/colorScheme';
@@ -185,7 +185,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         const {model, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
         const paperTransform = this.metrics.getTransform();
 
-        const className = classnames(
+        const className = cx(
             CLASS_NAME,
             hideScrollBars ? `${CLASS_NAME}--hide-scrollbars` : undefined,
             this.isAnimatingGraph() ? `${CLASS_NAME}--animated` : undefined

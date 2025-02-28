@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
@@ -173,7 +173,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         return (
             <div
-                className={classnames(
+                className={cx(
                     CLASS_NAME,
                     isControlled ? `${CLASS_NAME}--controlled` : undefined,
                     className

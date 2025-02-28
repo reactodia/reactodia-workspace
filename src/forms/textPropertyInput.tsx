@@ -1,4 +1,4 @@
-import classnames from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
@@ -71,7 +71,7 @@ function TextPropertyInputInner(props: {
                         />
                     ) : null}
                     <button type='button'
-                        className={classnames(
+                        className={cx(
                             'reactodia-btn',
                             'reactodia-btn-default',
                             `${CLASS_NAME}__value-remove`
@@ -91,7 +91,7 @@ function TextPropertyInputInner(props: {
             ))}
             <div key='add' className={`${CLASS_NAME}__row`}>
                 <button type='button'
-                    className={classnames(
+                    className={cx(
                         'reactodia-btn',
                         'reactodia-btn-default',
                         `${CLASS_NAME}__value-add`
@@ -116,7 +116,7 @@ function LanguageSelector(props: {
 }) {
     const {language, languages, onChangeLanguage} = props;
     return (
-        <select className={classnames('reactodia-form-control', `${CLASS_NAME}__language`)}
+        <select className={cx('reactodia-form-control', `${CLASS_NAME}__language`)}
             disabled={languages.length === 0 && !language}
             value={language}
             onChange={e => onChangeLanguage(e.currentTarget.value)}>

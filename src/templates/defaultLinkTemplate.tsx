@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
@@ -124,8 +124,8 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 link={link}
                 position={getPathPosition(0.5)}
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
-                textClass={classnames(TEXT_CLASS, primaryLabelProps?.textClass)}
-                rectClass={classnames(BACKGROUND_CLASS, primaryLabelProps?.rectClass)}
+                textClass={cx(TEXT_CLASS, primaryLabelProps?.textClass)}
+                rectClass={cx(BACKGROUND_CLASS, primaryLabelProps?.rectClass)}
                 title={primaryLabelProps?.title ?? t.text('default_link_template.label.title', {
                     relation: label,
                     relationIri: t.formatIri(link.typeId),
@@ -173,7 +173,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     const stroke = pathProps?.stroke;
     return (
         <g
-            className={classnames(
+            className={cx(
                 CLASS_NAME,
                 link instanceof RelationGroup ? `${CLASS_NAME}--group` : undefined,
                 renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
@@ -183,7 +183,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
                 pathProps={{
                     fill: 'none',
                     ...pathProps,
-                    className: classnames(`${CLASS_NAME}__path`, pathProps?.className),
+                    className: cx(`${CLASS_NAME}__path`, pathProps?.className),
                     stroke,
                     strokeDasharray: linkState?.[TemplateProperties.LayoutOnly]
                         ? '5,5' : pathProps?.strokeDasharray,
@@ -229,9 +229,9 @@ function LinkProperties(props: DefaultLinkPathTemplateProps) {
                 position={getPathPosition(0.5)}
                 line={propertyLabelStartLine + index}
                 textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
-                className={classnames(PROPERTY_CLASS, propertyLabelProps?.className)}
-                textClass={classnames(TEXT_CLASS, propertyLabelProps?.textClass)}
-                rectClass={classnames(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
+                className={cx(PROPERTY_CLASS, propertyLabelProps?.className)}
+                textClass={cx(TEXT_CLASS, propertyLabelProps?.textClass)}
+                rectClass={cx(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
                 title={propertyLabelProps?.title ?? t.text('default_link_template.property.title', {
                     property: property.label,
                     propertyIri: t.formatIri(property.iri),

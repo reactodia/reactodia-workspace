@@ -1,5 +1,5 @@
+import cx from 'clsx';
 import * as React from 'react';
-import classnames from 'classnames';
 
 import { EventObserver, Unsubscribe } from '../coreUtils/events';
 
@@ -352,7 +352,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                     </div>
                     {closable ? (
                         <button title='Close'
-                            className={classnames(
+                            className={cx(
                                 'reactodia-btn',
                                 `${CLASS_NAME}__close-button`
                             )}
