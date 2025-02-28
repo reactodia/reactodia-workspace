@@ -1,45 +1,23 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-
-import react from 'eslint-plugin-react';
 import globals from 'globals';
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import react from 'eslint-plugin-react';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-export default [
-    ...compat.extends(
-        'eslint:recommended',
-        'plugin:@typescript-eslint/recommended',
-        'plugin:react/recommended',
-    ),
+export default tseslint.config(
+    eslint.configs.recommended,
+    tseslint.configs.recommended,
+    react.configs.flat.recommended,
+    react.configs.flat['jsx-runtime'],
+    {
+        ignores: ['dist/'],
+    },
     {
         plugins: {
-            '@typescript-eslint': typescriptEslint,
             react,
-        },
-        languageOptions: {
-            globals: {
-                ...globals.browser,
-            },
-            parser: tsParser,
-            ecmaVersion: 'latest',
-            sourceType: 'module',
         },
         settings: {
             react: {
                 pragma: 'React',
-                fragment: 'Fragment',
                 version: '17.0',
             },
         },
@@ -71,13 +49,11 @@ export default [
         },
     },
     {
-        files: ['**/.eslintrc.{js,cjs}'],
+        files: ['**/eslint.config.mjs', '**/*.config.mts'],
         languageOptions: {
             globals: {
                 ...globals.node,
             },
-            ecmaVersion: 5,
-            sourceType: 'commonjs',
         },
     },
     {
@@ -92,6 +68,7 @@ export default [
                 flatTernaryExpressions: true,
                 SwitchCase: 1,
             }],
+            '@typescript-eslint/no-require-imports': 'off',
         },
     }
-];
+);
