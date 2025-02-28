@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-btn {
   display: inline-block;
@@ -14,9 +14,9 @@
   white-space: nowrap;
   
   background-image: none;
-  border: $theme-button-border-width solid transparent;
-  border-radius: $theme-button-border-radius;
-  transition: background-color $theme-transition-duration;
+  border: theme.$button-border-width solid transparent;
+  border-radius: theme.$button-border-radius;
+  transition: background-color theme.$transition-duration;
 
   touch-action: manipulation;
   -webkit-user-select: none;
@@ -30,23 +30,23 @@
 }
 
 .reactodia-btn-default {
-  color: $theme-button-default-color;
-  background-color: $theme-button-default-background-color;
-  border-color: $theme-button-default-border-color;
+  color: theme.$button-default-color;
+  background-color: theme.$button-default-background-color;
+  border-color: theme.$button-default-border-color;
 
   &:hover {
-    color: $theme-button-default-color-focus;
-    background-color: $theme-button-default-background-color-focus;
+    color: theme.$button-default-color-focus;
+    background-color: theme.$button-default-background-color-focus;
   }
 
   &:active, &.active {
-    color: $theme-button-default-color-focus;
-    background-color: $theme-button-default-background-color-active;
+    color: theme.$button-default-color-focus;
+    background-color: theme.$button-default-background-color-active;
   }
 
   &[disabled], &[disabled]:hover, &[disabled]:focus, &[disabled]:active, &[disabled].active {
-    color: $theme-button-default-color;
-    background-color: $theme-input-background-color-disabled;
+    color: theme.$button-default-color;
+    background-color: theme.$input-background-color-disabled;
   }
 }
 
@@ -72,60 +72,60 @@
 
 .reactodia-btn-primary {
   @include reactodia-button(
-    $theme-color-emphasis-0,
-    $theme-color-primary,
-    $theme-color-primary-dark,
-    $theme-color-primary-darker,
-    $theme-color-primary-darkest
+    theme.$color-emphasis-0,
+    theme.$color-primary,
+    theme.$color-primary-dark,
+    theme.$color-primary-darker,
+    theme.$color-primary-darkest
   );
 }
 
 .reactodia-btn-secondary {
   @include reactodia-button(
-    $theme-color-gray-900,
-    $theme-color-secondary,
-    $theme-color-secondary-dark,
-    $theme-color-secondary-darker,
-    $theme-color-secondary-darkest
+    theme.$color-gray-900,
+    theme.$color-secondary,
+    theme.$color-secondary-dark,
+    theme.$color-secondary-darker,
+    theme.$color-secondary-darkest
   );
 }
 
 .reactodia-btn-success {
   @include reactodia-button(
-    $theme-color-emphasis-0,
-    $theme-color-success,
-    $theme-color-success-dark,
-    $theme-color-success-darker,
-    $theme-color-success-darkest
+    theme.$color-emphasis-0,
+    theme.$color-success,
+    theme.$color-success-dark,
+    theme.$color-success-darker,
+    theme.$color-success-darkest
   );
 }
 
 .reactodia-btn-info {
   @include reactodia-button(
-    $theme-color-emphasis-0,
-    $theme-color-info,
-    $theme-color-info-dark,
-    $theme-color-info-darker,
-    $theme-color-info-darkest
+    theme.$color-emphasis-0,
+    theme.$color-info,
+    theme.$color-info-dark,
+    theme.$color-info-darker,
+    theme.$color-info-darkest
   );
 }
 
 .reactodia-btn-warning {
   @include reactodia-button(
-    $theme-color-emphasis-0,
-    $theme-color-warning,
-    $theme-color-warning-dark,
-    $theme-color-warning-darker,
-    $theme-color-warning-darkest
+    theme.$color-emphasis-0,
+    theme.$color-warning,
+    theme.$color-warning-dark,
+    theme.$color-warning-darker,
+    theme.$color-warning-darkest
   );
 }
 
 .reactodia-btn-danger {
   @include reactodia-button(
-    $theme-color-emphasis-0,
-    $theme-color-danger,
-    $theme-color-danger-dark,
-    $theme-color-danger-darker,
-    $theme-color-danger-darkest
+    theme.$color-emphasis-0,
+    theme.$color-danger,
+    theme.$color-danger-dark,
+    theme.$color-danger-darker,
+    theme.$color-danger-darkest
   );
 }

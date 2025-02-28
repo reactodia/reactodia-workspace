@@ -1,13 +1,13 @@
-@import "../mixin/icons";
-@import "../mixin/draggableHandle";
-@import "../mixin/zIndex";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../mixin/draggableHandle" as *;
+@use "../mixin/zIndex";
+@use "../theme/theme";
 
 .reactodia-dialog {
-  background: $theme-background-color-surface;
-  border: $theme-dialog-border-width solid $theme-dialog-border-color;
-  border-radius: $theme-dialog-border-radius;
-  box-shadow: $theme-canvas-box-shadow;
+  background: theme.$background-color-surface;
+  border: theme.$dialog-border-width solid theme.$dialog-border-color;
+  border-radius: theme.$dialog-border-radius;
+  box-shadow: theme.$canvas-box-shadow;
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -28,21 +28,21 @@
   &__close-button {
     padding: 6px;
     background: none;
-    color: $theme-button-default-color;
+    color: theme.$button-default-color;
 
     border: none;
     border-top-left-radius: unset;
     border-bottom-right-radius: unset;
 
-    transition: background-color $theme-transition-duration;
+    transition: background-color theme.$transition-duration;
   
     &::before {
       @include codicon("close");
     }
 
     &:hover {
-      color: $theme-button-default-color-focus;
-      background-color: $theme-button-default-background-color-focus;
+      color: theme.$button-default-color-focus;
+      background-color: theme.$button-default-background-color-focus;
     }
   }
 
@@ -65,11 +65,11 @@
   right: 0;
   top: 0;
   bottom: 0;
-  z-index: $z-index-viewport-dialog;
+  z-index: zIndex.$viewport-dialog;
 
   display: flex;
   align-items: center;
   justify-content: center;
   
-  background-color: $theme-canvas-overlay-color;
+  background-color: theme.$canvas-overlay-color;
 }

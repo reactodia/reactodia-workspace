@@ -1,12 +1,12 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 @mixin inheritable-defaults {
   /* Defaults for inheritable properties */
   box-sizing: border-box;
   white-space: initial;
 
-  color: $theme-font-color-base;
-  font-family: $theme-font-family-base;
-  font-size: $theme-font-size-base;
-  line-height: $theme-line-height-base;
+  color: theme.$font-color-base;
+  font-family: theme.$font-family-base;
+  font-size: theme.$font-size-base;
+  line-height: theme.$line-height-base;
 }

@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-form-control {
   display: block;
@@ -6,22 +6,22 @@
   height: 34px;
   margin: 0;
   padding: 6px 12px;
-  font-family: $theme-font-family-base;
-  line-height: $theme-line-height-base;
+  font-family: theme.$font-family-base;
+  line-height: theme.$line-height-base;
   font-size: 14px;
-  color: $theme-input-color;
-  background-color: $theme-input-background-color;
-  border: $theme-input-border-width solid $theme-input-border-color;
-  border-radius: $theme-input-border-radius;
+  color: theme.$input-color;
+  background-color: theme.$input-background-color;
+  border: theme.$input-border-width solid theme.$input-border-color;
+  border-radius: theme.$input-border-radius;
   transition: border-color ease-in-out .15s;
 
   &:focus {
-    border-color: $theme-input-border-color-focus;
+    border-color: theme.$input-border-color-focus;
     outline: 0;
   }
 
   &:disabled {
-    background-color: $theme-input-background-color-disabled;
+    background-color: theme.$input-background-color-disabled;
     cursor: not-allowed;
     opacity: 0.6;
   }

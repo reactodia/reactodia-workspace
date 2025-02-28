@@ -1,4 +1,5 @@
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-toolbar-action {
   &__open {
@@ -60,29 +61,29 @@
   &__language-selector {
     float: left;
     position: relative;
-    height: $theme-toolbar-height;
-    background: $theme-button-default-background-color;
-    border: $theme-button-border-width solid $theme-button-default-border-color;
-    border-radius: $theme-button-border-radius;
+    height: theme.$toolbar-height;
+    background: theme.$button-default-background-color;
+    border: theme.$button-border-width solid theme.$button-default-border-color;
+    border-radius: theme.$button-border-radius;
     padding: 0 5px;
 
     display: flex;
     align-items: center;
 
     &:focus-within {
-      border-color: $theme-input-border-color-focus;
+      border-color: theme.$input-border-color-focus;
     }
 
     select {
-      height: $theme-toolbar-height;
-      background-color: $theme-button-default-background-color;
+      height: theme.$toolbar-height;
+      background-color: theme.$button-default-background-color;
       border: none;
       outline: none;
       color: inherit;
       margin: 0;
       font: inherit;
       line-height: inherit;
-      height: calc($theme-toolbar-height - 4px);
+      height: calc(theme.$toolbar-height - 4px);
     }
 
     label {

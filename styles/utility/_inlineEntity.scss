@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-inline-entity {
   border: 1px solid var(--reactodia-inline-entity-color);
@@ -8,7 +8,7 @@
   line-height: 1.3;
 
   &__label {
-    background: $theme-element-background-color;
+    background: theme.$element-background-color;
     padding: 0 2px;
   }
 }

@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-classic-template {
   max-width: 450px;
@@ -53,7 +53,7 @@
     border-bottom-right-radius: 12px;
     border-top-style: solid;
     border-top-width: 1px;
-    background: $theme-element-background-color;
+    background: theme.$element-background-color;
     padding: 7px 10px 8px 10px;
     overflow: hidden;
     display: flex;
@@ -80,7 +80,7 @@
     font-size: 12px;
     font-weight: 100;
     margin-right: 15px;
-    color: $theme-color-emphasis-500;
+    color: theme.$color-emphasis-500;
   }
   
   &__iri-container {
@@ -92,12 +92,12 @@
   }
   
   &__iri {
-    color: $theme-color-emphasis-500;
+    color: theme.$color-emphasis-500;
   }
 
   &__divider {
     border: 0;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     height: 0;
     margin: 5px 0px 5px 0px;
   }

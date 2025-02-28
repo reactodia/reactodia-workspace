@@ -1,7 +1,7 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-no-search-results {
   text-align: center;
   font-style: italic;
-  color: $theme-input-color-placeholder;
+  color: theme.$input-color-placeholder;
 }

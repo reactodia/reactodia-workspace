@@ -1,4 +1,4 @@
-@import "./common";
+@use "./common" as *;
 
 .reactodia-workspace-dark {
   color-scheme: dark;

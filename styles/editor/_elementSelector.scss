@@ -1,3 +1,6 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
 .reactodia-element-selector {
   flex-grow: 1;
   display: flex;
@@ -43,7 +46,7 @@
   }
 
   &__separator-text {
-    color: $theme-border-color-base;
+    color: theme.$border-color-base;
     display: inline-block;
     font-size: 13px;
     position: relative;

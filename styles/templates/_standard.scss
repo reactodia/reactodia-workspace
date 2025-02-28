@@ -1,9 +1,9 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 $standard-template-color: var(--reactodia-element-style-color);
-$standard-template-background: $theme-element-background-color;
-$standard-new-entity-stripe: $theme-element-background-color;
+$standard-template-background: theme.$element-background-color;
+$standard-new-entity-stripe: theme.$element-background-color;
 
 .reactodia-standard-template {
   min-width: 180px;
@@ -170,7 +170,7 @@ $standard-new-entity-stripe: $theme-element-background-color;
   &__iri-key {
     font-size: 12px;
     margin-right: 4px;
-    color: $theme-color-emphasis-500;
+    color: theme.$color-emphasis-500;
   }
 
   &__iri-value {
@@ -182,12 +182,12 @@ $standard-new-entity-stripe: $theme-element-background-color;
   }
 
   &__iri-value a {
-    color: $theme-color-emphasis-500;
+    color: theme.$color-emphasis-500;
   }
 
   &__hr {
     border: 0;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     height: 0;
     margin: 5px 0;
   }

@@ -27,16 +27,18 @@ for (const config of configurations) {
 }
 
 if (SPARQL_ENDPOINT) {
-  app.use(createProxyMiddleware('/sparql**', {
+  app.use(createProxyMiddleware({
     target: SPARQL_ENDPOINT,
+    pathFilter: '/sparql**',
     pathRewrite: {'/sparql' : ''},
     changeOrigin: true,
     secure: false,
   }));
 }
 
-app.use(createProxyMiddleware('/wikidata**', {
-  target: WIKIDATA_ENDPOINT || SPARQL_ENDPOINT,
+app.use(createProxyMiddleware({
+  target: WIKIDATA_ENDPOINT,
+  pathFilter: '/wikidata**',
   pathRewrite: {'/wikidata' : ''},
   changeOrigin: true,
   secure: false,

@@ -1,5 +1,5 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-links-toolbox {
   flex: auto;
@@ -16,7 +16,7 @@
   }
 
   &__rest {
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     flex: auto;
     display: flex;
     flex-direction: column;
@@ -86,7 +86,7 @@
     
     cursor: pointer;
     opacity: 0.4;
-    transition: opacity $theme-transition-duration;
+    transition: opacity theme.$transition-duration;
   }
 
   &__link-item:hover &__filter-button {

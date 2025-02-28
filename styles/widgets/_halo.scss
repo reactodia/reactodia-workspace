@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-halo {
   position: absolute;
@@ -6,5 +6,5 @@
 
   border: 1.5px dashed #d8956d;
   border-radius: 2px;
-  box-shadow: $theme-selection-single-box-shadow;
+  box-shadow: theme.$selection-single-box-shadow;
 }

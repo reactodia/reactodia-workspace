@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-link-action {
   $button-size: var(--reactodia-link-button-size);
@@ -10,7 +10,7 @@
   padding: 0;
   opacity: 0.8;
   outline: none;
-  transition: opacity $theme-transition-duration;
+  transition: opacity theme.$transition-duration;
 
   &:hover {
     opacity: 1;
@@ -26,7 +26,7 @@
   }
 
   &__button {
-    background-color: $theme-color-gray-400;
+    background-color: theme.$color-gray-400;
     background-position: 50%;
     background-repeat: no-repeat;
     background-size: 65%;
@@ -36,7 +36,7 @@
   }
 
   &__endpoint {
-    color: $theme-color-primary;
+    color: theme.$color-primary;
     background: transparent;
   }
 
@@ -52,7 +52,7 @@
     background: white url("@codicons/edit.svg") no-repeat;
     background-size: 80%;
     background-position: center;
-    filter: invert(100%) $theme-selection-icon-filter;
+    filter: invert(100%) theme.$selection-icon-filter;
 
     position: absolute;
     margin-left: 5px;
@@ -63,7 +63,7 @@
     
     cursor: pointer;
     opacity: 0.5;
-    transition: opacity $theme-transition-duration;
+    transition: opacity theme.$transition-duration;
 
     &:hover {
       opacity: 1;

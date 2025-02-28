@@ -1,11 +1,11 @@
-@import "../mixin/icons";
-@import "../mixin/zIndex";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../mixin/zIndex";
+@use "../theme/theme";
 
 .reactodia-dropdown {
   position: relative;
   float: left;
-  z-index: $z-index-dropdown;
+  z-index: zIndex.$dropdown;
 
   &__content {
     position: absolute;
@@ -17,7 +17,7 @@
   }
 
   &--expanded &__content {
-    box-shadow: $theme-canvas-box-shadow;
+    box-shadow: theme.$canvas-box-shadow;
   }
 
   &--collapsed &__content {
@@ -47,7 +47,7 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    background-color: $theme-background-color-surface;
+    background-color: theme.$background-color-surface;
   }
 
   .reactodia-dropdown-menu-item {
@@ -55,23 +55,23 @@
   }
 
   .reactodia-dropdown-menu-item:first-child {
-    border-top-right-radius: $theme-button-border-radius;
+    border-top-right-radius: theme.$button-border-radius;
   }
 
   .reactodia-dropdown-menu-item:last-child {
-    border-bottom-left-radius: $theme-button-border-radius;
-    border-bottom-right-radius: $theme-button-border-radius;
+    border-bottom-left-radius: theme.$button-border-radius;
+    border-bottom-right-radius: theme.$button-border-radius;
   }
 }
 
 .reactodia-dropdown-menu-item {
   & ~ & {
-    margin-top: calc(-1 * $theme-button-border-width);
-    border-top-color: $theme-button-default-border-color;
+    margin-top: calc(-1 * theme.$button-border-width);
+    border-top-color: theme.$button-default-border-color;
   }
   &--disabled, &--disabled:hover {
-    color: $theme-button-default-color;
-    background-color: $theme-input-background-color-disabled;
+    color: theme.$button-default-color;
+    background-color: theme.$input-background-color-disabled;
     cursor: not-allowed;
     opacity: .65;
   }

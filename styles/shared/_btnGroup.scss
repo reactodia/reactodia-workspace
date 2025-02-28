@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-btn-group {
   position: relative;
@@ -21,7 +21,7 @@
   .reactodia-btn + .reactodia-btn-group,
   .reactodia-btn-group + .reactodia-btn,
   .reactodia-btn-group + .reactodia-btn-group {
-    margin-left: calc(-1 * $theme-button-border-width);
+    margin-left: calc(-1 * theme.$button-border-width);
   }
 
   > .reactodia-btn {
@@ -30,13 +30,13 @@
 
   > .reactodia-btn:first-child {
     margin-left: 0;
-    border-top-left-radius: $theme-button-border-radius;
-    border-bottom-left-radius: $theme-button-border-radius;
+    border-top-left-radius: theme.$button-border-radius;
+    border-bottom-left-radius: theme.$button-border-radius;
   }
 
   > .reactodia-btn:last-child {
-    border-top-right-radius: $theme-button-border-radius;
-    border-bottom-right-radius: $theme-button-border-radius;
+    border-top-right-radius: theme.$button-border-radius;
+    border-bottom-right-radius: theme.$button-border-radius;
   }
 
   &-sm > .reactodia-btn {

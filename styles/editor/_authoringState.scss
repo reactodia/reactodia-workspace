@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-authoring-state {
   &__element-outlines {
@@ -8,18 +8,18 @@
   }
 
   &__outline-overlay {
-    fill: $theme-color-emphasis-0;
+    fill: theme.$color-emphasis-0;
     fill-opacity: 0.3;
   }
 
   &__outline-stripe-line {
-    stroke: $theme-color-emphasis-300;
+    stroke: theme.$color-emphasis-300;
     stroke-width: 10;
     stroke-opacity: 0.2;
   }
 
   &__outline-cross-line {
-    stroke: $theme-color-danger;
+    stroke: theme.$color-danger;
   }
 
   &__link-temporary,
@@ -33,24 +33,24 @@
   }
 
   &__link-temporary {
-    stroke: $theme-color-gray-600;
+    stroke: theme.$color-gray-600;
     stroke-dasharray: 8 8;
   }
 
   &__link-added {
-    stroke: $theme-color-success;
+    stroke: theme.$color-success;
   }
 
   &__link-changed {
-    stroke: $theme-color-primary;
+    stroke: theme.$color-primary;
   }
 
   &__link-deleted {
-    stroke: $theme-color-danger;
+    stroke: theme.$color-danger;
   }
 
   &__link-uncertain {
-    stroke: $theme-color-primary;
+    stroke: theme.$color-primary;
   }
 
   &__item-validation:not(:first-child) {
@@ -71,19 +71,19 @@
   }
 
   &--severity-info &__item-validation-icon {
-    background: $theme-color-info;
+    background: theme.$color-info;
     -webkit-mask-image: url("@codicons/info.svg");
     mask-image: url("@codicons/info.svg");
   }
 
   &--severity-warning &__item-validation-icon {
-    background: $theme-color-warning;
+    background: theme.$color-warning;
     -webkit-mask-image: url("@codicons/warning.svg");
     mask-image: url("@codicons/warning.svg");
   }
 
   &--severity-error &__item-validation-icon {
-    background: $theme-color-danger;
+    background: theme.$color-danger;
     -webkit-mask-image: url("@codicons/warning.svg");
     mask-image: url("@codicons/warning.svg");
   }
@@ -94,7 +94,7 @@
   }
 
   &__state-cancel {
-    color: $theme-color-primary;
+    color: theme.$color-primary;
     cursor: pointer;
     &:hover {
       text-decoration: underline;
@@ -113,7 +113,7 @@
     display: flex;
     align-items: center;
     bottom: 0;
-    background: $theme-canvas-underlay-color;
+    background: theme.$canvas-underlay-color;
     border-radius: 2px;
     padding: 1px;
   }

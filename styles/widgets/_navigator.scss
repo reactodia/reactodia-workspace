@@ -1,18 +1,18 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-navigator {
   display: block;
   overflow: hidden;
 
-  background: $theme-navigator-background-fill;
-  border: $theme-border-width-base solid $theme-border-color-base;
+  background: theme.$navigator-background-fill;
+  border: theme.$border-width-base solid theme.$border-color-base;
   border-radius: 2px;
-  box-shadow: $theme-canvas-box-shadow;
+  box-shadow: theme.$canvas-box-shadow;
 
   transition:
-    width $theme-transition-duration,
-    height $theme-transition-duration;
+    width theme.$transition-duration,
+    height theme.$transition-duration;
 
   &--collapsed {
     width: 24px;
@@ -20,7 +20,7 @@
   }
 
   > canvas {
-    transition: opacity $theme-transition-duration;
+    transition: opacity theme.$transition-duration;
   }
   &--expanded > canvas { opacity: 1; }
   &--collapsed > canvas { opacity: 0; }
@@ -33,7 +33,7 @@
     padding: 4px;
 
     opacity: 0.5;
-    transition: opacity $theme-transition-duration;
+    transition: opacity theme.$transition-duration;
 
     &:not(:disabled):hover {
       opacity: 1;

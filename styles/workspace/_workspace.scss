@@ -1,11 +1,11 @@
-@import "../mixin/defaults";
+@use "../mixin/defaults";
 
 .reactodia-workspace {
   display: flex;
   flex-direction: column;
   height: 100%;
 
-  @include inheritable-defaults;
+  @include defaults.inheritable-defaults;
 
   *, *:before, *:after {
     box-sizing: inherit;

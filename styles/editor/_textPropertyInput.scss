@@ -1,11 +1,14 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
 .reactodia-text-property-input {
   &__row {
     display: flex;
-    gap: $theme-spacing-horizontal;
+    gap: theme.$spacing-horizontal;
   }
 
   &__row + &__row {
-    margin-top: $theme-spacing-vertical;
+    margin-top: theme.$spacing-vertical;
   }
 
   &__language {

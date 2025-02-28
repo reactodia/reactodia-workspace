@@ -1,5 +1,5 @@
-@import "../mixin/icons";
-@import "../mixin/zIndex";
+@use "../mixin/icons" as *;
+@use "../mixin/zIndex";
 
 .reactodia-toolbar {
   /* Prevent buttons to wrap after menu button if width is too small */
@@ -14,6 +14,6 @@
 
   &__menu {
     margin-right: 5px;
-    z-index: $z-index-toolbar-menu;
+    z-index: zIndex.$toolbar-menu;
   }
 }

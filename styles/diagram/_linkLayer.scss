@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-link {
   &--blurred {
@@ -15,7 +15,7 @@
     fill: none;
   }
   .reactodia-link:hover &__wrap {
-    stroke: $theme-color-emphasis-400;
+    stroke: theme.$color-emphasis-400;
     opacity: 0.44;
   }
 }
@@ -26,7 +26,7 @@
   }
   /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__vertex:not([fill]) {
-    fill: $theme-link-stroke-color;
+    fill: theme.$link-stroke-color;
   }
   .reactodia-link:not(:hover) &__vertex {
     fill: transparent;
@@ -34,12 +34,12 @@
 
   &__handle {
     opacity: 0;
-    transition: opacity $theme-transition-duration;
+    transition: opacity theme.$transition-duration;
     cursor: pointer;
-    > circle { fill: $theme-color-emphasis-500; }
-    > path { stroke: $theme-color-emphasis-200; }
+    > circle { fill: theme.$color-emphasis-500; }
+    > path { stroke: theme.$color-emphasis-200; }
     &:hover {
-      > circle { fill: $theme-color-emphasis-900; }
+      > circle { fill: theme.$color-emphasis-900; }
     }
   }
   .reactodia-link:hover &__handle {
@@ -50,6 +50,6 @@
 .reactodia-link-marker {
   /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__path:not([fill]) {
-    fill: $theme-link-stroke-color;
+    fill: theme.$link-stroke-color;
   }
 }

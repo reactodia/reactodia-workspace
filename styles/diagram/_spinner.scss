@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-spinner {
   &__arrow {
@@ -9,11 +9,11 @@
   }
 
   &__text {
-    color: $theme-font-color-base;
+    color: theme.$font-color-base;
   }
 
   &[data-error='true'] &__arrow {
-    color: $theme-color-danger;
+    color: theme.$color-danger;
     animation-iteration-count: 1;
   }
 }

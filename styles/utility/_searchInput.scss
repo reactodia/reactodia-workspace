@@ -1,12 +1,12 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-search-input {
   display: flex;
 
   &__input {
     &::placeholder {
-      color: $theme-input-color-placeholder;
+      color: theme.$input-color-placeholder;
     }
   }
 
@@ -27,16 +27,16 @@
     left: -33px;
     padding: 8px;
     cursor: pointer;
-    color: $theme-button-default-color;
+    color: theme.$button-default-color;
     background: transparent;
     border: 0;
-    border-top-right-radius: $theme-input-border-radius;
-    border-bottom-right-radius: $theme-input-border-radius;
-    transition: background-color $theme-transition-duration;
+    border-top-right-radius: theme.$input-border-radius;
+    border-bottom-right-radius: theme.$input-border-radius;
+    transition: background-color theme.$transition-duration;
 
     &:hover {
-      color: $theme-button-default-color-focus;
-      background-color: $theme-button-default-background-color-focus;
+      color: theme.$button-default-color-focus;
+      background-color: theme.$button-default-background-color-focus;
     }
 
     &::after {

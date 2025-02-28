@@ -1,0 +1,178 @@
+/* Colors */
+$color-gray-0: var(--reactodia-color-gray-0);
+$color-gray-100: var(--reactodia-color-gray-100);
+$color-gray-200: var(--reactodia-color-gray-200);
+$color-gray-300: var(--reactodia-color-gray-300);
+$color-gray-400: var(--reactodia-color-gray-400);
+$color-gray-500: var(--reactodia-color-gray-500);
+$color-gray-600: var(--reactodia-color-gray-600);
+$color-gray-700: var(--reactodia-color-gray-700);
+$color-gray-800: var(--reactodia-color-gray-800);
+$color-gray-900: var(--reactodia-color-gray-900);
+$color-gray-1000: var(--reactodia-color-gray-1000);
+
+$color-emphasis-0: var(--reactodia-color-emphasis-0);
+$color-emphasis-100: var(--reactodia-color-emphasis-100);
+$color-emphasis-200: var(--reactodia-color-emphasis-200);
+$color-emphasis-300: var(--reactodia-color-emphasis-300);
+$color-emphasis-400: var(--reactodia-color-emphasis-400);
+$color-emphasis-500: var(--reactodia-color-emphasis-500);
+$color-emphasis-600: var(--reactodia-color-emphasis-600);
+$color-emphasis-700: var(--reactodia-color-emphasis-700);
+$color-emphasis-800: var(--reactodia-color-emphasis-800);
+$color-emphasis-900: var(--reactodia-color-emphasis-900);
+$color-emphasis-1000: var(--reactodia-color-emphasis-1000);
+
+$color-white: var(--reactodia-color-gray-0);
+$color-black: var(--reactodia-color-gray-1000);
+
+$color-primary: var(--reactodia-color-primary);
+$color-primary-dark: var(--reactodia-color-primary-dark);
+$color-primary-darker: var(--reactodia-color-primary-darker);
+$color-primary-darkest: var(--reactodia-color-primary-darkest);
+$color-primary-light: var(--reactodia-color-primary-light);
+$color-primary-lighter: var(--reactodia-color-primary-lighter);
+$color-primary-lightest: var(--reactodia-color-primary-lightest);
+$color-primary-contrast-background: var(--reactodia-color-primary-contrast-background);
+$color-primary-contrast-foreground: var(--reactodia-color-primary-contrast-foreground);
+
+$color-secondary: var(--reactodia-color-secondary);
+$color-secondary-dark: var(--reactodia-color-secondary-dark);
+$color-secondary-darker: var(--reactodia-color-secondary-darker);
+$color-secondary-darkest: var(--reactodia-color-secondary-darkest);
+$color-secondary-light: var(--reactodia-color-secondary-light);
+$color-secondary-lighter: var(--reactodia-color-secondary-lighter);
+$color-secondary-lightest: var(--reactodia-color-secondary-lightest);
+$color-secondary-contrast-background: var(--reactodia-color-secondary-contrast-background);
+$color-secondary-contrast-foreground: var(--reactodia-color-secondary-contrast-foreground);
+
+$color-success: var(--reactodia-color-success);
+$color-success-dark: var(--reactodia-color-success-dark);
+$color-success-darker: var(--reactodia-color-success-darker);
+$color-success-darkest: var(--reactodia-color-success-darkest);
+$color-success-light: var(--reactodia-color-success-light);
+$color-success-lighter: var(--reactodia-color-success-lighter);
+$color-success-lightest: var(--reactodia-color-success-lightest);
+$color-success-contrast-background: var(--reactodia-color-success-contrast-background);
+$color-success-contrast-foreground: var(--reactodia-color-success-contrast-foreground);
+
+$color-info: var(--reactodia-color-info);
+$color-info-dark: var(--reactodia-color-info-dark);
+$color-info-darker: var(--reactodia-color-info-darker);
+$color-info-darkest: var(--reactodia-color-info-darkest);
+$color-info-light: var(--reactodia-color-info-light);
+$color-info-lighter: var(--reactodia-color-info-lighter);
+$color-info-lightest: var(--reactodia-color-info-lightest);
+$color-info-contrast-background: var(--reactodia-color-info-contrast-background);
+$color-info-contrast-foreground: var(--reactodia-color-info-contrast-foreground);
+
+$color-warning: var(--reactodia-color-warning);
+$color-warning-dark: var(--reactodia-color-warning-dark);
+$color-warning-darker: var(--reactodia-color-warning-darker);
+$color-warning-darkest: var(--reactodia-color-warning-darkest);
+$color-warning-light: var(--reactodia-color-warning-light);
+$color-warning-lighter: var(--reactodia-color-warning-lighter);
+$color-warning-lightest: var(--reactodia-color-warning-lightest);
+$color-warning-contrast-background: var(--reactodia-color-warning-contrast-background);
+$color-warning-contrast-foreground: var(--reactodia-color-warning-contrast-foreground);
+
+$color-danger: var(--reactodia-color-danger);
+$color-danger-dark: var(--reactodia-color-danger-dark);
+$color-danger-darker: var(--reactodia-color-danger-darker);
+$color-danger-darkest: var(--reactodia-color-danger-darkest);
+$color-danger-light: var(--reactodia-color-danger-light);
+$color-danger-lighter: var(--reactodia-color-danger-lighter);
+$color-danger-lightest: var(--reactodia-color-danger-lightest);
+$color-danger-contrast-background: var(--reactodia-color-danger-contrast-background);
+$color-danger-contrast-foreground: var(--reactodia-color-danger-contrast-foreground);
+
+$color-content: var(--reactodia-color-content);
+$color-content-inverse: var(--reactodia-color-content-inverse);
+$color-content-contrast: var(--reactodia-color-content-contrast);
+
+$background-color: var(--reactodia-background-color);
+$background-color-surface: var(--reactodia-background-color-surface);
+
+/* Text and fonts */
+$font-family-base: var(--reactodia-font-family-base);
+$font-family-monospace: var(--reactodia-font-family-monospace);
+$font-size-base: var(--reactodia-font-size-base);
+$line-height-base: var(--reactodia-line-height-base);
+$font-color-base: var(--reactodia-font-color-base);
+$font-color-base-inverse: var(--reactodia-font-color-base-inverse);
+
+/* Spacing */
+$spacing-base: var(--reactodia-spacing-base);
+$spacing-vertical: var(--reactodia-spacing-vertical);
+$spacing-horizontal: var(--reactodia-spacing-horizontal);
+
+/* Borders */
+$border-width-base: var(--reactodia-border-width-base);
+$border-radius-base: var(--reactodia-border-radius-base);
+$border-color-base: var(--reactodia-border-color-base);
+
+/* Transitions */
+$transition-duration: var(--reactodia-transition-duration);
+
+/* Input */
+$input-color: var(--reactodia-input-color);
+$input-color-placeholder: var(--reactodia-input-color-placeholder);
+$input-background-color: var(--reactodia-input-background-color);
+$input-background-color-disabled: var(--reactodia-input-background-color-disabled);
+$input-border-color: var(--reactodia-input-border-color);
+$input-border-color-focus: var(--reactodia-input-border-color-focus);
+$input-border-radius: var(--reactodia-input-border-radius);
+$input-border-width: var(--reactodia-input-border-width);
+
+/* Button */
+$button-border-radius: var(--reactodia-button-border-radius);
+$button-border-width: var(--reactodia-button-border-width);
+$button-default-background-color: var(--reactodia-button-default-background-color);
+$button-default-background-color-active: var(--reactodia-button-default-background-color-active);
+$button-default-background-color-focus: var(--reactodia-button-default-background-color-focus);
+$button-default-border-color: var(--reactodia-button-default-border-color);
+$button-default-color: var(--reactodia-button-default-color);
+$button-default-color-focus: var(--reactodia-button-default-color-focus);
+
+/* Draggable Handle */
+$draggable-handle-corner-color: var(--reactodia-draggable-handle-corner-color);
+$draggable-handle-corner-color-focus: var(--reactodia-draggable-handle-corner-color-focus);
+$draggable-handle-side-color: var(--reactodia-draggable-handle-side-color);
+
+/* Tree */
+$tree-background-color-active: var(--reactodia-tree-background-color-active);
+$tree-background-color-focus: var(--reactodia-tree-background-color-focus);
+$tree-border-color-active: var(--reactodia-tree-border-color-active);
+$tree-border-color-focus: var(--reactodia-tree-border-color-focus);
+
+/* Dialog */
+$dialog-border-color: var(--reactodia-dialog-border-color);
+$dialog-border-radius: var(--reactodia-dialog-border-radius);
+$dialog-border-width: var(--reactodia-dialog-border-width);
+
+/* Canvas */
+$canvas-background-color: var(--reactodia-canvas-background-color);
+$canvas-box-shadow: var(--reactodia-canvas-box-shadow);
+$canvas-overlay-color: var(--reactodia-canvas-overlay-color);
+$canvas-underlay-color: var(--reactodia-canvas-underlay-color);
+$element-background-color: var(--reactodia-element-background-color);
+$link-stroke-color: var(--reactodia-link-stroke-color);
+
+/* Halo and Selection */
+$selection-icon-filter: var(--reactodia-selection-icon-filter);
+$selection-multiple-box-shadow: var(--reactodia-selection-multiple-box-shadow);
+$selection-single-box-shadow: var(--reactodia-selection-single-box-shadow);
+
+/* Navigator */
+$navigator-background-fill: var(--reactodia-navigator-background-fill);
+$navigator-scrollable-pane-fill: var(--reactodia-navigator-scrollable-pane-fill);
+$navigator-viewport-fill: var(--reactodia-navigator-viewport-fill);
+$navigator-viewport-stroke-color: var(--reactodia-navigator-viewport-stroke-color);
+$navigator-viewport-stroke-width: var(--reactodia-navigator-viewport-stroke-width);
+$navigator-viewport-stroke-dash: var(--reactodia-navigator-viewport-stroke-dash);
+$navigator-overflow-stroke-color: var(--reactodia-navigator-overflow-stroke-color);
+$navigator-overflow-stroke-width: var(--reactodia-navigator-overflow-stroke-width);
+$navigator-overflow-stroke-dash: var(--reactodia-navigator-overflow-stroke-dash);
+
+/* Menu and Toolbar */
+$toolbar-height: var(--reactodia-toolbar-height);

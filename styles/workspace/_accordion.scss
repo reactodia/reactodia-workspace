@@ -1,5 +1,5 @@
-@import "../mixin/zIndex";
-@import "../theme/variables";
+@use "../mixin/zIndex";
+@use "../theme/theme";
 
 .reactodia-accordion {
   flex: auto;
@@ -16,7 +16,7 @@
   }
 
   &--vertical:not(&--resizing) > .reactodia-accordion-item {
-    transition: height $theme-transition-duration ease-in-out;
+    transition: height theme.$transition-duration ease-in-out;
   }
 }
 
@@ -30,7 +30,7 @@
   }
 
   &--vertical {
-    border-top: $theme-border-width-base solid $theme-border-color-base;
+    border-top: theme.$border-width-base solid theme.$border-color-base;
 
     &:first-child {
       border-top-width: 0;
@@ -38,7 +38,7 @@
   }
 
   &--horizontal {
-    border-right: $theme-border-width-base solid $theme-border-color-base;
+    border-right: theme.$border-width-base solid theme.$border-color-base;
 
     &:last-child {
       border-right-width: 0;
@@ -47,7 +47,7 @@
 
   &__handle {
     position: absolute;
-    z-index: $z-index-accordion-handle;
+    z-index: zIndex.$accordion-handle;
   }
 
   &__handle-vertical {
@@ -67,8 +67,8 @@
   }
 
   &__handle-btn {
-    background-color: $theme-button-default-background-color;
-    border: 2px solid $theme-color-primary;
+    background-color: theme.$button-default-background-color;
+    border: 2px solid theme.$color-primary;
     box-shadow: 0 0 0 1px rgba(9, 30, 66, 0.08), 0 2px 4px 1px rgba(9, 30, 66, 0.08);
     border-radius: 10px;
     cursor: pointer;
@@ -77,8 +77,8 @@
     top: 50%;
     margin-top: -10px;
     width: 20px;
-    z-index: $z-index-accordion-handle-button;
-    transition: $theme-transition-duration;
+    z-index: zIndex.$accordion-handle-button;
+    transition: theme.$transition-duration;
 
     display: flex;
     align-items: center;
@@ -91,18 +91,18 @@
       content: '';
       height: 16px;
       width: 16px;
-      transition: opacity filter $theme-transition-duration;
-      color: $theme-color-emphasis-700;
+      transition: opacity filter theme.$transition-duration;
+      color: theme.$color-emphasis-700;
       background-color: currentColor;
     }
 
     &:hover {
-      background-color: $theme-color-primary;
+      background-color: theme.$color-primary;
     }
 
     &:hover::before {
       opacity: 1;
-      color: $theme-color-white;
+      color: theme.$color-white;
     }
   }
 
@@ -141,7 +141,7 @@
     flex: 1 1 0px; // IE 11 requires a unit to be added to the third argument
     display: flex;
     flex-direction: column;
-    background-color: $theme-background-color;
+    background-color: theme.$background-color;
   }
 
   &__header {
@@ -150,7 +150,7 @@
 
     flex-shrink: 0;
     font-size: 16px;
-    background-color: $theme-color-emphasis-200;
+    background-color: theme.$color-emphasis-200;
     cursor: default;
     /* unselectable */
     -webkit-touch-callout: none;
@@ -160,7 +160,7 @@
     user-select: none;
 
     &:before {
-      border-top: 6px solid $theme-color-emphasis-700;
+      border-top: 6px solid theme.$color-emphasis-700;
       border-left: 3.5px solid transparent;
       border-right: 3.5px solid transparent;
       content: "";
@@ -176,7 +176,7 @@
   }
 
   &--collapsed &__inner {
-    background-color: $theme-background-color-surface;
+    background-color: theme.$background-color-surface;
   }
 
   &--collapsed &__header:before {

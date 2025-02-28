@@ -1,5 +1,5 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-instances-search {
   flex: auto;
@@ -30,25 +30,25 @@
   }
 
   &__criterion-class {
-    border: $theme-color-primary 1px dashed;
-    color: $theme-color-primary-contrast-foreground;
-    background-color: $theme-color-primary-contrast-background;
+    border: theme.$color-primary 1px dashed;
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-element {
-    border: $theme-color-primary 1px dashed;
-    color: $theme-color-primary-contrast-foreground;
-    background-color: $theme-color-primary-contrast-background;
+    border: theme.$color-primary 1px dashed;
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
 
   &__criterion-link-type {
-    border: $theme-color-primary 1px dashed;
-    color: $theme-color-primary-contrast-foreground;
-    background-color: $theme-color-primary-contrast-background;
+    border: theme.$color-primary 1px dashed;
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
     padding: 0 .5em 0 .5em;
     word-wrap: break-word;
   }
@@ -98,7 +98,7 @@
 
   &__rest {
     padding: 10px 10px 0 10px;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
   }
 
   &__results {
@@ -124,9 +124,9 @@
   &__actions {
     display: flex;
     justify-content: flex-end;
-    gap: $theme-spacing-horizontal;
+    gap: theme.$spacing-horizontal;
     height: 40px;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     transition: height 200ms 0ms;
   }
 

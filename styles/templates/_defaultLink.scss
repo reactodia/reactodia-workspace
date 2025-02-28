@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-default-link {
   &--group .reactodia-link-path {
@@ -6,7 +6,7 @@
   }
 
   &__label-text {
-    fill: $theme-font-color-base;
+    fill: theme.$font-color-base;
     stroke: none;
     stroke-width: 0;
     font-size: inherit;
@@ -25,14 +25,14 @@
   }
 
   &__label-background {
-    fill: $theme-canvas-background-color;
+    fill: theme.$canvas-background-color;
     stroke: none;
     stroke-width: 0;
   }
 
   &__source-count &__label-text,
   &__target-count &__label-text {
-    fill: $theme-color-emphasis-600;
+    fill: theme.$color-emphasis-600;
     font-size: 12px;
   }
 
@@ -43,6 +43,6 @@
 
   /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
   &__path:not([stroke]) {
-    stroke: $theme-link-stroke-color;
+    stroke: theme.$link-stroke-color;
   }
 }

@@ -1,7 +1,7 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
-$no-results-color: $theme-color-emphasis-400;
+$no-results-color: theme.$color-emphasis-400;
 
 .reactodia-connections-menu {
   flex: auto;
@@ -19,7 +19,7 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__breadcrumbs-link {
-    color: $theme-color-primary;
+    color: theme.$color-primary;
     cursor: pointer;
     text-decoration: none;
   
@@ -44,7 +44,7 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__sort-switch:checked + &__sort-switch-label {
-    color: $theme-color-primary-light;
+    color: theme.$color-primary-light;
     opacity: 1;
   }
 
@@ -81,7 +81,7 @@ $no-results-color: $theme-color-emphasis-400;
     padding: 5px;
     overflow-x: hidden;
     overflow-y: auto;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     flex-grow: 1;
     margin: 0;
   }
@@ -106,7 +106,7 @@ $no-results-color: $theme-color-emphasis-400;
 
   &__links-list-hr {
     border: 0;
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
     height: 0;
     margin-top: 6px;
     margin-bottom: 6px;
@@ -118,11 +118,11 @@ $no-results-color: $theme-color-emphasis-400;
     padding: 0 5px 0 0;
     align-items: center;
     margin-bottom: 4px;
-    background: $theme-color-emphasis-200;
+    background: theme.$color-emphasis-200;
     border-radius: 2px;
 
     &:hover {
-      background-color: $theme-color-emphasis-400;
+      background-color: theme.$color-emphasis-400;
     }
   }
 
@@ -135,7 +135,7 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__link:not(:hover) &__link-direction {
-    background: $theme-color-emphasis-300;
+    background: theme.$color-emphasis-300;
   }
 
   &__link-direction-in,
@@ -212,8 +212,8 @@ $no-results-color: $theme-color-emphasis-400;
     user-select: none;
   
     &:hover {
-      color: $theme-button-default-color-focus;
-      background-color: $theme-button-default-background-color-focus;
+      color: theme.$button-default-color-focus;
+      background-color: theme.$button-default-background-color-focus;
     }
   }
 
@@ -255,8 +255,8 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__objects-list {
-    border: $theme-border-width-base solid $theme-border-color-base;
-    border-radius: $theme-border-radius-base;
+    border: theme.$border-width-base solid theme.$border-color-base;
+    border-radius: theme.$border-radius-base;
     height: 0;
     flex-grow: 1;
     overflow-x: hidden;
@@ -273,7 +273,7 @@ $no-results-color: $theme-color-emphasis-400;
   }
 
   &__objects-extra {
-    color: $theme-color-emphasis-600;
+    color: theme.$color-emphasis-600;
     cursor: help;
   }
 
@@ -287,7 +287,7 @@ $no-results-color: $theme-color-emphasis-400;
     padding-bottom: 2px;
 
     &:not(:last-child) {
-      margin-right: $theme-spacing-horizontal;
+      margin-right: theme.$spacing-horizontal;
     }
   }
 }

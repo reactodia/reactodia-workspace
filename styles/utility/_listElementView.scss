@@ -1,4 +1,4 @@
-@import "../theme/variables";
+@use "../theme/theme";
 
 .reactodia-list-element-view {
   position: relative;
@@ -19,9 +19,9 @@
   }
 
   &__label {
-    background: $theme-element-background-color;
+    background: theme.$element-background-color;
     border-radius: 0 2px 2px 0;
-    font-family: $theme-font-family-base;
+    font-family: theme.$font-family-base;
     font-size: 15px;
     min-height: 1.3em;
     padding-left: 7px;
@@ -30,7 +30,7 @@
   }
 
   &--selected &__label {
-    color: $theme-color-content-contrast;
+    color: theme.$color-content-contrast;
   }
 }
 

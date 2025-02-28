@@ -1,5 +1,5 @@
-@import "../mixin/zIndex";
-@import "../theme/variables";
+@use "../mixin/zIndex";
+@use "../theme/theme";
 
 .reactodia-loading-widget {
   left: 0;
@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: $theme-color-emphasis-1000;
-  background-color: $theme-canvas-overlay-color;
-  z-index: $z-index-loading-widget;
+  color: theme.$color-emphasis-1000;
+  background-color: theme.$canvas-overlay-color;
+  z-index: zIndex.$loading-widget;
 }

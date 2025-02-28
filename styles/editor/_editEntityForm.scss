@@ -1,5 +1,5 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-edit-entity-form {
   &--loading {
@@ -8,6 +8,6 @@
   }
 
   label .reactodia-form-control + .reactodia-form-control {
-    margin-top: $theme-spacing-vertical;
+    margin-top: theme.$spacing-vertical;
   }
 }

@@ -1,5 +1,5 @@
-@import "../mixin/icons";
-@import "../theme/variables";
+@use "../mixin/icons" as *;
+@use "../theme/theme";
 
 .reactodia-class-tree {
   flex: auto;
@@ -26,7 +26,7 @@
   }
 
   &__tree {
-    border-top: 1px solid $theme-border-color-base;
+    border-top: 1px solid theme.$border-color-base;
   }
 
   &__no-results {
@@ -63,13 +63,13 @@
     border: 1px solid;
     border-color: transparent;
     &:hover {
-      background: $theme-tree-background-color-focus;
-      border-color: $theme-tree-border-color-focus;
+      background: theme.$tree-background-color-focus;
+      border-color: theme.$tree-border-color-focus;
       cursor: pointer;
     }
     &--selected {
-      background-color: $theme-tree-background-color-active;
-      border-color: $theme-tree-border-color-active;
+      background-color: theme.$tree-background-color-active;
+      border-color: theme.$tree-border-color-active;
     }
   }
 
@@ -92,7 +92,7 @@
 
   &__label {
     margin-left: 5px;
-    color: $theme-font-color-base;
+    color: theme.$font-color-base;
   }
 
   &__highlighted-term {
@@ -120,7 +120,7 @@
     &:hover {
       cursor: pointer;
       opacity: 1;
-      transition: opacity $theme-transition-duration;
+      transition: opacity theme.$transition-duration;
     }
   }
 
