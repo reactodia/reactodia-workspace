@@ -57,8 +57,15 @@ export default [
             'no-control-regex': 'off',
             'quotes': ['warn', 'single'],
             'semi': ['warn', 'always'],
+            '@typescript-eslint/no-empty-object-type': ['warn', {
+                allowInterfaces: 'with-single-extends',
+                allowWithName: 'Props$',
+            }],
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-namespace': 'off',
+            '@typescript-eslint/no-require-imports': ['warn', {
+                allow: ['\\.(json|scss|svg|ttl)$'],
+            }],
             '@typescript-eslint/no-unused-vars': 'off',
             '@typescript-eslint/no-var-requires': 'off',
         },
