@@ -36,7 +36,8 @@ export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | un
 /**
  * Provides a custom component to render element on a diagram.
  */
-export type ElementTemplateResolver = (element: Element) => ElementTemplate | undefined;
+export type ElementTemplateResolver = (element: Element) =>
+    ElementTemplate | ElementTemplateComponent | undefined;
 /**
  * Provides a custom rendering on a diagram for links of specific type.
  */
@@ -59,7 +60,15 @@ export interface TypeStyle {
 /**
  * Custom component to render a single diagram element.
  */
-export type ElementTemplate = React.ComponentType<TemplateProps>;
+export type ElementTemplateComponent = React.ComponentType<TemplateProps>;
+
+export interface ElementTemplate {
+    readonly component: ElementTemplateComponent;
+    /**
+     * @default "rect"
+     */
+    readonly shape?: 'rect' | 'ellipse';
+}
 
 /**
  * Props for a custom {@link ElementTemplate} component.
@@ -101,6 +110,12 @@ export interface LinkTemplate {
      * SVG path marker style at the target of the link.
      */
     markerTarget?: LinkMarkerStyle;
+    /**
+     * SVG path spline type between source and target elements.
+     *
+     * @default "straight"
+     */
+    splineType?: 'straight' | 'smooth';
     /**
      * Renders the link component on SVG canvas.
      */

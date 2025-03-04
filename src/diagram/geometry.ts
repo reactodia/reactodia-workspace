@@ -162,25 +162,42 @@ export function boundsOf(element: Element, sizeProvider: SizeProvider): Rect {
     };
 }
 
-function intersectRayFromRectangleCenter(sourceRect: Rect, rayTarget: Vector) {
-    const isTargetInsideRect =
-        sourceRect.width === 0 || sourceRect.height === 0 ||
-        rayTarget.x > sourceRect.x && rayTarget.x < (sourceRect.x + sourceRect.width) &&
-        rayTarget.y > sourceRect.y && rayTarget.y < (sourceRect.y + sourceRect.height);
+export interface ShapeGeometry {
+    readonly type: 'rect' | 'ellipse';
+    readonly bounds: Rect;
+}
 
-    const halfWidth = sourceRect.width / 2;
-    const halfHeight = sourceRect.height / 2;
-    const center = {
-        x: sourceRect.x + halfWidth,
-        y: sourceRect.y + halfHeight,
-    };
-    if (isTargetInsideRect) {
-        return center;
+function intersectRayFromShape(geometry: ShapeGeometry, target: Vector): Vector | undefined {
+    switch (geometry.type) {
+        case 'ellipse': {
+            return intersectRayFromEllipse(geometry.bounds, target);
+        }
+        case 'rect':
+        default: {
+            return intersectRayFromRect(geometry.bounds, target);
+        }
+    }
+}
+
+function intersectRayFromRect(rect: Rect, target: Vector) {
+    if (
+        rect.width === 0 || rect.height === 0 ||
+        target.x > rect.x && target.x < (rect.x + rect.width) &&
+        target.y > rect.y && target.y < (rect.y + rect.height)
+    ) {
+        return undefined;
     }
 
+    const halfWidth = rect.width / 2;
+    const halfHeight = rect.height / 2;
+    const center: Vector = {
+        x: rect.x + halfWidth,
+        y: rect.y + halfHeight,
+    };
+
     const direction = Vector.normalize({
-        x: rayTarget.x - center.x,
-        y: rayTarget.y - center.y,
+        x: target.x - center.x,
+        y: target.y - center.y,
     });
 
     const rightDirection = {x: Math.abs(direction.x), y: direction.y};
@@ -199,6 +216,18 @@ function intersectRayFromRectangleCenter(sourceRect: Rect, rayTarget: Vector) {
             y: center.y + halfHeight * Math.sign(direction.y),
         };
     }
+}
+
+function intersectRayFromEllipse(bounds: Rect, target: Vector): Vector | undefined {
+    const center = Rect.center(bounds);
+    const pointer = Vector.subtract(target, center);
+    const normal = Vector.normalize(pointer);
+    const intersection: Vector = {
+        x: normal.x * bounds.width * 0.5,
+        y: normal.y * bounds.height * 0.5,
+    };
+    return Vector.length(pointer) >= Vector.length(intersection)
+        ? Vector.add(center, intersection) : undefined;
 }
 
 /**
@@ -221,24 +250,44 @@ export function isPolylineEqual(left: ReadonlyArray<Vector>, right: ReadonlyArra
 }
 
 /**
- * Computes line geometry between two rectangles clipped at each
- * rectangle border with intermediate points in-between.
+ * Computes line geometry between two shapes clipped at each
+ * ones border with intermediate points in-between.
  *
- * It is assumed that the line starts at source rectangle center,
- * ends at target rectangle center and goes through each vertex in the array.
+ * It is assumed that the line starts at source shape center,
+ * ends at target shape center and goes through each vertex in the array.
  *
  * @category Geometry
  */
 export function computePolyline(
-    sourceRect: Rect,
-    targetRect: Rect,
+    source: ShapeGeometry | Rect,
+    target: ShapeGeometry | Rect,
     vertices: ReadonlyArray<Vector>
 ): Vector[] {
-    const startPoint = intersectRayFromRectangleCenter(
-        sourceRect, vertices.length > 0 ? vertices[0] : Rect.center(targetRect));
-    const endPoint = intersectRayFromRectangleCenter(
-        targetRect, vertices.length > 0 ? vertices[vertices.length - 1] : Rect.center(sourceRect));
-    return [startPoint, ...vertices, endPoint];
+    const sourceShape: ShapeGeometry = 'type' in source ? source : {type: 'rect', bounds: source};
+    const targetShape: ShapeGeometry = 'type' in target ? target : {type: 'rect', bounds: target};
+
+    let start: Vector | undefined;
+    for (let i = 0; i < vertices.length; i++) {
+        start = intersectRayFromShape(sourceShape, vertices[i]);
+        if (start) {
+            break;
+        }
+    }
+    if (!start) {
+        start = intersectRayFromShape(sourceShape, Rect.center(targetShape.bounds))
+            ?? Rect.center(sourceShape.bounds);
+    }
+
+    let end: Vector | undefined;
+    for (let i = vertices.length - 1; i >= 0; i--) {
+        end = intersectRayFromShape(targetShape, vertices[i]);
+    }
+    if (!end) {
+        end = intersectRayFromShape(targetShape, Rect.center(sourceShape.bounds))
+            ?? Rect.center(targetShape.bounds);
+    }
+
+    return [start, ...vertices, end];
 }
 
 /**
@@ -326,13 +375,60 @@ export function findNearestSegmentIndex(polyline: ReadonlyArray<Vector>, locatio
     return foundIndex;
 }
 
+export interface SplineGeometry {
+    readonly type: 'straight' | 'smooth';
+    readonly points: ReadonlyArray<Vector>;
+    readonly source: Vector;
+    readonly target: Vector;
+}
+
+export class Spline {
+    private constructor(readonly geometry: SplineGeometry) {
+        if (geometry.points.length < 2) {
+            throw new Error('Spline must consists of at least two points');
+        }
+    }
+
+    static create(geometry: SplineGeometry) {
+        return new Spline(geometry);
+    }
+
+    toPath(): string {
+        const {type, points, source, target} = this.geometry;
+
+        if (type === 'smooth' && points.length >= 3) {
+            const smoothness = 0.25;
+            const parts = [`M${points[0].x} ${points[0].y}`];
+            let previousTangent = Vector.normalize(Vector.subtract(source, points[0]));
+            for (let i = 1; i < points.length; i++) {
+                const previous = points[i - 1];
+                const p = points[i];
+                const next = points[i + 1];
+                const tangent = next
+                    ? Vector.normalize(Vector.subtract(previous, next))
+                    : Vector.normalize(Vector.subtract(p, target));
+                const length = Vector.length(Vector.subtract(previous, p));
+                const c0 = Vector.subtract(previous, Vector.scale(previousTangent, length * smoothness));
+                const c1 = Vector.add(p, Vector.scale(tangent, length * smoothness));
+                previousTangent = tangent;
+                parts.push(` C${c0.x} ${c0.y} ${c1.x} ${c1.y} ${p.x} ${p.y}`);
+            }
+            return parts.join('');
+        }
+    
+        return pathFromPolyline(points);
+    }
+}
+
 /**
  * Converts linear line geometry into an SVG path.
  *
  * @category Geometry
  */
-export function pathFromPolyline(polyline: ReadonlyArray<Vector>): string {
-    return 'M' + polyline.map(({x, y}) => `${x},${y}`).join(' L');
+export function pathFromPolyline(
+    polyline: ReadonlyArray<Vector>
+): string {
+    return 'M' + polyline.map(({x, y}) => `${x} ${y}`).join(' L');
 }
 
 /**

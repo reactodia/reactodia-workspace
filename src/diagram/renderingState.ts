@@ -9,7 +9,7 @@ import {
 import { LinkTypeIri } from '../data/model';
 
 import { Element, Link } from './elements';
-import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
+import { Rect, ShapeGeometry, Size, SizeProvider, boundsOf, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
 import { SharedCanvasState } from './sharedCanvasState';
@@ -156,6 +156,10 @@ export interface RenderingState extends SizeProvider {
      */
     getElementTemplate(element: Element): ElementTemplate;
     /**
+     * Returns resolved element shape based on its template and the computed bounds.
+     */
+    getElementShape(element: Element): ShapeGeometry;
+    /**
      * Returns link templates for all types of rendered links.
      */
     getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate>;
@@ -290,7 +294,20 @@ export class MutableRenderingState implements RenderingState {
     }
 
     getElementTemplate(element: Element): ElementTemplate {
-        return this.resolveElementTemplate(element) ?? this.shared.defaultElementTemplate;
+        let resolved = this.resolveElementTemplate(element);
+        if (typeof resolved === 'function') {
+            resolved = {component: resolved};
+        }
+        return resolved ?? this.shared.defaultElementTemplate;
+    }
+
+    getElementShape(element: Element): ShapeGeometry {
+        const template = this.getElementTemplate(element);
+        const bounds = boundsOf(element, this);
+        return {
+            type: template.shape ?? 'rect',
+            bounds,
+        };
     }
 
     ensureLinkTypeIndex(linkTypeId: LinkTypeIri): number {

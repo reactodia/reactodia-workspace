@@ -9,8 +9,7 @@ import type { ValidationSeverity } from '../../data/validationProvider';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import {
-    Vector, boundsOf, computePolyline, getPointAlongPolyline, computePolylineLength,
-    pathFromPolyline,
+    Rect, Spline, Vector, computePolyline, getPointAlongPolyline, computePolylineLength,
 } from '../../diagram/geometry';
 import { TransformedSvgCanvas } from '../../diagram/paper';
 import { RenderingLayer } from '../../diagram/renderingState';
@@ -19,7 +18,7 @@ import { HtmlSpinner } from '../../diagram/spinner';
 
 import { AuthoringState } from '../../editor/authoringState';
 import { RelationLink } from '../../editor/dataElements';
-import { LinkValidation, ElementValidation, getMaxSeverity } from '../../editor/validation';
+import { getMaxSeverity } from '../../editor/validation';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -98,26 +97,33 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         this.forceUpdate();
     };
 
-    private calculateLinkPath(link: Link) {
-        const polyline = this.calculatePolyline(link);
-        return pathFromPolyline(polyline);
+    private calculateLinkPath(link: Link): string {
+        const spline = this.calculateSpline(link);
+        return spline.toPath();
     }
 
-    private calculatePolyline(link: Link) {
+    private calculateSpline(link: Link): Spline {
         const {workspace: {model}, canvas} = this.props;
 
         const source = model.getElement(link.sourceId)!;
         const target = model.getElement(link.targetId)!;
 
+        const template = canvas.renderingState.getLinkTemplates().get(link.typeId);
+
         const route = canvas.renderingState.getRouting(link.id);
         const verticesDefinedByUser = link.vertices || [];
         const vertices = route ? route.vertices : verticesDefinedByUser;
 
-        return computePolyline(
-            boundsOf(source, canvas.renderingState),
-            boundsOf(target, canvas.renderingState),
-            vertices
-        );
+        const sourceShape = canvas.renderingState.getElementShape(source);
+        const targetShape = canvas.renderingState.getElementShape(target);
+        const points = computePolyline(sourceShape, targetShape, vertices);
+
+        return Spline.create({
+            type: template?.splineType ?? 'straight',
+            points,
+            source: Rect.center(sourceShape.bounds),
+            target: Rect.center(targetShape.bounds),
+        });
     }
 
     private renderLinkStateLabels() {
@@ -241,9 +247,9 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
             const {x, y} = labelBounds;
             return {x, y: y - linkLabelMargin / 2};
         } else {
-            const polyline = this.calculatePolyline(link);
-            const polylineLength = computePolylineLength(polyline);
-            return getPointAlongPolyline(polyline, polylineLength / 2);
+            const spline = this.calculateSpline(link);
+            const polylineLength = computePolylineLength(spline.geometry.points);
+            return getPointAlongPolyline(spline.geometry.points, polylineLength / 2);
         }
     }
 

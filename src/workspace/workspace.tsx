@@ -182,7 +182,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({
-            defaultElementTemplate: StandardTemplate,
+            defaultElementTemplate: {component: StandardTemplate},
             defaultLinkTemplate: DefaultLinkTemplate,
             defaultLayout: defaultLayout ?? blockingDefaultLayout,
             renameLinkProvider,

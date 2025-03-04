@@ -4,7 +4,7 @@ import { ColorSchemeApi } from '../coreUtils/colorScheme';
 
 import type { ZoomOptions } from '../diagram/canvasApi';
 import type {
-    LinkRouter, LinkTemplateResolver, ElementTemplate,
+    LinkRouter, LinkTemplateResolver, ElementTemplate, ElementTemplateComponent,
 } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { PaperArea } from '../diagram/paperArea';
@@ -76,7 +76,8 @@ export interface CanvasProps {
  * Provides a custom component to render element on a diagram
  * based on the element itself and its type IRIs if the element is an entity.
  */
-export type TypedElementResolver = (types: readonly string[], element: Element) => ElementTemplate | undefined;
+export type TypedElementResolver = (types: readonly string[], element: Element) =>
+    ElementTemplate | ElementTemplateComponent | undefined;
 
 const CLASS_NAME = 'reactodia-canvas';
 

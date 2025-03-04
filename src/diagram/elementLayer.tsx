@@ -4,7 +4,7 @@ import { findDOMNode, flushSync } from 'react-dom';
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
-import { TemplateProps } from './customization';
+import { ElementTemplate, TemplateProps } from './customization';
 
 import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
@@ -389,22 +389,22 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
 }
 
 class TemplatedElement extends React.Component<OverlaidElementProps> {
-    private cachedTemplateClass: React.ComponentType<TemplateProps> | undefined;
+    private cachedTemplate: ElementTemplate | undefined;
     private cachedTemplateProps: TemplateProps | undefined;
 
     render() {
         const {state, renderingState} = this.props;
         const {element, templateProps} = state;
-        const templateClass = renderingState.getElementTemplate(element);
-        this.cachedTemplateClass = templateClass;
+        const template = renderingState.getElementTemplate(element);
+        this.cachedTemplate = template;
         this.cachedTemplateProps = templateProps;
-        return React.createElement(templateClass, templateProps);
+        return React.createElement(template.component, templateProps);
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
-        const templateClass = nextProps.renderingState.getElementTemplate(nextProps.state.element);
+        const template = nextProps.renderingState.getElementTemplate(nextProps.state.element);
         return !(
-            this.cachedTemplateClass === templateClass &&
+            this.cachedTemplate?.component === template.component &&
             this.cachedTemplateProps === nextProps.state.templateProps
         );
     }

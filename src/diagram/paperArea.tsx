@@ -15,7 +15,7 @@ import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
 import { Element, Link, Cell, LinkVertex } from './elements';
 import {
-    Vector, Rect, boundsOf, computePolyline, findNearestSegmentIndex, getContentFittingBox,
+    Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox,
 } from './geometry';
 import { DiagramModel } from './model';
 import { CommandBatch } from './history';
@@ -592,8 +592,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         const source = model.getElement(link.sourceId)!;
         const target = model.getElement(link.targetId)!;
         const polyline = computePolyline(
-            boundsOf(source, renderingState),
-            boundsOf(target, renderingState),
+            renderingState.getElementShape(source),
+            renderingState.getElementShape(target),
             vertices
         );
         const segmentIndex = findNearestSegmentIndex(polyline, location);
