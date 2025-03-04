@@ -1,9 +1,11 @@
+import * as React from 'react';
+
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import {
-    ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate,
-    LinkRouter, RoutedLink, RoutedLinks,
+    ElementTemplate, ElementTemplateComponent, ElementTemplateResolver, LinkTemplateResolver,
+    LinkTemplate, LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
 
 import { LinkTypeIri } from '../data/model';
@@ -181,6 +183,7 @@ export class MutableRenderingState implements RenderingState {
     private readonly model: DiagramModel;
     private readonly resolveElementTemplate: ElementTemplateResolver;
     private readonly resolveLinkTemplate: LinkTemplateResolver;
+    private readonly mappedTemplates = new WeakMap<ElementTemplateComponent, ElementTemplate>();
     private readonly linkRouter: LinkRouter;
 
     private readonly elementSizes = new WeakMap<Element, Size>();
@@ -296,7 +299,13 @@ export class MutableRenderingState implements RenderingState {
     getElementTemplate(element: Element): ElementTemplate {
         let resolved = this.resolveElementTemplate(element);
         if (typeof resolved === 'function') {
-            resolved = {component: resolved};
+            let mapped = this.mappedTemplates.get(resolved);
+            if (!mapped) {
+                const component = resolved;
+                mapped = {renderElement: props => React.createElement(component, props)};
+                this.mappedTemplates.set(resolved, mapped);
+            }
+            resolved = mapped;
         }
         return resolved ?? this.shared.defaultElementTemplate;
     }

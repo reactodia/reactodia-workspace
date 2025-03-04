@@ -65,7 +65,11 @@ export {
     Link, LinkEvents, LinkProps, LinkTemplateState, LinkVertex,
     Cell, VoidElement, LinkTypeVisibility,
 } from './diagram/elements';
-export * from './diagram/geometry';
+export {
+    Rect, ShapeGeometry, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition,
+    computePolyline, computePolylineLength, findElementAtPoint, findNearestSegmentIndex,
+    getContentFittingBox, getPointAlongPolyline, isPolylineEqual, pathFromPolyline,
+} from './diagram/geometry';
 export { CellsChangedEvent } from './diagram/graph';
 export * from './diagram/history';
 export {
@@ -142,7 +146,7 @@ export {
     DefaultLinkTemplate, DefaultLinkPathTemplate, DefaultLinkPathTemplateProps,
 } from './templates/defaultLinkTemplate';
 export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
-export { StandardTemplate } from './templates/standardTemplate';
+export { StandardTemplate, StandardEntity, StandardEntityProps } from './templates/standardTemplate';
 export { SemanticTypeStyles } from './templates/typeStyles';
 export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
 

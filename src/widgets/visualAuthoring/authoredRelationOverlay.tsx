@@ -119,7 +119,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         const points = computePolyline(sourceShape, targetShape, vertices);
 
         return Spline.create({
-            type: template?.splineType ?? 'straight',
+            type: template?.spline ?? 'straight',
             points,
             source: Rect.center(sourceShape.bounds),
             target: Rect.center(targetShape.bounds),

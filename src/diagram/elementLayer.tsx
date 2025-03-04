@@ -398,13 +398,13 @@ class TemplatedElement extends React.Component<OverlaidElementProps> {
         const template = renderingState.getElementTemplate(element);
         this.cachedTemplate = template;
         this.cachedTemplateProps = templateProps;
-        return React.createElement(template.component, templateProps);
+        return template.renderElement(templateProps);
     }
 
     shouldComponentUpdate(nextProps: OverlaidElementProps) {
         const template = nextProps.renderingState.getElementTemplate(nextProps.state.element);
         return !(
-            this.cachedTemplate?.component === template.component &&
+            this.cachedTemplate === template &&
             this.cachedTemplateProps === nextProps.state.templateProps
         );
     }

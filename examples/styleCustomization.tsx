@@ -51,11 +51,11 @@ function StyleCustomizationExample() {
                 canvas={{
                     elementTemplateResolver: (types, element) => {
                         if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                            return RoundTemplate;
+                            return RoundEntityTemplate;
                         }
                         return undefined;
                     },
-                    linkTemplateResolver: type => CUSTOM_LINK_TEMPLATE,
+                    linkTemplateResolver: type => DoubleArrowLinkTemplate,
                 }}
                 menu={<ExampleToolbarMenu />}
             />
@@ -63,9 +63,9 @@ function StyleCustomizationExample() {
     );
 }
 
-const RoundTemplate: Reactodia.ElementTemplate = {
-    component: RoundEntity,
+const RoundEntityTemplate: Reactodia.ElementTemplate = {
     shape: 'ellipse',
+    renderElement: props => <RoundEntity {...props} />,
 };
 
 function RoundEntity(props: Reactodia.TemplateProps) {
@@ -97,7 +97,7 @@ function RoundEntity(props: Reactodia.TemplateProps) {
     );
 }
 
-const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
+const DoubleArrowLinkTemplate: Reactodia.LinkTemplate = {
     markerSource: {
         fill: '#4b4a67',
         stroke: '#4b4a67',
@@ -112,12 +112,12 @@ const CUSTOM_LINK_TEMPLATE: Reactodia.LinkTemplate = {
         width: 20,
         height: 12,
     },
-    splineType: 'smooth',
+    spline: 'smooth',
     renderLink: props => (
         <Reactodia.DefaultLinkPathTemplate {...props}
-            pathProps={{stroke: '#3c4260', strokeWidth: 2}}
+            pathProps={{stroke: '#747da8', strokeWidth: 2}}
             primaryLabelProps={{
-                textStyle: {fill: '#3c4260'},
+                textStyle: {fill: '#747da8'},
             }}
         />
     ),

@@ -9,7 +9,7 @@ import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { TemplateProps } from '../diagram/customization';
+import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -26,11 +26,21 @@ import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceConte
 import { GroupPaginator } from './groupPaginator';
 
 /**
- * Props for {@link StandardTemplate} component.
+ * Default element template to display an {@link EntityElement} or
+ * {@link EntityGroup} on a canvas.
  *
- * @see {@link StandardTemplate}
+ * Uses {@link StandardEntity} component by default.
  */
-export interface StandardTemplateProps extends TemplateProps {
+export const StandardTemplate: ElementTemplate = {
+    renderElement: props => <StandardEntity {...props} />,
+};
+
+/**
+ * Props for {@link StandardEntity} component.
+ *
+ * @see {@link StandardEntity}
+ */
+export interface StandardEntityProps extends TemplateProps {
     /**
      * Default number items to show per page in element group.
      *
@@ -48,7 +58,8 @@ export interface StandardTemplateProps extends TemplateProps {
 /**
  * Default element template component.
  *
- * The template supports displaying entity elements, including entity groups.
+ * The template supports displaying only {@link EntityElement} or {@link EntityGroup},
+ * otherwise nothing will be rendered.
  *
  * The template supports the following template state:
  *   - pinned properties;
@@ -59,18 +70,18 @@ export interface StandardTemplateProps extends TemplateProps {
  *
  * @category Components
  */
-export function StandardTemplate(props: TemplateProps) {
+export function StandardEntity(props: TemplateProps) {
     const {element} = props;
     if (element instanceof EntityElement) {
         return (
-            <StandardTemplateStandalone {...props}
+            <StandardEntityStandalone {...props}
                 data={element.data}
                 target={element}
             />
         );
     } else if (element instanceof EntityGroup) {
         return (
-            <StandardTemplateGroup {...props}
+            <StandardEntityGroup {...props}
                 items={element.items}
                 target={element}
             />
@@ -80,7 +91,7 @@ export function StandardTemplate(props: TemplateProps) {
     }
 }
 
-interface StandardTemplateBodyProps extends TemplateProps {
+interface StandardEntityBodyProps extends TemplateProps {
     data: ElementModel;
     target: Element;
 }
@@ -90,7 +101,7 @@ const FOAF_NAME: PropertyTypeIri = 'http://xmlns.com/foaf/0.1/name';
 const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
 
-function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
+function StandardEntityStandalone(props: StandardEntityBodyProps) {
     const {data, isExpanded, elementState, target} = props;
     const workspace = useWorkspace();
     const {model, editor, translation: t, getElementTypeStyle} = workspace;
@@ -237,12 +248,12 @@ function StandardTemplateStandalone(props: StandardTemplateBodyProps) {
     );
 }
 
-interface StandardTemplateGroupProps extends StandardTemplateProps {
+interface StandardEntityGroupProps extends StandardEntityProps {
     items: ReadonlyArray<EntityGroupItem>;
     target: EntityGroup;
 }
 
-function StandardTemplateGroup(props: StandardTemplateGroupProps) {
+function StandardEntityGroup(props: StandardEntityGroupProps) {
     const {
         items, target, elementState,
         groupPageSize = DEFAULT_PAGE_SIZE,
@@ -279,7 +290,7 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
             style={groupStyle}
             role='list'>
             {pageItems.map(item => (
-                <StandardTemplateGroupItem {...props}
+                <StandardEntityGroupItem {...props}
                     key={item.data.id}
                     data={item.data}
                     isExpanded={false}
@@ -312,14 +323,14 @@ function StandardTemplateGroup(props: StandardTemplateGroupProps) {
     );
 }
 
-interface StandardTemplateGroupItemProps extends TemplateProps {
+interface StandardEntityGroupItemProps extends TemplateProps {
     data: ElementModel;
     target: EntityGroup;
     canvas: CanvasApi;
     workspace: WorkspaceContext;
 }
 
-function StandardTemplateGroupItem(props: StandardTemplateGroupItemProps) {
+function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
     const {data, target, canvas, workspace} = props;
     const {model, editor, translation: t, ungroupSome, getElementTypeStyle} = workspace;
 

@@ -162,8 +162,17 @@ export function boundsOf(element: Element, sizeProvider: SizeProvider): Rect {
     };
 }
 
+/**
+ * Describes a basic 2D shape with a specific bounds (position and size).
+ */
 export interface ShapeGeometry {
+    /**
+     * Basic 2D shape type.
+     */
     readonly type: 'rect' | 'ellipse';
+    /**
+     * Shape bounds (position and size).
+     */
     readonly bounds: Rect;
 }
 

@@ -297,7 +297,7 @@ function LinkView(props: LinkViewProps) {
     const targetShape = renderingState.getElementShape(target);
     const polyline = computePolyline(sourceShape, targetShape, vertices);
     const spline = Spline.create({
-        type: template.splineType ?? 'straight',
+        type: template.spline ?? 'straight',
         points: polyline,
         source: Rect.center(sourceShape.bounds),
         target: Rect.center(targetShape.bounds),
