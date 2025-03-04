@@ -281,6 +281,9 @@ export function computePolyline(
     let end: Vector | undefined;
     for (let i = vertices.length - 1; i >= 0; i--) {
         end = intersectRayFromShape(targetShape, vertices[i]);
+        if (end) {
+            break;
+        }
     }
     if (!end) {
         end = intersectRayFromShape(targetShape, Rect.center(sourceShape.bounds))
