@@ -4,6 +4,24 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Support round (elliptical-shaped) elements:
+  * Allow element templates to set `shape: 'ellipse'` to correctly compute link geometry;
+  * Change `ElementTemplate` to be an object with additional element template options, allow to return both `ElementTemplate` and `ElementTemplateComponent` from `elementTemplateResolver`;
+  * Add built-in basic circle-shaped `RoundTemplate` with its `RoundEntity` template component;
+  * Add `RenderingState.getElementShape()` method to compute shape information (including bounds) for the element.
+- Support smooth-curved links:
+  * Allow link templates to set `spline: 'smooth'` to have rounded joints and overall shape via cubic Bézier curves.
+
+#### 💅 Polish
+- Export built-in element templates and its components separately for easier customization:
+  * Change `StandardTemplate` to a template object, expose its components as `StandardEntity` and `StandardEntityGroup`;
+  * Change `ClassicTemplate` to a template object, expose its component as `ClassicEntity`.
+
+#### 🔧 Maintenance
+- Replace `classnames` runtime dependency by `clsx`.
+- Update runtime dependencies: `n3`, `@vscode/codicons`.
+- Update dev-dependencies: Webpack + loaders, SASS, TypeScript, Vitest, ESLint.
 
 ## [0.28.1] - 2025-02-28
 #### 🐛 Fixed

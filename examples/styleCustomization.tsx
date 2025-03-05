@@ -50,8 +50,11 @@ function StyleCustomizationExample() {
             <Reactodia.DefaultWorkspace
                 canvas={{
                     elementTemplateResolver: (types, element) => {
-                        if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                            return RoundEntityTemplate;
+                        if (
+                            types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty') ||
+                            types.includes('http://www.w3.org/2002/07/owl#AnnotationProperty')
+                        ) {
+                            return Reactodia.RoundTemplate;
                         }
                         return undefined;
                     },
@@ -60,40 +63,6 @@ function StyleCustomizationExample() {
                 menu={<ExampleToolbarMenu />}
             />
         </Reactodia.Workspace>
-    );
-}
-
-const RoundEntityTemplate: Reactodia.ElementTemplate = {
-    shape: 'ellipse',
-    renderElement: props => <RoundEntity {...props} />,
-};
-
-function RoundEntity(props: Reactodia.TemplateProps) {
-    const {element} = props;
-    const {model, translation: t, getElementTypeStyle} = Reactodia.useWorkspace();
-
-    const data = element instanceof Reactodia.EntityElement ? element.data : undefined;
-    if (!data) {
-        return null;
-    }
-
-    const label = t.formatLabel(data.label, data.id, model.language);
-    const {color} = getElementTypeStyle(data.types);
-    return (
-        <div
-            style={{
-                width: 120,
-                height: 120,
-                background: 'var(--reactodia-element-background-color)',
-                border: '10px solid',
-                borderColor: color,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}>
-            {label}
-        </div>
     );
 }
 

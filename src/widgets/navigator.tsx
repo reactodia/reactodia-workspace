@@ -313,7 +313,8 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
     private drawElements(ctx: CanvasRenderingContext2D, pt: PaperTransform, style: DrawStyle) {
         const {canvas, workspace: {model}} = this.props;
         for (const element of model.elements) {
-            const {x, y, width, height} = boundsOf(element, canvas.renderingState);
+            const {type, bounds: {x, y, width, height}} = canvas.renderingState.getElementShape(element);
+            ctx.beginPath();
             ctx.fillStyle = this.chooseElementColor(element, style);
 
             const {x: x1, y: y1} = canvasFromPaperCoords({x, y}, pt, this.transform);
@@ -322,7 +323,21 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
                 y: y + height,
             }, pt, this.transform);
 
-            ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+            switch (type) {
+                case 'ellipse': {
+                    ctx.ellipse(
+                        (x1 + x2) / 2, (y1 + y2) / 2,
+                        (x2 - x1) / 2, (y2 - y1) / 2,
+                        0, Math.PI * 2, 0
+                    );
+                    break;
+                }
+                default: {
+                    ctx.rect(x1, y1, x2 - x1, y2 - y1);
+                    break;
+                }
+            }
+            ctx.fill();
         }
     }
 

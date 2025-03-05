@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import type { Translation } from '../coreUtils/i18n';
 
-import type * as Rdf from '../data/rdf/rdfModel';
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
@@ -14,8 +13,7 @@ import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
-import { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
+import { EntityElement, EntityGroup } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -29,10 +27,20 @@ import { GroupPaginator } from './groupPaginator';
  * Default element template to display an {@link EntityElement} or
  * {@link EntityGroup} on a canvas.
  *
- * Uses {@link StandardEntity} component by default.
+ * Uses {@link StandardEntity} component to render a single entity and
+ * {@link StandardEntityGroup} component to render an entity group.
  */
 export const StandardTemplate: ElementTemplate = {
-    renderElement: props => <StandardEntity {...props} />,
+    renderElement: props => {
+        const {element} = props;
+        if (element instanceof EntityElement) {
+            return <StandardEntity {...props} />;
+        } else if (element instanceof EntityGroup) {
+            return <StandardEntityGroup {...props} />;
+        } else {
+            return null;
+        }
+    },
 };
 
 /**
@@ -40,76 +48,39 @@ export const StandardTemplate: ElementTemplate = {
  *
  * @see {@link StandardEntity}
  */
-export interface StandardEntityProps extends TemplateProps {
-    /**
-     * Default number items to show per page in element group.
-     *
-     * @default 6
-     */
-    groupPageSize?: number;
-    /**
-     * Available group page sizes to select from.
-     *
-     * @default [5, 10, 15, 20, 30]
-     */
-    groupPageSizes?: ReadonlyArray<number>;
-}
+export interface StandardEntityProps extends TemplateProps {}
+
+const CLASS_NAME = 'reactodia-standard-template';
 
 /**
- * Default element template component.
+ * Default single entity template component.
  *
- * The template supports displaying only {@link EntityElement} or {@link EntityGroup},
+ * The template supports displaying only {@link EntityElement},
  * otherwise nothing will be rendered.
  *
  * The template supports the following template state:
- *   - pinned properties;
- *   - group page index and size.
+ *   - {@link TemplateProperties.PinnedProperties}
  *
  * Entities can be edited or deleted using corresponding buttons
  * from the expanded state.
  *
  * @category Components
+ * @see {@link StandardTemplate}
  */
-export function StandardEntity(props: TemplateProps) {
-    const {element} = props;
-    if (element instanceof EntityElement) {
-        return (
-            <StandardEntityStandalone {...props}
-                data={element.data}
-                target={element}
-            />
-        );
-    } else if (element instanceof EntityGroup) {
-        return (
-            <StandardEntityGroup {...props}
-                items={element.items}
-                target={element}
-            />
-        );
-    } else {
-        return null;
-    }
-}
-
-interface StandardEntityBodyProps extends TemplateProps {
-    data: ElementModel;
-    target: Element;
-}
-
-const CLASS_NAME = 'reactodia-standard-template';
-const FOAF_NAME: PropertyTypeIri = 'http://xmlns.com/foaf/0.1/name';
-const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
-
-function StandardEntityStandalone(props: StandardEntityBodyProps) {
-    const {data, isExpanded, elementState, target} = props;
+export function StandardEntity(props: StandardEntityProps) {
+    const {element, isExpanded, elementState} = props;
     const workspace = useWorkspace();
     const {model, editor, translation: t, getElementTypeStyle} = workspace;
 
+    const data = element instanceof EntityElement ? element.data : undefined;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
     const entityContext = useAuthoredEntity(data, isExpanded);
 
-    const label = formatEntityLabel(data, model, t);
+    if (!data) {
+        return null;
+    }
+
+    const label = t.formatLabel(data.label, data.id, model.language);
     const typesLabel = formatEntityTypes(data, workspace);
     const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
     const rootStyle = {
@@ -118,7 +89,7 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
 
     const pinnedProperties = findPinnedProperties() ?? {};
 
-    function renderTypes() {
+    function renderTypes(data: ElementModel) {
         if (data.types.length === 0) {
             return t.text('standard_template.default_type');
         }
@@ -144,7 +115,7 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
         return pinned;
     }
 
-    function renderIri() {
+    function renderIri(data: ElementModel) {
         const finalIri = entityContext.editedIri === undefined ? data.id : entityContext.editedIri;
         return (
             <div>
@@ -169,7 +140,7 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
         );
     }
 
-    function renderThumbnail() {
+    function renderThumbnail(data: ElementModel) {
         if (data.image) {
             return (
                 <div className={`${CLASS_NAME}__thumbnail`} aria-hidden='true'>
@@ -201,11 +172,11 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
             <div className={`${CLASS_NAME}__main`}>
                 <div className={`${CLASS_NAME}__body`}>
                     <div className={`${CLASS_NAME}__body-horizontal`}>
-                        {renderThumbnail()}
+                        {renderThumbnail(data)}
                         <div className={`${CLASS_NAME}__body-content`}>
                             <div title={typesLabel} className={`${CLASS_NAME}__type`}>
                                 <div className={`${CLASS_NAME}__type-value`}>
-                                    {renderTypes()}
+                                    {renderTypes(data)}
                                 </div>
                             </div>
                             <WithFetchStatus type='element' target={data.id}>
@@ -230,13 +201,13 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
                         </div>
                     ) : null}
                     <div className={`${CLASS_NAME}__dropdown-content`}>
-                        {renderIri()}
+                        {renderIri(data)}
                         <PropertyList data={data} />
                         {editor.inAuthoringMode ? <>
                             <hr className={`${CLASS_NAME}__hr`}
                                 data-reactodia-no-export='true'
                             />
-                            <Actions target={target}
+                            <Actions target={element}
                                 entityContext={entityContext}
                                 translation={t}
                             />
@@ -248,14 +219,47 @@ function StandardEntityStandalone(props: StandardEntityBodyProps) {
     );
 }
 
-interface StandardEntityGroupProps extends StandardEntityProps {
-    items: ReadonlyArray<EntityGroupItem>;
-    target: EntityGroup;
+/**
+ * Props for {@link StandardEntityGroup} component.
+ *
+ * @see {@link StandardEntityGroup}
+ */
+export interface StandardEntityGroupProps extends TemplateProps {
+    /**
+     * Default number items to show per page in element group.
+     *
+     * @default 6
+     */
+    groupPageSize?: number;
+    /**
+     * Available group page sizes to select from.
+     *
+     * @default [5, 10, 15, 20, 30]
+     */
+    groupPageSizes?: ReadonlyArray<number>;
 }
 
-function StandardEntityGroup(props: StandardEntityGroupProps) {
+const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZES: ReadonlyArray<number> = [5, 10, 15, 20, 30];
+
+/**
+ * Default entity group template component.
+ *
+ * The template supports displaying only {@link EntityGroup},
+ * otherwise nothing will be rendered.
+ *
+ * The template supports the following template state:
+ *   - {@link TemplateProperties.GroupPageIndex}
+ *   - {@link TemplateProperties.GroupPageSize}
+ *
+ * Entities can be ungroup from the element with a corresponding button.
+ *
+ * @category Components
+ * @see {@link StandardTemplate}
+ */
+export function StandardEntityGroup(props: StandardEntityGroupProps) {
     const {
-        items, target, elementState,
+        element, elementState,
         groupPageSize = DEFAULT_PAGE_SIZE,
         groupPageSizes = DEFAULT_PAGE_SIZES,
     } = props;
@@ -263,7 +267,12 @@ function StandardEntityGroup(props: StandardEntityGroupProps) {
     const workspace = useWorkspace();
     const {getElementStyle} = workspace;
 
-    const {color: groupColor} = getElementStyle(target);
+    if (!(element instanceof EntityGroup)) {
+        return null;
+    }
+    const items = element.items;
+
+    const {color: groupColor} = getElementStyle(element);
     const groupStyle = {
         '--reactodia-standard-group-color': groupColor,
     } as React.CSSProperties;
@@ -294,7 +303,7 @@ function StandardEntityGroup(props: StandardEntityGroupProps) {
                     key={item.data.id}
                     data={item.data}
                     isExpanded={false}
-                    target={target}
+                    target={element}
                     canvas={canvas}
                     workspace={workspace}
                 />
@@ -308,14 +317,14 @@ function StandardEntityGroup(props: StandardEntityGroupProps) {
             ))}
             <GroupPaginator pageIndex={pageIndex}
                 pageCount={pageCount}
-                onChangePage={page => target.setElementState({
-                    ...target.elementState,
+                onChangePage={page => element.setElementState({
+                    ...element.elementState,
                     [TemplateProperties.GroupPageIndex]: page,
                 })}
                 pageSize={pageSize}
                 pageSizes={groupPageSizes}
-                onChangePageSize={size => target.setElementState({
-                    ...target.elementState,
+                onChangePageSize={size => element.setElementState({
+                    ...element.elementState,
                     [TemplateProperties.GroupPageSize]: size,
                 })}
             />
@@ -336,7 +345,7 @@ function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
-    const label = formatEntityLabel(data, model, t);
+    const label = t.formatLabel(data.label, data.id, model.language);
     const iri = t.formatIri(data.id);
     const typesLabel = formatEntityTypes(data, workspace);
     const title = t.text('standard_template.group_item.title', {
@@ -396,27 +405,14 @@ function hasPinnedProperties(data: ElementModel, pinned: PinnedProperties): bool
     return false;
 }
 
-function formatEntityLabel(data: ElementModel, model: DataDiagramModel, t: Translation): string {
-    const foafName = Object.prototype.hasOwnProperty.call(data.properties, FOAF_NAME)
-        ? data.properties[FOAF_NAME] : undefined;
-    if (foafName) {
-        const literals = foafName.filter((v): v is Rdf.Literal => v.termType === 'Literal');
-        if (literals.length > 0) {
-            return t.formatLabel(literals, data.id, model.language);
-        }
-    }
-    return t.formatLabel(data.label, data.id, model.language);
-}
-
 function formatEntityTypes(
     data: ElementModel,
     workspace: WorkspaceContext
 ): string {
     const {translation: t} = workspace;
-    if (data.types.length === 0) {
-        return t.text('standard_template.default_type');
-    }
-    return formatEntityTypeList(data, workspace);
+    return data.types.length === 0
+        ? t.text('standard_template.default_type')
+        : formatEntityTypeList(data, workspace);
 }
 
 function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
