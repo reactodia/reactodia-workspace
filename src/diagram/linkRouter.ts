@@ -58,19 +58,22 @@ export class DefaultLinkRouter implements LinkRouter {
         routings: RoutedLinks
     ) {
         const element = model.getElement(elementId)!;
-        const {x, y, width, height} = boundsOf(element, sizeProvider);
+        const bounds = boundsOf(element, sizeProvider);
+        const {x, y, width, height} = bounds;
+        const center = Rect.center(bounds);
 
         let index = 0;
         for (const sibling of model.getElementLinks(element)) {
+            const {sourceId, targetId} = sibling;
             if (
                 routings.has(sibling.id) ||
                 model.getLinkVisibility(sibling.typeId) === 'hidden' ||
-                hasUserPlacedVertices(sibling)
+                sourceId !== targetId
             ) {
                 continue;
             }
-            const {sourceId, targetId} = sibling;
-            if (sourceId === targetId) {
+
+            if (sibling.vertices.length === 0) {
                 const offset = this.gap * (index + 1);
                 const vertices: Vector[] = [
                     {x: x - offset, y: y + height / 2},
@@ -79,6 +82,17 @@ export class DefaultLinkRouter implements LinkRouter {
                 ];
                 routings.set(sibling.id, {linkId: sibling.id, vertices});
                 index++;
+            } else if (sibling.vertices.length === 1) {
+                const [pivot] = sibling.vertices;
+                const ray = Vector.normalize(Vector.subtract(pivot, center));
+                const shifted = Vector.add(pivot, Vector.scale(ray, -this.gap));
+                const rotated: Vector = {x: -ray.y, y: ray.x};
+                const vertices: Vector[] = [
+                    Vector.add(shifted, Vector.scale(rotated, this.gap)),
+                    pivot,
+                    Vector.add(shifted, Vector.scale(rotated, -this.gap)),
+                ];
+                routings.set(sibling.id, {linkId: sibling.id, vertices});
             }
         }
     }

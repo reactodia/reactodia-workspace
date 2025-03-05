@@ -7,8 +7,7 @@ import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Link } from '../diagram/elements';
 import {
-    Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
-    pathFromPolyline,
+    Rect, Spline, Vector, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 import type { DiagramModel, GraphStructure } from '../diagram/model';
 import { TransformedSvgCanvas } from '../diagram/paper';
@@ -99,7 +98,7 @@ interface State {
 }
 
 interface HaloLinkActionContext extends LinkActionContext {
-    readonly polyline: ReadonlyArray<Vector>;
+    readonly spline: Spline;
 }
 
 const CLASS_NAME = 'reactodia-halo-link';
@@ -126,16 +125,17 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
             buttonMargin = DEFAULT_BUTTON_MARGIN,
         } = props;
 
-        const polyline = computeEffectiveLinkPolyline(target, model, canvas.renderingState);
-        if (!polyline) {
+        const spline = computeLinkSpline(target, model, canvas.renderingState);
+        if (!spline) {
             return null;
         }
-        const polylineLength = computePolylineLength(polyline);
+
+        const polylineLength = computePolylineLength(spline.geometry.points);
 
         const getPosition: LinkActionContext['getPosition'] = (side, index) => {
             const shift = (buttonSize + buttonMargin) * index;
             const point = getPointAlongPolyline(
-                polyline,
+                spline.geometry.points,
                 side === 'source' ? shift : (polylineLength - shift)
             );
             const {x, y} = canvas.metrics.paperToScrollablePaneCoords(point.x, point.y);
@@ -146,15 +146,16 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
         };
 
         const getAngleInDegrees: LinkActionContext['getAngleInDegrees'] = side => {
-            const start = polyline[side === 'source' ? 1 : polyline.length - 1];
-            const end = polyline[side === 'source' ? 0 : polyline.length - 2];
+            const {points} = spline.geometry;
+            const start = points[side === 'source' ? 1 : points.length - 1];
+            const end = points[side === 'source' ? 0 : points.length - 2];
             const unit = Vector.normalize(Vector.subtract(end, start));
             return Math.atan2(unit.y, unit.x) * (180 / Math.PI);
         };
 
         return {
             link: target,
-            polyline,
+            spline,
             buttonSize,
             getPosition,
             getAngleInDegrees,
@@ -248,27 +249,34 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     }
 }
 
-function computeEffectiveLinkPolyline(
+function computeLinkSpline(
     link: Link,
     graph: GraphStructure,
     renderingState: RenderingState
-): ReadonlyArray<Vector> | undefined {
-    const sourceElement = graph.getElement(link.sourceId);
-    const targetElement = graph.getElement(link.targetId);
+): Spline | undefined {
+    const source = graph.getElement(link.sourceId);
+    const target = graph.getElement(link.targetId);
 
-    if (!(sourceElement && targetElement)) {
+    if (!(source && target)) {
         return undefined;
     }
+
+    const template = renderingState.getLinkTemplates().get(link.typeId);
 
     const route = renderingState.getRouting(link.id);
     const verticesDefinedByUser = link.vertices || [];
     const vertices = route ? route.vertices : verticesDefinedByUser;
 
-    return computePolyline(
-        boundsOf(sourceElement, renderingState),
-        boundsOf(targetElement, renderingState),
-        vertices
-    );
+    const sourceShape = renderingState.getElementShape(source);
+    const targetShape = renderingState.getElementShape(target);
+    const points = computePolyline(sourceShape, targetShape, vertices);
+    
+    return Spline.create({
+        type: template?.spline ?? 'straight',
+        points,
+        source: Rect.center(sourceShape.bounds),
+        target: Rect.center(targetShape.bounds),
+    });
 }
 
 interface LinkHighlightProps {
@@ -278,7 +286,7 @@ interface LinkHighlightProps {
 }
 
 function LinkHighlight(props: LinkHighlightProps) {
-    const {actionContext: {link, polyline}, margin, canvas} = props;
+    const {actionContext: {link, spline}, margin, canvas} = props;
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -305,8 +313,6 @@ function LinkHighlight(props: LinkHighlightProps) {
         height: y1 - y0 + margin * 2,
     };
 
-    const path = pathFromPolyline(polyline);
-
     return <>
         <div className={`${CLASS_NAME}__label-highlight`}
             style={labelHighlightStyle}
@@ -314,7 +320,7 @@ function LinkHighlight(props: LinkHighlightProps) {
         <TransformedSvgCanvas paperTransform={canvas.metrics.getTransform()}
             style={{overflow: 'visible', pointerEvents: 'none'}}>
             <path className={`${CLASS_NAME}__path-highlight`}
-                d={path}
+                d={spline.toPath()}
             />
         </TransformedSvgCanvas>
     </>;

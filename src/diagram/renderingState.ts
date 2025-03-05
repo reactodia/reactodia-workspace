@@ -1,15 +1,17 @@
+import * as React from 'react';
+
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import {
-    ElementTemplateResolver, LinkTemplateResolver, ElementTemplate, LinkTemplate,
-    LinkRouter, RoutedLink, RoutedLinks,
+    ElementTemplate, ElementTemplateComponent, ElementTemplateResolver, LinkTemplateResolver,
+    LinkTemplate, LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
 
 import { LinkTypeIri } from '../data/model';
 
 import { Element, Link } from './elements';
-import { Rect, Size, SizeProvider, isPolylineEqual } from './geometry';
+import { Rect, ShapeGeometry, Size, SizeProvider, boundsOf, isPolylineEqual } from './geometry';
 import { DefaultLinkRouter } from './linkRouter';
 import { DiagramModel } from './model';
 import { SharedCanvasState } from './sharedCanvasState';
@@ -156,6 +158,10 @@ export interface RenderingState extends SizeProvider {
      */
     getElementTemplate(element: Element): ElementTemplate;
     /**
+     * Returns resolved element shape based on its template and the computed bounds.
+     */
+    getElementShape(element: Element): ShapeGeometry;
+    /**
      * Returns link templates for all types of rendered links.
      */
     getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate>;
@@ -177,6 +183,7 @@ export class MutableRenderingState implements RenderingState {
     private readonly model: DiagramModel;
     private readonly resolveElementTemplate: ElementTemplateResolver;
     private readonly resolveLinkTemplate: LinkTemplateResolver;
+    private readonly mappedTemplates = new WeakMap<ElementTemplateComponent, ElementTemplate>();
     private readonly linkRouter: LinkRouter;
 
     private readonly elementSizes = new WeakMap<Element, Size>();
@@ -290,7 +297,26 @@ export class MutableRenderingState implements RenderingState {
     }
 
     getElementTemplate(element: Element): ElementTemplate {
-        return this.resolveElementTemplate(element) ?? this.shared.defaultElementTemplate;
+        let resolved = this.resolveElementTemplate(element);
+        if (typeof resolved === 'function') {
+            let mapped = this.mappedTemplates.get(resolved);
+            if (!mapped) {
+                const component = resolved;
+                mapped = {renderElement: props => React.createElement(component, props)};
+                this.mappedTemplates.set(resolved, mapped);
+            }
+            resolved = mapped;
+        }
+        return resolved ?? this.shared.defaultElementTemplate;
+    }
+
+    getElementShape(element: Element): ShapeGeometry {
+        const template = this.getElementTemplate(element);
+        const bounds = boundsOf(element, this);
+        return {
+            type: template.shape ?? 'rect',
+            bounds,
+        };
     }
 
     ensureLinkTypeIndex(linkTypeId: LinkTypeIri): number {

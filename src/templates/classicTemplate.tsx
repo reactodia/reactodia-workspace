@@ -4,12 +4,29 @@ import * as React from 'react';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementModel, PropertyTypeIri } from '../data/model';
-import { TemplateProps } from '../diagram/customization';
+import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { formatEntityTypeList } from '../widgets/utility/listElementView';
 import { useWorkspace } from '../workspace/workspaceContext';
+
+/**
+ * Element template component with classic "look and feel" which
+ * was used for elements before v0.8.0.
+ *
+ * Uses {@link ClassicEntity} component to render a single entity.
+ */
+export const ClassicTemplate: ElementTemplate = {
+    renderElement: props => <ClassicEntity {...props} />,
+};
+
+/**
+ * Props for {@link ClassicEntity} component.
+ *
+ * @see {@link ClassicEntity}
+ */
+export interface ClassicEntityProps extends TemplateProps {}
 
 const CLASS_NAME = 'reactodia-classic-template';
 
@@ -18,11 +35,13 @@ const CLASS_NAME = 'reactodia-classic-template';
  *
  * This classic "look and feel" was used for elements before v0.8.0
  *
- * The template does not support displaying entity groups.
+ * The template supports displaying only {@link EntityElement} elements,
+ * otherwise nothing will be rendered.
  *
  * @category Components
+ * @see {@link ClassicTemplate}
  */
-export function ClassicTemplate(props: TemplateProps) {
+export function ClassicEntity(props: ClassicEntityProps) {
     const {element, isExpanded} = props;
     const data = element instanceof EntityElement ? element.data : undefined;
 

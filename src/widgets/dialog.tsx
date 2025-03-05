@@ -192,8 +192,8 @@ export class Dialog extends React.Component<DialogProps, State> {
         const vertices = route ? route.vertices : verticesDefinedByUser;
 
         const polyline = computePolyline(
-            boundsOf(source, canvas.renderingState),
-            boundsOf(target, canvas.renderingState),
+            canvas.renderingState.getElementShape(source),
+            canvas.renderingState.getElementShape(target),
             vertices
         );
         const polylineLength = computePolylineLength(polyline);

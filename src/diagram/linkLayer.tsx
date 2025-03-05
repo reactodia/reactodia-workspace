@@ -8,8 +8,8 @@ import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import { Element, Link, LinkVertex } from './elements';
 import {
-    Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength,
-    getPointAlongPolyline, pathFromPolyline,
+    Rect, Size, Spline, Vector, computePolyline, computePolylineLength,
+    getPointAlongPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
@@ -292,13 +292,16 @@ function LinkView(props: LinkViewProps) {
     const route = renderingState.getRouting(link.id);
     const verticesDefinedByUser = link.vertices;
     const vertices = route ? route.vertices : verticesDefinedByUser;
-    const polyline = computePolyline(
-        boundsOf(source, renderingState),
-        boundsOf(target, renderingState),
-        vertices
-    );
 
-    const path = pathFromPolyline(polyline);
+    const sourceShape = renderingState.getElementShape(source);
+    const targetShape = renderingState.getElementShape(target);
+    const polyline = computePolyline(sourceShape, targetShape, vertices);
+    const spline = Spline.create({
+        type: template.spline ?? 'straight',
+        points: polyline,
+        source: Rect.center(sourceShape.bounds),
+        target: Rect.center(targetShape.bounds),
+    });
 
     const polylineLength = computePolylineLength(polyline);
     const getPathPosition = (offset: number) => {
@@ -314,7 +317,7 @@ function LinkView(props: LinkViewProps) {
         link,
         markerSource: `url(#${linkMarkerKey(typeIndex, true)})`,
         markerTarget: `url(#${linkMarkerKey(typeIndex, false)})`,
-        path,
+        path: spline.toPath(),
         getPathPosition,
         route,
     });

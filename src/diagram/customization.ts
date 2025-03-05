@@ -34,9 +34,10 @@ export interface FormattedProperty {
  */
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
 /**
- * Provides a custom component to render element on a diagram.
+ * Provides a custom template to render an element on the canvas.
  */
-export type ElementTemplateResolver = (element: Element) => ElementTemplate | undefined;
+export type ElementTemplateResolver = (element: Element) =>
+    ElementTemplate | ElementTemplateComponent | undefined;
 /**
  * Provides a custom rendering on a diagram for links of specific type.
  */
@@ -57,9 +58,30 @@ export interface TypeStyle {
 }
 
 /**
- * Custom component to render a single diagram element.
+ * Custom template to render a single diagram element.
  */
-export type ElementTemplate = React.ComponentType<TemplateProps>;
+export interface ElementTemplate {
+    /**
+     * Assumed shape type for the rendered diagram element to
+     * correctly connect links and other geometry calculations.
+     *
+     * @default "rect"
+     */
+    readonly shape?: 'rect' | 'ellipse';
+    /**
+     * Renders the element on the normal (non-SVG) canvas layer.
+     *
+     * **Note**: this should be a pure function, not a React component by itself.
+     */
+    readonly renderElement: (props: TemplateProps) => React.ReactNode;
+}
+
+/**
+ * Custom React component to render a single diagram element.
+ *
+ * @see {@link ElementTemplate}
+ */
+export type ElementTemplateComponent = React.ComponentType<TemplateProps>;
 
 /**
  * Props for a custom {@link ElementTemplate} component.
@@ -102,9 +124,19 @@ export interface LinkTemplate {
      */
     markerTarget?: LinkMarkerStyle;
     /**
-     * Renders the link component on SVG canvas.
+     * SVG path spline type between source and target elements:
+     *  - `straight`: a spline with straight line segments,
+     *  - `smooth`: a spline with cubic-bezier curve segments.
+     *
+     * @default "straight"
      */
-    renderLink(props: LinkTemplateProps): React.ReactNode;
+    spline?: 'straight' | 'smooth';
+    /**
+     * Renders the link component on SVG canvas layer.
+     *
+     * **Note**: this should be a pure function, not a React component by itself.
+     */
+    readonly renderLink: (props: LinkTemplateProps) => React.ReactNode;
 }
 
 /**
