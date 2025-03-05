@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Export built-in element templates and its components separately for easier customization:
   * Change `StandardTemplate` to a template object, expose its components as `StandardEntity` and `StandardEntityGroup`;
   * Change `ClassicTemplate` to a template object, expose its component as `ClassicEntity`.
+- Improve default routing for self (feedback) links with a single user-defined variable to have a basic loop instead of a straight line.
 
 #### 🔧 Maintenance
 - Replace `classnames` runtime dependency by `clsx`.
