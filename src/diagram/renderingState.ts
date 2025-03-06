@@ -158,10 +158,6 @@ export interface RenderingState extends SizeProvider {
      */
     getElementTemplate(element: Element): ElementTemplate;
     /**
-     * Returns resolved element shape based on its template and the computed bounds.
-     */
-    getElementShape(element: Element): ShapeGeometry;
-    /**
      * Returns link templates for all types of rendered links.
      */
     getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate>;

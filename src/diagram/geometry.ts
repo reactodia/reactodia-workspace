@@ -145,6 +145,10 @@ export interface SizeProvider {
      * Gets current size for the specified element.
      */
     getElementSize(element: Element): Size | undefined;
+    /**
+     * Gets element shape based on its template and the current bounds.
+     */
+    getElementShape(element: Element): ShapeGeometry;
 }
 
 /**
@@ -484,7 +488,7 @@ export function findElementAtPoint(
 export function getContentFittingBox(
     elements: Iterable<Element>,
     links: Iterable<Link>,
-    sizeProvider: SizeProvider
+    sizeProvider: Pick<SizeProvider, 'getElementSize'>
 ): Rect {
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;

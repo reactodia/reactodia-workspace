@@ -1,7 +1,7 @@
 import type { ElementTypeIri, LinkTypeIri } from '../data/model';
 
 import type { Element, Link } from './elements';
-import { Rect, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition } from './geometry';
+import { Rect, ShapeGeometry, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition } from './geometry';
 import type { DiagramModel } from './model';
 
 /**
@@ -233,6 +233,13 @@ class StaticSizeProvider implements SizeProvider {
 
     getElementSize(element: Element): Size | undefined {
         return this.sizes.get(element.id);
+    }
+
+    getElementShape(element: Element): ShapeGeometry {
+        return {
+            type: 'rect',
+            bounds: boundsOf(element, this),
+        };
     }
 }
 

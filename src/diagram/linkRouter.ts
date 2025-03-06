@@ -2,7 +2,7 @@ import type { LinkRouter, RoutedLinks } from './customization';
 
 import type { GraphStructure } from './model';
 import type { Link } from './elements';
-import { SizeProvider, Vector, Rect, boundsOf } from './geometry';
+import { SizeProvider, Vector, Rect, computePolyline, boundsOf } from './geometry';
 
 /**
  * Options for {@link DefaultLinkRouter}.
@@ -58,9 +58,9 @@ export class DefaultLinkRouter implements LinkRouter {
         routings: RoutedLinks
     ) {
         const element = model.getElement(elementId)!;
-        const bounds = boundsOf(element, sizeProvider);
-        const {x, y, width, height} = bounds;
-        const center = Rect.center(bounds);
+        const shape = sizeProvider.getElementShape(element);
+        const {x, y} = shape.bounds;
+        const center = Rect.center(shape.bounds);
 
         let index = 0;
         for (const sibling of model.getElementLinks(element)) {
@@ -76,21 +76,29 @@ export class DefaultLinkRouter implements LinkRouter {
             if (sibling.vertices.length === 0) {
                 const offset = this.gap * (index + 1);
                 const vertices: Vector[] = [
-                    {x: x - offset, y: y + height / 2},
+                    {x: x - offset, y: y + offset},
                     {x: x - offset, y: y - offset},
-                    {x: x + width / 2, y: y - offset},
+                    {x: x + offset, y: y - offset},
                 ];
                 routings.set(sibling.id, {linkId: sibling.id, vertices});
                 index++;
             } else if (sibling.vertices.length === 1) {
                 const [pivot] = sibling.vertices;
+                const pivotTarget: Rect = {x: pivot.x, y: pivot.y, width: 0, height: 0};
+                // Find the point on the shape border closest to pivot
+                const [intersection] = computePolyline(shape, pivotTarget, []);
+                const offset = Math.min(
+                    Math.max(this.gap, Vector.length(Vector.subtract(pivot, intersection)) * 0.75),
+                    shape.bounds.width,
+                    shape.bounds.height
+                );
                 const ray = Vector.normalize(Vector.subtract(pivot, center));
-                const shifted = Vector.add(pivot, Vector.scale(ray, -this.gap));
+                const shifted = Vector.add(pivot, Vector.scale(ray, -offset));
                 const rotated: Vector = {x: -ray.y, y: ray.x};
                 const vertices: Vector[] = [
-                    Vector.add(shifted, Vector.scale(rotated, this.gap)),
+                    Vector.add(shifted, Vector.scale(rotated, offset)),
                     pivot,
-                    Vector.add(shifted, Vector.scale(rotated, -this.gap)),
+                    Vector.add(shifted, Vector.scale(rotated, -offset)),
                 ];
                 routings.set(sibling.id, {linkId: sibling.id, vertices});
             }
