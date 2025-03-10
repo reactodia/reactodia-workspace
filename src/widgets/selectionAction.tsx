@@ -173,6 +173,7 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
  */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, ...otherProps} = props;
+    const {canvas} = useCanvas();
     const {model, editor, translation: t} = useWorkspace();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     
@@ -186,6 +187,21 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             }
         }
     }
+
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(canvas.events, 'keyup', e => {
+            if (
+                e.sourceEvent.key === 'Delete' &&
+                document.activeElement &&
+                document.activeElement.localName !== 'input'
+            ) {
+                editor.removeSelectedElements();
+                canvas.focus();
+            }
+        });
+        return () => listener.stopListening();
+    }, []);
 
     const singleNewEntity = newEntities === 1 && totalEntities === 1;
     return (
@@ -559,9 +575,11 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
                 if (canGroup) {
                     const group = await groupEntitiesAnimated(elements, canvas, workspace);
                     model.setSelection([group]);
+                    group.focus();
                 } else if (canUngroup) {
                     const ungrouped = await ungroupAllEntitiesAnimated(elements, canvas, workspace);
                     model.setSelection(ungrouped);
+                    canvas.focus();
                 }
             }}
         />

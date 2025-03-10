@@ -356,7 +356,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                                 'reactodia-btn',
                                 `${CLASS_NAME}__close-button`
                             )}
-                            onClick={onHide}
+                            onClick={this.onClose}
                         />
                     ) : null}
                 </div>
@@ -388,4 +388,11 @@ export class Dialog extends React.Component<DialogProps, State> {
             </div>
         );
     }
+
+    private onClose = () => {
+        const {canvas} = this.context;
+        const {onHide} = this.props;
+        canvas.focus();
+        onHide();
+    };
 }

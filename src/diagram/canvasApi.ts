@@ -46,6 +46,11 @@ export interface CanvasApi {
      */
     setPointerMode(value: CanvasPointerMode): void;
     /**
+     * Sets the focus on the graph canvas itself to be able to handle keyboard interaction
+     * within its layers.
+     */
+    focus(): void;
+    /**
      * Changes the viewport such that its center is aligned to specified point
      * in paper coordinates.
      *
@@ -185,6 +190,16 @@ export interface CanvasEvents {
      */
     resize: CanvasResizeEvent;
     /**
+     * Triggered on [keydown](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event/)
+     * event in the canvas.
+     */
+    keydown: CanvasKeyboardEvent;
+    /**
+     * Triggered on [keyup](https://developer.mozilla.org/en-US/docs/Web/API/Element/keyup_event/)
+     * event in the canvas.
+     */
+    keyup: CanvasKeyboardEvent;
+    /**
      * Triggered on {@link CanvasApi.isAnimatingGraph} property change.
      */
     changeAnimatingGraph: PropertyChange<CanvasApi, boolean>;
@@ -295,6 +310,17 @@ export interface CanvasResizeEvent {
      * Event source (canvas).
      */
     readonly source: CanvasApi;
+}
+
+export interface CanvasKeyboardEvent {
+    /**
+     * Event source (canvas).
+     */
+    readonly source: CanvasApi;
+    /**
+     * Original (raw) event data.
+     */
+    readonly sourceEvent: React.KeyboardEvent;
 }
 
 /**

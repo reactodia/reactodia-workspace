@@ -95,6 +95,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     readonly events: Events<CanvasEvents> = this.source;
 
     private area!: HTMLDivElement;
+    private readonly rootRef = React.createRef<HTMLDivElement>();
     private readonly svgCanvasRef = React.createRef<SVGSVGElement>();
 
     private readonly pageSize = {x: 1500, y: 800};
@@ -194,7 +195,11 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         const renderedWidgets = Array.from(this.getAllWidgets());
         return (
             <CanvasContext.Provider value={this.canvasContext}>
-                <div className={className}>
+                <div className={className}
+                    ref={this.rootRef}
+                    tabIndex={0}
+                    onKeyDown={this.onKeyDown}
+                    onKeyUp={this.onKeyUp}>
                     <div className={`${CLASS_NAME}__area`}
                         ref={this.onAreaMount}
                         onPointerDown={this.onAreaPointerDown}>
@@ -670,6 +675,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.source.trigger('resize', {source: this});
     };
 
+    focus(): void {
+        this.rootRef.current?.focus({preventScroll: true});
+    }
+
     centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
         const {width, height} = this.state;
         const paperCenter = paperPosition || {x: width / 2, y: height / 2};
@@ -831,6 +840,14 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             sourceEvent: e,
             target: cell,
         });
+    };
+
+    private onKeyDown = (e: React.KeyboardEvent) => {
+        this.source.trigger('keydown', {source: this, sourceEvent: e});
+    };
+
+    private onKeyUp = (e: React.KeyboardEvent) => {
+        this.source.trigger('keyup', {source: this, sourceEvent: e});
     };
 
     private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {

@@ -103,11 +103,6 @@ export class EditorController {
         this.listener.listen(this.events, 'changeAuthoringState', e => {
             this.validateChangedFrom(e.previous);
         });
-
-        document.addEventListener('keyup', this.onKeyUp);
-        this.cancellation.signal.addEventListener('abort', () => {
-            document.removeEventListener('keyup', this.onKeyUp);
-        });
     }
 
     /** @hidden */
@@ -245,16 +240,6 @@ export class EditorController {
             this.cancellation.signal
         );
     }
-
-    private onKeyUp = (e: KeyboardEvent) => {
-        if (
-            e.key === 'Delete' &&
-            document.activeElement &&
-            document.activeElement.localName !== 'input'
-        ) {
-            this.removeSelectedElements();
-        }
-    };
 
     /**
      * Removes all selected diagram elements from the diagram

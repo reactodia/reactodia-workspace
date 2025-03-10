@@ -118,7 +118,7 @@ export class OverlayController {
     }
 
     private onAnyCanvasPointerUp = (event: CanvasPointerUpEvent) => {
-        const {sourceEvent, target, triggerAsClick} = event;
+        const {source: canvas, sourceEvent, target, triggerAsClick} = event;
 
         if (sourceEvent.ctrlKey || sourceEvent.shiftKey || sourceEvent.metaKey) {
             return;
@@ -137,9 +137,7 @@ export class OverlayController {
         } else if (!target && triggerAsClick) {
             this.model.setSelection([]);
             this.hideDialog();
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
+            canvas.focus();
         }
     };
 
