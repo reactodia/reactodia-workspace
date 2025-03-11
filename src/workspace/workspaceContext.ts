@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { Events, EventTrigger } from '../coreUtils/events';
 import type { Translation } from '../coreUtils/i18n';
 
 import type { ElementIri, ElementTypeIri } from '../data/model';
@@ -13,6 +14,8 @@ import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import type { EntityElement, EntityGroup } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 import type { OverlayController } from '../editor/overlayController';
+
+import type { WorkspaceExtension } from './workspaceExtension';
 
 /**
  * Represents a context for the whole workspace, its stores and services.
@@ -44,7 +47,14 @@ export interface WorkspaceContext {
      * Cancellation signal that becomes aborted when the workspace is disposed.
      */
     readonly disposeSignal: AbortSignal;
-
+    /**
+     * Gets a common command event bus for the given definition which allows interaction
+     * between different components.
+     *
+     * The returned event bus will share triggered events between all observers for
+     * the same definition.
+     */
+    readonly getExtensionCommands: <T>(definition: WorkspaceExtension<T>) => Events<T> & EventTrigger<T>;
     /**
      * Computes a style to display target element in various parts of the UI.
      */

@@ -12,13 +12,9 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function RdfExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const [searchCommands] = React.useState(() =>
-        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
-    );
-
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model} = context;
+        const {model, getExtensionCommands} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
@@ -36,7 +32,8 @@ function RdfExample() {
         });
 
         if (!diagram) {
-            searchCommands.trigger('focus', {sectionKey: 'elementTypes'});
+            getExtensionCommands(Reactodia.UnifiedSearchExtension)
+                .trigger('focus', {sectionKey: 'elementTypes'});
         }
     }, [turtleData]);
 
@@ -51,7 +48,6 @@ function RdfExample() {
                         <ExampleToolbarMenu />
                     </>
                 }
-                searchCommands={searchCommands}
                 languages={[
                     {code: 'de', label: 'Deutsch'},
                     {code: 'en', label: 'english'},

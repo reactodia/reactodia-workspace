@@ -1,7 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { EventObserver, EventTrigger } from '../coreUtils/events';
+import { EventObserver } from '../coreUtils/events';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 import { Debouncer } from '../coreUtils/scheduler';
 
@@ -12,6 +12,7 @@ import { Element, LinkTypeVisibility } from '../diagram/elements';
 import { LinkType, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
+import { InstancesSearchExtension } from '../workspace/workspaceExtension';
 import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { InlineEntity } from './utility/inlineEntity';
@@ -56,10 +57,6 @@ export interface LinkTypesToolboxProps {
      * @default 1
      */
     minSearchTermLength?: number;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
@@ -311,18 +308,23 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     }
 
     private renderLinks(links: ReadonlyArray<LabelledLinkType>) {
-        const {instancesSearchCommands} = this.props;
+        const {workspace: {getExtensionCommands}} = this.props;
         const {filteredLinks} = this.state;
+
+        const commands = getExtensionCommands(InstancesSearchExtension);
+        const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
+        commands.trigger('findCapabilities', event);
+
         return (
             <ul className={`${CLASS_NAME}__links`}>
                 {links.map(link => (
                     <LinkInToolBox key={link.iri}
                         link={link}
                         onAddToFilter={
-                            instancesSearchCommands && filteredLinks.selectionLinks.has(link.iri)
+                            event.capabilities.length > 0 && filteredLinks.selectionLinks.has(link.iri)
                                 ? this.onAddToFilter : undefined
                         }
-                        filterKey={filteredLinks.term}  
+                        filterKey={filteredLinks.term}
                     />
                 ))}
             </ul>
@@ -330,15 +332,17 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     }
 
     private onAddToFilter = (linkType: LinkTypeIri) => {
-        const {instancesSearchCommands} = this.props;
+        const {workspace: {getExtensionCommands}} = this.props;
         const {filteredLinks} = this.state;
+
         if (filteredLinks.selection.length === 1) {
-            instancesSearchCommands?.trigger('setCriteria', {
-                criteria: {
-                    refElement: filteredLinks.selection[0].id,
-                    refElementLink: linkType,
-                }
-            });
+            getExtensionCommands(InstancesSearchExtension)
+                .trigger('setCriteria', {
+                    criteria: {
+                        refElement: filteredLinks.selection[0].id,
+                        refElementLink: linkType,
+                    }
+                });
         }
     };
 }

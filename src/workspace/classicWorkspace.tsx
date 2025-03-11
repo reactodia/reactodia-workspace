@@ -1,19 +1,16 @@
 import * as React from 'react';
 
-import { EventSource } from '../coreUtils/events';
 import { useTranslation } from '../coreUtils/i18n';
 
 import { defineCanvasWidget } from '../diagram/canvasWidget';
 
 import { Canvas } from '../widgets/canvas';
 import { ClassTree, ClassTreeProps } from '../widgets/classTree';
-import {
-    ConnectionsMenu, ConnectionsMenuCommands,
-} from '../widgets/connectionsMenu';
+import { ConnectionsMenu } from '../widgets/connectionsMenu';
 import { DropOnCanvas } from '../widgets/dropOnCanvas';
 import { Halo } from '../widgets/halo';
 import { HaloLink } from '../widgets/haloLink';
-import { InstancesSearch, InstancesSearchProps, InstancesSearchCommands } from '../widgets/instancesSearch';
+import { InstancesSearch, InstancesSearchProps } from '../widgets/instancesSearch';
 import { LinkTypesToolbox, LinkTypesToolboxProps } from '../widgets/linksToolbox';
 import { Navigator } from '../widgets/navigator';
 import { Selection } from '../widgets/selection';
@@ -79,12 +76,6 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     } = props;
 
     const t = useTranslation();
-    const [connectionsMenuCommands] = React.useState(() =>
-        props.connectionsMenuCommands ?? new EventSource<ConnectionsMenuCommands>()
-    );
-    const [instancesSearchCommands] = React.useState(() =>
-        props.instancesSearchCommands ?? new EventSource<InstancesSearchCommands>()
-    );
 
     return (
         <WorkspaceRoot colorScheme={colorScheme}>
@@ -93,42 +84,26 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                     {...leftColumn}>
                     <WorkspaceLayoutItem id='classes'
                         heading={t.text('classic_workspace.class_tree.heading')}>
-                        <ClassTree {...classTree}
-                            instancesSearchCommands={instancesSearchCommands}
-                        />
+                        <ClassTree {...classTree} />
                     </WorkspaceLayoutItem>
                     <WorkspaceLayoutItem id='instances'
                         heading={t.text('classic_workspace.instances.heading')}>
-                        <InstancesSearch {...instancesSearch}
-                            commands={instancesSearchCommands}
-                        />
+                        <InstancesSearch {...instancesSearch} />
                     </WorkspaceLayoutItem>
                 </WorkspaceLayoutColumn>
                 <WorkspaceLayoutItem id='canvas'>
                     <Canvas {...canvas}>
                         <VisualAuthoring {...visualAuthoring} />
                         {connectionsMenu === null ? null : (
-                            <ConnectionsMenu {...connectionsMenu}
-                                commands={connectionsMenuCommands}
-                                instancesSearchCommands={instancesSearchCommands}
-                            />
+                            <ConnectionsMenu {...connectionsMenu} />
                         )}
                         {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}
                         {halo === null ? null : (
-                            <Halo {...halo}
-                                instancesSearchCommands={instancesSearchCommands}
-                                connectionsMenuCommands={
-                                    connectionsMenu === null ? undefined : connectionsMenuCommands
-                                }
-                            />
+                            <Halo {...halo} />
                         )}
                         {haloLink === null ? null : <HaloLink {...haloLink} />}
                         {selection === null ? null : (
-                            <Selection {...selection}
-                                connectionsMenuCommands={
-                                    connectionsMenu === null ? undefined : connectionsMenuCommands
-                                }
-                            />
+                            <Selection {...selection} />
                         )}
                         {navigator === null ? null : <Navigator dock='se' {...navigator} />}
                         {toolbar === null ? null : <ClassicToolbar dock='nw' {...toolbar} />}
@@ -141,9 +116,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                     {...rightColumn}>
                     <WorkspaceLayoutItem id='connections'
                         heading={t.text('classic_workspace.connections.heading')}>
-                        <LinkTypesToolbox {...linkToolbox}
-                            instancesSearchCommands={instancesSearchCommands}
-                        />
+                        <LinkTypesToolbox {...linkToolbox} />
                     </WorkspaceLayoutItem>
                 </WorkspaceLayoutColumn>
             </WorkspaceLayoutRow>

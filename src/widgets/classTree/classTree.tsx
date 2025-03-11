@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
-import { EventObserver, EventTrigger } from '../../coreUtils/events';
+import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import { Translation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
@@ -21,8 +21,10 @@ import { DataDiagramModel } from '../../editor/dataDiagramModel';
 import { NoSearchResults } from '../utility/noSearchResults';
 import { ProgressBar, ProgressState } from '../utility/progressBar';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
-import type { InstancesSearchCommands } from '../instancesSearch';
 
+import {
+    InstancesSearchExtension, VisualAuthoringExtension,
+} from '../../workspace/workspaceExtension';
 import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 import { TreeNode } from './treeModel';
@@ -57,10 +59,6 @@ export interface ClassTreeProps {
      * @default 2
      */
     minSearchTermLength?: number;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
@@ -331,11 +329,12 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     };
 
     private onSelectNode = (node: TreeNode) => {
-        const {instancesSearchCommands} = this.props;
+        const {workspace: {getExtensionCommands}} = this.props;
         this.setState({selectedNode: node}, () => {
-            instancesSearchCommands?.trigger('setCriteria', {
-                criteria: {elementType: node.iri},
-            });
+            getExtensionCommands(InstancesSearchExtension)
+                .trigger('setCriteria', {
+                    criteria: {elementType: node.iri},
+                });
         });
     };
 
@@ -405,7 +404,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     }
 
     private async createInstanceAt(elementType: ElementTypeIri, dropEvent?: CanvasDropEvent) {
-        const {workspace: {model, view, editor}} = this.props;
+        const {workspace: {model, view, editor, getExtensionCommands: getCommandBus}} = this.props;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
@@ -438,7 +437,8 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         batch.store();
         model.setSelection([element]);
-        editor.authoringCommands.trigger('editEntity', {target: element});
+        getCommandBus(VisualAuthoringExtension)
+            .trigger('editEntity', {target: element});
     }
 }
 

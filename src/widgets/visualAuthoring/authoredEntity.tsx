@@ -9,6 +9,7 @@ import { Element } from '../../diagram/elements';
 
 import { EntityElement } from '../../editor/dataElements';
 
+import { VisualAuthoringExtension } from '../../workspace/workspaceExtension';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 /**
@@ -61,7 +62,7 @@ export function useAuthoredEntity(
     data: ElementModel | undefined,
     shouldLoad: boolean
 ): AuthoredEntityContext {
-    const {editor} = useWorkspace();
+    const {editor, getExtensionCommands} = useWorkspace();
 
     const entity = editor.inAuthoringMode ? data : undefined;
 
@@ -110,7 +111,8 @@ export function useAuthoredEntity(
             ? undefined : Boolean(allowedActions & AllowedActions.Delete),
         onEdit: (target: Element) => {
             if (target instanceof EntityElement) {
-                editor.authoringCommands.trigger('editEntity', {target});
+                getExtensionCommands(VisualAuthoringExtension)
+                    .trigger('editEntity', {target});
             }
         },
         onDelete: () => {

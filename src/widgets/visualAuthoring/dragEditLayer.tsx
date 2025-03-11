@@ -18,6 +18,7 @@ import { Spinner } from '../../diagram/spinner';
 import { TemporaryState } from '../../editor/authoringState';
 import { EntityElement, RelationLink } from '../../editor/dataElements';
 
+import { VisualAuthoringExtension } from '../../workspace/workspaceExtension';
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface DragEditLayerProps {
@@ -318,7 +319,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
-        const {operation, canvas, workspace: {model, editor}} = this.props;
+        const {operation, canvas, workspace: {model, editor, getExtensionCommands}} = this.props;
 
         try {
             const {targetElement, connectionsToAny, connectionsToTarget} = this.state;
@@ -366,16 +367,18 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 if (targetElement) {
                     const focusedLink = modifiedLink || this.oldLink;
                     model.setSelection([focusedLink!]);
-                    editor.authoringCommands.trigger('editRelation', {target: focusedLink!});
+                    getExtensionCommands(VisualAuthoringExtension)
+                        .trigger('editRelation', {target: focusedLink!});
                 } else if (createdTarget && modifiedLink) {
                     model.setSelection([createdTarget]);
                     const source = model.getElement(modifiedLink.sourceId) as EntityElement;
-                    editor.authoringCommands.trigger('findOrCreateEntity', {
-                        link: modifiedLink,
-                        source,
-                        target: createdTarget,
-                        targetIsNew: true,
-                    });
+                    getExtensionCommands(VisualAuthoringExtension)
+                        .trigger('findOrCreateEntity', {
+                            link: modifiedLink,
+                            source,
+                            target: createdTarget,
+                            targetIsNew: true,
+                        });
                 }
             }
         } finally {

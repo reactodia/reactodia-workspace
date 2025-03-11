@@ -247,5 +247,10 @@ export {
     WorkspaceGroupParams, WorkspaceUngroupAllParams, WorkspaceUngroupSomeParams,
     ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
+export {
+    WorkspaceExtension,
+    ConnectionsMenuExtension, InstancesSearchExtension, UnifiedSearchExtension,
+    VisualAuthoringExtension,
+} from './workspace/workspaceExtension';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';

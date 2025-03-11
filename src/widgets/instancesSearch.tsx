@@ -1,7 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { EventObserver, Events } from '../coreUtils/events';
+import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 import { TranslatedText } from '../coreUtils/i18n';
 
@@ -19,6 +19,7 @@ import {
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 
 import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
+import { InstancesSearchExtension } from '../workspace/workspaceExtension';
 
 import { InlineEntity } from './utility/inlineEntity';
 import { NoSearchResults } from './utility/noSearchResults';
@@ -69,16 +70,21 @@ export interface InstancesSearchProps {
      * button press and not via drag and drop.
      */
     onAddElements?: (elements: Element[]) => void;
-    /**
-     * Event bus to listen commands for this component.
-     */
-    commands: Events<InstancesSearchCommands>;
 }
 
 /**
  * Events for {@link InstancesSearch} event bus.
  */
 export interface InstancesSearchCommands {
+    /**
+     * Triggered on a request to query implementations for its capabilities.
+     */
+    findCapabilities: {
+        /**
+         * Collects found instances search capabilities.
+         */
+        readonly capabilities: Array<Record<string, never>>;
+    };
     /**
      * Can be triggered to set filter criteria and initiate the search.
      */
@@ -191,8 +197,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 
     componentDidMount() {
-        const {commands, workspace} = this.props;
-        const {model, triggerWorkspaceEvent} = workspace;
+        const {workspace} = this.props;
+        const {model} = workspace;
 
         this.listener.listen(model.events, 'changeLanguage', () => this.forceUpdate());
         this.listener.listen(model.events, 'loadingStart', () => {
@@ -203,16 +209,24 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 () => this.props.searchStore.change({value: '', action: 'clear'})
             );
         });
+
+        const commands = workspace.getExtensionCommands(InstancesSearchExtension);
+        this.listener.listen(commands, 'findCapabilities', e => {
+            e.capabilities.push({});
+        });
         this.listener.listen(commands, 'setCriteria', ({criteria}) => {
+            const {
+                searchStore, onChangeCriteria, workspace: {triggerWorkspaceEvent},
+            } = this.props;
             triggerWorkspaceEvent(WorkspaceEventKey.searchUpdateCriteria);
             this.setState(
                 {criteria},
                 () => {
-                    this.props.searchStore.change({
+                    searchStore.change({
                         value: criteria.text ?? '',
                         action: 'clear',
                     });
-                    this.props.onChangeCriteria?.(this.state.criteria);
+                    onChangeCriteria?.(this.state.criteria);
                 }
             );
         });

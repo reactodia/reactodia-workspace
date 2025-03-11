@@ -1,7 +1,6 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { Events } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
@@ -12,8 +11,11 @@ import type { Rect, Size, Vector } from '../../diagram/geometry';
 import { Dropdown } from '../utility/dropdown';
 import { useSearchInputStore } from '../utility/searchInput';
 import { getParentDockAlignment } from '../utility/viewportDock';
+
 // TODO: move into widgets
 import { DraggableHandle } from '../../workspace/draggableHandle';
+import { useWorkspace } from '../../workspace/workspaceContext';
+import { UnifiedSearchExtension } from '../../workspace/workspaceExtension';
 
 import { UnifiedSearchSectionContext } from './searchSection';
 
@@ -27,10 +29,6 @@ export interface UnifiedSearchProps {
      * Available sections (providers) to search with.
      */
     sections: ReadonlyArray<UnifiedSearchSection>;
-    /**
-     * Event bus to listen commands for this component.
-     */
-    commands?: Events<UnifiedSearchCommands>;
     /**
      * Default (initial) width for the component, including
      * the search input and the dropdown.
@@ -138,7 +136,6 @@ const CLASS_NAME = 'reactodia-unified-search';
 export function UnifiedSearch(props: UnifiedSearchProps) {
     const {
         sections,
-        commands,
         defaultWidth = 300,
         defaultHeight = 350,
         minWidth = 200,
@@ -224,24 +221,24 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         [sections, searchStore, activeSection, setActiveSection, setExpanded]
     );
 
+    const {getExtensionCommands} = useWorkspace();
+    const commands = getExtensionCommands(UnifiedSearchExtension);
     const toggleInputRef = React.useRef<HTMLInputElement | null>(null);
     React.useEffect(() => {
-        if (commands) {
-            const onFocus = ({sectionKey}: UnifiedSearchCommands['focus']): void => {
-                if (sectionKey) {
-                    if (sections.some(section => section.key === sectionKey)) {
-                        setActiveSection(activeSection.activate(sectionKey));
-                    } else {
-                        console.warn(
-                            `Unified search: cannot activate section that does not exists: ${sectionKey}`
-                        );
-                    }
+        const onFocus = ({sectionKey}: UnifiedSearchCommands['focus']): void => {
+            if (sectionKey) {
+                if (sections.some(section => section.key === sectionKey)) {
+                    setActiveSection(activeSection.activate(sectionKey));
+                } else {
+                    console.warn(
+                        `Unified search: cannot activate section that does not exists: ${sectionKey}`
+                    );
                 }
-                toggleInputRef.current?.focus();
-            };
-            commands.on('focus', onFocus);
-            return () => commands.off('focus', onFocus);
-        }
+            }
+            toggleInputRef.current?.focus();
+        };
+        commands.on('focus', onFocus);
+        return () => commands.off('focus', onFocus);
     }, [commands, sections, activeSection, setExpanded, setActiveSection]);
 
     const hasSearchQuery = (

@@ -10,12 +10,8 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function WikidataExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const [searchCommands] = React.useState(() =>
-        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
-    );
-
     const {onMount, getContext} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model} = context;
+        const {model, getExtensionCommands} = context;
 
         const sparqlProvider = new Reactodia.SparqlDataProvider(
             {
@@ -48,7 +44,8 @@ function WikidataExample() {
         });
 
         if (!diagram) {
-            searchCommands.trigger('focus', {sectionKey: 'entities'});
+            getExtensionCommands(Reactodia.UnifiedSearchExtension)
+                .trigger('focus', {sectionKey: 'entities'});
         }
     }, []);
 
@@ -84,7 +81,6 @@ function WikidataExample() {
                         </Reactodia.ToolbarAction>
                     </>
                 }
-                searchCommands={searchCommands}
                 connectionsMenu={{suggestProperties}}
                 languages={[
                     {code: 'de', label: 'Deutsch'},

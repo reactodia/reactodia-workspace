@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AnyListener, EventObserver, EventTrigger } from '../coreUtils/events';
+import { AnyListener, EventObserver } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
@@ -8,8 +8,6 @@ import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element, ElementEvents } from '../diagram/elements';
 import { boundsOf } from '../diagram/geometry';
 
-import type { ConnectionsMenuCommands } from './connectionsMenu';
-import type { InstancesSearchCommands } from './instancesSearch';
 import {
     SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
     SelectionActionConnections, SelectionActionAddToFilter, SelectionActionGroup,
@@ -29,14 +27,6 @@ export interface HaloProps {
      */
     margin?: number;
     /**
-     * Event bus to send commands to {@link ConnectionMenu} component.
-     */
-    connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
-    /**
      * {@link SelectionAction} items representing available actions on the selected element.
      *
      * **Default**:
@@ -46,12 +36,8 @@ export interface HaloProps {
      *   <SelectionActionRemove dock='ne' />
      *   <SelectionActionExpand dock='s' />
      *   <SelectionActionAnchor dock='w' />
-     *   <SelectionActionConnections dock='e'
-     *       commands={connectionsMenuCommands}
-     *   />
-     *   <SelectionActionAddToFilter dock='se'
-     *       commands={instancesSearchCommands}
-     *   />
+     *   <SelectionActionConnections dock='e' />
+     *   <SelectionActionAddToFilter dock='se' />
      *   <SelectionActionEstablishLink dock='sw' />
      * </>
      * ```
@@ -143,8 +129,6 @@ class HaloInner extends React.Component<HaloInnerProps> {
             target,
             canvas,
             margin = 5,
-            connectionsMenuCommands,
-            instancesSearchCommands,
             children,
         } = this.props;
 
@@ -168,12 +152,8 @@ class HaloInner extends React.Component<HaloInnerProps> {
                     <SelectionActionRemove dock='ne' />
                     <SelectionActionExpand dock='s' />
                     <SelectionActionAnchor dock='w' />
-                    <SelectionActionConnections dock='e'
-                        commands={connectionsMenuCommands}
-                    />
-                    <SelectionActionAddToFilter dock='se'
-                        commands={instancesSearchCommands}
-                    />
+                    <SelectionActionConnections dock='e' />
+                    <SelectionActionAddToFilter dock='se' />
                     <SelectionActionEstablishLink dock='sw' />
                 </>}
             </div>
