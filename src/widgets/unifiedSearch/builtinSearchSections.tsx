@@ -1,10 +1,13 @@
 import * as React from 'react';
 
-import { Events, EventTrigger, EventObserver } from '../../coreUtils/events';
+import { EventObserver } from '../../coreUtils/events';
 
 import { ClassTree } from '../classTree';
-import { InstancesSearch, InstancesSearchCommands, SearchCriteria } from '../instancesSearch';
+import { InstancesSearch, SearchCriteria } from '../instancesSearch';
 import { LinkTypesToolbox } from '../linksToolbox';
+
+import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { useUnifiedSearchSection } from './searchSection';
 
@@ -28,12 +31,8 @@ export function SearchSectionElementTypes(props: {
      * @default 2
      */
     minSearchTermLength?: number;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }) {
-    const {searchTimeout = 200, minSearchTermLength = 2, instancesSearchCommands} = props;
+    const {searchTimeout = 200, minSearchTermLength = 2} = props;
     const {searchStore, shouldRender} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
@@ -42,7 +41,6 @@ export function SearchSectionElementTypes(props: {
     return shouldRender ? (
         <ClassTree className={SECTION_ELEMENT_TYPES_CLASS}
             searchStore={searchStore}
-            instancesSearchCommands={instancesSearchCommands}
         />
     ) : null;
 }
@@ -67,26 +65,22 @@ export function SearchSectionEntities(props: {
      * @default 3
      */
     minSearchTermLength?: number;
-    /**
-     * Event bus to listen commands for {@link InstancesSearch} component.
-     */
-    instancesSearchCommands: Events<InstancesSearchCommands> & EventTrigger<InstancesSearchCommands>;
 }) {
-    const {searchTimeout = 600, minSearchTermLength = 3, instancesSearchCommands} = props;
+    const {searchTimeout = 600, minSearchTermLength = 3} = props;
+    const {getCommandBus} = useWorkspace();
     const {shouldRender, setSectionActive, searchStore} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
     });
 
+    const commands = getCommandBus(InstancesSearchTopic);
     React.useEffect(() => {
-        if (instancesSearchCommands) {
-            const listener = new EventObserver();
-            listener.listen(instancesSearchCommands, 'setCriteria', ({criteria}) => {
-                setSectionActive(true, criteriaAsSearchExtra(criteria));
-            });
-            return () => listener.stopListening();
-        }
-    }, [shouldRender, instancesSearchCommands]);
+        const listener = new EventObserver();
+        listener.listen(commands, 'setCriteria', ({criteria}) => {
+            setSectionActive(true, criteriaAsSearchExtra(criteria));
+        });
+        return () => listener.stopListening();
+    }, [shouldRender, commands]);
 
     return (
         <InstancesSearch className={SECTION_ENTITIES_CLASS}
@@ -99,7 +93,6 @@ export function SearchSectionEntities(props: {
             onAddElements={() => {
                 setSectionActive(false);
             }}
-            commands={instancesSearchCommands}
         />
     );
 }
@@ -132,12 +125,8 @@ export function SearchSectionLinkTypes(props: {
      * @default 1
      */
     minSearchTermLength?: number;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }) {
-    const {searchTimeout = 200, minSearchTermLength = 1, instancesSearchCommands} = props;
+    const {searchTimeout = 200, minSearchTermLength = 1} = props;
     const {shouldRender, isSectionActive, searchStore} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
@@ -147,7 +136,6 @@ export function SearchSectionLinkTypes(props: {
         <LinkTypesToolbox className={SECTION_LINK_TYPES_CLASS}
             trackSelected={isSectionActive}
             searchStore={searchStore}
-            instancesSearchCommands={instancesSearchCommands}
         />
     ) : null;
 }

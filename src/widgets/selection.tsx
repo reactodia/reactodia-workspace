@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
-import { EventObserver, EventTrigger } from '../coreUtils/events';
+import { EventObserver } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
@@ -14,7 +14,6 @@ import {
 } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
 
-import type { ConnectionsMenuCommands } from './connectionsMenu';
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
     SelectionActionExpand, SelectionActionConnections, SelectionActionGroup,
@@ -39,10 +38,6 @@ export interface SelectionProps {
      */
     itemMargin?: number;
     /**
-     * Event bus to send commands to {@link ConnectionMenu} component.
-     */
-    connectionsMenuCommands?: EventTrigger<ConnectionsMenuCommands>;
-    /**
      * {@link SelectionAction} items representing available actions on the selected elements.
      *
      * **Default**:
@@ -52,9 +47,7 @@ export interface SelectionProps {
      *   <SelectionActionLayout dock='nw' dockColumn={2} />
      *   <SelectionActionGroup dock='nw' dockColumn={3} />
      *   <SelectionActionRemove dock='ne' />
-     *   <SelectionActionConnections dock='e'
-     *       commands={props.connectionsMenuCommands}
-     *   />
+     *   <SelectionActionConnections dock='e' />
      *   <SelectionActionExpand dock='s' />
      * </>
      * ```
@@ -216,7 +209,6 @@ function SelectionBox(props: SelectionBoxProps) {
         model, canvas, selectedElements, highlightedBox,
         boxMargin = 5,
         itemMargin = 2,
-        connectionsMenuCommands,
         children,
     } = props;
 
@@ -263,9 +255,7 @@ function SelectionBox(props: SelectionBoxProps) {
                         <SelectionActionLayout dock='nw' dockColumn={2} />
                         <SelectionActionGroup dock='nw' dockColumn={3} />
                         <SelectionActionRemove dock='ne' />
-                        <SelectionActionConnections dock='e'
-                            commands={connectionsMenuCommands}
-                        />
+                        <SelectionActionConnections dock='e' />
                         <SelectionActionExpand dock='s' />
                     </>}
                 </div>

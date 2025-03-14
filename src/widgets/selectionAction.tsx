@@ -2,7 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
-import { EventObserver, EventTrigger } from '../coreUtils/events';
+import { EventObserver } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
@@ -21,6 +21,9 @@ import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataEle
 import type { EditorController } from '../editor/editorController';
 import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
 
+import {
+    ConnectionsMenuTopic, InstancesSearchTopic, VisualAuthoringTopic,
+} from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { DockDirection } from './utility/viewportDock';
@@ -431,12 +434,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
  *
  * @see {@link SelectionActionConnections}
  */
-export interface SelectionActionConnectionsProps extends SelectionActionStyleProps {
-    /**
-     * Event bus to send commands to {@link ConnectionMenu} component.
-     */
-    commands?: EventTrigger<ConnectionsMenuCommands>;
-}
+export interface SelectionActionConnectionsProps extends SelectionActionStyleProps {}
 
 /**
  * Selection action component to open a {@link ConnectionsMenu} for the selected entities.
@@ -444,8 +442,8 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
  * @category Components
  */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
-    const {className, title, commands, ...otherProps} = props;
-    const {model, overlay, translation: t} = useWorkspace();
+    const {className, title, ...otherProps} = props;
+    const {model, overlay, translation: t, getCommandBus} = useWorkspace();
 
     const menuOpened = useObservedProperty(
         overlay.events,
@@ -462,9 +460,14 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
         }
     }
 
-    if (!(commands && entityCount > 0)) {
+    const commands = getCommandBus(ConnectionsMenuTopic);
+    const event: ConnectionsMenuCommands['findCapabilities'] = {capabilities: []};
+    commands.trigger('findCapabilities', event);
+
+    if (!(event.capabilities.length > 0 && entityCount > 0)) {
         return null;
     }
+
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -490,12 +493,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
  *
  * @see {@link SelectionActionAddToFilter}
  */
-export interface SelectionActionAddToFilterProps extends SelectionActionStyleProps {
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    commands?: EventTrigger<InstancesSearchCommands>;
-}
+export interface SelectionActionAddToFilterProps extends SelectionActionStyleProps {}
 
 /**
  * Selection action component to add the selected entity to the {@link InstancesSearch} filter.
@@ -503,11 +501,15 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
  * @category Components
  */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
-    const {className, title, commands, ...otherProps} = props;
-    const {model} = useCanvas();
-    const t = useTranslation();
+    const {className, title, ...otherProps} = props;
+    const {model, translation: t, getCommandBus} = useWorkspace();
+
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    if (!(commands && elements.length === 1)) {
+    const commands = getCommandBus(InstancesSearchTopic);
+    const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
+    commands.trigger('findCapabilities', event);
+
+    if (!(event.capabilities.length > 0 && elements.length === 1)) {
         return null;
     }
     const [target] = elements;
@@ -606,7 +608,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor, translation: t, getCommandBus} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -641,9 +643,10 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                editor.authoringCommands.trigger('startDragEdit', {
-                    operation: {mode: 'connect', source: target, point},
-                });
+                getCommandBus(VisualAuthoringTopic)
+                    .trigger('startDragEdit', {
+                        operation: {mode: 'connect', source: target, point},
+                    });
             }}
         />
     );

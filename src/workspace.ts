@@ -247,5 +247,9 @@ export {
     WorkspaceGroupParams, WorkspaceUngroupAllParams, WorkspaceUngroupSomeParams,
     ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
+export {
+    CommandBusTopic,
+    ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic, VisualAuthoringTopic,
+} from './workspace/commandBusTopic';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';

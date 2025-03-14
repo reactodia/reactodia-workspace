@@ -2,7 +2,7 @@ import * as React from 'react';
 import { hcl } from 'd3-color';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
-import { Events, EventObserver, EventSource, EventTrigger } from '../coreUtils/events';
+import { EventObserver, EventSource } from '../coreUtils/events';
 import { HashMap } from '../coreUtils/hashMap';
 import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../coreUtils/i18n';
 
@@ -24,7 +24,7 @@ import {
 import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityGroup, EntityGroupItem } from '../editor/dataElements';
+import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
 import {
     groupEntitiesAnimated, ungroupAllEntitiesAnimated, ungroupSomeEntitiesAnimated,
@@ -34,12 +34,10 @@ import { OverlayController } from '../editor/overlayController';
 import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
 
-import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
-
+import type { CommandBusTopic } from './commandBusTopic';
 import {
     WorkspaceContext, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
-import { EntityElement } from '../workspace';
 
 /**
  * Props for {@link Workspace} component.
@@ -75,12 +73,6 @@ export interface WorkspaceProps {
      * Provides a strategy to rename diagram links (change labels).
      */
     renameLinkProvider?: RenameLinkProvider;
-    /**
-     * Event bus to connect {@link VisualAuthoring} to other components.
-     *
-     * If not specified, an internal instance will be automatically created.
-     */
-    authoringCommands?: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
     /**
      * Overrides how a single label gets selected from multiple of them based on target language.
      */
@@ -140,6 +132,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
 
+    private readonly extensionCommands = new WeakMap<CommandBusTopic<any>, EventSource<any>>();
+
     private readonly resolveTypeStyle: TypeStyleResolver;
     private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
     private readonly cachedGroupStyles: WeakMap<ReadonlyArray<EntityGroupItem>, ProcessedTypeStyle>;
@@ -157,7 +151,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
             metadataProvider,
             validationProvider,
             renameLinkProvider,
-            authoringCommands = new EventSource(),
             typeStyleResolver,
             selectLabelLanguage,
             defaultLanguage = DEFAULT_LANGUAGE,
@@ -190,7 +183,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const editor = new EditorController({
             model,
-            authoringCommands,
             metadataProvider,
             validationProvider,
         });
@@ -217,6 +209,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             overlay,
             translation,
             disposeSignal: this.cancellation.signal,
+            getCommandBus: this.getCommandBus,
             getElementStyle: this.getElementStyle,
             getElementTypeStyle: this.getElementTypeStyle,
             performLayout: this.onPerformLayout,
@@ -288,6 +281,15 @@ export class Workspace extends React.Component<WorkspaceProps> {
         editor.dispose();
         overlay.dispose();
     }
+
+    private getCommandBus: WorkspaceContext['getCommandBus'] = (extension) => {
+        let commands = this.extensionCommands.get(extension);
+        if (!commands) {
+            commands = new EventSource();
+            this.extensionCommands.set(extension, commands);
+        }
+        return commands;
+    };
 
     private getElementStyle: WorkspaceContext['getElementStyle'] = element => {
         if (element instanceof EntityElement) {

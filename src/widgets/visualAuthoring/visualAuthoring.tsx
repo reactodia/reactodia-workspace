@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 
-import { ElementModel, equalLinks, equalProperties } from '../../data/model';
+import { ElementModel } from '../../data/model';
 import { defineCanvasWidget } from '../../diagram/canvasWidget';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
@@ -17,6 +17,7 @@ import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
 import { RenameLinkForm } from '../../forms/renameLinkForm';
 
+import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { AuthoredEntityDecorator } from './authoredEntityDecorator';
@@ -93,7 +94,7 @@ export interface VisualAuthoringCommands {
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
     const {propertyEditor} = props;
-    const {model, view, editor, overlay, translation: t} = useWorkspace();
+    const {model, view, editor, overlay, translation: t, getCommandBus} = useWorkspace();
 
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
@@ -135,9 +136,10 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
     }, []);
 
     React.useLayoutEffect(() => {
+        const commands = getCommandBus(VisualAuthoringTopic);
         const listener = new EventObserver();
 
-        listener.listen(editor.authoringCommands, 'startDragEdit', ({operation}) => {
+        listener.listen(commands, 'startDragEdit', ({operation}) => {
             const onFinishEditing = () => {
                 view.setCanvasWidget('dragEditLayer', null);
             };
@@ -149,7 +151,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             view.setCanvasWidget('dragEditLayer', {element: dragEditLayer, attachment: 'overElements'});
         });
 
-        listener.listen(editor.authoringCommands, 'editEntity', ({target}) => {
+        listener.listen(commands, 'editEntity', ({target}) => {
             const onSubmit = (newData: ElementModel) => {
                 overlay.hideDialog();
                 editor.changeEntity(target.data.id, newData);
@@ -179,7 +181,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             });
         });
 
-        listener.listen(editor.authoringCommands, 'findOrCreateEntity', e => {
+        listener.listen(commands, 'findOrCreateEntity', e => {
             const {link, source, target, targetIsNew} = e;
             const content = (
                 <FindOrCreateEntityForm source={source}
@@ -189,7 +191,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     onAfterApply={() => {
                         overlay.hideDialog();
                         if (AuthoringState.isAddedEntity(editor.authoringState, target.iri)) {
-                            editor.authoringCommands.trigger('editEntity', {target});
+                            commands.trigger('editEntity', {target});
                         }
                     }}
                     onCancel={() => overlay.hideDialog()}
@@ -207,7 +209,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             });
         });
 
-        listener.listen(editor.authoringCommands, 'editRelation', ({target: link}) => {
+        listener.listen(commands, 'editRelation', ({target: link}) => {
             const content = (
                 <EditRelationForm originalLink={link}
                     source={model.getElement(link.sourceId) as EntityElement}
@@ -216,7 +218,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                         // Close current dialog before opening a new one to avoid
                         // target temporary link removal
                         overlay.hideDialog();
-                        editor.authoringCommands.trigger('editRelation', {target: newTarget});
+                        commands.trigger('editRelation', {target: newTarget});
                     }}
                     onAfterApply={() => overlay.hideDialog()}
                     onCancel={() => overlay.hideDialog()}
@@ -238,7 +240,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             });
         });
 
-        listener.listen(editor.authoringCommands, 'renameLink', ({target: link}) => {
+        listener.listen(commands, 'renameLink', ({target: link}) => {
             const defaultSize: Size = {width: 300, height: 165};
             overlay.showDialog({
                 target: link,

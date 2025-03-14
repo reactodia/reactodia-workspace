@@ -1,5 +1,5 @@
-import { Events, EventSource, EventObserver, EventTrigger, PropertyChange } from '../coreUtils/events';
-import { Translation, TranslatedText } from '../coreUtils/i18n';
+import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
+import { TranslatedText } from '../coreUtils/i18n';
 
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
@@ -8,8 +8,6 @@ import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
 import { Element, Link } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
-
-import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 
 import {
     AuthoringState, AuthoringEvent, TemporaryState,
@@ -24,7 +22,6 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 /** @hidden */
 export interface EditorProps {
     readonly model: DataDiagramModel;
-    readonly authoringCommands: Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
     readonly metadataProvider?: MetadataProvider;
     readonly validationProvider?: ValidationProvider;
 }
@@ -68,8 +65,6 @@ export class EditorController {
     readonly events: Events<EditorEvents> = this.source;
 
     private readonly model: DataDiagramModel;
-    private readonly _authoringCommands:
-        Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands>;
 
     private _inAuthoringMode = false;
     private _metadataProvider: MetadataProvider | undefined;
@@ -82,9 +77,8 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, authoringCommands, metadataProvider, validationProvider} = props;
+        const {model, metadataProvider, validationProvider} = props;
         this.model = model;
-        this._authoringCommands = authoringCommands;
         this._metadataProvider = metadataProvider;
         this._validationProvider = validationProvider;
 
@@ -109,13 +103,6 @@ export class EditorController {
     dispose(): void {
         this.listener.stopListening();
         this.cancellation.abort();
-    }
-
-    /**
-     * Event bus to connect {@link VisualAuthoring} to other components.
-     */
-    get authoringCommands(): Events<VisualAuthoringCommands> & EventTrigger<VisualAuthoringCommands> {
-        return this._authoringCommands;
     }
 
     /**

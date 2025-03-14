@@ -1,16 +1,12 @@
 import * as React from 'react';
 
-import { Events, EventSource, EventTrigger } from '../coreUtils/events';
 import { useTranslation } from '../coreUtils/i18n';
 
 import { Canvas, CanvasProps } from '../widgets/canvas';
-import {
-    ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
-} from '../widgets/connectionsMenu';
+import { ConnectionsMenu, ConnectionsMenuProps } from '../widgets/connectionsMenu';
 import { DropOnCanvas, DropOnCanvasProps } from '../widgets/dropOnCanvas';
 import { Halo, HaloProps } from '../widgets/halo';
 import { HaloLink, HaloLinkProps } from '../widgets/haloLink';
-import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import { Navigator, NavigatorProps } from '../widgets/navigator';
 import { Selection, SelectionProps } from '../widgets/selection';
 import { Toolbar, ToolbarProps } from '../widgets/toolbar';
@@ -19,7 +15,7 @@ import {
     ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
 } from '../widgets/toolbarAction';
 import {
-    UnifiedSearch, UnifiedSearchProps, UnifiedSearchCommands, UnifiedSearchSection,
+    UnifiedSearch, UnifiedSearchProps, UnifiedSearchSection,
     SearchSectionElementTypes,
     SearchSectionEntities,
     SearchSectionLinkTypes,
@@ -95,24 +91,6 @@ export interface BaseDefaultWorkspaceProps {
      * If specified as `null`, the component will not be rendered.
      */
     zoomControl?: Partial<ZoomControlProps> | null;
-    /**
-     * Event bus to connect {@link UnifiedSearch} to other components.
-     *
-     * If not specified, an internal instance will be automatically created.
-     */
-    searchCommands?: Events<UnifiedSearchCommands> & EventTrigger<UnifiedSearchCommands>;
-    /**
-     * Event bus to connect {@link ConnectionMenu} to other components.
-     *
-     * If not specified, an internal instance will be automatically created.
-     */
-    connectionsMenuCommands?: Events<ConnectionsMenuCommands> & EventTrigger<ConnectionsMenuCommands>;
-    /**
-     * Event bus to connect {@link InstancesSearch} to other components.
-     *
-     * If not specified, an internal instance will be automatically created.
-     */
-    instancesSearchCommands?: Events<InstancesSearchCommands> & EventTrigger<InstancesSearchCommands>;
 }
 
 /**
@@ -193,15 +171,6 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     } = props;
 
     const t = useTranslation();
-    const [searchCommands] = React.useState(() =>
-        props.searchCommands ?? new EventSource<UnifiedSearchCommands>()
-    );
-    const [connectionsMenuCommands] = React.useState(() =>
-        props.connectionsMenuCommands ?? new EventSource<ConnectionsMenuCommands>()
-    );
-    const [instancesSearchCommands] = React.useState(() =>
-        props.instancesSearchCommands ?? new EventSource<InstancesSearchCommands>()
-    );
 
     const menuContent = menu === null ? null : (
         menu ?? <>
@@ -226,61 +195,31 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
             key: 'elementTypes',
             label: t.text('default_workspace.search_section_entity_types.label'),
             title: t.text('default_workspace.search_section_entity_types.title'),
-            component: (
-                <SearchSectionElementTypes
-                    instancesSearchCommands={instancesSearchCommands}
-                />
-            )
+            component: <SearchSectionElementTypes />,
         },
         {
             key: 'entities',
             label: t.text('default_workspace.search_section_entities.label'),
             title: t.text('default_workspace.search_section_entities.title'),
-            component: (
-                <SearchSectionEntities
-                    instancesSearchCommands={instancesSearchCommands}
-                />
-            )
+            component: <SearchSectionEntities />,
         },
         {
             key: 'linkTypes',
             label: t.text('default_workspace.search_section_link_types.label'),
             title: t.text('default_workspace.search_section_link_types.title'),
-            component: (
-                <SearchSectionLinkTypes
-                    instancesSearchCommands={instancesSearchCommands}
-                />
-            )
+            component: <SearchSectionLinkTypes />,
         }
-    ], [instancesSearchCommands]);
+    ], []);
 
     return (
         <WorkspaceRoot colorScheme={colorScheme}>
             <Canvas {...canvas}>
                 <VisualAuthoring {...visualAuthoring} />
-                {connectionsMenu === null ? null : (
-                    <ConnectionsMenu {...connectionsMenu}
-                        commands={connectionsMenuCommands}
-                        instancesSearchCommands={instancesSearchCommands}
-                    />
-                )}
+                {connectionsMenu === null ? null : <ConnectionsMenu {...connectionsMenu} />}
                 {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}
-                {halo === null ? null : (
-                    <Halo {...halo}
-                        instancesSearchCommands={instancesSearchCommands}
-                        connectionsMenuCommands={
-                            connectionsMenu === null ? undefined : connectionsMenuCommands
-                        }
-                    />
-                )}
+                {halo === null ? null : <Halo {...halo} />}
                 {haloLink === null ? null : <HaloLink {...haloLink} />}
-                {selection === null ? null : (
-                    <Selection {...selection}
-                        connectionsMenuCommands={
-                            connectionsMenu === null ? undefined : connectionsMenuCommands
-                        }
-                    />
-                )}
+                {selection === null ? null : <Selection {...selection} />}
                 {zoomControl === null ? null : (
                     <ZoomControl dock='w'
                         {...zoomControl}
@@ -297,7 +236,6 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                     {search === null ? null : (
                         <UnifiedSearch {...search}
                             sections={search?.sections ?? defaultSections}
-                            commands={searchCommands}
                         />
                     )}
                 </Toolbar>

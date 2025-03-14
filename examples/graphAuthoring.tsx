@@ -13,10 +13,6 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'
 function GraphAuthoringExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
-    const [searchCommands] = React.useState(() =>
-        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
-    );
-
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model, editor, performLayout} = context;
         editor.setAuthoringMode(true);
@@ -76,7 +72,6 @@ function GraphAuthoringExample() {
                     },
                 }}
                 menu={<ExampleToolbarMenu />}
-                searchCommands={searchCommands}
             />
         </Reactodia.Workspace>
     );

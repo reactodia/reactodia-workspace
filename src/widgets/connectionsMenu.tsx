@@ -1,7 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { Events, EventObserver, EventTrigger } from '../coreUtils/events';
+import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 import { TranslatedText } from '../coreUtils/i18n';
 
@@ -25,6 +25,7 @@ import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/u
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
+import { ConnectionsMenuTopic, InstancesSearchTopic } from '../workspace/commandBusTopic';
 
 import { highlightSubstring } from './utility/listElementView';
 import { SearchResults, getAllPresentEntities } from './utility/searchResults';
@@ -36,10 +37,6 @@ import { SearchResults, getAllPresentEntities } from './utility/searchResults';
  */
 export interface ConnectionsMenuProps {
     /**
-     * Event bus to listen commands for this component.
-     */
-    commands: Events<ConnectionsMenuCommands>;
-    /**
      * Whether to open (connected by) "All" link type by default.
      *
      * @default false
@@ -49,10 +46,6 @@ export interface ConnectionsMenuProps {
      * Smart link type suggestion provider when searching by the link type label.
      */
     suggestProperties?: PropertySuggestionHandler;
-    /**
-     * Event bus to send commands to {@link InstancesSearch} component.
-     */
-    instancesSearchCommands?: EventTrigger<InstancesSearchCommands>;
 }
 
 /**
@@ -61,6 +54,15 @@ export interface ConnectionsMenuProps {
  * @see {@link ConnectionsMenu}
  */
 export interface ConnectionsMenuCommands {
+    /**
+     * Triggered on a request to query implementations for its capabilities.
+     */
+    findCapabilities: {
+        /**
+         * Collects found connections menu capabilities.
+         */
+        readonly capabilities: Array<Record<string, never>>;
+    };
     /**
      * Can be triggered to open connections menu for the target elements.
      */
@@ -136,15 +138,17 @@ export interface PropertyScore {
  * @category Components
  */
 export function ConnectionsMenu(props: ConnectionsMenuProps) {
-    const {commands} = props;
-
     const workspace = useWorkspace();
     const {canvas} = useCanvas();
 
     const lastSortMode = React.useRef<SortMode>('alphabet');
 
+    const commands = workspace.getCommandBus(ConnectionsMenuTopic);
     React.useEffect(() => {
         const listener = new EventObserver();
+        listener.listen(commands, 'findCapabilities', e => {
+            e.capabilities.push({});
+        });
         listener.listen(commands, 'show', ({targets}) => {
             if (targets.length === 0) {
                 return;
@@ -629,7 +633,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private getBody() {
         const {
-            targetIris, instancesSearchCommands, connectionSearch, objectSearch, workspace,
+            targetIris, connectionSearch, objectSearch, workspace,
         } = this.props;
         const {
             panel, connectionSortMode, loadingState, objects, connections, connectionSuggestions,
@@ -657,6 +661,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             ) {
                 return <LoadingSpinner />;
             }
+
+            const commands = workspace.getCommandBus(InstancesSearchTopic);
+            const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
+            commands.trigger('findCapabilities', event);
+
             return (
                 <ConnectionsList
                     targetIris={targetIris}
@@ -668,7 +677,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     allRelatedLink={this.ALL_RELATED_ELEMENTS_LINK}
                     onExpandLink={this.onExpandLink}
                     onMoveToFilter={
-                        instancesSearchCommands && targetIris.length === 1
+                        event.capabilities.length > 0 && targetIris.length === 1
                             ? this.onMoveToFilter
                             : undefined
                     }
@@ -744,7 +753,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onMoveToFilter = (linkDataChunk: LinkDataChunk) => {
-        const {targetIris, instancesSearchCommands} = this.props;
+        const {targetIris, workspace: {getCommandBus}} = this.props;
         const {linkType, direction} = linkDataChunk;
 
         const singleTargetIri = targetIris.length === 1 ? targetIris[0] : undefined;
@@ -752,12 +761,13 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
         
+        const commands = getCommandBus(InstancesSearchTopic);
         if (linkType.id === this.ALL_RELATED_ELEMENTS_LINK.id) {
-            instancesSearchCommands?.trigger('setCriteria', {
+            commands.trigger('setCriteria', {
                 criteria: {refElement: singleTargetIri},
             });
         } else {
-            instancesSearchCommands?.trigger('setCriteria', {
+            commands.trigger('setCriteria', {
                 criteria: {
                     refElement: singleTargetIri,
                     refElementLink: linkType.id,

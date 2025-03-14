@@ -31,12 +31,8 @@ function SparqlExample() {
         setConnectionSettings(settings);
     };
 
-    const [searchCommands] = React.useState(() =>
-        new Reactodia.EventSource<Reactodia.UnifiedSearchCommands>
-    );
-
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model} = context;
+        const {model, getCommandBus} = context;
 
         if (connectionSettings) {
             const diagram = tryLoadLayoutFromLocalStorage();
@@ -53,7 +49,8 @@ function SparqlExample() {
             });
     
             if (!diagram) {
-                searchCommands.trigger('focus', {sectionKey: 'elementTypes'});
+                getCommandBus(Reactodia.UnifiedSearchTopic)
+                    .trigger('focus', {sectionKey: 'elementTypes'});
             }
         } else {
             showConnectionDialog(connectionSettings, applyConnectionSettings, context);
@@ -66,7 +63,6 @@ function SparqlExample() {
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
-                searchCommands={searchCommands}
                 canvasWidgets={[
                     <Reactodia.Toolbar key='sparql-settings'
                         dock='sw'
