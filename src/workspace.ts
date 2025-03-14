@@ -7,7 +7,6 @@ export {
     Listener, AnyListener, AnyEvent, PropertyChange,
     Events, EventTrigger, EventObserver, EventSource,
 } from './coreUtils/events';
-export * from './coreUtils/hashMap';
 export {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
     useSyncStore, useSyncStoreWithComparator,

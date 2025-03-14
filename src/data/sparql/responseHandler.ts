@@ -1,5 +1,6 @@
+import { HashMap, HashSet } from '@reactodia/hashmap';
+
 import { multimapAdd } from '../../coreUtils/collections';
-import { HashMap, HashSet } from '../../coreUtils/hashMap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {

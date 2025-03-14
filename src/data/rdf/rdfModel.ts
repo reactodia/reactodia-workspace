@@ -1,7 +1,7 @@
-import * as N3 from 'n3';
 import * as RdfJs from '@rdfjs/types';
+import { chainHash, dropHighestNonSignBit, hashString } from '@reactodia/hashmap';
+import * as N3 from 'n3';
 
-import { hashFnv32a } from '../utils';
 import { escapeRdfValue } from './rdfEscape';
 
 export type NamedNode<T extends string = string> = RdfJs.NamedNode<T>;
@@ -79,41 +79,29 @@ export function hashTerm(node: Term): number {
     switch (node.termType) {
         case 'NamedNode':
         case 'BlankNode':
-            hash = hashFnv32a(node.value);
+            hash = hashString(node.value);
             break;
         case 'Literal':
-            hash = hashFnv32a(node.value);
+            hash = hashString(node.value);
             if (node.datatype) {
-                hash = (Math.imul(hash, 31) + hashFnv32a(node.datatype.value)) | 0;
+                hash = chainHash(hash, hashString(node.datatype.value));
             }
             if (node.language) {
-                hash = (Math.imul(hash, 31) + hashFnv32a(node.language)) | 0;
+                hash = chainHash(hash, hashString(node.language));
             }
             break;
         case 'Variable':
-            hash = hashFnv32a(node.value);
+            hash = hashString(node.value);
             break;
         case 'Quad': {
-            hash = (Math.imul(hash, 31) + hashTerm(node.subject)) | 0;
-            hash = (Math.imul(hash, 31) + hashTerm(node.predicate)) | 0;
-            hash = (Math.imul(hash, 31) + hashTerm(node.object)) | 0;
-            hash = (Math.imul(hash, 31) + hashTerm(node.graph)) | 0;
+            hash = chainHash(hash, hashTerm(node.subject));
+            hash = chainHash(hash, hashTerm(node.predicate));
+            hash = chainHash(hash, hashTerm(node.object));
+            hash = chainHash(hash, hashTerm(node.graph));
             break;
         }
     }
     return dropHighestNonSignBit(hash);
-}
-
-export function hashString(str: string): number {
-    return hashFnv32a(str);
-}
-
-export function chainHash(hash: number, added: number): number {
-    return (Math.imul(hash, 31) + added) | 0;
-}
-
-export function dropHighestNonSignBit(i32: number): number {
-    return ((i32 >>> 1) & 0x40000000) | (i32 & 0xBFFFFFFF);
 }
 
 export function equalTerms(a: Term, b: Term): boolean {
