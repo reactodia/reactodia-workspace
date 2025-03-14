@@ -8,6 +8,8 @@ import {
 } from '../coreUtils/hooks';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
+import { LinkTypeIri } from '../data/model';
+
 import { useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
@@ -593,7 +595,12 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
  *
  * @see {@link SelectionActionEstablishLink}
  */
-export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {}
+export interface SelectionActionEstablishLinkProps extends SelectionActionStyleProps {
+    /**
+     * If specified, creates the relation link of that type.
+     */
+    linkType?: LinkTypeIri;
+}
 
 /**
  * Selection action component to start creating a relation link to an existing
@@ -606,7 +613,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
  * @category Components
  */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
-    const {className, title, ...otherProps} = props;
+    const {className, title, linkType, ...otherProps} = props;
     const {canvas} = useCanvas();
     const {model, editor, translation: t, getCommandBus} = useWorkspace();
 
@@ -616,7 +623,11 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const target = elements.length === 1 ? elements[0] : undefined;
-    const canLink = useCanEstablishLink(editor, inAuthoringMode ? target : undefined);
+    const canLink = useCanEstablishLink(
+        editor,
+        inAuthoringMode ? target : undefined,
+        linkType
+    );
 
     if (!(target instanceof EntityElement && inAuthoringMode)) {
         return null;
@@ -645,14 +656,23 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 getCommandBus(VisualAuthoringTopic)
                     .trigger('startDragEdit', {
-                        operation: {mode: 'connect', source: target, point},
+                        operation: {
+                            mode: 'connect',
+                            source: target,
+                            linkType,
+                            point,
+                        },
                     });
             }}
         />
     );
 }
 
-function useCanEstablishLink(editor: EditorController, target: Element | undefined) {
+function useCanEstablishLink(
+    editor: EditorController,
+    target: Element | undefined,
+    linkType: LinkTypeIri | undefined
+): boolean | undefined {
     const [canLink, setCanLink] = React.useState<boolean | undefined>();
 
     const entityTarget = target instanceof EntityElement ? target : undefined;
@@ -677,7 +697,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             setCanLink(undefined);
             const signal = cancellation.signal;
             mapAbortedToNull(
-                editor.metadataProvider.canConnect(targetData, undefined, undefined, {signal}),
+                editor.metadataProvider.canConnect(targetData, undefined, linkType, {signal}),
                 signal
             ).then(connections => {
                 if (connections === null) { return; }
@@ -685,7 +705,7 @@ function useCanEstablishLink(editor: EditorController, target: Element | undefin
             });
         }
         return () => cancellation.abort();
-    }, [targetData, authoringEvent]);
+    }, [targetData, authoringEvent, linkType]);
 
     return canLink;
 }

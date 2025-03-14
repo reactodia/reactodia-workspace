@@ -44,6 +44,10 @@ export interface DragEditConnect {
      */
     readonly source: EntityElement;
     /**
+     * Restrict the created relation to have only the specified type.
+     */
+    readonly linkType?: LinkTypeIri;
+    /**
      * Initial position for the dragged link endpoint on paper.
      */
     readonly point: Vector;
@@ -139,21 +143,21 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
 
     private beginCreatingLink(operation: DragEditConnect) {
         const {workspace: {model, editor}} = this.props;
-        const {source, point} = operation;
+        const {source, linkType, point} = operation;
 
         const temporaryElement = this.createTemporaryElement(point);
         const linkTemplate = new RelationLink({
             sourceId: source.id,
             targetId: temporaryElement.id,
             data: {
-                linkTypeId: PLACEHOLDER_LINK_TYPE,
+                linkTypeId: linkType ?? PLACEHOLDER_LINK_TYPE,
                 sourceId: source.iri,
                 targetId: '',
                 properties: {},
             },
         });
         const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
-        model.setLinkVisibility(temporaryLink.typeId, 'withoutLabel');
+        model.setLinkVisibility(PLACEHOLDER_LINK_TYPE, 'withoutLabel');
 
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;
@@ -430,14 +434,20 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             }
         }
 
+        const singleInLink = inLinkSet.size === 1 ? [...inLinkSet][0] : undefined;
+        const singleOutLink = outLinkSet.size === 1 ? [...outLinkSet][0] : undefined;
+
         let linkTypeIri: LinkTypeIri;
         let direction: 'in' | 'out';
-        if (inLinkSet.size === 0 && outLinkSet.size === 1) {
-            linkTypeIri = [...outLinkSet][0];
+        if (inLinkSet.size === 0 && singleOutLink) {
+            linkTypeIri = singleOutLink;
             direction = 'out';
-        } else if (inLinkSet.size === 1 && outLinkSet.size === 0) {
-            linkTypeIri = [...inLinkSet][0];
+        } else if (singleInLink && outLinkSet.size === 0) {
+            linkTypeIri = singleInLink;
             direction = 'in';
+        } else if (singleInLink && singleOutLink && singleInLink === singleOutLink) {
+            linkTypeIri = singleOutLink;
+            direction = model.findLink(linkTypeIri, source.id, target.id) ? 'in' : 'out';
         } else {
             linkTypeIri = PLACEHOLDER_LINK_TYPE;
             direction = 'out';

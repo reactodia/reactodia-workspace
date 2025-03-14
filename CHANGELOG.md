@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Remove all commands-like props from components, e.g. `commands`, `connectionMenuCommands`, `instancesSearchCommands`, `searchCommands`.
   * Triggering a command or listening for one from outside the component should be done by acquiring a commands object using `getCommandBus()` with the following built-in command bus topics: `ConnectionsMenuTopic`, `InstancesSearchTopic`, `UnifiedSearchTopic`, `VisualAuthoringTopic`.
   * **[🧪Experimental]** Custom command bus topics can be defined with `CommandBusTopic.define()`.
+- Support `linkType` option for `SelectionActionEstablishLink` to create a relation of a specific type from that action by default.
 
 #### 🔧 Maintenance
 - Replace `classnames` runtime dependency by `clsx`.
