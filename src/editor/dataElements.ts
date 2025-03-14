@@ -1,5 +1,6 @@
+import { HashSet, type ReadonlyHashSet } from '@reactodia/hashmap';
+
 import { Events, EventSource, PropertyChange } from '../coreUtils/events';
-import { ReadonlyHashSet, HashSet } from '../coreUtils/hashMap';
 import { TranslatedText } from '../coreUtils/i18n';
 
 import {

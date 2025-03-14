@@ -1,5 +1,6 @@
+import { HashMap, type ReadonlyHashMap } from '@reactodia/hashmap';
+
 import { mapAbortedToNull } from '../coreUtils/async';
-import { HashMap, ReadonlyHashMap } from '../coreUtils/hashMap';
 
 import { ElementIri, LinkKey, LinkModel, hashLink, equalLinks } from '../data/model';
 import {

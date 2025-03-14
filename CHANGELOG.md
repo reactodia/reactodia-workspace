@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Support `linkType` option for `SelectionActionEstablishLink` to create a relation of a specific type from that action by default.
 
 #### 🔧 Maintenance
+- Extract `HashMap`, `HashSet` and hash-code generation utilities into separate package [`@reactodia/hashmap`](https://github.com/reactodia/hashmap).
 - Replace `classnames` runtime dependency by `clsx`.
 - Update runtime dependencies: `n3`, `@vscode/codicons`.
 - Update dev-dependencies: Webpack + loaders, SASS, TypeScript, Vitest, ESLint.

@@ -1,4 +1,5 @@
-import { HashSet } from '../../src/coreUtils/hashMap';
+import { HashSet } from '@reactodia/hashmap';
+
 import { EmptyDataProvider } from '../../src/data/decorated/emptyDataProvider';
 import {
     ElementIri, ElementModel,

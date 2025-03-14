@@ -46,6 +46,7 @@ const mainConfig = {
     ]
   },
   externals: [
+    '@reactodia/hashmap',
     'd3-color',
     'file-saver',
     'n3',
