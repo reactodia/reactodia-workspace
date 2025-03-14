@@ -15,7 +15,7 @@ import { getParentDockAlignment } from '../utility/viewportDock';
 // TODO: move into widgets
 import { DraggableHandle } from '../../workspace/draggableHandle';
 import { useWorkspace } from '../../workspace/workspaceContext';
-import { UnifiedSearchExtension } from '../../workspace/workspaceExtension';
+import { UnifiedSearchTopic } from '../../workspace/commandBusTopic';
 
 import { UnifiedSearchSectionContext } from './searchSection';
 
@@ -221,8 +221,8 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         [sections, searchStore, activeSection, setActiveSection, setExpanded]
     );
 
-    const {getExtensionCommands} = useWorkspace();
-    const commands = getExtensionCommands(UnifiedSearchExtension);
+    const {getCommandBus} = useWorkspace();
+    const commands = getCommandBus(UnifiedSearchTopic);
     const toggleInputRef = React.useRef<HTMLInputElement | null>(null);
     React.useEffect(() => {
         const onFocus = ({sectionKey}: UnifiedSearchCommands['focus']): void => {

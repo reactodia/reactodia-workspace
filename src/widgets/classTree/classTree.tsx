@@ -23,8 +23,8 @@ import { ProgressBar, ProgressState } from '../utility/progressBar';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 
 import {
-    InstancesSearchExtension, VisualAuthoringExtension,
-} from '../../workspace/workspaceExtension';
+    InstancesSearchTopic, VisualAuthoringTopic,
+} from '../../workspace/commandBusTopic';
 import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 import { TreeNode } from './treeModel';
@@ -329,9 +329,9 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     };
 
     private onSelectNode = (node: TreeNode) => {
-        const {workspace: {getExtensionCommands}} = this.props;
+        const {workspace: {getCommandBus}} = this.props;
         this.setState({selectedNode: node}, () => {
-            getExtensionCommands(InstancesSearchExtension)
+            getCommandBus(InstancesSearchTopic)
                 .trigger('setCriteria', {
                     criteria: {elementType: node.iri},
                 });
@@ -404,7 +404,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     }
 
     private async createInstanceAt(elementType: ElementTypeIri, dropEvent?: CanvasDropEvent) {
-        const {workspace: {model, view, editor, getExtensionCommands: getCommandBus}} = this.props;
+        const {workspace: {model, view, editor, getCommandBus}} = this.props;
         const batch = model.history.startBatch();
 
         const signal = this.createElementCancellation.signal;
@@ -437,7 +437,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         batch.store();
         model.setSelection([element]);
-        getCommandBus(VisualAuthoringExtension)
+        getCommandBus(VisualAuthoringTopic)
             .trigger('editEntity', {target: element});
     }
 }

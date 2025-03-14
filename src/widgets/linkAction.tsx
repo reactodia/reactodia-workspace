@@ -17,7 +17,7 @@ import { AuthoringState } from '../editor/authoringState';
 import { EntityElement, RelationLink } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
 
-import { VisualAuthoringExtension } from '../workspace/workspaceExtension';
+import { VisualAuthoringTopic } from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
@@ -178,7 +178,7 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor, translation: t, getExtensionCommands} = useWorkspace();
+    const {model, editor, translation: t, getCommandBus} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -218,7 +218,7 @@ export function LinkActionEdit(props: LinkActionEditProps) {
             )}
             disabled={!canModify.canChangeType}
             onSelect={() =>
-                getExtensionCommands(VisualAuthoringExtension)
+                getCommandBus(VisualAuthoringTopic)
                     .trigger('editRelation', {target: link})
             }
         />
@@ -356,7 +356,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const {dockSide, className, title, ...otherProps} = props;
     const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {editor, translation: t, getExtensionCommands} = useWorkspace();
+    const {editor, translation: t, getCommandBus} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -391,7 +391,7 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
             disabled={linkIsDeleted}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                getExtensionCommands(VisualAuthoringExtension)
+                getCommandBus(VisualAuthoringTopic)
                     .trigger('startDragEdit', {
                         operation: {
                             mode: dockSide === 'source' ? 'moveSource' : 'moveTarget',
@@ -434,7 +434,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkProvider}, translation: t, getExtensionCommands} = useWorkspace();
+    const {view: {renameLinkProvider}, translation: t, getCommandBus} = useWorkspace();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -460,7 +460,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
             style={style}
             title={title ?? t.text('link_action.rename_link.title')}
             onClick={() =>
-                getExtensionCommands(VisualAuthoringExtension)
+                getCommandBus(VisualAuthoringTopic)
                     .trigger('renameLink', {target: link})
             }
         />

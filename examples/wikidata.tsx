@@ -11,7 +11,7 @@ function WikidataExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
 
     const {onMount, getContext} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model, getExtensionCommands} = context;
+        const {model, getCommandBus} = context;
 
         const sparqlProvider = new Reactodia.SparqlDataProvider(
             {
@@ -44,7 +44,7 @@ function WikidataExample() {
         });
 
         if (!diagram) {
-            getExtensionCommands(Reactodia.UnifiedSearchExtension)
+            getCommandBus(Reactodia.UnifiedSearchTopic)
                 .trigger('focus', {sectionKey: 'entities'});
         }
     }, []);

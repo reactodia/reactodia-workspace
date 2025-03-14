@@ -248,9 +248,8 @@ export {
     ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
 export {
-    WorkspaceExtension,
-    ConnectionsMenuExtension, InstancesSearchExtension, UnifiedSearchExtension,
-    VisualAuthoringExtension,
-} from './workspace/workspaceExtension';
+    CommandBusTopic,
+    ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic, VisualAuthoringTopic,
+} from './workspace/commandBusTopic';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';

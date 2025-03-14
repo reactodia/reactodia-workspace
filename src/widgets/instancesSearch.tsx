@@ -19,7 +19,7 @@ import {
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 
 import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
-import { InstancesSearchExtension } from '../workspace/workspaceExtension';
+import { InstancesSearchTopic } from '../workspace/commandBusTopic';
 
 import { InlineEntity } from './utility/inlineEntity';
 import { NoSearchResults } from './utility/noSearchResults';
@@ -210,7 +210,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             );
         });
 
-        const commands = workspace.getExtensionCommands(InstancesSearchExtension);
+        const commands = workspace.getCommandBus(InstancesSearchTopic);
         this.listener.listen(commands, 'findCapabilities', e => {
             e.capabilities.push({});
         });

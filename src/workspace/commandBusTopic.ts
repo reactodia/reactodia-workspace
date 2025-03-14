@@ -6,39 +6,35 @@ import type { UnifiedSearchCommands } from '../widgets/unifiedSearch';
 import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 
 /**
- * Represents a workspace extension definition.
- *
- * Currently, an extension is defined as having a common event bus to
- * communicate between different components.
+ * Represents a definition for an event bus to communicate
+ * between related components with the same topic.
  */
-export class WorkspaceExtension<T> {
+export class CommandBusTopic<T> {
     private __commandsMarker: Events<T> | undefined;
 
     private constructor() {}
 
     /**
-     * Defines a new workspace extension.
-     *
-     * **Experimental**: this feature will likely change in the future.
+     * Defines a new command event topic.
      */
     static define<T>() {
-        return new WorkspaceExtension<T>();
+        return new CommandBusTopic<T>();
     }
 }
 
 /**
  * Event bus to connect {@link ConnectionMenu} to other components.
  */
-export const ConnectionsMenuExtension = WorkspaceExtension.define<ConnectionsMenuCommands>();
+export const ConnectionsMenuTopic = CommandBusTopic.define<ConnectionsMenuCommands>();
 /**
  * Event bus to connect {@link InstancesSearch} to other components.
  */
-export const InstancesSearchExtension = WorkspaceExtension.define<InstancesSearchCommands>();
+export const InstancesSearchTopic = CommandBusTopic.define<InstancesSearchCommands>();
 /**
  * Event bus to connect {@link UnifiedSearch} to other components.
  */
-export const UnifiedSearchExtension = WorkspaceExtension.define<UnifiedSearchCommands>();
+export const UnifiedSearchTopic = CommandBusTopic.define<UnifiedSearchCommands>();
 /**
  * Event bus to connect {@link VisualAuthoring} to other components.
  */
-export const VisualAuthoringExtension = WorkspaceExtension.define<VisualAuthoringCommands>();
+export const VisualAuthoringTopic = CommandBusTopic.define<VisualAuthoringCommands>();

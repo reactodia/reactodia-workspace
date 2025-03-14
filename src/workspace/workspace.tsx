@@ -34,7 +34,7 @@ import { OverlayController } from '../editor/overlayController';
 import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
 
-import type { WorkspaceExtension } from './workspaceExtension';
+import type { CommandBusTopic } from './commandBusTopic';
 import {
     WorkspaceContext, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
@@ -132,7 +132,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
 
-    private readonly extensionCommands = new WeakMap<WorkspaceExtension<any>, EventSource<any>>();
+    private readonly extensionCommands = new WeakMap<CommandBusTopic<any>, EventSource<any>>();
 
     private readonly resolveTypeStyle: TypeStyleResolver;
     private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
@@ -209,7 +209,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             overlay,
             translation,
             disposeSignal: this.cancellation.signal,
-            getExtensionCommands: this.getExtensionCommands,
+            getCommandBus: this.getCommandBus,
             getElementStyle: this.getElementStyle,
             getElementTypeStyle: this.getElementTypeStyle,
             performLayout: this.onPerformLayout,
@@ -282,7 +282,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         overlay.dispose();
     }
 
-    private getExtensionCommands: WorkspaceContext['getExtensionCommands'] = (extension) => {
+    private getCommandBus: WorkspaceContext['getCommandBus'] = (extension) => {
         let commands = this.extensionCommands.get(extension);
         if (!commands) {
             commands = new EventSource();

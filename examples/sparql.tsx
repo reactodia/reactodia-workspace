@@ -32,7 +32,7 @@ function SparqlExample() {
     };
 
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model, getExtensionCommands} = context;
+        const {model, getCommandBus} = context;
 
         if (connectionSettings) {
             const diagram = tryLoadLayoutFromLocalStorage();
@@ -49,7 +49,7 @@ function SparqlExample() {
             });
     
             if (!diagram) {
-                getExtensionCommands(Reactodia.UnifiedSearchExtension)
+                getCommandBus(Reactodia.UnifiedSearchTopic)
                     .trigger('focus', {sectionKey: 'elementTypes'});
             }
         } else {

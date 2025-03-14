@@ -15,7 +15,7 @@ import type { EntityElement, EntityGroup } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
 import type { OverlayController } from '../editor/overlayController';
 
-import type { WorkspaceExtension } from './workspaceExtension';
+import type { CommandBusTopic } from './commandBusTopic';
 
 /**
  * Represents a context for the whole workspace, its stores and services.
@@ -48,13 +48,13 @@ export interface WorkspaceContext {
      */
     readonly disposeSignal: AbortSignal;
     /**
-     * Gets a common command event bus for the given definition which allows interaction
-     * between different components.
+     * Gets a common command event bus for the given topic definition which allows
+     * interaction between related components.
      *
      * The returned event bus will share triggered events between all observers for
      * the same definition.
      */
-    readonly getExtensionCommands: <T>(definition: WorkspaceExtension<T>) => Events<T> & EventTrigger<T>;
+    readonly getCommandBus: <T>(definition: CommandBusTopic<T>) => Events<T> & EventTrigger<T>;
     /**
      * Computes a style to display target element in various parts of the UI.
      */

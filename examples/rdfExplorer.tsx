@@ -14,7 +14,7 @@ function RdfExample() {
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
-        const {model, getExtensionCommands} = context;
+        const {model, getCommandBus} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
         try {
@@ -32,7 +32,7 @@ function RdfExample() {
         });
 
         if (!diagram) {
-            getExtensionCommands(Reactodia.UnifiedSearchExtension)
+            getCommandBus(Reactodia.UnifiedSearchTopic)
                 .trigger('focus', {sectionKey: 'elementTypes'});
         }
     }, [turtleData]);

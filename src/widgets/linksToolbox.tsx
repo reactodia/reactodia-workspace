@@ -12,7 +12,7 @@ import { Element, LinkTypeVisibility } from '../diagram/elements';
 import { LinkType, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { InstancesSearchExtension } from '../workspace/workspaceExtension';
+import { InstancesSearchTopic } from '../workspace/commandBusTopic';
 import { WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { InlineEntity } from './utility/inlineEntity';
@@ -308,10 +308,10 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     }
 
     private renderLinks(links: ReadonlyArray<LabelledLinkType>) {
-        const {workspace: {getExtensionCommands}} = this.props;
+        const {workspace: {getCommandBus}} = this.props;
         const {filteredLinks} = this.state;
 
-        const commands = getExtensionCommands(InstancesSearchExtension);
+        const commands = getCommandBus(InstancesSearchTopic);
         const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
         commands.trigger('findCapabilities', event);
 
@@ -332,11 +332,11 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
     }
 
     private onAddToFilter = (linkType: LinkTypeIri) => {
-        const {workspace: {getExtensionCommands}} = this.props;
+        const {workspace: {getCommandBus}} = this.props;
         const {filteredLinks} = this.state;
 
         if (filteredLinks.selection.length === 1) {
-            getExtensionCommands(InstancesSearchExtension)
+            getCommandBus(InstancesSearchTopic)
                 .trigger('setCriteria', {
                     criteria: {
                         refElement: filteredLinks.selection[0].id,

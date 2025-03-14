@@ -22,8 +22,8 @@ import type { EditorController } from '../editor/editorController';
 import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
 
 import {
-    ConnectionsMenuExtension, InstancesSearchExtension, VisualAuthoringExtension,
-} from '../workspace/workspaceExtension';
+    ConnectionsMenuTopic, InstancesSearchTopic, VisualAuthoringTopic,
+} from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { DockDirection } from './utility/viewportDock';
@@ -443,7 +443,7 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
  */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, ...otherProps} = props;
-    const {model, overlay, translation: t, getExtensionCommands} = useWorkspace();
+    const {model, overlay, translation: t, getCommandBus} = useWorkspace();
 
     const menuOpened = useObservedProperty(
         overlay.events,
@@ -460,7 +460,7 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
         }
     }
 
-    const commands = getExtensionCommands(ConnectionsMenuExtension);
+    const commands = getCommandBus(ConnectionsMenuTopic);
     const event: ConnectionsMenuCommands['findCapabilities'] = {capabilities: []};
     commands.trigger('findCapabilities', event);
 
@@ -502,10 +502,10 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
  */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, ...otherProps} = props;
-    const {model, translation: t, getExtensionCommands} = useWorkspace();
+    const {model, translation: t, getCommandBus} = useWorkspace();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    const commands = getExtensionCommands(InstancesSearchExtension);
+    const commands = getCommandBus(InstancesSearchTopic);
     const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
     commands.trigger('findCapabilities', event);
 
@@ -608,7 +608,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {className, title, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {model, editor, translation: t, getExtensionCommands} = useWorkspace();
+    const {model, editor, translation: t, getCommandBus} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -643,7 +643,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             )}
             onMouseDown={e => {
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-                getExtensionCommands(VisualAuthoringExtension)
+                getCommandBus(VisualAuthoringTopic)
                     .trigger('startDragEdit', {
                         operation: {mode: 'connect', source: target, point},
                     });

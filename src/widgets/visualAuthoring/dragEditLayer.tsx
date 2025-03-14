@@ -18,7 +18,7 @@ import { Spinner } from '../../diagram/spinner';
 import { TemporaryState } from '../../editor/authoringState';
 import { EntityElement, RelationLink } from '../../editor/dataElements';
 
-import { VisualAuthoringExtension } from '../../workspace/workspaceExtension';
+import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface DragEditLayerProps {
@@ -319,7 +319,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {
-        const {operation, canvas, workspace: {model, editor, getExtensionCommands}} = this.props;
+        const {operation, canvas, workspace: {model, editor, getCommandBus}} = this.props;
 
         try {
             const {targetElement, connectionsToAny, connectionsToTarget} = this.state;
@@ -367,12 +367,12 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 if (targetElement) {
                     const focusedLink = modifiedLink || this.oldLink;
                     model.setSelection([focusedLink!]);
-                    getExtensionCommands(VisualAuthoringExtension)
+                    getCommandBus(VisualAuthoringTopic)
                         .trigger('editRelation', {target: focusedLink!});
                 } else if (createdTarget && modifiedLink) {
                     model.setSelection([createdTarget]);
                     const source = model.getElement(modifiedLink.sourceId) as EntityElement;
-                    getExtensionCommands(VisualAuthoringExtension)
+                    getCommandBus(VisualAuthoringTopic)
                         .trigger('findOrCreateEntity', {
                             link: modifiedLink,
                             source,

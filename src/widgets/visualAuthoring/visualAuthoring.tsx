@@ -17,7 +17,7 @@ import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
 import { RenameLinkForm } from '../../forms/renameLinkForm';
 
-import { VisualAuthoringExtension } from '../../workspace/workspaceExtension';
+import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { AuthoredEntityDecorator } from './authoredEntityDecorator';
@@ -94,7 +94,7 @@ export interface VisualAuthoringCommands {
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
     const {propertyEditor} = props;
-    const {model, view, editor, overlay, translation: t, getExtensionCommands} = useWorkspace();
+    const {model, view, editor, overlay, translation: t, getCommandBus} = useWorkspace();
 
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
@@ -136,7 +136,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
     }, []);
 
     React.useLayoutEffect(() => {
-        const commands = getExtensionCommands(VisualAuthoringExtension);
+        const commands = getCommandBus(VisualAuthoringTopic);
         const listener = new EventObserver();
 
         listener.listen(commands, 'startDragEdit', ({operation}) => {

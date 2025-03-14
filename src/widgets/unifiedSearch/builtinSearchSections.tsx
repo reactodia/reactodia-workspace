@@ -6,7 +6,7 @@ import { ClassTree } from '../classTree';
 import { InstancesSearch, SearchCriteria } from '../instancesSearch';
 import { LinkTypesToolbox } from '../linksToolbox';
 
-import { InstancesSearchExtension } from '../../workspace/workspaceExtension';
+import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { useUnifiedSearchSection } from './searchSection';
@@ -67,13 +67,13 @@ export function SearchSectionEntities(props: {
     minSearchTermLength?: number;
 }) {
     const {searchTimeout = 600, minSearchTermLength = 3} = props;
-    const {getExtensionCommands} = useWorkspace();
+    const {getCommandBus} = useWorkspace();
     const {shouldRender, setSectionActive, searchStore} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
     });
 
-    const commands = getExtensionCommands(InstancesSearchExtension);
+    const commands = getCommandBus(InstancesSearchTopic);
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(commands, 'setCriteria', ({criteria}) => {

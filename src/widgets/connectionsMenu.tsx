@@ -25,7 +25,7 @@ import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/u
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 
 import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
-import { ConnectionsMenuExtension, InstancesSearchExtension } from '../workspace/workspaceExtension';
+import { ConnectionsMenuTopic, InstancesSearchTopic } from '../workspace/commandBusTopic';
 
 import { highlightSubstring } from './utility/listElementView';
 import { SearchResults, getAllPresentEntities } from './utility/searchResults';
@@ -143,7 +143,7 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
 
     const lastSortMode = React.useRef<SortMode>('alphabet');
 
-    const commands = workspace.getExtensionCommands(ConnectionsMenuExtension);
+    const commands = workspace.getCommandBus(ConnectionsMenuTopic);
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(commands, 'findCapabilities', e => {
@@ -662,7 +662,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                 return <LoadingSpinner />;
             }
 
-            const commands = workspace.getExtensionCommands(InstancesSearchExtension);
+            const commands = workspace.getCommandBus(InstancesSearchTopic);
             const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
             commands.trigger('findCapabilities', event);
 
@@ -753,7 +753,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     private onMoveToFilter = (linkDataChunk: LinkDataChunk) => {
-        const {targetIris, workspace: {getExtensionCommands}} = this.props;
+        const {targetIris, workspace: {getCommandBus}} = this.props;
         const {linkType, direction} = linkDataChunk;
 
         const singleTargetIri = targetIris.length === 1 ? targetIris[0] : undefined;
@@ -761,7 +761,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             return;
         }
         
-        const commands = getExtensionCommands(InstancesSearchExtension);
+        const commands = getCommandBus(InstancesSearchTopic);
         if (linkType.id === this.ALL_RELATED_ELEMENTS_LINK.id) {
             commands.trigger('setCriteria', {
                 criteria: {refElement: singleTargetIri},
