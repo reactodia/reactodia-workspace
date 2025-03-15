@@ -1,5 +1,4 @@
-import { HashMap } from '../../coreUtils/hashMap';
-import { hashFnv32a } from '../utils';
+import { HashMap, hashString } from '@reactodia/hashmap';
 
 import { Sha256 } from './sha256';
 
@@ -63,7 +62,7 @@ export function subtractAdjacencyBlocks<K extends string | number>(
 function hashRange<K extends string | number>(range: AdjacencyRange<K>): number {
     let hash = 0;
     for (const item of range) {
-        hash = (hash | 0) + (hashFnv32a(String(item)) | 0);
+        hash = (hash | 0) + (hashString(String(item)) | 0);
     }
     return hash | 0;
 }

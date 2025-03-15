@@ -1,6 +1,7 @@
+import { chainHash, dropHighestNonSignBit, hashString } from '@reactodia/hashmap';
+
 import { shallowArrayEqual } from '../coreUtils/collections';
 
-import { hashFnv32a } from '../data/utils';
 import * as Rdf from './rdf/rdfModel';
 
 /**
@@ -136,9 +137,9 @@ export function isEncodedBlank(iri: string): boolean {
  */
 export function hashSubtypeEdge(edge: SubtypeEdge): number {
     const [from, to] = edge;
-    let hash = Rdf.hashString(from);
-    hash = Rdf.chainHash(hash, Rdf.hashString(to));
-    return Rdf.dropHighestNonSignBit(hash);
+    let hash = hashString(from);
+    hash = chainHash(hash, hashString(to));
+    return dropHighestNonSignBit(hash);
 }
 
 /**
@@ -172,9 +173,9 @@ export function equalLinks(left: LinkKey, right: LinkKey) {
  */
 export function hashLink(link: LinkKey): number {
     const {linkTypeId, sourceId, targetId} = link;
-    let hash = hashFnv32a(linkTypeId);
-    hash = hash * 31 + hashFnv32a(sourceId);
-    hash = hash * 31 + hashFnv32a(targetId);
+    let hash = hashString(linkTypeId);
+    hash = chainHash(hash, hashString(sourceId));
+    hash = chainHash(hash, hashString(targetId));
     return hash;
 }
 

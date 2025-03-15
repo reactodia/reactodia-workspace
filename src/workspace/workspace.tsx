@@ -1,15 +1,14 @@
+import { HashMap, chainHash, hashString } from '@reactodia/hashmap';
 import * as React from 'react';
 import { hcl } from 'd3-color';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver, EventSource } from '../coreUtils/events';
-import { HashMap } from '../coreUtils/hashMap';
 import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
-import { hashFnv32a } from '../data/utils';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization';
@@ -430,7 +429,7 @@ function getHueFromClasses(types: ReadonlyArray<ElementTypeIri>, seed?: number):
 function hashTypeIris(types: ReadonlyArray<ElementTypeIri>, seed = 0): number {
     let hash = seed | 0;
     for (const name of types) {
-        hash = Math.imul(hash, 31) + (hashFnv32a(name, hash) | 0);
+        hash = chainHash(hash, hashString(name, hash));
     }
     return hash | 0;
 }

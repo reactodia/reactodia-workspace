@@ -1,6 +1,6 @@
+import { HashSet } from '@reactodia/hashmap';
 import { describe, expect, it } from 'vitest';
 
-import { HashSet } from '../../src/coreUtils/hashMap';
 import {
     DirectedChunk, chunkUndirectedCrossProduct,
 } from '../../src/data/sparql/requestChunking';

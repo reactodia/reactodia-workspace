@@ -1,7 +1,7 @@
-import { HashMap } from '../../coreUtils/hashMap';
+import { HashMap, dropHighestNonSignBit } from '@reactodia/hashmap';
 
 import {
-    Quad, Term, DefaultDataFactory, dropHighestNonSignBit, hashTerm, equalTerms, hashQuad, equalQuads,
+    Quad, Term, DefaultDataFactory, hashTerm, equalTerms, hashQuad, equalQuads,
 } from './rdfModel';
 
 /**
