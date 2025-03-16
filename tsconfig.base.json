@@ -2,14 +2,15 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "importHelpers": true,
     "strict": true,
     "noImplicitAny": true,
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "removeComments": true,
   },
   "include": [
     "./src/**/*.ts",

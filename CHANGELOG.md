@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 🔧 Maintenance
 - Extract `HashMap`, `HashSet` and hash-code generation utilities into separate package [`@reactodia/hashmap`](https://github.com/reactodia/hashmap).
+- Extract Web Worker-related utilities into separate package [`@reactodia/worker-proxy`](https://github.com/reactodia/worker-proxy):
+  * `@reactodia/worker-proxy/protocol` should be used instead of `@reactodia/workspace/worker-protocol` to define custom workers.
+  * `useWorker()` hook now accepts any worker adhering to the `RefCountedWorker` interface from `@reactodia/worker-proxy`, e.g. created with `refCountedWorker()` function. 
 - Replace `classnames` runtime dependency by `clsx`.
 - Update runtime dependencies: `n3`, `@vscode/codicons`.
 - Update dev-dependencies: Webpack + loaders, SASS, TypeScript, Vitest, ESLint.

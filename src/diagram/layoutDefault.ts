@@ -1,14 +1,14 @@
-import type { DefaultLayouts } from '../layout.worker';
+import { RefCountedWorker, refCountedWorker } from '@reactodia/worker-proxy';
 
-import { WorkerDefinition, defineWorker } from '../coreUtils/workers';
+import type { DefaultLayouts } from '../layout.worker';
 
 /**
  * Creates a definition for a a Web Worker with the default layout algorithms.
  *
  * @category Utilities
  */
-export function defineLayoutWorker(workerFactory: () => Worker): WorkerDefinition<DefaultLayouts> {
-    return defineWorker<typeof DefaultLayouts>(workerFactory, []);
+export function defineLayoutWorker(workerFactory: () => Worker): RefCountedWorker<DefaultLayouts> {
+    return refCountedWorker<typeof DefaultLayouts>(workerFactory, []);
 }
 
 export type { DefaultLayouts };
