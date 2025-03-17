@@ -78,12 +78,6 @@ export {
 } from './diagram/layout';
 export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
-    DefaultLayoutOptions, blockingDefaultLayout,
-    ColaForceLayoutOptions, colaForceLayout,
-    ColaFlowLayoutOptions, colaFlowLayout,
-    colaRemoveOverlaps, layoutPadded, layoutPaddedBiasFree, getContentFittingBoxForLayout,
-} from './diagram/layoutShared';
-export {
     LinkPath, LinkPathProps,
     LinkLabel, LinkLabelProps,
     LinkVertices, LinkVerticesProps,

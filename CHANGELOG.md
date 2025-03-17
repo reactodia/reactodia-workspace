@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Change `StandardTemplate` to a template object, expose its components as `StandardEntity` and `StandardEntityGroup`;
   * Change `ClassicTemplate` to a template object, expose its component as `ClassicEntity`.
 - Improve default routing for self (feedback) links with a single user-defined variable to have a basic loop instead of a straight line.
+- Reduce the size of the main package bundle by moving fallback synchronous (blocking) layout into the separate entry point `/layout-sync`:
+  * **[💥Breaking]** Make `defaultLayout` a required prop for a `Workspace`: if a bundled synchronous fallback (`blockingDefaultLayout()`) was used by default, now it is necessary to import it manually from `/layout-sync`;
+  * The recommended layout algorithm usage is as before via Web Workers with `defineLayoutWorker()` and `useWorker()`.
 - **[💥Breaking]** Replace explicit "commands" passing by common `WorkspaceContext.getCommandBus()`:
   * Remove all commands-like props from components, e.g. `commands`, `connectionMenuCommands`, `instancesSearchCommands`, `searchCommands`.
   * Triggering a command or listening for one from outside the component should be done by acquiring a commands object using `getCommandBus()` with the following built-in command bus topics: `ConnectionsMenuTopic`, `InstancesSearchTopic`, `UnifiedSearchTopic`, `VisualAuthoringTopic`.

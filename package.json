@@ -98,6 +98,10 @@
       "types": "./dist/typings/workspace.d.ts",
       "import": "./dist/workspace.js"
     },
+    "./layout-sync": {
+      "types": "./dist/typings/layout-sync.d.ts",
+      "default": "./dist/layout-sync.js"
+    },
     "./layout.worker": {
       "types": "./dist/typings/layout.worker.d.ts",
       "default": "./dist/layout.worker.js"

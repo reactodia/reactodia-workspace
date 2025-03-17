@@ -1,5 +1,4 @@
 import { connectWorker } from '@reactodia/worker-proxy/protocol';
-import * as cola from 'webcola';
 
 import type { LayoutGraph, LayoutState } from './diagram/layout';
 import {
