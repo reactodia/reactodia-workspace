@@ -7,6 +7,7 @@ const mainConfig = {
   mode: 'none',
   entry: {
     'workspace': './src/workspace',
+    'layout-sync': './src/layout-sync',
   },
   output: {
     filename: '[name].js',

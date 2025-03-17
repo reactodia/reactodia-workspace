@@ -267,10 +267,14 @@ export interface DefaultLayoutOptions {
  *
  * The algorithm used is force-directed layout from [cola.js](https://ialab.it.monash.edu/webcola/).
  *
- * This function is computationally expensive and should be used only as fallback
- * when other ways to compute diagram layout is not available.
- * The recommended way is to use web workers via `@reactodia/workspace/layout.worker`
- * and {@link useWorker Reactodia.useWorker()}`.
+ * **Warning**: this function is computationally expensive and should be used only as fallback
+ * when other ways to compute diagram layout is not available as the browser execution will
+ * freeze during the call for large diagrams.
+ * 
+ * The recommended way is to use web workers via
+ * {@link defineLayoutWorker Reactodia.defineLayoutWorker()} to import the worker from
+ * `@reactodia/workspace/layout.worker` and {@link useWorker Reactodia.useWorker()} to
+ * get a layout function from it.
  *
  * @category Geometry
  */

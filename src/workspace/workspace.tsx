@@ -16,7 +16,6 @@ import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
 } from '../diagram/layout';
-import { blockingDefaultLayout } from '../diagram/layoutShared';
 import {
     DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
 } from '../diagram/locale';
@@ -98,9 +97,13 @@ export interface WorkspaceProps {
     /**
      * Default function to compute diagram layout.
      *
-     * If not provided, uses {@link blockingDefaultLayout} as a synchronous fallback.
+     * It is recommended to get layout function from a background worker,
+     * e.g. with {@link defineDefaultLayouts} and {@link useWorker}.
+     *
+     * In cases when a worker is not available, it is possible to import and
+     * use {@link blockingDefaultLayout} as a synchronous fallback.
      */
-    defaultLayout?: LayoutFunction;
+    defaultLayout: LayoutFunction;
     /**
      * Handler for a request to navigate to a specific IRI.
      *
@@ -176,7 +179,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const view = new SharedCanvasState({
             defaultElementTemplate: StandardTemplate,
             defaultLinkTemplate: DefaultLinkTemplate,
-            defaultLayout: defaultLayout ?? blockingDefaultLayout,
+            defaultLayout,
             renameLinkProvider,
         });
 
@@ -217,14 +220,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
             ungroupSome: this.onUngroupSome,
             triggerWorkspaceEvent: onWorkspaceEvent,
         };
-
-        if (!defaultLayout) {
-            console.warn(
-                'Reactodia.Workspace: "defaultLayout" prop is not provided, using synchronous fallback ' +
-                'which may freeze the execution for large diagrams. It is recommended to use ' +
-                'layout worker via Reactodia.defineDefaultLayouts() and Reactodia.useWorker().'
-            );
-        }
     }
 
     /**
