@@ -15,7 +15,7 @@ export {
     LabelLanguageSelector, TranslatedProperty, TranslatedText, Translation, useTranslation,
 } from './coreUtils/i18n';
 export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
-export { WorkerDefinition, defineWorker, useWorker } from './coreUtils/workers';
+export { useWorker } from './coreUtils/workers';
 export { Debouncer, animateInterval } from './coreUtils/scheduler';
 
 export * from './data/model';

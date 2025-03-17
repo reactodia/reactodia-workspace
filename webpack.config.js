@@ -47,6 +47,8 @@ const mainConfig = {
   },
   externals: [
     '@reactodia/hashmap',
+    '@reactodia/worker-proxy',
+    '@reactodia/worker-proxy/protocol',
     'd3-color',
     'file-saver',
     'n3',
@@ -64,7 +66,6 @@ const workerConfig = {
   mode: 'none',
   target: 'webworker',
   entry: {
-    'worker-protocol': './src/worker-protocol',
     'layout.worker': './src/layout.worker',
   },
   output: {

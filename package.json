@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@reactodia/hashmap": "^0.1.0",
+    "@reactodia/worker-proxy": "^0.1.0",
     "clsx": "^2.1.1",
     "d3-color": "^3.1.0",
     "file-saver": "^2.0.5",
@@ -100,10 +101,6 @@
     "./layout.worker": {
       "types": "./dist/typings/layout.worker.d.ts",
       "default": "./dist/layout.worker.js"
-    },
-    "./worker-protocol": {
-      "types": "./dist/typings/worker-protocol.d.ts",
-      "import": "./dist/worker-protocol.js"
     }
   },
   "files": [
