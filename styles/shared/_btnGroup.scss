@@ -28,13 +28,13 @@
     border-radius: unset;
   }
 
-  > .reactodia-btn:first-child {
+  > .reactodia-btn:first-of-type {
     margin-left: 0;
     border-top-left-radius: theme.$button-border-radius;
     border-bottom-left-radius: theme.$button-border-radius;
   }
 
-  > .reactodia-btn:last-child {
+  > .reactodia-btn:last-of-type {
     border-top-right-radius: theme.$button-border-radius;
     border-bottom-right-radius: theme.$button-border-radius;
   }
