@@ -1,7 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import type { DockDirection } from '../widgets/utility/viewportDock';
+import type { DockDirection } from './viewportDock';
 
 /**
  * Props for {@link DraggableHandle} component.
