@@ -272,7 +272,7 @@ function computeLinkSpline(
     const points = computePolyline(sourceShape, targetShape, vertices);
     
     return Spline.create({
-        type: template?.spline ?? 'straight',
+        type: template?.spline ?? Spline.defaultType,
         points,
         source: Rect.center(sourceShape.bounds),
         target: Rect.center(targetShape.bounds),

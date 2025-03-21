@@ -128,7 +128,7 @@ export interface LinkTemplate {
      *  - `straight`: a spline with straight line segments,
      *  - `smooth`: a spline with cubic-bezier curve segments.
      *
-     * @default "straight"
+     * @default "smooth"
      */
     spline?: 'straight' | 'smooth';
     /**

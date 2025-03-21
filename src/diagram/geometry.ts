@@ -405,6 +405,8 @@ export class Spline {
         }
     }
 
+    static readonly defaultType: SplineGeometry['type'] = 'smooth';
+
     static create(geometry: SplineGeometry) {
         return new Spline(geometry);
     }
