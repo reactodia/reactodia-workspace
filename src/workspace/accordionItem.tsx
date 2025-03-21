@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DraggableHandle } from './draggableHandle';
+import { DraggableHandle } from '../widgets/utility/draggableHandle';
 
 export enum DockSide {
     Left = 1,

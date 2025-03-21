@@ -147,6 +147,7 @@ export {
 export { SemanticTypeStyles } from './templates/typeStyles';
 export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
 
+export { DraggableHandle, DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {
     DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
 } from './widgets/utility/dropdown';
@@ -232,7 +233,6 @@ export {
     ClassicToolbar, ClassicToolbarProps,
 } from './workspace/classicWorkspace';
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
-export { DraggableHandle, DraggableHandleProps } from './workspace/draggableHandle';
 export {
     Workspace, WorkspaceProps, LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
 } from './workspace/workspace';

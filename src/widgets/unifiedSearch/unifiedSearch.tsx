@@ -8,12 +8,11 @@ import { Debouncer } from '../../coreUtils/scheduler';
 import { useCanvas } from '../../diagram/canvasApi';
 import type { Rect, Size, Vector } from '../../diagram/geometry';
 
+import { DraggableHandle } from '../utility/draggableHandle';
 import { Dropdown } from '../utility/dropdown';
 import { useSearchInputStore } from '../utility/searchInput';
 import { getParentDockAlignment } from '../utility/viewportDock';
 
-// TODO: move into widgets
-import { DraggableHandle } from '../../workspace/draggableHandle';
 import { useWorkspace } from '../../workspace/workspaceContext';
 import { UnifiedSearchTopic } from '../../workspace/commandBusTopic';
 

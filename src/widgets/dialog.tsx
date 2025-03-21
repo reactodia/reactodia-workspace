@@ -9,7 +9,7 @@ import {
     Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 
-import { DraggableHandle } from '../workspace/draggableHandle';
+import { DraggableHandle } from './utility/draggableHandle';
 
 export interface DialogProps extends DialogStyleProps {
     target?: DialogTarget;
