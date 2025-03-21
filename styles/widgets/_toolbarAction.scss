@@ -54,10 +54,6 @@
     @include codicon-button("type-hierarchy-sub");
   }
 
-  .reactodia-toolbar__quick-access-group &__layout {
-    margin-right: 5px;
-  }
-
   &__language-selector {
     float: left;
     position: relative;
@@ -94,5 +90,9 @@
         @include codicon("globe");
       }
     }
+  }
+
+  .reactodia-btn + &__language-selector {
+    margin-left: 5px;
   }
 }
