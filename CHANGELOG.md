@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Add built-in basic circle-shaped `RoundTemplate` with its `RoundEntity` template component;
   * Add `RenderingState.getElementShape()` method to compute shape information (including bounds) for the element.
 - Support smooth-curved links:
-  * Allow link templates to set `spline: 'smooth'` to have rounded joints and overall shape via cubic Bézier curves.
+  * Allow link templates to set `spline: 'smooth'` to have rounded joints and overall shape via cubic Bézier curves;
+  * Render links as smooth-curved by default unless a `spline: 'straight'` is set in the link template.
 - Allow to dock a dialog to any side of a target with `dock` property with a configurable `dockMargin`.
 
 #### 🐛 Fixed
