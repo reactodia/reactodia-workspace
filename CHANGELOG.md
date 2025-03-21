@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Add `RenderingState.getElementShape()` method to compute shape information (including bounds) for the element.
 - Support smooth-curved links:
   * Allow link templates to set `spline: 'smooth'` to have rounded joints and overall shape via cubic Bézier curves.
+- Allow to dock a dialog to any side of a target with `dock` property with a configurable `dockMargin`.
+
+#### 🐛 Fixed
+- Use `--reactodia-viewport-dock-margin` instead of a hard-coded value to compute max size for a dialog without target.
 
 #### 💅 Polish
 - Make `Canvas` a [focusable](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) element to allow to handle keyboard events scoped to the graph:

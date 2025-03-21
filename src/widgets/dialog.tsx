@@ -3,16 +3,16 @@ import * as React from 'react';
 
 import { EventObserver, Unsubscribe } from '../coreUtils/events';
 
-import { CanvasApi, CanvasContext } from '../diagram/canvasApi';
+import { CanvasContext } from '../diagram/canvasApi';
 import { Element, Link } from '../diagram/elements';
 import {
-    Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
+    Rect, Size, Vector, boundsOf, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 
 import { DraggableHandle } from '../workspace/draggableHandle';
 
 export interface DialogProps extends DialogStyleProps {
-    target?: Element | Link;
+    target?: DialogTarget;
     onHide: () => void;
     centered?: boolean;
     children: React.ReactNode;
@@ -60,8 +60,25 @@ export interface DialogStyleProps {
      * @default true
      */
     closable?: boolean;
-    offset?: Vector;
-    calculatePosition?: (canvas: CanvasApi) => Vector | undefined;
+    /**
+     * Dock direction for the dialog from the {@link DialogProps.target target}
+     * point of view:
+     *  - `n`: north (top)
+     *  - `e`: east (right)
+     *  - `s`: south (bottom)
+     *  - `w`: west (left)
+     *
+     * Only applicable if the {@link DialogProps.target target} is provided.
+     *
+     * @default "e"
+     */
+    dock?: 'n' | 'e' | 's' | 'w';
+    /**
+     * Margin between the dialog and the target.
+     *
+     * @default 40
+     */
+    dockMargin?: number;
 }
 
 interface State {
@@ -75,9 +92,9 @@ const DEFAULT_SIZE: Size = {width: 300, height: 320};
 const MIN_SIZE: Size = {width: 250, height: 250};
 const MAX_SIZE: Size = {width: 800, height: 800};
 
-const ELEMENT_OFFSET = 40;
-const LINK_OFFSET = 20;
-const FOCUS_OFFSET = 20;
+const DEFAULT_DOCK = 'e';
+const DEFAULT_DOCK_MARGIN = 40;
+const FOCUS_MARGIN = 20;
 
 export class Dialog extends React.Component<DialogProps, State> {
     static contextType = CanvasContext;
@@ -112,7 +129,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         this.listenToTarget(undefined);
     }
 
-    private listenToTarget(target?: Element | Link) {
+    private listenToTarget(target: DialogTarget | undefined) {
         if (this.unsubscribeFromTarget) {
             this.unsubscribeFromTarget();
             this.unsubscribeFromTarget = undefined;
@@ -121,108 +138,43 @@ export class Dialog extends React.Component<DialogProps, State> {
         if (target) {
             const {model} = this.context;
 
-            if (target instanceof Element) {
-                this.listenToElement(target);
-            } else if (target instanceof Link) {
-                this.listenToLink(target);
-            }
-
+            const unsubscribeFromStore = target.subscribe(this.updateAll, this.context);
             this.handler.listen(model.events, 'changeLanguage', this.updateAll);
 
-            this.unsubscribeFromTarget = () => { this.handler.stopListening(); };
+            this.unsubscribeFromTarget = () => {
+                unsubscribeFromStore();
+                this.handler.stopListening();
+            };
         }
     }
 
-    private listenToElement(element: Element) {
-        const {canvas} = this.context;
-        this.handler.listen(element.events, 'changePosition', this.updateAll);
-        this.handler.listen(canvas.renderingState.events, 'changeElementSize', e => {
-            if (e.source === element) {
-                this.updateAll();
-            }
-        });
-    }
-
-    private listenToLink(link: Link) {
-        const {canvas, model} = this.context;
-
-        const source = model.getElement(link.sourceId)!;
-        const target = model.getElement(link.targetId)!;
-
-        this.listenToElement(source);
-        this.listenToElement(target);
-
-        this.handler.listen(link.events, 'changeVertices', this.updateAll);
-        this.handler.listen(canvas.renderingState.events, 'changeLinkLabelBounds', e => {
-            if (e.source === link) {
-                this.updateAll();
-            }
-        });
-    }
-
-    private calculatePositionForElement(element: Element): Vector {
-        const {defaultSize = DEFAULT_SIZE} = this.props;
+    private calculatePosition(currentSize: Size): Vector | undefined {
+        const {
+            target,
+            defaultSize = DEFAULT_SIZE,
+            dock = DEFAULT_DOCK,
+            dockMargin = DEFAULT_DOCK_MARGIN,
+        } = this.props;
         const {canvas} = this.context;
 
-        const bbox = boundsOf(element, canvas.renderingState);
-        const {y: y0} = canvas.metrics.paperToScrollablePaneCoords(bbox.x, bbox.y);
-        const {x: x1, y: y1} = canvas.metrics.paperToScrollablePaneCoords(
-            bbox.x + bbox.width,
-            bbox.y + bbox.height,
-        );
-
-        return {
-            x: x1 + ELEMENT_OFFSET,
-            y: (y0 + y1) / 2 - (defaultSize.height / 2),
-        };
-    }
-
-    private calculatePositionForLink(link: Link): Vector {
-        const {canvas, model} = this.context;
-
-        const source = model.getElement(link.sourceId);
-        const target = model.getElement(link.targetId);
-
-        if (!source || !target) {
-            throw new Error('Source and target are not specified');
+        if (target) {
+            const bounds = target.getBounds(this.context);
+            const paneMin = canvas.metrics.paperToScrollablePaneCoords(bounds.x, bounds.y);
+            const paneMax = canvas.metrics.paperToScrollablePaneCoords(
+                bounds.x + bounds.width,
+                bounds.y + bounds.height
+            );
+            return computeDockedPosition(
+                paneMin,
+                paneMax,
+                dock,
+                dockMargin,
+                defaultSize,
+                currentSize
+            );
         }
 
-        const route = canvas.renderingState.getRouting(link.id);
-        const verticesDefinedByUser = link.vertices || [];
-        const vertices = route ? route.vertices : verticesDefinedByUser;
-
-        const polyline = computePolyline(
-            canvas.renderingState.getElementShape(source),
-            canvas.renderingState.getElementShape(target),
-            vertices
-        );
-        const polylineLength = computePolylineLength(polyline);
-        const targetPoint = getPointAlongPolyline(polyline, polylineLength / 2);
-
-        const {x, y} = canvas.metrics.paperToScrollablePaneCoords(targetPoint.x, targetPoint.y);
-
-        return {y: y + LINK_OFFSET, x: x + LINK_OFFSET};
-    }
-
-    private calculatePosition(): Vector | undefined {
-        const {target, offset = {x: 0, y: 0}, calculatePosition} = this.props;
-        const {canvas} = this.context;
-
-        if (calculatePosition) {
-            const position = calculatePosition(canvas);
-            if (position) {
-                const {x, y} = canvas.metrics.paperToScrollablePaneCoords(position.x, position.y);
-                return {x: x + offset.x, y: y + offset.y};
-            }
-        }
-
-        if (target instanceof Element) {
-            return this.calculatePositionForElement(target);
-        } else if (target instanceof Link) {
-            return this.calculatePositionForLink(target);
-        } else {
-            return undefined;
-        }
+        return undefined;
     }
 
     private getViewPortScrollablePoints(): {min: Vector; max: Vector} {
@@ -233,16 +185,16 @@ export class Dialog extends React.Component<DialogProps, State> {
         return {min, max};
     }
 
-    private getDialogScrollablePoints(): {min: Vector; max: Vector} {
-        const {defaultSize = DEFAULT_SIZE} = this.props;
-        const {x, y} = this.calculatePosition() ?? {x: 0, y: 0};
+    private getDialogScrollableBounds(): { min: Vector; max: Vector } {
+        const size = this.getCurrentSize();
+        const {x, y} = this.calculatePosition(size) ?? {x: 0, y: 0};
         const min = {
-            x: x - FOCUS_OFFSET,
-            y: y - FOCUS_OFFSET,
+            x: x - FOCUS_MARGIN,
+            y: y - FOCUS_MARGIN,
         };
         const max = {
-            x: min.x + defaultSize.width + FOCUS_OFFSET * 2,
-            y: min.y + defaultSize.height + FOCUS_OFFSET * 2,
+            x: min.x + size.width + FOCUS_MARGIN * 2,
+            y: min.y + size.height + FOCUS_MARGIN * 2,
         };
         return {min, max};
     }
@@ -250,7 +202,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     private focusOn() {
         const {canvas} = this.context;
         const {min: viewPortMin, max: viewPortMax} = this.getViewPortScrollablePoints();
-        const {min, max} = this.getDialogScrollablePoints();
+        const {min, max} = this.getDialogScrollableBounds();
 
         let xOffset = 0;
         if (min.x < viewPortMin.x) {
@@ -311,9 +263,21 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private onDragHandle = (e: MouseEvent, dx: number, dy: number) => {
-        const factor = this.props.centered ? 2 : 1;
-        const width = dx ? this.calculateWidth(this.startSize!.x + dx * factor) : undefined;
-        const height = dy ? this.calculateHeight(this.startSize!.y + dy * factor) : undefined;
+        const {dock = DEFAULT_DOCK, centered} = this.props;
+        let factorX = centered ? 2 : 1;
+        let factorY = centered ? 2 : 1;
+        switch (dock) {
+            case 'n': {
+                factorY *= -1;
+                break;
+            }
+            case 'w': {
+                factorX *= -1;
+                break;
+            }
+        }
+        const width = dx ? this.calculateWidth(this.startSize!.x + dx * factorX) : undefined;
+        const height = dy ? this.calculateHeight(this.startSize!.y + dy * factorY) : undefined;
         this.setState(state => ({
             width: width ?? state.width,
             height: height ?? state.height,
@@ -322,21 +286,19 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     render() {
         const {
-            defaultSize = DEFAULT_SIZE,
-            maxSize = MAX_SIZE,
+            dock = DEFAULT_DOCK,
             caption,
-            onHide,
             resizableBy = 'all',
             closable = true,
         } = this.props;
-        const position = this.calculatePosition();
-        const width = this.state.width ?? defaultSize.width;
-        const height = this.state.height ?? defaultSize.height;
+
+        const size = this.getCurrentSize();
+        const position = this.calculatePosition(size);
         const style: React.CSSProperties = {
             left: position?.x,
             top: position?.y,
-            width: Math.min(width, maxSize.width),
-            height: Math.min(height, maxSize.height),
+            width: size.width,
+            height: size.height,
         };
 
         return (
@@ -363,7 +325,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                 {this.props.children}
                 {resizableBy === 'y' || resizableBy === 'all' ? (
                     <DraggableHandle
-                        className={`${CLASS_NAME}__bottom-handle`}
+                        dock={dock === 'n' ? 'n' : 's'}
                         axis='y'
                         onBeginDragHandle={this.onStartDragging}
                         onDragHandle={this.onDragHandle}>
@@ -371,7 +333,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                 ) : null}
                 {resizableBy === 'x' || resizableBy === 'all' ? (
                     <DraggableHandle
-                        className={`${CLASS_NAME}__right-handle`}
+                        dock={dock === 'w' ? 'w' : 'e'}
                         axis='x'
                         onBeginDragHandle={this.onStartDragging}
                         onDragHandle={this.onDragHandle}>
@@ -379,7 +341,11 @@ export class Dialog extends React.Component<DialogProps, State> {
                 ): null}
                 {resizableBy === 'none' ? null : (
                     <DraggableHandle
-                        className={`${CLASS_NAME}__bottom-right-handle`}
+                        dock={
+                            dock === 'n' ? 'ne' :
+                            dock === 'w' ? 'sw' :
+                            'se'
+                        }
                         axis={resizableBy}
                         onBeginDragHandle={this.onStartDragging}
                         onDragHandle={this.onDragHandle}>
@@ -389,10 +355,139 @@ export class Dialog extends React.Component<DialogProps, State> {
         );
     }
 
+    private getCurrentSize(): Size {
+        const {defaultSize = DEFAULT_SIZE, maxSize = MAX_SIZE} = this.props;
+        return {
+            width: Math.min(this.state.width ?? defaultSize.width, maxSize.width),
+            height: Math.min(this.state.height ?? defaultSize.height, maxSize.height),
+        };
+    }
+
     private onClose = () => {
         const {canvas} = this.context;
         const {onHide} = this.props;
         canvas.focus();
         onHide();
     };
+}
+
+export interface DialogTarget {
+    readonly subscribe: (onChange: () => void, context: CanvasContext) => () => void;
+    readonly getBounds: (context: CanvasContext) => Rect;
+}
+
+export const DialogTarget = {
+    forElement(element: Element): DialogTarget {
+        return {
+            subscribe: (onChange, { canvas }) => {
+                const listener = new EventObserver();
+                listener.listen(element.events, 'changePosition', onChange);
+                listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+                    if (e.source === element) {
+                        onChange();
+                    }
+                });
+                return () => listener.stopListening();
+            },
+            getBounds: ({ canvas }) => boundsOf(element, canvas.renderingState),
+        };
+    },
+    forLink(link: Link): DialogTarget {
+        return {
+            subscribe: (onChange, { model, canvas }) => {
+                const source = model.getElement(link.sourceId);
+                const target = model.getElement(link.targetId);
+
+                if (!source || !target) {
+                    throw new Error('Source and target are not specified');
+                }
+
+                const listener = new EventObserver();
+                listener.listen(source.events, 'changePosition', onChange);
+                listener.listen(target.events, 'changePosition', onChange);
+                listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+                    if (e.source === source || e.source === target) {
+                        onChange();
+                    }
+                });
+                listener.listen(link.events, 'changeVertices', onChange);
+                listener.listen(canvas.renderingState.events, 'changeLinkLabelBounds', e => {
+                    if (e.source === link) {
+                        onChange();
+                    }
+                });
+                return () => listener.stopListening();
+            },
+            getBounds: ({ model, canvas }) => {
+                const labelBounds = canvas.renderingState.getLinkLabelBounds(link);
+                if (labelBounds) {
+                    return labelBounds;
+                }
+
+                const source = model.getElement(link.sourceId);
+                const target = model.getElement(link.targetId);
+
+                if (!source || !target) {
+                    throw new Error('Source and target are not specified');
+                }
+
+                const route = canvas.renderingState.getRouting(link.id);
+                const verticesDefinedByUser = link.vertices || [];
+                const vertices = route ? route.vertices : verticesDefinedByUser;
+    
+                const polyline = computePolyline(
+                    canvas.renderingState.getElementShape(source),
+                    canvas.renderingState.getElementShape(target),
+                    vertices
+                );
+                const polylineLength = computePolylineLength(polyline);
+                const {x, y} = getPointAlongPolyline(polyline, polylineLength / 2);
+
+                return {x, y, width: 0, height: 0};
+            },
+        };
+    },
+} as const;
+
+function computeDockedPosition(
+    targetMin: Vector,
+    targetMax: Vector,
+    dock: 'n' | 'e' | 's' | 'w',
+    dockMargin: number,
+    defaultSize: Size,
+    currentSize: Size
+): Vector {
+    let x: number;
+    switch (dock) {
+        case 'w': {
+            x = targetMin.x - currentSize.width - dockMargin;
+            break;
+        }
+        case 'e': {
+            x = targetMax.x + dockMargin;
+            break;
+        }
+        default: {
+            x = (targetMin.x + targetMax.x - defaultSize.width) / 2;
+            break;
+        }
+    }
+
+    let y: number;
+    switch (dock) {
+        case 'n': {
+            y = targetMin.y - currentSize.height - dockMargin;
+            break;
+        }
+        case 's': {
+            y = targetMax.y + dockMargin;
+            break;
+        }
+        default: {
+            y = (targetMin.y + targetMax.y - defaultSize.height) / 2;
+            break;
+        }
+    }
+
+    return {x, y};
 }

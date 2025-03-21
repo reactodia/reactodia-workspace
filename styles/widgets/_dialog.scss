@@ -1,5 +1,4 @@
 @use "../mixin/icons" as *;
-@use "../mixin/draggableHandle" as *;
 @use "../mixin/zIndex";
 @use "../theme/theme";
 
@@ -44,18 +43,6 @@
       color: theme.$button-default-color-focus;
       background-color: theme.$button-default-background-color-focus;
     }
-  }
-
-  &__bottom-handle {
-    @include draggable-handle-s;
-  }
-
-  &__right-handle {
-    @include draggable-handle-e;
-  }
-
-  &__bottom-right-handle {
-    @include draggable-handle-se;
   }
 }
 

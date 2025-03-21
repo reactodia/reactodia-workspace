@@ -14,7 +14,8 @@ import { DiagramModel } from '../diagram/model';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
-import { Dialog, DialogProps, DialogStyleProps } from '../widgets/dialog';
+import { Dialog, DialogProps, DialogStyleProps, DialogTarget } from '../widgets/dialog';
+import { getParentDockMargin } from '../widgets/utility/viewportDock';
 
 /** @hidden */
 export interface OverlayControllerProps {
@@ -311,7 +312,11 @@ export class OverlayController {
             this.view.setCanvasWidget('dialog', {
                 element: (
                     <Dialog {...style}
-                        target={target}
+                        target={
+                            target instanceof Element ? DialogTarget.forElement(target) :
+                            target instanceof Link ? DialogTarget.forLink(target) :
+                            target
+                        }
                         onHide={onHide}>
                         {content}
                     </Dialog>
@@ -402,10 +407,16 @@ function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
 }
 
 function ViewportDialog(props: DialogProps) {
-    const {...dialogProps} = props;
     const viewportSize = useViewportSize();
-    // TODO: somehow use --reactodia-viewport-dock-margin
-    const margin = 10;
+
+    const overlayRef = React.useRef<HTMLDivElement>(null);
+    const [margin, setMargin] = React.useState(0);
+    React.useLayoutEffect(() => {
+        if (overlayRef.current) {
+            setMargin(getParentDockMargin(overlayRef.current) ?? 0);
+        }
+    }, []);
+
     const maxSize = React.useMemo(
         (): Size => ({
             width: viewportSize.width - margin * 2,
@@ -414,8 +425,10 @@ function ViewportDialog(props: DialogProps) {
         [viewportSize, margin]
     );
     return (
-        <div className='reactodia-viewport-dialog-overlay'>
-            <Dialog {...dialogProps}
+        <div ref={overlayRef}
+            className='reactodia-viewport-dialog-overlay'>
+            <Dialog {...props}
+                dock='e'
                 centered={true}
                 maxSize={maxSize}
             />

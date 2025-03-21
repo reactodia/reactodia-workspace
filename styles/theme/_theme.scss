@@ -137,7 +137,9 @@ $button-default-color-focus: var(--reactodia-button-default-color-focus);
 /* Draggable Handle */
 $draggable-handle-corner-color: var(--reactodia-draggable-handle-corner-color);
 $draggable-handle-corner-color-focus: var(--reactodia-draggable-handle-corner-color-focus);
+$draggable-handle-corner-width: var(--reactodia-draggable-handle-corner-width);
 $draggable-handle-side-color: var(--reactodia-draggable-handle-side-color);
+$draggable-handle-side-width: var(--reactodia-draggable-handle-side-width);
 
 /* Tree */
 $tree-background-color-active: var(--reactodia-tree-background-color-active);
@@ -157,6 +159,7 @@ $canvas-overlay-color: var(--reactodia-canvas-overlay-color);
 $canvas-underlay-color: var(--reactodia-canvas-underlay-color);
 $element-background-color: var(--reactodia-element-background-color);
 $link-stroke-color: var(--reactodia-link-stroke-color);
+$viewport-dock-margin: var(--reactodia-viewport-dock-margin);
 
 /* Halo and Selection */
 $selection-icon-filter: var(--reactodia-selection-icon-filter);

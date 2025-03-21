@@ -121,3 +121,17 @@ export function getParentDockAlignment(
         style.getPropertyValue('--reactodia-viewport-dock-align-y') as DockAlignment | undefined,
     ];
 }
+
+export function getParentDockMargin(
+    target: Element
+): number | undefined {
+    const style = getComputedStyle(target);
+    const rawValue = style.getPropertyValue('--reactodia-viewport-dock-margin');
+    if (rawValue) {
+        const value = parseFloat(rawValue);
+        if (Number.isFinite(value)) {
+            return value;
+        }
+    }
+    return undefined;
+}

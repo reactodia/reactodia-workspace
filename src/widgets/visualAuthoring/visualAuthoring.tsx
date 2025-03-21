@@ -249,16 +249,6 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     defaultSize,
                     resizableBy: 'x',
                     caption: t.text('visual_authoring.rename_link.dialog.caption'),
-                    offset: {x: 25, y: - defaultSize.height / 2},
-                    calculatePosition: canvas => {
-                        const bounds = canvas.renderingState.getLinkLabelBounds(link);
-                        if (bounds) {
-                            const {x, y, width, height} = bounds;
-                            return {x: x + width, y: y + height / 2};
-                        } else {
-                            return undefined;
-                        }
-                    },
                 },
                 content: (
                     <RenameLinkForm link={link}

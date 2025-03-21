@@ -533,17 +533,19 @@ function SearchContent(props: SearchContentProps) {
                     </div>
                 </UnifiedSearchSectionContext.Provider>
             ))}
-            <DraggableHandle axis='y'
-                className={`${CLASS_NAME}__bottom-handle`}
+            <DraggableHandle dock='s'
+                axis='y'
                 onBeginDragHandle={updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
-            <DraggableHandle axis='x'
+            <DraggableHandle dock='e'
+                axis='x'
                 className={`${CLASS_NAME}__right-handle`}
                 onBeginDragHandle={updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
-            <DraggableHandle axis='all'
+            <DraggableHandle dock='se'
+                axis='all'
                 className={`${CLASS_NAME}__corner-handle`}
                 onBeginDragHandle={updatePanelBounds}
                 onDragHandle={onDrag}>

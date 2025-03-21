@@ -1,7 +1,8 @@
+@use "../theme/theme";
+
 .reactodia-viewport-dock {
-  $dock-margin: var(--reactodia-viewport-dock-margin, 10px);
-  $dock-offset-x: calc(#{$dock-margin} + var(--reactodia-viewport-dock-offset-x, 0px));
-  $dock-offset-y: calc(#{$dock-margin} + var(--reactodia-viewport-dock-offset-y, 0px));
+  $dock-offset-x: calc(#{theme.$viewport-dock-margin} + var(--reactodia-viewport-dock-offset-x, 0px));
+  $dock-offset-y: calc(#{theme.$viewport-dock-margin} + var(--reactodia-viewport-dock-offset-y, 0px));
 
   &--row-n,
   &--row-s,
