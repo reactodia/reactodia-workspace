@@ -1,0 +1,141 @@
+@use "../theme/theme";
+
+$corner-size: theme.$draggable-handle-corner-width;
+$corner-inner: calc(theme.$draggable-handle-corner-width / 2);
+
+@mixin _draggable-handle-side {
+  position: absolute;
+  opacity: 0;
+  background-color: theme.$draggable-handle-side-color;
+
+  &:hover {
+    opacity: 0.1;
+  }
+}
+
+@mixin _draggable-handle-corner {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-radius: theme.$border-radius-base;
+
+  &::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-radius: theme.$border-radius-base;
+  }
+}
+
+.reactodia-draggable-handle {
+  &--dock-n,
+  &--dock-s {
+    @include _draggable-handle-side;
+
+    width: 100%;
+    height: theme.$draggable-handle-side-width;
+    cursor: ns-resize;
+  }
+
+  &--dock-n { top: 0; }
+  &--dock-s { bottom: 0; }
+
+  &--dock-w,
+  &--dock-e {
+    @include _draggable-handle-side;
+
+    top: 0;
+    width: theme.$draggable-handle-side-width;
+    height: 100%;
+    cursor: ew-resize;
+  }
+
+  &--dock-w { left: 0; }
+  &--dock-e { right: 0; }
+
+  &--dock-nw,
+  &--dock-ne,
+  &--dock-sw,
+  &--dock-se {
+    @include _draggable-handle-corner;
+  }
+
+  &--dock-nw,
+  &--dock-ne {
+    border-color: theme.$draggable-handle-corner-color transparent transparent transparent;
+
+    &::before {
+      top: -10px;
+      border-color: theme.$draggable-handle-corner-color transparent transparent transparent;
+    }
+
+    &:hover {
+      border-color: theme.$draggable-handle-corner-color-focus transparent transparent transparent;
+    }
+  }
+
+  &--dock-nw {
+    top: 0;
+    left: 0;
+    border-width: $corner-size $corner-size 0 0;
+    cursor: nwse-resize;
+
+    &::before {
+      left: 0;
+      border-width: $corner-inner $corner-inner 0 0;
+    }
+  }
+
+  &--dock-ne {
+    top: 0;
+    right: 0;
+    border-width: $corner-size 0 0 $corner-size;
+    cursor: nesw-resize;
+
+    &::before {
+      right: 0;
+      border-width: $corner-inner 0 0 $corner-inner;
+    }
+  }
+
+  &--dock-sw,
+  &--dock-se {
+    border-color: transparent transparent theme.$draggable-handle-corner-color transparent;
+
+    &::before {
+      bottom: -10px;
+      border-color: transparent transparent theme.$draggable-handle-corner-color transparent;
+    }
+
+    &:hover {
+      border-color: transparent transparent theme.$draggable-handle-corner-color-focus transparent;
+    }
+  }
+
+  &--dock-sw {
+    bottom: 0;
+    left: 0;
+    border-width: 0 $corner-size $corner-size 0;
+    cursor: nesw-resize;
+
+    &::before {
+      left: 0;
+      border-width: 0 $corner-inner $corner-inner 0;
+    }
+  }
+
+  &--dock-se {
+    bottom: 0;
+    right: 0;
+    border-width: 0 0 $corner-size $corner-size;
+    cursor: nwse-resize;
+
+    &::before {
+      right: 0;
+      border-width: 0 0 $corner-inner $corner-inner;
+    }
+  }
+}

@@ -89,6 +89,9 @@
   --reactodia-button-border-width: var(--reactodia-border-width-base);
   --reactodia-button-default-border-color: var(--reactodia-border-color-base);
 
+  --reactodia-draggable-handle-corner-width: 10px;
+  --reactodia-draggable-handle-side-width: 5px;
+
   --reactodia-tree-background-color-active: rgba(101, 166, 255, 0.3);
   --reactodia-tree-background-color-focus: rgba(189, 217, 255, 0.3);
   --reactodia-tree-border-color-active: rgba(115, 211, 255, 0.5);;
@@ -99,6 +102,7 @@
   --reactodia-dialog-border-width: var(--reactodia-border-width-base);
 
   --reactodia-canvas-background-color: var(--reactodia-background-color);
+  --reactodia-viewport-dock-margin: 10px;
 
   --reactodia-selection-single-box-shadow: 0 0 5px 0 #d8956d inset;
 

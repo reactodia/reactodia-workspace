@@ -168,6 +168,7 @@ export {
     ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
 } from './widgets/connectionsMenu';
+export type { DialogStyleProps } from './widgets/dialog';
 export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
 export { Halo, HaloProps } from './widgets/halo';
 export { HaloLink, HaloLinkProps } from './widgets/haloLink';
