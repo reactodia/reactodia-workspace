@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use `--reactodia-viewport-dock-margin` instead of a hard-coded value to compute max size for a dialog without target.
 
 #### 💅 Polish
+- Use "rounded" look by default by setting default `--reactodia-border-radius-base` to a non-zero value (it can be unset as before if desired to have a more "rectangular" UI styling).
 - Make `Canvas` a [focusable](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) element to allow to handle keyboard events scoped to the graph:
   * Removing selected elements on `Delete` key press now happens only when `SelectionActionRemove` if displayed by the `Halo` or `Selection` canvas widgets and only if the canvas has the focus to avoid accidental element removal by the action from unrelated document parts.
   * Expose `keydown` and `keyup` events on `CanvasApi.events` to handle keyboard events scoped to the canvas.

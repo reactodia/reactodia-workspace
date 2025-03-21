@@ -34,8 +34,8 @@
             top: 40px;
             right: 45px;
         }
-        :root[data-border-radius] {
-            --reactodia-border-radius-base: 4px;
+        :root[data-border-radius-zero] .reactodia-workspace {
+            --reactodia-border-radius-base: unset;
         }
     </style>
     <body>
@@ -90,21 +90,21 @@
             // Border radius toggle
             var borderRadiusToggle = document.getElementById('reactodia-example-border-radius-toggle');
             borderRadiusToggle.addEventListener('click', () => {
-                if (hasBorderRadius()) {
-                    document.documentElement.removeAttribute('data-border-radius');
+                if (hasBorderRadiusZero()) {
+                    document.documentElement.removeAttribute('data-border-radius-zero');
                 } else {
-                    document.documentElement.setAttribute('data-border-radius', 'true');
+                    document.documentElement.setAttribute('data-border-radius-zero', 'true');
                 }
                 updateBorderRadiusToggle();
             });
             updateBorderRadiusToggle();
 
             function updateBorderRadiusToggle() {
-                borderRadiusToggle.innerText = hasBorderRadius() ? '◯' : '▭';
+                borderRadiusToggle.innerText = hasBorderRadiusZero() ? '▭' : '◯';
             }
 
-            function hasBorderRadius() {
-                return document.documentElement.hasAttribute('data-border-radius');
+            function hasBorderRadiusZero() {
+                return document.documentElement.hasAttribute('data-border-radius-zero');
             }
         </script>
     </body>
