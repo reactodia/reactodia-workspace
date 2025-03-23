@@ -1,6 +1,6 @@
 {
   "name": "@reactodia/workspace",
-  "version": "0.28.1",
+  "version": "0.29.0-next",
   "description": "Reactodia Workspace -- library for visual interaction with graphs in a form of a diagram.",
   "repository": {
     "type": "git",
@@ -100,18 +100,18 @@
     },
     "./layout-sync": {
       "types": "./dist/typings/layout-sync.d.ts",
-      "default": "./dist/layout-sync.js"
+      "import": "./dist/layout-sync.js"
     },
     "./layout.worker": {
       "types": "./dist/typings/layout.worker.d.ts",
-      "default": "./dist/layout.worker.js"
+      "import": "./dist/layout.worker.js"
     }
   },
   "files": [
     "dist/layout.worker.js",
     "dist/layout.worker.js.map",
-    "dist/worker-protocol.js",
-    "dist/worker-protocol.js.map",
+    "dist/layout-sync.js",
+    "dist/layout-sync.js.map",
     "dist/workspace.js",
     "dist/workspace.js.map",
     "dist/typings",

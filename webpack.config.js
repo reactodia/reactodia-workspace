@@ -15,10 +15,12 @@ const mainConfig = {
     library: {
       type: 'module',
     },
+    chunkLoading: false,
   },
   experiments: {
     outputModule: true,
   },
+  optimization: {},
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
     alias: {
@@ -50,10 +52,12 @@ const mainConfig = {
     '@reactodia/hashmap',
     '@reactodia/worker-proxy',
     '@reactodia/worker-proxy/protocol',
+    'clsx',
     'd3-color',
     'file-saver',
     'n3',
     'react',
+    'react/jsx-runtime',
     'react-dom',
     'webcola',
   ],
@@ -74,6 +78,7 @@ const workerConfig = {
     chunkFormat: 'module',
   },
   experiments: mainConfig.experiments,
+  optimization: mainConfig.optimization,
   resolve: {
     extensions: mainConfig.resolve.extensions,
   },
