@@ -46,8 +46,7 @@ function ClassicWorkspaceExample() {
             metadataProvider={metadataProvider}
             validationProvider={validationProvider}
             renameLinkProvider={renameLinkProvider}
-            typeStyleResolver={SemanticTypeStyles}
-            onIriClick={({iri}) => window.open(iri)}>
+            typeStyleResolver={SemanticTypeStyles}>
             <Reactodia.ClassicWorkspace
                 canvas={{
                     elementTemplateResolver: types => {

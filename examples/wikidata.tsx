@@ -63,8 +63,7 @@ function WikidataExample() {
 
     return (
         <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}
-            onIriClick={({iri}) => window.open(iri)}>
+            defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace
                 menu={
                     <>

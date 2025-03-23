@@ -129,8 +129,9 @@ export function StandardEntity(props: StandardEntityProps) {
                         {isEncodedBlank(finalIri)
                             ? <span>{t.text('standard_template.blank_node')}</span>
                             : <a href={finalIri}
-                                title={finalIri}
-                                data-iri-click-intent='openEntityIri'>
+                                target='_blank'
+                                rel='noreferrer'
+                                title={finalIri}>
                                 {finalIri}
                             </a>}
                     </div>

@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 🔧 Maintenance
 - Move deprecated type styles and link templates into separate entry point `@reactodia/workspace/legacy-styles`, including `SemanticTypeStyles`, `makeOntologyLinkTemplates(Reactodia)` (factory) and `makeLinkStyleShowIri(Reactodia)` factory.
+- Remove deprecated `WorkspaceProps.onIriClick()` and corresponding events and trigger method on `SharedCanvasState`.
 - Extract `HashMap`, `HashSet` and hash-code generation utilities into separate package [`@reactodia/hashmap`](https://github.com/reactodia/hashmap).
 - Extract Web Worker-related utilities into separate package [`@reactodia/worker-proxy`](https://github.com/reactodia/worker-proxy):
   * `@reactodia/worker-proxy/protocol` should be used instead of `@reactodia/workspace/worker-protocol` to define custom workers.

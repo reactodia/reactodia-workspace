@@ -19,7 +19,7 @@ import {
 import {
     DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
 } from '../diagram/locale';
-import { SharedCanvasState, IriClickEvent } from '../diagram/sharedCanvasState';
+import { SharedCanvasState } from '../diagram/sharedCanvasState';
 
 import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
@@ -104,12 +104,6 @@ export interface WorkspaceProps {
      * use {@link blockingDefaultLayout} as a synchronous fallback.
      */
     defaultLayout: LayoutFunction;
-    /**
-     * Handler for a request to navigate to a specific IRI.
-     *
-     * @deprecated Use element templates to change how IRIs should be opened.
-     */
-    onIriClick?: (event: IriClickEvent) => void;
     /**
      * Handler for a well-known workspace event.
      */
@@ -251,10 +245,6 @@ export class Workspace extends React.Component<WorkspaceProps> {
                 canvas.renderingState.syncUpdate();
                 canvas.zoomToFit();
             }
-        });
-        this.listener.listen(view.events, 'iriClick', e => {
-            const {onIriClick} = this.props;
-            onIriClick?.(e);
         });
 
         if (onWorkspaceEvent) {

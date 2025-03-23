@@ -45,8 +45,7 @@ function StyleCustomizationExample() {
                 } else {
                     return undefined;
                 }
-            }}
-            onIriClick={({iri}) => window.open(iri)}>
+            }}>
             <Reactodia.DefaultWorkspace
                 canvas={{
                     elementTemplateResolver: (types, element) => {

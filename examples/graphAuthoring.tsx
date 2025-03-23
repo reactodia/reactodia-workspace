@@ -59,8 +59,7 @@ function GraphAuthoringExample() {
             defaultLayout={defaultLayout}
             metadataProvider={metadataProvider}
             validationProvider={validationProvider}
-            renameLinkProvider={renameLinkProvider}
-            onIriClick={({iri}) => window.open(iri)}>
+            renameLinkProvider={renameLinkProvider}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
             />

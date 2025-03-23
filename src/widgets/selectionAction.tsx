@@ -389,6 +389,23 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
  * @see {@link SelectionActionAnchor}
  */
 export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
+    /**
+     * Props for the inner `<a>` element.
+     *
+     * **Default**:
+     * ```ts
+     * {
+     *     role: 'button',
+     *     href: '{target.iri}',
+     *     target: '_blank',
+     *     rel: 'noreferrer',
+     * }
+     * ```
+     */
+    anchorProps?: React.HTMLProps<HTMLAnchorElement>;
+    /**
+     * Handler to call when the action is selected.
+     */
     onSelect?: (target: EntityElement, e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -398,8 +415,8 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
  * @category Components
  */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
-    const {dock, dockRow, dockColumn, className, title, onSelect} = props;
-    const {model, canvas} = useCanvas();
+    const {dock, dockRow, dockColumn, className, title, anchorProps, onSelect} = props;
+    const {model} = useCanvas();
     const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
@@ -411,6 +428,10 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     }
     return (
         <a role='button'
+            href={target.iri}
+            target='_blank'
+            rel='noreferrer'
+            {...anchorProps}
             className={cx(
                 CLASS_NAME,
                 getDockClass(dock),
@@ -418,13 +439,10 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
                 `${CLASS_NAME}__link`
             )}
             style={getDockStyle(dockRow, dockColumn)}
-            href={target.iri}
             title={title ?? t.text('selection_action.anchor.title')}
             onClick={e => {
                 if (onSelect) {
                     onSelect(target, e);
-                } else {
-                    canvas.renderingState.shared.onIriClick(target.iri, target, 'jumpToEntity', e);
                 }
             }}
         />

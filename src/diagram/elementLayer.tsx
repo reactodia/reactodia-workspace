@@ -10,7 +10,7 @@ import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
 import { DiagramModel } from './model';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
-import { SharedCanvasState, IriClickIntent } from './sharedCanvasState';
+import { SharedCanvasState } from './sharedCanvasState';
 
 export interface ElementLayerProps {
     model: DiagramModel;
@@ -318,7 +318,6 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
             onLoad={this.onLoadOrErrorEvent}
             // eslint-disable-next-line react/no-unknown-property
             onError={this.onLoadOrErrorEvent}
-            onClick={this.onClick}
             onDoubleClick={this.onDoubleClick}>
             <TemplatedElement {...this.props} />
         </div>;
@@ -335,22 +334,6 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         // TODO: replace findDOMNode() usage by accessing a ref
         // eslint-disable-next-line react/no-find-dom-node
         onResize(state.element, findDOMNode(this) as HTMLDivElement);
-    };
-
-    private onClick = (e: React.MouseEvent<EventTarget>) => {
-        if (e.target instanceof HTMLElement && e.target.localName === 'a') {
-            const anchor = e.target as HTMLAnchorElement;
-            const {renderingState, state} = this.props;
-            const rawIntent = e.target.getAttribute('data-iri-click-intent') as IriClickIntent;
-            const clickIntent: IriClickIntent = rawIntent === 'openEntityIri'
-                ? 'openEntityIri' : 'openOtherIri';
-            renderingState.shared.onIriClick(
-                decodeURI(anchor.href),
-                state.element,
-                clickIntent,
-                e
-            );
-        }
     };
 
     private onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {

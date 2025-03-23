@@ -36,12 +36,6 @@ export interface SharedCanvasStateEvents {
      */
     findCanvas: FindCanvasEvent;
     /**
-     * Triggered on request to navigate to a specific IRI.
-     *
-     * @deprecated Use element templates to change how IRIs should be opened.
-     */
-    iriClick: IriClickEvent;
-    /**
      * Triggered when all rendering-related state should be disposed.
      */
     dispose: {
@@ -62,16 +56,6 @@ export interface FindCanvasEvent {
      * Collects found canvas instances.
      */
     readonly canvases: CanvasApi[];
-}
-
-/** @deprecated */
-export type IriClickIntent = 'jumpToEntity' | 'openEntityIri' | 'openOtherIri';
-/** @deprecated */
-export interface IriClickEvent {
-    iri: string;
-    element: Element;
-    clickIntent: IriClickIntent;
-    originalEvent: React.MouseEvent<any>;
 }
 
 /**
@@ -162,22 +146,6 @@ export class SharedCanvasState {
     findAnyCanvas(): CanvasApi | undefined {
         const canvases = this.findAllCanvases();
         return canvases.length > 0 ? canvases[0] : undefined;
-    }
-
-    /**
-     * Requests to navigate to a specific IRI.
-     *
-     * @deprecated
-     */
-    onIriClick(
-        iri: string,
-        element: Element,
-        clickIntent: IriClickIntent,
-        event: React.MouseEvent<any>
-    ): void {
-        event.persist();
-        event.preventDefault();
-        this.source.trigger('iriClick', {iri, element, clickIntent, originalEvent: event});
     }
 
     /**

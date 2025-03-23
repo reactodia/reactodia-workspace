@@ -78,7 +78,9 @@ export function ClassicEntity(props: ClassicEntityProps) {
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
                         title={data.id}
-                        href={data.id}>
+                        href={data.id}
+                        target='_blank'
+                        rel='noreferrer'>
                         {data.id}
                     </a>
                 </div>
