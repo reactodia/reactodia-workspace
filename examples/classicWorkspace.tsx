@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as N3 from 'n3';
 
 import * as Reactodia from '../src/workspace';
+import { SemanticTypeStyles, makeOntologyLinkTemplates } from '../src/legacy-styles';
+const OntologyLinkTemplates = makeOntologyLinkTemplates(Reactodia);
 
 import { ExampleMetadataProvider, ExampleValidationProvider } from './resources/exampleMetadata';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
@@ -44,7 +46,7 @@ function ClassicWorkspaceExample() {
             metadataProvider={metadataProvider}
             validationProvider={validationProvider}
             renameLinkProvider={renameLinkProvider}
-            typeStyleResolver={Reactodia.SemanticTypeStyles}
+            typeStyleResolver={SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.ClassicWorkspace
                 canvas={{
@@ -58,7 +60,7 @@ function ClassicWorkspaceExample() {
                         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return Reactodia.DefaultLinkTemplate;
                         }
-                        return Reactodia.OntologyLinkTemplates(type); 
+                        return OntologyLinkTemplates(type);
                     },
                 }}
                 toolbar={{

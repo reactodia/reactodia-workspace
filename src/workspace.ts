@@ -144,8 +144,6 @@ export {
     StandardTemplate, StandardEntity, StandardEntityProps,
     StandardEntityGroup, StandardEntityGroupProps,
 } from './templates/standardTemplate';
-export { SemanticTypeStyles } from './templates/typeStyles';
-export { OntologyLinkTemplates, LINK_STYLE_SHOW_IRI } from './templates/linkStyles';
 
 export { DraggableHandle, DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {

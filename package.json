@@ -105,6 +105,10 @@
     "./layout.worker": {
       "types": "./dist/typings/layout.worker.d.ts",
       "import": "./dist/layout.worker.js"
+    },
+    "./legacy-styles": {
+      "types": "./dist/typings/legacy-styles.d.ts",
+      "import": "./dist/legacy-styles.js"
     }
   },
   "files": [
@@ -112,6 +116,8 @@
     "dist/layout.worker.js.map",
     "dist/layout-sync.js",
     "dist/layout-sync.js.map",
+    "dist/legacy-styles.js",
+    "dist/legacy-styles.js.map",
     "dist/workspace.js",
     "dist/workspace.js.map",
     "dist/typings",

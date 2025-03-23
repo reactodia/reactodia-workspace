@@ -60,17 +60,8 @@ function GraphAuthoringExample() {
             metadataProvider={metadataProvider}
             validationProvider={validationProvider}
             renameLinkProvider={renameLinkProvider}
-            typeStyleResolver={Reactodia.SemanticTypeStyles}
             onIriClick={({iri}) => window.open(iri)}>
             <Reactodia.DefaultWorkspace
-                canvas={{
-                    linkTemplateResolver: type => {
-                        if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
-                            return Reactodia.DefaultLinkTemplate;
-                        }
-                        return Reactodia.OntologyLinkTemplates(type); 
-                    },
-                }}
                 menu={<ExampleToolbarMenu />}
             />
         </Reactodia.Workspace>

@@ -8,6 +8,7 @@ const mainConfig = {
   entry: {
     'workspace': './src/workspace',
     'layout-sync': './src/layout-sync',
+    'legacy-styles': './src/legacy-styles',
   },
   output: {
     filename: '[name].js',
