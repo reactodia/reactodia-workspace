@@ -18,6 +18,8 @@ import { useWorkspace } from '../workspace/workspaceContext';
  * an {@link EntityElement} on a canvas.
  *
  * Uses {@link RoundEntity} component to render a single entity.
+ *
+ * @category Constants
  */
 export const RoundTemplate: ElementTemplate = {
     shape: 'ellipse',

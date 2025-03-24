@@ -136,7 +136,7 @@ export {
 
 export { ClassicTemplate, ClassicEntity, ClassicEntityProps } from './templates/classicTemplate';
 export {
-    DefaultLinkTemplate, DefaultLinkPathTemplate, DefaultLinkPathTemplateProps,
+    DefaultLinkTemplate, DefaultLink, DefaultLinkProps,
 } from './templates/defaultLinkTemplate';
 export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
 export { RoundTemplate, RoundEntity, RoundEntityProps } from './templates/roundTemplate';

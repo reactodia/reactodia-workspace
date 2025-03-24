@@ -23,7 +23,6 @@ const objectIcon = require('@images/semantic/object.svg');
  *   - Event: `wd:Q1190554`
  *   - Object: `wd:Q488383`
  *
- * @category Constants
  * @deprecated These styles will be removed in later versions
  */
 export const SemanticTypeStyles: TypeStyleResolver = types => {
@@ -64,14 +63,13 @@ export const SemanticTypeStyles: TypeStyleResolver = types => {
  * Factory for a built-in link template which displays an additional label
  * with the link type IRI.
  *
- * @category Constants
  * @deprecated This link template will be removed in some later version
  */
 export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): LinkTemplate {
     return {
         ...Reactodia.DefaultLinkTemplate,
         renderLink: props => (
-            <Reactodia.DefaultLinkPathTemplate {...props}
+            <Reactodia.DefaultLink {...props}
                 prependLabels={
                     <Reactodia.LinkLabel link={props.link}
                         position={props.getPathPosition(0.5)}
@@ -97,7 +95,6 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
  *   - Range: `rdfs:range`
  *   - Type-of: `rdf:type`
  *
- * @category Constants
  * @deprecated These link templates will be removed in later versions
  */
 export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace')): LinkTemplateResolver {
@@ -108,7 +105,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
             stroke: '#cf8e76',
         },
         renderLink: props => (
-            <Reactodia.DefaultLinkPathTemplate {...props}
+            <Reactodia.DefaultLink {...props}
                 pathProps={{
                     stroke: '#f8a485',
                 }}
@@ -123,7 +120,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
             stroke: '#38b5db',
         },
         renderLink: props => (
-            <Reactodia.DefaultLinkPathTemplate {...props}
+            <Reactodia.DefaultLink {...props}
                 pathProps={{
                     stroke: '#34c7f3',
                 }}
@@ -138,7 +135,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
             stroke: '#38b5db',
         },
         renderLink: props => (
-            <Reactodia.DefaultLinkPathTemplate {...props}
+            <Reactodia.DefaultLink {...props}
                 pathProps={{
                     stroke: '#34c7f3',
                 }}
@@ -153,7 +150,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
             stroke: '#5b9a3b',
         },
         renderLink: props => (
-            <Reactodia.DefaultLinkPathTemplate {...props}
+            <Reactodia.DefaultLink {...props}
                 pathProps={{
                     stroke: '#8cd965',
                 }}

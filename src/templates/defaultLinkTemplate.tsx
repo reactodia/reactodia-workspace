@@ -18,9 +18,10 @@ import { useWorkspace } from '../workspace/workspaceContext';
 /**
  * Default link template.
  *
- * Uses {@link DefaultLinkPathTemplate} to display the link itself.
+ * Uses {@link DefaultLink} to display the link itself.
  *
- * @see {@link DefaultLinkPathTemplate}
+ * @category Constants
+ * @see {@link DefaultLink}
  */
 export const DefaultLinkTemplate: LinkTemplate = {
     markerTarget: {
@@ -28,7 +29,7 @@ export const DefaultLinkTemplate: LinkTemplate = {
         width: 9,
         height: 8,
     },
-    renderLink: props => <DefaultLinkPathTemplate {...props} />,
+    renderLink: props => <DefaultLink {...props} />,
 };
 
 const CLASS_NAME = 'reactodia-default-link';
@@ -38,11 +39,11 @@ const TEXT_CLASS = `${CLASS_NAME}__label-text`;
 const BACKGROUND_CLASS = `${CLASS_NAME}__label-background`;
 
 /**
- * Props for {@link DefaultLinkPathTemplate} component.
+ * Props for {@link DefaultLink} component.
  *
- * @see {@link DefaultLinkPathTemplate}
+ * @see {@link DefaultLink}
  */
-export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
+export interface DefaultLinkProps extends LinkTemplateProps {
     /**
      * Additional CSS class for the component.
      */
@@ -79,9 +80,9 @@ export interface DefaultLinkPathTemplateProps extends LinkTemplateProps {
 }
 
 /**
- * Additional style props for the link labels in {@link DefaultLinkPathTemplate}.
+ * Additional style props for the link labels in {@link DefaultLink}.
  *
- * @see {@link DefaultLinkPathTemplateProps}
+ * @see {@link DefaultLinkProps}
  */
 type CustomizedLinkLabelProps = Omit<
     LinkLabelProps,
@@ -89,20 +90,20 @@ type CustomizedLinkLabelProps = Omit<
 >;
 
 /**
- * Default link path template component.
+ * Default link template component.
  *
  * The template supports displaying any diagram links, including relation
  * links and relation groups.
  *
  * The template supports the following template state:
- *   - layout only mark.
+ *   - {@link TemplateProperties.LayoutOnly}
  *
  * {@link RenameLinkProvider} can be used to display a different label
  * than the default one based on the relation data or the link type.
  *
  * @category Components
  */
-export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
+export function DefaultLink(props: DefaultLinkProps) {
     const {
         link, className, path, pathProps, markerSource, markerTarget, getPathPosition, route,
         primaryLabelProps,
@@ -199,7 +200,7 @@ export function DefaultLinkPathTemplate(props: DefaultLinkPathTemplateProps) {
     );
 }
 
-function LinkProperties(props: DefaultLinkPathTemplateProps) {
+function LinkProperties(props: DefaultLinkProps) {
     const {
         link, getPathPosition, route, propertyLabelProps,
         propertyLabelStartLine = 1,

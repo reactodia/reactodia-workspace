@@ -16,6 +16,8 @@ import { useWorkspace } from '../workspace/workspaceContext';
  * was used for elements before v0.8.0.
  *
  * Uses {@link ClassicEntity} component to render a single entity.
+ *
+ * @category Constants
  */
 export const ClassicTemplate: ElementTemplate = {
     renderElement: props => <ClassicEntity {...props} />,

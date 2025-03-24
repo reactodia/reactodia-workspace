@@ -29,6 +29,8 @@ import { GroupPaginator } from './groupPaginator';
  *
  * Uses {@link StandardEntity} component to render a single entity and
  * {@link StandardEntityGroup} component to render an entity group.
+ *
+ * @category Constants
  */
 export const StandardTemplate: ElementTemplate = {
     renderElement: props => {

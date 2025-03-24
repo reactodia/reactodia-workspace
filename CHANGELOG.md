@@ -24,9 +24,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Removing selected elements on `Delete` key press now happens only when `SelectionActionRemove` if displayed by the `Halo` or `Selection` canvas widgets and only if the canvas has the focus to avoid accidental element removal by the action from unrelated document parts.
   * Expose `keydown` and `keyup` events on `CanvasApi.events` to handle keyboard events scoped to the canvas.
   * Canvas is now auto-focused (without scroll) on certain actions such as removing selected elements, grouping or ungrouping entities or dismissing a dialog.
-- Export built-in element templates and its components separately for easier customization:
+- Export built-in templates and its components separately for easier customization:
   * Change `StandardTemplate` to a template object, expose its components as `StandardEntity` and `StandardEntityGroup`;
-  * Change `ClassicTemplate` to a template object, expose its component as `ClassicEntity`.
+  * Change `ClassicTemplate` to a template object, expose its component as `ClassicEntity`;
+  * Rename `DefaultLinkPathTemplate` to `DefaultLink`.
 - Improve default routing for self (feedback) links with a single user-defined variable to have a basic loop instead of a straight line.
 - Reduce the size of the main package bundle by moving fallback synchronous (blocking) layout into the separate entry point `/layout-sync`:
   * **[💥Breaking]** Make `defaultLayout` a required prop for a `Workspace`: if a bundled synchronous fallback (`blockingDefaultLayout()`) was used by default, now it is necessary to import it manually from `/layout-sync`;
