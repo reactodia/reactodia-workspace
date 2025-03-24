@@ -8,6 +8,8 @@ import type { VisualAuthoringCommands } from '../widgets/visualAuthoring';
 /**
  * Represents a definition for an event bus to communicate
  * between related components with the same topic.
+ *
+ * @category Core
  */
 export class CommandBusTopic<T> {
     private __commandsMarker: Events<T> | undefined;
@@ -24,17 +26,25 @@ export class CommandBusTopic<T> {
 
 /**
  * Event bus to connect {@link ConnectionMenu} to other components.
+ *
+ * @category Constants
  */
 export const ConnectionsMenuTopic = CommandBusTopic.define<ConnectionsMenuCommands>();
 /**
  * Event bus to connect {@link InstancesSearch} to other components.
+ *
+ * @category Constants
  */
 export const InstancesSearchTopic = CommandBusTopic.define<InstancesSearchCommands>();
 /**
  * Event bus to connect {@link UnifiedSearch} to other components.
+ *
+ * @category Constants
  */
 export const UnifiedSearchTopic = CommandBusTopic.define<UnifiedSearchCommands>();
 /**
  * Event bus to connect {@link VisualAuthoring} to other components.
+ *
+ * @category Constants
  */
 export const VisualAuthoringTopic = CommandBusTopic.define<VisualAuthoringCommands>();

@@ -46,7 +46,7 @@ export interface LinkActionContext {
     readonly getAngleInDegrees: (side: 'source' | 'target') => number;
 }
 
-export const LinkActionContext = React.createContext<LinkActionContext | null>(null);
+export const LinkActionProvidedContext = React.createContext<LinkActionContext | null>(null);
 
 /**
  * React hook to get rendering context for the link action.
@@ -56,7 +56,7 @@ export const LinkActionContext = React.createContext<LinkActionContext | null>(n
  * @category Hooks
  */
 export function useLinkActionContext(): LinkActionContext {
-    const context = React.useContext(LinkActionContext);
+    const context = React.useContext(LinkActionProvidedContext);
     if (!context) {
         throw new Error('Missing context for LinkAction');
     }

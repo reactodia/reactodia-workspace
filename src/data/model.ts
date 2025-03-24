@@ -204,6 +204,11 @@ function equalTermArrays(a: ReadonlyArray<Rdf.Term>, b: ReadonlyArray<Rdf.Term>)
     return true;
 }
 
+/**
+ * Computes whether two property sets are the same, including both keys and values.
+ *
+ * @category Data
+ */
 export function equalProperties(
     a: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
     b: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> }

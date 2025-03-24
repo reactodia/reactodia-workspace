@@ -194,6 +194,7 @@ type DeepPath<T> = T extends object ? (
 /**
  * Represents a lazily-resolved simple or formatted translation string.
  *
+ * @category Core
  * @see Translation
  */
 export class TranslatedText {

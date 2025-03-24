@@ -14,7 +14,8 @@ import { TransformedSvgCanvas } from '../diagram/paper';
 import type { RenderingState } from '../diagram/renderingState';
 
 import {
-    LinkActionContext, LinkActionMoveEndpoint, LinkActionEdit, LinkActionDelete, LinkActionRename,
+    LinkActionContext, LinkActionProvidedContext, LinkActionMoveEndpoint, LinkActionEdit,
+    LinkActionDelete, LinkActionRename,
 } from './linkAction';
 
 /**
@@ -235,7 +236,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
                     margin={highlightMargin}
                     canvas={canvas}
                 />
-                <LinkActionContext.Provider value={actionContext}>
+                <LinkActionProvidedContext.Provider value={actionContext}>
                     {children ?? <>
                         <LinkActionMoveEndpoint dockSide='target' />
                         <LinkActionMoveEndpoint dockSide='source' />
@@ -243,7 +244,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
                         <LinkActionDelete dockSide='target' dockIndex={2} />
                         <LinkActionRename />
                     </>}
-                </LinkActionContext.Provider>
+                </LinkActionProvidedContext.Provider>
             </div>
         );
     }
