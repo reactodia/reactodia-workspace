@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Allow to dock a dialog to any side of a target with `dock` property with a configurable `dockMargin`.
 
 #### 🐛 Fixed
+- Fix search section activation race in `UnifiedSearch` which causes to sometimes open the first section instead of the specified one in `focus` command.
+- Auto-focus on search input field in `UnifiedSearch` on `focus` command.
 - Use `--reactodia-viewport-dock-margin` instead of a hard-coded value to compute max size for a dialog without target.
 
 #### 💅 Polish

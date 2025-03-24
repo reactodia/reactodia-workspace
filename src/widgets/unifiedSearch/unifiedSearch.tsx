@@ -163,12 +163,12 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
 
     React.useEffect(() => {
         const onClearSearch = () => {
-            setActiveSection(activeSection.deactivate());
+            setActiveSection(previous => previous.deactivate());
             setExpanded(false);
         };
         searchStore.events.on('clearSearch', onClearSearch);
         return () => searchStore.events.off('clearSearch', onClearSearch);
-    }, [searchStore, activeSection, setActiveSection, setExpanded]);
+    }, [searchStore, setActiveSection, setExpanded]);
 
     const [panelSize, setPanelSize] = React.useState<Size>({
         width: defaultWidth,
@@ -206,12 +206,11 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
                 isSectionActive: section.key === activeSection?.key,
                 setSectionActive: (active, searchExtra) => {
                     if (active) {
-                        setActiveSection(
-                            activeSection.activate(section.key, searchExtra)
-                        );
+                        setActiveSection(previous => previous.activate(section.key, searchExtra));
                         setExpanded(true);
+                        toggleInputRef.current?.focus();
                     } else {
-                        setActiveSection(activeSection.deactivate());
+                        setActiveSection(previous => previous.deactivate());
                         setExpanded(false);
                     }
                 },
@@ -227,7 +226,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         const onFocus = ({sectionKey}: UnifiedSearchCommands['focus']): void => {
             if (sectionKey) {
                 if (sections.some(section => section.key === sectionKey)) {
-                    setActiveSection(activeSection.activate(sectionKey));
+                    setActiveSection(previous => previous.activate(sectionKey));
                 } else {
                     console.warn(
                         `Unified search: cannot activate section that does not exists: ${sectionKey}`
@@ -238,7 +237,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         };
         commands.on('focus', onFocus);
         return () => commands.off('focus', onFocus);
-    }, [commands, sections, activeSection, setExpanded, setActiveSection]);
+    }, [commands, sections, setExpanded, setActiveSection]);
 
     const hasSearchQuery = (
         searchTerm.length > 0 ||
@@ -267,16 +266,19 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
                     }
                     expanded={expanded}
                     setExpanded={nextExpanded => {
-                        if (nextExpanded) {
-                            if (activeSection.key === undefined) {
-                                const defaultSectionKey = findDefaultSectionKey();
-                                if (defaultSectionKey) {
-                                    setActiveSection(activeSection.activate(defaultSectionKey));
+                        setActiveSection(previous => {
+                            if (nextExpanded) {
+                                if (previous.key === undefined) {
+                                    const defaultSectionKey = findDefaultSectionKey();
+                                    if (defaultSectionKey) {
+                                        return previous.activate(defaultSectionKey);
+                                    }
                                 }
+                            } else {
+                                return previous.deactivate();
                             }
-                        } else {
-                            setActiveSection(activeSection.deactivate());
-                        }
+                            return previous;
+                        });
                         setExpanded(nextExpanded);
                     }}
                     minWidth={minWidth}
@@ -285,7 +287,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
             }>
             <SearchContent sections={sectionsWithContext}
                 activeSectionKey={activeSection.key}
-                onActivateSection={key => setActiveSection(activeSection.switch(key))}
+                onActivateSection={key => setActiveSection(previous => previous.switch(key))}
                 size={effectiveSize}
                 minSize={{width: minWidth, height: minHeight}}
                 offsetForMaxSize={{x: offsetWithMaxWidth, y: offsetWithMaxHeight}}
