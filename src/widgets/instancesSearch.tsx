@@ -495,7 +495,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         this.setState(
             (state) => {
                 const text = term === '' ? undefined : term;
-                return {
+                return state.criteria.text === text ? null : {
                     criteria: {...state.criteria, text},
                 };
             },

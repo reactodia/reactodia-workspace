@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix "max update exceeded in `componentDidUpdate()`" error that can be triggered in `InstancesSearch` in some cases.
 
 ## [0.29.0] - 2025-03-24
 #### 🚀 New Features
