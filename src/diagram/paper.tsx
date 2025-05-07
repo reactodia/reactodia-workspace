@@ -12,7 +12,7 @@ export interface PaperProps {
     model: DiagramModel;
     renderingState: MutableRenderingState;
     paperTransform: PaperTransform;
-    svgCanvasRef?: React.RefObject<SVGSVGElement>;
+    svgCanvasRef?: React.RefObject<SVGSVGElement | null>;
     onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     onScrollCapture?: (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => void;
@@ -150,7 +150,7 @@ export interface PaperTransform {
  */
 export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement> {
     paperTransform: PaperTransform;
-    svgCanvasRef?: React.RefObject<SVGSVGElement>;
+    svgCanvasRef?: React.RefObject<SVGSVGElement | null>;
 }
 
 const TRANSFORMED_SVG_CANVAS_STYLE: Readonly<CSSProperties> = {
@@ -174,7 +174,11 @@ export function TransformedSvgCanvas(props: TransformedSvgCanvasProps) {
         svgStyle = {...svgStyle, ...style};
     }
     return (
-        <svg ref={svgCanvasRef}
+        <svg
+            ref={
+                /* For compatibility with React 19 typings */
+                svgCanvasRef as React.RefObject<SVGSVGElement>
+            }
             width={scaledWidth}
             height={scaledHeight}
             style={svgStyle}

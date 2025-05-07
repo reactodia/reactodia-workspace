@@ -340,7 +340,7 @@ class ActiveSection {
 }
 
 function SearchToggle(props: {
-    inputRef: React.RefObject<HTMLInputElement>,
+    inputRef: React.RefObject<HTMLInputElement | null>,
     searchTerm: string;
     setSearchTerm: (term: string) => void;
     onSubmit: () => void;
@@ -361,7 +361,11 @@ function SearchToggle(props: {
             style={{
                 width: panelSize?.width,
             }}>
-            <input ref={inputRef}
+            <input
+                ref={
+                    /* For compatibility with React 19 typings */
+                    inputRef as React.RefObject<HTMLInputElement>
+                }
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
                 style={{minWidth}}
@@ -439,7 +443,7 @@ function SearchContent(props: SearchContentProps) {
         readonly bounds: Rect;
         readonly centeredByX: boolean;
         readonly centerOffsetX: number;
-    }>();
+    }>(undefined);
 
     const updatePanelBounds = () => {
         if (!panelRef.current) {
@@ -558,7 +562,7 @@ function SearchContent(props: SearchContentProps) {
 function useViewportResizeHandler(handler: () => void) {
     const {canvas} = useCanvas();
 
-    const sizeCheckerRef = React.useRef<() => void>();
+    const sizeCheckerRef = React.useRef<() => void>(undefined);
     React.useLayoutEffect(() => {
         sizeCheckerRef.current = handler;
     });

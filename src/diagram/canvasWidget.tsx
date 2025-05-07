@@ -33,7 +33,7 @@ export function defineCanvasWidget<P>(
     metadataOf: (element: React.ReactElement<P>) => CanvasWidgetDescription
 ): void {
     const typeWithMetadata = type as WithMetadata;
-    typeWithMetadata[GET_WIDGET_METADATA] = metadataOf;
+    typeWithMetadata[GET_WIDGET_METADATA] = metadataOf as WithMetadata[typeof GET_WIDGET_METADATA];
 }
 
 export function extractCanvasWidget(

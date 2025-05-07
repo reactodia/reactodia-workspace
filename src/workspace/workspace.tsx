@@ -487,7 +487,7 @@ export function useLoadedWorkspace(
         loadedWorkspace: LoadedWorkspace;
     }
 
-    const stateRef = React.useRef<State>();
+    const stateRef = React.useRef<State>(undefined);
     if (stateRef.current) {
         stateRef.current.latestOnLoad = onLoad;
     } else {

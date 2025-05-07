@@ -72,7 +72,7 @@ export function DraggableHandle(props: DraggableHandleProps) {
         ...otherProps
     } = props;
 
-    const holdState = React.useRef<HoldState>();
+    const holdState = React.useRef<HoldState>(undefined);
 
     const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (holdState.current || e.target !== e.currentTarget) {

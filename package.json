@@ -34,6 +34,7 @@
     "typings": "tsc --project tsconfig.typings.json --declaration --declarationMap --emitDeclarationOnly --outDir dist/typings",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "install-react-19": "npm i react@19 react-dom@19 @types/react@19 @types/react-dom@19",
     "clean": "rimraf dist"
   },
   "dependencies": {
@@ -46,8 +47,8 @@
     "webcola": "~3.3.8"
   },
   "peerDependencies": {
-    "react": "^17.0.2 || ^18",
-    "react-dom": "^17.0.2 || ^18"
+    "react": "^17.0.2 || ^18 || ^19",
+    "react-dom": "^17.0.2 || ^18 || ^19"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

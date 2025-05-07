@@ -129,13 +129,13 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     private renderLinkStateLabels() {
         const {workspace: {model, editor, translation: t}} = this.props;
 
-        const rendered: JSX.Element[] = [];
+        const rendered: React.ReactElement[] = [];
         for (const link of model.links) {
             if (!(link instanceof RelationLink)) {
                 continue;
             }
 
-            let renderedState: JSX.Element | null = null;
+            let renderedState: React.ReactElement | null = null;
             const state = editor.authoringState.links.get(link.data);
             if (state) {
                 let statusText: string;
@@ -195,7 +195,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
 
     private renderLinkStateHighlighting() {
         const {workspace: {model, editor}} = this.props;
-        const rendered: JSX.Element[] = [];
+        const rendered: React.ReactElement[] = [];
         for (const link of model.links) {
             if (!(link instanceof RelationLink)) {
                 continue;
@@ -253,7 +253,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         }
     }
 
-    private renderLinkValidations(key: LinkKey): JSX.Element | null {
+    private renderLinkValidations(key: LinkKey): React.ReactElement | null {
         const {workspace: {editor}} = this.props;
         const {validationState} = editor;
 

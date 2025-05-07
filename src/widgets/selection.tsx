@@ -228,7 +228,7 @@ function SelectionBox(props: SelectionBoxProps) {
         canvas.renderingState
     )) : [];
 
-    const moveControllerRef = React.useRef<StatefulMoveController | undefined>();
+    const moveControllerRef = React.useRef<StatefulMoveController>(undefined);
     if (!moveControllerRef.current) {
         moveControllerRef.current = new StatefulMoveController(canvas, model);
     }

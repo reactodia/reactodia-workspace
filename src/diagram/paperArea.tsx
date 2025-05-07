@@ -119,8 +119,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     readonly metrics: CanvasMetrics;
 
-    constructor(props: PaperAreaProps, context: any) {
-        super(props, context);
+    constructor(props: PaperAreaProps) {
+        super(props);
         const {zoomOptions = {}} = this.props;
         this.state = {
             width: this.pageSize.x,

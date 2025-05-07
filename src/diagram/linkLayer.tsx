@@ -56,7 +56,7 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
     private labelMeasureRequests = new Set<MeasurableLabel>();
     private delayedMeasureLabels = new Debouncer();
 
-    private readonly memoizedLinks = new WeakMap<Link, JSX.Element>();
+    private readonly memoizedLinks = new WeakMap<Link, React.ReactElement>();
 
     constructor(props: LinkLayerProps) {
         super(props);

@@ -107,7 +107,7 @@ export function useSyncStoreWithComparator<R>(
     getSnapshot: () => R,
     equalResults: (a: R, b: R) => boolean
 ) {
-    const lastSnapshot = React.useRef<[R]>();
+    const lastSnapshot = React.useRef<[R]>(undefined);
     return useSyncExternalStore(
         subscribe,
         () => {

@@ -83,7 +83,7 @@ export function useKeyedSyncStore<K extends string, Context>(
     }
 
     const [, setVersion] = React.useState(0);
-    const contextRef = React.useRef<ObservedContext>();
+    const contextRef = React.useRef<ObservedContext>(undefined);
 
     let observedContext = contextRef.current;
     if (!observedContext) {
