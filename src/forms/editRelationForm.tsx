@@ -1,6 +1,12 @@
+import cx from 'clsx';
 import * as React from 'react';
 
-import { LinkModel, equalLinks, equalProperties } from '../data/model';
+import { mapAbortedToNull } from '../coreUtils/async';
+
+import { LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
+import type { MetadataProvider, MetadataRelationShape } from '../data/metadataProvider';
+
+import { HtmlSpinner } from '../diagram/spinner';
 
 import { EntityElement, RelationLink } from '../editor/dataElements';
 
@@ -9,10 +15,14 @@ import { ProgressBar } from '../widgets/utility/progressBar';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 import {
-    LinkTypeSelector, ValidatedLink, dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
+    type ExtendedLink, LinkTypeSelector, type ValidatedLink,
+    dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
 } from './linkTypeSelector';
 
+import { PropertiesInput, type PropertyUpdater } from './propertiesInput';
+
 const FORM_CLASS = 'reactodia-form';
+const CLASS_NAME = 'reactodia-edit-relation-form';
 
 export interface EditRelationFormProps {
     originalLink: RelationLink;
@@ -90,6 +100,35 @@ function EditRelationFormInner(props: EditRelationFormProps) {
         }
     }, [value]);
 
+    const [metadata, metadataError] = useRelationMetadata(editor.metadataProvider, value.link);
+    const languages = React.useMemo(
+        () => editor.metadataProvider?.getLiteralLanguages() ?? [], []
+    );
+
+    const onChangeProperty = (
+        property: PropertyTypeIri,
+        updater: PropertyUpdater
+    ): void => {
+        setValue((previous): ValidatedLink => {
+            const properties = previous.link.base.properties;
+            const values = Object.prototype.hasOwnProperty.call(properties, property)
+                ? properties[property] : undefined;
+            return {
+                ...previous,
+                link: {
+                    ...previous.link,
+                    base: {
+                        ...previous.link.base,
+                        properties: {
+                            ...properties,
+                            [property]: updater(values ?? []),
+                        }
+                    }
+                }
+            };
+        });
+    };
+
     const onApply = () => {
         const toApply = dataFromExtendedLink(value.link);
 
@@ -110,7 +149,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
     const linkIsValid = !value.error;
     return (
         <div className={FORM_CLASS}>
-            <div className={`${FORM_CLASS}__body`}>
+            <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
                 <LinkTypeSelector link={value.link}
                     error={value.error}
                     onChange={link => setValue({
@@ -128,6 +167,20 @@ function EditRelationFormInner(props: EditRelationFormProps) {
                         />
                     </div>
                 ) : null}
+                {!metadata ? (
+                    <div className={cx(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
+                        <HtmlSpinner width={30} height={30}
+                            errorOccurred={Boolean(metadataError)}
+                        />
+                    </div>
+                ) : metadata.shape ? (
+                    <PropertiesInput className={`${CLASS_NAME}__properties`}
+                        properties={metadata.shape.properties}
+                        languages={languages}
+                        data={value.link.base.properties}
+                        onChangeData={onChangeProperty}
+                    />
+                ) : null}
             </div>
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
@@ -144,4 +197,50 @@ function EditRelationFormInner(props: EditRelationFormProps) {
             </div>
         </div>
     );
+}
+
+interface RelationMetadata {
+    readonly shape: MetadataRelationShape | null;
+}
+
+function useRelationMetadata(
+    metadataProvider: MetadataProvider | undefined,
+    link: ExtendedLink,
+): readonly [shape: RelationMetadata | undefined, error?: unknown] {
+    const [shape, setShape] = React.useState<RelationMetadata>();
+    const [shapeError, setShapeError] = React.useState<unknown>();
+
+    React.useEffect(() => {
+        if (metadataProvider) {
+            setShape(undefined);
+            setShapeError(undefined);
+            const cancellation = new AbortController();
+            const signal = cancellation.signal;
+            const data = dataFromExtendedLink(link);
+            mapAbortedToNull(
+                Promise.all([
+                    metadataProvider.canModifyRelation(data, link.source, link.target, {signal}),
+                    metadataProvider.getRelationShape(data.linkTypeId, {signal}),
+                ]),
+                signal
+            ).then(
+                result => {
+                    if (result === null) {
+                        return;
+                    }
+                    const [status, shape] = result;
+                    setShape({shape: status.canEdit ? shape : null});
+                },
+                error => {
+                    console.error('Failed to load relation metadata:', error);
+                    setShapeError(error);
+                }
+            );
+            return cancellation.abort();
+        } else {
+            setShape({shape: null});
+        }
+    }, [link.base.linkTypeId, link.source, link.target]);
+
+    return [shape, shapeError];
 }

@@ -2,23 +2,17 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
-import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import { useTranslation } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
-import type {
-    MetadataEntityShape, MetadataPropertyShape, MetadataValueShape,
-} from '../data/metadataProvider';
+import type { MetadataProvider, MetadataEntityShape } from '../data/metadataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { subscribePropertyTypes } from '../editor/observedElement';
-import { WithFetchStatus } from '../editor/withFetchStatus';
-
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { PropertyUpdater, TextPropertyInput } from './textPropertyInput';
+import { PropertiesInput, type PropertyUpdater, DEFAULT_PROPERTY_SHAPE } from './propertiesInput';
+import { TextPropertyInput } from './textPropertyInput';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
@@ -32,33 +26,11 @@ export function EditEntityForm(props: {
     const {model, editor, translation: t} = useWorkspace();
 
     const [data, setData] = React.useState(entity);
-    const [shape, setShape] = React.useState<MetadataEntityShape>();
-    const [error, setError] = React.useState<unknown>();
-
     React.useEffect(() => {
         setData(entity);
-        if (editor.metadataProvider) {
-            setShape(undefined);
-            setError(undefined);
-            const cancellation = new AbortController();
-            const signal = cancellation.signal;
-            mapAbortedToNull(
-                editor.metadataProvider.getEntityShape(entity.types, {signal}),
-                signal
-            ).then(
-                result => {
-                    if (result === null) {
-                        return;
-                    }
-                    setShape(result);
-                },
-                error => setError(error)
-            );
-        } else {
-            setShape(DEFAULT_ENTITY_SHAPE);
-        }
     }, [entity]);
 
+    const [shape, shapeError] = useEntityShape(editor.metadataProvider, entity);
     const languages = React.useMemo(
         () => editor.metadataProvider?.getLiteralLanguages() ?? [], []
     );
@@ -98,7 +70,7 @@ export function EditEntityForm(props: {
         return (
             <div className={cx(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
                 <HtmlSpinner width={30} height={30}
-                    errorOccurred={Boolean(error)}
+                    errorOccurred={Boolean(shapeError)}
                 />
             </div>
         );
@@ -142,7 +114,8 @@ export function EditEntityForm(props: {
                         factory={model.factory}
                     />
                 </div>
-                <Properties properties={shape.properties}
+                <PropertiesInput className={`${CLASS_NAME}__properties`}
+                    properties={shape.properties}
                     languages={languages}
                     data={data.properties}
                     onChangeData={onChangeProperty}
@@ -169,103 +142,40 @@ export function EditEntityForm(props: {
 const DEFAULT_ENTITY_SHAPE: MetadataEntityShape = {
     properties: new Map(),
 };
-const DEFAULT_VALUE_SHAPE: MetadataValueShape = {
-    termType: 'Literal',
-};
-const DEFAULT_PROPERTY_SHAPE: MetadataPropertyShape = {
-    valueShape: DEFAULT_VALUE_SHAPE,
-};
 
-function Properties(props: {
-    properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
-    languages: ReadonlyArray<string>;
-    data: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
-    onChangeData: (property: PropertyTypeIri, updater: PropertyUpdater) => void;
-}) {
-    const {properties, languages, data, onChangeData} = props;
-    const {model, translation: t} = useWorkspace();
+function useEntityShape(
+    metadataProvider: MetadataProvider | undefined,
+    entity: ElementModel
+): readonly [shape: MetadataEntityShape | undefined, error?: unknown] {
+    const [shape, setShape] = React.useState<MetadataEntityShape>();
+    const [shapeError, setShapeError] = React.useState<unknown>();
 
-    const extendedProperties = new Map(properties);
-    for (const propertyIri of Object.keys(data)) {
-        if (!extendedProperties.has(propertyIri)) {
-            extendedProperties.set(propertyIri, DEFAULT_PROPERTY_SHAPE);
+    React.useEffect(() => {
+        if (metadataProvider) {
+            setShape(undefined);
+            setShapeError(undefined);
+            const cancellation = new AbortController();
+            const signal = cancellation.signal;
+            mapAbortedToNull(
+                metadataProvider.getEntityShape(entity.types, {signal}),
+                signal
+            ).then(
+                result => {
+                    if (result === null) {
+                        return;
+                    }
+                    setShape(result);
+                },
+                error => {
+                    console.error('Failed to load entity shape:', error);
+                    setShapeError(error);
+                }
+            );
+            return () => cancellation.abort();
+        } else {
+            setShape(DEFAULT_ENTITY_SHAPE);
         }
-    }
-    const propertyIris = Array.from(extendedProperties.keys());
-    useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
+    }, [entity]);
 
-    if (propertyIris.length === 0) {
-        return null;
-    }
-
-    const labelledProperties = Array.from(extendedProperties, ([iri, shape]) => {
-        const property = model.getPropertyType(iri);
-        const values = Object.prototype.hasOwnProperty.call(data, iri) ? data[iri] : undefined;
-        return {
-            iri,
-            label: t.formatLabel(property?.data?.label, iri, model.language),
-            shape,
-            values: values ?? [],
-        };
-    });
-    labelledProperties.sort((a, b) => a.label.localeCompare(b.label));
-
-    return (
-        <div role='list'
-            className={`${CLASS_NAME}__properties`}>
-            {labelledProperties.map(({iri, label, shape, values}) =>
-                <Property key={iri}
-                    iri={iri}
-                    label={label}
-                    shape={shape}
-                    languages={languages}
-                    values={values}
-                    onChange={onChangeData}
-                    factory={model.factory}
-                />
-            )}
-        </div>
-    );
-}
-
-function Property(props: {
-    iri: PropertyTypeIri;
-    label: string;
-    shape: MetadataPropertyShape;
-    languages: ReadonlyArray<string>;
-    values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-    onChange: (iri: PropertyTypeIri, updater: PropertyUpdater) => void;
-    factory: Rdf.DataFactory;
-}) {
-    const {iri, label, shape, languages, values, onChange, factory} = props;
-    const t = useTranslation();
-
-    const updateValues = React.useCallback((updater: PropertyUpdater) => {
-        onChange(iri, updater);
-    }, [iri, onChange]);
-
-    return (
-        <div className={`${FORM_CLASS}__row`}>
-            <label
-                title={t.text('visual_authoring.property.title', {
-                    property: label,
-                    propertyIri: iri,
-                })}>
-                <WithFetchStatus type='propertyType' target={iri}>
-                    <span>
-                        {t.text('visual_authoring.property.label', {
-                            property: label,
-                            propertyIri: iri,
-                        })}
-                    </span>
-                </WithFetchStatus>
-            </label>
-            <TextPropertyInput shape={shape}
-                languages={languages}
-                values={values}
-                updateValues={updateValues}
-                factory={factory}
-            />
-        </div>
-    );
+    return [shape, shapeError];
 }

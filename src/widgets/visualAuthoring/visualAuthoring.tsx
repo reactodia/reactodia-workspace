@@ -231,8 +231,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 target: link,
                 dialogType: BuiltinDialogType.editRelation,
                 style: {
-                    defaultSize: {width: 300, height: 180},
-                    resizableBy: 'x',
+                    defaultSize: {width: 340, height: 300},
                     caption,
                 },
                 content,

@@ -7,10 +7,9 @@ import { useTranslation } from '../coreUtils/i18n';
 import * as Rdf from '../data/rdf/rdfModel';
 import type { MetadataPropertyShape, MetadataValueShape } from '../data/metadataProvider';
 
-const CLASS_NAME = 'reactodia-text-property-input';
+import type { PropertyUpdater } from './propertiesInput';
 
-export type PropertyUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
-    ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+const CLASS_NAME = 'reactodia-text-property-input';
 
 function TextPropertyInputInner(props: {
     shape: MetadataPropertyShape;

@@ -18,9 +18,10 @@ const rdfs = vocabulary('http://www.w3.org/2000/01/rdf-schema#', [
 
 const SIMULATED_DELAY: number = 200; /* ms */
 
-export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
+export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
     private readonly propertyTypes = [owl.AnnotationProperty, owl.DatatypeProperty, owl.ObjectProperty];
     private readonly editableTypes = new Set([owl.Class, ...this.propertyTypes]);
+    private readonly editableRelations = new Set<Reactodia.LinkTypeIri>([rdfs.domain, rdfs.range]);
     private readonly literalLanguages: ReadonlyArray<string> = ['de', 'en', 'es', 'ru', 'zh'];
 
     getLiteralLanguages(): ReadonlyArray<string> {
@@ -137,6 +138,7 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
             case rdfs.subPropertyOf: {
                 return {
                     canChangeType: true,
+                    canEdit: this.editableRelations.has(link.linkTypeId),
                     canDelete: true,
                 };
             }
@@ -158,6 +160,20 @@ export class ExampleMetadataProvider implements Reactodia.MetadataProvider {
             });
             properties.set(rdfs.seeAlso, {
                 valueShape: {termType: 'NamedNode'},
+            });
+        }
+        return {properties};
+    }
+
+    async getRelationShape(
+        linkType: Reactodia.LinkTypeIri,
+        options: { readonly signal?: AbortSignal; }
+    ): Promise<Reactodia.MetadataRelationShape> {
+        await Reactodia.delay(SIMULATED_DELAY, {signal: options.signal});
+        const properties = new Map<Reactodia.PropertyTypeIri, Reactodia.MetadataPropertyShape>();
+        if (this.editableRelations.has(linkType)) {
+            properties.set(rdfs.comment, {
+                valueShape: {termType: 'Literal'},
             });
         }
         return {properties};
@@ -204,6 +220,18 @@ export class ExampleValidationProvider implements Reactodia.ValidationProvider {
                     target: event.target.id,
                     severity: 'info',
                     message: 'It might be a good idea to make the property a sub-property of another',
+                });
+            }
+        }
+
+        for (const link of event.outboundLinks) {
+            const { [rdfs.comment]: comments } = link.properties;
+            if (comments && !comments.every(comment => comment.termType === 'Literal' && comment.language)) {
+                items.push({
+                    type: 'link',
+                    target: link,
+                    severity: 'error',
+                    message: 'rdfs:comment value should have a language',
                 });
             }
         }
