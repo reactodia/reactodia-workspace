@@ -1,0 +1,8 @@
+@use "../theme/theme";
+
+.reactodia-edit-relation-form {
+  &--loading {
+    align-items: center;
+    justify-content: center;
+  }
+}

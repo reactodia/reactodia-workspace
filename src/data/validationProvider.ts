@@ -35,7 +35,7 @@ export type ValidationSeverity = 'info' | 'warning' | 'error';
 /**
  * Provides a strategy to validate changes to the data in the graph authoring mode.
  *
- * **Experimental**: this feature will likely change in the future.
+ * **Unstable**: this interface will likely change in the future.
  *
  * @category Core
  */
