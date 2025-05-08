@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 
-import { ElementModel } from '../../data/model';
+import type { ElementModel } from '../../data/model';
 import { defineCanvasWidget } from '../../diagram/canvasWidget';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
@@ -12,6 +12,9 @@ import { AuthoringState } from '../../editor/authoringState';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
 import { EntityElement, RelationLink } from '../../editor/dataElements';
 
+import type { PropertyInputOrDefaultResolver } from '../../forms/input/inputCommon';
+import { PropertyInputText } from '../../forms/input/propertyInputText';
+import { PropertyInputList } from '../../forms/input/propertyInputList';
 import { EditRelationForm } from '../../forms/editRelationForm';
 import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
@@ -34,6 +37,10 @@ export interface VisualAuthoringProps {
      * Overrides default property editor for elements and links in the graph authoring mode.
      */
     propertyEditor?: PropertyEditor;
+    /**
+     * Overrides default input for a specific entity or relation property.
+     */
+    inputResolver?: PropertyInputOrDefaultResolver;
 }
 
 /**
@@ -93,7 +100,7 @@ export interface VisualAuthoringCommands {
  * @category Components
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
-    const {propertyEditor} = props;
+    const {propertyEditor, inputResolver} = props;
     const {model, view, editor, overlay, translation: t, getCommandBus} = useWorkspace();
 
     React.useLayoutEffect(() => {
@@ -167,6 +174,10 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     entity={modelToEdit}
                     onApply={onSubmit}
                     onCancel={onCancel}
+                    resolveInput={(property, inputProps) => {
+                        const input = inputResolver?.(property, inputProps);
+                        return input ?? <PropertyInputList {...inputProps} valueInput={PropertyInputText} />;
+                    }}
                 />
             );
             overlay.showDialog({
@@ -222,6 +233,10 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     }}
                     onAfterApply={() => overlay.hideDialog()}
                     onCancel={() => overlay.hideDialog()}
+                    resolveInput={(property, inputProps) => {
+                        const input = inputResolver?.(property, inputProps);
+                        return input ?? <PropertyInputList {...inputProps} valueInput={PropertyInputText} />;
+                    }}
                 />
             );
             const caption = editor.temporaryState.links.has(link.data)

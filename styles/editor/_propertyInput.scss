@@ -1,7 +1,7 @@
 @use "../mixin/icons" as *;
 @use "../theme/theme";
 
-.reactodia-text-property-input {
+.reactodia-property-input-list {
   &__row {
     display: flex;
     gap: theme.$spacing-horizontal;
@@ -11,11 +11,6 @@
     margin-top: theme.$spacing-vertical;
   }
 
-  &__language {
-    width: unset;
-    padding: 0 2px;
-  }
-  
   &__value-remove {
     @include codicon-button("trash");
     padding: 6px 4px;
@@ -24,5 +19,12 @@
   &__value-add {
     @include codicon-button("add");
     padding: 6px;
+  }
+}
+
+.reactodia-property-input-text {
+  &__language {
+    width: unset;
+    padding: 0 2px;
   }
 }

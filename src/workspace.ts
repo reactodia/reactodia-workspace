@@ -128,6 +128,13 @@ export {
 export { ValidationState, ElementValidation, LinkValidation } from './editor/validation';
 export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
 
+export type {
+    PropertyInputSingleProps, PropertyInputMultiProps, PropertyInputMultiUpdater,
+    PropertyInputOrDefaultResolver,
+} from './forms/input/inputCommon';
+export { PropertyInputList, type PropertyInputListProps } from './forms/input/propertyInputList';
+export { PropertyInputText, type PropertyInputTextProps } from './forms/input/propertyInputText';
+
 export {
     SerializedDiagram, SerializedLayout, SerializedLinkOptions,
     SerializedLayoutElement, SerializedLayoutElementGroup, SerializedLayoutElementItem,

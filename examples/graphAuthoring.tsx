@@ -62,6 +62,11 @@ function GraphAuthoringExample() {
             renameLinkProvider={renameLinkProvider}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
+                visualAuthoring={{
+                    inputResolver: (property, inputProps) => property === 'http://www.w3.org/2000/01/rdf-schema#comment'
+                        ? <Reactodia.PropertyInputList {...inputProps} valueInput={CommentWithTitleInput} />
+                        : undefined,
+                }}
             />
         </Reactodia.Workspace>
     );
@@ -71,6 +76,47 @@ class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     override canRename(link: Reactodia.Link): boolean {
         return link.typeId === 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
     }
+}
+
+function CommentWithTitleInput(props: Reactodia.PropertyInputSingleProps) {
+    const {value, setValue, factory} = props;
+    const literal = value.termType === 'Literal' ? value : factory.literal('');
+    const [title, body = ''] = literal.value.split('\n', 2);
+    return (
+        <>
+            <div style={{display: 'flex', flexDirection: 'column'}}>
+                <label style={{color: 'var(--reactodia-color-emphasis-700)'}}>title</label>
+                <input className='reactodia-form-control'
+                    placeholder='Comment title'
+                    value={title}
+                    onChange={e => {
+                        const nextTitle = e.currentTarget.value;
+                        setValue(factory.literal(
+                            `${nextTitle}\n${body}`,
+                            literal.language ? literal.language : literal.datatype
+                        ));
+                    }}
+                />
+            </div>
+            <div style={{display: 'flex', flexDirection: 'column'}}>
+                <label style={{color: 'var(--reactodia-color-emphasis-700)'}}>detail</label>
+                <div style={{display: 'flex', gap: 'var(--reactodia-spacing-horizontal)'}}>
+                    <Reactodia.PropertyInputText {...props}
+                        placeholder='Comment body'
+                        value={factory.literal(body, literal.language ? literal.language : literal.datatype)}
+                        setValue={nextBody => {
+                            if (nextBody.termType === 'Literal') {
+                                setValue(factory.literal(
+                                    `${title}\n${nextBody.value}`,
+                                    nextBody.language ? nextBody.language : nextBody.datatype
+                                ));
+                            }
+                        }}
+                    />
+                </div>
+            </div>
+        </>
+    );
 }
 
 mountOnLoad(<GraphAuthoringExample />);
