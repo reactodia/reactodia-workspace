@@ -236,7 +236,7 @@ function useRelationMetadata(
                     setShapeError(error);
                 }
             );
-            return cancellation.abort();
+            return () => cancellation.abort();
         } else {
             setShape({shape: null});
         }
