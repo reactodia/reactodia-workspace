@@ -13,11 +13,15 @@ import { AuthoredEntity } from '../../editor/authoringState';
 import { EntityElement } from '../../editor/dataElements';
 import { ElementValidation, LinkValidation, getMaxSeverity } from '../../editor/validation';
 
+import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
+
+import { useAuthoredEntity } from './authoredEntity';
 
 export interface AuthoredEntityDecoratorProps {
     target: EntityElement;
     position: Vector;
+    inlineActions?: boolean;
 }
 
 export function AuthoredEntityDecorator(props: AuthoredEntityDecoratorProps) {
@@ -145,6 +149,39 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
         return null;
     }
 
+    private renderElementState() {
+        const {target, inlineActions, workspace: {editor, translation: t, getCommandBus}} = this.props;
+        const {state, isTemporary} = this.state;
+
+        return (
+            <div className={`${CLASS_NAME}__state-indicator`}
+                key={target.id}
+                style={{left: 0, top: 0}}>
+                <div className={`${CLASS_NAME}__state-indicator-container`}>
+                    <div className={`${CLASS_NAME}__state-indicator-body`}>
+                        {state ? (
+                            <span className={`${CLASS_NAME}__state-label`}>
+                                {(
+                                    state.type === 'entityAdd' ? t.text('authoring_state.entity_add.label') :
+                                    state.type === 'entityChange' ? t.text('authoring_state.entity_change.label') :
+                                    state.type === 'entityDelete' ? t.text('authoring_state.entity_delete.label') :
+                                    null
+                                )}
+                            </span>
+                        ) : null}
+                        {isTemporary ? null : (
+                            <InlineActions target={target}
+                                state={state}
+                                allActions={Boolean(inlineActions)}
+                            />
+                        )}
+                        {this.renderElementValidations()}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation) {
         const severity = getMaxSeverity(validation.items);
         return (
@@ -180,52 +217,6 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
         }).join('\n');
 
         return this.renderValidationIcon(title, validation);
-    }
-
-    private renderElementState() {
-        const {target, workspace: {editor, translation: t}} = this.props;
-        const {state} = this.state;
-        if (state) {
-            let statusText: string;
-            let title: string;
-
-            switch (state.type) {
-                case 'entityAdd': {
-                    statusText = t.text('authoring_state.entity_add.label');
-                    title = t.text('authoring_state.entity_add_revert.title');
-                    break;
-                }
-                case 'entityChange': {
-                    statusText = t.text('authoring_state.entity_change.label');
-                    title = t.text('authoring_state.entity_change_revert.title');
-                    break;
-                }
-                case 'entityDelete': {
-                    statusText = t.text('authoring_state.entity_delete.label');
-                    title = t.text('authoring_state.entity_delete_revert.title');
-                    break;
-                }
-            }
-
-            return (
-                <div className={`${CLASS_NAME}__state-indicator`}
-                    key={target.id}
-                    style={{left: 0, top: 0}}>
-                    <div className={`${CLASS_NAME}__state-indicator-container`}>
-                        <div className={`${CLASS_NAME}__state-indicator-body`}>
-                            <span>
-                                <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
-                                [<span className={`${CLASS_NAME}__state-cancel`}
-                                    onClick={() => editor.discardChange(state)}
-                                    title={title}>{t.text('authoring_state.discard.label')}</span>]
-                            </span>
-                            {this.renderElementValidations()}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return null;
     }
 
     render() {
@@ -275,4 +266,51 @@ function getSeverityClass(severity: ValidationSeverity): string | undefined {
         default:
             return undefined;
     }
+}
+
+function InlineActions(props: {
+    target: EntityElement;
+    state: AuthoredEntity | undefined;
+    allActions: boolean;
+}) {
+    const {target, state, allActions} = props;
+    const {editor, translation: t} = useWorkspace();
+
+    const authored = useAuthoredEntity(target.data, allActions);
+
+    return (
+        <div className={`${CLASS_NAME}__actions`}>
+            {allActions && (!state || state.type === 'entityAdd' || state.type === 'entityChange') ? (
+                <button className={`${CLASS_NAME}__action ${CLASS_NAME}__action-edit`}
+                    disabled={!authored.canEdit}
+                    onClick={() => authored.onEdit(target)}
+                    title={
+                        authored.canEdit
+                            ? t.text('authoring_state.entity_action_edit.title')
+                            : t.text('authoring_state.entity_action_edit.title_disabled')
+                    }>
+                    {t.text('authoring_state.entity_action_edit.label')}
+                </button>
+            ) : null}
+            {(allActions && !state) || state?.type === 'entityAdd' ? (
+                <button className={`${CLASS_NAME}__action ${CLASS_NAME}__action-delete`}
+                    disabled={!authored.canDelete}
+                    onClick={() => authored.onDelete()}
+                    title={
+                        authored.canEdit
+                            ? t.text('authoring_state.entity_action_delete.title')
+                            : t.text('authoring_state.entity_action_delete.title_disabled')
+                    }>
+                    {t.text('authoring_state.entity_action_delete.label')}
+                </button>
+            ) : null}
+            {state && state.type !== 'entityAdd' ? (
+                <button className={`${CLASS_NAME}__action ${CLASS_NAME}__action-discard`}
+                    onClick={() => editor.discardChange(state)}
+                    title={t.text('authoring_state.entity_action_discard.title')}>
+                    {t.text('authoring_state.entity_action_discard.label')}
+                </button>
+            ) : null}
+        </div>
+    );
 }

@@ -12,19 +12,22 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
-        "discard.label": { "$ref": "#/$defs/Value" },
+        "entity_action_delete.label": { "$ref": "#/$defs/Value" },
+        "entity_action_delete.title": { "$ref": "#/$defs/Value" },
+        "entity_action_delete.title_disabled": { "$ref": "#/$defs/Value" },
+        "entity_action_discard.label": { "$ref": "#/$defs/Value" },
+        "entity_action_discard.title": { "$ref": "#/$defs/Value" },
+        "entity_action_edit.label": { "$ref": "#/$defs/Value" },
+        "entity_action_edit.title": { "$ref": "#/$defs/Value" },
+        "entity_action_edit.title_disabled": { "$ref": "#/$defs/Value" },
         "entity_add.label": { "$ref": "#/$defs/Value" },
-        "entity_add_revert.title": { "$ref": "#/$defs/Value" },
         "entity_change.label": { "$ref": "#/$defs/Value" },
-        "entity_change_revert.title": { "$ref": "#/$defs/Value" },
         "entity_delete.label": { "$ref": "#/$defs/Value" },
-        "entity_delete_revert.title": { "$ref": "#/$defs/Value" },
+        "relation_action_discard.label": { "$ref": "#/$defs/Value" },
+        "relation_action_discard.title": { "$ref": "#/$defs/Value" },
         "relation_add.label": { "$ref": "#/$defs/Value" },
-        "relation_add_revert.title": { "$ref": "#/$defs/Value" },
         "relation_change.label": { "$ref": "#/$defs/Value" },
-        "relation_change_revert.title": { "$ref": "#/$defs/Value" },
-        "relation_delete.label": { "$ref": "#/$defs/Value" },
-        "relation_delete_revert.title": { "$ref": "#/$defs/Value" }
+        "relation_delete.label": { "$ref": "#/$defs/Value" }
       }
     },
     "classic_workspace": {

@@ -16,7 +16,7 @@ import { RenderingLayer } from '../../diagram/renderingState';
 import { Link } from '../../diagram/elements';
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import { AuthoringState } from '../../editor/authoringState';
+import { AuthoredRelation, AuthoringState } from '../../editor/authoringState';
 import { RelationLink } from '../../editor/dataElements';
 import { getMaxSeverity } from '../../editor/validation';
 
@@ -127,7 +127,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     }
 
     private renderLinkStateLabels() {
-        const {workspace: {model, editor, translation: t}} = this.props;
+        const {workspace: {model, editor}} = this.props;
 
         const rendered: React.ReactElement[] = [];
         for (const link of model.links) {
@@ -135,39 +135,8 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
                 continue;
             }
 
-            let renderedState: React.ReactElement | null = null;
             const state = editor.authoringState.links.get(link.data);
-            if (state) {
-                let statusText: string;
-                let title: string;
-
-                switch (state.type) {
-                    case 'relationAdd': {
-                        statusText = t.text('authoring_state.relation_add.label');
-                        title = t.text('authoring_state.relation_add_revert.title');
-                        break;
-                    }
-                    case 'relationChange': {
-                        statusText = t.text('authoring_state.relation_change.label');
-                        title = t.text('authoring_state.relation_change_revert.title');
-                        break;
-                    }
-                    case 'relationDelete': {
-                        statusText = t.text('authoring_state.relation_delete.label');
-                        title = t.text('authoring_state.relation_delete_revert.title');
-                        break;
-                    }
-                }
-
-                renderedState = (
-                    <span>
-                        <span className={`${CLASS_NAME}__state-label`}>{statusText}</span>
-                        [<span className={`${CLASS_NAME}__state-cancel`}
-                            onClick={() => editor.discardChange(state)}
-                            title={title}>{t.text('authoring_state.discard.label')}</span>]
-                    </span>
-                );
-            }
+            const renderedState = this.renderLinkStatus(state);
 
             const renderedValidations = this.renderLinkValidations(link.data);
             if (renderedState || renderedValidations) {
@@ -191,6 +160,32 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         }
 
         return rendered;
+    }
+
+    private renderLinkStatus(state: AuthoredRelation | undefined) {
+        const {workspace: {editor, translation: t}} = this.props;
+
+        if (!state) {
+            return null;
+        }
+
+        return (
+            <>
+                <span className={`${CLASS_NAME}__state-label`}>
+                    {(
+                        state.type === 'relationAdd' ? t.text('authoring_state.relation_add.label') :
+                        state.type === 'relationChange' ? t.text('authoring_state.relation_change.label') :
+                        state.type === 'relationDelete' ? t.text('authoring_state.relation_delete.label') :
+                        null
+                    )}
+                </span>
+                <span className={`${CLASS_NAME}__action ${CLASS_NAME}__action-discard`}
+                    onClick={() => editor.discardChange(state)}
+                    title={t.text('authoring_state.relation_action_discard.title')}>
+                    {t.text('authoring_state.relation_action_discard.label')}
+                </span>
+            </>
+        );
     }
 
     private renderLinkStateHighlighting() {

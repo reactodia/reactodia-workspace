@@ -41,6 +41,12 @@ export interface VisualAuthoringProps {
      * Overrides default input for a specific entity or relation property.
      */
     inputResolver?: PropertyInputOrDefaultResolver;
+    /**
+     * Whether to display inline authoring actions (edit, delete) on entity elements.
+     *
+     * @default true
+     */
+    inlineEntityActions?: boolean;
 }
 
 /**
@@ -100,7 +106,7 @@ export interface VisualAuthoringCommands {
  * @category Components
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
-    const {propertyEditor, inputResolver} = props;
+    const {propertyEditor, inputResolver, inlineEntityActions = true} = props;
     const {model, view, editor, overlay, translation: t, getCommandBus} = useWorkspace();
 
     React.useLayoutEffect(() => {
@@ -116,6 +122,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 return (
                     <AuthoredEntityDecorator target={element}
                         position={element.position}
+                        inlineActions={inlineEntityActions}
                     />
                 );
             }
