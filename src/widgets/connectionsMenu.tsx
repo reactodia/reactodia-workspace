@@ -848,7 +848,7 @@ interface ConnectionsListProps {
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
 
-    scrolledListRef: React.RefObject<HTMLUListElement>;
+    scrolledListRef: React.RefObject<HTMLUListElement | null>;
 }
 
 interface ConnectionSuggestions {
@@ -911,7 +911,7 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
         const {workspace, data, suggestions} = this.props;
         const {scores} = suggestions;
 
-        const views: JSX.Element[] = [];
+        const views: React.ReactElement[] = [];
         const addView = (link: LinkTypeModel, direction: 'in' | 'out') => {
             const {inCount, outCount, inexact} = data.counts.get(link.id) ?? {
                 inCount: 0,
@@ -998,7 +998,11 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
             ];
         }
         return (
-            <ul ref={scrolledListRef}
+            <ul
+                ref={
+                    /* For compatibility with React 19 typings */
+                    scrolledListRef as React.RefObject<HTMLUListElement>
+                }
                 className={cx(
                     'reactodia-scrollable',
                     `${CLASS_NAME}__links-list`,
@@ -1164,7 +1168,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
             total: elements.length,
         });
 
-        let extraCountInfo: JSX.Element | null = null;
+        let extraCountInfo: React.ReactElement | null = null;
         if (chunk.expectedCount !== 'some') {
             const extraCount = elements.length - Math.min(LINK_COUNT_PER_PAGE, chunk.expectedCount);
             const extra = Math.abs(extraCount) > LINK_COUNT_PER_PAGE ?

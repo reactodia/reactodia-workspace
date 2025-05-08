@@ -114,7 +114,7 @@ export function DefaultLink(props: DefaultLinkProps) {
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
 
     const renamedLabel = renameLinkProvider?.getLabel(link);
-    let labelContent: JSX.Element | null = null;
+    let labelContent: React.ReactElement | null = null;
     if (model.getLinkVisibility(link.typeId) === 'visible') {
         const linkType = model.getLinkType(link.typeId);
         const label = renamedLabel ?? t.formatLabel(linkType?.data?.label, link.typeId, model.language);

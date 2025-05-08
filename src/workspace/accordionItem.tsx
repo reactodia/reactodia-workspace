@@ -48,8 +48,8 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
         direction: 'vertical',
     };
 
-    private _element: HTMLDivElement | undefined | null;
-    private _header: HTMLDivElement | undefined | null;
+    private _element = React.createRef<HTMLDivElement>();
+    private _header = React.createRef<HTMLDivElement>();
 
     constructor(props: AccordionItemProps) {
         super(props);
@@ -58,8 +58,8 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
         };
     }
 
-    get element() { return this._element; }
-    get header() { return this._header; }
+    get element(): HTMLDivElement | null { return this._element.current; }
+    get header():  HTMLDivElement | null { return this._header.current; }
 
     private get isVertical() {
         return this.props.direction === 'vertical';
@@ -92,11 +92,11 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
                     `${CLASS_NAME} ${CLASS_NAME}--${collapsed ? 'collapsed' : 'expanded'} ${CLASS_NAME}--${direction}
                     ${resizing ? `${CLASS_NAME}--resizing` : ''}`
                 }
-                ref={element => this._element = element}
+                ref={this._element}
                 style={style}>
                 <div className={`${CLASS_NAME}__inner`}>
                     {heading ? <div className={`${CLASS_NAME}__header`}
-                        ref={header => this._header = header}
+                        ref={this._header}
                         onClick={() => this.props.onChangeCollapsed!(!collapsed)}>{heading}</div> : null}
                     <div className={`${CLASS_NAME}__body`}>
                         {children && isMounted

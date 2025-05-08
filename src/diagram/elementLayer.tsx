@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { findDOMNode, flushSync } from 'react-dom';
+import { flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
@@ -56,7 +56,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         forAll: RedrawFlags.None,
     };
     private delayedRedraw = new Debouncer();
-    private readonly memoizedElements = new WeakMap<ElementState, JSX.Element>();
+    private readonly memoizedElements = new WeakMap<ElementState, React.ReactElement>();
 
     private sizeRequests = new Map<string, SizeUpdateRequest>();
     private delayedUpdateSizes = new Debouncer();
@@ -289,6 +289,7 @@ interface OverlaidElementProps {
 }
 
 class OverlaidElement extends React.Component<OverlaidElementProps> {
+    private readonly elementRef = React.createRef<HTMLDivElement | null>();
     private readonly listener = new EventObserver();
 
     render(): React.ReactElement<any> {
@@ -311,7 +312,10 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
             data-element-id={element.id}
             style={{position: 'absolute', transform}}
             tabIndex={0}
-            ref={this.onMount}
+            ref={
+                /* For compatibility with React 19 typings */
+                this.elementRef as React.RefObject<HTMLDivElement>
+            }
             // Resize element when child image loaded,
             // works through automatic bubbling for these events in React.
             // eslint-disable-next-line react/no-unknown-property
@@ -323,17 +327,11 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         </div>;
     }
 
-    private onMount = (node: HTMLDivElement | null) => {
-        if (!node) { return; }
-        const {state, onResize} = this.props;
-        onResize(state.element, node);
-    };
-
     private onLoadOrErrorEvent = () => {
         const {state, onResize} = this.props;
-        // TODO: replace findDOMNode() usage by accessing a ref
-        // eslint-disable-next-line react/no-find-dom-node
-        onResize(state.element, findDOMNode(this) as HTMLDivElement);
+        if (this.elementRef.current) {
+            onResize(state.element, this.elementRef.current);
+        }
     };
 
     private onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -346,13 +344,14 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     };
 
     componentDidMount() {
-        const {state, model} = this.props;
+        const {state, onResize} = this.props;
         this.listener.listen(state.element.events, 'requestedFocus', () => {
-            // TODO: replace findDOMNode() usage by accessing a ref
-            // eslint-disable-next-line react/no-find-dom-node
-            const element = findDOMNode(this) as HTMLElement;
-            if (element) { element.focus(); }
+            this.elementRef.current?.focus();
         });
+
+        if (this.elementRef.current) {
+            onResize(state.element, this.elementRef.current);
+        }
     }
 
     componentWillUnmount() {
@@ -365,9 +364,9 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
 
     componentDidUpdate() {
         const {state, onResize} = this.props;
-        // TODO: replace findDOMNode() usage by accessing a ref
-        // eslint-disable-next-line react/no-find-dom-node
-        onResize(state.element, findDOMNode(this) as HTMLDivElement);
+        if (this.elementRef.current) {
+            onResize(state.element, this.elementRef.current);
+        }
     }
 }
 

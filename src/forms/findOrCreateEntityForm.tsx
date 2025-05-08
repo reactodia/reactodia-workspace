@@ -41,8 +41,8 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
     private validationCancellation = new AbortController();
 
-    constructor(props: FindOrCreateEntityFormProps, context: any) {
-        super(props, context);
+    constructor(props: FindOrCreateEntityFormProps) {
+        super(props);
         const {source, target, initialTargetIsNew, originalLink} = this.props;
         this.link = originalLink;
         this.state = {

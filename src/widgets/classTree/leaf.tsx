@@ -31,8 +31,8 @@ export class Leaf extends React.Component<LeafProps, State> {
     static contextType = WorkspaceContext;
     declare readonly context: WorkspaceContext;
 
-    constructor(props: LeafProps, context: any) {
-        super(props, context);
+    constructor(props: LeafProps) {
+        super(props);
         this.state = {
             expanded: Boolean(this.props.searchText),
         };

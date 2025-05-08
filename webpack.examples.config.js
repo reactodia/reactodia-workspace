@@ -108,6 +108,10 @@ module.exports = (env, argv) => {
         })
       )
     ],
+    ignoreWarnings: [
+      // For compatibility with different React versions (v17/v18/v19) in examples
+      e => e.message.includes('Can\'t resolve \'react-dom/client\''),
+    ],
   };
 
   /**

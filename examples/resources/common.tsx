@@ -14,8 +14,14 @@ function onPageLoad(callback: (container: HTMLDivElement) => void) {
 }
 
 export function mountOnLoad(node: React.ReactElement): void {
-    onPageLoad(container => {
-        ReactDOM.render(node, container);
+    onPageLoad(async container => {
+        try {
+            const {createRoot} = await import('react-dom/client');
+            const root = createRoot(container);
+            root.render(node);
+        } catch (err) {
+            ReactDOM.render(node, container);
+        }
     });
 }
 

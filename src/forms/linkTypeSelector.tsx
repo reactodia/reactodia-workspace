@@ -46,8 +46,8 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     private readonly listener = new EventObserver();
     private readonly cancellation = new AbortController();
 
-    constructor(props: LinkTypeSelectorProps, context: any) {
-        super(props, context);
+    constructor(props: LinkTypeSelectorProps) {
+        super(props);
         this.state = {};
     }
 
