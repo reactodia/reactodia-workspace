@@ -69,15 +69,12 @@ export interface RdfDataProviderOptions {
 const BLANK_PREFIX = 'urn:reactodia:blank:rdf:';
 
 const OWL_CLASS = 'http://www.w3.org/2002/07/owl#Class';
-const OWL_DATATYPE_PROPERTY = 'http://www.w3.org/2002/07/owl#DatatypeProperty';
 const OWL_OBJECT_PROPERTY = 'http://www.w3.org/2002/07/owl#ObjectProperty';
 
-const RDF_PROPERTY = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Property';
-const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+const RDF_PROPERTY = `${Rdf.Vocabulary.rdf.namespace}#Property` as const;
 
-const RDFS_CLASS = 'http://www.w3.org/2000/01/rdf-schema#Class';
-const RDFS_LABEL = 'http://www.w3.org/2000/01/rdf-schema#label';
-const RDFS_SUB_CLASS_OF = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
+const RDFS_CLASS = `${Rdf.Vocabulary.rdfs.namespace}#Class` as const;
+const RDFS_SUB_CLASS_OF = `${Rdf.Vocabulary.rdfs.namespace}#subClassOf`;
 
 const SCHEMA_THUMBNAIL_URL = 'https://schema.org/thumbnailUrl';
 
@@ -111,9 +108,9 @@ export class RdfDataProvider implements DataProvider {
             IndexQuadBy.OP
         );
         this.acceptBlankNodes = options.acceptBlankNodes ?? true;
-        this.typePredicate = this.factory.namedNode(options.typePredicate ?? RDF_TYPE);
+        this.typePredicate = this.factory.namedNode(options.typePredicate ?? Rdf.Vocabulary.rdf.type);
         this.labelPredicate = options.labelPredicate === null
-            ? null : this.factory.namedNode(options.labelPredicate ?? RDFS_LABEL);
+            ? null : this.factory.namedNode(options.labelPredicate ?? Rdf.Vocabulary.rdfs.label);
         this.imagePredicate = options.imagePredicate === null
             ? null : this.factory.namedNode(options.imagePredicate ?? SCHEMA_THUMBNAIL_URL);
         this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [OWL_CLASS, RDFS_CLASS])

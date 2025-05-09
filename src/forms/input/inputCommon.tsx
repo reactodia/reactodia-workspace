@@ -1,0 +1,94 @@
+import * as React from 'react';
+
+import * as Rdf from '../../data/rdf/rdfModel';
+import { PropertyTypeIri } from '../../data/model';
+
+import type { MetadataPropertyShape, MetadataValueShape } from '../../data/metadataProvider';
+
+/**
+ * Resolves an input component to edit a specific entity or relation property.
+ *
+ * If the resolver returns `undefined` then the default input will be used,
+ * else if it returns `null` then the input will be hidden,
+ * otherwise the returned input will be used.
+ *
+ * @see {@link VisualAuthoring.inputResolver}
+ */
+export type PropertyInputOrDefaultResolver = (property: PropertyTypeIri, inputProps: PropertyInputMultiProps) =>
+    React.ReactElement | undefined | null;
+
+/**
+ * Props for a property input accepting a single value to edit.
+ *
+ * @see {@link PropertyInputOrDefaultResolver}
+ */
+export interface PropertyInputSingleProps {
+    /**
+     * Property shape metadata.
+     */
+    shape: MetadataPropertyShape;
+    /**
+     * Languages to author text literals.
+     *
+     * Usually provided by {@link MetadataProvider.getLiteralLanguages}.
+     */
+    languages: ReadonlyArray<string>;
+    /**
+     * Current value for the edited property.
+     */
+    value: Rdf.NamedNode | Rdf.Literal;
+    /**
+     * Sets the current value for the edited property.
+     */
+    setValue: (value: Rdf.NamedNode | Rdf.Literal) => void;
+    /**
+     * RDF/JS-compatible term factory to create RDF terms.
+     */
+    factory: Rdf.DataFactory;
+}
+
+/**
+ * Props for a property input accepting multiple values to edit.
+ *
+ * @see {@link PropertyInputOrDefaultResolver}
+ */
+export interface PropertyInputMultiProps {
+    /**
+     * Property shape metadata.
+     */
+    shape: MetadataPropertyShape;
+    /**
+     * Languages to author text literals.
+     *
+     * Usually provided by {@link MetadataProvider.getLiteralLanguages}.
+     */
+    languages: ReadonlyArray<string>;
+    /**
+     * Current list (or set) of values for the edited property.
+     */
+    values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+    /**
+     * Sets the current list (or set) of values for the edited property.
+     */
+    updateValues: (updater: PropertyInputMultiUpdater) => void;
+    /**
+     * RDF/JS-compatible term factory to create RDF terms.
+     */
+    factory: Rdf.DataFactory;
+}
+
+/**
+ * Pure function to update a previous set of property values into a new one.
+ *
+ * @see {@link PropertyInputMultiProps.updateValues}
+ */
+export type PropertyInputMultiUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
+    ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+
+const DEFAULT_VALUE_SHAPE: MetadataValueShape = {
+    termType: 'Literal',
+};
+
+export const DEFAULT_PROPERTY_SHAPE: MetadataPropertyShape = {
+    valueShape: DEFAULT_VALUE_SHAPE,
+};

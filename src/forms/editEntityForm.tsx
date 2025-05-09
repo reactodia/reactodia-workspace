@@ -11,8 +11,10 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { PropertiesInput, type PropertyUpdater, DEFAULT_PROPERTY_SHAPE } from './propertiesInput';
-import { TextPropertyInput } from './textPropertyInput';
+import { type PropertyInputMultiUpdater, DEFAULT_PROPERTY_SHAPE } from './input/inputCommon';
+import { PropertiesInput, type PropertyInputResolver } from './input/propertiesInput';
+import { PropertyInputText } from './input/propertyInputText';
+import { PropertyInputList } from './input/propertyInputList';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
@@ -21,8 +23,9 @@ export function EditEntityForm(props: {
     entity: ElementModel;
     onApply: (entity: ElementModel) => void;
     onCancel: () => void;
+    resolveInput: PropertyInputResolver;
 }) {
-    const {entity, onApply, onCancel} = props;
+    const {entity, onApply, onCancel, resolveInput} = props;
     const {model, editor, translation: t} = useWorkspace();
 
     const [data, setData] = React.useState(entity);
@@ -41,7 +44,7 @@ export function EditEntityForm(props: {
         setData(previous => ({...previous, id: iri}));
     }, []);
 
-    const onChangeLabel = React.useCallback((updater: PropertyUpdater) => {
+    const onChangeLabel = React.useCallback((updater: PropertyInputMultiUpdater) => {
         setData(previous => ({
             ...previous,
             label: updater(previous.label) as ReadonlyArray<Rdf.Literal>,
@@ -50,7 +53,7 @@ export function EditEntityForm(props: {
 
     const onChangeProperty = (
         property: PropertyTypeIri,
-        updater: PropertyUpdater
+        updater: PropertyInputMultiUpdater
     ): void => {
         setData(previous => {
             const properties = previous.properties;
@@ -107,11 +110,13 @@ export function EditEntityForm(props: {
                 </div>
                 <div className={`${FORM_CLASS}__row`}>
                     <label>{t.text('visual_authoring.edit_entity.label.label')}</label>
-                    <TextPropertyInput shape={DEFAULT_PROPERTY_SHAPE}
+                    <PropertyInputList
+                        shape={DEFAULT_PROPERTY_SHAPE}
                         languages={languages}
                         values={data.label}
                         updateValues={onChangeLabel}
                         factory={model.factory}
+                        valueInput={PropertyInputText}
                     />
                 </div>
                 <PropertiesInput className={`${CLASS_NAME}__properties`}
@@ -119,6 +124,7 @@ export function EditEntityForm(props: {
                     languages={languages}
                     data={data.properties}
                     onChangeData={onChangeProperty}
+                    resolveInput={resolveInput}
                 />
             </div>
             <div className={`${FORM_CLASS}__controls`}>

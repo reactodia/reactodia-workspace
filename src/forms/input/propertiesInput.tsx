@@ -1,39 +1,35 @@
 import * as React from 'react';
 
-import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import { useTranslation } from '../coreUtils/i18n';
+import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
+import { useTranslation } from '../../coreUtils/i18n';
 
-import { PropertyTypeIri } from '../data/model';
-import * as Rdf from '../data/rdf/rdfModel';
-import type { MetadataPropertyShape, MetadataValueShape } from '../data/metadataProvider';
+import { PropertyTypeIri } from '../../data/model';
+import * as Rdf from '../../data/rdf/rdfModel';
+import type { MetadataPropertyShape } from '../../data/metadataProvider';
 
-import { subscribePropertyTypes } from '../editor/observedElement';
-import { WithFetchStatus } from '../editor/withFetchStatus';
+import { subscribePropertyTypes } from '../../editor/observedElement';
+import { WithFetchStatus } from '../../editor/withFetchStatus';
 
-import { useWorkspace } from '../workspace/workspaceContext';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { TextPropertyInput } from './textPropertyInput';
+import {
+    type PropertyInputMultiUpdater, type PropertyInputMultiProps, DEFAULT_PROPERTY_SHAPE,
+} from './inputCommon';
 
 const FORM_CLASS = 'reactodia-form';
 
-export type PropertyUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
-    ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-
-const DEFAULT_VALUE_SHAPE: MetadataValueShape = {
-    termType: 'Literal',
-};
-export const DEFAULT_PROPERTY_SHAPE: MetadataPropertyShape = {
-    valueShape: DEFAULT_VALUE_SHAPE,
-};
+export type PropertyInputResolver = (property: PropertyTypeIri, props: PropertyInputMultiProps) =>
+    React.ReactElement | null;
 
 export function PropertiesInput(props: {
     className?: string;
     properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
     languages: ReadonlyArray<string>;
     data: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
-    onChangeData: (property: PropertyTypeIri, updater: PropertyUpdater) => void;
+    onChangeData: (property: PropertyTypeIri, updater: PropertyInputMultiUpdater) => void;
+    resolveInput: PropertyInputResolver;
 }) {
-    const {className, properties, languages, data, onChangeData} = props;
+    const {className, properties, languages, data, onChangeData, resolveInput} = props;
     const {model, translation: t} = useWorkspace();
 
     const extendedProperties = new Map(properties);
@@ -73,6 +69,7 @@ export function PropertiesInput(props: {
                     values={values}
                     onChange={onChangeData}
                     factory={model.factory}
+                    resolveInput={resolveInput}
                 />
             )}
         </div>
@@ -85,13 +82,14 @@ function Property(props: {
     shape: MetadataPropertyShape;
     languages: ReadonlyArray<string>;
     values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-    onChange: (iri: PropertyTypeIri, updater: PropertyUpdater) => void;
+    onChange: (iri: PropertyTypeIri, updater: PropertyInputMultiUpdater) => void;
     factory: Rdf.DataFactory;
+    resolveInput: PropertyInputResolver;
 }) {
-    const {iri, label, shape, languages, values, onChange, factory} = props;
+    const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
     const t = useTranslation();
 
-    const updateValues = React.useCallback((updater: PropertyUpdater) => {
+    const updateValues = React.useCallback((updater: PropertyInputMultiUpdater) => {
         onChange(iri, updater);
     }, [iri, onChange]);
 
@@ -111,12 +109,13 @@ function Property(props: {
                     </span>
                 </WithFetchStatus>
             </label>
-            <TextPropertyInput shape={shape}
-                languages={languages}
-                values={values}
-                updateValues={updateValues}
-                factory={factory}
-            />
+            {resolveInput(iri, {
+                shape,
+                languages,
+                values,
+                updateValues,
+                factory,
+            })}
         </div>
     );
 }

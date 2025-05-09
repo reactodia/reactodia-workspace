@@ -19,7 +19,8 @@ import {
     dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
 } from './linkTypeSelector';
 
-import { PropertiesInput, type PropertyUpdater } from './propertiesInput';
+import { type PropertyInputMultiUpdater } from './input/inputCommon';
+import { PropertiesInput, type PropertyInputResolver } from './input/propertiesInput';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-relation-form';
@@ -31,6 +32,7 @@ export interface EditRelationFormProps {
     onChangeTarget: (newTarget: RelationLink) => void;
     onAfterApply: () => void;
     onCancel: () => void;
+    resolveInput: PropertyInputResolver;
 }
 
 export function EditRelationForm(props: EditRelationFormProps) {
@@ -43,7 +45,7 @@ export function EditRelationForm(props: EditRelationFormProps) {
 }
 
 function EditRelationFormInner(props: EditRelationFormProps) {
-    const {originalLink, source, target, onChangeTarget, onAfterApply, onCancel} = props;
+    const {originalLink, source, target, onChangeTarget, onAfterApply, onCancel, resolveInput} = props;
     const workspace = useWorkspace();
     const {editor, translation: t} = workspace;
 
@@ -107,7 +109,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
 
     const onChangeProperty = (
         property: PropertyTypeIri,
-        updater: PropertyUpdater
+        updater: PropertyInputMultiUpdater
     ): void => {
         setValue((previous): ValidatedLink => {
             const properties = previous.link.base.properties;
@@ -179,6 +181,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
                         languages={languages}
                         data={value.link.base.properties}
                         onChangeData={onChangeProperty}
+                        resolveInput={resolveInput}
                     />
                 ) : null}
             </div>
