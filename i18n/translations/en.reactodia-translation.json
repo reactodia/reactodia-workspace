@@ -1,19 +1,22 @@
 {
   "$schema": "../i18n.schema.json",
   "authoring_state": {
-    "discard.label": "cancel",
+    "entity_action_delete.label": "delete",
+    "entity_action_delete.title": "Delete entity",
+    "entity_action_delete.title_disabled": "Cannot delete the entity",
+    "entity_action_discard.label": "cancel",
+    "entity_action_discard.title": "Discard all changes to the entity",
+    "entity_action_edit.label": "edit",
+    "entity_action_edit.title": "Edit entity",
+    "entity_action_edit.title_disabled": "Cannot edit the entity",
     "entity_add.label": "New",
-    "entity_add_revert.title": "Revert creation of the entity",
     "entity_change.label": "Change",
-    "entity_change_revert.title": "Revert all changes in properties of the entity",
     "entity_delete.label": "Delete",
-    "entity_delete_revert.title": "Revert deletion of the entity",
+    "relation_action_discard.label": "cancel",
+    "relation_action_discard.title": "Discard all changes to the relation",
     "relation_add.label": "New",
-    "relation_add_revert.title": "Revert creation of the relation",
     "relation_change.label": "Change",
-    "relation_change_revert.title": "Revert all changes in properties of the relation",
-    "relation_delete.label": "Delete",
-    "relation_delete_revert.title": "Revert deletion of the relation"
+    "relation_delete.label": "Delete"
   },
   "classic_workspace": {
     "class_tree.heading": "Classes",

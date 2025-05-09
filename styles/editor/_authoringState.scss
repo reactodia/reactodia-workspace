@@ -1,3 +1,4 @@
+@use "../mixin/icons" as *;
 @use "../theme/theme";
 
 .reactodia-authoring-state {
@@ -53,10 +54,6 @@
     stroke: theme.$color-primary;
   }
 
-  &__item-validation:not(:first-child) {
-    margin-left: 5px;
-  }
-
   &__item-validation {
     align-self: flex-end;
     display: flex;
@@ -90,15 +87,6 @@
 
   &__state-label {
     font-weight: bold;
-    margin-right: 5px;
-  }
-
-  &__state-cancel {
-    color: theme.$color-primary;
-    cursor: pointer;
-    &:hover {
-      text-decoration: underline;
-    }
   }
 
   &__state-indicator {
@@ -112,9 +100,46 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
+    gap: theme.$spacing-horizontal;
     bottom: 0;
     background: theme.$canvas-underlay-color;
     border-radius: 2px;
     padding: 1px;
+    height: 22px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: theme.$spacing-horizontal;
+  }
+
+  &__action {
+    background: none;
+    border: 0 none;
+    padding: 0;
+    cursor: pointer;
+
+    opacity: 0.5;
+    transition: opacity theme.$transition-duration;
+    &:hover {
+      opacity: 1;
+    }
+
+    &[disabled] {
+      cursor: not-allowed;
+      opacity: 0.2;
+    }
+  }
+
+  &__action-edit {
+    @include codicon-button("edit");
+  }
+
+  &__action-delete {
+    @include codicon-button("trash");
+  }
+
+  &__action-discard {
+    @include codicon-button("discard");
   }
 }
