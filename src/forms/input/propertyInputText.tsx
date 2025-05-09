@@ -16,6 +16,12 @@ const CLASS_NAME = 'reactodia-property-input-text';
  */
 export interface PropertyInputTextProps extends PropertyInputSingleProps {
     /**
+     * Whether to use multiline `textarea` to display and edit the text value.
+     *
+     * @default false
+     */
+    multiline?: boolean;
+    /**
      * Placeholder text for the property input.
      *
      * @default "Property value"
@@ -31,10 +37,14 @@ export interface PropertyInputTextProps extends PropertyInputSingleProps {
  * will be displayed as well.
  */
 export function PropertyInputText(props: PropertyInputTextProps) {
-    const {shape: {valueShape}, languages, value: term, setValue, factory, placeholder} = props;
+    const {
+        shape: {valueShape}, languages, value: term, setValue, factory,
+        multiline, placeholder,
+    } = props;
 
     const t = useTranslation();
 
+    const Component = multiline ? 'textarea' : 'input';
     const hasLanguageSelector = valueShape.termType === 'Literal' && (
         !valueShape.datatype ||
         valueShape.datatype.value === Rdf.Vocabulary.rdf.langString ||
@@ -43,8 +53,8 @@ export function PropertyInputText(props: PropertyInputTextProps) {
 
     return (
         <>
-            <input name='reactodia-text-property-input'
-                className='reactodia-form-control'
+            <Component name='reactodia-text-property-input'
+                className={cx('reactodia-form-control', CLASS_NAME)}
                 placeholder={placeholder ?? t.text('visual_authoring.property.text_value.placeholder')}
                 value={term.value}
                 onChange={e => {
@@ -68,9 +78,11 @@ function LanguageSelector(props: {
     onChangeLanguage: (language: string) => void;
 }) {
     const {language, languages, onChangeLanguage} = props;
+    if (languages.length === 0 && !language) {
+        return null;
+    }
     return (
         <select className={cx('reactodia-form-control', `${CLASS_NAME}__language`)}
-            disabled={languages.length === 0 && !language}
             value={language}
             onChange={e => onChangeLanguage(e.currentTarget.value)}>
             <option value=''>—</option>
