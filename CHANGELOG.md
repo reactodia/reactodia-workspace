@@ -4,6 +4,24 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Support authoring relation properties:
+  * Add `MetadataProvider.getRelationShape()` interface method to get editor metadata for relation properties, and allow to return `canEdit: true` from `MetadataProvider.canModifyRelation()` to display relation properties editor;
+- Display "edit" and "delete" inline entity actions:
+  * Add option `inlineEntityActions` (defaults to `true`) for `VisualAuthoring` to display entity actions inline at the top of each entity;
+  * Improve the style for "cancel" (discard) action on entities and relations to make it consistent with other inline actions.
+
+#### 🐛 Fixed
+- Always display validation state for an entities and relations in case when the target does not have any authoring changes.
+
+#### 💅 Polish
+- Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
+- Provide gradual customization options for the built-in entity and relation property editor:
+  * Expose ability to customize property input in authoring forms with `inputResolver` option for `VisualAuthoring` component;
+  * Export built-in inputs `PropertyInputList` and `PropertyInputText`, as well as `PropertyInputSingleProps` and `PropertyInputMultiProps` props interfaces to implement custom property inputs.
+
+#### 🔧 Maintenance
+- Make library compatible with [React v19](https://react.dev/blog/2024/12/05/react-19), while continuing support for v17 and v18.
 
 ## [0.29.1] - 2025-03-25
 #### 🐛 Fixed
