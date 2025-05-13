@@ -98,8 +98,7 @@ const CLASS_NAME = 'reactodia-drag-edit-layer';
 
 class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State> {
     private readonly listener = new EventObserver();
-    private readonly cancellation = new AbortController();
-
+    private cancellation = new AbortController();
     private canDropOnElementCancellation = new AbortController();
 
     private temporaryLink: RelationLink | undefined;
@@ -113,6 +112,9 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
 
     componentDidMount() {
         const {operation} = this.props;
+
+        this.cancellation = new AbortController();
+
         switch (operation.mode) {
             case 'connect': {
                 this.beginCreatingLink(operation);
@@ -127,8 +129,10 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 throw new Error(`Unknown edit mode: "${(operation as DragEditOperation).mode}"`);
             }
         }
+
         this.forceUpdate();
         this.queryCanConnectToAny();
+
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
     }
@@ -139,11 +143,14 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         this.canDropOnElementCancellation.abort();
         document.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mouseup', this.onMouseUp);
+        this.cleanup();
     }
 
     private beginCreatingLink(operation: DragEditConnect) {
         const {workspace: {model, editor}} = this.props;
         const {source, linkType, point} = operation;
+
+        const batch = model.history.startBatch();
 
         const temporaryElement = this.createTemporaryElement(point);
         const linkTemplate = new RelationLink({
@@ -159,6 +166,8 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
         model.setLinkVisibility(PLACEHOLDER_LINK_TYPE, 'withoutLabel');
 
+        batch.discard();
+
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;
     }
@@ -166,6 +175,8 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
     private beginMovingLink(operation: DragEditMoveEndpoint) {
         const {workspace: {model, editor}} = this.props;
         const {mode, link, point} = operation;
+
+        const batch = model.history.startBatch();
 
         this.oldLink = link;
         model.removeLink(link.id);
@@ -185,20 +196,17 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         });
         const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
 
+        batch.discard();
+
         this.temporaryElement = temporaryElement;
         this.temporaryLink = temporaryLink;
     }
 
     private createTemporaryElement(point: Vector) {
         const {workspace: {model}} = this.props;
-
         const temporaryElement = new VoidElement({});
         temporaryElement.setPosition(point);
-
-        const batch = model.history.startBatch();
         model.addElement(temporaryElement);
-        batch.discard();
-
         return temporaryElement;
     }
 
@@ -328,9 +336,9 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         try {
             const {targetElement, connectionsToAny, connectionsToTarget} = this.state;
 
-            if (this.oldLink) {
-                model.addLink(this.oldLink);
-            }
+            const batch = model.history.startBatch();
+            const restoredLink = this.restoreOldLink();
+            batch.discard();
 
             const allowedConnections = targetElement ? connectionsToTarget : connectionsToAny;
             if (allowedConnections && allowedConnections.length > 0) {
@@ -351,14 +359,14 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                     }
                     case 'moveSource': {
                         modifiedLink = editor.moveRelationSource({
-                            link: this.oldLink!,
+                            link: restoredLink!,
                             newSource: targetElement as EntityElement,
                         });
                         break;
                     }
                     case 'moveTarget': {
                         modifiedLink = editor.moveRelationTarget({
-                            link: this.oldLink!,
+                            link: restoredLink!,
                             newTarget: targetElement as EntityElement,
                         });
                         break;
@@ -369,7 +377,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 }
 
                 if (targetElement) {
-                    const focusedLink = modifiedLink || this.oldLink;
+                    const focusedLink = modifiedLink || restoredLink;
                     model.setSelection([focusedLink!]);
                     getCommandBus(VisualAuthoringTopic)
                         .trigger('editRelation', {target: focusedLink!});
@@ -462,7 +470,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             effectiveSource.data,
             effectiveTarget.data,
             linkTypeIri,
-            { signal: this.cancellation.signal }
+            {signal: this.cancellation.signal}
         );
         const link = new RelationLink({
             sourceId: effectiveSource.id,
@@ -475,7 +483,13 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
     }
 
     private cleanupAndFinish() {
-        const {onFinishEditing, workspace: {model, editor}} = this.props;
+        const {onFinishEditing} = this.props;
+        this.cleanup();
+        onFinishEditing();
+    }
+
+    private cleanup() {
+        const {workspace: {model, editor}} = this.props;
 
         const batch = model.history.startBatch();
         model.removeElement(this.temporaryElement!.id);
@@ -483,9 +497,18 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         editor.setTemporaryState(
             TemporaryState.removeRelation(editor.temporaryState, this.temporaryLink!.data)
         );
+        this.restoreOldLink();
         batch.discard();
+    }
 
-        onFinishEditing();
+    private restoreOldLink(): RelationLink | undefined {
+        const {workspace: {model}} = this.props;
+        const restoredLink = this.oldLink;
+        this.oldLink = undefined;
+        if (restoredLink) {
+            model.addLink(restoredLink);
+        }
+        return restoredLink;
     }
 
     render() {

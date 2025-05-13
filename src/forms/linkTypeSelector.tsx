@@ -44,7 +44,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     declare readonly context: WorkspaceContext;
 
     private readonly listener = new EventObserver();
-    private readonly cancellation = new AbortController();
+    private fetchTypesCancellation = new AbortController();
 
     constructor(props: LinkTypeSelectorProps) {
         super(props);
@@ -70,7 +70,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.cancellation.abort();
+        this.fetchTypesCancellation.abort();
     }
 
     private async fetchPossibleLinkTypes() {
@@ -79,14 +79,19 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         if (!metadataProvider) {
             return;
         }
+
+        this.fetchTypesCancellation.abort();
+        this.fetchTypesCancellation = new AbortController();
+        const signal = this.fetchTypesCancellation.signal;
+
         const connections = await mapAbortedToNull(
             metadataProvider.canConnect(
                 link.source,
                 link.target,
                 undefined,
-                {signal: this.cancellation.signal}
+                {signal}
             ),
-            this.cancellation.signal
+            signal
         );
         if (connections === null) {
             return;

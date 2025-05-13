@@ -155,6 +155,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     private loadingScope: AbortScope | undefined;
     private _dataProvider: DataProvider;
     private fetcher: DataFetcher;
+    private discardingTask = Promise.resolve();
 
     /** @hidden */
     constructor(options: DataDiagramModelOptions) {
@@ -321,6 +322,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             hideUnusedLinkTypes = false,
             signal: parentSignal,
         } = params;
+
+        await this.discardingTask;
         this.resetGraph();
         this.setDataProvider(dataProvider);
 
@@ -378,12 +381,23 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * Discards all diagram content and resets associated data provider to en empty one.
      */
     discardLayout(): void {
-        this.resetGraph();
-        this.setDataProvider(new EmptyDataProvider());
-        this.extendedSource.trigger('loadingStart', {source: this});
-        this.subscribeGraph();
-        this.history.reset();
-        this.extendedSource.trigger('loadingSuccess', {source: this});
+        const previous = this.discardingTask;
+        // Run discard in a microtask to avoid warnings due to synchronous
+        // React state updates when called from a lifecycle method,
+        // e.g. from a dispose callback in a useEffect()
+        this.discardingTask = Promise.resolve()
+            .then(async () => {
+                await previous;
+                this.resetGraph();
+                this.setDataProvider(new EmptyDataProvider());
+                this.extendedSource.trigger('loadingStart', {source: this});
+                this.subscribeGraph();
+                this.history.reset();
+                this.extendedSource.trigger('loadingSuccess', {source: this});
+            })
+            .catch(err => {
+                console.warn('Error while discarding a layout', err);
+            });
     }
 
     /**

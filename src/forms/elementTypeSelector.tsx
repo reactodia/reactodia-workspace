@@ -67,7 +67,7 @@ const FORM_CLASS = 'reactodia-form';
 
 export class ElementTypeSelectorInner extends React.Component<ElementTypeSelectorInnerProps, State> {
     private readonly listener = new EventObserver();
-    private readonly cancellation = new AbortController();
+    private fetchTypesCancellation = new AbortController();
     private filterCancellation = new AbortController();
     private loadingItemCancellation = new AbortController();
 
@@ -107,7 +107,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.cancellation.abort();
+        this.fetchTypesCancellation.abort();
         this.filterCancellation.abort();
         this.loadingItemCancellation.abort();
     }
@@ -119,14 +119,19 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         if (!metadataProvider) {
             return;
         }
+
+        this.fetchTypesCancellation.abort();
+        this.fetchTypesCancellation = new AbortController();
+        const signal = this.fetchTypesCancellation.signal;
+
         const connections = await mapAbortedToNull(
             metadataProvider.canConnect(
                 source,
                 undefined,
                 undefined,
-                {signal: this.cancellation.signal}
+                {signal}
             ),
-            this.cancellation.signal
+            signal
         );
         if (connections === null) {
             return;
