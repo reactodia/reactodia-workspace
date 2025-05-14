@@ -60,7 +60,6 @@ const mainConfig = {
     'react',
     'react/jsx-runtime',
     'react-dom',
-    'webcola',
   ],
   devtool: 'source-map',
 };
@@ -88,7 +87,13 @@ const workerConfig = {
       {
         test: /\.([cm]?ts|tsx)$/,
         loader: 'ts-loader',
-      }
+      },
+      // Load source maps from bundled WebCola
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        loader: 'source-map-loader',
+      },
     ],
   },
   externals: mainConfig.externals,
