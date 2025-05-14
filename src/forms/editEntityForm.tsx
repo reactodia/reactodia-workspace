@@ -5,16 +5,18 @@ import { mapAbortedToNull } from '../coreUtils/async';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
-import type { MetadataProvider, MetadataEntityShape } from '../data/metadataProvider';
+import type {
+    MetadataProvider, MetadataEntityShape, MetadataPropertyShape,
+} from '../data/metadataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { type PropertyInputMultiUpdater, DEFAULT_PROPERTY_SHAPE } from './input/inputCommon';
-import { PropertiesInput, type PropertyInputResolver } from './input/propertiesInput';
-import { PropertyInputText } from './input/propertyInputText';
-import { PropertyInputList } from './input/propertyInputList';
+import { type FormInputMultiUpdater } from './input/inputCommon';
+import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup';
+import { FormInputList } from './input/formInputList';
+import { FormInputText } from './input/formInputText';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
@@ -23,7 +25,7 @@ export function EditEntityForm(props: {
     entity: ElementModel;
     onApply: (entity: ElementModel) => void;
     onCancel: () => void;
-    resolveInput: PropertyInputResolver;
+    resolveInput: FormInputGroupProps['resolveInput'];
 }) {
     const {entity, onApply, onCancel, resolveInput} = props;
     const {model, editor, translation: t} = useWorkspace();
@@ -38,36 +40,44 @@ export function EditEntityForm(props: {
         () => editor.metadataProvider?.getLiteralLanguages() ?? [], []
     );
 
-    const onChangeIri = React.useCallback((e: React.FormEvent<HTMLInputElement>) => {
-        const target = (e.target as HTMLInputElement);
-        const iri: ElementIri = target.value;
-        setData(previous => ({...previous, id: iri}));
+    const iriValues = React.useMemo(() => [model.factory.namedNode(data.id)], [data.id]);
+    const onChangeIri = React.useCallback((updater: FormInputMultiUpdater) => {
+        setData(previous => {
+            const nextIriValues = updater([model.factory.namedNode(previous.id)]);
+            if (nextIriValues.length === 0) {
+                return previous;
+            }
+            const iri: ElementIri = nextIriValues[0].value;
+            return {...previous, id: iri};
+        });
     }, []);
 
-    const onChangeLabel = React.useCallback((updater: PropertyInputMultiUpdater) => {
+    const onChangeLabel = React.useCallback((updater: FormInputMultiUpdater) => {
         setData(previous => ({
             ...previous,
             label: updater(previous.label) as ReadonlyArray<Rdf.Literal>,
         }));
     }, []);
 
-    const onChangeProperty = (
+    const onChangeProperty = React.useCallback((
         property: PropertyTypeIri,
-        updater: PropertyInputMultiUpdater
+        updater: FormInputMultiUpdater
     ): void => {
         setData(previous => {
             const properties = previous.properties;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
+            const nextValues = updater(values ?? []);
+            const nextProperties = {...properties, [property]: nextValues};
+            if (nextValues.length === 0) {
+                delete nextProperties[property];
+            }
             return {
                 ...previous,
-                properties: {
-                    ...properties,
-                    [property]: updater(values ?? []),
-                }
+                properties: nextProperties,
             };
         });
-    };
+    }, []);
 
     if (!shape) {
         return (
@@ -83,14 +93,14 @@ export function EditEntityForm(props: {
         <div className={cx(FORM_CLASS, CLASS_NAME)}>
             <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
                 <div className={`${FORM_CLASS}__row`}>
-                    <label>
-                        {t.text('visual_authoring.edit_entity.iri.label')}
-                        <input className='reactodia-form-control'
-                            name='reactodia-edit-entity-iri'
-                            defaultValue={data.id}
-                            onChange={onChangeIri}
-                        />
-                    </label>
+                    <label>{t.text('visual_authoring.edit_entity.iri.label')}</label>
+                    {resolveInput('urn:reactodia:entityIri', {
+                        shape: IRI_SHAPE,
+                        languages,
+                        values: iriValues,
+                        updateValues: onChangeIri,
+                        factory: model.factory,
+                    })}
                 </div>
                 <div className={`${FORM_CLASS}__row`}>
                     <label>
@@ -110,19 +120,20 @@ export function EditEntityForm(props: {
                 </div>
                 <div className={`${FORM_CLASS}__row`}>
                     <label>{t.text('visual_authoring.edit_entity.label.label')}</label>
-                    <PropertyInputList
-                        shape={DEFAULT_PROPERTY_SHAPE}
+                    <FormInputList
+                        shape={LABEL_SHAPE}
                         languages={languages}
                         values={data.label}
                         updateValues={onChangeLabel}
                         factory={model.factory}
-                        valueInput={PropertyInputText}
+                        valueInput={FormInputText}
                     />
                 </div>
-                <PropertiesInput className={`${CLASS_NAME}__properties`}
-                    properties={shape.properties}
+                <FormInputGroup className={`${CLASS_NAME}__properties`}
                     languages={languages}
-                    data={data.properties}
+                    extraPropertyShape={shape.extraProperty}
+                    propertyShapes={shape.properties}
+                    propertyValues={data.properties}
                     onChangeData={onChangeProperty}
                     resolveInput={resolveInput}
                 />
@@ -147,6 +158,14 @@ export function EditEntityForm(props: {
 
 const DEFAULT_ENTITY_SHAPE: MetadataEntityShape = {
     properties: new Map(),
+};
+const IRI_SHAPE: MetadataPropertyShape = {
+    valueShape: {termType: 'NamedNode'},
+    minCount: 1,
+    maxCount: 1,
+};
+const LABEL_SHAPE: MetadataPropertyShape = {
+    valueShape: {termType: 'Literal'},
 };
 
 function useEntityShape(

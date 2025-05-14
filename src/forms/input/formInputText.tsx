@@ -5,16 +5,16 @@ import { useTranslation } from '../../coreUtils/i18n';
 
 import * as Rdf from '../../data/rdf/rdfModel';
 
-import { type PropertyInputSingleProps } from './inputCommon';
+import { type FormInputSingleProps } from './inputCommon';
 
 const CLASS_NAME = 'reactodia-property-input-text';
 
 /**
- * Props for {@link PropertyInputText} component.
+ * Props for {@link FormInputText} component.
  *
- * @see {@link PropertyInputText}
+ * @see {@link FormInputText}
  */
-export interface PropertyInputTextProps extends PropertyInputSingleProps {
+export interface FormInputTextProps extends FormInputSingleProps {
     /**
      * Whether to use multiline `textarea` to display and edit the text value.
      *
@@ -22,7 +22,7 @@ export interface PropertyInputTextProps extends PropertyInputSingleProps {
      */
     multiline?: boolean;
     /**
-     * Placeholder text for the property input.
+     * Placeholder text for the form input.
      *
      * @default "Property value"
      */
@@ -30,13 +30,15 @@ export interface PropertyInputTextProps extends PropertyInputSingleProps {
 }
 
 /**
- * Property input to edit a single value as a plain string.
+ * Form input to edit a single value as a plain string.
  *
  * If specified value shape has `rdf:langString` or `xsd:string` datatype,
  * a language selector with languages from {@link MetadataProvider.getLiteralLanguages}
  * will be displayed as well.
+ *
+ * **Unstable**: this component will likely change in the future.
  */
-export function PropertyInputText(props: PropertyInputTextProps) {
+export function FormInputText(props: FormInputTextProps) {
     const {
         shape: {valueShape}, languages, value: term, setValue, factory,
         multiline, placeholder,
