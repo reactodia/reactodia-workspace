@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
 - Provide gradual customization options for the built-in entity and relation property editor:
   * Expose ability to customize property input in authoring forms with `inputResolver` option for `VisualAuthoring` component;
-  * Export built-in inputs `PropertyInputList` and `PropertyInputText`, as well as `PropertyInputSingleProps` and `PropertyInputMultiProps` props interfaces to implement custom property inputs.
+  * Export built-in inputs `FormInputList` and `FormInputText`, as well as `FormInputSingleProps` and `FormInputMultiProps` props interfaces to implement custom property inputs.
 
 #### 🔧 Maintenance
 - Make library compatible with [React v19](https://react.dev/blog/2024/12/05/react-19), while continuing support for v17 and v18.

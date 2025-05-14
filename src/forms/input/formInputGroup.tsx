@@ -13,48 +13,62 @@ import { WithFetchStatus } from '../../editor/withFetchStatus';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import {
-    type PropertyInputMultiUpdater, type PropertyInputMultiProps, DEFAULT_PROPERTY_SHAPE,
+    type FormInputMultiUpdater, type FormInputMultiProps,
 } from './inputCommon';
 
 const FORM_CLASS = 'reactodia-form';
 
-export type PropertyInputResolver = (property: PropertyTypeIri, props: PropertyInputMultiProps) =>
-    React.ReactElement | null;
-
-export function PropertiesInput(props: {
+export interface FormInputGroupProps {
     className?: string;
-    properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
     languages: ReadonlyArray<string>;
-    data: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
-    onChangeData: (property: PropertyTypeIri, updater: PropertyInputMultiUpdater) => void;
-    resolveInput: PropertyInputResolver;
-}) {
-    const {className, properties, languages, data, onChangeData, resolveInput} = props;
+    propertyShapes: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
+    extraPropertyShape?: MetadataPropertyShape;
+    propertyValues: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
+    onChangeData: (property: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
+    resolveInput: (property: PropertyTypeIri, props: FormInputMultiProps) =>
+        React.ReactElement | null;
+}
+
+export function FormInputGroup(props: FormInputGroupProps) {
+    const {
+        className, languages, propertyShapes, extraPropertyShape, propertyValues, onChangeData, resolveInput,
+    } = props;
     const {model, translation: t} = useWorkspace();
 
-    const extendedProperties = new Map(properties);
-    for (const propertyIri of Object.keys(data)) {
-        if (!extendedProperties.has(propertyIri)) {
-            extendedProperties.set(propertyIri, DEFAULT_PROPERTY_SHAPE);
+    const propertyIris: PropertyTypeIri[] = Array.from(propertyShapes.keys());
+    if (extraPropertyShape) {
+        for (const propertyIri in propertyValues) {
+            if (
+                Object.prototype.hasOwnProperty.call(propertyValues, propertyIri) &&
+                !propertyShapes.has(propertyIri)
+            ) {
+                propertyIris.push(propertyIri);
+            }
         }
     }
-    const propertyIris = Array.from(extendedProperties.keys());
+
     useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
 
     if (propertyIris.length === 0) {
         return null;
     }
 
-    const labelledProperties = Array.from(extendedProperties, ([iri, shape]) => {
-        const property = model.getPropertyType(iri);
-        const values = Object.prototype.hasOwnProperty.call(data, iri) ? data[iri] : undefined;
-        return {
-            iri,
-            label: t.formatLabel(property?.data?.label, iri, model.language),
-            shape,
-            values: values ?? [],
-        };
-    });
+    const labelledProperties: LabelledProperty[] = [];
+    for (const iri of propertyIris) {
+        const shape = propertyShapes.get(iri) ?? extraPropertyShape;
+        if (shape) {
+            const property = model.getPropertyType(iri);
+            const values = Object.prototype.hasOwnProperty.call(propertyValues, iri)
+                ? propertyValues[iri] : undefined;
+            labelledProperties.push({
+                iri,
+                label: t.formatLabel(property?.data?.label, iri, model.language),
+                shape,
+                values: values ?? [],
+            });
+        }
+    }
+
     labelledProperties.sort((a, b) => a.label.localeCompare(b.label));
 
     return (
@@ -76,22 +90,40 @@ export function PropertiesInput(props: {
     );
 }
 
+interface LabelledProperty {
+    readonly iri: string;
+    readonly label: string;
+    readonly shape: MetadataPropertyShape;
+    readonly values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+}
+
 function Property(props: {
     iri: PropertyTypeIri;
     label: string;
     shape: MetadataPropertyShape;
     languages: ReadonlyArray<string>;
     values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-    onChange: (iri: PropertyTypeIri, updater: PropertyInputMultiUpdater) => void;
+    onChange: (iri: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
     factory: Rdf.DataFactory;
-    resolveInput: PropertyInputResolver;
+    resolveInput: FormInputGroupProps['resolveInput'];
 }) {
     const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
     const t = useTranslation();
 
-    const updateValues = React.useCallback((updater: PropertyInputMultiUpdater) => {
+    const updateValues = React.useCallback((updater: FormInputMultiUpdater) => {
         onChange(iri, updater);
     }, [iri, onChange]);
+
+    const input = resolveInput(iri, {
+        shape,
+        languages,
+        values,
+        updateValues,
+        factory,
+    });
+    if (!input) {
+        return null;
+    }
 
     return (
         <div className={`${FORM_CLASS}__row`}>
@@ -109,13 +141,7 @@ function Property(props: {
                     </span>
                 </WithFetchStatus>
             </label>
-            {resolveInput(iri, {
-                shape,
-                languages,
-                values,
-                updateValues,
-                factory,
-            })}
+            {input}
         </div>
     );
 }
