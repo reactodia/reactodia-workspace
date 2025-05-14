@@ -14,15 +14,15 @@ import type { MetadataPropertyShape, MetadataValueShape } from '../../data/metad
  *
  * @see {@link VisualAuthoring.inputResolver}
  */
-export type PropertyInputOrDefaultResolver = (property: PropertyTypeIri, inputProps: PropertyInputMultiProps) =>
+export type FormInputOrDefaultResolver = (property: PropertyTypeIri, inputProps: FormInputMultiProps) =>
     React.ReactElement | undefined | null;
 
 /**
  * Props for a property input accepting a single value to edit.
  *
- * @see {@link PropertyInputOrDefaultResolver}
+ * @see {@link FormInputOrDefaultResolver}
  */
-export interface PropertyInputSingleProps {
+export interface FormInputSingleProps {
     /**
      * Property shape metadata.
      */
@@ -50,9 +50,9 @@ export interface PropertyInputSingleProps {
 /**
  * Props for a property input accepting multiple values to edit.
  *
- * @see {@link PropertyInputOrDefaultResolver}
+ * @see {@link FormInputOrDefaultResolver}
  */
-export interface PropertyInputMultiProps {
+export interface FormInputMultiProps {
     /**
      * Property shape metadata.
      */
@@ -70,7 +70,7 @@ export interface PropertyInputMultiProps {
     /**
      * Sets the current list (or set) of values for the edited property.
      */
-    updateValues: (updater: PropertyInputMultiUpdater) => void;
+    updateValues: (updater: FormInputMultiUpdater) => void;
     /**
      * RDF/JS-compatible term factory to create RDF terms.
      */
@@ -80,9 +80,9 @@ export interface PropertyInputMultiProps {
 /**
  * Pure function to update a previous set of property values into a new one.
  *
- * @see {@link PropertyInputMultiProps.updateValues}
+ * @see {@link FormInputMultiProps.updateValues}
  */
-export type PropertyInputMultiUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
+export type FormInputMultiUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
     ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
 
 const DEFAULT_VALUE_SHAPE: MetadataValueShape = {

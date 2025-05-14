@@ -19,8 +19,8 @@ import {
     dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
 } from './linkTypeSelector';
 
-import { type PropertyInputMultiUpdater } from './input/inputCommon';
-import { PropertiesInput, type PropertyInputResolver } from './input/propertiesInput';
+import { type FormInputMultiUpdater } from './input/inputCommon';
+import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-relation-form';
@@ -32,7 +32,7 @@ export interface EditRelationFormProps {
     onChangeTarget: (newTarget: RelationLink) => void;
     onAfterApply: () => void;
     onCancel: () => void;
-    resolveInput: PropertyInputResolver;
+    resolveInput: FormInputGroupProps['resolveInput'];
 }
 
 export function EditRelationForm(props: EditRelationFormProps) {
@@ -109,22 +109,24 @@ function EditRelationFormInner(props: EditRelationFormProps) {
 
     const onChangeProperty = (
         property: PropertyTypeIri,
-        updater: PropertyInputMultiUpdater
+        updater: FormInputMultiUpdater
     ): void => {
         setValue((previous): ValidatedLink => {
             const properties = previous.link.base.properties;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
+            const nextValues = updater(values ?? []);
+            const nextProperties = {...properties, [property]: nextValues};
+            if (nextValues.length === 0) {
+                delete nextProperties[property];
+            }
             return {
                 ...previous,
                 link: {
                     ...previous.link,
                     base: {
                         ...previous.link.base,
-                        properties: {
-                            ...properties,
-                            [property]: updater(values ?? []),
-                        }
+                        properties: nextProperties,
                     }
                 }
             };
@@ -176,10 +178,11 @@ function EditRelationFormInner(props: EditRelationFormProps) {
                         />
                     </div>
                 ) : metadata.shape ? (
-                    <PropertiesInput className={`${CLASS_NAME}__properties`}
-                        properties={metadata.shape.properties}
+                    <FormInputGroup className={`${CLASS_NAME}__properties`}
                         languages={languages}
-                        data={value.link.base.properties}
+                        extraPropertyShape={metadata.shape.extraProperty}
+                        propertyShapes={metadata.shape.properties}
+                        propertyValues={value.link.base.properties}
                         onChangeData={onChangeProperty}
                         resolveInput={resolveInput}
                     />

@@ -83,15 +83,32 @@ export interface MetadataCanModifyRelation {
 }
 
 export interface MetadataEntityShape {
+    readonly extraProperty?: MetadataPropertyShape;
     readonly properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
 }
 
 export interface MetadataRelationShape {
+    readonly extraProperty?: MetadataPropertyShape;
     readonly properties: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
 }
 
 export interface MetadataPropertyShape {
+    /**
+     * RDF term shape for the property.
+     */
     readonly valueShape: MetadataValueShape;
+    /**
+     * Minimum number of values for the property.
+     *
+     * @default 0
+     */
+    readonly minCount?: number;
+    /**
+     * Maximum number of values for the property (inclusive).
+     *
+     * @default Infinity
+     */
+    readonly maxCount?: number;
 }
 
 export type MetadataValueShape =

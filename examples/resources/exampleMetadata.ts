@@ -160,9 +160,15 @@ export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
             });
             properties.set(rdfs.seeAlso, {
                 valueShape: {termType: 'NamedNode'},
+                maxCount: 1,
             });
         }
-        return {properties};
+        return {
+            extraProperty: {
+                valueShape: {termType: 'Literal'},
+            },
+            properties,
+        };
     }
 
     async getRelationShape(
