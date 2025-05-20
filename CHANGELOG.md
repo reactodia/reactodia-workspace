@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 🐛 Fixed
 - Always display validation state for an entities and relations in case when the target does not have any authoring changes.
+- Display elliptical authoring state overlays for elliptically-shaped entity elements.
 
 #### 💅 Polish
 - Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
