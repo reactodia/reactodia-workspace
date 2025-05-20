@@ -62,9 +62,12 @@ function GraphAuthoringExample() {
             renameLinkProvider={renameLinkProvider}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
+                canvas={{
+                    elementTemplateResolver: () => Reactodia.RoundTemplate,
+                }}
                 visualAuthoring={{
                     inputResolver: (property, inputProps) => property === 'http://www.w3.org/2000/01/rdf-schema#comment'
-                        ? <Reactodia.PropertyInputList {...inputProps} valueInput={MultilineTextInput} />
+                        ? <Reactodia.FormInputList {...inputProps} valueInput={MultilineTextInput} />
                         : undefined,
                 }}
             />
@@ -78,8 +81,8 @@ class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     }
 }
 
-function MultilineTextInput(props: Reactodia.PropertyInputSingleProps) {
-    return <Reactodia.PropertyInputText {...props} multiline />;
+function MultilineTextInput(props: Reactodia.FormInputSingleProps) {
+    return <Reactodia.FormInputText {...props} multiline />;
 }
 
 mountOnLoad(<GraphAuthoringExample />);

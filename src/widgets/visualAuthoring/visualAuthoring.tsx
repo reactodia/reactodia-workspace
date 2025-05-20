@@ -12,9 +12,9 @@ import { AuthoringState } from '../../editor/authoringState';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
 import { EntityElement, RelationLink } from '../../editor/dataElements';
 
-import type { PropertyInputOrDefaultResolver } from '../../forms/input/inputCommon';
-import { PropertyInputText } from '../../forms/input/propertyInputText';
-import { PropertyInputList } from '../../forms/input/propertyInputList';
+import { FormInputList } from '../../forms/input/formInputList';
+import { FormInputText } from '../../forms/input/formInputText';
+import type { FormInputOrDefaultResolver } from '../../forms/input/inputCommon';
 import { EditRelationForm } from '../../forms/editRelationForm';
 import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
@@ -39,8 +39,10 @@ export interface VisualAuthoringProps {
     propertyEditor?: PropertyEditor;
     /**
      * Overrides default input for a specific entity or relation property.
+     *
+     * **Unstable**: this feature will likely change in the future.
      */
-    inputResolver?: PropertyInputOrDefaultResolver;
+    inputResolver?: FormInputOrDefaultResolver;
     /**
      * Whether to display inline authoring actions (edit, delete) on entity elements.
      *
@@ -183,7 +185,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     onCancel={onCancel}
                     resolveInput={(property, inputProps) => {
                         const input = inputResolver?.(property, inputProps);
-                        return input ?? <PropertyInputList {...inputProps} valueInput={PropertyInputText} />;
+                        return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
                     }}
                 />
             );
@@ -242,7 +244,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     onCancel={() => overlay.hideDialog()}
                     resolveInput={(property, inputProps) => {
                         const input = inputResolver?.(property, inputProps);
-                        return input ?? <PropertyInputList {...inputProps} valueInput={PropertyInputText} />;
+                        return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
                     }}
                 />
             );

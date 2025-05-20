@@ -7,25 +7,27 @@ import { useTranslation } from '../../coreUtils/i18n';
 import * as Rdf from '../../data/rdf/rdfModel';
 import type { MetadataValueShape } from '../../data/metadataProvider';
 
-import type { PropertyInputSingleProps, PropertyInputMultiProps } from './inputCommon';
+import type { FormInputSingleProps, FormInputMultiProps } from './inputCommon';
 
 const CLASS_NAME = 'reactodia-property-input-list';
 
 /**
- * Props for {@link PropertyInputList} component.
+ * Props for {@link FormInputList} component.
  *
- * @see {@link PropertyInputList}
+ * @see {@link FormInputList}
  */
-export interface PropertyInputListProps extends PropertyInputMultiProps {
+export interface FormInputListProps extends FormInputMultiProps {
     /**
-     * Property input component type to edit each property value.
+     * Form input component type to edit each property value.
      */
-    valueInput: React.ElementType<PropertyInputSingleProps>;
+    valueInput: React.ElementType<FormInputSingleProps>;
 }
 
-function PropertyInputListInner(props: PropertyInputListProps) {
+function FormInputListInner(props: FormInputListProps) {
     const {shape, languages, values, updateValues, factory, valueInput: ValueInput} = props;
     const t = useTranslation();
+
+    const {minCount = 0, maxCount = Infinity} = shape;
 
     const keys = React.useRef<number[]>([]);
     const nextKey = React.useRef(1);
@@ -45,7 +47,7 @@ function PropertyInputListInner(props: PropertyInputListProps) {
                         value={values[index]}
                         setValue={nextValue => {
                             updateValues(previous => {
-                                if (previous[index] !== term) {
+                                if (index >= previous.length || !Rdf.equalTerms(previous[index], term)) {
                                     return previous;
                                 }
                                 const nextValues = [...previous];
@@ -55,47 +57,53 @@ function PropertyInputListInner(props: PropertyInputListProps) {
                         }}
                         factory={factory}
                     />
+                    {values.length <= minCount ? null : (
+                        <button type='button'
+                            className={cx(
+                                'reactodia-btn',
+                                'reactodia-btn-default',
+                                `${CLASS_NAME}__value-remove`
+                            )}
+                            title={t.text('visual_authoring.property.remove_value.title')}
+                            onClick={() => updateValues(previous => {
+                                if (index >= previous.length || !Rdf.equalTerms(previous[index], term)) {
+                                    return previous;
+                                }
+                                const nextValues = [...previous];
+                                keys.current.splice(index, 1);
+                                nextValues.splice(index, 1);
+                                return nextValues;
+                            })}
+                        />
+                    )}
+                </div>
+            ))}
+            {values.length >= maxCount ? null : (
+                <div key='add' className={`${CLASS_NAME}__row`}>
                     <button type='button'
                         className={cx(
                             'reactodia-btn',
                             'reactodia-btn-default',
-                            `${CLASS_NAME}__value-remove`
+                            `${CLASS_NAME}__value-add`
                         )}
-                        title={t.text('visual_authoring.property.remove_value.title')}
+                        title={t.text('visual_authoring.property.add_value.title')}
                         onClick={() => updateValues(previous => {
-                            if (previous[index] !== term) {
-                                return previous;
-                            }
-                            const nextValues = [...previous];
-                            keys.current.splice(index, 1);
-                            nextValues.splice(index, 1);
-                            return nextValues;
+                            return [...previous, makeEmptyTerm(shape.valueShape, factory)];
                         })}
                     />
                 </div>
-            ))}
-            <div key='add' className={`${CLASS_NAME}__row`}>
-                <button type='button'
-                    className={cx(
-                        'reactodia-btn',
-                        'reactodia-btn-default',
-                        `${CLASS_NAME}__value-add`
-                    )}
-                    title={t.text('visual_authoring.property.add_value.title')}
-                    onClick={() => updateValues(previous => {
-                        return [...previous, makeEmptyTerm(shape.valueShape, factory)];
-                    })}
-                />
-            </div>
+            )}
         </>
     );
 }
 
 /**
- * Property input to edit multiple values in a list of specified single value inputs.
+ * Form input to edit multiple values in a list of specified single value inputs.
+ *
+ * **Unstable**: this component will likely change in the future.
  */
-export const PropertyInputList = React.memo(
-    PropertyInputListInner,
+export const FormInputList = React.memo(
+    FormInputListInner,
     (prevProps, nextProps) => (
         prevProps.shape === nextProps.shape &&
         shallowArrayEqual(prevProps.languages, nextProps.languages) &&
