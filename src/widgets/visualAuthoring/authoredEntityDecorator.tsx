@@ -6,14 +6,13 @@ import { EventObserver } from '../../coreUtils/events';
 import type { ValidationSeverity } from '../../data/validationProvider';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
-import { Vector } from '../../diagram/geometry';
+import { type ShapeGeometry, Vector } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 
 import { AuthoredEntity } from '../../editor/authoringState';
 import { EntityElement } from '../../editor/dataElements';
 import { ElementValidation, LinkValidation, getMaxSeverity } from '../../editor/validation';
 
-import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 import { useAuthoredEntity } from './authoredEntity';
@@ -110,38 +109,34 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
     private renderElementOutlines() {
         const {target, canvas} = this.props;
         const {state, isTemporary} = this.state;
-        const {width, height} = canvas.renderingState.getElementSize(target) ?? {width: 0, height: 0};
+        const shape = canvas.renderingState.getElementShape(target);
         if (isTemporary) {
             return (
                 <>
-                    <rect className={`${CLASS_NAME}__outline-overlay`}
-                        x={0} y={0}
-                        width={width}
-                        height={height}
+                    <ElementSvgShape shape={shape}
+                        className={`${CLASS_NAME}__outline-overlay`}
                     />
-                    <rect x={0} y={0}
-                        width={width}
-                        height={height}
+                    <ElementSvgShape shape={shape}
                         fill='url(#stripe-pattern)'
                     />
                 </>
             );
         }
         if (state && state.type === 'entityDelete') {
-            const right = width;
-            const bottom = height;
+            const cx = shape.bounds.width / 2;
+            const cy = shape.bounds.height / 2;
+            const rx = shape.type === 'rect' ? cx : cx * Math.SQRT1_2;
+            const ry = shape.type === 'rect' ? cy : cy * Math.SQRT1_2;
             return (
                 <g key={target.id}>
-                    <rect className={`${CLASS_NAME}__outline-overlay`}
-                        x={0} y={0}
-                        width={width}
-                        height={height}
+                    <ElementSvgShape shape={shape}
+                        className={`${CLASS_NAME}__outline-overlay`}
                     />
                     <line className={`${CLASS_NAME}__outline-cross-line`}
-                        x1={0} y1={0} x2={right} y2={bottom}
+                        x1={cx - rx} y1={cy - ry} x2={cx + rx} y2={cy + ry}
                     />
                     <line className={`${CLASS_NAME}__outline-cross-line`}
-                        x1={right} y1={0} x2={0} y2={bottom}
+                        x1={cx - rx} y1={cy + ry} x2={cx + rx} y2={cy - ry}
                     />
                 </g>
             );
@@ -313,4 +308,36 @@ function InlineActions(props: {
             ) : null}
         </div>
     );
+}
+
+function ElementSvgShape(
+    props: { shape: ShapeGeometry } & Omit<React.SVGProps<unknown>, 'ref'>
+): React.ReactElement | null {
+    const {shape, ...otherProps} = props;
+    switch (shape.type) {
+        case 'rect': {
+            return (
+                <rect
+                    x={0} y={0}
+                    width={shape.bounds.width}
+                    height={shape.bounds.height}
+                    {...otherProps}
+                />
+            );
+        }
+        case 'ellipse': {
+            const rx = shape.bounds.width / 2;
+            const ry = shape.bounds.height / 2;
+            return (
+                <ellipse
+                    cx={rx} cy={ry}
+                    rx={rx} ry={ry}
+                    {...otherProps}
+                />
+            );
+        }
+        default: {
+            return null;
+        }
+    }
 }
