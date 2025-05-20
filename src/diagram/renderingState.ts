@@ -57,6 +57,15 @@ export interface RenderingStateEvents {
      */
     changeElementSize: PropertyChange<Element, Size | undefined>;
     /**
+     * Triggered on {@link RenderingState.getLinkLabels} property change.
+     */
+    changeLinkLabels: {
+        /**
+         * Event source (rendering state).
+         */
+        readonly source: RenderingState;
+    };
+    /**
      * Triggered when a primary label size for a link has changed.
      *
      * Link label size changes happen when rendering on
@@ -183,6 +192,8 @@ export class MutableRenderingState implements RenderingState {
     private readonly linkRouter: LinkRouter;
 
     private readonly elementSizes = new WeakMap<Element, Size>();
+    private readonly linkLabels = new WeakMap<Link, LinkLabelState>();
+    private nextLinkLabelKey = 0;
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
     private readonly linkTypeIndex = new Map<LinkTypeIri, number>();
@@ -269,6 +280,36 @@ export class MutableRenderingState implements RenderingState {
         }
     }
 
+    generateLinkLabelKey(): number {
+        const key = this.nextLinkLabelKey;
+        this.nextLinkLabelKey++;
+        return key;
+    }
+
+    addLinkLabel(link: Link, key: number, content: React.ReactNode): void {
+        let state = this.linkLabels.get(link);
+        if (!state) {
+            state = {
+                labels: new Map(),
+            };
+            this.linkLabels.set(link, state);
+        }
+        state.labels.set(key, content);
+        this.source.trigger('changeLinkLabels', {source: this});
+    }
+
+    removeLinkLabel(link: Link, key: number): void {
+        const state = this.linkLabels.get(link);
+        if (state) {
+            state.labels.delete(key);
+            this.source.trigger('changeLinkLabels', {source: this});
+        }
+    }
+
+    getLinkLabels(link: Link): ReadonlyMap<number, React.ReactNode> | undefined {
+        return this.linkLabels.get(link)?.labels;
+    }
+
     getLinkLabelBounds(link: Link): Rect | undefined {
         return this.linkLabelBounds.get(link);
     }
@@ -277,10 +318,7 @@ export class MutableRenderingState implements RenderingState {
         const previous = this.linkLabelBounds.get(link);
         const sameBounds = !previous && !bounds || (
             previous && bounds &&
-            previous.x === bounds.x &&
-            previous.y === bounds.y &&
-            previous.width === bounds.width &&
-            previous.height === bounds.height
+            Rect.equals(previous, bounds)
         );
         if (!sameBounds) {
             if (bounds) {
@@ -367,6 +405,10 @@ export class MutableRenderingState implements RenderingState {
         this.routings = computedRoutes;
         this.source.trigger('changeRoutings', {source: this, previous: previousRoutes});
     };
+}
+
+interface LinkLabelState {
+    readonly labels: Map<number, React.ReactNode>;
 }
 
 function sameRoutedLink(a: RoutedLink, b: RoutedLink) {

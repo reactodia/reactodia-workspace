@@ -8,6 +8,7 @@ export interface ToSVGOptions {
     sizeProvider: SizeProvider;
     colorSchemeApi: ColorSchemeApi;
     paper: SVGSVGElement;
+    layers: ReadonlyArray<HTMLElement>;
     contentBox: Rect;
     getOverlaidElement: (id: string) => HTMLElement;
     preserveDimensions?: boolean;
@@ -195,7 +196,7 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
     svgClone: SVGSVGElement;
     imageBounds: { [path: string]: Bounds };
 } {
-    const {model, sizeProvider, paper, getOverlaidElement} = options;
+    const {model, sizeProvider, paper, layers, getOverlaidElement, contentBox} = options;
     const svgClone = paper.cloneNode(true) as SVGSVGElement;
     svgClone.removeAttribute('class');
     svgClone.removeAttribute('style');
@@ -212,6 +213,21 @@ function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
     const viewport = findViewport()!;
     viewport.removeAttribute('transform');
     viewport.setAttribute('class', 'reactodia-exported-canvas');
+
+    for (const layer of layers) {
+        const layerClone = layer.cloneNode(true) as HTMLElement;
+        layerClone.setAttribute('style', `transform: translate(${-contentBox.x}px,${-contentBox.y}px)`);
+
+        const layerForeignObject = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
+        layerForeignObject.appendChild(layerClone);
+        layerForeignObject.setAttribute('transform', `translate(${contentBox.x},${contentBox.y})`);
+        layerForeignObject.setAttribute('width', String(contentBox.width));
+        layerForeignObject.setAttribute('height', String(contentBox.height));
+
+        const layerRoot = document.createElementNS(SVG_NAMESPACE, 'g');
+        layerRoot.appendChild(layerForeignObject);
+        viewport.appendChild(layerRoot);
+    }
 
     const imageBounds: { [path: string]: Bounds } = Object.create(null);
 

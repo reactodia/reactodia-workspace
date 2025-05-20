@@ -457,11 +457,12 @@ const GROUPED_LABEL_MARGIN = 2;
 const DEFAULT_TEXT_ANCHOR = 'middle';
 
 /**
- * Component to display a text label over a diagram link.
+ * Component to display a text label over a diagram link in SVG context.
  *
  * @category Components
+ * @deprecated Use {@link LinkLabel} component instead to display label in HTML context instead.
  */
-export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
+export class SvgLinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
     /** @hidden */
     static contextType = LinkLayerContext;
     /** @hidden */
