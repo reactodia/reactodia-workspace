@@ -7,7 +7,10 @@ import { PropertyTypeIri } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
-import { LinkLabel, type LinkLabelProps } from '../diagram/labelLayer';
+import {
+    HtmlLinkLabel as LinkLabel,
+    type HtmlLinkLabelProps as LinkLabelProps,
+} from '../diagram/linkLayer';
 import { LinkPath, LinkVertices } from '../diagram/linkLayer';
 
 import { RelationGroup, RelationLink } from '../editor/dataElements';
@@ -123,7 +126,11 @@ export function DefaultLink(props: DefaultLinkProps) {
             <LinkLabel {...primaryLabelProps}
                 primary
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
-                className={cx(LABEL_CLASS, primaryLabelProps?.className)}
+                className={cx(
+                    LABEL_CLASS,
+                    renamedLabel ? `${LABEL_CLASS}--renamed` : undefined,
+                    primaryLabelProps?.className
+                )}
                 title={primaryLabelProps?.title ?? t.text('default_link_template.label.title', {
                     relation: label,
                     relationIri: t.formatIri(link.typeId),
@@ -176,7 +183,6 @@ export function DefaultLink(props: DefaultLinkProps) {
             className={cx(
                 CLASS_NAME,
                 link instanceof RelationGroup ? `${CLASS_NAME}--group` : undefined,
-                renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
                 className
             )}>
             <LinkPath path={path}

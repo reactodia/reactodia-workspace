@@ -1,9 +1,11 @@
 import cx from 'clsx';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
+import { useCanvas } from './canvasApi';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import { Element, Link, LinkVertex } from './elements';
@@ -12,8 +14,8 @@ import {
     getPointAlongPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
+import { type PaperTransform, HtmlPaperLayer } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
-import { useCanvas } from './canvasApi';
 
 export interface LinkLayerProps {
     model: DiagramModel;
@@ -37,7 +39,7 @@ type ScheduleLabelMeasure = (
 interface MeasurableLabel {
     readonly owner: Link | undefined;
     measureSize(): Size | undefined;
-    applySize({width, height}: Size): void;
+    applySize?({width, height}: Size): void;
     computeBounds({width, height}: Size): Rect;
 }
 
@@ -214,7 +216,7 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
             for (let i = 0; i < requests.length; i++) {
                 const label = requests[i];
                 const size = sizes[i];
-                if (size) {
+                if (size && label.applySize) {
                     label.applySize(size);
                 }
             }
@@ -375,6 +377,37 @@ export function LinkPath(props: LinkPathProps) {
     </>;
 }
 
+export function LinkLabelLayer(props: {
+    renderingState: MutableRenderingState;
+    paperTransform: PaperTransform;
+    layerRef?: React.MutableRefObject<HTMLDivElement | null>;
+}) {
+    const {renderingState, paperTransform, layerRef} = props;
+
+    const parentRef = React.useRef<HTMLDivElement | null>(null);
+    const onMount = React.useCallback((element: HTMLDivElement | null) => {
+        parentRef.current = element;
+        if (layerRef) {
+            layerRef.current = element;
+        }
+    }, [layerRef]);
+
+    React.useEffect(() => {
+        const parent = parentRef.current;
+        if (parent) {
+            renderingState.attachLinkLabelContainer(parent);
+            return () => renderingState.attachLinkLabelContainer(null);
+        }
+    }, []);
+
+    return (
+        <HtmlPaperLayer paperTransform={paperTransform}
+            className='reactodia-label-layer'
+            layerRef={onMount}
+        />
+    );
+}
+
 /**
  * Props for {@link LinkLabel} component.
  *
@@ -460,9 +493,8 @@ const DEFAULT_TEXT_ANCHOR = 'middle';
  * Component to display a text label over a diagram link in SVG context.
  *
  * @category Components
- * @deprecated Use {@link LinkLabel} component instead to display label in HTML context instead.
  */
-export class SvgLinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
+export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
     /** @hidden */
     static contextType = LinkLayerContext;
     /** @hidden */
@@ -591,6 +623,150 @@ export class SvgLinkLabel extends React.Component<LinkLabelProps, LinkLabelState
             scheduleLabelMeasure(this, false);
         }
     }
+}
+
+/**
+ * Props for {@link LinkLabel} component.
+ *
+ * @see {@link LinkLabel}
+ */
+export interface HtmlLinkLabelProps {
+    /**
+     * Owner link to display label over.
+     */
+    link: Link;
+    /**
+     * Whether the label should be considered as primary one for the link.
+     *
+     * Primary label bounds are available via {@link RenderingState.getLinkLabelBounds}.
+     */
+    primary?: boolean;
+    /**
+     * Label position in paper coordinates.
+     */
+    position: Vector;
+    /**
+     * Vertical row shift for the label
+     * (e.g. `-1` for one row above, `1` for one row below).
+     *
+     * @default 0
+     */
+    line?: number;
+    /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
+    /**
+     * Additional CSS styles for the component.
+     */
+    style?: React.CSSProperties;
+    /**
+     * Label text alignment relative to its position.
+     *
+     * @default "middle"
+     */
+    textAnchor?: 'start' | 'middle' | 'end';
+    /**
+     * Title for the label.
+     */
+    title?: string;
+    /**
+     * Content for the label.
+     *
+     * This content is rendered in the normal HTML context, unlike the link itself.
+     */
+    children?: React.ReactNode;
+}
+
+export function HtmlLinkLabel(props: HtmlLinkLabelProps) {
+    const {link, position: {x, y}, line, className, style, textAnchor, title, children} = props;
+    const {canvas} = useCanvas();
+
+    const layerContext = React.useContext(LinkLayerContext);
+    const elementRef = React.useRef<HTMLDivElement | null>(null);
+    const measurableLabelRef = React.useRef<MeasurableLabelWithProps>(undefined);
+
+    React.useLayoutEffect(() => {
+        if (layerContext && props.primary) {
+            if (!measurableLabelRef.current) {
+                const measurable: MeasurableLabelWithProps = {
+                    owner: link,
+                    measureSize: () => {
+                        const bounds = elementRef.current?.getBoundingClientRect();
+                        if (!bounds) {
+                            return undefined;
+                        }
+                        const inverseScale = 1 / canvas.getScale();
+                        return {
+                            width: bounds.width * inverseScale,
+                            height: bounds.height * inverseScale,
+                        };
+                    },
+                    computeBounds: size => computeLabelBounds(measurable.latestProps, size),
+                    latestProps: props,
+                };
+                measurableLabelRef.current = measurable;
+            }
+            measurableLabelRef.current.latestProps = props;
+            layerContext.scheduleLabelMeasure(measurableLabelRef.current, false);
+        }
+    });
+
+    React.useLayoutEffect(() => {
+        return () => {
+            const measurable = measurableLabelRef.current;
+            if (layerContext && measurable) {
+                layerContext.scheduleLabelMeasure(measurable, true);
+            }
+        };
+    }, []);
+
+    const anchorTransform = (
+        textAnchor === 'start' ? 'translate(0,-50%)' :
+        textAnchor === 'end' ? 'translate(-100%,-50%)' :
+        'translate(-50%,-50%)'
+    );
+    const providedStyle = {
+        ...style,
+        position: 'absolute',
+        transform: `translate(${x}px,${y}px)${anchorTransform}`,
+        '--reactodia-link-label-line': line,
+    } as React.CSSProperties;
+
+    const renderingState = canvas.renderingState as MutableRenderingState;
+
+    return createPortal(
+        <div ref={elementRef}
+            data-link-id={link.id}
+            className={cx(LINK_LABEL_CLASS, className)}
+            style={providedStyle}
+            title={title}>
+            {children}
+        </div>,
+        renderingState.getLinkLabelContainer()
+    );
+}
+
+interface MeasurableLabelWithProps extends MeasurableLabel {
+    latestProps: HtmlLinkLabelProps;
+}
+
+function computeLabelBounds(props: HtmlLinkLabelProps, {width, height}: Size): Rect {
+    const {position: {x, y}, textAnchor = DEFAULT_TEXT_ANCHOR} = props;
+
+    let xOffset = 0;
+    if (textAnchor === 'middle') {
+        xOffset = -width / 2;
+    } else if (textAnchor === 'end') {
+        xOffset = -width;
+    }
+
+    return {
+        x: x + xOffset,
+        y: y - height / 2,
+        width,
+        height,
+    };
 }
 
 /**

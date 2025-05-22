@@ -18,8 +18,7 @@ import { ElementLayer } from './elementLayer';
 import {
     Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox,
 } from './geometry';
-import { LabelLayer } from './labelLayer';
-import { LinkLayer, LinkMarkers } from './linkLayer';
+import { LinkLabelLayer, LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
 import { CommandBatch } from './history';
 import { Paper, PaperTransform, SvgPaperLayer } from './paper';
@@ -222,8 +221,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                     links={model.links}
                                 />
                             </SvgPaperLayer>
-                            <LabelLayer model={model}
-                                renderingState={renderingState}
+                            <LinkLabelLayer renderingState={renderingState}
                                 paperTransform={paperTransform}
                                 layerRef={this.labelLayerRef}
                             />

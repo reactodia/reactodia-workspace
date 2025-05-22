@@ -71,7 +71,7 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
         renderLink: props => (
             <Reactodia.DefaultLink {...props}
                 prependLabels={
-                    <Reactodia.LinkLabel link={props.link}
+                    <Reactodia.HtmlLinkLabel link={props.link}
                         position={props.getPathPosition(0.5)}
                         line={1}
                         style={{
@@ -80,7 +80,7 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
                             fontWeight: 'lighter',
                         }}>
                         {props.link.typeId}
-                    </Reactodia.LinkLabel>
+                    </Reactodia.HtmlLinkLabel>
                 }
                 propertyLabelStartLine={2}
             />

@@ -76,11 +76,12 @@ export {
     LayoutTypeProvider, LayoutFunction,
     calculateLayout, applyLayout, uniformGrid, translateToPositiveQuadrant,
 } from './diagram/layout';
-export { LinkLabel, type LinkLabelProps } from './diagram/labelLayer';
 export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
     LinkPath, LinkPathProps,
     LinkVertices, LinkVerticesProps,
+    LinkLabel, LinkLabelProps,
+    HtmlLinkLabel, HtmlLinkLabelProps,
 } from './diagram/linkLayer';
 export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
 export {

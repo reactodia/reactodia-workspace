@@ -123,7 +123,7 @@ export interface PaperTransform {
  */
 export interface HtmlPaperLayerProps extends React.HTMLProps<HTMLDivElement> {
     paperTransform: PaperTransform;
-    layerRef?: React.RefObject<HTMLDivElement | null>;
+    layerRef?: React.Ref<HTMLDivElement | null>;
 }
 
 /**

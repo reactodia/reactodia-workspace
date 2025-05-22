@@ -14,7 +14,7 @@
     font-weight: bold;
   }
 
-  &--renamed &__label {
+  &__label--renamed {
     font-style: italic;
     font-weight: normal;
   }
@@ -31,7 +31,9 @@
 
   &__source-count,
   &__target-count {
+    color: theme.$color-emphasis-600;
     font-size: 12px;
     font-weight: bold;
+    opacity: 80%;
   }
 }
