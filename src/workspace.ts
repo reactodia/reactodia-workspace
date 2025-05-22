@@ -79,12 +79,15 @@ export {
 export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
     LinkPath, LinkPathProps,
-    LinkLabel, LinkLabelProps,
     LinkVertices, LinkVerticesProps,
+    LinkLabel, LinkLabelProps,
+    HtmlLinkLabel, HtmlLinkLabelProps,
 } from './diagram/linkLayer';
 export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
 export {
-    PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
+    type PaperTransform, paneTopLeft, totalPaneSize,
+    HtmlPaperLayer, type HtmlPaperLayerProps,
+    SvgPaperLayer, type SvgPaperLayerProps,
 } from './diagram/paper';
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
