@@ -6,7 +6,7 @@ import {
     PropertyTypeIri, PropertyTypeModel, ElementIri, ElementTypeIri, LinkTypeIri,
     hashLink, equalLinks, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
-import type { DataProviderLinkCount, DataProviderLookupItem } from '../provider';
+import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import type { DataProviderDefinition } from './composite';
 
 const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';

@@ -8,7 +8,7 @@ import {
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
 } from '../model';
-import type { DataProviderLinkCount, DataProviderLookupItem } from '../provider';
+import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
 import {
     SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,

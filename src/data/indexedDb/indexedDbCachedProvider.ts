@@ -7,7 +7,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 
 import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
 import { Sha256 } from './sha256';

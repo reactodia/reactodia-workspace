@@ -4,7 +4,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
 /**

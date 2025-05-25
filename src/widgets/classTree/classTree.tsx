@@ -9,7 +9,7 @@ import { Translation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
-import { DataProvider } from '../../data/provider';
+import { DataProvider } from '../../data/dataProvider';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
 import { Element } from '../../diagram/elements';

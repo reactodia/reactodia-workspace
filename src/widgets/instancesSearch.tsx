@@ -6,7 +6,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
-import { DataProviderLookupParams, DataProviderLookupItem } from '../data/provider';
+import { DataProviderLookupParams, DataProviderLookupItem } from '../data/dataProvider';
 
 import type { CanvasApi } from '../diagram/canvasApi';
 import { placeElementsAroundTarget } from '../diagram/commands';
