@@ -7,7 +7,7 @@ import {
     LinkTypeIri, PropertyTypeIri, equalLinks,
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
-import { DataProvider } from '../data/provider';
+import { DataProvider } from '../data/dataProvider';
 import * as Rdf from '../data/rdf/rdfModel';
 
 import { setLinkState } from '../diagram/commands';

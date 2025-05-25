@@ -18,6 +18,7 @@ export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/ke
 export { useWorker } from './coreUtils/workers';
 export { Debouncer, animateInterval } from './coreUtils/scheduler';
 
+export * from './data/dataProvider';
 export * from './data/model';
 export {
     MetadataProvider, MetadataCanConnect, MetadataCanModifyEntity, MetadataCanModifyRelation,
@@ -27,7 +28,6 @@ export {
     ValidationProvider, ValidationEvent, ValidationResult, ValidatedElement, ValidatedLink,
     ValidationSeverity,
 } from './data/validationProvider';
-export * from './data/provider';
 export {
     TemplateProperties, PinnedProperties,
     DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,

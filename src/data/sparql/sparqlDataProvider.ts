@@ -8,7 +8,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
 import {
     MutableClassModel,

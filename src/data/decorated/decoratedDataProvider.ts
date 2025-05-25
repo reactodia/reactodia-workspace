@@ -3,7 +3,7 @@ import { delay } from '../../coreUtils/async';
 import type * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel,

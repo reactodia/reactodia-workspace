@@ -5,7 +5,7 @@ import {
     ElementModel, ElementTypeModel, LinkModel, LinkTypeModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
-import { DataProvider } from '../data/provider';
+import { DataProvider } from '../data/dataProvider';
 
 import { Graph } from '../diagram/graph';
 

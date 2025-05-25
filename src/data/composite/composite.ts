@@ -1,7 +1,7 @@
 import * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,

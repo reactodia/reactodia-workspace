@@ -7,7 +7,7 @@ import { Translation } from '../coreUtils/i18n';
 
 import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
 import { ElementModel, ElementTypeIri } from '../data/model';
-import { DataProviderLookupItem } from '../data/provider';
+import { DataProviderLookupItem } from '../data/dataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
 

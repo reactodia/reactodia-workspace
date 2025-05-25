@@ -7,7 +7,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-} from '../provider';
+} from '../dataProvider';
 
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
