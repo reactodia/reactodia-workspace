@@ -6,7 +6,7 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/model';
-import { generate128BitID } from '../data/utils';
+import { generate128BitID, makeCaseInsensitiveFilter } from '../data/utils';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget } from '../diagram/canvasWidget';
@@ -886,11 +886,12 @@ class ConnectionsList extends React.Component<ConnectionsListProps> {
 
     private getLinks() {
         const {workspace: {model, translation: t}, data, filterKey} = this.props;
+        const textFilter = filterKey ? makeCaseInsensitiveFilter(filterKey) : undefined;
         return (data.links || [])
             .map(link => model.getLinkType(link.id)?.data ?? link)
             .filter(link => {
-                const text = t.formatLabel(link.label, link.id, model.language).toLowerCase();
-                return !filterKey || text.indexOf(filterKey.toLowerCase()) >= 0;
+                const text = t.formatLabel(link.label, link.id, model.language);
+                return !textFilter || textFilter(text);
             })
             .sort(this.compareLinks);
     }
@@ -1033,7 +1034,7 @@ class LinkInPopupMenu extends React.Component<LinkInPopupMenuProps> {
             workspace: {model, translation: t},
         } = this.props;
         const relation = t.formatLabel(link.label, link.id, model.language);
-        const relationIri = t.formatIri(link.id);
+        const relationIri = model.locale.formatIri(link.id);
         const probabilityPercent = Math.round(probability * 100);
         const textLine = highlightSubstring(
             relation + (probabilityPercent > 0 ? ` (${probabilityPercent}%)` : ''),
@@ -1146,14 +1147,15 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
     }
 
     private getFilteredObjects(): ReadonlyArray<ElementModel> {
-        const {workspace: {model, translation: t}, data, filterKey} = this.props;
+        const {workspace: {model}, data, filterKey} = this.props;
         if (!filterKey) {
             return data.elements;
         }
-        const loweredFilterKey = filterKey.toLowerCase();
+        
+        const textFilter = makeCaseInsensitiveFilter(filterKey);
         return data.elements.filter(element => {
-            const text = t.formatLabel(element.label, element.id, model.language).toLowerCase();
-            return text && text.indexOf(loweredFilterKey) >= 0;
+            const text = model.locale.formatEntityLabel(element, model.language);
+            return textFilter(text);
         });
     }
 

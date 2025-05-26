@@ -79,6 +79,10 @@
     "request_relations.command": "Request relations between entities",
     "ungroup_entities.command": "Ungroup entities"
   },
+  "default_data_locale": {
+    "iri": "<{{value}}>",
+    "iri_blank": "(blank node)"
+  },
   "default_link_template": {
     "group_source.title": "{{value}} source elements",
     "group_source.value": "{{value}}",
@@ -250,7 +254,6 @@
     "dialog.cancel.title": "Cancel the dialog",
     "edit_entity.dialog.caption": "Edit entity",
     "edit_entity.iri.label": "IRI",
-    "edit_entity.label.label": "Label",
     "edit_entity.type.label": "Type",
     "edit_relation.dialog.caption": "Edit relation",
     "edit_relation.dialog.caption_new": "Establish new relation",

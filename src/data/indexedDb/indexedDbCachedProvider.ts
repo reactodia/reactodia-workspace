@@ -146,7 +146,7 @@ interface LookupRecord {
  * @category Data
  */
 export class IndexedDbCachedProvider implements DataProvider {
-    static readonly DB_VERSION = 3;
+    static readonly DB_VERSION = 4;
 
     private readonly hasher = new Sha256();
 
@@ -380,7 +380,6 @@ export class IndexedDbCachedProvider implements DataProvider {
             this.cacheMissing,
             async ids => await this.baseProvider.elements({elementIds: ids, signal}),
         );
-        rehydrateLabels(result.values(), this.factory);
         rehydrateProperties(result.values(), this.factory);
         return result;
     }
@@ -786,7 +785,6 @@ export class IndexedDbCachedProvider implements DataProvider {
             })
         );
         const elements = record.result.map(el => el.element);
-        rehydrateLabels(elements, this.factory);
         rehydrateProperties(elements, this.factory);
         return record.result;
     }

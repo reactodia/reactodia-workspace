@@ -75,7 +75,6 @@ export class MockDataProvider extends EmptyDataProvider {
             result.set(iri, {
                 id: iri,
                 types: [],
-                label: [],
                 properties: {},
             });
         }

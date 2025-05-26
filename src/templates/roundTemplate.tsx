@@ -9,8 +9,6 @@ import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { formatEntityTypeList } from '../widgets/utility/listElementView';
-
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
@@ -71,7 +69,7 @@ export function RoundEntity(props: RoundEntityProps) {
         return null;
     }
 
-    const label = t.formatLabel(data.label, data.id, model.language);
+    const label = model.locale.formatEntityLabel(data, model.language);
     const {color: baseColor} = getElementTypeStyle(data.types);
     const rootStyle = {
         '--reactodia-element-style-color': baseColor,
@@ -81,7 +79,7 @@ export function RoundEntity(props: RoundEntityProps) {
         <div className={cx(CLASS_NAME, className)}
             style={style ? {...rootStyle, ...style} : rootStyle}>
             <div className={`${CLASS_NAME}__types`}
-                title={showTypes ? formatEntityTypeList(data, workspace) : undefined}>
+                title={showTypes ? model.locale.formatEntityTypeList(data, model.language) : undefined}>
                 {showTypes ? data.types.map((typeIri, index) => {
                     const type = model.getElementType(typeIri);
                     const label = t.formatLabel(type?.data?.label, typeIri, model.language);

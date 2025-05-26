@@ -17,7 +17,6 @@ import { EntityElement, EntityGroup } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { formatEntityTypeList } from '../widgets/utility/listElementView';
 import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
@@ -82,7 +81,8 @@ export function StandardEntity(props: StandardEntityProps) {
         return null;
     }
 
-    const label = t.formatLabel(data.label, data.id, model.language);
+    const label = model.locale.formatEntityLabel(data, model.language);
+    const imageUrl = model.locale.selectEntityImageUrl(data);
     const typesLabel = formatEntityTypes(data, workspace);
     const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
     const rootStyle = {
@@ -143,11 +143,11 @@ export function StandardEntity(props: StandardEntityProps) {
         );
     }
 
-    function renderThumbnail(data: ElementModel) {
-        if (data.image) {
+    function renderThumbnail() {
+        if (imageUrl !== undefined) {
             return (
                 <div className={`${CLASS_NAME}__thumbnail`} aria-hidden='true'>
-                    <img src={data.image} className={`${CLASS_NAME}__thumbnail-image`} />
+                    <img src={imageUrl} className={`${CLASS_NAME}__thumbnail-image`} />
                 </div>
             );
         } else if (iconUrl) {
@@ -175,7 +175,7 @@ export function StandardEntity(props: StandardEntityProps) {
             <div className={`${CLASS_NAME}__main`}>
                 <div className={`${CLASS_NAME}__body`}>
                     <div className={`${CLASS_NAME}__body-horizontal`}>
-                        {renderThumbnail(data)}
+                        {renderThumbnail()}
                         <div className={`${CLASS_NAME}__body-content`}>
                             <div title={typesLabel} className={`${CLASS_NAME}__type`}>
                                 <div className={`${CLASS_NAME}__type-value`}>
@@ -198,11 +198,11 @@ export function StandardEntity(props: StandardEntityProps) {
             </div>
             {isExpanded ? (
                 <div className={`${CLASS_NAME}__dropdown`}>
-                    {data.image ? (
+                    {imageUrl === undefined ? null : (
                         <div className={`${CLASS_NAME}__photo`}>
-                            <img src={data.image} className={`${CLASS_NAME}__photo-image`} />
+                            <img src={imageUrl} className={`${CLASS_NAME}__photo-image`} />
                         </div>
-                    ) : null}
+                    )}
                     <div className={`${CLASS_NAME}__dropdown-content`}>
                         {renderIri(data)}
                         <PropertyList data={data} />
@@ -348,8 +348,8 @@ function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
-    const label = t.formatLabel(data.label, data.id, model.language);
-    const iri = t.formatIri(data.id);
+    const label = model.locale.formatEntityLabel(data, model.language);
+    const iri = model.locale.formatIri(data.id);
     const typesLabel = formatEntityTypes(data, workspace);
     const title = t.text('standard_template.group_item.title', {
         entity: label,
@@ -412,10 +412,10 @@ function formatEntityTypes(
     data: ElementModel,
     workspace: WorkspaceContext
 ): string {
-    const {translation: t} = workspace;
+    const {model, translation: t} = workspace;
     return data.types.length === 0
         ? t.text('standard_template.default_type')
-        : formatEntityTypeList(data, workspace);
+        : model.locale.formatEntityTypeList(data, model.language);
 }
 
 function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
@@ -476,7 +476,7 @@ function PropertyList(props: {
                             <div className={`${CLASS_NAME}__properties-key`}
                                 title={t.text('standard_template.property.title', {
                                     property: label,
-                                    propertyIri: t.formatIri(iri),
+                                    propertyIri: model.locale.formatIri(iri),
                                 })}>
                                 {label}
                             </div>

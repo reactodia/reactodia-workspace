@@ -64,7 +64,6 @@ export class EntityElement extends Element {
         return {
             id: iri,
             types: [],
-            label: [],
             properties: {},
         };
     }

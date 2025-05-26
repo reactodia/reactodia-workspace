@@ -216,8 +216,6 @@ export function triplesToElementBinding(
 interface MutableElementModel {
     readonly id: ElementIri;
     types: ElementTypeIri[];
-    label: Rdf.Literal[];
-    image?: string;
     properties: { [id: string]: Array<Rdf.NamedNode | Rdf.Literal> };
 }
 
@@ -225,7 +223,8 @@ export function getElementsInfo(
     response: SparqlResponse<ElementBinding>,
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
     propertyByPredicate: ReadonlyMap<string, readonly PropertyConfiguration[]> = EMPTY_MAP,
-    openWorldProperties = true,
+    labelPredicate: PropertyTypeIri,
+    openWorldProperties: boolean
 ): Map<ElementIri, ElementModel> {
     const instances = new Map<ElementIri, MutableElementModel>();
 
@@ -237,7 +236,7 @@ export function getElementsInfo(
             model = emptyElementInfo(iri);
             instances.set(iri, model);
         }
-        enrichElement(model, binding);
+        enrichElement(model, binding, labelPredicate);
     }
 
     if (!openWorldProperties || propertyByPredicate.size > 0) {
@@ -278,6 +277,7 @@ function mapPropertiesByConfig(
 export function enrichElementsWithImages(
     response: SparqlResponse<ElementImageBinding>,
     elements: Map<ElementIri, ElementModel>,
+    imagePropertyIri: PropertyTypeIri
 ): void {
     for (const binding of response.results.bindings) {
         if (!isRdfIri(binding.inst)) {
@@ -285,7 +285,11 @@ export function enrichElementsWithImages(
         }
         const elementInfo = elements.get(binding.inst.value);
         if (elementInfo) {
-            (elementInfo as MutableElementModel).image = binding.image.value;
+            appendProperty(
+                (elementInfo as MutableElementModel).properties,
+                imagePropertyIri,
+                binding.image
+            );
         }
     }
 }
@@ -329,11 +333,11 @@ export function getLinksInfo(
         if (existing) {
             // this can only happen due to error in sparql or when merging properties
             if (binding.propType && binding.propValue) {
-                appendProperty(existing.properties, binding.propType, binding.propValue);
+                appendProperty(existing.properties, binding.propType.value, binding.propValue);
             }
         } else {
             if (binding.propType && binding.propValue) {
-                appendProperty(model.properties, binding.propType, binding.propValue);
+                appendProperty(model.properties, binding.propType.value, binding.propValue);
             }
             const linkConfigs = linkByPredicateType.get(model.linkTypeId);
             if (linkConfigs && linkConfigs.length > 0) {
@@ -412,6 +416,7 @@ export function getFilteredData(
     response: SparqlResponse<ElementBinding & FilterBinding>,
     sourceTypes: ReadonlySet<ElementTypeIri> | undefined,
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> | undefined,
+    labelPredicate: PropertyTypeIri,
     openWorldLinks: boolean
 ): DataProviderLookupItem[] {
     const predicateToConfig = linkByPredicateType ?? EMPTY_MAP;
@@ -432,7 +437,7 @@ export function getFilteredData(
             model = emptyElementInfo(iri);
             instances.set(iri, model);
         }
-        enrichElement(model, binding);
+        enrichElement(model, binding, labelPredicate);
 
         if (isRdfIri(binding.classAll)) {
             multimapAdd(resultTypes, iri, binding.classAll.value);
@@ -552,14 +557,25 @@ function typeMatchesDomain(
     }
 }
 
-export function enrichElement(element: MutableElementModel, binding: ElementBinding) {
-    if (!element) { return; }
-    appendLabel(element.label, binding.label);
+function enrichElement(
+    element: MutableElementModel | undefined,
+    binding: ElementBinding,
+    labelPredicate: PropertyTypeIri
+) {
+    if (!element) {
+        return;
+    }
+
+    if (binding.label) {
+        appendProperty(element.properties, labelPredicate, binding.label);
+    }
+
     if (binding.class && element.types.indexOf(binding.class.value) < 0) {
         element.types.push(binding.class.value);
     }
+
     if (binding.propType && binding.propValue && binding.propType.value !== LABEL_PREDICATE) {
-        appendProperty(element.properties, binding.propType, binding.propValue);
+        appendProperty(element.properties, binding.propType.value, binding.propValue);
     }
 }
 
@@ -571,13 +587,13 @@ function appendLabel(container: Rdf.Literal[], newLabel: Rdf.Literal | undefined
     container.push(newLabel);
 }
 
-function appendProperty(
+export function appendProperty(
     properties: { [id: string]: Array<Rdf.NamedNode | Rdf.Literal> },
-    propType: Rdf.NamedNode,
+    propType: PropertyTypeIri,
     propValue: Rdf.NamedNode | Rdf.Literal
 ): void {
-    let values = Object.prototype.hasOwnProperty.call(properties, propType.value)
-        ? properties[propType.value] : undefined;
+    let values = Object.prototype.hasOwnProperty.call(properties, propType)
+        ? properties[propType] : undefined;
     if (values) {
         for (const existing of values) {
             if (Rdf.equalTerms(existing, propValue)) {
@@ -586,7 +602,7 @@ function appendProperty(
         }
     } else {
         values = [];
-        properties[propType.value] = values;
+        properties[propType] = values;
     }
     values.push(propValue);
 }
@@ -607,7 +623,6 @@ function getLinkCount(sLinkType: LinkCountBinding): DataProviderLinkCount {
 function emptyElementInfo(id: ElementIri): MutableElementModel {
     const elementInfo: MutableElementModel = {
         id: id,
-        label: [],
         types: [],
         properties: {},
     };

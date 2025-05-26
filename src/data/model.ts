@@ -53,8 +53,6 @@ export type SubtypeEdge = readonly [derived: ElementTypeIri, base: ElementTypeIr
 export interface ElementModel {
     readonly id: ElementIri;
     readonly types: ReadonlyArray<ElementTypeIri>;
-    readonly label: ReadonlyArray<Rdf.Literal>;
-    readonly image?: string;
     readonly properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
 }
 
@@ -188,8 +186,6 @@ export function equalElements(a: ElementModel, b: ElementModel): boolean {
     return (
         a.id === b.id &&
         shallowArrayEqual(a.types, b.types) &&
-        equalTermArrays(a.label, b.label) &&
-        a.image === b.image &&
         equalProperties(a.properties, b.properties)
     );
 }

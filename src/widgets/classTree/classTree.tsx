@@ -10,6 +10,7 @@ import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/dataProvider';
+import { makeCaseInsensitiveFilter } from '../../data/utils';
 
 import { CanvasApi, CanvasDropEvent } from '../../diagram/canvasApi';
 import { Element } from '../../diagram/elements';
@@ -583,10 +584,11 @@ function filterByKeyword(roots: ReadonlyArray<TreeNode>, searchText: string): Re
     if (roots.length === 0) {
         return roots;
     }
+    const searchFilter = makeCaseInsensitiveFilter(searchText);
     function collectByKeyword(acc: TreeNode[], node: TreeNode) {
         const derived = node.derived.reduce(collectByKeyword, []);
         // keep parent if children is included or label contains keyword
-        if (derived.length > 0 || node.label.toLowerCase().indexOf(searchText) >= 0) {
+        if (derived.length > 0 || searchFilter(node.label)) {
             acc.push(TreeNode.setDerived(node, derived));
         }
         return acc;

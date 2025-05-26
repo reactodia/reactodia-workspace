@@ -8,7 +8,6 @@ import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
-import { formatEntityTypeList } from '../widgets/utility/listElementView';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
@@ -55,21 +54,22 @@ export function ClassicEntity(props: ClassicEntityProps) {
         return null;
     }
 
-    const types = data?.types ?? [];
+    const types = data.types ?? [];
     const {color, icon} = getElementTypeStyle(types);
 
     const typesLabel = types.length > 0
-        ?  formatEntityTypeList(data, workspace)
+        ?  model.locale.formatEntityTypeList(data, model.language)
         : t.text('standard_template.default_type');
-    const label = t.formatLabel(data?.label, data.id, model.language);
+    const label = model.locale.formatEntityLabel(data, model.language);
+    const imageUrl = model.locale.selectEntityImageUrl(data);
 
-    const image = data?.image ? (
+    const image = imageUrl === undefined ? undefined : (
         <div className={`${CLASS_NAME}__thumbnail`}>
             <img className={`${CLASS_NAME}__thumbnail-image`}
-                src={data.image}
+                src={imageUrl}
             />
         </div>
-    ) : undefined;
+    );
 
     const expander = isExpanded ? (
         <div>
@@ -159,7 +159,7 @@ function PropertyList(props: {
                             <div className={`${CLASS_NAME}__property-label`}
                                 title={t.text('standard_template.property.title', {
                                     property: label,
-                                    propertyIri: t.formatIri(iri),
+                                    propertyIri: model.locale.formatIri(iri),
                                 })}>
                                 {label}
                             </div>

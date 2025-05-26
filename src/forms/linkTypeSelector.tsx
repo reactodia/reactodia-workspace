@@ -150,7 +150,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
         const data = model.getLinkType(iri);
         const label = t.formatLabel(data?.data?.label, iri, model.language);
         let [sourceLabel, targetLabel] = [link.source, link.target].map(element =>
-            t.formatLabel(element.label, element.id, model.language)
+            model.locale.formatEntityLabel(element, model.language)
         );
         if (direction === 'in') {
             [sourceLabel, targetLabel] = [targetLabel, sourceLabel];

@@ -114,7 +114,6 @@ export interface GraphStructure {
 export interface DiagramModelOptions {
     history: CommandHistory;
     translation: Translation;
-    selectLabelLanguage?: LabelLanguageSelector;
 }
 
 /**
@@ -146,22 +145,11 @@ export class DiagramModel implements GraphStructure {
      * Provides the mechanism to undo/redo commands on the diagram.
      */
     readonly history: CommandHistory;
-    /**
-     * Provides the methods to format the content according to the current language.
-     *
-     * @deprecated Use {@link useTranslation} hook instead.
-     */
-    readonly locale: LocaleFormatter;
 
     /** @hidden */
     constructor(options: DiagramModelOptions) {
-        const {history, translation} = options;
+        const {history} = options;
         this.history = history;
-        this.locale = this.createLocale(translation);
-    }
-
-    protected createLocale(translation: Translation): this['locale'] {
-        return new DiagramLocaleFormatter(this, translation);
     }
 
     /**
@@ -470,98 +458,5 @@ class RemoveLinkCommand implements Command {
         const {graph, link} = this;
         graph.removeLink(link.id);
         return new AddLinkCommand(graph, link);
-    }
-}
-
-/**
- * Provides utility methods to format the diagram content according
- * to the current language.
- *
- * @deprecated Use {@link Translation} interface instead.
- */
-export interface LocaleFormatter {
-    /**
-     * Selects a single preferred literal for the target language out of several candidates.
-     *
-     * Language code is specified as lowercase [BCP47](https://www.rfc-editor.org/rfc/rfc5646)
-     * string (examples: `en`, `en-gb`, etc).
-     *
-     * **Example**:
-     * ```ts
-     * model.setLanguage('de');
-     * // Returns: Rdf.Literal { value = 'Apfel', language = 'de' }
-     * const name = model.locale.formatLabel([
-     *     model.factory.literal('Apple', 'en'),
-     *     model.factory.literal('Apfel', 'de'),
-     *     model.factory.literal('Яблоко', 'ru'),
-     * ]);
-     * ```
-     *
-     * @param labels candidate literal with same or different language codes
-     * @param language target language code (defaults to the {@link DiagramModel.language})
-     * @returns selected literal or `undefined` if no suitable literal was found
-     */
-    selectLabel(
-        labels: ReadonlyArray<Rdf.Literal>,
-        language?: string
-    ): Rdf.Literal | undefined;
-
-    /**
-     * Same as {@link selectLabel selectLabel()} but uses local part of
-     * the `fallbackIri` as a fallback to display an entity referred by IRI
-     * even if there is no suitable label to use.
-     *
-     * **Example**:
-     * ```ts
-     * // Returns: 'Apple'
-     * const name = model.locale.formatLabel(
-     *     [
-     *         model.factory.literal('Apfel', 'de'),
-     *         model.factory.literal('Яблоко', 'ru'),
-     *     ],
-     *     'http://example.com/entity/Apple',
-     *     'en'
-     * );
-     * ```
-     */
-    formatLabel(
-        labels: ReadonlyArray<Rdf.Literal> | undefined,
-        fallbackIri: string,
-        language?: string
-    ): string;
-
-    /**
-     * Formats IRI to display in the UI:
-     *   - usual IRIs are enclosed in `<IRI>`;
-     *   - anonymous element IRIs displayed as `(blank node)`.
-     */
-    formatIri(iri: string): string;
-}
-
-export class DiagramLocaleFormatter implements LocaleFormatter {
-    constructor(
-        protected readonly model: DiagramModel,
-        protected readonly translation: Translation
-    ) {}
-
-    selectLabel(
-        labels: ReadonlyArray<Rdf.Literal>,
-        language?: string
-    ): Rdf.Literal | undefined {
-        const targetLanguage = language ?? this.model.language;
-        return this.translation.selectLabel(labels, targetLanguage);
-    }
-
-    formatLabel(
-        labels: ReadonlyArray<Rdf.Literal> | undefined,
-        fallbackIri: string,
-        language?: string
-    ): string {
-        const targetLanguage = language ?? this.model.language;
-        return this.translation.formatLabel(labels, fallbackIri, targetLanguage);
-    }
-
-    formatIri(iri: string): string {
-        return this.translation.formatIri(iri);
     }
 }

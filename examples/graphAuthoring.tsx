@@ -62,9 +62,6 @@ function GraphAuthoringExample() {
             renameLinkProvider={renameLinkProvider}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
-                canvas={{
-                    elementTemplateResolver: () => Reactodia.RoundTemplate,
-                }}
                 visualAuthoring={{
                     inputResolver: (property, inputProps) => property === 'http://www.w3.org/2000/01/rdf-schema#comment'
                         ? <Reactodia.FormInputList {...inputProps} valueInput={MultilineTextInput} />

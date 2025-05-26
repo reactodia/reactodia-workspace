@@ -138,7 +138,6 @@ export class EmptyMetadataProvider implements MetadataProvider {
         return {
             id: '',
             types: [],
-            label: [],
             properties: {},
         };
     }

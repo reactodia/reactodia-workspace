@@ -129,7 +129,7 @@ export function DefaultLink(props: DefaultLinkProps) {
                 rectClass={cx(BACKGROUND_CLASS, primaryLabelProps?.rectClass)}
                 title={primaryLabelProps?.title ?? t.text('default_link_template.label.title', {
                     relation: label,
-                    relationIri: t.formatIri(link.typeId),
+                    relationIri: model.locale.formatIri(link.typeId),
                 })}
                 content={renamedLabel ? label : (
                     <WithFetchStatus type='linkType' target={link.typeId}>
@@ -235,7 +235,7 @@ function LinkProperties(props: DefaultLinkProps) {
                 rectClass={cx(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
                 title={propertyLabelProps?.title ?? t.text('default_link_template.property.title', {
                     property: property.label,
-                    propertyIri: t.formatIri(property.iri),
+                    propertyIri: model.locale.formatIri(property.iri),
                 })}
                 content={<>
                     <WithFetchStatus type='propertyType' target={property.iri}>

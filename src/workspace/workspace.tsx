@@ -167,7 +167,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         this.cachedTypeStyles = new WeakMap();
         this.cachedGroupStyles = new WeakMap();
 
-        const model = new DataDiagramModel({history, translation, selectLabelLanguage});
+        const model = new DataDiagramModel({history, translation});
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({
