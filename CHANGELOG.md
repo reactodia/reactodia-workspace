@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Display "edit" and "delete" inline entity actions:
   * Add option `inlineEntityActions` (defaults to `true`) for `VisualAuthoring` to display entity actions inline at the top of each entity;
   * Improve the style for "cancel" (discard) action on entities and relations to make it consistent with other inline actions.
+- Select entity label and image using `DataLocaleProvider` based on its properties:
+  * **[Breaking]** Remove `ElementModel.{label, image}` properties and instead use `DataDiagramModel.locale` methods to select them based on `ElementModel.properties` instead;
+  * Allow to override data locale provider (default is `DefaultDataLocaleProvider`) by passing `locale` option to `model.importLayout()` or `model.createNewDiagram()`.
 
 #### 🐛 Fixed
 - Always display validation state for an entities and relations in case when the target does not have any authoring changes.
@@ -17,12 +20,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 💅 Polish
 - Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
+- Re-use and un-deprecate `model.locale` formatting object with `DataLocaleProvider` interface type:
+  * **[Breaking]**: Remove `Translation.formatIri()` in favor of `locale.formatIri()`;
+  * Replace other deprecated methods of `locale` with: `selectEntityLabel()`, `selectEntityImageUrl()`, `formatEntityLabel()`, `formatEntityTypeList()`;
 - Provide gradual customization options for the built-in entity and relation property editor:
   * Expose ability to customize property input in authoring forms with `inputResolver` option for `VisualAuthoring` component;
   * Export built-in inputs `FormInputList` and `FormInputText`, as well as `FormInputSingleProps` and `FormInputMultiProps` props interfaces to implement custom property inputs.
 
 #### 🔧 Maintenance
 - Make library compatible with [React v19](https://react.dev/blog/2024/12/05/react-19), while continuing support for v17 and v18.
+- Increase `IndexedDbCachedProvider.DB_VERSION` to 4 due to `ElementModel` changes.
+- Remove deprecated `LocaleFormatter`, `DataGraphLocaleFormatter` and `FormattedProperty` types.
 
 ## [0.29.1] - 2025-03-25
 #### 🐛 Fixed

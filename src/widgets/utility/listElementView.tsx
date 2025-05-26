@@ -55,7 +55,7 @@ const CLASS_NAME = 'reactodia-list-element-view';
  */
 export function ListElementView(props: ListElementViewProps) {
     const workspace = useWorkspace();
-    const {model, translation: t, getElementTypeStyle} = workspace;
+    const {model, getElementTypeStyle} = workspace;
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
@@ -76,7 +76,7 @@ export function ListElementView(props: ListElementViewProps) {
         '--reactodia-element-style-color': elementColor,
     } as React.CSSProperties;
 
-    const localizedText = t.formatLabel(element.label, element.id, model.language);
+    const localizedText = model.locale.formatEntityLabel(element, model.language);
 
     const onItemClick = (event: React.MouseEvent<any>) => {
         if (!disabled && onClick) {
@@ -162,25 +162,12 @@ export function highlightSubstring(
 export function formatEntityTitle(entity: ElementModel, workspace: WorkspaceContext): string {
     const {model, translation: t} = workspace;
 
-    const label = t.formatLabel(entity.label, entity.id, model.language);
-    const entityIri = t.formatIri(entity.id);
-    const entityTypes = formatEntityTypeList(entity, workspace);
+    const entityIri = model.locale.formatIri(entity.id);
+    const entityLabel = model.locale.formatEntityLabel(entity, model.language);
+    const entityTypes = model.locale.formatEntityTypeList(entity, model.language);
 
-    const title = t.text('inline_entity.title', {entity: label, entityIri, entityTypes});
-    const titleExtra = t.text('inline_entity.title_extra', {entity: label, entityIri, entityTypes});
+    const title = t.text('inline_entity.title', {entity: entityLabel, entityIri, entityTypes});
+    const titleExtra = t.text('inline_entity.title_extra', {entity: entityLabel, entityIri, entityTypes});
 
     return `${title}${titleExtra ? `\n${titleExtra}` : ''}`;
-}
-
-/**
- * Formats an entity types into a sorted labels list to display in the UI.
- */
-export function formatEntityTypeList(entity: ElementModel, workspace: WorkspaceContext): string {
-    const {model, translation: t} = workspace;
-    const labelList = entity.types.map(iri => {
-        const labels = model.getElementType(iri)?.data?.label;
-        return t.formatLabel(labels, iri, model.language);
-    });
-    labelList.sort();
-    return labelList.join(', ');
 }

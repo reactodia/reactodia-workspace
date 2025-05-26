@@ -9,11 +9,13 @@ import {
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../dataProvider';
+
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
 import {
     MutableClassModel,
     MutableLinkType,
     MutablePropertyModel,
+    appendProperty,
     collectClassInfo,
     collectElementTypes,
     collectLinkTypes,
@@ -109,6 +111,13 @@ export interface SparqlDataProviderOptions {
     ) => Promise<Map<ElementIri, string>>;
 
     /**
+     * Property IRI to store prepared image URL for an entity.
+     *
+     * @default "http://schema.org/thumbnailUrl"
+     */
+    prepareImagePredicate?: PropertyTypeIri;
+
+    /**
      * Allows to extract/fetch labels separately from SPARQL query as an alternative or
      * in addition to `label` output binding.
      */
@@ -116,6 +125,13 @@ export interface SparqlDataProviderOptions {
         resources: Set<string>,
         signal: AbortSignal | undefined
     ) => Promise<Map<string, Rdf.Literal[]>>;
+
+    /**
+     * Property IRI to store prepared labels for an entity.
+     *
+     * @default "http://www.w3.org/2000/01/rdf-schema#label"
+     */
+    prepareLabelPredicate?: PropertyTypeIri;
 }
 
 /**
@@ -172,6 +188,9 @@ export class SparqlDataProvider implements DataProvider {
     private propertyByPredicate = new Map<string, PropertyConfiguration[]>();
     private openWorldProperties: boolean;
 
+    private readonly labelPredicate: PropertyTypeIri;
+    private readonly imagePredicate: PropertyTypeIri;
+
     constructor(
         options: SparqlDataProviderOptions,
         settings: SparqlDataProviderSettings = OwlStatsSettings,
@@ -185,7 +204,13 @@ export class SparqlDataProvider implements DataProvider {
         this.settings = settings;
         this.queryFunction = queryFunction;
 
-        const {chunk, queryMethod = 'GET'} = this.options;
+        const {
+            chunk,
+            queryMethod = 'GET',
+            prepareLabelPredicate,
+            prepareImagePredicate,
+        } = this.options;
+
         if (chunk) {
             if (!Number.isSafeInteger(chunk.maxSize)) {
                 throw new Error(
@@ -225,6 +250,9 @@ export class SparqlDataProvider implements DataProvider {
         }
         this.openWorldProperties = settings.propertyConfigurations.length === 0 ||
             Boolean(settings.openWorldProperties);
+
+        this.labelPredicate = prepareLabelPredicate ?? Rdf.Vocabulary.rdfs.label;
+        this.imagePredicate = prepareImagePredicate ?? Rdf.Vocabulary.schema.thumbnailUrl;
     }
 
     private async queryChunked<T extends string>(
@@ -419,15 +447,27 @@ export class SparqlDataProvider implements DataProvider {
             bindings,
             await types,
             this.propertyByPredicate,
+            this.labelPredicate,
             this.openWorldProperties
         );
 
         if (this.options.prepareLabels) {
-            await attachLabels(elementModels.values(), this.options.prepareLabels, signal);
+            await attachProperties(
+                elementModels.values(),
+                this.options.prepareLabels,
+                this.labelPredicate,
+                signal
+            );
         }
 
         if (this.options.prepareImages) {
-            await prepareElementImages(elementModels, this.options.prepareImages, signal);
+            await prepareElementImages(
+                elementModels,
+                this.options.prepareImages,
+                this.imagePredicate,
+                this.factory,
+                signal
+            );
         } else if (this.options.imagePropertyUris && this.options.imagePropertyUris.length) {
             await this.attachImages(elementModels, this.options.imagePropertyUris, signal);
         }
@@ -454,7 +494,7 @@ export class SparqlDataProvider implements DataProvider {
             `;
             try {
                 const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
-                enrichElementsWithImages(bindings, elements);
+                enrichElementsWithImages(bindings, elements, this.imagePredicate);
             } catch (err) {
                 console.warn('Failed to load entity image URLs', err);
             }
@@ -697,12 +737,21 @@ export class SparqlDataProvider implements DataProvider {
         const bindings = await this.executeSparqlSelect<ElementBinding & FilterBinding>(filterQuery, {signal});
 
         const linkedElements = getFilteredData(
-            bindings, await types, this.linkByPredicate, this.openWorldLinks
+            bindings,
+            await types,
+            this.linkByPredicate,
+            this.labelPredicate,
+            this.openWorldLinks
         );
 
         if (this.options.prepareLabels) {
             const models = linkedElements.map(linked => linked.element);
-            await attachLabels(models, this.options.prepareLabels, signal);
+            await attachProperties(
+                models,
+                this.options.prepareLabels,
+                this.labelPredicate,
+                signal
+            );
         }
 
         return linkedElements;
@@ -1017,10 +1066,7 @@ async function attachLabels(
     fetchLabels: NonNullable<SparqlDataProviderOptions['prepareLabels']>,
     signal: AbortSignal | undefined
 ): Promise<void> {
-    const resources = new Set<string>();
-    for (const item of items) {
-        resources.add(item.id);
-    }
+    const resources = new Set<string>(Array.from(items, item => item.id));
     const labels = await fetchLabels(resources, signal);
     for (const item of items) {
         const itemLabels = labels.get(item.id);
@@ -1030,16 +1076,42 @@ async function attachLabels(
     }
 }
 
+type MutableProperties = Record<PropertyTypeIri, Array<Rdf.NamedNode | Rdf.Literal>>;
+
+async function attachProperties(
+    items: Iterable<ElementModel>,
+    fetchProperties: NonNullable<SparqlDataProviderOptions['prepareLabels']>,
+    propertyIri: PropertyTypeIri,
+    signal: AbortSignal | undefined
+) {
+    const resources = new Set<string>(Array.from(items, item => item.id));
+    const properties = await fetchProperties(resources, signal);
+    for (const item of items) {
+        const itemValues = properties.get(item.id);
+        if (itemValues) {
+            for (const value of itemValues) {
+                appendProperty(item.properties as MutableProperties, propertyIri, value);
+            }
+        }
+    }
+}
+
 function prepareElementImages(
     elements: Map<ElementIri, ElementModel>,
     fetchImages: NonNullable<SparqlDataProviderOptions['prepareImages']>,
+    imagePropertyIri: PropertyTypeIri,
+    factory: Rdf.DataFactory,
     signal: AbortSignal | undefined
 ): Promise<void> {
     return fetchImages(elements.values(), signal).then(images => {
         for (const [iri, image] of images) {
-            const model = elements.get(iri) as { image: string | undefined };
-            if (model) {
-                model.image = image;
+            const entity = elements.get(iri);
+            if (entity) {
+                appendProperty(
+                    entity.properties as MutableProperties,
+                    imagePropertyIri,
+                    factory.namedNode(image)
+                );
             }
         }
     });

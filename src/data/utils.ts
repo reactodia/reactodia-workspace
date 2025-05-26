@@ -7,3 +7,12 @@ export function generate128BitID() {
     // generate by half because of restricted numerical precision
     return random32BitDigits() + random32BitDigits() + random32BitDigits() + random32BitDigits();
 }
+
+export function makeCaseInsensitiveFilter(token: string): (item: string) => boolean {
+    const filter = new RegExp(escapeRegexp(token), 'i');
+    return item => filter.test(item);
+}
+
+function escapeRegexp(token: string): string {
+    return token.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+}

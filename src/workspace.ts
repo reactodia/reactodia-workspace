@@ -82,7 +82,7 @@ export {
     LinkLabel, LinkLabelProps,
     LinkVertices, LinkVerticesProps,
 } from './diagram/linkLayer';
-export { type DiagramModel, DiagramModelEvents, GraphStructure, LocaleFormatter } from './diagram/model';
+export { type DiagramModel, DiagramModelEvents, GraphStructure } from './diagram/model';
 export {
     PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
 } from './diagram/paper';
@@ -118,6 +118,9 @@ export {
     FetchOperationElement, FetchOperationLink, FetchOperationElementType,
     FetchOperationLinkType, FetchOperationPropertyType,
 } from './editor/dataFetcher';
+export {
+    type DataLocaleProvider, DefaultDataLocaleProvider, DefaultDataLocaleProviderOptions,
+} from './editor/dataLocaleProvider';
 export { EditorEvents, EditorController } from './editor/editorController';
 export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,

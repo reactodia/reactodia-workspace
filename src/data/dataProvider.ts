@@ -1,4 +1,4 @@
-import type { DataFactory } from './rdf/rdfModel';
+import type * as Rdf from './rdf/rdfModel';
 import {
     ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
@@ -14,7 +14,7 @@ export interface DataProvider {
      * Returns an [RDF term factory](https://rdf.js.org/data-model-spec/#datafactory-interface)
      * to create RDF terms for identifiers and property values.
      */
-    readonly factory: DataFactory;
+    readonly factory: Rdf.DataFactory;
 
     /**
      * Gets the structure and data for all known element types.

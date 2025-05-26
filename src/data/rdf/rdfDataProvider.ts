@@ -8,6 +8,7 @@ import {
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../dataProvider';
+import { makeCaseInsensitiveFilter } from '../utils';
 
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
@@ -76,8 +77,6 @@ const RDF_PROPERTY = `${Rdf.Vocabulary.rdf.namespace}#Property` as const;
 const RDFS_CLASS = `${Rdf.Vocabulary.rdfs.namespace}#Class` as const;
 const RDFS_SUB_CLASS_OF = `${Rdf.Vocabulary.rdfs.namespace}#subClassOf`;
 
-const SCHEMA_THUMBNAIL_URL = 'https://schema.org/thumbnailUrl';
-
 /**
  * Provides graph data from in-memory [RDF/JS-compatible](https://rdf.js.org/data-model-spec/)
  * graph dataset.
@@ -112,7 +111,7 @@ export class RdfDataProvider implements DataProvider {
         this.labelPredicate = options.labelPredicate === null
             ? null : this.factory.namedNode(options.labelPredicate ?? Rdf.Vocabulary.rdfs.label);
         this.imagePredicate = options.imagePredicate === null
-            ? null : this.factory.namedNode(options.imagePredicate ?? SCHEMA_THUMBNAIL_URL);
+            ? null : this.factory.namedNode(options.imagePredicate ?? Rdf.Vocabulary.schema.thumbnailUrl);
         this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [OWL_CLASS, RDFS_CLASS])
             .map(iri => this.factory.namedNode(iri));
         this.elementSubtypePredicate = options.elementSubtypePredicate === null
@@ -305,16 +304,9 @@ export class RdfDataProvider implements DataProvider {
         for (const elementId of elementIds) {
             const elementIri = this.decodeTerm(elementId);
             if (this.dataset.hasMatches(elementIri, null, null)) {
-                const imageTerm = this.imagePredicate
-                    ? findFirstIriOrLiteral(this.dataset, elementIri, this.imagePredicate)
-                    : undefined;
                 const model: ElementModel = {
                     id: elementId,
                     types: findTypes(this.dataset, elementIri, this.typePredicate),
-                    label: this.labelPredicate
-                        ? findLiterals(this.dataset, elementIri, this.labelPredicate)
-                        : [],
-                    image: imageTerm ? imageTerm.value : undefined,
                     properties: findProperties(this.dataset, elementIri),
                 };
                 result.set(elementId, model);
@@ -422,7 +414,7 @@ export class RdfDataProvider implements DataProvider {
         const items = new HashMap<Rdf.NamedNode | Rdf.BlankNode, ResultItem>(
             Rdf.hashTerm, Rdf.equalTerms
         );
-        let requiredTextFilter = params.text ? new RegExp(escapeRegexp(params.text), 'i') : undefined;
+        let requiredTextFilter = params.text ? makeCaseInsensitiveFilter(params.text) : undefined;
 
         if (params.refElementId) {
             const refElementIri = this.decodeTerm(params.refElementId);
@@ -483,7 +475,7 @@ export class RdfDataProvider implements DataProvider {
                 if (
                     isResourceTerm(t.subject) &&
                     t.object.termType === 'Literal' &&
-                    requiredTextFilter.test(t.object.value) &&
+                    requiredTextFilter(t.object.value) &&
                     !items.has(t.subject)
                 ) {
                     items.set(t.subject, {term: t.subject});
@@ -498,13 +490,15 @@ export class RdfDataProvider implements DataProvider {
             if (linkedElements.length >= limit) {
                 break;
             }
-            let labels: Rdf.Literal[];
+
+            let properties: ElementModel['properties'] = {};
+
             if (this.labelPredicate) {
-                labels = findLiterals(this.dataset, item.term, this.labelPredicate);
+                const labels = findLiterals(this.dataset, item.term, this.labelPredicate);
                 if (requiredTextFilter) {
                     let foundMatch = false;
                     for (const label of labels) {
-                        if (requiredTextFilter.test(label.value)) {
+                        if (requiredTextFilter(label.value)) {
                             foundMatch = true;
                             break;
                         }
@@ -513,18 +507,26 @@ export class RdfDataProvider implements DataProvider {
                         continue;
                     }
                 }
-            } else {
-                labels = [];
+                properties = {
+                    ...properties,
+                    [this.labelPredicate.value]: labels,
+                };
             }
-            const imageTerm = this.imagePredicate
-                ? findFirstIriOrLiteral(this.dataset, item.term, this.imagePredicate)
-                : undefined;
+
+            if (this.imagePredicate) {
+                const imageTerm = findFirstIriOrLiteral(this.dataset, item.term, this.imagePredicate);
+                if (imageTerm) {
+                    properties = {
+                        ...properties,
+                        [this.imagePredicate.value]: [imageTerm],
+                    };
+                }
+            }
+            
             const model: ElementModel = {
                 id: this.encodeTerm(item.term),
                 types: findTypes(this.dataset, item.term, this.typePredicate),
-                label: labels,
-                image: imageTerm ? imageTerm.value : undefined,
-                properties: {},
+                properties,
             };
             linkedElements.push({
                 element: model,
@@ -662,8 +664,4 @@ function decodeTerm(
     } else {
         return factory.namedNode(iri);
     }
-}
-
-function escapeRegexp(token: string): string {
-    return token.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
 }

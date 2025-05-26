@@ -4,7 +4,6 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
-import * as Rdf from '../data/rdf/rdfModel';
 import type {
     MetadataProvider, MetadataEntityShape, MetadataPropertyShape,
 } from '../data/metadataProvider';
@@ -15,8 +14,6 @@ import { useWorkspace } from '../workspace/workspaceContext';
 
 import { type FormInputMultiUpdater } from './input/inputCommon';
 import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup';
-import { FormInputList } from './input/formInputList';
-import { FormInputText } from './input/formInputText';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
@@ -50,13 +47,6 @@ export function EditEntityForm(props: {
             const iri: ElementIri = nextIriValues[0].value;
             return {...previous, id: iri};
         });
-    }, []);
-
-    const onChangeLabel = React.useCallback((updater: FormInputMultiUpdater) => {
-        setData(previous => ({
-            ...previous,
-            label: updater(previous.label) as ReadonlyArray<Rdf.Literal>,
-        }));
     }, []);
 
     const onChangeProperty = React.useCallback((
@@ -117,17 +107,6 @@ export function EditEntityForm(props: {
                             />
                         ))}
                     </label>
-                </div>
-                <div className={`${FORM_CLASS}__row`}>
-                    <label>{t.text('visual_authoring.edit_entity.label.label')}</label>
-                    <FormInputList
-                        shape={LABEL_SHAPE}
-                        languages={languages}
-                        values={data.label}
-                        updateValues={onChangeLabel}
-                        factory={model.factory}
-                        valueInput={FormInputText}
-                    />
                 </div>
                 <FormInputGroup className={`${CLASS_NAME}__properties`}
                     languages={languages}

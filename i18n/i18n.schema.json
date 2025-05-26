@@ -107,6 +107,14 @@
         "ungroup_entities.command": { "$ref": "#/$defs/Value" }
       }
     },
+    "default_data_locale": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "iri": { "$ref": "#/$defs/Value" },
+        "iri_blank": { "$ref": "#/$defs/Value" }
+      }
+    },
     "default_link_template": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,

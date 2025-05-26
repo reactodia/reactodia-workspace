@@ -130,9 +130,7 @@ function mergeElementModels(a: ElementModel, b: ElementModel): ElementModel {
     return {
         ...a,
         ...b,
-        label: mergeLabels(a.label, b.label),
         types: Array.from(typeSet).sort(),
-        image: a.image || b.image,
         properties: mergeProperties(a.properties, b.properties),
     };
 }

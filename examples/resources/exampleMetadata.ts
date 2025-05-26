@@ -39,8 +39,11 @@ export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
         return {
             id: `${type}_${random32BitDigits}` as Reactodia.ElementIri,
             types: [type],
-            label: [Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)],
-            properties: {},
+            properties: {
+                [Reactodia.Rdf.Vocabulary.rdfs.label]: [
+                    Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)
+                ]
+            },
         };
     }
 
@@ -157,6 +160,13 @@ export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
         if (types.some(type => this.editableTypes.has(type))) {
             properties.set(rdfs.comment, {
                 valueShape: {termType: 'Literal'},
+            });
+            properties.set(Reactodia.Rdf.Vocabulary.rdfs.label, {
+                valueShape: {termType: 'Literal'},
+            });
+            properties.set(Reactodia.Rdf.Vocabulary.schema.thumbnailUrl, {
+                valueShape: {termType: 'NamedNode'},
+                maxCount: 1,
             });
             properties.set(rdfs.seeAlso, {
                 valueShape: {termType: 'NamedNode'},

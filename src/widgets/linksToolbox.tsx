@@ -20,6 +20,7 @@ import { highlightSubstring } from './utility/listElementView';
 import { NoSearchResults } from './utility/noSearchResults';
 import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
 import type { InstancesSearchCommands } from './instancesSearch';
+import { makeCaseInsensitiveFilter } from '../data/utils';
 
 /**
  * Props for {@link LinkTypesToolbox} component.
@@ -358,13 +359,14 @@ function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerPro
         allLinkTypeIris.add(link.typeId);
     }
 
+    const termFilter = makeCaseInsensitiveFilter(term);
     const allLinkTypes = Array.from(allLinkTypeIris, iri => model.createLinkType(iri))
         .map((link): LabelledLinkType => ({
             iri: link.id,
             type: link,
             label: t.formatLabel(link.data?.label, link.id, model.language)
         }))
-        .filter(link => link.label.toLowerCase().indexOf(term.toLowerCase()) >= 0)
+        .filter(link => termFilter(link.label))
         .sort((a, b) => {
             return a.label.localeCompare(b.label);
         });

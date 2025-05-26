@@ -11,13 +11,11 @@ import { DataProvider } from '../data/dataProvider';
 import * as Rdf from '../data/rdf/rdfModel';
 
 import { setLinkState } from '../diagram/commands';
-import { FormattedProperty } from '../diagram/customization';
 import { Link, LinkTypeVisibility } from '../diagram/elements';
 import { Rect, getContentFittingBox } from '../diagram/geometry';
 import { Command } from '../diagram/history';
 import {
-    DiagramLocaleFormatter, DiagramModel, DiagramModelEvents, DiagramModelOptions,
-    GraphStructure, LocaleFormatter,
+    DiagramModel, DiagramModelEvents, DiagramModelOptions, GraphStructure,
 } from '../diagram/model';
 
 import {
@@ -32,6 +30,7 @@ import {
     DataFetcher, ChangeOperationsEvent, FetchOperation, FetchOperationTargetType,
     FetchOperationTypeToTarget,
 } from './dataFetcher';
+import { type DataLocaleProvider, DefaultDataLocaleProvider } from './dataLocaleProvider';
 import {
     SerializedDiagram, SerializedLinkOptions, emptyDiagram,
     serializeDiagram, deserializeDiagram, markLayoutOnly,
@@ -149,24 +148,27 @@ export interface DataDiagramModelOptions extends DiagramModelOptions {}
  */
 export class DataDiagramModel extends DiagramModel implements DataGraphStructure {
     declare readonly events: Events<DataDiagramModelEvents>;
-    declare readonly locale: DataGraphLocaleFormatter;
+
+    private readonly translation: Translation;
 
     private dataGraph = new DataGraph();
     private loadingScope: AbortScope | undefined;
     private _dataProvider: DataProvider;
+    private _locale: DataLocaleProvider;
     private fetcher: DataFetcher;
     private discardingTask = Promise.resolve();
 
     /** @hidden */
     constructor(options: DataDiagramModelOptions) {
         super(options);
+        this.translation = options.translation;
         this._dataProvider = new EmptyDataProvider();
         this.fetcher = new DataFetcher(this.graph, this.dataGraph, this._dataProvider);
+        this._locale = new DefaultDataLocaleProvider({
+            model: this,
+            translation: this.translation,
+        });
         this.subscribeGraph();
-    }
-
-    protected override createLocale(translation: Translation): this['locale'] {
-        return new ExtendedLocaleFormatter(this, translation);
     }
 
     private get extendedSource(): EventSource<DataDiagramModelEvents> {
@@ -190,6 +192,13 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
     protected getTermFactory(): Rdf.DataFactory {
         return this._dataProvider.factory;
+    }
+
+    /**
+     * Provides the methods to format the graph data according to the current language.
+     */
+    get locale(): DataLocaleProvider {
+        return this._locale;
     }
 
     /**
@@ -256,6 +265,14 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          */
         dataProvider: DataProvider;
         /**
+         * Formatter for the graph data on the diagram.
+         *
+         * If not specified, the {@link DefaultDataLocaleProvider} is used.
+         *
+         * @see {@link DataDiagramModel.locale}
+         */
+        locale?: DataLocaleProvider;
+        /**
          * Cancellation signal.
          */
         signal?: AbortSignal;
@@ -282,6 +299,14 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          * for the diagram.
          */
         dataProvider: DataProvider;
+        /**
+         * Formatter for the graph data on the diagram.
+         *
+         * If not specified, the {@link DefaultDataLocaleProvider} is used.
+         *
+         * @see {@link DataDiagramModel.locale}
+         */
+        locale?: DataLocaleProvider;
         /**
          * Diagram state to restore (elements and their positions,
          * links with visibility settings, etc).
@@ -316,6 +341,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }): Promise<void> {
         const {
             dataProvider,
+            locale,
             diagram = emptyDiagram(),
             preloadedElements,
             validateLinks = false,
@@ -326,6 +352,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         await this.discardingTask;
         this.resetGraph();
         this.setDataProvider(dataProvider);
+        this._locale = locale ?? new DefaultDataLocaleProvider({
+            model: this,
+            translation: this.translation,
+        });
 
         this.loadingScope = new AbortScope(parentSignal);
         this.extendedSource.trigger('loadingStart', {source: this});
@@ -973,68 +1003,6 @@ export interface RequestLinksOptions {
      * of the specified types.
      */
     linkTypes?: ReadonlyArray<LinkTypeIri>;
-}
-
-export interface DataGraphLocaleFormatter extends LocaleFormatter {
-    /**
-     * Formats an array of element types into a sorted labels
-     * to display in the UI.
-     */
-    formatElementTypes(
-        types: ReadonlyArray<ElementTypeIri>,
-        language?: string
-    ): string[];
-
-    /**
-     * Formats a map of property values into a sorted list with labels
-     * to display in the UI.
-     */
-    formatPropertyList(
-        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
-        language?: string
-    ): FormattedProperty[];
-}
-
-class ExtendedLocaleFormatter extends DiagramLocaleFormatter implements DataGraphLocaleFormatter {
-    declare protected model: DataDiagramModel;
-
-    constructor(model: DataDiagramModel, translation: Translation) {
-        super(model, translation);
-    }
-
-    formatElementTypes(
-        types: ReadonlyArray<ElementTypeIri>,
-        language?: string
-    ): string[] {
-        const targetLanguage = language ?? this.model.language;
-        const labelList = types.map(iri => {
-            const labels = this.model.getElementType(iri)?.data?.label;
-            return this.translation.formatLabel(labels, iri, targetLanguage);
-        });
-        labelList.sort();
-        return labelList;
-    }
-
-    formatPropertyList(
-        properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
-        language?: string
-    ): FormattedProperty[] {
-        const targetLanguage = language ?? this.model.language;
-        const propertyIris: PropertyTypeIri[] = Object.keys(properties);
-        const propertyList = propertyIris.map((propertyId): FormattedProperty => {
-            const labels = this.model.getPropertyType(propertyId)?.data?.label;
-            const label = this.formatLabel(labels, propertyId, targetLanguage);
-            const allValues = properties[propertyId];
-            const localizedValues = this.translation.selectValues(allValues, targetLanguage);
-            return {
-                propertyId,
-                label,
-                values: localizedValues.length === 0 ? allValues : localizedValues,
-            };
-        });
-        propertyList.sort((a, b) => a.label.localeCompare(b.label));
-        return propertyList;
-    }
 }
 
 /**

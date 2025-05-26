@@ -161,6 +161,7 @@ export function getLocalName(uri: string): string | undefined {
 
 const NAMESPACE_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 const NAMESPACE_RDFS = 'http://www.w3.org/2000/01/rdf-schema#';
+const NAMESPACE_SCHEMA = 'http://schema.org/';
 const NAMESPACE_XSD = 'http://www.w3.org/2001/XMLSchema#';
 
 export const Vocabulary = {
@@ -173,6 +174,10 @@ export const Vocabulary = {
     rdfs: {
         namespace: NAMESPACE_RDFS,
         label: `${NAMESPACE_RDFS}label`,
+    },
+    schema: {
+        namespace: NAMESPACE_SCHEMA,
+        thumbnailUrl: `${NAMESPACE_SCHEMA}thumbnailUrl`,
     },
     xsd: {
         namespace: NAMESPACE_XSD,

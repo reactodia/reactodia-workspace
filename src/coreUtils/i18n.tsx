@@ -124,13 +124,6 @@ export interface Translation {
         fallbackIri: string,
         language: string
     ): string;
-
-    /**
-     * Formats IRI to display in the UI:
-     *   - usual IRIs are enclosed in `<IRI>`;
-     *   - anonymous element IRIs displayed as `(blank node)`.
-     */
-    formatIri(iri: string): string;
 }
 
 /**

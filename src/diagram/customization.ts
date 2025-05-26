@@ -1,29 +1,10 @@
 import type * as React from 'react';
 
-import type { LinkTypeIri, PropertyTypeIri } from '../data/model';
-import type * as Rdf from '../data/rdf/rdfModel';
+import type { LinkTypeIri } from '../data/model';
 
 import type { Element, ElementTemplateState, Link } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
-
-/**
- * Property with resolved label to display in the UI.
- */
-export interface FormattedProperty {
-    /**
-     * Property IRI.
-     */
-    readonly propertyId: PropertyTypeIri;
-    /**
-     * Formatted property label.
-     */
-    readonly label: string;
-    /**
-     * Property values.
-     */
-    readonly values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-}
 
 /**
  * Provides a custom type style for an element with specific set of types.
