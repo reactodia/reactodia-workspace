@@ -149,29 +149,26 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
         const {state, isTemporary} = this.state;
 
         return (
-            <div className={`${CLASS_NAME}__state-indicator`}
-                key={target.id}
-                style={{left: 0, top: 0}}>
-                <div className={`${CLASS_NAME}__state-indicator-container`}>
-                    <div className={`${CLASS_NAME}__state-indicator-body`}>
-                        {state ? (
-                            <span className={`${CLASS_NAME}__state-label`}>
-                                {(
-                                    state.type === 'entityAdd' ? t.text('authoring_state.entity_add.label') :
-                                    state.type === 'entityChange' ? t.text('authoring_state.entity_change.label') :
-                                    state.type === 'entityDelete' ? t.text('authoring_state.entity_delete.label') :
-                                    null
-                                )}
-                            </span>
-                        ) : null}
-                        {isTemporary ? null : (
-                            <InlineActions target={target}
-                                state={state}
-                                allActions={Boolean(inlineActions)}
-                            />
-                        )}
-                        {this.renderElementValidations()}
-                    </div>
+            <div key={target.id}
+                className={`${CLASS_NAME}__state-indicator`}>
+                <div className={`${CLASS_NAME}__state-indicator-body`}>
+                    {state ? (
+                        <span className={`${CLASS_NAME}__state-label`}>
+                            {(
+                                state.type === 'entityAdd' ? t.text('authoring_state.entity_add.label') :
+                                state.type === 'entityChange' ? t.text('authoring_state.entity_change.label') :
+                                state.type === 'entityDelete' ? t.text('authoring_state.entity_delete.label') :
+                                null
+                            )}
+                        </span>
+                    ) : null}
+                    {isTemporary ? null : (
+                        <InlineActions target={target}
+                            state={state}
+                            allActions={Boolean(inlineActions)}
+                        />
+                    )}
+                    {this.renderElementValidations()}
                 </div>
             </div>
         );
@@ -225,7 +222,8 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
             return null;
         }
         return (
-            <div style={{position: 'absolute', transform}}>
+            <div className={`${CLASS_NAME}__decorator`}
+                style={{position: 'absolute', transform}}>
                 {outlines ? (
                     <svg className={`${CLASS_NAME}__element-outlines`}
                         width={size.width}
