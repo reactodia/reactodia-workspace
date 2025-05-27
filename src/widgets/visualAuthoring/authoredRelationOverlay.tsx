@@ -147,11 +147,9 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
                         <div key={link.id}
                             className={`${CLASS_NAME}__state-indicator`}
                             style={style}>
-                            <div className={`${CLASS_NAME}__state-indicator-container`}>
-                                <div className={`${CLASS_NAME}__state-indicator-body`}>
-                                    {renderedState}
-                                    {renderedValidations}
-                                </div>
+                            <div className={`${CLASS_NAME}__state-indicator-body`}>
+                                {renderedState}
+                                {renderedValidations}
                             </div>
                         </div>
                     );
