@@ -41,6 +41,24 @@ function GraphAuthoringExample() {
                 model.createElement('http://www.w3.org/ns/org#subOrganizationOf'),
                 model.createElement('http://www.w3.org/ns/org#unitOf'),
             ];
+            const factory = dataProvider.factory;
+            for (const element of elements) {
+                dataProvider.addGraph([
+                    factory.quad(
+                        factory.namedNode(element.iri),
+                        factory.namedNode('urn:reactodia:hasJsonContent'),
+                        Reactodia.Rdf.JsonLiteral.create(factory, {
+                            authoredBy: 'alex',
+                            likes: 42,
+                            location: {
+                                x: 102,
+                                y: -12.3,
+                            },
+                            tags: ['todo', { id: 'toDelete', name: 'To delete' }],
+                        })
+                    )
+                ]);
+            }
             model.history.execute(Reactodia.setElementExpanded(elements[0], true));
             await Promise.all([
                 model.requestElementData(elements.map(el => el.iri)),
