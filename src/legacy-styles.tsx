@@ -74,13 +74,13 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
                     <Reactodia.LinkLabel link={props.link}
                         position={props.getPathPosition(0.5)}
                         line={1}
-                        textStyle={{
-                            fill: 'gray',
+                        style={{
+                            color: 'gray',
                             fontSize: 12,
                             fontWeight: 'lighter',
-                        }}
-                        content={props.link.typeId}
-                    />
+                        }}>
+                        {props.link.typeId}
+                    </Reactodia.LinkLabel>
                 }
                 propertyLabelStartLine={2}
             />
