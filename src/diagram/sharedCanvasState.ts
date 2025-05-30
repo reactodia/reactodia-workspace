@@ -64,9 +64,6 @@ export interface FindCanvasEvent {
 export type CellHighlighter = (item: Element | Link) => boolean;
 
 /** @hidden */
-export type ElementDecoratorResolver = (element: Element) => React.ReactNode | undefined;
-
-/** @hidden */
 export interface SharedCanvasStateOptions {
     defaultElementTemplate: ElementTemplate;
     defaultLinkTemplate: LinkTemplate;
@@ -92,7 +89,6 @@ export class SharedCanvasState {
     private _canvasWidgets: ReadonlyMap<string, CanvasWidgetDescription>;
     private dropOnPaperHandler: ((e: CanvasDropEvent) => void) | undefined;
     private _highlighter: CellHighlighter | undefined;
-    private _elementDecorator: ElementDecoratorResolver | undefined;
 
     /**
      * Default element template to use as a fallback.
@@ -222,16 +218,6 @@ export class SharedCanvasState {
         if (previous === value) { return; }
         this._highlighter = value;
         this.source.trigger('changeHighlight', {source: this, previous});
-    }
-
-    /** @hidden */
-    _setElementDecorator(decorator: ElementDecoratorResolver | undefined): void {
-        this._elementDecorator = decorator;
-    }
-
-    /** @hidden */
-    _decorateElement(element: Element): React.ReactNode | undefined {
-        return this._elementDecorator?.(element);
     }
 }
 

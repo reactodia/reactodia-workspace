@@ -1,11 +1,8 @@
 @use "../theme/theme";
 
 @mixin icon($url) {
-  -webkit-mask: url($url);
-  mask: url($url);
-  mask-size: contain;
-  mask-position: 0 0;
-  mask-repeat: no-repeat;
+  -webkit-mask: url($url) 0px 0px / contain no-repeat;
+  mask: url($url) 0px 0px / contain no-repeat;
   background-color: currentColor;
   content: '';
   display: block;

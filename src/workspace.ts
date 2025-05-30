@@ -64,6 +64,7 @@ export {
     Link, LinkEvents, LinkProps, LinkTemplateState, LinkVertex,
     Cell, VoidElement, LinkTypeVisibility,
 } from './diagram/elements';
+export { ElementDecoration } from './diagram/elementLayer';
 export {
     Rect, ShapeGeometry, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition,
     computePolyline, computePolylineLength, findElementAtPoint, findNearestSegmentIndex,
@@ -90,7 +91,7 @@ export {
 } from './diagram/paper';
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
-    type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter, ElementDecoratorResolver,
+    type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter,
     FindCanvasEvent, RenameLinkToLinkStateProvider,
 } from './diagram/sharedCanvasState';
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
