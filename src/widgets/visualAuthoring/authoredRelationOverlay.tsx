@@ -11,7 +11,7 @@ import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import {
     Rect, Spline, Vector, computePolyline, getPointAlongPolyline, computePolylineLength,
 } from '../../diagram/geometry';
-import { TransformedSvgCanvas } from '../../diagram/paper';
+import { SvgPaperLayer } from '../../diagram/paper';
 import { RenderingLayer } from '../../diagram/renderingState';
 import { Link } from '../../diagram/elements';
 import { HtmlSpinner } from '../../diagram/spinner';
@@ -281,10 +281,10 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
             transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
         };
         return <div className={`${CLASS_NAME}`}>
-            <TransformedSvgCanvas paperTransform={transform}
+            <SvgPaperLayer paperTransform={transform}
                 style={{overflow: 'visible', pointerEvents: 'none'}}>
                 {this.renderLinkStateHighlighting()}
-            </TransformedSvgCanvas>
+            </SvgPaperLayer>
             <div className={`${CLASS_NAME}__validation-layer`} style={htmlTransformStyle}>
                 {this.renderLinkStateLabels()}
             </div>

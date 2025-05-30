@@ -14,12 +14,14 @@ import {
 import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
 import { Element, Link, Cell, LinkVertex } from './elements';
+import { ElementLayer } from './elementLayer';
 import {
     Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox,
 } from './geometry';
+import { LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
 import { CommandBatch } from './history';
-import { Paper, PaperTransform } from './paper';
+import { Paper, PaperTransform, SvgPaperLayer } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
 import {
     ToSVGOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
@@ -96,7 +98,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private area!: HTMLDivElement;
     private readonly rootRef = React.createRef<HTMLDivElement>();
-    private readonly svgCanvasRef = React.createRef<SVGSVGElement>();
+    private readonly linkLayerRef = React.createRef<SVGSVGElement>();
+    private readonly elementLayerRef = React.createRef<HTMLDivElement>();
 
     private readonly pageSize = {x: 1500, y: 800};
     private readonly canvasContext: CanvasContext;
@@ -204,31 +207,40 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                         ref={this.onAreaMount}
                         onPointerDown={this.onAreaPointerDown}>
                         <Paper model={model}
-                            renderingState={renderingState}
                             paperTransform={paperTransform}
-                            svgCanvasRef={this.svgCanvasRef}
                             onPointerDown={this.onPaperPointerDown}
                             onContextMenu={this.onContextMenu}
-                            onScrollCapture={this.onPaperScrollCapture}
-                            linkLayerWidgets={
-                                <div className={`${CLASS_NAME}__widgets`}
-                                    onPointerDown={this.onWidgetsPointerDown}>
-                                    {renderedWidgets
-                                        .filter(w => w.attachment === 'overLinks')
-                                        .map(widget => ensureWidgetGetRendered(widget.element))
-                                    }
-                                </div>
-                            }
-                            elementLayerWidgets={
-                                <div className={`${CLASS_NAME}__widgets`}
-                                    onPointerDown={this.onWidgetsPointerDown}>
-                                    {renderedWidgets
-                                        .filter(w => w.attachment === 'overElements')
-                                        .map(widget => ensureWidgetGetRendered(widget.element))
-                                    }
-                                </div>
-                            }
-                        />
+                            onScrollCapture={this.onPaperScrollCapture}>
+                            <SvgPaperLayer layerRef={this.linkLayerRef}
+                                className={`${CLASS_NAME}__canvas`}
+                                style={{overflow: 'visible'}}
+                                paperTransform={paperTransform}>
+                                <LinkMarkers renderingState={renderingState} />
+                                <LinkLayer model={model}
+                                    renderingState={renderingState}
+                                    links={model.links}
+                                />
+                            </SvgPaperLayer>
+                            <div className={`${CLASS_NAME}__widgets`}
+                                onPointerDown={this.onWidgetsPointerDown}>
+                                {renderedWidgets
+                                    .filter(w => w.attachment === 'overLinks')
+                                    .map(widget => ensureWidgetGetRendered(widget.element))
+                                }
+                            </div>
+                            <ElementLayer layerRef={this.elementLayerRef}
+                                model={model}
+                                renderingState={renderingState}
+                                paperTransform={paperTransform}
+                            />
+                            <div className={`${CLASS_NAME}__widgets`}
+                                onPointerDown={this.onWidgetsPointerDown}>
+                                {renderedWidgets
+                                    .filter(w => w.attachment === 'overElements')
+                                    .map(widget => ensureWidgetGetRendered(widget.element))
+                                }
+                            </div>
+                        </Paper>
                         {watermarkSvg ? (
                             <a href={watermarkUrl} target='_blank' rel='noreferrer'>
                                 <img className={`${CLASS_NAME}__watermark`}
@@ -851,21 +863,23 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {
-        const {model, renderingState, colorSchemeApi} = this.props;
+        const {colorSchemeApi} = this.props;
         const {
             removeByCssSelectors = [],
         } = baseOptions;
-        const svg = this.svgCanvasRef.current;
-        if (!svg) {
-            throw new Error('Cannot find SVG canvas to export');
+        const linkLayer = this.linkLayerRef.current;
+        const elementLayer = this.elementLayerRef.current;
+        if (!(linkLayer && elementLayer)) {
+            throw new Error('Cannot find element and link layers to export');
         }
         return {
-            model,
-            sizeProvider: renderingState,
             colorSchemeApi,
-            paper: svg,
+            styleRoot: linkLayer,
             contentBox: this.getContentFittingBox(),
-            getOverlaidElement: id => this.area.querySelector(`[data-element-id='${id}']`) as HTMLElement,
+            layers: [
+                linkLayer,
+                elementLayer,
+            ],
             preserveDimensions: true,
             convertImagesToDataUris: true,
             removeByCssSelectors: [

@@ -10,7 +10,7 @@ import {
     Rect, Spline, Vector, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 import type { DiagramModel, GraphStructure } from '../diagram/model';
-import { TransformedSvgCanvas } from '../diagram/paper';
+import { SvgPaperLayer } from '../diagram/paper';
 import type { RenderingState } from '../diagram/renderingState';
 
 import {
@@ -318,11 +318,11 @@ function LinkHighlight(props: LinkHighlightProps) {
         <div className={`${CLASS_NAME}__label-highlight`}
             style={labelHighlightStyle}
         />
-        <TransformedSvgCanvas paperTransform={canvas.metrics.getTransform()}
+        <SvgPaperLayer paperTransform={canvas.metrics.getTransform()}
             style={{overflow: 'visible', pointerEvents: 'none'}}>
             <path className={`${CLASS_NAME}__path-highlight`}
                 d={spline.toPath()}
             />
-        </TransformedSvgCanvas>
+        </SvgPaperLayer>
     </>;
 }

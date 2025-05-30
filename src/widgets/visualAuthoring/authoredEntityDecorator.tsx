@@ -223,7 +223,8 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
         }
         return (
             <div className={`${CLASS_NAME}__decorator`}
-                style={{position: 'absolute', transform}}>
+                style={{position: 'absolute', transform}}
+                data-reactodia-no-export='true'>
                 {outlines ? (
                     <svg className={`${CLASS_NAME}__element-outlines`}
                         width={size.width}

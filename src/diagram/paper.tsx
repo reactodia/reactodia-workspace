@@ -2,33 +2,24 @@ import * as React from 'react';
 import { Component, CSSProperties } from 'react';
 
 import { Cell, LinkVertex } from './elements';
-import { ElementLayer } from './elementLayer';
 import { Vector } from './geometry';
-import { LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
-import { MutableRenderingState } from './renderingState';
 
 export interface PaperProps {
     model: DiagramModel;
-    renderingState: MutableRenderingState;
     paperTransform: PaperTransform;
-    svgCanvasRef?: React.RefObject<SVGSVGElement | null>;
     onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
     onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
     onScrollCapture?: (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => void;
-    linkLayerWidgets?: React.ReactElement<any>;
-    elementLayerWidgets?: React.ReactElement<any>;
+    children: React.ReactNode;
 }
 
 const CLASS_NAME = 'reactodia-paper';
 
 export class Paper extends Component<PaperProps> {
     render() {
-        const {
-            model, renderingState, paperTransform, svgCanvasRef,
-            linkLayerWidgets, elementLayerWidgets,
-        } = this.props;
-        const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
+        const {paperTransform, children} = this.props;
+        const {width, height, scale, paddingX, paddingY} = paperTransform;
 
         const scaledWidth = width * scale;
         const scaledHeight = height * scale;
@@ -43,10 +34,7 @@ export class Paper extends Component<PaperProps> {
             paddingRight: paddingX,
             paddingBottom: paddingY,
         };
-        const htmlTransformStyle: React.CSSProperties = {
-            position: 'absolute', left: 0, top: 0,
-            transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
-        };
+        
 
         return (
             <div className={CLASS_NAME}
@@ -54,22 +42,7 @@ export class Paper extends Component<PaperProps> {
                 onPointerDown={this.onPointerDown}
                 onContextMenu={this.onContextMenu}
                 onScrollCapture={this.onScrollCapture}>
-                <TransformedSvgCanvas svgCanvasRef={svgCanvasRef}
-                    className={`${CLASS_NAME}__canvas`}
-                    style={{overflow: 'visible'}}
-                    paperTransform={paperTransform}>
-                    <LinkMarkers renderingState={renderingState} />
-                    <LinkLayer model={model}
-                        renderingState={renderingState}
-                        links={model.links}
-                    />
-                </TransformedSvgCanvas>
-                {linkLayerWidgets}
-                <ElementLayer model={model}
-                    renderingState={renderingState}
-                    style={htmlTransformStyle}
-                />
-                {elementLayerWidgets}
+                {children}
             </div>
         );
     }
@@ -134,42 +107,82 @@ function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | un
  * @category Geometry
  */
 export interface PaperTransform {
-    width: number;
-    height: number;
-    originX: number;
-    originY: number;
-    scale: number;
-    paddingX: number;
-    paddingY: number;
+    readonly width: number;
+    readonly height: number;
+    readonly originX: number;
+    readonly originY: number;
+    readonly scale: number;
+    readonly paddingX: number;
+    readonly paddingY: number;
 }
 
 /**
- * Props for {@link TransformedSvgCanvas} component.
+ * Props for {@link HtmlPaperLayer} component.
  *
- * @see {@link TransformedSvgCanvas}
+ * @see {@link HtmlPaperLayer}
  */
-export interface TransformedSvgCanvasProps extends React.HTMLProps<SVGSVGElement> {
+export interface HtmlPaperLayerProps extends React.HTMLProps<HTMLDivElement> {
     paperTransform: PaperTransform;
-    svgCanvasRef?: React.RefObject<SVGSVGElement | null>;
+    layerRef?: React.Ref<HTMLDivElement | null>;
 }
 
-const TRANSFORMED_SVG_CANVAS_STYLE: Readonly<CSSProperties> = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-};
-
 /**
- * SVG canvas component to render its children on the diagram in paper coordinate system.
+ * HTML layer to render its children on the diagram in paper coordinate system.
+ *
+ * **Unstable**: this component will likely change in the future.
  *
  * @category Components
  */
-export function TransformedSvgCanvas(props: TransformedSvgCanvasProps) {
-    const {svgCanvasRef, paperTransform, style, children, ...otherProps} = props;
-    const {width, height, originX, originY, scale, paddingX, paddingY} = paperTransform;
+export function HtmlPaperLayer(props: HtmlPaperLayerProps) {
+    const {paperTransform, layerRef, style, children, ...otherProps} = props;
+    const {originX, originY, scale} = paperTransform;
+    let transformStyle: React.CSSProperties = {
+        position: 'absolute', left: 0, top: 0,
+        transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
+    };
+    if (style) {
+        transformStyle = {...transformStyle, ...style};
+    }
+    return (
+        <div
+            ref={
+                /* For compatibility with React 19 typings */
+                layerRef as React.RefObject<HTMLDivElement>
+            }
+            style={transformStyle}
+            {...otherProps}>
+            {children}
+        </div>
+    );
+}
+
+/**
+ * Props for {@link SvgPaperLayer} component.
+ *
+ * @see {@link SvgPaperLayer}
+ */
+export interface SvgPaperLayerProps extends React.HTMLProps<SVGSVGElement> {
+    paperTransform: PaperTransform;
+    layerRef?: React.RefObject<SVGSVGElement | null>;
+}
+
+/**
+ * SVG layer to render its children on the diagram in paper coordinate system.
+ *
+ * **Unstable**: this component will likely change in the future.
+ *
+ * @category Components
+ */
+export function SvgPaperLayer(props: SvgPaperLayerProps) {
+    const {layerRef, paperTransform, style, children, ...otherProps} = props;
+    const {width, height, originX, originY, scale} = paperTransform;
     const scaledWidth = width * scale;
     const scaledHeight = height * scale;
-    let svgStyle = TRANSFORMED_SVG_CANVAS_STYLE;
+    let svgStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+    };
     if (style) {
         svgStyle = {...svgStyle, ...style};
     }
@@ -177,7 +190,7 @@ export function TransformedSvgCanvas(props: TransformedSvgCanvasProps) {
         <svg
             ref={
                 /* For compatibility with React 19 typings */
-                svgCanvasRef as React.RefObject<SVGSVGElement>
+                layerRef as React.RefObject<SVGSVGElement>
             }
             width={scaledWidth}
             height={scaledHeight}
