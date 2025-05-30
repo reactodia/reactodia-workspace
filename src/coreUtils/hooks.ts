@@ -42,9 +42,16 @@ export function neverSyncStore(): SyncStore {
 /**
  * Creates an event store which changes when an event triggers with the specified event type.
  *
+ * @param events an observable object to subscribe with the result store
+ * @param key event type from the `events` to subscribe with the result store
+ * @param deps hook dependency list to re-subscribe to the store on changes
  * @category Hooks
  */
-export function useEventStore<E, K extends keyof E>(events: Events<E> | undefined, key: K): SyncStore {
+export function useEventStore<E, K extends keyof E>(
+    events: Events<E> | undefined,
+    key: K,
+    deps?: React.DependencyList
+): SyncStore {
     return React.useCallback((onStoreChange: () => void) => {
         if (events) {
             events.on(key, onStoreChange);
@@ -52,7 +59,7 @@ export function useEventStore<E, K extends keyof E>(events: Events<E> | undefine
         } else {
             return NEVER_SYNC_STORE_DISPOSE;
         }
-    }, [events, key]);
+    }, deps ? [events, key, ...deps] : [events, key]);
 }
 
 /**

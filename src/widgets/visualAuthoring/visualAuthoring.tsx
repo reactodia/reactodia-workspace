@@ -1,12 +1,13 @@
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
+import { useObservedProperty } from '../../coreUtils/hooks';
+import { Debouncer } from '../../coreUtils/scheduler';
 
 import type { ElementModel } from '../../data/model';
 import { defineCanvasWidget } from '../../diagram/canvasWidget';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
-import type { ElementDecoratorResolver } from '../../diagram/sharedCanvasState';
 
 import { AuthoringState } from '../../editor/authoringState';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
@@ -119,25 +120,6 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             attachment: 'overLinks',
         });
 
-        const authoringDecorator: ElementDecoratorResolver = element => {
-            if (element instanceof EntityElement) {
-                return (
-                    <AuthoredEntityDecorator target={element}
-                        position={element.position}
-                        inlineActions={inlineEntityActions}
-                    />
-                );
-            }
-            return undefined;
-        };
-        const updateElementDecorator = () => {
-            view._setElementDecorator(
-                editor.inAuthoringMode ? authoringDecorator : undefined
-            );
-        };
-        listener.listen(editor.events, 'changeMode', () => updateElementDecorator());
-        updateElementDecorator();
-
         listener.listen(overlay.events, 'changeOpenedDialog', ({previous}) => {
             if (previous && previous.target) {
                 editor.removeTemporaryCells([previous.target]);
@@ -147,7 +129,6 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         return () => {
             listener.stopListening();
             view.setCanvasWidget('states', null);
-            view._setElementDecorator(undefined);
         };
     }, []);
 
@@ -284,7 +265,58 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         return () => listener.stopListening();
     }, []);
 
-    return null;
+    return <EntityDecorators inlineActions={inlineEntityActions} />;
 }
+
+function EntityDecoratorsInner(props: {
+    inlineActions: boolean;
+}) {
+    const {inlineActions} = props;
+    const {model, editor} = useWorkspace();
+
+    const inAuthoringMode = useObservedProperty(editor.events, 'changeMode', () => editor.inAuthoringMode);
+
+    const [version, setVersion] = React.useState(0);
+    React.useEffect(() => {
+        const debouncer = new Debouncer();
+        const listener = new EventObserver();
+        const scheduleUpdate = () => setVersion(v => v + 1);
+        listener.listen(model.events, 'changeCells', () => {
+            debouncer.call(scheduleUpdate);
+        });
+        return () => {
+            listener.stopListening();
+            debouncer.dispose();
+        };
+    }, []);
+
+    const cachedDecorators = React.useMemo(
+        () => new WeakMap<EntityElement, React.ReactNode>(),
+        [inlineActions, version]
+    );
+
+    const decorators: React.ReactNode[] = [];
+    if (inAuthoringMode) {
+        for (const element of model.elements) {
+            if (element instanceof EntityElement) {
+                let decorator = cachedDecorators.get(element);
+                if (!decorator) {
+                    decorator = (
+                        <AuthoredEntityDecorator key={element.id}
+                            target={element}
+                            inlineActions={inlineActions}
+                        />
+                    );
+                    cachedDecorators.set(element, decorator);
+                }
+                decorators.push(decorator);
+            }
+        }
+    }
+
+    return decorators;
+}
+
+const EntityDecorators = React.memo(EntityDecoratorsInner);
 
 defineCanvasWidget(VisualAuthoring, element => ({element, attachment: 'viewport'}));
