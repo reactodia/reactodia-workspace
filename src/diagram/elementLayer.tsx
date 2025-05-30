@@ -1,11 +1,13 @@
+import cx from 'clsx';
 import * as React from 'react';
-import { flushSync } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementTemplate, TemplateProps } from './customization';
 
+import { useCanvas } from './canvasApi';
 import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
 import { DiagramModel } from './model';
@@ -106,15 +108,6 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                                 onResize={this.requestSizeUpdate}
                             />
                         );
-                        const elementDecoration = renderingState.shared._decorateElement(state.element);
-                        if (elementDecoration) {
-                            overlaidElement = (
-                                <React.Fragment key={state.element.id}>
-                                    {overlaidElement}
-                                    {elementDecoration}
-                                </React.Fragment>
-                            );
-                        }
                         memoizedElements.set(state, overlaidElement);
                     }
                     return overlaidElement;
@@ -291,8 +284,11 @@ interface OverlaidElementProps {
     onResize: (model: Element, node: HTMLDivElement) => void;
 }
 
+const OVERLAID_ELEMENT_CLASS = 'reactodia-overlaid-element';
+
 class OverlaidElement extends React.Component<OverlaidElementProps> {
     private readonly elementRef = React.createRef<HTMLDivElement | null>();
+    private readonly decorationsRef = React.createRef<HTMLDivElement | null>();
     private readonly listener = new EventObserver();
 
     render(): React.ReactElement<any> {
@@ -301,7 +297,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
             return <div />;
         }
 
-        const {x = 0, y = 0} = element.position;
+        const {x, y} = element.position;
         const transform = `translate(${x}px,${y}px)`;
 
         // const angle = model.get('angle') || 0;
@@ -310,24 +306,40 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         const className = (
             `reactodia-overlaid-element ${blurred ? 'reactodia-overlaid-element--blurred' : ''}`
         );
-        return <div className={className}
-            // set `element-id` to translate mouse events to paper
-            data-element-id={element.id}
-            style={{position: 'absolute', transform}}
-            tabIndex={0}
-            ref={
-                /* For compatibility with React 19 typings */
-                this.elementRef as React.RefObject<HTMLDivElement>
-            }
-            // Resize element when child image loaded,
-            // works through automatic bubbling for these events in React.
-            // eslint-disable-next-line react/no-unknown-property
-            onLoad={this.onLoadOrErrorEvent}
-            // eslint-disable-next-line react/no-unknown-property
-            onError={this.onLoadOrErrorEvent}
-            onDoubleClick={this.onDoubleClick}>
-            <TemplatedElement {...this.props} />
-        </div>;
+        const style: React.CSSProperties = {position: 'absolute', transform};
+        return (
+            <>
+                <div
+                    className={cx(
+                        OVERLAID_ELEMENT_CLASS,
+                        blurred ? `${OVERLAID_ELEMENT_CLASS}--blurred` : undefined
+                    )}
+                    style={style}
+                    // set `element-id` to translate mouse events to paper
+                    data-element-id={element.id}
+                    tabIndex={0}
+                    ref={
+                        /* For compatibility with React 19 typings */
+                        this.elementRef as React.RefObject<HTMLDivElement>
+                    }
+                    // Resize element when child image loaded,
+                    // works through automatic bubbling for these events in React.
+                    // eslint-disable-next-line react/no-unknown-property
+                    onLoad={this.onLoadOrErrorEvent}
+                    // eslint-disable-next-line react/no-unknown-property
+                    onError={this.onLoadOrErrorEvent}
+                    onDoubleClick={this.onDoubleClick}>
+                    <TemplatedElement {...this.props} />
+                </div>
+                <div className='reactodia-element-decorations'
+                    style={style}
+                    ref={
+                        /* For compatibility with React 19 typings */
+                        this.decorationsRef as React.RefObject<HTMLDivElement>
+                    }
+                />
+            </>
+        );
     }
 
     private onLoadOrErrorEvent = () => {
@@ -347,7 +359,14 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     };
 
     componentDidMount() {
-        const {state, onResize} = this.props;
+        const {state, onResize, renderingState} = this.props;
+
+        if (this.decorationsRef.current) {
+            this.decorationsRef.current.appendChild(
+                renderingState.ensureDecorationContainer(state.element)
+            );
+        }
+
         this.listener.listen(state.element.events, 'requestedFocus', () => {
             this.elementRef.current?.focus();
         });
@@ -358,6 +377,11 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     }
 
     componentWillUnmount() {
+        const {state, renderingState} = this.props;
+
+        const container = renderingState.ensureDecorationContainer(state.element);
+        container.parentElement?.removeChild(container);
+
         this.listener.stopListening();
     }
 
@@ -397,4 +421,39 @@ class TemplatedElement extends React.Component<OverlaidElementProps> {
 
 function computeIsBlurred(element: Element, view: SharedCanvasState): boolean {
     return Boolean(view.highlighter && !view.highlighter(element));
+}
+
+/**
+ * Component to display a decoration over a canvas element.
+ *
+ * All entity decorations are rendered as children of a DOM element
+ * with `reactodia-element-decorators` CSS class which immediately follows
+ * target canvas element itself in the DOM.
+ *
+ * Parent DOM elements for the decoration has translation, `width` and `height`
+ * set to the same values as the target element to be able to layout decorations
+ * via CSS.
+ *
+ * **Unstable**: this feature may change in the future.
+ *
+ * @category Components
+ */
+export function ElementDecoration(props: {
+    /**
+     * Target canvas element to decorate.
+     */
+    target: Element;
+    /**
+     * Decoration to render over an element.
+     */
+    children: React.ReactNode;
+}) {
+    const {target, children} = props;
+    const {canvas} = useCanvas();
+    const renderingState = canvas.renderingState as MutableRenderingState;
+
+    return createPortal(
+        children,
+        renderingState.ensureDecorationContainer(target)
+    );
 }

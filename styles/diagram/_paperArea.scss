@@ -65,7 +65,8 @@
   }
 
   &--animated {
-    .reactodia-overlaid-element {
+    .reactodia-overlaid-element,
+    .reactodia-element-decorations {
       transition: transform 0.5s ease-in-out;
     }
     .reactodia-link-layer {

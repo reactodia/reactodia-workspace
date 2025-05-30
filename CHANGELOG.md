@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Display "edit" and "delete" inline entity actions:
   * Add option `inlineEntityActions` (defaults to `true`) for `VisualAuthoring` to display entity actions inline at the top of each entity;
   * Improve the style for "cancel" (discard) action on entities and relations to make it consistent with other inline actions.
+- Add `ElementDecoration` component to display additional decorations over canvas elements either from the template itself or from outside the element:
+  * Element decorations are not included in the computed element bounds but are exported with the canvas unless explicitly marked with `data-reactodia-no-export` attribute (as with other canvas elements);
 - Select entity label and image using `DataLocaleProvider` based on its properties:
   * **[Breaking]** Remove `ElementModel.{label, image}` properties and instead use `DataDiagramModel.locale` methods to select them based on `ElementModel.properties` instead;
   * Allow to override data locale provider (default is `DefaultDataLocaleProvider`) by passing `locale` option to `model.importLayout()` or `model.createNewDiagram()`.
@@ -26,6 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Provide gradual customization options for the built-in entity and relation property editor:
   * Expose ability to customize property input in authoring forms with `inputResolver` option for `VisualAuthoring` component;
   * Export built-in inputs `FormInputList` and `FormInputText`, as well as `FormInputSingleProps` and `FormInputMultiProps` props interfaces to implement custom property inputs.
+- Support optional dependency list in `useEventStore()` to re-subscribe to store if needed.
 
 #### 🔧 Maintenance
 - Make library compatible with [React v19](https://react.dev/blog/2024/12/05/react-19), while continuing support for v17 and v18.
