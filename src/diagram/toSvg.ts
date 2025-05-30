@@ -1,15 +1,12 @@
 import type { ColorSchemeApi } from '../coreUtils/colorScheme';
 
-import type { DiagramModel } from './model';
-import { Rect, Size, SizeProvider, Vector, boundsOf } from './geometry';
+import { Rect, Size, Vector } from './geometry';
 
 export interface ToSVGOptions {
-    model: DiagramModel;
-    sizeProvider: SizeProvider;
     colorSchemeApi: ColorSchemeApi;
-    paper: SVGSVGElement;
+    styleRoot: HTMLElement | SVGElement;
+    layers: ReadonlyArray<SVGSVGElement | HTMLElement>;
     contentBox: Rect;
-    getOverlaidElement: (id: string) => HTMLElement;
     preserveDimensions?: boolean;
     convertImagesToDataUris?: boolean;
     removeByCssSelectors?: ReadonlyArray<string>;
@@ -26,12 +23,6 @@ interface Bounds {
 }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-/**
- * Padding (in px) for <foreignObject> elements of exported SVG to
- * mitigate issues with elements body overflow caused by missing styles
- * in exported image.
- */
-const FOREIGN_OBJECT_SIZE_PADDING = 2;
 const DEFAULT_BORDER_PADDING: Vector = {x: 100, y: 100};
 const XML_ENCODING_HEADER = '<?xml version="1.0" encoding="UTF-8"?>';
 
@@ -56,47 +47,46 @@ async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         borderPadding = DEFAULT_BORDER_PADDING,
     } = options;
 
+    const viewBox: Rect = {
+        x: bbox.x - borderPadding.x,
+        y: bbox.y - borderPadding.y,
+        width: bbox.width + 2 * borderPadding.x,
+        height: bbox.height + 2 * borderPadding.y,
+    };
+
     let cssPropertyValues!: ReturnType<typeof captureCustomCssPropertyValues>;
-    let clonedPaperSvg!: ReturnType<typeof clonePaperSvg>;
+    let clonedPaperSvg!: ReturnType<typeof composeExportedSvg>;
     colorSchemeApi.actInColorScheme('light', () => {
-        cssPropertyValues = captureCustomCssPropertyValues(options.paper);
-        clonedPaperSvg = clonePaperSvg(options, FOREIGN_OBJECT_SIZE_PADDING);
+        cssPropertyValues = captureCustomCssPropertyValues(options.styleRoot);
+        clonedPaperSvg = composeExportedSvg(options.layers, viewBox);
     });
 
-    const {svgClone, imageBounds} = clonedPaperSvg;
+    const {composedSvg, imageBounds} = clonedPaperSvg;
     for (const selector of removeByCssSelectors) {
-        for (const node of svgClone.querySelectorAll(selector)) {
+        for (const node of composedSvg.querySelectorAll(selector)) {
             node.remove();
         }
     }
 
     // Workaround to include only library-related stylesheets
-    const exportedCssText = extractCSSFromDocument(svgClone);
-
-    const paddedWidth = bbox.width + 2 * borderPadding.x;
-    const paddedHeight = bbox.height + 2 * borderPadding.y;
+    const exportedCssText = extractCSSFromDocument(composedSvg);
 
     if (options.preserveDimensions) {
-        svgClone.setAttribute('width', paddedWidth.toString());
-        svgClone.setAttribute('height', paddedHeight.toString());
+        composedSvg.setAttribute('width', String(viewBox.width));
+        composedSvg.setAttribute('height', String(viewBox.height));
     } else {
-        svgClone.setAttribute('width', '100%');
-        svgClone.setAttribute('height', '100%');
+        composedSvg.setAttribute('width', '100%');
+        composedSvg.setAttribute('height', '100%');
     }
 
-    const viewBox: Rect = {
-        x: bbox.x - borderPadding.x,
-        y: bbox.y - borderPadding.y,
-        width: paddedWidth,
-        height: paddedHeight,
-    };
-    svgClone.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+    
+    composedSvg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
 
     if (watermarkSvg) {
-        addWatermark(svgClone, viewBox, watermarkSvg);
+        addWatermark(composedSvg, viewBox, watermarkSvg);
     }
 
-    const images = Array.from(svgClone.querySelectorAll('img'));
+    const images = Array.from(composedSvg.querySelectorAll('img'));
     await Promise.all(images.map(img => {
         const exportKey = img.getAttribute('export-key');
         img.removeAttribute('export-key');
@@ -124,9 +114,9 @@ async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         `<style>${serializeCssPropertyValues(cssPropertyValues)}</style>\n` +
         `<style>${exportedCssText}</style>`
     );
-    svgClone.insertBefore(defs, svgClone.firstChild);
+    composedSvg.insertBefore(defs, composedSvg.firstChild);
 
-    return svgClone;
+    return composedSvg;
 }
 
 function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {
@@ -191,63 +181,65 @@ function extractCSSFromDocument(targetSubtree: Element): string {
     return exportedParts.join('\n');
 }
 
-function clonePaperSvg(options: ToSVGOptions, elementSizePadding: number): {
-    svgClone: SVGSVGElement;
+function composeExportedSvg(layers: ToSVGOptions['layers'], viewBox: Rect): {
+    composedSvg: SVGSVGElement;
     imageBounds: { [path: string]: Bounds };
 } {
-    const {model, sizeProvider, paper, getOverlaidElement} = options;
-    const svgClone = paper.cloneNode(true) as SVGSVGElement;
-    svgClone.removeAttribute('class');
-    svgClone.removeAttribute('style');
-
-    function findViewport() {
-        let child = svgClone.firstChild;
-        while (child) {
-            if (child instanceof SVGGElement) { return child; }
-            child = child.nextSibling;
-        }
-        return undefined;
-    }
-
-    const viewport = findViewport()!;
-    viewport.removeAttribute('transform');
-    viewport.setAttribute('class', 'reactodia-exported-canvas');
+    const composedSvg = document.createElementNS(SVG_NAMESPACE, 'svg');
+    const composedViewport = document.createElementNS(SVG_NAMESPACE, 'g');
+    composedViewport.setAttribute('class', 'reactodia-exported-canvas');
+    composedSvg.appendChild(composedViewport);
 
     const imageBounds: { [path: string]: Bounds } = Object.create(null);
 
-    for (const element of model.elements) {
-        const modelId = element.id;
-        const overlaidView = getOverlaidElement(modelId);
-        if (!overlaidView) { continue; }
+    for (const layer of layers) {
+        if (layer instanceof SVGSVGElement) {
+            const layerClone = layer.cloneNode(true) as SVGSVGElement;
+            const layerViewport = findSvgLayerViewport(layerClone)!;
+            layerViewport.removeAttribute('transform');
 
-        const elementRoot = document.createElementNS(SVG_NAMESPACE, 'g');
-        const overlaidViewContent = overlaidView.firstChild!.cloneNode(true) as HTMLElement;
-        elementRoot.setAttribute('class', 'reactodia-exported-element');
+            composedViewport.appendChild(layerViewport);
+        } else if (layer instanceof HTMLElement) {
+            const layerClone = layer.cloneNode(true) as HTMLElement;
+            layerClone.classList.add('reactodia-exported-layer');
+            layerClone.setAttribute('style', `transform: translate(${-viewBox.x}px,${-viewBox.y}px)`);
 
-        const newRoot = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
-        newRoot.appendChild(overlaidViewContent);
+            const layerForeignObject = document.createElementNS(SVG_NAMESPACE, 'foreignObject');
+            layerForeignObject.appendChild(layerClone);
+            layerForeignObject.setAttribute('transform', `translate(${viewBox.x},${viewBox.y})`);
+            layerForeignObject.setAttribute('width', String(viewBox.width));
+            layerForeignObject.setAttribute('height', String(viewBox.height));
 
-        const {x, y, width, height} = boundsOf(element, sizeProvider);
-        newRoot.setAttribute('transform', `translate(${x},${y})`);
-        newRoot.setAttribute('width', (width + elementSizePadding).toString());
-        newRoot.setAttribute('height', (height + elementSizePadding).toString());
+            const layerRoot = document.createElementNS(SVG_NAMESPACE, 'g');
+            layerRoot.appendChild(layerForeignObject);
+            composedViewport.appendChild(layerRoot);
 
-        elementRoot.appendChild(newRoot);
-        viewport.appendChild(elementRoot);
+            const clonedNodes = layerClone.querySelectorAll('img');
+            let nextImageIndex = 0;
 
-        const clonedNodes = overlaidViewContent.querySelectorAll('img');
-
-        foreachNode(overlaidView.querySelectorAll('img'), (img, index) => {
-            const exportKey = `export-key-${index}`;
-            clonedNodes[index].setAttribute('export-key', exportKey);
-            imageBounds[exportKey] = {
-                width: img.clientWidth,
-                height: img.clientHeight,
-            };
-        });
+            for (const img of layer.querySelectorAll('img')) {
+                const index = nextImageIndex;
+                nextImageIndex++;
+                const exportKey = `export-key-${index}`;
+                clonedNodes[index].setAttribute('export-key', exportKey);
+                imageBounds[exportKey] = {
+                    width: img.clientWidth,
+                    height: img.clientHeight,
+                };
+            }
+        }
     }
 
-    return {svgClone, imageBounds};
+    return {composedSvg, imageBounds};
+}
+
+function findSvgLayerViewport(layer: SVGSVGElement): SVGGElement | undefined {
+    let child = layer.firstChild;
+    while (child) {
+        if (child instanceof SVGGElement) { return child; }
+        child = child.nextSibling;
+    }
+    return undefined;
 }
 
 async function exportAsDataUri(original: HTMLImageElement): Promise<string> {
@@ -318,12 +310,6 @@ function serializeCssPropertyValues(propertyValues: ReadonlyMap<string, string>)
     }
     parts.push('}\n');
     return parts.join('');
-}
-
-function foreachNode<T extends Node>(nodeList: NodeListOf<T>, callback: (node: T, index: number) => void) {
-    for (let i = 0; i < nodeList.length; i++) {
-        callback(nodeList[i], i);
-    }
 }
 
 /**

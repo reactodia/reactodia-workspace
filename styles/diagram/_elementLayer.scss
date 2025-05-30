@@ -2,14 +2,11 @@
   cursor: move;
   outline: none;
 
+  // http://stackoverflow.com/questions/6664460/line-height-affects-images
+  img { vertical-align: middle; }
+
   &--blurred {
     filter: grayscale(100%);
     opacity: 0.5;
   }
-}
-
-.reactodia-overlaid-element,
-.reactodia-exported-element {
-  // http://stackoverflow.com/questions/6664460/line-height-affects-images
-  img { vertical-align: middle; }
 }

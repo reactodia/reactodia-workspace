@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Make library compatible with [React v19](https://react.dev/blog/2024/12/05/react-19), while continuing support for v17 and v18.
 - Increase `IndexedDbCachedProvider.DB_VERSION` to 4 due to `ElementModel` changes.
 - Remove deprecated `LocaleFormatter`, `DataGraphLocaleFormatter` and `FormattedProperty` types.
+- Simplify the exported canvas SVG by using a single `<foreignObject>` to hold the whole element layer instead of a separate one for each canvas element.
 
 ## [0.29.1] - 2025-03-25
 #### 🐛 Fixed

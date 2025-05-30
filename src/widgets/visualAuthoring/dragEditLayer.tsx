@@ -11,7 +11,7 @@ import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import { Element, VoidElement } from '../../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../../diagram/linkLayer';
-import { TransformedSvgCanvas } from '../../diagram/paper';
+import { SvgPaperLayer } from '../../diagram/paper';
 import type { MutableRenderingState } from '../../diagram/renderingState';
 import { Spinner } from '../../diagram/spinner';
 
@@ -522,7 +522,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         const transform = canvas.metrics.getTransform();
         const renderingState = canvas.renderingState as MutableRenderingState;
         return (
-            <TransformedSvgCanvas paperTransform={transform}
+            <SvgPaperLayer paperTransform={transform}
                 className={CLASS_NAME}>
                 <LinkMarkers renderingState={renderingState} />
                 {this.renderHighlight()}
@@ -533,7 +533,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                         links={[this.temporaryLink]}
                     />
                 )}
-            </TransformedSvgCanvas>
+            </SvgPaperLayer>
         );
     }
 

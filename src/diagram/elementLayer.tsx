@@ -9,13 +9,15 @@ import { ElementTemplate, TemplateProps } from './customization';
 import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
 import { DiagramModel } from './model';
+import { HtmlPaperLayer, type PaperTransform } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
 import { SharedCanvasState } from './sharedCanvasState';
 
 export interface ElementLayerProps {
+    layerRef: React.Ref<HTMLDivElement | null>;
     model: DiagramModel;
     renderingState: MutableRenderingState;
-    style: React.CSSProperties;
+    paperTransform: PaperTransform;
 }
 
 interface State {
@@ -76,7 +78,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     }
 
     render() {
-        const {style, model, renderingState} = this.props;
+        const {model, renderingState, paperTransform, layerRef} = this.props;
         const {version, elementStates} = this.state;
         const {memoizedElements} = this;
 
@@ -89,9 +91,10 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         }
 
         return (
-            <div key={version}
+            <HtmlPaperLayer key={version}
+                layerRef={layerRef}
                 className='reactodia-element-layer'
-                style={style}>
+                paperTransform={paperTransform}>
                 {elementsToRender.map(state => {
                     let overlaidElement = memoizedElements.get(state);
                     if (!overlaidElement) {
@@ -116,7 +119,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                     }
                     return overlaidElement;
                 })}
-            </div>
+            </HtmlPaperLayer>
         );
     }
 

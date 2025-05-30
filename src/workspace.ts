@@ -84,7 +84,9 @@ export {
 } from './diagram/linkLayer';
 export { type DiagramModel, DiagramModelEvents, GraphStructure } from './diagram/model';
 export {
-    PaperTransform, TransformedSvgCanvas, TransformedSvgCanvasProps, paneTopLeft, totalPaneSize,
+    type PaperTransform, paneTopLeft, totalPaneSize,
+    HtmlPaperLayer, type HtmlPaperLayerProps,
+    SvgPaperLayer, type SvgPaperLayerProps,
 } from './diagram/paper';
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
