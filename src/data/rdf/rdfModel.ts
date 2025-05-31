@@ -1,7 +1,8 @@
-import * as RdfJs from '@rdfjs/types';
+import type * as RdfJs from '@rdfjs/types';
 import { chainHash, dropHighestNonSignBit, hashString } from '@reactodia/hashmap';
 import * as N3 from 'n3';
 
+import { JsonLiteral } from './jsonLiteral';
 import { escapeRdfValue } from './rdfEscape';
 
 export type NamedNode<T extends string = string> = RdfJs.NamedNode<T>;
@@ -15,6 +16,8 @@ export type Term = NamedNode | BlankNode | Literal | Variable | DefaultGraph | Q
 export type DataFactory = RdfJs.DataFactory;
 
 export const DefaultDataFactory: RdfJs.DataFactory = N3.DataFactory;
+
+export { JsonLiteral };
 
 export function looksLikeTerm(value: unknown): value is Term {
     if (!(
@@ -78,10 +81,15 @@ export function hashTerm(node: Term): number {
     let hash = 0;
     switch (node.termType) {
         case 'NamedNode':
-        case 'BlankNode':
+        case 'BlankNode': {
             hash = hashString(node.value);
             break;
-        case 'Literal':
+        }
+        case 'Literal': {
+            const json = JsonLiteral.fromLiteral(node);
+            if (json) {
+                return JsonLiteral.hash(json);
+            }
             hash = hashString(node.value);
             if (node.datatype) {
                 hash = chainHash(hash, hashString(node.datatype.value));
@@ -90,9 +98,11 @@ export function hashTerm(node: Term): number {
                 hash = chainHash(hash, hashString(node.language));
             }
             break;
-        case 'Variable':
+        }
+        case 'Variable': {
             hash = hashString(node.value);
             break;
+        }
         case 'Quad': {
             hash = chainHash(hash, hashTerm(node.subject));
             hash = chainHash(hash, hashTerm(node.predicate));
@@ -117,10 +127,19 @@ export function equalTerms(a: Term, b: Term): boolean {
             return a.value === value;
         }
         case 'Literal': {
-            const { value, language, datatype } = b as Literal;
-            return a.value === value
-                && a.datatype.value === datatype.value
-                && a.language === language;
+            const other = b as Literal;
+            if (a.datatype.value !== other.datatype.value) {
+                return false;
+            } else if (a.datatype.value === Vocabulary.rdf.JSON) {
+                const aJson = JsonLiteral.fromLiteral(a);
+                const bJson = JsonLiteral.fromLiteral(other);
+                if (aJson) {
+                    return bJson ? JsonLiteral.equal(aJson, bJson) : false;
+                } else if (bJson) {
+                    return aJson ? JsonLiteral.equal(aJson, bJson) : false;
+                }
+            }
+            return a.language === other.language && a.value === other.value;
         }
         case 'Quad': {
             const { subject, predicate, object, graph } = b as Quad;
