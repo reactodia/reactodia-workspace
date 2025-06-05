@@ -80,8 +80,8 @@ export {
 export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
     LinkPath, LinkPathProps,
-    LinkLabel, LinkLabelProps,
     LinkVertices, LinkVerticesProps,
+    LinkLabel, LinkLabelProps,
 } from './diagram/linkLayer';
 export { type DiagramModel, DiagramModelEvents, GraphStructure } from './diagram/model';
 export {
