@@ -5,10 +5,12 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
+const BOOK_ICON = require('@vscode/codicons/src/icons/book.svg');
 const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
 const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
 
-const TURTLE_DATA = require('./resources/orgOntology.ttl');
+const EXAMPLE_DIAGRAM = require('./resources/exampleDiagram.json') as Reactodia.SerializedDiagram;
+const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
@@ -21,7 +23,7 @@ function StyleCustomizationExample() {
         const dataProvider = new Reactodia.RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
 
-        const diagram = tryLoadLayoutFromLocalStorage();
+        const diagram = tryLoadLayoutFromLocalStorage() ?? EXAMPLE_DIAGRAM;
         await model.importLayout({
             diagram,
             dataProvider: dataProvider,
@@ -53,15 +55,88 @@ function StyleCustomizationExample() {
                             types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty') ||
                             types.includes('http://www.w3.org/2002/07/owl#AnnotationProperty')
                         ) {
-                            return Reactodia.RoundTemplate;
+                            return PropertyTemplate;
                         }
                         return undefined;
                     },
                     linkTemplateResolver: type => DoubleArrowLinkTemplate,
                 }}
+                canvasWidgets={[
+                    <BookDecorations key='book-decorations' />
+                ]}
                 menu={<ExampleToolbarMenu />}
             />
         </Reactodia.Workspace>
+    );
+}
+
+function BookDecorations() {
+    const {model} = Reactodia.useCanvas();
+    return model.elements
+        .filter(element => element instanceof Reactodia.EntityElement)
+        .map(element => <BookDecoration key={element.id} target={element} />);
+}
+
+Reactodia.defineCanvasWidget(BookDecorations, element => ({element, attachment: 'viewport'}));
+
+function BookDecoration(props: { target: Reactodia.EntityElement }) {
+    const {target} = props;
+
+    const data = Reactodia.useObservedProperty(
+        target.events,
+        'changeData',
+        () => target.data.types.includes('http://www.w3.org/2002/07/owl#Class') ? target.data : null
+    );
+
+    return data ? (
+        <Reactodia.ElementDecoration target={target}>
+            <div
+                style={{
+                    mask: `url(${BOOK_ICON}) 0px 0px / contain no-repeat`,
+                    backgroundColor: 'orange',
+                    height: '36px',
+                    width: '36px',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '-10px',
+                    transform: 'translate(-100%,-50%)',
+                }}
+            />
+        </Reactodia.ElementDecoration>
+    ) : null;
+}
+
+const PropertyTemplate: Reactodia.ElementTemplate = {
+    ...Reactodia.RoundTemplate,
+    renderElement: props => (
+        <>
+            <Reactodia.RoundEntity {...props} />
+            {props.element instanceof Reactodia.EntityElement
+                ? <ElementLabelDecoration target={props.element} />
+                : null}
+        </>
+    ),
+};
+
+function ElementLabelDecoration(props: { target: Reactodia.EntityElement }) {
+    const {target} = props;
+    const {model} = Reactodia.useWorkspace();
+    const data = Reactodia.useObservedProperty(target.events, 'changeData', () => target.data);
+    const label = model.locale.formatEntityLabel(data, model.language);
+    return (
+        <Reactodia.ElementDecoration target={target}>
+            <div data-element-id={target.id}
+                style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translate(-50%,100%)',
+                    color: 'cornflowerblue',
+                    cursor: 'move',
+                }}>
+                {label}
+            </div>
+        </Reactodia.ElementDecoration>
     );
 }
 

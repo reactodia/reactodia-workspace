@@ -139,4 +139,18 @@
   &__action-discard {
     @include codicon-button("discard");
   }
+
+  &__decorator &__state-indicator {
+    transition: opacity theme.$transition-duration;
+  }
+
+  &__decorator--optional &__state-indicator {
+    opacity: 0;
+  }
+
+  .reactodia-overlaid-element:hover + .reactodia-element-decorations &__state-indicator,
+  &__decorator--selected &__state-indicator,
+  &__decorator:hover &__state-indicator {
+    opacity: 1;
+  }
 }

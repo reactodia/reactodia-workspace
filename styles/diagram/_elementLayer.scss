@@ -10,3 +10,11 @@
     opacity: 0.5;
   }
 }
+
+.reactodia-element-decorations {
+  pointer-events: none;
+
+  & > div > * {
+    pointer-events: initial;
+  }
+}

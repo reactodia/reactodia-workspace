@@ -1,0 +1,323 @@
+{
+  "@context": "https://ontodia.org/context/v1.json",
+  "@type": "Diagram",
+  "layoutData": {
+    "@type": "Layout",
+    "elements": [
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:a6d63a17bcfb4c680f389a5a7a589d43",
+        "iri": "http://www.w3.org/ns/org#subOrganizationOf",
+        "position": {
+          "x": 416.4996489696495,
+          "y": -94.61209052131107
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:aa2f5fe0dd1f0baa24578ce03bfe7aa2",
+        "iri": "http://www.w3.org/ns/org#FormalOrganization",
+        "position": {
+          "x": 245.07195136811163,
+          "y": 257.38791047868887
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:bfaa31ca770ce4c4da76da5241d8a7ac",
+        "iri": "http://www.w3.org/ns/org#originalOrganization",
+        "position": {
+          "x": 910.0719533681116,
+          "y": 322.38791047868887
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:3cde33482534596a8df68d21bb897325",
+        "iri": "http://www.w3.org/ns/org#hasSubOrganization",
+        "position": {
+          "x": 928.0883288205229,
+          "y": -103.76363556907984
+        },
+        "isExpanded": true
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:5baa064128a81bc02cac694c23103022",
+        "iri": "http://www.w3.org/2004/02/skos/core#notation",
+        "position": {
+          "x": 994.9697475104838,
+          "y": 467.81216634209295
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:53fdc2179dcfa65f7f36b961b05273f9",
+        "iri": "http://xmlns.com/foaf/0.1/Person",
+        "position": {
+          "x": 199.68733770574528,
+          "y": 1013.2612391880664
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:2acf0a6a290517473c1cc17cd9914fae",
+        "iri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+        "position": {
+          "x": 70.53963259892362,
+          "y": 682.8942985846004
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:99f72d1bdf2cc02777fd266b27cc4002",
+        "iri": "http://www.w3.org/ns/org#location",
+        "position": {
+          "x": 266.0151212081579,
+          "y": 820.6855846449575
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d",
+        "iri": "http://www.w3.org/ns/org#Organization",
+        "position": {
+          "x": 595.4400142052012,
+          "y": 365.64749755730986
+        },
+        "isExpanded": false
+      },
+      {
+        "@type": "Element",
+        "@id": "urn:reactodia:e:360baaa2bbfc9f8519c8c30ea2a592de",
+        "iri": "http://www.w3.org/ns/org#identifier",
+        "position": {
+          "x": 398.6043417162783,
+          "y": 510.2697756397058
+        },
+        "isExpanded": false
+      }
+    ],
+    "links": [
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:5c7a7962d47acab72685da32c8258e03",
+        "property": "http://www.w3.org/2002/07/owl#inverseOf",
+        "source": {
+          "@id": "urn:reactodia:e:a6d63a17bcfb4c680f389a5a7a589d43"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3cde33482534596a8df68d21bb897325"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#subOrganizationOf",
+        "targetIri": "http://www.w3.org/ns/org#hasSubOrganization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:14171e344fe4d40a1f5e6292cc1ab7ad",
+        "property": "http://www.w3.org/2002/07/owl#inverseOf",
+        "source": {
+          "@id": "urn:reactodia:e:3cde33482534596a8df68d21bb897325"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:a6d63a17bcfb4c680f389a5a7a589d43"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#hasSubOrganization",
+        "targetIri": "http://www.w3.org/ns/org#subOrganizationOf",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:3bfdf290a2477e62ad9511d038fe2f72",
+        "property": "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+        "source": {
+          "@id": "urn:reactodia:e:aa2f5fe0dd1f0baa24578ce03bfe7aa2"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#FormalOrganization",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:7310be9783a010e7cca54191d9b43001",
+        "property": "http://www.w3.org/2000/01/rdf-schema#domain",
+        "source": {
+          "@id": "urn:reactodia:e:a6d63a17bcfb4c680f389a5a7a589d43"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#subOrganizationOf",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:d329a12efa514a498c350f8f43d1660e",
+        "property": "http://www.w3.org/2000/01/rdf-schema#range",
+        "source": {
+          "@id": "urn:reactodia:e:a6d63a17bcfb4c680f389a5a7a589d43"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#subOrganizationOf",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:5db6a3cf12687a87ad633c62de2320f9",
+        "property": "http://www.w3.org/2000/01/rdf-schema#domain",
+        "source": {
+          "@id": "urn:reactodia:e:3cde33482534596a8df68d21bb897325"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#hasSubOrganization",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:6622b4fa08ea89d0237d36fb02e602f8",
+        "property": "http://www.w3.org/2000/01/rdf-schema#range",
+        "source": {
+          "@id": "urn:reactodia:e:3cde33482534596a8df68d21bb897325"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#hasSubOrganization",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:6507bf44ae3db04ba57a0b73fd8cae68",
+        "property": "http://www.w3.org/2000/01/rdf-schema#range",
+        "source": {
+          "@id": "urn:reactodia:e:bfaa31ca770ce4c4da76da5241d8a7ac"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#originalOrganization",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": [],
+        "linkState": {}
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:feef930cebc5a03c659846a6589f5a7c",
+        "property": "http://www.w3.org/2000/01/rdf-schema#domain",
+        "source": {
+          "@id": "urn:reactodia:e:360baaa2bbfc9f8519c8c30ea2a592de"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:3ba3769957d60fe95f45c466d339ae0d"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#identifier",
+        "targetIri": "http://www.w3.org/ns/org#Organization",
+        "vertices": []
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:5e017ae7b40dd18dd94d18856c4b6ecb",
+        "property": "http://www.w3.org/2000/01/rdf-schema#domain",
+        "source": {
+          "@id": "urn:reactodia:e:99f72d1bdf2cc02777fd266b27cc4002"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:53fdc2179dcfa65f7f36b961b05273f9"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#location",
+        "targetIri": "http://xmlns.com/foaf/0.1/Person",
+        "vertices": []
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:0be6d734bc0fd2a68cff2e3aa322831a",
+        "property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "source": {
+          "@id": "urn:reactodia:e:360baaa2bbfc9f8519c8c30ea2a592de"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:2acf0a6a290517473c1cc17cd9914fae"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#identifier",
+        "targetIri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+        "vertices": []
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:01e0d2bcdb2a3c8eb78c93e403e25cf9",
+        "property": "http://www.w3.org/2000/01/rdf-schema#subPropertyOf",
+        "source": {
+          "@id": "urn:reactodia:e:360baaa2bbfc9f8519c8c30ea2a592de"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:5baa064128a81bc02cac694c23103022"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#identifier",
+        "targetIri": "http://www.w3.org/2004/02/skos/core#notation",
+        "vertices": [
+          {
+            "x": 518.001685941526,
+            "y": 640.9247485467047
+          },
+          {
+            "x": 573.6520886792771,
+            "y": 780.0507492198781
+          },
+          {
+            "x": 787.194334613068,
+            "y": 716.6351817569764
+          },
+          {
+            "x": 744.4858730839012,
+            "y": 499.2103596318145
+          },
+          {
+            "x": 868.0815443067735,
+            "y": 574.9207804996777
+          }
+        ]
+      },
+      {
+        "@type": "Link",
+        "@id": "urn:reactodia:l:3c59b142b5add42f18adf6b26df1c263",
+        "property": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "source": {
+          "@id": "urn:reactodia:e:99f72d1bdf2cc02777fd266b27cc4002"
+        },
+        "target": {
+          "@id": "urn:reactodia:e:2acf0a6a290517473c1cc17cd9914fae"
+        },
+        "sourceIri": "http://www.w3.org/ns/org#location",
+        "targetIri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+        "vertices": []
+      }
+    ]
+  },
+  "linkTypeOptions": []
+}

@@ -182,6 +182,8 @@ export class MutableRenderingState implements RenderingState {
     private readonly mappedTemplates = new WeakMap<ElementTemplateComponent, ElementTemplate>();
     private readonly linkRouter: LinkRouter;
 
+    private readonly decorationContainers = new WeakMap<Element | Link, HTMLDivElement>();
+
     private readonly elementSizes = new WeakMap<Element, Size>();
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
@@ -252,6 +254,15 @@ export class MutableRenderingState implements RenderingState {
         }
     }
 
+    ensureDecorationContainer(target: Element | Link): HTMLDivElement {
+        let container = this.decorationContainers.get(target);
+        if (!container) {
+            container = document.createElement('div');
+            this.decorationContainers.set(target, container);
+        }
+        return container;
+    }
+
     getElementSize(element: Element): Size | undefined {
         return this.elementSizes.get(element);
     }
@@ -264,6 +275,9 @@ export class MutableRenderingState implements RenderingState {
             previous.height === size.height
         );
         if (!sameSize) {
+            const decorationContainer = this.ensureDecorationContainer(element);
+            decorationContainer.style = `width: ${size.width}px; height: ${size.height}px`;
+
             this.elementSizes.set(element, size);
             this.source.trigger('changeElementSize', {source: element, previous});
         }

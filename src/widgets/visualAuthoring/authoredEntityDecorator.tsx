@@ -2,198 +2,101 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
+import { useObservedProperty, useEventStore, useSyncStore } from '../../coreUtils/hooks';
 
 import type { ValidationSeverity } from '../../data/validationProvider';
 
-import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
-import { type ShapeGeometry, Vector } from '../../diagram/geometry';
+import { useCanvas } from '../../diagram/canvasApi';
+import { ElementDecoration } from '../../diagram/elementLayer';
+import { type ShapeGeometry } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 
 import { AuthoredEntity } from '../../editor/authoringState';
 import { EntityElement } from '../../editor/dataElements';
-import { ElementValidation, LinkValidation, getMaxSeverity } from '../../editor/validation';
+import { getMaxSeverity } from '../../editor/validation';
 
-import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { useAuthoredEntity } from './authoredEntity';
 
-export interface AuthoredEntityDecoratorProps {
-    target: EntityElement;
-    position: Vector;
-    inlineActions?: boolean;
-}
-
-export function AuthoredEntityDecorator(props: AuthoredEntityDecoratorProps) {
-    const {canvas} = useCanvas();
-    const workspace = useWorkspace();
-    return (
-        <AuthoredEntityDecoratorInner {...props}
-            canvas={canvas}
-            workspace={workspace}
-        />
-    );
-}
-
-interface AuthoredEntityDecoratorInnerProps extends AuthoredEntityDecoratorProps {
-    canvas: CanvasApi;
-    workspace: WorkspaceContext;
-}
-
-interface State {
-    state?: AuthoredEntity;
-    validation?: ElementValidation;
-    isTemporary?: boolean;
-}
-
 const CLASS_NAME = 'reactodia-authoring-state';
 
-class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecoratorInnerProps, State> {
-    private readonly listener = new EventObserver();
+export function AuthoredEntityDecorator(props: {
+    target: EntityElement;
+    inlineActions: boolean;
+}) {
+    const {target, inlineActions} = props;
+    const {canvas} = useCanvas();
+    const {model, editor, translation: t} = useWorkspace();
 
-    constructor(props: AuthoredEntityDecoratorInnerProps) {
-        super(props);
-        const {target, workspace: {editor}} = this.props;
-        this.state = {
-            state: editor.authoringState.elements.get(target.iri),
-            validation: editor.validationState.elements.get(target.iri),
-            isTemporary: editor.temporaryState.elements.has(target.iri),
-        };
-    }
+    const onlyTargetSelected = useObservedProperty(
+        model.events,
+        'changeSelection',
+        () => model.selection.length === 1 && model.selection[0] === target
+    );
+    const data = useObservedProperty(target.events, 'changeData', () => target.data);
 
-    componentDidMount() {
-        const {target, canvas, workspace: {editor}} = this.props;
-        this.listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
+    const dependencies = [data];
+    const state = useSyncStore(
+        useEventStore(editor.events, 'changeAuthoringState', dependencies),
+        () => editor.authoringState.elements.get(data.id)
+    );
+    const validation = useSyncStore(
+        useEventStore(editor.events, 'changeValidationState', dependencies),
+        () => editor.validationState.elements.get(data.id)
+    );
+    const isTemporary = useSyncStore(
+        useEventStore(editor.events, 'changeTemporaryState', dependencies),
+        () => editor.temporaryState.elements.has(data.id)
+    );
+
+    const [shape, setShape] = React.useState(() => canvas.renderingState.getElementShape(target));
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(canvas.renderingState.events, 'changeElementSize', e => {
             if (e.source === target) {
-                this.forceUpdate();
+                setShape(canvas.renderingState.getElementShape(target));
             }
         });
-        this.listener.listen(editor.events, 'changeAuthoringState', e => {
-            const state = editor.authoringState.elements.get(target.iri);
-            if (state === e.previous.elements.get(target.iri)) { return; }
-            this.setState({state});
-        });
-        this.listener.listen(editor.events, 'changeValidationState', e => {
-            const validation = editor.validationState.elements.get(target.iri);
-            if (validation === e.previous.elements.get(target.iri)) { return; }
-            this.setState({validation});
-        });
-        this.listener.listen(editor.events, 'changeTemporaryState', e => {
-            const isTemporary = editor.temporaryState.elements.has(target.iri);
-            if (isTemporary === e.previous.elements.has(target.iri)) { return; }
-            this.setState({isTemporary});
-        });
-        this.listener.listen(target.events, 'changeData', e => {
-            if (e.previous.id !== target.iri) {
-                this.setState({
-                    isTemporary: editor.temporaryState.elements.has(target.iri),
-                    validation: editor.validationState.elements.get(target.iri),
-                    state: editor.authoringState.elements.get(target.iri),
-                });
-            }
-        });
-    }
+        return () => listener.stopListening();
+    }, [target]);
 
-    componentWillUnmount() {
-        this.listener.stopListening();
-    }
-
-    shouldComponentUpdate(nextProps: AuthoredEntityDecoratorProps, nextState: State) {
-        return (
-            this.state.state !== nextState.state ||
-            this.state.validation !== nextState.validation ||
-            this.state.isTemporary !== nextState.isTemporary ||
-            this.props.position !== nextProps.position
+    let elementOutlines: React.ReactElement | null = null;
+    if (isTemporary) {
+        elementOutlines = (
+            <>
+                <ElementSvgShape shape={shape}
+                    className={`${CLASS_NAME}__outline-overlay`}
+                />
+                <ElementSvgShape shape={shape}
+                    fill='url(#stripe-pattern)'
+                />
+            </>
+        );
+    } else if (state && state.type === 'entityDelete') {
+        const cx = shape.bounds.width / 2;
+        const cy = shape.bounds.height / 2;
+        const rx = shape.type === 'rect' ? cx : cx * Math.SQRT1_2;
+        const ry = shape.type === 'rect' ? cy : cy * Math.SQRT1_2;
+        elementOutlines = (
+            <g key={target.id}>
+                <ElementSvgShape shape={shape}
+                    className={`${CLASS_NAME}__outline-overlay`}
+                />
+                <line className={`${CLASS_NAME}__outline-cross-line`}
+                    x1={cx - rx} y1={cy - ry} x2={cx + rx} y2={cy + ry}
+                />
+                <line className={`${CLASS_NAME}__outline-cross-line`}
+                    x1={cx - rx} y1={cy + ry} x2={cx + rx} y2={cy - ry}
+                />
+            </g>
         );
     }
 
-    private renderElementOutlines() {
-        const {target, canvas} = this.props;
-        const {state, isTemporary} = this.state;
-        const shape = canvas.renderingState.getElementShape(target);
-        if (isTemporary) {
-            return (
-                <>
-                    <ElementSvgShape shape={shape}
-                        className={`${CLASS_NAME}__outline-overlay`}
-                    />
-                    <ElementSvgShape shape={shape}
-                        fill='url(#stripe-pattern)'
-                    />
-                </>
-            );
-        }
-        if (state && state.type === 'entityDelete') {
-            const cx = shape.bounds.width / 2;
-            const cy = shape.bounds.height / 2;
-            const rx = shape.type === 'rect' ? cx : cx * Math.SQRT1_2;
-            const ry = shape.type === 'rect' ? cy : cy * Math.SQRT1_2;
-            return (
-                <g key={target.id}>
-                    <ElementSvgShape shape={shape}
-                        className={`${CLASS_NAME}__outline-overlay`}
-                    />
-                    <line className={`${CLASS_NAME}__outline-cross-line`}
-                        x1={cx - rx} y1={cy - ry} x2={cx + rx} y2={cy + ry}
-                    />
-                    <line className={`${CLASS_NAME}__outline-cross-line`}
-                        x1={cx - rx} y1={cy + ry} x2={cx + rx} y2={cy - ry}
-                    />
-                </g>
-            );
-        }
-        return null;
-    }
-
-    private renderElementState() {
-        const {target, inlineActions, workspace: {editor, translation: t, getCommandBus}} = this.props;
-        const {state, isTemporary} = this.state;
-
-        return (
-            <div key={target.id}
-                className={`${CLASS_NAME}__state-indicator`}>
-                <div className={`${CLASS_NAME}__state-indicator-body`}>
-                    {state ? (
-                        <span className={`${CLASS_NAME}__state-label`}>
-                            {(
-                                state.type === 'entityAdd' ? t.text('authoring_state.entity_add.label') :
-                                state.type === 'entityChange' ? t.text('authoring_state.entity_change.label') :
-                                state.type === 'entityDelete' ? t.text('authoring_state.entity_delete.label') :
-                                null
-                            )}
-                        </span>
-                    ) : null}
-                    {isTemporary ? null : (
-                        <InlineActions target={target}
-                            state={state}
-                            allActions={Boolean(inlineActions)}
-                        />
-                    )}
-                    {this.renderElementValidations()}
-                </div>
-            </div>
-        );
-    }
-
-    private renderValidationIcon(title: string, validation: LinkValidation | ElementValidation) {
+    let elementValidations: React.ReactElement | null = null;
+    if (validation) {
         const severity = getMaxSeverity(validation.items);
-        return (
-            <div className={cx(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
-                title={title}>
-                {validation.loading
-                    ? <HtmlSpinner width={15} height={17} />
-                    : <div className={`${CLASS_NAME}__item-validation-icon`} />}
-                {(!validation.loading && validation.items.length > 0)
-                    ? validation.items.length : undefined}
-            </div>
-        );
-    }
 
-    private renderElementValidations() {
-        const {workspace: {model, translation: t}} = this.props;
-        const {validation} = this.state;
-        if (!validation) {
-            return null;
-        }
         const title = validation.items.map(item => {
             if (item.propertyType) {
                 const propertyType = model.getPropertyType(item.propertyType);
@@ -207,28 +110,58 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
                 return item.message;
             }
         }).join('\n');
-
-        return this.renderValidationIcon(title, validation);
+        
+        elementValidations = (
+            <div className={cx(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}
+                title={title}>
+                {validation.loading
+                    ? <HtmlSpinner width={15} height={17} />
+                    : <div className={`${CLASS_NAME}__item-validation-icon`} />}
+                {(!validation.loading && validation.items.length > 0)
+                    ? validation.items.length : undefined}
+            </div>
+        );
     }
 
-    render() {
-        const {target, canvas} = this.props;
-        const {position} = target;
-        const size = canvas.renderingState.getElementSize(target) ?? {width: 0, height: 0};
-        const transform = `translate(${position.x}px,${position.y}px)`;
-        const outlines = this.renderElementOutlines();
-        const state = this.renderElementState();
-        if (!outlines && !state) {
-            return null;
-        }
-        return (
-            <div className={`${CLASS_NAME}__decorator`}
-                style={{position: 'absolute', transform}}
+    const elementState = (
+        <div key={target.id}
+            className={`${CLASS_NAME}__state-indicator`}>
+            <div className={`${CLASS_NAME}__state-indicator-body`}>
+                {state ? (
+                    <span className={`${CLASS_NAME}__state-label`}>
+                        {(
+                            state.type === 'entityAdd' ? t.text('authoring_state.entity_add.label') :
+                            state.type === 'entityChange' ? t.text('authoring_state.entity_change.label') :
+                            state.type === 'entityDelete' ? t.text('authoring_state.entity_delete.label') :
+                            null
+                        )}
+                    </span>
+                ) : null}
+                {isTemporary ? null : (
+                    <InlineActions target={target}
+                        state={state}
+                        allActions={Boolean(inlineActions)}
+                    />
+                )}
+                {elementValidations}
+            </div>
+        </div>
+    );
+
+    const isOptional = !state && !validation;
+    return (
+        <ElementDecoration target={target}>
+            <div
+                className={cx(
+                    `${CLASS_NAME}__decorator`,
+                    isOptional ? `${CLASS_NAME}__decorator--optional` : undefined,
+                    onlyTargetSelected ? `${CLASS_NAME}__decorator--selected` : undefined
+                )}
                 data-reactodia-no-export='true'>
-                {outlines ? (
+                {elementOutlines ? (
                     <svg className={`${CLASS_NAME}__element-outlines`}
-                        width={size.width}
-                        height={size.height}>
+                        width={shape.bounds.width}
+                        height={shape.bounds.height}>
                         <defs>
                             <pattern id='stripe-pattern'
                                 patternUnits='userSpaceOnUse'
@@ -240,13 +173,13 @@ class AuthoredEntityDecoratorInner extends React.Component<AuthoredEntityDecorat
                                 />
                             </pattern>
                         </defs>
-                        {this.renderElementOutlines()}
+                        {elementOutlines}
                     </svg>
                 ) : null}
-                {state}
+                {elementState}
             </div>
-        );
-    }
+        </ElementDecoration>
+    );
 }
 
 function getSeverityClass(severity: ValidationSeverity): string | undefined {
