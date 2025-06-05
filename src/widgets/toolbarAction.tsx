@@ -442,16 +442,16 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
     const {translation: t, performLayout} = useWorkspace();
-    const elementCount = useObservedProperty(
+    const diagramIsEmpty = useObservedProperty(
         model.events,
         'changeCells',
-        () => model.elements.length
+        () => model.elements.length === 0
     );
     return (
         <ToolbarAction {...otherProps}
             className={cx(className, `${CLASS_NAME}__layout`)}
             title={title ?? t.text('toolbar_action.layout.title')}
-            disabled={elementCount === 0}
+            disabled={diagramIsEmpty}
             onSelect={() => {
                 performLayout({
                     canvas,

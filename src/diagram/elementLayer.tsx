@@ -10,6 +10,7 @@ import { ElementTemplate, TemplateProps } from './customization';
 import { useCanvas } from './canvasApi';
 import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
+import type { Size } from './geometry';
 import { DiagramModel } from './model';
 import { HtmlPaperLayer, type PaperTransform } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
@@ -48,8 +49,9 @@ interface RedrawBatch {
 }
 
 interface SizeUpdateRequest {
-    element: Element;
-    node: HTMLDivElement;
+    readonly element: Element;
+    readonly node: HTMLDivElement;
+    computedSize?: Size;
 }
 
 export class ElementLayer extends React.Component<ElementLayerProps, State> {
@@ -221,10 +223,15 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         const {renderingState} = this.props;
         const batch = this.sizeRequests;
         this.sizeRequests = new Map<string, SizeUpdateRequest>();
-        batch.forEach(({element, node}) => {
-            const {clientWidth, clientHeight} = node;
-            renderingState.setElementSize(element, {width: clientWidth, height: clientHeight});
-        });
+        for (const request of batch.values()) {
+            const {clientWidth, clientHeight} = request.node;
+            request.computedSize = {width: clientWidth, height: clientHeight};
+        }
+        for (const request of batch.values()) {
+            if (request.computedSize) {
+                renderingState.setElementSize(request.element, request.computedSize);
+            }
+        }
     };
 }
 
