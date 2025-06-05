@@ -2,6 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
+import { useObservedProperty } from '../../coreUtils/hooks';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { LinkKey } from '../../data/model';
@@ -30,8 +31,15 @@ export interface AuthoredRelationOverlayProps {
 }
 
 export function AuthoredRelationOverlay(props: AuthoredRelationOverlayProps) {
-    const workspace = useWorkspace();
     const {canvas} = useCanvas();
+    const workspace = useWorkspace();
+    const {editor} = workspace;
+
+    const inAuthoringMode = useObservedProperty(editor.events, 'changeMode', () => editor.inAuthoringMode);
+    if (!inAuthoringMode) {
+        return null;
+    }
+
     return (
         <LinkStateWidgetInner {...props}
             workspace={workspace}
@@ -270,12 +278,9 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     }
 
     render() {
-        const {workspace: {editor}, canvas} = this.props;
+        const {canvas} = this.props;
         const transform = canvas.metrics.getTransform();
         const {scale, originX, originY} = transform;
-        if (!editor.inAuthoringMode) {
-            return null;
-        }
         const htmlTransformStyle: React.CSSProperties = {
             position: 'absolute', left: 0, top: 0,
             transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
