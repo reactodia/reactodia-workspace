@@ -2,6 +2,7 @@ import type { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
+import { rdfs, schema } from '../data/rdf/vocabulary';
 
 import type { DataDiagramModel } from './dataDiagramModel';
 
@@ -62,7 +63,10 @@ export interface DefaultDataLocaleProviderOptions {
 }
 
 /**
- * Provides a default graph data formatter implementation.
+ * Provides a default graph data locale provider implementation.
+ *
+ * The default provider uses {@link rdfs.label} and {@link schema.thumbnailUrl}
+ * properties to get labels and image URLs unless overridden with options.
  */
 export class DefaultDataLocaleProvider implements DataLocaleProvider {
     protected readonly model: DataDiagramModel;
@@ -76,8 +80,8 @@ export class DefaultDataLocaleProvider implements DataLocaleProvider {
         const {
             model,
             translation,
-            labelProperty = Rdf.Vocabulary.rdfs.label,
-            imageProperty = Rdf.Vocabulary.schema.thumbnailUrl,
+            labelProperty = rdfs.label,
+            imageProperty = schema.thumbnailUrl,
         } = options;
         this.model = model;
         this.translation = translation;

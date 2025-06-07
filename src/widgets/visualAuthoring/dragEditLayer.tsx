@@ -5,7 +5,7 @@ import { EventObserver } from '../../coreUtils/events';
 
 import { MetadataCanConnect } from '../../data/metadataProvider';
 import { ElementModel, ElementTypeIri, LinkTypeIri } from '../../data/model';
-import { PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE } from '../../data/schema';
+import { PlaceholderEntityType, PlaceholderRelationType } from '../../data/schema';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
 import { Element, VoidElement } from '../../diagram/elements';
@@ -157,14 +157,14 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             sourceId: source.id,
             targetId: temporaryElement.id,
             data: {
-                linkTypeId: linkType ?? PLACEHOLDER_LINK_TYPE,
+                linkTypeId: linkType ?? PlaceholderRelationType,
                 sourceId: source.iri,
                 targetId: '',
                 properties: {},
             },
         });
         const temporaryLink = editor.createRelation(linkTemplate, {temporary: true});
-        model.setLinkVisibility(PLACEHOLDER_LINK_TYPE, 'withoutLabel');
+        model.setLinkVisibility(PlaceholderRelationType, 'withoutLabel');
 
         batch.discard();
 
@@ -246,7 +246,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             editor.metadataProvider.canConnect(
                 source.data,
                 undefined,
-                link.data.linkTypeId === PLACEHOLDER_LINK_TYPE
+                link.data.linkTypeId === PlaceholderRelationType
                     ? undefined : link.data.linkTypeId,
                 {signal: this.cancellation.signal}
             ),
@@ -304,7 +304,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             editor.metadataProvider.canConnect(
                 source,
                 target,
-                link.data.linkTypeId === PLACEHOLDER_LINK_TYPE
+                link.data.linkTypeId === PlaceholderRelationType
                     ? undefined : link.data.linkTypeId,
                 {signal}
             ),
@@ -411,7 +411,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 elementTypes.add(typeIri);
             }
         }
-        const selectedType = elementTypes.size === 1 ? Array.from(elementTypes)[0] : PLACEHOLDER_ELEMENT_TYPE;
+        const selectedType = elementTypes.size === 1 ? Array.from(elementTypes)[0] : PlaceholderEntityType;
         const elementModel = await editor.metadataProvider.createEntity(
             selectedType,
             {signal: this.cancellation.signal}
@@ -457,7 +457,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
             linkTypeIri = singleOutLink;
             direction = model.findLink(linkTypeIri, source.id, target.id) ? 'in' : 'out';
         } else {
-            linkTypeIri = PLACEHOLDER_LINK_TYPE;
+            linkTypeIri = PlaceholderRelationType;
             direction = 'out';
         }
 

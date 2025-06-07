@@ -1,5 +1,5 @@
 import { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
-import { TemplateProperties, DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { DiagramContextV1, PlaceholderRelationType, TemplateProperties } from '../data/schema';
 
 import { Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
@@ -116,7 +116,7 @@ export interface SerializedLayoutLinkItem {
  */
 export function emptyDiagram(): SerializedDiagram {
     return {
-        '@context': DIAGRAM_CONTEXT_URL_V1,
+        '@context': DiagramContextV1,
         '@type': 'Diagram',
         layoutData: {
             '@type': 'Layout',
@@ -150,7 +150,7 @@ export function serializeDiagram(diagram: DeserializedDiagram): SerializedDiagra
         linkTypeOptions = [];
         for (const [linkTypeIri, visibility] of linkTypeVisibility) {
             // Do not serialize default link type options
-            if  (visibility !== 'visible' && linkTypeIri !== PLACEHOLDER_LINK_TYPE) {
+            if  (visibility !== 'visible' && linkTypeIri !== PlaceholderRelationType) {
                 linkTypeOptions.push({
                     '@type': 'LinkTypeOptions',
                     property: linkTypeIri,
