@@ -5,7 +5,7 @@ import { EventObserver } from '../coreUtils/events';
 import { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../data/model';
-import { PLACEHOLDER_LINK_TYPE } from '../data/schema';
+import { PlaceholderRelationType } from '../data/schema';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -258,7 +258,7 @@ export async function validateLinkType(
     signal: AbortSignal | undefined
 ): Promise<Pick<ValidatedLink, 'error' | 'allowChange'>> {
     const {model, editor, translation: t} = workspace;
-    if (currentLink.linkTypeId === PLACEHOLDER_LINK_TYPE) {
+    if (currentLink.linkTypeId === PlaceholderRelationType) {
         return {
             error: t.text('visual_authoring.select_relation.validation.error_required'),
             allowChange: true,

@@ -12,6 +12,7 @@ import { makeCaseInsensitiveFilter } from '../utils';
 
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
+import { rdf, rdfs, schema } from './vocabulary';
 
 /**
  * Options for {@link RdfDataProvider}.
@@ -72,10 +73,10 @@ const BLANK_PREFIX = 'urn:reactodia:blank:rdf:';
 const OWL_CLASS = 'http://www.w3.org/2002/07/owl#Class';
 const OWL_OBJECT_PROPERTY = 'http://www.w3.org/2002/07/owl#ObjectProperty';
 
-const RDF_PROPERTY = `${Rdf.Vocabulary.rdf.namespace}#Property` as const;
+const RDF_PROPERTY = `${rdf.namespace}#Property` as const;
 
-const RDFS_CLASS = `${Rdf.Vocabulary.rdfs.namespace}#Class` as const;
-const RDFS_SUB_CLASS_OF = `${Rdf.Vocabulary.rdfs.namespace}#subClassOf`;
+const RDFS_CLASS = `${rdfs.namespace}#Class` as const;
+const RDFS_SUB_CLASS_OF = `${rdfs.namespace}#subClassOf`;
 
 /**
  * Provides graph data from in-memory [RDF/JS-compatible](https://rdf.js.org/data-model-spec/)
@@ -107,11 +108,11 @@ export class RdfDataProvider implements DataProvider {
             IndexQuadBy.OP
         );
         this.acceptBlankNodes = options.acceptBlankNodes ?? true;
-        this.typePredicate = this.factory.namedNode(options.typePredicate ?? Rdf.Vocabulary.rdf.type);
+        this.typePredicate = this.factory.namedNode(options.typePredicate ?? rdf.type);
         this.labelPredicate = options.labelPredicate === null
-            ? null : this.factory.namedNode(options.labelPredicate ?? Rdf.Vocabulary.rdfs.label);
+            ? null : this.factory.namedNode(options.labelPredicate ?? rdfs.label);
         this.imagePredicate = options.imagePredicate === null
-            ? null : this.factory.namedNode(options.imagePredicate ?? Rdf.Vocabulary.schema.thumbnailUrl);
+            ? null : this.factory.namedNode(options.imagePredicate ?? schema.thumbnailUrl);
         this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [OWL_CLASS, RDFS_CLASS])
             .map(iri => this.factory.namedNode(iri));
         this.elementSubtypePredicate = options.elementSubtypePredicate === null

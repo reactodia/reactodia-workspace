@@ -5,7 +5,7 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 import { Translation } from '../coreUtils/i18n';
 
-import { PLACEHOLDER_ELEMENT_TYPE } from '../data/schema';
+import { PlaceholderEntityType } from '../data/schema';
 import { ElementModel, ElementTypeIri } from '../data/model';
 import { DataProviderLookupItem } from '../data/dataProvider';
 
@@ -245,7 +245,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                             name='reactodia-element-type-selector-select'
                             value={value}
                             onChange={this.onElementTypeChange}>
-                            <option value={PLACEHOLDER_ELEMENT_TYPE} disabled={true}>
+                            <option value={PlaceholderEntityType} disabled={true}>
                                 {t.text('visual_authoring.select_entity.type.placeholder')}
                             </option>
                             {
@@ -358,7 +358,7 @@ export function validateElementType(
     workspace: WorkspaceContext
 ): Promise<Pick<ElementValue, 'error' | 'allowChange'>> {
     const {translation: t} = workspace;
-    const isElementTypeSelected = element.types.indexOf(PLACEHOLDER_ELEMENT_TYPE) < 0;
+    const isElementTypeSelected = element.types.indexOf(PlaceholderEntityType) < 0;
     const error = isElementTypeSelected
         ? undefined
         : t.text('visual_authoring.select_entity.validation.error_required');

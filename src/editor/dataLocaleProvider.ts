@@ -2,6 +2,7 @@ import type { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
+import { rdfs, schema } from '../data/rdf/vocabulary';
 
 import type { DataDiagramModel } from './dataDiagramModel';
 
@@ -52,23 +53,34 @@ export interface DefaultDataLocaleProviderOptions {
      */
     readonly translation: Translation;
     /**
-     * Property IRI to select labels from for an entity.
+     * Property IRIs to select labels from for an entity.
+     *
+     * The values of a first property in the sequence with a non-empty value set are selected.
+     *
+     * @default ["http://www.w3.org/2000/01/rdf-schema#label"]
      */
-    readonly labelProperty?: PropertyTypeIri | undefined;
+    readonly labelProperties?: readonly PropertyTypeIri[];
     /**
-     * Property IRI to select image URL from for an entity.
+     * Property IRIs to select image URL from for an entity.
+     *
+     * The first found value of a property in the sequence is selected as an entity image.
+     *
+     * @default ["http://schema.org/thumbnailUrl"]
      */
-    readonly imageProperty?: PropertyTypeIri | undefined;
+    readonly imageProperties?: readonly PropertyTypeIri[];
 }
 
 /**
- * Provides a default graph data formatter implementation.
+ * Provides a default graph data locale provider implementation.
+ *
+ * The default provider uses {@link rdfs.label} and {@link schema.thumbnailUrl}
+ * properties to get labels and image URLs unless overridden with options.
  */
 export class DefaultDataLocaleProvider implements DataLocaleProvider {
     protected readonly model: DataDiagramModel;
     protected readonly translation: Translation;
-    private readonly labelProperty: PropertyTypeIri | undefined;
-    private readonly imageProperty: PropertyTypeIri | undefined;
+    private readonly labelProperties: readonly PropertyTypeIri[];
+    private readonly imageProperties: readonly PropertyTypeIri[];
 
     private readonly EMPTY_LABELS: readonly Rdf.Literal[] = [];
 
@@ -76,29 +88,32 @@ export class DefaultDataLocaleProvider implements DataLocaleProvider {
         const {
             model,
             translation,
-            labelProperty = Rdf.Vocabulary.rdfs.label,
-            imageProperty = Rdf.Vocabulary.schema.thumbnailUrl,
+            labelProperties = [rdfs.label],
+            imageProperties = [schema.thumbnailUrl],
         } = options;
         this.model = model;
         this.translation = translation;
-        this.labelProperty = labelProperty;
-        this.imageProperty = imageProperty;
+        this.labelProperties = labelProperties;
+        this.imageProperties = imageProperties;
     }
 
     selectEntityLabel(entity: ElementModel): readonly Rdf.Literal[] {
-        if (this.labelProperty !== undefined) {
-            if (Object.prototype.hasOwnProperty.call(entity.properties, this.labelProperty)) {
-                const values = entity.properties[this.labelProperty];
-                return values ? filterInLiterals(values) : this.EMPTY_LABELS;
+        for (const property of this.labelProperties) {
+            if (Object.prototype.hasOwnProperty.call(entity.properties, property)) {
+                const values = entity.properties[property];
+                const literals = values ? filterInLiterals(values) : this.EMPTY_LABELS;
+                if (literals.length > 0) {
+                    return literals;
+                }
             }
         }
         return this.EMPTY_LABELS;
     }
 
     selectEntityImageUrl(entity: ElementModel): string | undefined {
-        if (this.imageProperty !== undefined) {
-            if (Object.prototype.hasOwnProperty.call(entity.properties, this.imageProperty)) {
-                const values = entity.properties[this.imageProperty];
+        for (const property of this.imageProperties) {
+            if (Object.prototype.hasOwnProperty.call(entity.properties, property)) {
+                const values = entity.properties[property];
                 if (values && values.length > 0) {
                     return values[0].value;
                 }

@@ -40,7 +40,7 @@ export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
             id: `${type}_${random32BitDigits}` as Reactodia.ElementIri,
             types: [type],
             properties: {
-                [Reactodia.Rdf.Vocabulary.rdfs.label]: [
+                [Reactodia.rdfs.label]: [
                     Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)
                 ]
             },
@@ -161,10 +161,10 @@ export class ExampleMetadataProvider extends Reactodia.EmptyMetadataProvider {
             properties.set(rdfs.comment, {
                 valueShape: {termType: 'Literal'},
             });
-            properties.set(Reactodia.Rdf.Vocabulary.rdfs.label, {
+            properties.set(Reactodia.rdfs.label, {
                 valueShape: {termType: 'Literal'},
             });
-            properties.set(Reactodia.Rdf.Vocabulary.schema.thumbnailUrl, {
+            properties.set(Reactodia.schema.thumbnailUrl, {
                 valueShape: {termType: 'NamedNode'},
                 maxCount: 1,
             });
