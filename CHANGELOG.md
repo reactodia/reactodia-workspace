@@ -13,8 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Add `ElementDecoration` component to display additional decorations over canvas elements either from the template itself or from outside the element:
   * Element decorations are not included in the computed element bounds but are exported with the canvas unless explicitly marked with `data-reactodia-no-export` attribute (as with other canvas elements);
 - Select entity label and image using `DataLocaleProvider` based on its properties:
-  * **[Breaking]** Remove `ElementModel.{label, image}` properties and instead use `DataDiagramModel.locale` methods to select them based on `ElementModel.properties` instead;
-  * Allow to override data locale provider (default is `DefaultDataLocaleProvider`) by passing `locale` option to `model.importLayout()` or `model.createNewDiagram()`.
+  * **[💥Breaking]** Remove `ElementModel.{label, image}` properties and instead use `DataDiagramModel.locale` methods to select them based on `ElementModel.properties` instead;
+  * Allow to override data locale provider (default is `DefaultDataLocaleProvider`) by passing `locale` option to `model.importLayout()` or `model.createNewDiagram()`;
 
 #### 🐛 Fixed
 - Always display validation state for an entities and relations in case when the target does not have any authoring changes.
@@ -26,11 +26,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 💅 Polish
 - Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
 - Re-use and un-deprecate `model.locale` formatting object with `DataLocaleProvider` interface type:
-  * **[Breaking]**: Remove `Translation.formatIri()` in favor of `locale.formatIri()`;
+  * **[💥Breaking]**: Remove `Translation.formatIri()` in favor of `locale.formatIri()`;
   * Replace other deprecated methods of `locale` with: `selectEntityLabel()`, `selectEntityImageUrl()`, `formatEntityLabel()`, `formatEntityTypeList()`;
 - Provide gradual customization options for the built-in entity and relation property editor:
   * Expose ability to customize property input in authoring forms with `inputResolver` option for `VisualAuthoring` component;
   * Export built-in inputs `FormInputList` and `FormInputText`, as well as `FormInputSingleProps` and `FormInputMultiProps` props interfaces to implement custom property inputs.
+- **[💥Breaking]** Rename the following constants for consistency in naming style:
+  * `DIAGRAM_CONTEXT_URL_V1` -> `DiagramContextV1`,
+  * `PLACEHOLDER_ELEMENT_TYPE` -> `PlaceholderEntityType`,
+  * `PLACEHOLDER_LINK_TYPE` -> `PlaceholderRelationType`;
 - Support optional dependency list in `useEventStore()` to re-subscribe to store if needed.
 
 #### 🔧 Maintenance

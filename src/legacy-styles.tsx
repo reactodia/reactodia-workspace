@@ -167,7 +167,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
             return LINK_RANGE;
         } else if (type === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
             return LINK_TYPE_OF;
-        } else if (type === Reactodia.PLACEHOLDER_LINK_TYPE) {
+        } else if (type === Reactodia.PlaceholderRelationType) {
             return {...Reactodia.DefaultLinkTemplate, markerTarget: {fill: 'none'}};
         } else {
             return undefined;

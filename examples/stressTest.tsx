@@ -72,8 +72,8 @@ function createLayout(
     edgesPerNode: number,
     factory: Reactodia.Rdf.DataFactory
 ): [Reactodia.Rdf.Quad[], Reactodia.ElementIri[]] {
-    const rdfType = factory.namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
-    const rdfsLabel = factory.namedNode('http://www.w3.org/2000/01/rdf-schema#label');
+    const rdfType = factory.namedNode(Reactodia.rdf.type);
+    const rdfsLabel = factory.namedNode(Reactodia.rdfs.label);
     const nodeType = factory.namedNode('urn:test:Node');
     const linkType = factory.namedNode('urn:test:link');
 

@@ -6,20 +6,19 @@ import type { ElementTypeIri, LinkTypeIri } from './model';
  *
  * @category Constants
  */
-export const DIAGRAM_CONTEXT_URL_V1 = 'https://ontodia.org/context/v1.json';
-
+export const DiagramContextV1 = 'https://ontodia.org/context/v1.json';
 /**
- * Element type for an newly created temporary entity in graph authoring mode.
+ * Type for a newly created temporary entity in graph authoring mode.
  *
  * @category Constants
  */
-export const PLACEHOLDER_ELEMENT_TYPE: ElementTypeIri = 'urn:reactodia:newElement';
+export const PlaceholderEntityType: ElementTypeIri = 'urn:reactodia:newElement';
 /**
- * Link type for an newly created temporary relation in graph authoring mode.
+ * Type for an newly created temporary relation in graph authoring mode.
  *
  * @category Constants
  */
-export const PLACEHOLDER_LINK_TYPE: LinkTypeIri = 'urn:reactodia:newLink';
+export const PlaceholderRelationType: LinkTypeIri = 'urn:reactodia:newLink';
 
 /**
  * Well-known properties for element state ({@link Element.elementState})

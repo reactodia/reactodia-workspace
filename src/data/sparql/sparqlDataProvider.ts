@@ -2,6 +2,7 @@ import * as N3 from 'n3';
 
 import { multimapArrayAdd } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
+import { rdfs, schema } from '../rdf/vocabulary';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
@@ -251,8 +252,8 @@ export class SparqlDataProvider implements DataProvider {
         this.openWorldProperties = settings.propertyConfigurations.length === 0 ||
             Boolean(settings.openWorldProperties);
 
-        this.labelPredicate = prepareLabelPredicate ?? Rdf.Vocabulary.rdfs.label;
-        this.imagePredicate = prepareImagePredicate ?? Rdf.Vocabulary.schema.thumbnailUrl;
+        this.labelPredicate = prepareLabelPredicate ?? rdfs.label;
+        this.imagePredicate = prepareImagePredicate ?? schema.thumbnailUrl;
     }
 
     private async queryChunked<T extends string>(
