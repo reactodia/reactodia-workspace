@@ -289,7 +289,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         let processedStyle = this.cachedTypeStyles.get(types);
         if (!processedStyle) {
             const customStyle = this.resolveTypeStyle(types);
-            const icon = customStyle ? customStyle.icon : undefined;
+
             let color: string;
             if (customStyle && customStyle.color) {
                 color = hcl(customStyle.color).toString();
@@ -297,7 +297,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
                 const hue = getHueFromClasses(types, TYPE_STYLE_COLOR_SEED);
                 color = hcl(hue, 40, 75).toString();
             }
-            processedStyle = {icon, color};
+
+            processedStyle = {...customStyle, color};
             this.cachedTypeStyles.set(types, processedStyle);
         }
         return processedStyle;

@@ -37,11 +37,11 @@ function StyleCustomizationExample() {
             defaultLayout={defaultLayout}
             typeStyleResolver={types => {
                 if (types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1) {
-                    return {icon: CERTIFICATE_ICON};
+                    return {icon: CERTIFICATE_ICON, iconMonochrome: true};
                 } else if (types.indexOf('http://www.w3.org/2002/07/owl#Class') !== -1) {
-                    return {icon: CERTIFICATE_ICON};
+                    return {icon: CERTIFICATE_ICON, iconMonochrome: true};
                 } else if (types.indexOf('http://www.w3.org/2002/07/owl#ObjectProperty') !== -1) {
-                    return {icon: COG_ICON};
+                    return {icon: COG_ICON, iconMonochrome: true};
                 } else if (types.indexOf('http://www.w3.org/2002/07/owl#DatatypeProperty') !== -1) {
                     return {color: '#00b9f2'};
                 } else {

@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `PLACEHOLDER_ELEMENT_TYPE` -> `PlaceholderEntityType`,
   * `PLACEHOLDER_LINK_TYPE` -> `PlaceholderRelationType`;
 - Support the ability to expand up the `Dropdown`, `DropdownMenu` and `Toolbar` by setting `direction` to `"up"` e.g. for docking the toolbar to the bottom of the viewport.
+- Allow to return `iconMonochrome: true` for a type style to automatically apply dark theme filter for the icon.
 - Support optional dependency list in `useEventStore()` to re-subscribe to store if needed.
 
 #### 🔧 Maintenance

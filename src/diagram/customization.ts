@@ -26,6 +26,8 @@ export type LinkTemplateResolver = (linkTypeId: LinkTypeIri) => LinkTemplate | u
 
 /**
  * Common style for a type or set of types to display in various parts of the UI.
+ *
+ * @see {@link TypeStyleResolver}
  */
 export interface TypeStyle {
     /**
@@ -36,6 +38,13 @@ export interface TypeStyle {
      * Icon image URL.
      */
     readonly icon?: string;
+    /**
+     * Whether the icon is assumed to be monochrome, so it can be
+     * inverted for the dark theme.
+     *
+     * @default false
+     */
+    readonly iconMonochrome?: boolean;
 }
 
 /**
