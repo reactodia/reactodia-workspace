@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `DIAGRAM_CONTEXT_URL_V1` -> `DiagramContextV1`,
   * `PLACEHOLDER_ELEMENT_TYPE` -> `PlaceholderEntityType`,
   * `PLACEHOLDER_LINK_TYPE` -> `PlaceholderRelationType`;
+- Support the ability to expand up the `Dropdown`, `DropdownMenu` and `Toolbar` by setting `direction` to `"up"` e.g. for docking the toolbar to the bottom of the viewport.
 - Support optional dependency list in `useEventStore()` to re-subscribe to store if needed.
 
 #### 🔧 Maintenance

@@ -211,6 +211,9 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         }
     ], []);
 
+    const menuDock = mainToolbar?.dock ?? 'nw';
+    const menuDropUp = menuDock === 's' || menuDock === 'sw' || menuDock === 'se';
+
     return (
         <WorkspaceRoot colorScheme={colorScheme}>
             <Canvas {...canvas}>
@@ -231,10 +234,11 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                     />
                 )}
                 <Toolbar {...mainToolbar}
-                    dock={mainToolbar?.dock ?? 'nw'}
+                    dock={menuDock}
                     menu={menuContent}>
                     {search === null ? null : (
                         <UnifiedSearch {...search}
+                            direction={search?.direction ?? (menuDropUp ? 'up' : 'down')}
                             sections={search?.sections ?? defaultSections}
                         />
                     )}

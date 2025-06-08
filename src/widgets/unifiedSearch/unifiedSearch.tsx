@@ -29,6 +29,12 @@ export interface UnifiedSearchProps {
      */
     sections: ReadonlyArray<UnifiedSearchSection>;
     /**
+     * Search dropdown expand direction.
+     *
+     * @default "down"
+     */
+    direction?: 'down' | 'up';
+    /**
      * Default (initial) width for the component, including
      * the search input and the dropdown.
      *
@@ -135,6 +141,7 @@ const CLASS_NAME = 'reactodia-unified-search';
 export function UnifiedSearch(props: UnifiedSearchProps) {
     const {
         sections,
+        direction = 'down',
         defaultWidth = 300,
         defaultHeight = 350,
         minWidth = 200,
@@ -252,6 +259,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
 
     return (
         <Dropdown className={CLASS_NAME}
+            direction={direction}
             expanded={expanded}
             onClickOutside={onClickOutside}
             toggle={
@@ -288,6 +296,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
             <SearchContent sections={sectionsWithContext}
                 activeSectionKey={activeSection.key}
                 onActivateSection={key => setActiveSection(previous => previous.switch(key))}
+                dropUp={direction === 'up'}
                 size={effectiveSize}
                 minSize={{width: minWidth, height: minHeight}}
                 offsetForMaxSize={{x: offsetWithMaxWidth, y: offsetWithMaxHeight}}
@@ -420,21 +429,20 @@ function SearchToggle(props: {
     );
 }
 
-interface SearchContentProps {
+function SearchContent(props: {
     sections: ReadonlyArray<SectionWithContext>;
     activeSectionKey: string | undefined;
     onActivateSection: (sectionKey: string) => void;
+    dropUp: boolean;
     size: Size;
     minSize: Size;
     offsetForMaxSize: Vector;
     onResize: (size: Size) => void;
     setMaxSize: (size: Size) => void;
-}
-
-function SearchContent(props: SearchContentProps) {
+}) {
     const {
         sections, activeSectionKey, onActivateSection,
-        size, minSize, offsetForMaxSize, onResize, setMaxSize,
+        dropUp, size, minSize, offsetForMaxSize, onResize, setMaxSize,
     } = props;
 
     const {canvas} = useCanvas();
@@ -477,17 +485,16 @@ function SearchContent(props: SearchContentProps) {
             const viewportRight = viewport.x + viewport.width;
             const viewportBottom = viewport.y + viewport.height;
 
-            let proposedWidth: number;
-            if (centeredByX) {
-                proposedWidth = viewport.width - centerOffsetX - offsetForMaxSize.x;
-            } else {
-                proposedWidth = viewportRight - bounds.x - offsetForMaxSize.x;
-            }
+            const proposedWidth = centeredByX
+                ? viewport.width - centerOffsetX - offsetForMaxSize.x
+                : viewportRight - bounds.x - offsetForMaxSize.x;
+
+            const proposedHeight = dropUp
+                ? bounds.y - viewport.y - offsetForMaxSize.y
+                : viewportBottom - bounds.y - offsetForMaxSize.y;
+
             const maxWidth = Math.max(proposedWidth, minSize.width);
-            const maxHeight = Math.max(
-                viewportBottom - bounds.y - offsetForMaxSize.y,
-                minSize.height
-            );
+            const maxHeight = Math.max(proposedHeight, minSize.height);
 
             setMaxSize({width: maxWidth, height: maxHeight});
         }
@@ -498,7 +505,7 @@ function SearchContent(props: SearchContentProps) {
             const {bounds, centeredByX} = panelBounds.current;
             onResize({
                 width: bounds.width + dx * (centeredByX ? 2 : 1),
-                height: bounds.height + dy,
+                height: bounds.height + (dropUp ? -dy : dy),
             });
         }
     };
@@ -538,7 +545,7 @@ function SearchContent(props: SearchContentProps) {
                     </div>
                 </UnifiedSearchSectionContext.Provider>
             ))}
-            <DraggableHandle dock='s'
+            <DraggableHandle dock={dropUp ? 'n' : 's'}
                 axis='y'
                 onBeginDragHandle={updatePanelBounds}
                 onDragHandle={onDrag}>
@@ -549,7 +556,7 @@ function SearchContent(props: SearchContentProps) {
                 onBeginDragHandle={updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
-            <DraggableHandle dock='se'
+            <DraggableHandle dock={dropUp ? 'ne' : 'se'}
                 axis='all'
                 className={`${CLASS_NAME}__corner-handle`}
                 onBeginDragHandle={updatePanelBounds}

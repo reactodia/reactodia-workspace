@@ -79,7 +79,6 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     background: 0 0;
     border: 0;
     border-radius: theme.$input-border-radius;
-    border-top-left-radius: unset;
     transition: background-color theme.$transition-duration;
 
     &:hover {
@@ -88,13 +87,32 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     }
   }
 
-  .reactodia-dropdown--expanded &__collapse-button,
-  .reactodia-dropdown--expanded &__clear-button {
+  .reactodia-dropdown--down &__collapse-button,
+  .reactodia-dropdown--down &__clear-button {
+    border-top-left-radius: unset;
+  }
+
+  .reactodia-dropdown--down.reactodia-dropdown--expanded &__collapse-button,
+  .reactodia-dropdown--down.reactodia-dropdown--expanded &__clear-button {
     border-bottom-right-radius: unset;
   }
 
-  &__collapse-button::after {
+  .reactodia-dropdown--up &__collapse-button,
+  .reactodia-dropdown--up &__clear-button {
+    border-bottom-left-radius: unset;
+  }
+
+  .reactodia-dropdown--up.reactodia-dropdown--expanded &__collapse-button,
+  .reactodia-dropdown--up.reactodia-dropdown--expanded &__clear-button {
+    border-top-right-radius: unset;
+  }
+
+  .reactodia-dropdown--down &__collapse-button::after {
     @include codicon("chevron-up");
+  }
+
+  .reactodia-dropdown--up &__collapse-button::after {
+    @include codicon("chevron-down");
   }
 
   &__clear-button::after {

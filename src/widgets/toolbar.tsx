@@ -52,13 +52,15 @@ const CLASS_NAME = 'reactodia-toolbar';
 export function Toolbar(props: ToolbarProps) {
     const {dock, dockOffsetX, dockOffsetY, menu, children} = props;
     const t = useTranslation();
+    const dropUp = dock === 's' || dock === 'sw' || dock === 'se';
     return (
         <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
             dockOffsetY={dockOffsetY}>
-            <div className={CLASS_NAME}>
+            <div className={cx(CLASS_NAME, dropUp ? `${CLASS_NAME}--drop-up` : undefined)}>
                 {menu ? (
                     <DropdownMenu className={`${CLASS_NAME}__menu`}
+                        direction={dropUp ? 'up' : 'down'}
                         title={t.text('toolbar.menu_toggle.title')}>
                         {menu}
                     </DropdownMenu>

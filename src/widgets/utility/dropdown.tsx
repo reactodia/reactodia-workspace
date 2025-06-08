@@ -12,6 +12,12 @@ export interface DropdownProps {
      */
     className?: string;
     /**
+     * Dropdown expand direction.
+     *
+     * @default "down"
+     */
+    direction?: 'down' | 'up';
+    /**
      * Whether the dropdown should be rendering in the expanded state.
      */
     expanded: boolean;
@@ -39,7 +45,7 @@ const CLASS_NAME = 'reactodia-dropdown';
  * @category Components
  */
 export function Dropdown(props: DropdownProps) {
-    const {className, expanded, toggle, onClickOutside, children} = props;
+    const {className, direction = 'down', expanded, toggle, onClickOutside, children} = props;
     const menuRef = React.useRef<HTMLElement | null>(null);
 
     React.useLayoutEffect(() => {
@@ -60,12 +66,14 @@ export function Dropdown(props: DropdownProps) {
             className={cx(
                 className,
                 CLASS_NAME,
+                direction === 'down' ? `${CLASS_NAME}--down` : `${CLASS_NAME}--up`,
                 expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}>
-            {toggle}
+            {direction === 'down' ? toggle : null}
             <div className={`${CLASS_NAME}__content`}>
                 {children}
             </div>
+            {direction === 'up' ? toggle : null}
         </nav>
     );
 }
@@ -80,6 +88,12 @@ export interface DropdownMenuProps {
      * Additional CSS class for the component.
      */
     className?: string;
+    /**
+     * Dropdown menu expand direction.
+     *
+     * @default "down"
+     */
+    direction?: 'down' | 'up';
     /**
      * Title for the toggle menu button.
      */
@@ -98,7 +112,7 @@ const MENU_CLASS_NAME = 'reactodia-dropdown-menu';
  * @category Components
  */
 export function DropdownMenu(props: DropdownMenuProps) {
-    const {className, title, children} = props;
+    const {className, direction, title, children} = props;
     const [expanded, setExpanded] = React.useState(false);
     const providedContext = React.useMemo(
         (): DropdownMenuContext => ({expanded, setExpanded}),
@@ -108,6 +122,7 @@ export function DropdownMenu(props: DropdownMenuProps) {
     return (
         <DropdownMenuContext.Provider value={providedContext}>
             <Dropdown className={cx(className, MENU_CLASS_NAME)}
+                direction={direction}
                 expanded={expanded}
                 toggle={
                     <DropdownMenuToggleButton title={title} />

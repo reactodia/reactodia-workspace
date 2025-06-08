@@ -16,6 +16,10 @@
     transition: opacity 0.1s ease-in-out;
   }
 
+  &--up &__content {
+    bottom: 100%;
+  }
+
   &--expanded &__content {
     box-shadow: theme.$canvas-box-shadow;
   }
@@ -29,10 +33,16 @@
 }
 
 .reactodia-dropdown-menu {
-  .reactodia-dropdown--expanded &__toggle {
+  .reactodia-dropdown--down.reactodia-dropdown--expanded &__toggle {
     border-bottom: none;
     border-bottom-left-radius: unset;
     border-bottom-right-radius: unset;
+  }
+
+  .reactodia-dropdown--up.reactodia-dropdown--expanded &__toggle {
+    border-top: none;
+    border-top-left-radius: unset;
+    border-top-right-radius: unset;
   }
 
   &__toggle {
@@ -46,25 +56,39 @@
     padding: 0;
     list-style: none;
     display: flex;
-    flex-direction: column;
     background-color: theme.$background-color-surface;
   }
 
-  .reactodia-dropdown-menu-item {
-    border-radius: unset;
+  .reactodia-dropdown--down &__items {
+    flex-direction: column;
   }
 
-  .reactodia-dropdown-menu-item:first-child {
-    border-top-right-radius: theme.$button-border-radius;
-  }
-
-  .reactodia-dropdown-menu-item:last-child {
-    border-bottom-left-radius: theme.$button-border-radius;
-    border-bottom-right-radius: theme.$button-border-radius;
+  .reactodia-dropdown--up &__items {
+    flex-direction: column-reverse;
   }
 }
 
 .reactodia-dropdown-menu-item {
+  border-radius: unset;
+
+  .reactodia-dropdown--down &:first-child {
+    border-top-right-radius: theme.$button-border-radius;
+  }
+
+  .reactodia-dropdown--down &:last-child {
+    border-bottom-left-radius: theme.$button-border-radius;
+    border-bottom-right-radius: theme.$button-border-radius;
+  }
+
+  .reactodia-dropdown--up &:first-child {
+    border-bottom-right-radius: theme.$button-border-radius;
+  }
+
+  .reactodia-dropdown--up &:last-child {
+    border-top-left-radius: theme.$button-border-radius;
+    border-top-right-radius: theme.$button-border-radius;
+  }
+
   & ~ & {
     margin-top: calc(-1 * theme.$button-border-width);
     border-top-color: theme.$button-default-border-color;
