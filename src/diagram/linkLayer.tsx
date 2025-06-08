@@ -20,7 +20,7 @@ import { MutableRenderingState, RenderingLayer } from './renderingState';
 export interface LinkLayerProps {
     model: DiagramModel;
     renderingState: MutableRenderingState;
-    links: ReadonlyArray<Link>;
+    shouldRenderLink?: (link: Link) => boolean;
 }
 
 enum UpdateRequest {
@@ -36,9 +36,14 @@ interface MeasurableLabel {
     measureBounds(): Rect | undefined;
 }
 
+interface LinkLayerState {
+    readonly version: number;
+    readonly shouldUpdateLink: (link: Link) => boolean;
+}
+
 const CLASS_NAME = 'reactodia-link-layer';
 
-export class LinkLayer extends React.Component<LinkLayerProps, { version: number }> {
+export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
     private readonly listener = new EventObserver();
     private readonly delayedUpdate = new Debouncer();
 
@@ -59,7 +64,10 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
             scheduleLabelMeasure: this.scheduleLabelMeasure,
             clearLabelMeasure: this.clearLabelMeasure,
         };
-        this.state = {version: 0};
+        this.state = {
+            version: 0,
+            shouldUpdateLink: this.popShouldUpdatePredicate(),
+        };
     }
 
     componentDidMount() {
@@ -142,8 +150,12 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
         });
     }
 
-    shouldComponentUpdate() {
-        return false;
+    shouldComponentUpdate(nextProps: LinkLayerProps, nextState: LinkLayerState): boolean {
+        return !(
+            this.props.shouldRenderLink === nextProps.shouldRenderLink &&
+            this.state.version === nextState.version &&
+            this.state.shouldUpdateLink === nextState.shouldUpdateLink
+        );
     }
 
     componentWillUnmount() {
@@ -207,38 +219,44 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
     };
 
     private performUpdate = () => {
-        this.forceUpdate();
+        this.setState({
+            shouldUpdateLink: this.popShouldUpdatePredicate(),
+        });
     };
 
     render() {
-        const {model, links, renderingState} = this.props;
-        const {version} = this.state;
+        const {model, shouldRenderLink, renderingState} = this.props;
+        const {version, shouldUpdateLink} = this.state;
         const {memoizedLinks} = this;
 
-        const shouldUpdate = this.popShouldUpdatePredicate();
-        for (const link of links) {
-            if (shouldUpdate(link)) {
+        for (const link of model.links) {
+            if (shouldUpdateLink(link)) {
                 memoizedLinks.delete(link);
+            }
+        }
+
+        const renderedLinks: React.ReactElement[] = [];
+        for (const link of model.links) {
+            if (!shouldRenderLink || shouldRenderLink(link)) {
+                let view = memoizedLinks.get(link);
+                if (!view) {
+                    view = (
+                        <LinkView key={link.id}
+                            link={link}
+                            model={model}
+                            renderingState={renderingState}
+                        />
+                    );
+                    memoizedLinks.set(link, view);
+                }
+                renderedLinks.push(view);
             }
         }
 
         return (
             <LinkLayerContext.Provider value={this.providedContext}>
                 <g key={version} className={CLASS_NAME}>
-                    {links.map(link => {
-                        let linkView = memoizedLinks.get(link);
-                        if (!linkView) {
-                            linkView = (
-                                <LinkView key={link.id}
-                                    link={link}
-                                    model={model}
-                                    renderingState={renderingState}
-                                />
-                            );
-                            memoizedLinks.set(link, linkView);
-                        }
-                        return linkView;
-                    })}
+                    {renderedLinks}
                 </g>
             </LinkLayerContext.Provider>
         );

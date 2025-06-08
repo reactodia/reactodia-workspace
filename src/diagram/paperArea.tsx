@@ -219,7 +219,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                 <LinkMarkers renderingState={renderingState} />
                                 <LinkLayer model={model}
                                     renderingState={renderingState}
-                                    links={model.links}
                                 />
                             </SvgPaperLayer>
                             <LinkLabelLayer renderingState={renderingState}

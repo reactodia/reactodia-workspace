@@ -530,7 +530,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
                 {waitingForMetadata ? null : (
                     <LinkLayer model={model}
                         renderingState={renderingState}
-                        links={[this.temporaryLink]}
+                        shouldRenderLink={link => link === this.temporaryLink}
                     />
                 )}
             </SvgPaperLayer>
