@@ -13,6 +13,9 @@
 
   &__value-remove {
     @include codicon-button("trash");
+    align-self: flex-start;
+    border: none;
+    height: 34px;
     padding: 6px 4px;
   }
 
