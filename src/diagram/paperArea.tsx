@@ -18,7 +18,7 @@ import { ElementLayer } from './elementLayer';
 import {
     Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox,
 } from './geometry';
-import { LinkLayer, LinkMarkers } from './linkLayer';
+import { LinkLabelLayer, LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
 import { CommandBatch } from './history';
 import { Paper, PaperTransform, SvgPaperLayer } from './paper';
@@ -99,6 +99,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private area!: HTMLDivElement;
     private readonly rootRef = React.createRef<HTMLDivElement>();
     private readonly linkLayerRef = React.createRef<SVGSVGElement>();
+    private readonly labelLayerRef = React.createRef<HTMLDivElement>();
     private readonly elementLayerRef = React.createRef<HTMLDivElement>();
 
     private readonly pageSize = {x: 1500, y: 800};
@@ -221,6 +222,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                     links={model.links}
                                 />
                             </SvgPaperLayer>
+                            <LinkLabelLayer renderingState={renderingState}
+                                paperTransform={paperTransform}
+                                layerRef={this.labelLayerRef}
+                            />
                             <div className={`${CLASS_NAME}__widgets`}
                                 onPointerDown={this.onWidgetsPointerDown}>
                                 {renderedWidgets
@@ -868,9 +873,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             removeByCssSelectors = [],
         } = baseOptions;
         const linkLayer = this.linkLayerRef.current;
+        const labelLayer = this.labelLayerRef.current;
         const elementLayer = this.elementLayerRef.current;
-        if (!(linkLayer && elementLayer)) {
-            throw new Error('Cannot find element and link layers to export');
+        if (!(linkLayer && labelLayer && elementLayer)) {
+            throw new Error('Cannot find element, link or label layers to export');
         }
         return {
             colorSchemeApi,
@@ -878,6 +884,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             contentBox: this.getContentFittingBox(),
             layers: [
                 linkLayer,
+                labelLayer,
                 elementLayer,
             ],
             preserveDimensions: true,

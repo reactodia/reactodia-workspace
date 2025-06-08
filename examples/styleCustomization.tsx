@@ -160,7 +160,7 @@ const DoubleArrowLinkTemplate: Reactodia.LinkTemplate = {
         <Reactodia.DefaultLink {...props}
             pathProps={{stroke: '#747da8', strokeWidth: 2}}
             primaryLabelProps={{
-                textStyle: {fill: '#747da8'},
+                style: {color: '#747da8'},
             }}
         />
     ),

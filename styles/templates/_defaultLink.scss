@@ -5,44 +5,35 @@
     stroke-width: 2px;
   }
 
-  &__label-text {
-    fill: theme.$font-color-base;
-    stroke: none;
-    stroke-width: 0;
-    font-size: inherit;
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
+  &__path:not([stroke]) {
+    stroke: theme.$link-stroke-color;
+  }
+
+  &__label {
     font-weight: bold;
   }
 
-  &--renamed &__label-text {
+  &__label--renamed {
     font-style: italic;
     font-weight: normal;
   }
 
-  &__property &__label-text {
+  &__property {
     font-style: normal;
     font-weight: normal;
     font-size: 90%;
+
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  &__label-background {
-    fill: theme.$canvas-background-color;
-    stroke: none;
-    stroke-width: 0;
-  }
-
-  &__source-count &__label-text,
-  &__target-count &__label-text {
-    fill: theme.$color-emphasis-600;
+  &__source-count,
+  &__target-count {
+    color: theme.$color-emphasis-600;
     font-size: 12px;
-  }
-
-  &__source-count &__label-background,
-  &__target-count &__label-background {
+    font-weight: bold;
     opacity: 80%;
-  }
-
-  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
-  &__path:not([stroke]) {
-    stroke: theme.$link-stroke-color;
   }
 }

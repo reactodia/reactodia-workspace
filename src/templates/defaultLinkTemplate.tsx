@@ -7,7 +7,8 @@ import { PropertyTypeIri } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
 import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
-import { LinkPath, LinkLabel, LinkLabelProps, LinkVertices } from '../diagram/linkLayer';
+import { LinkLabel, LinkLabelProps } from '../diagram/linkLayer';
+import { LinkPath, LinkVertices } from '../diagram/linkLayer';
 
 import { RelationGroup, RelationLink } from '../editor/dataElements';
 import { subscribeLinkTypes, subscribePropertyTypes } from '../editor/observedElement';
@@ -35,8 +36,7 @@ export const DefaultLinkTemplate: LinkTemplate = {
 const CLASS_NAME = 'reactodia-default-link';
 
 const PROPERTY_CLASS = `${CLASS_NAME}__property`;
-const TEXT_CLASS = `${CLASS_NAME}__label-text`;
-const BACKGROUND_CLASS = `${CLASS_NAME}__label-background`;
+const LABEL_CLASS = `${CLASS_NAME}__label`;
 
 /**
  * Props for {@link DefaultLink} component.
@@ -122,21 +122,24 @@ export function DefaultLink(props: DefaultLinkProps) {
         labelContent = <>
             <LinkLabel {...primaryLabelProps}
                 primary
-                link={link}
-                position={getPathPosition(0.5)}
                 textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
-                textClass={cx(TEXT_CLASS, primaryLabelProps?.textClass)}
-                rectClass={cx(BACKGROUND_CLASS, primaryLabelProps?.rectClass)}
+                className={cx(
+                    LABEL_CLASS,
+                    renamedLabel ? `${LABEL_CLASS}--renamed` : undefined,
+                    primaryLabelProps?.className
+                )}
                 title={primaryLabelProps?.title ?? t.text('default_link_template.label.title', {
                     relation: label,
                     relationIri: model.locale.formatIri(link.typeId),
                 })}
-                content={renamedLabel ? label : (
+                link={link}
+                position={getPathPosition(0.5)}>
+                {renamedLabel ? <span>{label}</span> : (
                     <WithFetchStatus type='linkType' target={link.typeId}>
-                        <tspan>{label}</tspan>
+                        <span>{label}</span>
                     </WithFetchStatus>
                 )}
-            />
+            </LinkLabel>
             {prependLabels}
             {link instanceof RelationLink ? <LinkProperties {...props} /> : null}
             {link instanceof RelationGroup ? (
@@ -144,27 +147,23 @@ export function DefaultLink(props: DefaultLinkProps) {
                     <LinkLabel className={`${CLASS_NAME}__source-count`}
                         link={link}
                         position={getPathPosition(0.1)}
-                        textClass={TEXT_CLASS}
-                        rectClass={BACKGROUND_CLASS}
                         title={t.text('default_link_template.group_source.title', {
                             value: link.itemSources.size,
-                        })}
-                        content={t.text('default_link_template.group_source.value', {
+                        })}>
+                        {t.text('default_link_template.group_source.value', {
                             value: link.itemSources.size,
                         })}
-                    />
+                    </LinkLabel>
                     <LinkLabel className={`${CLASS_NAME}__target-count`}
                         link={link}
                         position={getPathPosition(0.9)}
-                        textClass={TEXT_CLASS}
-                        rectClass={BACKGROUND_CLASS}
                         title={t.text('default_link_template.group_target.title', {
                             value: link.itemTargets.size,
-                        })}
-                        content={t.text('default_link_template.group_target.value', {
+                        })}>
+                        {t.text('default_link_template.group_target.value', {
                             value: link.itemTargets.size,
                         })}
-                    />
+                    </LinkLabel>
                 </>
             ) : null}
         </>;
@@ -177,7 +176,6 @@ export function DefaultLink(props: DefaultLinkProps) {
             className={cx(
                 CLASS_NAME,
                 link instanceof RelationGroup ? `${CLASS_NAME}--group` : undefined,
-                renamedLabel ? `${CLASS_NAME}--renamed` : undefined,
                 className
             )}>
             <LinkPath path={path}
@@ -231,19 +229,15 @@ function LinkProperties(props: DefaultLinkProps) {
                 line={propertyLabelStartLine + index}
                 textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
                 className={cx(PROPERTY_CLASS, propertyLabelProps?.className)}
-                textClass={cx(TEXT_CLASS, propertyLabelProps?.textClass)}
-                rectClass={cx(BACKGROUND_CLASS, propertyLabelProps?.rectClass)}
                 title={propertyLabelProps?.title ?? t.text('default_link_template.property.title', {
                     property: property.label,
                     propertyIri: model.locale.formatIri(property.iri),
-                })}
-                content={<>
-                    <WithFetchStatus type='propertyType' target={property.iri}>
-                        <tspan>{property.label}:&nbsp;</tspan>
-                    </WithFetchStatus>
-                    {property.values.map(v => v.value).join(', ')}
-                </>}
-            />
+                })}>
+                <WithFetchStatus type='propertyType' target={property.iri}>
+                    <span>{property.label}:&nbsp;</span>
+                </WithFetchStatus>
+                {property.values.map(v => v.value).join(', ')}
+            </LinkLabel>
         ))}
     </>;
 }

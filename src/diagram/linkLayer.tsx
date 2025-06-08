@@ -1,9 +1,11 @@
 import cx from 'clsx';
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
+import { useCanvas } from './canvasApi';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
 import { Element, Link, LinkVertex } from './elements';
@@ -12,8 +14,8 @@ import {
     getPointAlongPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
+import { type PaperTransform, HtmlPaperLayer } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
-import { useCanvas } from './canvasApi';
 
 export interface LinkLayerProps {
     model: DiagramModel;
@@ -28,17 +30,10 @@ enum UpdateRequest {
     All,
 }
 
-type ScheduleLabelMeasure = (
-    label: MeasurableLabel,
-    clear: boolean
-) => void;
-
 /** @hidden */
 interface MeasurableLabel {
-    readonly owner: Link | undefined;
-    measureSize(): Size | undefined;
-    applySize({width, height}: Size): void;
-    computeBounds({width, height}: Size): Rect;
+    readonly owner: Link;
+    measureBounds(): Rect | undefined;
 }
 
 const CLASS_NAME = 'reactodia-link-layer';
@@ -62,6 +57,7 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
         super(props);
         this.providedContext = {
             scheduleLabelMeasure: this.scheduleLabelMeasure,
+            clearLabelMeasure: this.clearLabelMeasure,
         };
         this.state = {version: 0};
     }
@@ -180,15 +176,15 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
             : link => scheduledToUpdate.has(link.id);
     }
 
-    private scheduleLabelMeasure: ScheduleLabelMeasure = (label, clear) => {
-        if (label.owner && clear) {
-            const {renderingState} = this.props;
-            this.labelMeasureRequests.delete(label);
-            renderingState.setLinkLabelBounds(label.owner, undefined);
-        } else {
-            this.labelMeasureRequests.add(label);
-            this.delayedMeasureLabels.call(this.measureLabels);
-        }
+    private scheduleLabelMeasure = (label: MeasurableLabel) => {
+        this.labelMeasureRequests.add(label);
+        this.delayedMeasureLabels.call(this.measureLabels);
+    };
+
+    private clearLabelMeasure = (label: MeasurableLabel) => {
+        const {renderingState} = this.props;
+        this.labelMeasureRequests.delete(label);
+        renderingState.setLinkLabelBounds(label.owner, undefined);
     };
 
     private measureLabels = () => {
@@ -196,30 +192,18 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
         const requests = Array.from(this.labelMeasureRequests);
         this.labelMeasureRequests.clear();
 
-        const sizes: Array<Size | undefined> = [];
+        const bounds: Array<Rect | undefined> = [];
         for (const label of requests) {
-            sizes.push(label.measureSize());
+            bounds.push(label.measureBounds());
         }
 
         for (let i = 0; i < requests.length; i++) {
             const label = requests[i];
-            const size = sizes[i];
-            if (label.owner && size) {
-                const bounds = label.computeBounds(size);
-                renderingState.setLinkLabelBounds(label.owner, bounds);
+            const measuredBounds = bounds[i];
+            if (measuredBounds) {
+                renderingState.setLinkLabelBounds(label.owner, measuredBounds);
             }
         }
-
-        this.setState(() => {
-            for (let i = 0; i < requests.length; i++) {
-                const label = requests[i];
-                const size = sizes[i];
-                if (size) {
-                    label.applySize(size);
-                }
-            }
-            return null;
-        });
     };
 
     private performUpdate = () => {
@@ -262,7 +246,8 @@ export class LinkLayer extends React.Component<LinkLayerProps, { version: number
 }
 
 interface LinkLayerContext {
-    scheduleLabelMeasure: ScheduleLabelMeasure;
+    scheduleLabelMeasure: (label: MeasurableLabel) => void;
+    clearLabelMeasure: (label: MeasurableLabel) => void;
 }
 const LinkLayerContext = React.createContext<LinkLayerContext | null>(null);
 
@@ -375,6 +360,40 @@ export function LinkPath(props: LinkPathProps) {
     </>;
 }
 
+export function LinkLabelLayer(props: {
+    renderingState: MutableRenderingState;
+    paperTransform: PaperTransform;
+    layerRef?: React.MutableRefObject<HTMLDivElement | null>;
+}) {
+    const {renderingState, paperTransform, layerRef} = props;
+
+    const parentRef = React.useRef<HTMLDivElement | null>(null);
+    const onMount = React.useCallback((element: HTMLDivElement | null) => {
+        parentRef.current = element;
+        if (layerRef) {
+            layerRef.current = element;
+        }
+    }, [layerRef]);
+
+    React.useEffect(() => {
+        const parent = parentRef.current;
+        if (parent) {
+            renderingState.attachLinkLabelContainer(parent);
+            return () => renderingState.attachLinkLabelContainer(null);
+        }
+    }, []);
+
+    return (
+        <HtmlPaperLayer paperTransform={paperTransform}
+            className='reactodia-label-layer'
+            layerRef={onMount}
+        />
+    );
+}
+
+const LINK_LABEL_CLASS = 'reactodia-link-label';
+const DEFAULT_TEXT_ANCHOR = 'middle';
+
 /**
  * Props for {@link LinkLabel} component.
  *
@@ -407,189 +426,115 @@ export interface LinkLabelProps {
      */
     className?: string;
     /**
+     * Additional CSS styles for the component.
+     */
+    style?: React.CSSProperties;
+    /**
      * Label text alignment relative to its position.
      *
      * @default "middle"
      */
     textAnchor?: 'start' | 'middle' | 'end';
     /**
-     * Additional CSS class for the SVG rect used as underlying text background.
-     */
-    rectClass?: string;
-    /**
-     * Additional CSS styles for the SVG rect used as underlying text background.
-     */
-    rectStyle?: React.CSSProperties;
-    /**
-     * Additional CSS class for the SVG text used to display the label text.
-     */
-    textClass?: string;
-    /**
-     * Additional CSS styles for the SVG text used to display the label text.
-     */
-    textStyle?: React.CSSProperties;
-    /**
      * Title for the label.
      */
     title?: string;
     /**
-     * Label text content.
+     * Content for the label.
      *
-     * This content is nested in SVG `<text>` element, so only plain text children
-     * or elements like `<tspan>` should be specified.
-     */
-    content?: React.ReactNode;
-    /**
-     * Additional content rendered with the label.
-     *
-     * This content is rendered in the SVG context.
+     * This content is rendered in the normal HTML context, unlike the link itself.
      */
     children?: React.ReactNode;
 }
 
-interface LinkLabelState {
-    readonly width: number;
-    readonly height: number;
+export function LinkLabel(props: LinkLabelProps) {
+    const {link, position: {x, y}, line, className, style, textAnchor, title, children} = props;
+    const {canvas} = useCanvas();
+
+    const layerContext = React.useContext(LinkLayerContext);
+    const elementRef = React.useRef<HTMLDivElement | null>(null);
+    const measurableLabelRef = React.useRef<MeasurableLabelWithProps>(undefined);
+
+    React.useLayoutEffect(() => {
+        if (layerContext && props.primary) {
+            if (!measurableLabelRef.current) {
+                const measurable: MeasurableLabelWithProps = {
+                    owner: link,
+                    measureBounds: () => {
+                        const bounds = elementRef.current?.getBoundingClientRect();
+                        if (!bounds) {
+                            return undefined;
+                        }
+                        const inverseScale = 1 / canvas.getScale();
+                        return computeLabelBounds(measurable.latestProps, {
+                            width: bounds.width * inverseScale,
+                            height: bounds.height * inverseScale,
+                        });
+                    },
+                    latestProps: props,
+                };
+                measurableLabelRef.current = measurable;
+            }
+            measurableLabelRef.current.latestProps = props;
+            layerContext.scheduleLabelMeasure(measurableLabelRef.current);
+        }
+    });
+
+    React.useLayoutEffect(() => {
+        return () => {
+            const measurable = measurableLabelRef.current;
+            if (layerContext && measurable) {
+                layerContext.clearLabelMeasure(measurable);
+            }
+        };
+    }, []);
+
+    const anchorTransform = (
+        textAnchor === 'start' ? 'translate(0,-50%)' :
+        textAnchor === 'end' ? 'translate(-100%,-50%)' :
+        'translate(-50%,-50%)'
+    );
+    const providedStyle = {
+        ...style,
+        position: 'absolute',
+        transform: `translate(${x}px,${y}px)${anchorTransform}`,
+        '--reactodia-link-label-line': line,
+    } as React.CSSProperties;
+
+    const renderingState = canvas.renderingState as MutableRenderingState;
+
+    return createPortal(
+        <div ref={elementRef}
+            data-link-id={link.id}
+            className={cx(LINK_LABEL_CLASS, className)}
+            style={providedStyle}
+            title={title}>
+            {children}
+        </div>,
+        renderingState.getLinkLabelContainer()
+    );
 }
 
-const LINK_LABEL_CLASS = 'reactodia-link-label';
-const GROUPED_LABEL_MARGIN = 2;
-const DEFAULT_TEXT_ANCHOR = 'middle';
+interface MeasurableLabelWithProps extends MeasurableLabel {
+    latestProps: LinkLabelProps;
+}
 
-/**
- * Component to display a text label over a diagram link.
- *
- * @category Components
- */
-export class LinkLabel extends React.Component<LinkLabelProps, LinkLabelState> implements MeasurableLabel {
-    /** @hidden */
-    static contextType = LinkLayerContext;
-    /** @hidden */
-    declare readonly context: LinkLayerContext;
+function computeLabelBounds(props: LinkLabelProps, {width, height}: Size): Rect {
+    const {position: {x, y}, textAnchor = DEFAULT_TEXT_ANCHOR} = props;
 
-    private text: SVGTextElement | undefined | null;
-    private shouldUpdateBounds = true;
-
-    constructor(props: LinkLabelProps) {
-        super(props);
-        this.state = {width: 0, height: 0};
+    let xOffset = 0;
+    if (textAnchor === 'middle') {
+        xOffset = -width / 2;
+    } else if (textAnchor === 'end') {
+        xOffset = -width;
     }
 
-    /** @hidden */
-    get owner(): Link | undefined {
-        const {link, primary} = this.props;
-        return primary ? link : undefined;
-    }
-
-    /** @hidden */
-    render() {
-        const {
-            primary, position: {x, y}, line = 0, className, textAnchor = DEFAULT_TEXT_ANCHOR,
-            rectClass, rectStyle, textClass, textStyle, title, content, children,
-        } = this.props;
-        const {width, height} = this.state;
-        const {x: rectX, y: rectY} = this.computeBounds({width, height});
-
-        const transform = line === 0 ? undefined :
-            `translate(0, ${line * (height + GROUPED_LABEL_MARGIN)}px)`;
-        // HACK: 'alignment-baseline' and 'dominant-baseline' are not supported in Edge and IE
-        const dy = '0.6ex';
-
-        return (
-            <g style={transform ? {transform} : undefined}
-                className={cx(
-                    LINK_LABEL_CLASS,
-                    primary ? `${LINK_LABEL_CLASS}--primary` : undefined,
-                    className
-                )}>
-                {title ? <title>{title}</title> : undefined}
-                <rect x={rectX} y={rectY}
-                    width={width} height={height}
-                    className={rectClass}
-                    style={rectStyle}
-                />
-                <text ref={this.onTextMount}
-                    x={x} y={y} dy={dy}
-                    textAnchor={textAnchor}
-                    className={textClass}
-                    style={textStyle}>
-                    {content}
-                </text>
-                {children}
-            </g>
-        );
-    }
-
-    /** @hidden */
-    measureSize(): Size | undefined {
-        if (!this.text) {
-            return undefined;
-        }
-        const {width, height} = this.text.getBBox();
-        return {width, height};
-    }
-
-    /** @hidden */
-    applySize({width, height}: Size): void {
-        if (!(
-            width === this.state.width &&
-            height === this.state.height
-        )) {
-            this.setState({width, height});
-        }
-    }
-
-    /** @hidden */
-    computeBounds({width, height}: Size): Rect {
-        const {position: {x, y}, textAnchor = DEFAULT_TEXT_ANCHOR} = this.props;
-
-        let xOffset = 0;
-        if (textAnchor === 'middle') {
-            xOffset = -width / 2;
-        } else if (textAnchor === 'end') {
-            xOffset = -width;
-        }
-
-        return {
-            x: x + xOffset,
-            y: y - height / 2,
-            width,
-            height,
-        };
-    }
-
-    private onTextMount = (text: SVGTextElement | null) => {
-        this.text = text;
+    return {
+        x: x + xOffset,
+        y: y - height / 2,
+        width,
+        height,
     };
-
-    /** @hidden */
-    componentDidMount() {
-        this.tryRecomputeBounds(this.props);
-    }
-
-    /** @hidden */
-    componentWillUnmount() {
-        const {scheduleLabelMeasure} = this.context;
-        scheduleLabelMeasure(this, true);
-    }
-
-    /** @hidden */
-    UNSAFE_componentWillReceiveProps(nextProps: LinkLabelProps) {
-        this.shouldUpdateBounds = true;
-    }
-
-    /** @hidden */
-    componentDidUpdate(props: LinkLabelProps) {
-        this.tryRecomputeBounds(this.props);
-    }
-
-    private tryRecomputeBounds(props: LinkLabelProps) {
-        if (this.text && this.shouldUpdateBounds) {
-            this.shouldUpdateBounds = false;
-            const {scheduleLabelMeasure} = this.context;
-            scheduleLabelMeasure(this, false);
-        }
-    }
 }
 
 /**

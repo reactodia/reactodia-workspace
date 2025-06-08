@@ -185,6 +185,7 @@ export class MutableRenderingState implements RenderingState {
     private readonly decorationContainers = new WeakMap<Element | Link, HTMLDivElement>();
 
     private readonly elementSizes = new WeakMap<Element, Size>();
+    private readonly linkLabelContainer = document.createElement('div');
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
     private readonly linkTypeIndex = new Map<LinkTypeIri, number>();
@@ -283,6 +284,23 @@ export class MutableRenderingState implements RenderingState {
         }
     }
 
+    attachLinkLabelContainer(parent: HTMLElement | null): void {
+        if (parent) {
+            if (this.linkLabelContainer.parentElement) {
+                throw new Error('Cannot attach link label container to multiple parents');
+            }
+            parent.appendChild(this.linkLabelContainer);
+        } else {
+            if (this.linkLabelContainer.parentElement) {
+                this.linkLabelContainer.parentElement.removeChild(this.linkLabelContainer);
+            }
+        }
+    }
+
+    getLinkLabelContainer(): HTMLElement {
+        return this.linkLabelContainer;
+    }
+
     getLinkLabelBounds(link: Link): Rect | undefined {
         return this.linkLabelBounds.get(link);
     }
@@ -291,10 +309,7 @@ export class MutableRenderingState implements RenderingState {
         const previous = this.linkLabelBounds.get(link);
         const sameBounds = !previous && !bounds || (
             previous && bounds &&
-            previous.x === bounds.x &&
-            previous.y === bounds.y &&
-            previous.width === bounds.width &&
-            previous.height === bounds.height
+            Rect.equals(previous, bounds)
         );
         if (!sameBounds) {
             if (bounds) {
