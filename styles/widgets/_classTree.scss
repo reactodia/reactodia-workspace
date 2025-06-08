@@ -62,7 +62,7 @@
     padding: 1px;
     border: 1px solid;
     border-color: transparent;
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     &:hover {
       background: theme.$tree-background-color-focus;
       border-color: theme.$tree-border-color-focus;

@@ -119,7 +119,7 @@ $no-results-color: theme.$color-emphasis-400;
     align-items: center;
     margin-bottom: 4px;
     background: theme.$color-emphasis-200;
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
 
     &:hover {
       background-color: theme.$color-emphasis-400;

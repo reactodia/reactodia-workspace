@@ -5,6 +5,6 @@
   pointer-events: none;
 
   border: 1.5px dashed #d8956d;
-  border-radius: 2px;
+  border-radius: theme.$border-radius-s;
   box-shadow: theme.$selection-single-box-shadow;
 }

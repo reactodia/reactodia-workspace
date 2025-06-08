@@ -57,7 +57,7 @@
 .reactodia-link-label {
   margin-top: calc(1.5em * var(--reactodia-link-label-line, 0));
   padding: 0 2px;
-  border-radius: 2px;
+  border-radius: theme.$border-radius-s;
   color: theme.$font-color-base;
   background-color: theme.$canvas-background-color;
   white-space: nowrap;

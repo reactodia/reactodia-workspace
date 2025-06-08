@@ -5,7 +5,7 @@
   display: block;
   background: var(--reactodia-element-style-color);
   padding: 1px 1px 1px 10px;
-  border-radius: 2px;
+  border-radius: theme.$border-radius-s;
   margin: 0 0 2px 0;
   opacity: 1.0;
   cursor: move;
@@ -20,7 +20,7 @@
 
   &__label {
     background: theme.$element-background-color;
-    border-radius: 0 2px 2px 0;
+    border-radius: 0 theme.$border-radius-s theme.$border-radius-s 0;
     font-family: theme.$font-family-base;
     font-size: 15px;
     min-height: 1.3em;
