@@ -7,7 +7,7 @@
 
   background: theme.$navigator-background-fill;
   border: theme.$border-width-base solid theme.$border-color-base;
-  border-radius: 2px;
+  border-radius: theme.$border-radius-s;
   box-shadow: theme.$canvas-box-shadow;
 
   transition:

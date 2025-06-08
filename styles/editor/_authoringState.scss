@@ -100,7 +100,7 @@
     gap: theme.$spacing-horizontal;
     bottom: 0;
     background: theme.$canvas-underlay-color;
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     padding: 1px;
     height: 22px;
   }

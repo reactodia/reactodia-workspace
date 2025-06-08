@@ -11,7 +11,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
   float: left;
 
   &--group {
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     border: 1px solid;
     border-color: var(--reactodia-standard-group-color);
     background: $standard-template-background;
@@ -19,7 +19,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
   }
 
   &__main {
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     border: 1px solid;
     border-color: $standard-template-color;
     background-color: $standard-template-color;
@@ -27,7 +27,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
 
   &__body {
     margin-left: 8px;
-    border-radius: 0 2px 2px 0;
+    border-radius: 0 theme.$border-radius-s theme.$border-radius-s 0;
     border-left: 1px solid;
     border-left-color: $standard-template-color;
     padding: 3px 0;
@@ -53,7 +53,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
 
   &__item {
     display: flex;
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     border: 0px;
   }
 
@@ -145,7 +145,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
 
   &__photo-image {
     width: 100%;
-    border-radius: 2px 2px 0 0;
+    border-radius: theme.$border-radius-s theme.$border-radius-s 0 0;
   }
 
   &__type {
@@ -239,7 +239,7 @@ $standard-new-entity-stripe: theme.$element-background-color;
   &__dropdown {
     border: 1px solid;
     border-color: $standard-template-color;
-    border-radius: 2px;
+    border-radius: theme.$border-radius-s;
     background-color: $standard-template-background;
     margin-top: 5px;
   }
