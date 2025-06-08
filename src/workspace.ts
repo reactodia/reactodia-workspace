@@ -29,8 +29,8 @@ export {
     ValidationSeverity,
 } from './data/validationProvider';
 export {
+    DiagramContextV1, PlaceholderEntityType, PlaceholderRelationType,
     TemplateProperties, PinnedProperties,
-    DIAGRAM_CONTEXT_URL_V1, PLACEHOLDER_ELEMENT_TYPE, PLACEHOLDER_LINK_TYPE,
 } from './data/schema';
 export * from './data/composite/composite';
 export {
@@ -48,6 +48,7 @@ export * from './data/rdf/rdfDataProvider';
  * @category Core
  */
 export * as Rdf from './data/rdf/rdfModel';
+export * from './data/rdf/vocabulary';
 export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
 

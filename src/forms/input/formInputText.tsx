@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useTranslation } from '../../coreUtils/i18n';
 
 import * as Rdf from '../../data/rdf/rdfModel';
+import { rdf, xsd } from '../../data/rdf/vocabulary';
 
 import { type FormInputSingleProps } from './inputCommon';
 
@@ -49,8 +50,8 @@ export function FormInputText(props: FormInputTextProps) {
     const Component = multiline ? 'textarea' : 'input';
     const hasLanguageSelector = valueShape.termType === 'Literal' && (
         !valueShape.datatype ||
-        valueShape.datatype.value === Rdf.Vocabulary.rdf.langString ||
-        valueShape.datatype.value === Rdf.Vocabulary.xsd.string
+        valueShape.datatype.value === rdf.langString ||
+        valueShape.datatype.value === xsd.string
     );
 
     return (
