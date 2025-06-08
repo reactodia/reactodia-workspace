@@ -12,10 +12,16 @@
 
   &__previous {
     @include codicon-button("chevron-left");
+
+    border-top-right-radius: unset;
+    border-bottom-right-radius: unset;
   }
 
   &__next {
     @include codicon-button("chevron-right");
+
+    border-top-left-radius: unset;
+    border-bottom-left-radius: unset;
   }
 
   &__status {
