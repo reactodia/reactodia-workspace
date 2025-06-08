@@ -84,9 +84,9 @@ export function StandardEntity(props: StandardEntityProps) {
     const label = model.locale.formatEntityLabel(data, model.language);
     const imageUrl = model.locale.selectEntityImageUrl(data);
     const typesLabel = formatEntityTypes(data, workspace);
-    const {color: baseColor, icon: iconUrl} = getElementTypeStyle(data.types);
+    const typeStyle = getElementTypeStyle(data.types);
     const rootStyle = {
-        '--reactodia-element-style-color': baseColor,
+        '--reactodia-element-style-color': typeStyle.color,
     } as React.CSSProperties;
 
     const pinnedProperties = findPinnedProperties() ?? {};
@@ -150,10 +150,16 @@ export function StandardEntity(props: StandardEntityProps) {
                     <img src={imageUrl} className={`${CLASS_NAME}__thumbnail-image`} />
                 </div>
             );
-        } else if (iconUrl) {
+        } else if (typeStyle.icon) {
             return (
-                <div className={`${CLASS_NAME}__thumbnail`} aria-hidden='true'>
-                    <img src={iconUrl} className={`${CLASS_NAME}__thumbnail-icon`} />
+                <div className={`${CLASS_NAME}__thumbnail`}
+                    aria-hidden='true'>
+                    <img src={typeStyle.icon}
+                        className={cx(
+                            `${CLASS_NAME}__thumbnail-icon`,
+                            typeStyle.iconMonochrome ? `${CLASS_NAME}__thumbnail-icon--monochrome` : undefined
+                        )}
+                    />
                 </div>
             );
         }

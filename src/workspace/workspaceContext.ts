@@ -6,6 +6,7 @@ import type { Translation } from '../coreUtils/i18n';
 import type { ElementIri, ElementTypeIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
+import type { TypeStyle } from '../diagram/customization';
 import type { Element } from '../diagram/elements';
 import type { LayoutFunction } from '../diagram/layout';
 import type { SharedCanvasState } from '../diagram/sharedCanvasState';
@@ -213,15 +214,11 @@ export enum WorkspaceEventKey {
 /**
  * Represents a computed style to display an element in various parts of the UI.
  */
-export interface ProcessedTypeStyle {
+export interface ProcessedTypeStyle extends Omit<TypeStyle, 'color'> {
     /**
      * CSS color string.
      */
     readonly color: string;
-    /**
-     * Icon image URL.
-     */
-    readonly icon: string | undefined;
 }
 
 /** @hidden */

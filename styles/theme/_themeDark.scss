@@ -59,8 +59,9 @@
   --reactodia-canvas-underlay-color: rgba(28, 28, 28, 0.6);
   --reactodia-element-background-color: #242526;
   --reactodia-link-stroke-color: var(--reactodia-color-emphasis-1000);
+  --reactodia-monochrome-icon-filter: invert(1);
 
-  --reactodia-selection-icon-filter: invert(100%);
+  --reactodia-selection-icon-filter: invert(1);
   --reactodia-selection-multiple-box-shadow: 0 0 7px 7px rgba(170, 170, 170, 0.13);
 
   --reactodia-navigator-background-fill: var(--reactodia-color-gray-900);

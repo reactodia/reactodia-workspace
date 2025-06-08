@@ -134,6 +134,10 @@ $standard-new-entity-stripe: theme.$element-background-color;
     object-fit: contain;
   }
 
+  &__thumbnail-icon--monochrome {
+    filter: theme.$monochrome-icon-filter;
+  }
+
   &__photo {
     border-bottom: 1px solid;
     border-color: $standard-template-color;

@@ -58,9 +58,9 @@ export class Leaf extends React.Component<LeafProps, State> {
             `${CLASS_NAME}__toggle-collapsed`
         );
 
-        const {color, icon} = getElementTypeStyle([node.iri]);
+        const typeStyle = getElementTypeStyle([node.iri]);
         const providedStyle = {
-            '--reactodia-element-style-color': color,
+            '--reactodia-element-style-color': typeStyle.color,
         } as React.CSSProperties;
 
         const selected = Boolean(selectedNode && selectedNode.iri === node.iri);
@@ -86,10 +86,13 @@ export class Leaf extends React.Component<LeafProps, State> {
                     />
                     <a className={bodyClass} href={node.iri} onClick={this.onClick}>
                         <div className={`${CLASS_NAME}__icon-container`}>
-                            {icon ? (
+                            {typeStyle.icon ? (
                                 <img role='presentation'
-                                    className={`${CLASS_NAME}__icon`}
-                                    src={icon}
+                                    className={cx(
+                                        `${CLASS_NAME}__icon`,
+                                        typeStyle.iconMonochrome ? `${CLASS_NAME}__icon--monochrome` : undefined
+                                    )}
+                                    src={typeStyle.icon}
                                 />
                             ) : (
                                 <div className={node.derived.length === 0
