@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Improve the style for "cancel" (discard) action on entities and relations to make it consistent with other inline actions.
 - Add `ElementDecoration` component to display additional decorations over canvas elements either from the template itself or from outside the element:
   * Element decorations are not included in the computed element bounds but are exported with the canvas unless explicitly marked with `data-reactodia-no-export` attribute (as with other canvas elements);
+- **[💥Breaking]** Use separate HTML paper layer to display `LinkLabel` components instead of an SVG canvas, which allows to use CSS for layout, backgrounds and improves rendering performance:
+  * `textClass`, `textStyle`, `rectClass` and `rectStyle` are replaced by `className` and `style` props;
+  * CSS should use HTML styling properties instead of SVG variants, e.g. `color` and `background-color` instead of `stroke` and `fill`;
+  * Label content should be placed directly as children to the component instead of using `content` prop.
 - Select entity label and image using `DataLocaleProvider` based on its properties:
   * **[💥Breaking]** Remove `ElementModel.{label, image}` properties and instead use `DataDiagramModel.locale` methods to select them based on `ElementModel.properties` instead;
   * Allow to override data locale provider (default is `DefaultDataLocaleProvider`) by passing `locale` option to `model.importLayout()` or `model.createNewDiagram()`;

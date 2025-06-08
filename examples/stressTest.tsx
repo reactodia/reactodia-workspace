@@ -13,7 +13,11 @@ function StressTestExample() {
         const {model, view} = context;
 
         const dataProvider = new Reactodia.RdfDataProvider();
-        const [graphData, nodes] = createLayout(500, 2, dataProvider.factory);
+        const [graphData, nodes] = createLayout(dataProvider.factory, {
+            nodeCount: 500,
+            edgesPerNode: 2,
+            propertyPerEdge: 1,
+        });
         dataProvider.addGraph(graphData);
 
         const diagram = tryLoadLayoutFromLocalStorage();
@@ -67,11 +71,12 @@ function StressTestExample() {
     );
 }
 
-function createLayout(
-    nodeCount: number,
-    edgesPerNode: number,
-    factory: Reactodia.Rdf.DataFactory
-): [Reactodia.Rdf.Quad[], Reactodia.ElementIri[]] {
+function createLayout(factory: Reactodia.Rdf.DataFactory, options: {
+    nodeCount: number;
+    edgesPerNode: number;
+    propertyPerEdge: number;
+}): [Reactodia.Rdf.Quad[], Reactodia.ElementIri[]] {
+    const {nodeCount, edgesPerNode, propertyPerEdge} = options;
     const rdfType = factory.namedNode(Reactodia.rdf.type);
     const rdfsLabel = factory.namedNode(Reactodia.rdfs.label);
     const nodeType = factory.namedNode('urn:test:Node');
@@ -94,7 +99,13 @@ function createLayout(
         for (let j = 0; j < edgesPerNode; j++) {
             const target = i - j - 1;
             if (target >= 0) {
-                quads.push(factory.quad(iri, linkType, makeNodeIri(target)));
+                const link = factory.quad(iri, linkType, makeNodeIri(target));
+                quads.push(link);
+                for (let k = 0; k < propertyPerEdge; k++) {
+                    quads.push(factory.quad(
+                        link, factory.namedNode(`urn:test:property-${k}`), factory.literal(String(k))
+                    ));
+                };
             }
         }
     }
