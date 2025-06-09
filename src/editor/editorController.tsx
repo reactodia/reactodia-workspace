@@ -478,6 +478,9 @@ export class EditorController {
     }): RelationLink {
         const {model} = this;
         const {link, newSource} = params;
+        if (link.data.sourceId === newSource.data.id) {
+            return link;
+        }
         const batch = model.history.startBatch(
             TranslatedText.text('editor_controller.relation_move_source.command')
         );
@@ -500,6 +503,9 @@ export class EditorController {
     }): RelationLink {
         const {model} = this;
         const {link, newTarget} = params;
+        if (link.data.targetId === newTarget.data.id) {
+            return link;
+        }
         const batch = model.history.startBatch(
             TranslatedText.text('editor_controller.relation_move_target.command')
         );

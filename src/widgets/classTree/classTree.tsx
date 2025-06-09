@@ -408,7 +408,10 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         const {workspace: {model, view, editor, getCommandBus}} = this.props;
         const batch = model.history.startBatch();
 
+        this.createElementCancellation.abort();
+        this.createElementCancellation = new AbortController();
         const signal = this.createElementCancellation.signal;
+
         const elementModel = await mapAbortedToNull(
             editor.metadataProvider!.createEntity(elementType, {signal}),
             signal

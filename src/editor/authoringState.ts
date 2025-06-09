@@ -315,11 +315,18 @@ export namespace AuthoringState {
         }
         const newState = clone(state);
         const previous = state.links.get(before);
-        newState.links.set(before, {
-            type: 'relationChange',
-            before: (previous && previous.type === 'relationChange') ? previous.before : before,
-            data: after,
-        });
+        if (previous?.type === 'relationAdd') {
+            newState.links.set(before, {
+                type: 'relationAdd',
+                data: after,
+            });
+        } else {
+            newState.links.set(before, {
+                type: 'relationChange',
+                before: (previous && previous.type === 'relationChange') ? previous.before : before,
+                data: after,
+            });
+        }
         return newState;
     }
 
