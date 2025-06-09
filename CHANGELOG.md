@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Display elliptical authoring state overlays for elliptically-shaped entity elements.
 - Use provided `duration` in `CanvasApi.animateGraph()` for element transitions without the need to override the styles.
 - Trigger `keydown`, `keyup`, `scroll` and `contextMenu` canvas events only from a non-widget layer.
+- Fix marking existing relation as new or changed after moving its source or target to its original source or target.
 
 #### ⏱ Performance
 - Optimize diagram loading time by avoiding unnecessary updates and separating a measuring element sizes step from applying the sizes to the rendering state.

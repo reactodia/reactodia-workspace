@@ -12,7 +12,7 @@ import { makeCaseInsensitiveFilter } from '../utils';
 
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
-import { rdf, rdfs, schema } from './vocabulary';
+import { owl, rdf, rdfs, schema } from './vocabulary';
 
 /**
  * Options for {@link RdfDataProvider}.
@@ -70,14 +70,6 @@ export interface RdfDataProviderOptions {
 
 const BLANK_PREFIX = 'urn:reactodia:blank:rdf:';
 
-const OWL_CLASS = 'http://www.w3.org/2002/07/owl#Class';
-const OWL_OBJECT_PROPERTY = 'http://www.w3.org/2002/07/owl#ObjectProperty';
-
-const RDF_PROPERTY = `${rdf.namespace}#Property` as const;
-
-const RDFS_CLASS = `${rdfs.namespace}#Class` as const;
-const RDFS_SUB_CLASS_OF = `${rdfs.namespace}#subClassOf`;
-
 /**
  * Provides graph data from in-memory [RDF/JS-compatible](https://rdf.js.org/data-model-spec/)
  * graph dataset.
@@ -113,11 +105,11 @@ export class RdfDataProvider implements DataProvider {
             ? null : this.factory.namedNode(options.labelPredicate ?? rdfs.label);
         this.imagePredicate = options.imagePredicate === null
             ? null : this.factory.namedNode(options.imagePredicate ?? schema.thumbnailUrl);
-        this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [OWL_CLASS, RDFS_CLASS])
+        this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [owl.Class, rdfs.Class])
             .map(iri => this.factory.namedNode(iri));
         this.elementSubtypePredicate = options.elementSubtypePredicate === null
-            ? null : this.factory.namedNode(options.elementSubtypePredicate ?? RDFS_SUB_CLASS_OF);
-        this.linkTypeBaseTypes = (options.linkTypeBaseTypes ?? [OWL_OBJECT_PROPERTY, RDF_PROPERTY])
+            ? null : this.factory.namedNode(options.elementSubtypePredicate ?? rdfs.subClassOf);
+        this.linkTypeBaseTypes = (options.linkTypeBaseTypes ?? [owl.ObjectProperty, rdf.Property])
             .map(iri => this.factory.namedNode(iri));
     }
 

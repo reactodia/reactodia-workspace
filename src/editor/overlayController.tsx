@@ -97,6 +97,11 @@ export class OverlayController {
                 this.hideDialog();
             }
         });
+        this.listener.listen(this.model.events, 'discardGraph', () => {
+            if (this.openedDialog && this.openedDialog.target) {
+                this.hideDialog();
+            }
+        });
 
         view.setCanvasWidget('selectionHandler', {
             element: <CanvasOverlayHandler onCanvasPointerUp={this.onAnyCanvasPointerUp} />,

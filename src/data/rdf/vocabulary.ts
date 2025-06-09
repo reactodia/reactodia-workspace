@@ -1,3 +1,16 @@
+const NAMESPACE_OWL = 'http://www.w3.org/2002/07/owl#';
+/**
+ * Vocabulary for common terms from `owl: <http://www.w3.org/2002/07/owl#>` namespace.
+ *
+ * @category Constants
+ */
+export const owl = {
+    $namespace: NAMESPACE_OWL,
+    Class: `${NAMESPACE_OWL}Class`,
+    DatatypeProperty: `${NAMESPACE_OWL}DatatypeProperty`,
+    ObjectProperty: `${NAMESPACE_OWL}ObjectProperty`,
+} as const;
+
 const NAMESPACE_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 /**
  * Vocabulary for common terms from `rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>` namespace.
@@ -5,7 +18,8 @@ const NAMESPACE_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
  * @category Constants
  */
 export const rdf = {
-    namespace: NAMESPACE_RDF,
+    $namespace: NAMESPACE_RDF,
+    Property: `${NAMESPACE_RDF}Property`,
     langString: `${NAMESPACE_RDF}langString`,
     type: `${NAMESPACE_RDF}type`,
     JSON: `${NAMESPACE_RDF}JSON`,
@@ -18,8 +32,10 @@ const NAMESPACE_RDFS = 'http://www.w3.org/2000/01/rdf-schema#';
  * @category Constants
  */
 export const rdfs = {
-    namespace: NAMESPACE_RDFS,
+    $namespace: NAMESPACE_RDFS,
+    Class: `${NAMESPACE_RDFS}Class`,
     label: `${NAMESPACE_RDFS}label`,
+    subClassOf: `${NAMESPACE_RDFS}subClassOf`,
 } as const;
 
 const NAMESPACE_SCHEMA = 'http://schema.org/';
@@ -29,7 +45,7 @@ const NAMESPACE_SCHEMA = 'http://schema.org/';
  * @category Constants
  */
 export const schema = {
-    namespace: NAMESPACE_SCHEMA,
+    $namespace: NAMESPACE_SCHEMA,
     thumbnailUrl: `${NAMESPACE_SCHEMA}thumbnailUrl`,
 } as const;
 
@@ -40,6 +56,6 @@ const NAMESPACE_XSD = 'http://www.w3.org/2001/XMLSchema#';
  * @category Constants
  */
 export const xsd = {
-    namespace: NAMESPACE_XSD,
+    $namespace: NAMESPACE_XSD,
     string: `${NAMESPACE_XSD}string`,
 } as const;
