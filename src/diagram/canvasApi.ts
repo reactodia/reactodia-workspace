@@ -132,7 +132,7 @@ export interface CanvasApi {
      * Starts animation for graph elements and links.
      *
      * @param setupChanges immediately called function to perform animatable changes on graph
-     * @param duration animation duration in milliseconds (requires custom CSS to override)
+     * @param duration duration animation duration in milliseconds (default is `500`)
      * @returns promise which resolves when this animation ends
      *
      * **Example**:

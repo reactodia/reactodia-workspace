@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Always display validation state for an entities and relations in case when the target does not have any authoring changes.
 - Display elliptical authoring state overlays for elliptically-shaped entity elements.
+- Use provided `duration` in `CanvasApi.animateGraph()` for element transitions without the need to override the styles.
 
 #### ⏱ Performance
 - Optimize diagram loading time by avoiding unnecessary updates and separating a measuring element sizes step from applying the sizes to the rendering state.
