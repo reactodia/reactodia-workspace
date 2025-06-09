@@ -46,6 +46,9 @@ interface State {
     readonly scale: number;
     readonly paddingX: number;
     readonly paddingY: number;
+
+    readonly cssAnimations: number;
+    readonly cssAnimationDuration: number | undefined;
 }
 
 interface PointerMoveState {
@@ -106,7 +109,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private readonly canvasContext: CanvasContext;
 
     private viewportAnimation: ViewportAnimation | undefined;
-    private cssAnimations = 0;
 
     private movingState: PointerMoveState | undefined;
 
@@ -134,6 +136,8 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             scale: 1,
             paddingX: 0,
             paddingY: 0,
+            cssAnimations: 0,
+            cssAnimationDuration: undefined,
         };
         this.resizeObserver = new ResizeObserver(this.onResize);
         this.metrics = new (class extends BasePaperMetrics {
@@ -188,6 +192,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     render() {
         const {model, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
+        const {cssAnimationDuration} = this.state;
         const paperTransform = this.metrics.getTransform();
 
         const className = cx(
@@ -195,11 +200,16 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             hideScrollBars ? `${CLASS_NAME}--hide-scrollbars` : undefined,
             this.isAnimatingGraph() ? `${CLASS_NAME}--animated` : undefined
         );
+        const style = {
+            '--reactodia-canvas-animation-duration': cssAnimationDuration === undefined
+                ? undefined : `${cssAnimationDuration}ms`,
+        } as React.CSSProperties;
 
         const renderedWidgets = Array.from(this.getAllWidgets());
         return (
             <CanvasContext.Provider value={this.canvasContext}>
                 <div className={className}
+                    style={style}
                     ref={this.rootRef}
                     tabIndex={0}
                     onKeyDown={this.onKeyDown}
@@ -905,33 +915,30 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     isAnimatingGraph(): boolean {
-        return this.cssAnimations > 0;
+        return this.state.cssAnimations > 0;
     }
 
     animateGraph(setupChanges: () => void, duration?: number): Promise<void> {
-        this.changeGraphAnimationCount(+1);
-        setupChanges();
-
         const timeout = typeof duration === 'number' ? duration : DEFAULT_ANIMATION_DURATION;
-        return delay(timeout).then(() => this.onGraphAnimationEnd());
+        this.changeGraphAnimationCount(+1, timeout);
+        setupChanges();        
+        return delay(timeout).then(() => this.changeGraphAnimationCount(-1));
     }
 
-    private onGraphAnimationEnd() {
-        this.changeGraphAnimationCount(-1);
-    }
-
-    private changeGraphAnimationCount(change: number) {
-        const newValue = this.cssAnimations + change;
-        if (newValue < 0) { return; }
-
-        const previous = this.isAnimatingGraph();
-        this.cssAnimations = newValue;
-
-        const current = this.isAnimatingGraph();
-        if (previous !== current) {
-            this.forceUpdate();
-            this.source.trigger('changeAnimatingGraph', {source: this, previous});
-        }
+    private changeGraphAnimationCount(change: number, newDuration?: number) {
+        const beforeAnimating = this.isAnimatingGraph();
+        this.setState(
+            previous => ({
+                cssAnimations: previous.cssAnimations + change,
+                cssAnimationDuration: newDuration ?? previous.cssAnimationDuration,
+            }),
+            () => {
+                const afterAnimating = this.isAnimatingGraph();
+                if (afterAnimating !== beforeAnimating) {
+                    this.source.trigger('changeAnimatingGraph', {source: this, previous: beforeAnimating});
+                }
+            }
+        );
     }
 
     private get viewportState(): ViewportState {
