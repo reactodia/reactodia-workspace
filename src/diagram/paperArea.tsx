@@ -857,10 +857,16 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private onScroll = (e: Event) => {
+        if (!this.isEventFromCellLayer(e)) {
+            return;
+        }
         this.source.trigger('scroll', {source: this, sourceEvent: e});
     };
 
     private onContextMenu = (e: React.MouseEvent, cell: Cell | undefined) => {
+        if (!this.isEventFromCellLayer(e)) {
+            return;
+        }
         this.source.trigger('contextMenu', {
             source: this,
             sourceEvent: e,
@@ -869,12 +875,28 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private onKeyDown = (e: React.KeyboardEvent) => {
+        if (!this.isEventFromCellLayer(e)) {
+            return;
+        }
         this.source.trigger('keydown', {source: this, sourceEvent: e});
     };
 
     private onKeyUp = (e: React.KeyboardEvent) => {
+        if (!this.isEventFromCellLayer(e)) {
+            return;
+        }
         this.source.trigger('keyup', {source: this, sourceEvent: e});
     };
+
+    private isEventFromCellLayer(e: Event | React.SyntheticEvent): boolean {
+        const target = e.target;
+        return target instanceof Node && Boolean(
+            this.rootRef.current === target ||
+            this.linkLayerRef.current?.contains(target) ||
+            this.labelLayerRef.current?.contains(target) ||
+            this.elementLayerRef.current?.contains(target)
+        );
+    }
 
     private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {
         const {colorSchemeApi} = this.props;

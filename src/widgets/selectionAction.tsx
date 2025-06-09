@@ -174,6 +174,9 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
  *
  * Removing the elements adds a command to the command history.
  *
+ * When mounted, handles the following keyboard shortcuts:
+ *  -  `Delete`: remove all currently selected elements from the canvas.
+ *
  * @category Components
  */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
@@ -198,8 +201,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
         listener.listen(canvas.events, 'keyup', e => {
             if (
                 e.sourceEvent.key === 'Delete' &&
-                document.activeElement &&
-                document.activeElement.localName !== 'input'
+                !e.sourceEvent.ctrlKey &&
+                !e.sourceEvent.altKey &&
+                !e.sourceEvent.shiftKey
             ) {
                 editor.removeSelectedElements();
                 canvas.focus();
@@ -209,6 +213,7 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     }, []);
 
     const singleNewEntity = newEntities === 1 && totalEntities === 1;
+    const shortcut = ' (Delete)';
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -217,9 +222,9 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             )}
             title={
                 title ? title :
-                singleNewEntity ? t.text('selection_action.remove.title_new') :
-                elements.length === 1 ? t.text('selection_action.remove.title_single') :
-                t.text('selection_action.remove.title')
+                singleNewEntity ? t.text('selection_action.remove.title_new') + shortcut :
+                elements.length === 1 ? t.text('selection_action.remove.title_single') + shortcut :
+                t.text('selection_action.remove.title') + shortcut
             }
             onSelect={() => editor.removeSelectedElements()}
         />
@@ -564,6 +569,9 @@ export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
  *
  * Grouping or ungrouping the elements adds a command to the command history.
  *
+ * When mounted, handles the following keyboard shortcuts:
+ *  -  `G`: group or ungroup selected elements.
+ *
  * @category Components
  */
 export function SelectionActionGroup(props: SelectionActionGroupProps) {
@@ -577,10 +585,43 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
     const canGroup = elements.length > 0 && elements.every(element => element instanceof EntityElement);
     const canUngroup = elements.length > 0 && elements.every(element => element instanceof EntityGroup);
 
+    const onSelect = async () => {
+        if (canGroup) {
+            const group = await groupEntitiesAnimated(elements, canvas, workspace);
+            model.setSelection([group]);
+            group.focus();
+        } else if (canUngroup) {
+            const ungrouped = await ungroupAllEntitiesAnimated(elements, canvas, workspace);
+            model.setSelection(ungrouped);
+            canvas.focus();
+        }
+    };
+
+    const latestOnSelect = React.useRef<typeof onSelect>();
+    React.useEffect(() => {
+        latestOnSelect.current = onSelect;
+    });
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(canvas.events, 'keydown', e => {
+            if (
+                e.sourceEvent.key === 'g' &&
+                !e.sourceEvent.ctrlKey &&
+                !e.sourceEvent.metaKey &&
+                !e.sourceEvent.altKey
+            ) {
+                e.sourceEvent.preventDefault();
+                latestOnSelect.current?.();
+            }
+        });
+        return () => listener.stopListening();
+    }, []);
+
     if (elements.length === 0 || elements.length === 1 && canGroup) {
         return null;
     }
 
+    const shortcut = ' (G)';
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -590,20 +631,10 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
             disabled={!(canGroup || canUngroup)}
             title={title ?? (
                 canUngroup
-                    ? t.text('selection_action.group.title_ungroup')
-                    : t.text('selection_action.group.title')
+                    ? t.text('selection_action.group.title_ungroup') + shortcut
+                    : t.text('selection_action.group.title') + shortcut
             )}
-            onMouseDown={async () => {
-                if (canGroup) {
-                    const group = await groupEntitiesAnimated(elements, canvas, workspace);
-                    model.setSelection([group]);
-                    group.focus();
-                } else if (canUngroup) {
-                    const ungrouped = await ungroupAllEntitiesAnimated(elements, canvas, workspace);
-                    model.setSelection(ungrouped);
-                    canvas.focus();
-                }
-            }}
+            onSelect={onSelect}
         />
     );
 }

@@ -60,6 +60,9 @@ const CLASS_NAME = 'reactodia-selection';
 /**
  * Canvas widget component for rectangular element selection on the diagram.
  *
+ * When mounted, handles the following keyboard shortcuts:
+ *  -  `Ctrl+A` / `⌘+A`: select all canvas elements.
+ *
  * @category Components
  */
 export function Selection(props: SelectionProps) {
@@ -119,6 +122,16 @@ export function Selection(props: SelectionProps) {
                 applySelection(selectionBox, model, canvas);
             }
             origin = undefined;
+        });
+        listener.listen(canvas.events, 'keydown', e => {
+            if (
+                e.sourceEvent.key === 'a' &&
+                (e.sourceEvent.ctrlKey || e.sourceEvent.metaKey) &&
+                !e.sourceEvent.altKey
+            ) {
+                e.sourceEvent.preventDefault();
+                model.setSelection([...model.elements]);
+            }
         });
         return () => {
             listener.stopListening();
