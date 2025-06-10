@@ -11,6 +11,7 @@ export {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
     useSyncStore, useSyncStoreWithComparator,
 } from './coreUtils/hooks';
+export type { HotkeyString } from './coreUtils/hotkey';
 export {
     LabelLanguageSelector, TranslatedProperty, TranslatedText, Translation, useTranslation,
 } from './coreUtils/i18n';
@@ -53,7 +54,7 @@ export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
-export { defineCanvasWidget } from './diagram/canvasWidget';
+export { defineCanvasWidget, useCanvasHotkey } from './diagram/canvasWidget';
 export {
     RestoreGeometry, setElementState, setElementExpanded, setLinkState,
     changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,

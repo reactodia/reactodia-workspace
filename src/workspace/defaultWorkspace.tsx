@@ -121,7 +121,7 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
      *
      * If specified as `null`, the component will not be rendered.
      */
-    search?: UnifiedSearchProps | null;
+    search?: Partial<UnifiedSearchProps> | null;
     /**
      * Content for the secondary (actions) toolbar, in a form of
      * {@link ToolbarAction} elements.

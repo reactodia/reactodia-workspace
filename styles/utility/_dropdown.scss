@@ -69,6 +69,7 @@
 }
 
 .reactodia-dropdown-menu-item {
+  display: flex;
   border-radius: unset;
 
   .reactodia-dropdown--down &:first-child {

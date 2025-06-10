@@ -11,7 +11,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Add option `inlineEntityActions` (defaults to `true`) for `VisualAuthoring` to display entity actions inline at the top of each entity;
   * Improve the style for "cancel" (discard) action on entities and relations to make it consistent with other inline actions.
 - Add `ElementDecoration` component to display additional decorations over canvas elements either from the template itself or from outside the element:
-  * Element decorations are not included in the computed element bounds but are exported with the canvas unless explicitly marked with `data-reactodia-no-export` attribute (as with other canvas elements);
+  * Element decorations are not included in the computed element bounds but are exported with the canvas unless explicitly marked with `data-reactodia-no-export` attribute (as with other canvas elements).
+- Support keyboard hotkeys for the focused canvas:
+  * Allow to specify arbitrary hotkeys to `ToolbarAction` and `SelectionAction` components, export `useCanvasHotkey()` hook to bind hotkey from any canvas widget;
+  * Add default hotkeys for components: `Selection` (`Ctrl+A`: select all), `ToolbarActionUndo` (`Ctrl+Z`), `ToolbarActionRedo` (`Ctrl+Shift+Z`), `SelectionActionRemove` (`Delete`, same as before), `SelectionActionGroup` (`G`).
 - **[💥Breaking]** Use separate HTML paper layer to display `LinkLabel` components instead of an SVG canvas, which allows to use CSS for layout, backgrounds and improves rendering performance:
   * `textClass`, `textStyle`, `rectClass` and `rectStyle` are replaced by `className` and `style` props;
   * CSS should use HTML styling properties instead of SVG variants, e.g. `color` and `background-color` instead of `stroke` and `fill`;
@@ -44,7 +47,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `PLACEHOLDER_LINK_TYPE` -> `PlaceholderRelationType`;
 - Support the ability to expand up the `Dropdown`, `DropdownMenu` and `Toolbar` by setting `direction` to `"up"` e.g. for docking the toolbar to the bottom of the viewport.
 - Allow to return `iconMonochrome: true` for a type style to automatically apply dark theme filter for the icon.
-- Add keyboard shortcuts for `Selection` (`Ctrl+A`: select all), `ToolbarActionUndo` (`Ctrl+Z`), `ToolbarActionRedo` (`Ctrl+Shift+Z`), `SelectionActionRemove` (`Delete`, same as before), `SelectionActionGroup` (`G`).
 - Support optional dependency list in `useEventStore()` to re-subscribe to store if needed.
 
 #### 🔧 Maintenance

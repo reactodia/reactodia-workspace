@@ -6,11 +6,13 @@ import { EventObserver } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
+import type { HotkeyString } from '../coreUtils/hotkey';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { LinkTypeIri } from '../data/model';
 
 import { useCanvas } from '../diagram/canvasApi';
+import { useCanvasHotkey } from '../diagram/canvasWidget';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
@@ -61,6 +63,12 @@ export interface SelectionActionStyleProps {
      * Title for the action button.
      */
     title?: string;
+    /**
+     * Keyboard hotkey for the action when it's mounted.
+     *
+     * Passing `null` disables a default hotkey if there is one.
+     */
+    hotkey?: HotkeyString | null;
 }
 
 /**
@@ -97,14 +105,18 @@ const CLASS_NAME = 'reactodia-selection-action';
  */
 export function SelectionAction(props: SelectionActionProps) {
     const {
-        dock, dockRow, dockColumn, className, title, disabled,
-        onSelect, onMouseDown, children,
+        dock, dockRow, dockColumn, className, title, hotkey,
+        disabled, onSelect, onMouseDown, children,
     } = props;
+
+    const actionKey = useCanvasHotkey(hotkey, onSelect);
+    const titleWithHotkey = title && actionKey ? `${title} (${actionKey.text})` : title;
+
     return (
         <button type='button'
             className={cx(CLASS_NAME, getDockClass(dock), className)}
             style={getDockStyle(dockRow, dockColumn)}
-            title={title}
+            title={titleWithHotkey}
             disabled={disabled}
             onClick={onSelect}
             onMouseDown={onMouseDown}>
@@ -167,20 +179,22 @@ export function SelectionActionSpinner(props: SelectionActionSpinnerProps) {
  *
  * @see {@link SelectionActionRemove}
  */
-export interface SelectionActionRemoveProps extends SelectionActionStyleProps {}
+export interface SelectionActionRemoveProps extends SelectionActionStyleProps {
+    /**
+     * @default "None+Delete"
+     */
+    hotkey?: HotkeyString | null;
+}
 
 /**
  * Selection action component to remove an element from the diagram.
  *
  * Removing the elements adds a command to the command history.
  *
- * When mounted, handles the following keyboard shortcuts:
- *  -  `Delete`: remove all currently selected elements from the canvas.
- *
  * @category Components
  */
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
-    const {className, title, ...otherProps} = props;
+    const {className, title, hotkey, ...otherProps} = props;
     const {canvas} = useCanvas();
     const {model, editor, translation: t} = useWorkspace();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
@@ -196,24 +210,7 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
         }
     }
 
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        listener.listen(canvas.events, 'keyup', e => {
-            if (
-                e.sourceEvent.key === 'Delete' &&
-                !e.sourceEvent.ctrlKey &&
-                !e.sourceEvent.altKey &&
-                !e.sourceEvent.shiftKey
-            ) {
-                editor.removeSelectedElements();
-                canvas.focus();
-            }
-        });
-        return () => listener.stopListening();
-    }, []);
-
     const singleNewEntity = newEntities === 1 && totalEntities === 1;
-    const shortcut = ' (Delete)';
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -222,11 +219,15 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
             )}
             title={
                 title ? title :
-                singleNewEntity ? t.text('selection_action.remove.title_new') + shortcut :
-                elements.length === 1 ? t.text('selection_action.remove.title_single') + shortcut :
-                t.text('selection_action.remove.title') + shortcut
+                singleNewEntity ? t.text('selection_action.remove.title_new') :
+                elements.length === 1 ? t.text('selection_action.remove.title_single') :
+                t.text('selection_action.remove.title')
             }
-            onSelect={() => editor.removeSelectedElements()}
+            hotkey={hotkey === undefined ? 'None+Delete' : hotkey}
+            onSelect={() => {
+                editor.removeSelectedElements();
+                canvas.focus();
+            }}
         />
     );
 }
@@ -559,7 +560,12 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
  *
  * @see {@link SelectionActionGroup}
  */
-export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
+export interface SelectionActionGroupProps extends SelectionActionStyleProps {
+    /**
+     * @default "None+G"
+     */
+    hotkey?: HotkeyString | null;
+}
 
 /**
  * Selection action component to group or ungroup selected elements.
@@ -569,13 +575,10 @@ export interface SelectionActionGroupProps extends SelectionActionStyleProps {}
  *
  * Grouping or ungrouping the elements adds a command to the command history.
  *
- * When mounted, handles the following keyboard shortcuts:
- *  -  `G`: group or ungroup selected elements.
- *
  * @category Components
  */
 export function SelectionActionGroup(props: SelectionActionGroupProps) {
-    const {className, title, ...otherProps} = props;
+    const {className, title, hotkey, ...otherProps} = props;
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
     const {model, translation: t} = workspace;
@@ -597,31 +600,10 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
         }
     };
 
-    const latestOnSelect = React.useRef<typeof onSelect>();
-    React.useEffect(() => {
-        latestOnSelect.current = onSelect;
-    });
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        listener.listen(canvas.events, 'keydown', e => {
-            if (
-                e.sourceEvent.key === 'g' &&
-                !e.sourceEvent.ctrlKey &&
-                !e.sourceEvent.metaKey &&
-                !e.sourceEvent.altKey
-            ) {
-                e.sourceEvent.preventDefault();
-                latestOnSelect.current?.();
-            }
-        });
-        return () => listener.stopListening();
-    }, []);
-
     if (elements.length === 0 || elements.length === 1 && canGroup) {
         return null;
     }
 
-    const shortcut = ' (G)';
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -631,9 +613,10 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
             disabled={!(canGroup || canUngroup)}
             title={title ?? (
                 canUngroup
-                    ? t.text('selection_action.group.title_ungroup') + shortcut
-                    : t.text('selection_action.group.title') + shortcut
+                    ? t.text('selection_action.group.title_ungroup')
+                    : t.text('selection_action.group.title')
             )}
+            hotkey={hotkey === undefined ? 'None+G' : hotkey}
             onSelect={onSelect}
         />
     );

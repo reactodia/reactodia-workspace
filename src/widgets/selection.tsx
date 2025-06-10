@@ -5,9 +5,10 @@ import { EventObserver } from '../coreUtils/events';
 import {
     SyncStore, useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
+import type { HotkeyString } from '../coreUtils/hotkey';
 
 import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
+import { defineCanvasWidget, useCanvasHotkey } from '../diagram/canvasWidget';
 import { Element, Link } from '../diagram/elements';
 import {
     Rect, SizeProvider, Vector, boundsOf, findElementAtPoint, getContentFittingBox,
@@ -38,6 +39,14 @@ export interface SelectionProps {
      */
     itemMargin?: number;
     /**
+     * Keyboard hotkey to select all canvas elements.
+     *
+     * Passing `null` disables the default hotkey.
+     *
+     * @default "Mod+A"
+     */
+    hotkeySelectAll?: HotkeyString | null;
+    /**
      * {@link SelectionAction} items representing available actions on the selected elements.
      *
      * **Default**:
@@ -60,12 +69,10 @@ const CLASS_NAME = 'reactodia-selection';
 /**
  * Canvas widget component for rectangular element selection on the diagram.
  *
- * When mounted, handles the following keyboard shortcuts:
- *  -  `Ctrl+A` / `⌘+A`: select all canvas elements.
- *
  * @category Components
  */
 export function Selection(props: SelectionProps) {
+    const {hotkeySelectAll} = props;
     const {model, canvas} = useCanvas();
 
     const subscribeSelection = useEventStore(model.events, 'changeSelection');
@@ -123,21 +130,15 @@ export function Selection(props: SelectionProps) {
             }
             origin = undefined;
         });
-        listener.listen(canvas.events, 'keydown', e => {
-            if (
-                e.sourceEvent.key === 'a' &&
-                (e.sourceEvent.ctrlKey || e.sourceEvent.metaKey) &&
-                !e.sourceEvent.altKey
-            ) {
-                e.sourceEvent.preventDefault();
-                model.setSelection([...model.elements]);
-            }
-        });
         return () => {
             listener.stopListening();
             moveListener?.stopListening();
         };
     }, []);
+
+    useCanvasHotkey(hotkeySelectAll === undefined ? 'Mod+A' : hotkeySelectAll, () => {
+        model.setSelection([...model.elements]);
+    });
 
     if (highlightedBox || selectedElements.length > 1) {
         return (

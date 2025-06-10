@@ -892,6 +892,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         const target = e.target;
         return target instanceof Node && Boolean(
             this.rootRef.current === target ||
+            this.area === target ||
             this.linkLayerRef.current?.contains(target) ||
             this.labelLayerRef.current?.contains(target) ||
             this.elementLayerRef.current?.contains(target)

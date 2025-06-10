@@ -7,10 +7,11 @@ import {
 } from '../coreUtils/hooks';
 import type { Translation } from '../coreUtils/i18n';
 
-import { CanvasPointerUpEvent, useCanvas } from '../diagram/canvasApi';
+import { CanvasPointerUpEvent, CanvasKeyboardEvent, useCanvas } from '../diagram/canvasApi';
 import { Element, Link, LinkVertex } from '../diagram/elements';
 import { Size, Vector } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
+import type { MutableRenderingState } from '../diagram/renderingState';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
@@ -104,7 +105,12 @@ export class OverlayController {
         });
 
         view.setCanvasWidget('selectionHandler', {
-            element: <CanvasOverlayHandler onCanvasPointerUp={this.onAnyCanvasPointerUp} />,
+            element: (
+                <CanvasOverlayHandler
+                    onCanvasPointerUp={this.onAnyCanvasPointerUp}
+                    onCanvasKeydown={this.onAnyCanvasKeydown}
+                />
+            ),
             attachment: 'viewport',
         });
     }
@@ -123,7 +129,7 @@ export class OverlayController {
         this.listener.stopListening();
     }
 
-    private onAnyCanvasPointerUp = (event: CanvasPointerUpEvent) => {
+    private onAnyCanvasPointerUp = (event: CanvasPointerUpEvent): void => {
         const {source: canvas, sourceEvent, target, triggerAsClick} = event;
 
         if (sourceEvent.ctrlKey || sourceEvent.shiftKey || sourceEvent.metaKey) {
@@ -145,6 +151,12 @@ export class OverlayController {
             this.hideDialog();
             canvas.focus();
         }
+    };
+
+    private onAnyCanvasKeydown = (event: CanvasKeyboardEvent): void => {
+        const {source, sourceEvent} = event;
+        const renderingState = source.renderingState as MutableRenderingState;
+        renderingState.triggerHotkey(sourceEvent);
     };
 
     /**
@@ -459,14 +471,16 @@ function useViewportSize() {
 
 function CanvasOverlayHandler(props: {
     onCanvasPointerUp: (event: CanvasPointerUpEvent) => void;
+    onCanvasKeydown: (event: CanvasKeyboardEvent) => void;
 }) {
-    const {onCanvasPointerUp} = props;
+    const {onCanvasPointerUp, onCanvasKeydown} = props;
     const {canvas} = useCanvas();
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerUp', onCanvasPointerUp);
+        listener.listen(canvas.events, 'keydown', onCanvasKeydown);
         return () => listener.stopListening();
-    }, [onCanvasPointerUp]);
+    }, [onCanvasPointerUp, onCanvasKeydown]);
     return null;
 }
 
