@@ -1,6 +1,11 @@
+import { HashMap } from '@reactodia/hashmap';
 import * as React from 'react';
 
+import { multimapAdd, multimapDelete } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
+import {
+    type HotkeyAst, sameHotkeyAst, hashHotkeyAst, eventToHotkeyAst,
+} from '../coreUtils/hotkey';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import {
@@ -194,6 +199,10 @@ export class MutableRenderingState implements RenderingState {
     private readonly linkTemplates = new Map<LinkTypeIri, LinkTemplate>();
     private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
+
+    private readonly hotkeyHandlers = new HashMap<HotkeyAst, Set<() => void>>(
+        hashHotkeyAst, sameHotkeyAst
+    );
 
     readonly shared: SharedCanvasState;
 
@@ -396,9 +405,30 @@ export class MutableRenderingState implements RenderingState {
         this.routings = computedRoutes;
         this.source.trigger('changeRoutings', {source: this, previous: previousRoutes});
     };
+
+    listenHotkey(ast: HotkeyAst, handler: () => void): () => void {
+        multimapAdd(this.hotkeyHandlers, ast, handler);
+        return () => {
+            multimapDelete(this.hotkeyHandlers, ast, handler);
+        };
+    }
+
+    triggerHotkey(e: React.KeyboardEvent | KeyboardEvent): void {
+        if (e.repeat) {
+            return;
+        }
+        const pressAst = eventToHotkeyAst(e);
+        const handlers = this.hotkeyHandlers.get(pressAst);
+        if (handlers) {
+            for (const handler of handlers) {
+                e.preventDefault();
+                handler();
+            }
+        }
+    }
 }
 
-function sameRoutedLink(a: RoutedLink, b: RoutedLink) {
+function sameRoutedLink(a: RoutedLink, b: RoutedLink): boolean {
     return (
         a.linkId === b.linkId &&
         a.labelTextAnchor === b.labelTextAnchor &&

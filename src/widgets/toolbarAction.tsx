@@ -3,9 +3,11 @@ import { saveAs } from 'file-saver';
 import * as React from 'react';
 
 import { useObservedProperty } from '../coreUtils/hooks';
+import type { HotkeyString } from '../coreUtils/hotkey';
 import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
+import { useCanvasHotkey } from '../diagram/canvasWidget';
 import type { Command } from '../diagram/history';
 import { dataURLToBlob } from '../diagram/toSvg';
 
@@ -36,6 +38,12 @@ export interface ToolbarActionStyleProps {
      * Whether the action is disabled.
      */
     disabled?: boolean;
+    /**
+     * Keyboard hotkey for the action when it's mounted.
+     *
+     * Passing `null` disables a default hotkey if there is one.
+     */
+    hotkey?: HotkeyString | null;
 }
 
 /**
@@ -62,14 +70,24 @@ export interface ToolbarActionProps extends ToolbarActionStyleProps {
  * @category Components
  */
 export function ToolbarAction(props: ToolbarActionProps) {
-    const {className, title, disabled, onSelect, children} = props;
+    const {className, title, disabled, hotkey, onSelect, children} = props;
+
     const insideDropdown = useInsideDropdown();
+    const actionKey = useCanvasHotkey(hotkey, onSelect);
+    const titleWithHotkey = title && actionKey ? `${title} (${actionKey.text})` : title;
+
     return insideDropdown ? (
         <DropdownMenuItem className={className}
-            title={title}
+            title={titleWithHotkey}
             disabled={disabled}
             onSelect={onSelect}>
             {children}
+            {actionKey ? (
+                <>
+                    <span className={`${CLASS_NAME}__spacer`} />
+                    <span className={`${CLASS_NAME}__hotkey`}>{actionKey.text}</span>
+                </>
+            ) : null}
         </DropdownMenuItem>
     ) : (
         <button type='button'
@@ -77,7 +95,7 @@ export function ToolbarAction(props: ToolbarActionProps) {
                 className,
                 'reactodia-btn reactodia-btn-default'
             )}
-            title={title}
+            title={titleWithHotkey}
             disabled={disabled}
             onClick={onSelect}>
             {children}
@@ -338,19 +356,21 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
  *
  * @see {@link ToolbarActionUndo}
  */
-export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
+export interface ToolbarActionUndoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {
+    /**
+     * @default "Mod+Z"
+     */
+    hotkey?: HotkeyString | null;
+}
 
 /**
  * Toolbar action component to undo a command from the command history.
  *
- * When mounted, handles the following keyboard shortcuts:
- *  -  `Ctrl+Z` / `⌘+Z`: perform the undo action.
- *
  * @category Components
  */
 export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
-    const {className, title, ...otherProps} = props;
-    const {canvas, model: {history}} = useCanvas();
+    const {className, title, hotkey, ...otherProps} = props;
+    const {model: {history}} = useCanvas();
     const t = useTranslation();
     const insideDropdown = useInsideDropdown();
     const undoCommand = useObservedProperty(
@@ -362,34 +382,17 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
                 ? undefined : undoStack[undoStack.length - 1];
         }
     );
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        listener.listen(canvas.events, 'keydown', e => {
-            if (
-                e.sourceEvent.key === 'z' &&
-                (e.sourceEvent.ctrlKey || e.sourceEvent.metaKey) &&
-                !e.sourceEvent.altKey
-            ) {
-                e.sourceEvent.preventDefault();
-                history.undo();
-            }
-        });
-        return () => listener.stopListening();
-    }, [history]);
     const commandTitle = !title && undoCommand ? resolveCommandTitle(undoCommand, t) : undefined;
-    const shortcut = ' (Ctrl+Z / ⌘+Z)';
     return (
         <ToolbarAction {...otherProps}
             className={cx(className, `${CLASS_NAME}__undo`)}
             disabled={!undoCommand}
             title={title ?? (
                 commandTitle === undefined
-                    ? t.text('toolbar_action.undo.title') + shortcut
-                    : t.text(
-                        'toolbar_action.undo.title_named',
-                        {command: commandTitle}
-                    ) + shortcut
+                    ? t.text('toolbar_action.undo.title')
+                    : t.text('toolbar_action.undo.title_named', {command: commandTitle})
             )}
+            hotkey={hotkey === undefined ? 'Mod+Z' : hotkey}
             onSelect={() => history.undo()}>
             {insideDropdown ? t.text('toolbar_action.undo.label') : null}
         </ToolbarAction>
@@ -401,19 +404,21 @@ export function ToolbarActionUndo(props: ToolbarActionUndoProps) {
  *
  * @see {@link ToolbarActionRedo}
  */
-export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {}
+export interface ToolbarActionRedoProps extends Omit<ToolbarActionStyleProps, 'disabled'> {
+    /**
+     * @default "Mod+Shift+Z"
+     */
+    hotkey?: HotkeyString | null;
+}
 
 /**
  * Toolbar action component to redo a command from the command history.
  *
- * When mounted, handles the following keyboard shortcuts:
- *  -  `Ctrl+Shift+Z` / `⌘+Shift+Z`: perform the redo action.
- *
  * @category Components
  */
 export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
-    const {className, title, ...otherProps} = props;
-    const {canvas, model: {history}} = useCanvas();
+    const {className, title, hotkey, ...otherProps} = props;
+    const {model: {history}} = useCanvas();
     const t = useTranslation();
     const insideDropdown = useInsideDropdown();
     const redoCommand = useObservedProperty(
@@ -425,34 +430,17 @@ export function ToolbarActionRedo(props: ToolbarActionRedoProps) {
                 ? undefined : redoStack[redoStack.length - 1];
         }
     );
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        listener.listen(canvas.events, 'keydown', e => {
-            if (
-                e.sourceEvent.key === 'Z' &&
-                (e.sourceEvent.ctrlKey || e.sourceEvent.metaKey) &&
-                !e.sourceEvent.altKey
-            ) {
-                e.sourceEvent.preventDefault();
-                history.redo();
-            }
-        });
-        return () => listener.stopListening();
-    }, [history]);
     const commandTitle = !title && redoCommand ? resolveCommandTitle(redoCommand, t) : undefined;
-    const shortcut = ' (Ctrl+Shift+Z / ⌘+Shift+Z)';
     return (
         <ToolbarAction {...otherProps}
             className={cx(className, `${CLASS_NAME}__redo`)}
             disabled={!redoCommand}
             title={title ?? (
                 commandTitle === undefined
-                    ? t.text('toolbar_action.redo.title') + shortcut
-                    : t.text(
-                        'toolbar_action.redo.title_named',
-                        {command: commandTitle}
-                    ) + shortcut 
+                    ? t.text('toolbar_action.redo.title')
+                    : t.text('toolbar_action.redo.title_named', {command: commandTitle})
             )}
+            hotkey={hotkey === undefined ? 'Mod+Shift+Z' : hotkey}
             onSelect={() => history.redo()}>
             {insideDropdown ? t.text('toolbar_action.redo.label') : null}
         </ToolbarAction>

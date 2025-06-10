@@ -2,10 +2,12 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { useObservedProperty } from '../../coreUtils/hooks';
+import type { HotkeyString } from '../../coreUtils/hotkey';
 import { useTranslation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { useCanvas } from '../../diagram/canvasApi';
+import { useCanvasHotkey } from '../../diagram/canvasWidget';
 import type { Rect, Size, Vector } from '../../diagram/geometry';
 
 import { DraggableHandle } from '../utility/draggableHandle';
@@ -78,6 +80,14 @@ export interface UnifiedSearchProps {
      * @default "Search for..."
      */
     placeholder?: string;
+    /**
+     * Keyboard hotkey to focus on the search input.
+     *
+     * Passing `null` disables the default hotkey.
+     *
+     * @default null
+     */
+    hotkeyFocus?: HotkeyString | null;
 }
 
 /**
@@ -148,6 +158,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         minHeight = 150,
         offsetWithMaxWidth = 20,
         offsetWithMaxHeight = 20,
+        hotkeyFocus,
     } = props;
 
     const [expanded, setExpanded] = React.useState(false);
@@ -227,24 +238,28 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
     );
 
     const {getCommandBus} = useWorkspace();
-    const commands = getCommandBus(UnifiedSearchTopic);
+
     const toggleInputRef = React.useRef<HTMLInputElement | null>(null);
-    React.useEffect(() => {
-        const onFocus = ({sectionKey}: UnifiedSearchCommands['focus']): void => {
-            if (sectionKey) {
-                if (sections.some(section => section.key === sectionKey)) {
-                    setActiveSection(previous => previous.activate(sectionKey));
-                } else {
-                    console.warn(
-                        `Unified search: cannot activate section that does not exists: ${sectionKey}`
-                    );
-                }
+    const onFocus = React.useCallback(({sectionKey}: UnifiedSearchCommands['focus']): void => {
+        if (sectionKey) {
+            if (sections.some(section => section.key === sectionKey)) {
+                setActiveSection(previous => previous.activate(sectionKey));
+            } else {
+                console.warn(
+                    `Unified search: cannot activate section that does not exists: ${sectionKey}`
+                );
             }
-            toggleInputRef.current?.focus();
-        };
+        }
+        toggleInputRef.current?.focus();
+    }, [sections, setActiveSection]);
+
+    const commands = getCommandBus(UnifiedSearchTopic);
+    React.useEffect(() => {
         commands.on('focus', onFocus);
         return () => commands.off('focus', onFocus);
-    }, [commands, sections, setExpanded, setActiveSection]);
+    }, [commands, onFocus]);
+
+    useCanvasHotkey(hotkeyFocus, () => onFocus({}));
 
     const hasSearchQuery = (
         searchTerm.length > 0 ||

@@ -2,6 +2,15 @@
 @use "../theme/theme";
 
 .reactodia-toolbar-action {
+  &__spacer {
+    flex: auto;
+    min-width: 8px;
+  }
+
+  &__hotkey {
+    color: theme.$color-secondary-darkest;
+  }
+
   &__open {
     @include codicon-button("folder-opened");
   }

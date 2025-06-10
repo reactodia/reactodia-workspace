@@ -30,6 +30,7 @@ export function ExampleToolbarMenu() {
     return (
         <>
             <Reactodia.ToolbarActionOpen
+                hotkey='Mod+O'
                 fileAccept='.json'
                 onSelect={async file => {
                     const preloadedElements = new Map<Reactodia.ElementIri, Reactodia.ElementModel>();
@@ -61,6 +62,7 @@ export function ExampleToolbarMenu() {
                 Open diagram from file
             </Reactodia.ToolbarActionOpen>
             <Reactodia.ToolbarActionSave mode='layout'
+                hotkey='Mod+S'
                 onSelect={() => {
                     const diagramLayout = model.exportLayout();
                     const layoutString = JSON.stringify(diagramLayout);
@@ -93,7 +95,7 @@ export function ExampleToolbarMenu() {
             <Reactodia.ToolbarActionClearAll />
             <Reactodia.ToolbarActionExport kind='exportRaster' />
             <Reactodia.ToolbarActionExport kind='exportSvg' />
-            <Reactodia.ToolbarActionExport kind='print' />
+            <Reactodia.ToolbarActionExport kind='print' hotkey='Mod+P' />
         </>
     );
 }
