@@ -200,6 +200,7 @@ export {
 } from './widgets/linkAction';
 export { LinkTypesToolbox, LinkTypesToolboxProps } from './widgets/linksToolbox';
 export { Navigator, NavigatorProps } from './widgets/navigator';
+export { Placeholder } from './widgets/placeholder';
 export { Selection, SelectionProps } from './widgets/selection';
 export {
     SelectionAction, SelectionActionProps, SelectionActionStyleProps,

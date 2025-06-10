@@ -6,7 +6,9 @@ import { SemanticTypeStyles, makeOntologyLinkTemplates } from '../src/legacy-sty
 const OntologyLinkTemplates = makeOntologyLinkTemplates(Reactodia);
 
 import { ExampleMetadataProvider, ExampleValidationProvider } from './resources/exampleMetadata';
-import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
+import {
+    ExampleToolbarMenu, ExamplePlaceholder, mountOnLoad, tryLoadLayoutFromLocalStorage,
+} from './resources/common';
 
 const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
@@ -62,6 +64,11 @@ function ClassicWorkspaceExample() {
                         return OntologyLinkTemplates(type);
                     },
                 }}
+                canvasWidgets={[
+                    <Reactodia.Placeholder key='placeholder'>
+                        <ExamplePlaceholder />
+                    </Reactodia.Placeholder>
+                ]}
                 toolbar={{
                     menu: (
                         <>

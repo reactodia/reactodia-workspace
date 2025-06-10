@@ -4,6 +4,8 @@ import { saveAs } from 'file-saver';
 
 import * as Reactodia from '../../src/workspace';
 
+const folderOpenedIcon = require('@vscode/codicons/src/icons/folder-opened.svg');
+
 function onPageLoad(callback: (container: HTMLDivElement) => void) {
     document.addEventListener('DOMContentLoaded', () => {
         const container = document.createElement('div');
@@ -26,41 +28,10 @@ export function mountOnLoad(node: React.ReactElement): void {
 }
 
 export function ExampleToolbarMenu() {
-    const {model, editor, overlay} = Reactodia.useWorkspace();
+    const {model, editor} = Reactodia.useWorkspace();
     return (
         <>
-            <Reactodia.ToolbarActionOpen
-                hotkey='Mod+O'
-                fileAccept='.json'
-                onSelect={async file => {
-                    const preloadedElements = new Map<Reactodia.ElementIri, Reactodia.ElementModel>();
-                    for (const element of model.elements) {
-                        if (element instanceof Reactodia.EntityElement) {
-                            preloadedElements.set(element.iri, element.data);
-                        }
-                    }
-
-                    const task = overlay.startTask({title: 'Importing a layout from file'});
-                    try {
-                        const json = await file.text();
-                        const diagramLayout = JSON.parse(json);
-                        await model.importLayout({
-                            dataProvider: model.dataProvider,
-                            diagram: diagramLayout,
-                            preloadedElements,
-                            validateLinks: true,
-                        });
-                    } catch (err) {
-                        task.setError(new Error(
-                            'Failed to load specified file with a diagram layout.',
-                            {cause: err}
-                        ));
-                    } finally {
-                        task.end();
-                    }
-                }}>
-                Open diagram from file
-            </Reactodia.ToolbarActionOpen>
+            <OpenDiagramAction />
             <Reactodia.ToolbarActionSave mode='layout'
                 hotkey='Mod+S'
                 onSelect={() => {
@@ -97,6 +68,59 @@ export function ExampleToolbarMenu() {
             <Reactodia.ToolbarActionExport kind='exportSvg' />
             <Reactodia.ToolbarActionExport kind='print' hotkey='Mod+P' />
         </>
+    );
+}
+
+export function ExamplePlaceholder() {
+    
+    return (
+        <div
+            style={{
+                padding: 40,
+                background: 'var(--reactodia-color-emphasis-100)',
+                border: 'var(--reactodia-border-width-base) solid var(--reactodia-border-color-base)',
+                borderRadius: 'var(--reactodia-border-radius-base)',
+            }}>
+            <OpenDiagramAction />
+        </div>
+    );
+}
+
+function OpenDiagramAction() {
+    const {model, overlay} = Reactodia.useWorkspace();
+    return (
+        <Reactodia.ToolbarActionOpen
+            hotkey='Mod+O'
+            fileAccept='.json'
+            onSelect={async file => {
+                const preloadedElements = new Map<Reactodia.ElementIri, Reactodia.ElementModel>();
+                for (const element of model.elements) {
+                    if (element instanceof Reactodia.EntityElement) {
+                        preloadedElements.set(element.iri, element.data);
+                    }
+                }
+
+                const task = overlay.startTask({title: 'Importing a layout from file'});
+                try {
+                    const json = await file.text();
+                    const diagramLayout = JSON.parse(json);
+                    await model.importLayout({
+                        dataProvider: model.dataProvider,
+                        diagram: diagramLayout,
+                        preloadedElements,
+                        validateLinks: true,
+                    });
+                } catch (err) {
+                    task.setError(new Error(
+                        'Failed to load specified file with a diagram layout.',
+                        {cause: err}
+                    ));
+                } finally {
+                    task.end();
+                }
+            }}>
+            Open diagram from file
+        </Reactodia.ToolbarActionOpen>
     );
 }
 
