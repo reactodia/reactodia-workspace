@@ -34,7 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Optimize diagram loading time by avoiding unnecessary updates and separating a measuring element sizes step from applying the sizes to the rendering state.
 
 #### 💅 Polish
-- Export `EmptyMetadataProvider` as a stable base class to extend from when implementing custom metadata providers.
+- Export `BaseMetadataProvider` as a stable base to instantiate or extend when implementing custom metadata providers.
 - Re-use and un-deprecate `model.locale` formatting object with `DataLocaleProvider` interface type:
   * **[💥Breaking]**: Remove `Translation.formatIri()` in favor of `locale.formatIri()`;
   * Replace other deprecated methods of `locale` with: `selectEntityLabel()`, `selectEntityImageUrl()`, `formatEntityLabel()`, `formatEntityTypeList()`;

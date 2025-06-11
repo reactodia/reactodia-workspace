@@ -9,7 +9,7 @@ import type {
  *
  * **Unstable**: this interface will likely change in the future.
  *
- * It is recommended to extend {@link EmptyMetadataProvider} instead of
+ * It is recommended to extend {@link BaseMetadataProvider} instead of
  * implementing this interface directly to stay compatible with future versions.
  *
  * @category Core
@@ -119,15 +119,23 @@ export type MetadataValueShape =
     };
 
 /**
- * Metadata provider which does not allow to change anything in the graph
- * and returns nothing or empty metadata when requested.
+ * Metadata provider to use as a stable base to implement {@link MetadataProvider}
+ * interface.
  *
  * @category Core
  */
-export class EmptyMetadataProvider implements MetadataProvider {
+export class BaseMetadataProvider implements MetadataProvider {
+    private readonly methods: Partial<MetadataProvider>;
     private readonly emptyProperties = new Map<PropertyTypeIri, MetadataPropertyShape>();
 
+    constructor(methods: Partial<MetadataProvider> = {}) {
+        this.methods = methods;
+    }
+
     getLiteralLanguages(): ReadonlyArray<string> {
+        if (this.methods.getLiteralLanguages) {
+            return this.methods.getLiteralLanguages();
+        }
         return [];
     }
 
@@ -135,6 +143,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         type: ElementTypeIri,
         options: { readonly signal?: AbortSignal; }
     ): Promise<ElementModel> {
+        if (this.methods.createEntity) {
+            return this.methods.createEntity(type, options);
+        }
         return {
             id: '',
             types: [],
@@ -148,6 +159,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         linkType: LinkTypeIri,
         options: { readonly signal?: AbortSignal; }
     ): Promise<LinkModel> {
+        if (this.methods.createRelation) {
+            return this.methods.createRelation(source, target, linkType, options);
+        }
         return {
             linkTypeId: linkType,
             sourceId: source.id,
@@ -162,6 +176,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         linkType: LinkTypeIri | undefined,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataCanConnect[]> {
+        if (this.methods.canConnect) {
+            return this.methods.canConnect(source, target, linkType, options);
+        }
         return [];
     }
 
@@ -169,6 +186,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         entity: ElementModel,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataCanModifyEntity> {
+        if (this.methods.canModifyEntity) {
+            return this.methods.canModifyEntity(entity, options);
+        }
         return {};
     }
 
@@ -178,6 +198,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         target: ElementModel,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataCanModifyRelation> {
+        if (this.methods.canModifyRelation) {
+            this.methods.canModifyRelation(link, source, target, options);
+        }
         return {};
     }
 
@@ -185,6 +208,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         types: ReadonlyArray<ElementTypeIri>,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataEntityShape> {
+        if (this.methods.getEntityShape) {
+            return this.methods.getEntityShape(types, options);
+        }
         return {
             properties: this.emptyProperties,
         };
@@ -194,6 +220,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         linkType: LinkTypeIri,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataRelationShape> {
+        if (this.methods.getRelationShape) {
+            return this.methods.getRelationShape(linkType, options);
+        }
         return {
             properties: this.emptyProperties,
         };
@@ -203,6 +232,9 @@ export class EmptyMetadataProvider implements MetadataProvider {
         types: ReadonlySet<ElementTypeIri>,
         options: { readonly signal?: AbortSignal; }
     ): Promise<ReadonlySet<ElementTypeIri>> {
+        if (this.methods.filterConstructibleTypes) {
+            return this.methods.filterConstructibleTypes(types, options);
+        }
         return new Set<ElementTypeIri>();
     }
 }
