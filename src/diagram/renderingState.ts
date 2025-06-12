@@ -4,7 +4,7 @@ import * as React from 'react';
 import { multimapAdd, multimapDelete } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 import {
-    type HotkeyAst, sameHotkeyAst, hashHotkeyAst, eventToHotkeyAst,
+    type HotkeyAst, formatHotkey, sameHotkeyAst, hashHotkeyAst, eventToHotkeyAst,
 } from '../coreUtils/hotkey';
 import { Debouncer } from '../coreUtils/scheduler';
 
@@ -408,6 +408,12 @@ export class MutableRenderingState implements RenderingState {
 
     listenHotkey(ast: HotkeyAst, handler: () => void): () => void {
         multimapAdd(this.hotkeyHandlers, ast, handler);
+        if (this.hotkeyHandlers.get(ast)!.size === 2) {
+            console.warn(
+                'Reactodia: registered multiple handlers for the same hotkey ' +
+                `"${formatHotkey(ast)}" but only the first one will run if triggered.`
+            );
+        }
         return () => {
             multimapDelete(this.hotkeyHandlers, ast, handler);
         };
@@ -423,6 +429,8 @@ export class MutableRenderingState implements RenderingState {
             for (const handler of handlers) {
                 e.preventDefault();
                 handler();
+                // Use only the first handler and skip the rest
+                break;
             }
         }
     }

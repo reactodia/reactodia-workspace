@@ -81,6 +81,11 @@
     border-bottom-right-radius: theme.$button-border-radius;
   }
 
+  .reactodia-dropdown--down & ~ & {
+    margin-top: calc(-1 * theme.$button-border-width);
+    border-top-color: theme.$button-default-border-color;
+  }
+
   .reactodia-dropdown--up &:first-child {
     border-bottom-right-radius: theme.$button-border-radius;
   }
@@ -90,10 +95,11 @@
     border-top-right-radius: theme.$button-border-radius;
   }
 
-  & ~ & {
-    margin-top: calc(-1 * theme.$button-border-width);
-    border-top-color: theme.$button-default-border-color;
+  .reactodia-dropdown--up & ~ & {
+    margin-bottom: calc(-1 * theme.$button-border-width);
+    border-bottom-color: theme.$button-default-border-color;
   }
+
   &--disabled, &--disabled:hover {
     color: theme.$button-default-color;
     background-color: theme.$input-background-color-disabled;

@@ -520,6 +520,10 @@ export function useLoadedWorkspace(
             (async () => {
                 const task = context.overlay.startTask();
                 try {
+                    // Move execution into a microtask to avoid React warnings
+                    // when calling RenderingState.syncUpdate()
+                    await Promise.resolve();
+
                     await latestOnLoad({context, signal: controller.signal});
                 } catch (err) {
                     if (!controller.signal.aborted) {

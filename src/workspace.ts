@@ -85,6 +85,7 @@ export {
     LinkLabel, LinkLabelProps,
     LinkVertices, LinkVerticesProps,
 } from './diagram/linkLayer';
+export { DefaultLinkRouter, DefaultLinkRouterOptions } from './diagram/linkRouter';
 export { type DiagramModel, DiagramModelEvents, GraphStructure } from './diagram/model';
 export {
     type PaperTransform, paneTopLeft, totalPaneSize,
@@ -177,7 +178,7 @@ export {
     ViewportDock, ViewportDockProps, DockDirection,
 } from './widgets/utility/viewportDock';
 export { ClassTree, ClassTreeProps } from './widgets/classTree';
-export { Canvas, CanvasProps } from './widgets/canvas';
+export { Canvas, CanvasProps, TypedElementResolver } from './widgets/canvas';
 export {
     ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
