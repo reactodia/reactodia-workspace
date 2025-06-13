@@ -30,7 +30,6 @@ enum UpdateRequest {
     All,
 }
 
-/** @hidden */
 interface MeasurableLabel {
     readonly owner: Link;
     measureBounds(): Rect | undefined;

@@ -6,6 +6,7 @@ import {
     LabelLanguageSelector, Translation, TranslationKey, TranslationBundle, TranslationContext,
 } from '../coreUtils/i18n';
 
+import { isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
 export const DefaultTranslationBundle: TranslationBundle = DefaultBundle;
@@ -68,6 +69,13 @@ export class DefaultTranslation implements Translation {
     ): string {
         const label = labels ? this.selectLabel(labels, language) : undefined;
         return resolveLabel(label, fallbackIri);
+    }
+
+    formatIri(iri: string): string {
+        if (isEncodedBlank(iri)) {
+            return '(blank node)';
+        }
+        return `<${iri}>`;
     }
 }
 

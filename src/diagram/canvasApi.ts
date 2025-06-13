@@ -110,7 +110,8 @@ export interface CanvasApi {
      */
     zoomToFitRect(paperRect: Rect, options?: ViewportOptions): Promise<void>;
     /**
-     * Exports the diagram as a serialized SVG document (XML text content).
+     * Exports the diagram as a serialized into text SVG document
+     * with `<foreignObject>` HTML layers inside.
      *
      * Exported SVG document would include all diagram content as well as every CSS rule
      * which applies to any DOM element from the diagram content.

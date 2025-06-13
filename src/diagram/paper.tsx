@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Component, CSSProperties } from 'react';
 
 import { Cell, LinkVertex } from './elements';
 import { Vector } from './geometry';
@@ -16,7 +15,7 @@ export interface PaperProps {
 
 const CLASS_NAME = 'reactodia-paper';
 
-export class Paper extends Component<PaperProps> {
+export class Paper extends React.Component<PaperProps> {
     render() {
         const {paperTransform, children} = this.props;
         const {width, height, scale, paddingX, paddingY} = paperTransform;
@@ -26,7 +25,7 @@ export class Paper extends Component<PaperProps> {
         // using padding instead of margin in combination with setting width and height
         // on .paper element to avoid "over-constrained" margins, see an explanation here:
         // https://stackoverflow.com/questions/11695354
-        const style: CSSProperties = {
+        const style: React.CSSProperties = {
             width: scaledWidth + paddingX,
             height: scaledHeight + paddingY,
             marginLeft: paddingX,
@@ -120,6 +119,7 @@ export interface PaperTransform {
  * Props for {@link HtmlPaperLayer} component.
  *
  * @see {@link HtmlPaperLayer}
+ * @hidden
  */
 export interface HtmlPaperLayerProps extends React.HTMLProps<HTMLDivElement> {
     paperTransform: PaperTransform;
@@ -132,6 +132,7 @@ export interface HtmlPaperLayerProps extends React.HTMLProps<HTMLDivElement> {
  * **Unstable**: this component will likely change in the future.
  *
  * @category Components
+ * @hidden
  */
 export function HtmlPaperLayer(props: HtmlPaperLayerProps) {
     const {paperTransform, layerRef, style, children, ...otherProps} = props;
@@ -160,6 +161,7 @@ export function HtmlPaperLayer(props: HtmlPaperLayerProps) {
  * Props for {@link SvgPaperLayer} component.
  *
  * @see {@link SvgPaperLayer}
+ * @hidden
  */
 export interface SvgPaperLayerProps extends React.HTMLProps<SVGSVGElement> {
     paperTransform: PaperTransform;
@@ -172,6 +174,7 @@ export interface SvgPaperLayerProps extends React.HTMLProps<SVGSVGElement> {
  * **Unstable**: this component will likely change in the future.
  *
  * @category Components
+ * @hidden
  */
 export function SvgPaperLayer(props: SvgPaperLayerProps) {
     const {layerRef, paperTransform, style, children, ...otherProps} = props;

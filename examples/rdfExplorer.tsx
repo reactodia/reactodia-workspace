@@ -49,9 +49,14 @@ function RdfExample() {
                 }
                 languages={[
                     {code: 'de', label: 'Deutsch'},
-                    {code: 'en', label: 'english'},
-                    {code: 'es', label: 'español'},
-                    {code: 'ru', label: 'русский'},
+                    {code: 'en', label: 'English'},
+                    {code: 'es', label: 'Español'},
+                    {code: 'fr', label: 'Français'},
+                    {code: 'hi', label: 'हिन्दी'},
+                    {code: 'it', label: 'Italiano'},
+                    {code: 'ja', label: '日本語'},
+                    {code: 'pt', label: 'português'},
+                    {code: 'ru', label: 'Русский'},
                     {code: 'zh', label: '汉语'},
                 ]}
             />

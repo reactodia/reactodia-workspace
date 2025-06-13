@@ -124,6 +124,15 @@ export interface Translation {
         fallbackIri: string,
         language: string
     ): string;
+
+    /**
+     * Formats IRI to display in the UI:
+     *   - usual IRIs are enclosed in `<IRI>`;
+     *   - anonymous element IRIs displayed as `(blank node)`.
+     *
+     * @deprecated Use {@link DataLocaleProvider.formatIri} instead.
+     */
+    formatIri(iri: string): string;
 }
 
 /**
