@@ -28,7 +28,7 @@ function ClassicWorkspaceExample() {
         }
     
         const diagram = tryLoadLayoutFromLocalStorage();
-        model.importLayout({
+        await model.importLayout({
             diagram,
             dataProvider,
             validateLinks: true,

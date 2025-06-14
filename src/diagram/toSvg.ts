@@ -164,7 +164,7 @@ function extractCSSFromDocument(targetSubtree: Element): string {
     for (let i = 0; i < document.styleSheets.length; i++) {
         let rules: CSSRuleList;
         try {
-            const cssSheet = document.styleSheets[i] as CSSStyleSheet;
+            const cssSheet = document.styleSheets[i];
             rules = cssSheet.cssRules || cssSheet.rules;
             if (!rules) {
                 continue;
@@ -190,7 +190,7 @@ function composeExportedSvg(layers: ToSVGOptions['layers'], viewBox: Rect): {
     composedViewport.setAttribute('class', 'reactodia-exported-canvas');
     composedSvg.appendChild(composedViewport);
 
-    const imageBounds: { [path: string]: Bounds } = Object.create(null);
+    const imageBounds = Object.create(null) as { [path: string]: Bounds };
 
     for (const layer of layers) {
         if (layer instanceof SVGSVGElement) {

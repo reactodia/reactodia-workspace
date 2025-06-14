@@ -1160,11 +1160,11 @@ async function executeSparqlQuery<Binding>(
     }
     const response = await internalQuery;
     if (response.ok) {
-        const sparqlResponse: SparqlResponse<Binding> = await response.json();
+        const sparqlResponse = await response.json() as SparqlResponse<Binding>;
         return mapSparqlResponseIntoRdfJs(sparqlResponse, factory);
     } else {
         const error = new Error(response.statusText);
-        (error as any).response = response;
+        (error as { response?: Response }).response = response;
         throw error;
     }
 }
@@ -1205,7 +1205,7 @@ async function executeSparqlConstruct(
         return parser.parse(turtleText);
     } else {
         const error = new Error(response.statusText);
-        (error as any).response = response;
+        (error as { response?: Response }).response = response;
         throw error;
     }
 }
@@ -1221,7 +1221,7 @@ function appendQueryParams(endpoint: string, queryParams: { [key: string]: strin
 function queryInternal(params: {
     url: string;
     body?: string;
-    headers: any;
+    headers: { [header: string]: string };
     method: string;
     signal?: AbortSignal;
 }) {

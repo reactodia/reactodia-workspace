@@ -5,7 +5,7 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const TURTLE_DATA = require('./resources/orgOntology.ttl');
+const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 

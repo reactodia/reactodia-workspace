@@ -181,7 +181,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
     }
 
     private requestRedraw = (element: Element, request: RedrawFlags) => {
-        const flagsWithForAll = this.redrawBatch.forAll | request;
+        const flagsWithForAll: RedrawFlags = this.redrawBatch.forAll | request;
         if (flagsWithForAll === this.redrawBatch.forAll) {
             // forAll flags already include the request
             return;
@@ -254,9 +254,11 @@ function applyRedrawRequests(
                 state = {
                     element,
                     templateProps:
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                         (request & RedrawFlags.RecomputeTemplate) === RedrawFlags.RecomputeTemplate
                             ? computeTemplateProps(state.element) : state.templateProps,
                     blurred:
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                         (request & RedrawFlags.RecomputeBlurred) === RedrawFlags.RecomputeBlurred
                             ? computeIsBlurred(state.element, view) : state.blurred,
                 };

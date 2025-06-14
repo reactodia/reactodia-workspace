@@ -145,8 +145,8 @@ export async function calculateLayout(params: {
         elements = elements.filter(el => selectedElements.has(el));
     }
 
-    const nodes: { [id: string]: LayoutNode } = Object.create(null);
-    const bounds: { [id: string]: Rect } = Object.create(null);
+    const nodes = Object.create(null) as { [id: string]: LayoutNode };
+    const bounds = Object.create(null) as { [id: string]: Rect };
 
     for (const element of elements) {
         nodes[element.id] = {

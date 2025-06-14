@@ -367,11 +367,11 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         this.handler.listen(model.events, 'changeLanguage', this.scheduleUpdateAll);
         this.handler.listen(connectionSearch.events, 'changeValue', this.updateAll);
         this.handler.listen(connectionSearch.events, 'executeSearch', ({value}) => {
-            this.loadSuggestions(value);
+            void this.loadSuggestions(value);
         });
         this.handler.listen(objectSearch.events, 'changeValue', this.updateAll);
 
-        this.loadLinks();
+        void this.loadLinks();
     }
 
     getSnapshotBeforeUpdate(
@@ -465,7 +465,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         }, () => {
             this.resubscribeOnLinkTypeEvents();
             triggerWorkspaceEvent(WorkspaceEventKey.connectionsLoadLinks);
-            this.loadSuggestions('');
+            void this.loadSuggestions('');
         });
     }
 
@@ -621,7 +621,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             objects.chunk.direction === chunk.direction
         );
         if (!alreadyLoaded) {
-            this.loadObjects(chunk);
+            void this.loadObjects(chunk);
         }
 
         triggerWorkspaceEvent(WorkspaceEventKey.connectionsExpandLink);

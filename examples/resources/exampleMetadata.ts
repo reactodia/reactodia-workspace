@@ -233,7 +233,7 @@ type Vocabulary<Keys extends string[]> = {
 };
 
 function vocabulary<const Keys extends string[]>(prefix: string, keys: Keys): Vocabulary<Keys> {
-    const result: { [key: string]: string } = Object.create(null);
+    const result = Object.create(null) as { [key: string]: string };
     for (const key of keys) {
         result[key] = prefix + key;
     }

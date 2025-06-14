@@ -41,7 +41,7 @@ function SparqlExample() {
                 imagePropertyUris: ['http://xmlns.com/foaf/0.1/img'],
             }, Reactodia.OwlStatsSettings);
     
-            model.importLayout({
+            await model.importLayout({
                 diagram,
                 dataProvider: dataProvider,
                 validateLinks: true,

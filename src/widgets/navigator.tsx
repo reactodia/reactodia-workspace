@@ -540,7 +540,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             const canvasCoords = this.canvasFromPageCoords(e.pageX, e.pageY);
             const paperTransform = canvas.metrics.getTransform();
             const paperCoords = paperFromCanvasCoords(canvasCoords, paperTransform, this.transform);
-            canvas.centerTo(paperCoords);
+            void canvas.centerTo(paperCoords);
         }
     };
 
@@ -552,7 +552,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         e.preventDefault();
         const {canvas} = this.props;
         const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
-        canvas.zoomBy(-delta * 0.1);
+        void canvas.zoomBy(-delta * 0.1);
     };
 
     private onToggleClick = () => {

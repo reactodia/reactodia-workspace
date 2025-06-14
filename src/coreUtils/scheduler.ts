@@ -9,8 +9,7 @@
  * @category Utilities
  */
 export class Debouncer {
-    // TODO: fix
-    private scheduled: any;
+    private scheduled: number | undefined;
 
     private _timeout: number | 'frame';
     private callback: (() => void) | undefined;
@@ -38,7 +37,7 @@ export class Debouncer {
             if (this.timeout === 'frame') {
                 this.scheduled = requestAnimationFrame(this.runSynchronously);
             } else {
-                this.scheduled = setTimeout(this.runSynchronously, this.timeout);
+                this.scheduled = setTimeout(this.runSynchronously, this.timeout) as unknown as number;
             }
         }
     }
@@ -48,12 +47,12 @@ export class Debouncer {
         callback?.();
     }
 
-    runSynchronously() {
+    runSynchronously = () => {
         const wasScheduled = this.cancelScheduledTimeout();
         if (wasScheduled) {
             this.run();
         }
-    }
+    };
 
     dispose() {
         this.cancelScheduledTimeout();

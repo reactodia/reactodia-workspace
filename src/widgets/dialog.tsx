@@ -229,7 +229,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         const paperCenter = canvas.metrics.scrollablePaneToPaperCoords(
             newScrollableCenter.x, newScrollableCenter.y,
         );
-        canvas.centerTo(paperCenter);
+        void canvas.centerTo(paperCenter);
     }
 
     private onStartDragging = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -43,7 +43,7 @@ export function ExampleToolbarMenu() {
                     const task = overlay.startTask({title: 'Importing a layout from file'});
                     try {
                         const json = await file.text();
-                        const diagramLayout = JSON.parse(json);
+                        const diagramLayout = JSON.parse(json) as Reactodia.SerializedDiagram;
                         await model.importLayout({
                             dataProvider: model.dataProvider,
                             diagram: diagramLayout,
@@ -136,7 +136,9 @@ export function tryLoadLayoutFromLocalStorage(): Reactodia.SerializedDiagram | u
     if (layoutKey) {
         try {
             const unparsedLayout = localStorage.getItem(layoutKey);
-            const entry = unparsedLayout && JSON.parse(unparsedLayout);
+            const entry = unparsedLayout
+                ? JSON.parse(unparsedLayout) as Reactodia.SerializedDiagram
+                : undefined;
             return entry;
         } catch (e) {
             /* ignore */

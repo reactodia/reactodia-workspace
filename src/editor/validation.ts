@@ -185,7 +185,7 @@ export function validateElements(
                 newState.elements.set(entity.id, loadingElement);
                 outboundLinks.forEach(link => newState.links.set(link, loadingLink));
 
-                processValidationResult(result, loadingElement, loadingLink, event, editor);
+                void processValidationResult(result, loadingElement, loadingLink, event, editor);
             } else {
                 // use previous state for element and outbound links
                 newState.elements.set(entity.id, previousState.elements.get(entity.id)!);

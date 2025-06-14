@@ -303,14 +303,13 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
             <ToolbarAction {...otherProps}
                 className={cx(className, `${CLASS_NAME}__export-image`)}
                 title={title ?? t.text('toolbar_action.export_raster.title')}
-                onSelect={() => {
+                onSelect={async () => {
                     const exportOptions: ExportRasterOptions = rasterOptions ?? {
                         backgroundColor: 'white',
                     };
-                    canvas.exportRaster(exportOptions).then(dataUri => {
-                        const blob = dataURLToBlob(dataUri);
-                        saveAs(blob, `${fileName}.png`);
-                    });
+                    const dataUri = await canvas.exportRaster(exportOptions);
+                    const blob = dataURLToBlob(dataUri);
+                    saveAs(blob, `${fileName}.png`);
                 }}>
                 {children ?? t.text('toolbar_action.export_raster.label')}
             </ToolbarAction>
@@ -320,11 +319,10 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
             <ToolbarAction {...otherProps}
                 className={cx(className, `${CLASS_NAME}__export-image`)}
                 title={title ?? t.text('toolbar_action.export_svg.title')}
-                onSelect={() => {
-                    canvas.exportSvg({addXmlHeader: true}).then(svg => {
-                        const blob = new Blob([svg], {type: 'image/svg+xml'});
-                        saveAs(blob, `${fileName}.svg`);
-                    });
+                onSelect={async () => {
+                    const svg = await canvas.exportSvg({addXmlHeader: true});
+                    const blob = new Blob([svg], {type: 'image/svg+xml'});
+                    saveAs(blob, `${fileName}.svg`);
                 }}>
                 {children ?? t.text('toolbar_action.export_svg.label')}
             </ToolbarAction>
@@ -334,13 +332,12 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
             <ToolbarAction {...otherProps}
                 className={cx(className, `${CLASS_NAME}__print`)}
                 title={title ?? t.text('toolbar_action.export_print.title')}
-                onSelect={() => {
+                onSelect={async () => {
                     const printWindow = window.open('', undefined, 'width=1280,height=720')!;
-                    canvas.exportSvg().then(svg => {
-                        printWindow.document.write(svg);
-                        printWindow.document.close();
-                        printWindow.print();
-                    });
+                    const svg = await canvas.exportSvg();
+                    printWindow.document.write(svg);
+                    printWindow.document.close();
+                    printWindow.print();
                 }}>
                 {children ?? t.text('toolbar_action.export_print.label')}
             </ToolbarAction>
@@ -482,8 +479,8 @@ export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
             className={cx(className, `${CLASS_NAME}__layout`)}
             title={title ?? t.text('toolbar_action.layout.title')}
             disabled={diagramIsEmpty}
-            onSelect={() => {
-                performLayout({
+            onSelect={async () => {
+                await performLayout({
                     canvas,
                     animate: true,
                 });

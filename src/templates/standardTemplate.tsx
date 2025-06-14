@@ -385,7 +385,7 @@ function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
                     )}
                     data-reactodia-no-export='true'
                     title={t.text('standard_template.ungroup.title')}
-                    onClick={() => ungroupSome({
+                    onClick={() => void ungroupSome({
                         group: target,
                         entities: new Set([data.id]),
                         canvas,
