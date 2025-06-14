@@ -199,7 +199,7 @@ export class BaseMetadataProvider implements MetadataProvider {
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataCanModifyRelation> {
         if (this.methods.canModifyRelation) {
-            this.methods.canModifyRelation(link, source, target, options);
+            return this.methods.canModifyRelation(link, source, target, options);
         }
         return {};
     }
