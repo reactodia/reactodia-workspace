@@ -193,7 +193,10 @@ export class ExampleValidationProvider implements Reactodia.ValidationProvider {
             });
         }
 
-        if (event.target.types.includes(owl.ObjectProperty)) {
+        if (
+            event.state.elements.has(event.target.id) &&
+            event.target.types.includes(owl.ObjectProperty)
+        ) {
             if (!event.outboundLinks.some(link => link.linkTypeId === rdfs.subPropertyOf)) {
                 items.push({
                     type: 'element',
