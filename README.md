@@ -6,7 +6,8 @@
 
 `@reactodia/workspace` is an open-source fork of [Ontodia](https://github.com/metaphacts/ontodia) project.
 
-![reactodia_wikidata](https://github.com/user-attachments/assets/603953ad-15b0-4ead-91ca-ec3049fa5cee)
+![reactodia_oceanus_light_bordered](https://github.com/user-attachments/assets/040fc7c0-96d3-4079-8fee-873d5206f187#gh-light-mode-only)
+![reactodia_oceanus_dark_bordered](https://github.com/user-attachments/assets/e5ced6dd-3d3e-4e7d-aa2d-33677c58d292#gh-dark-mode-only)
 
 ## Installation
 
