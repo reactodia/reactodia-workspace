@@ -441,8 +441,6 @@ function computeIsBlurred(element: Element, view: SharedCanvasState): boolean {
  * set to the same values as the target element to be able to layout decorations
  * via CSS.
  *
- * **Unstable**: this feature may change in the future.
- *
  * @category Components
  */
 export function ElementDecoration(props: {

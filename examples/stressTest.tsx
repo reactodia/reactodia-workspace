@@ -82,9 +82,7 @@ function createLayout(factory: Reactodia.Rdf.DataFactory, options: {
     const nodeType = factory.namedNode('urn:test:Node');
     const linkType = factory.namedNode('urn:test:link');
 
-    const makeNodeIri = (n: number) => factory.namedNode(
-        `urn:test:n:${n}` as Reactodia.ElementIri
-    );
+    const makeNodeIri = (n: number) => factory.namedNode(`urn:test:n:${n}`);
 
     const elementIris: Reactodia.ElementIri[] = [];
     const quads: Reactodia.Rdf.Quad[] = [];

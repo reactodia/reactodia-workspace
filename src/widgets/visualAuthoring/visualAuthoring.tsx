@@ -4,7 +4,7 @@ import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import { Debouncer } from '../../coreUtils/scheduler';
 
-import type { ElementModel } from '../../data/model';
+import type { ElementModel, LinkModel } from '../../data/model';
 import { defineCanvasWidget } from '../../diagram/canvasWidget';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
@@ -56,25 +56,59 @@ export interface VisualAuthoringProps {
  * Provides custom editor for the entity data.
  */
 export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
+
 /**
  * Parameters for {@link PropertyEditor}.
  */
-export interface PropertyEditorOptions {
+export type PropertyEditorOptions =
+    | PropertyEditorOptionsEntity
+    | PropertyEditorOptionsRelation;
+
+/**
+ * Parameters for {@link PropertyEditor} for an entity target.
+ */
+export interface PropertyEditorOptionsEntity {
+    /**
+     * Type for the target to edit.
+     */
+    readonly type: 'entity';
     /**
      * Target entity data to edit.
      */
-    elementData: ElementModel;
+    readonly elementData: ElementModel;
     /**
      * Handler to submit changed entity data.
      *
      * Changed data may have a different entity IRI ({@link ElementModel.id})
      * in case when the entity identity needs to be changed.
      */
-    onSubmit: (newData: ElementModel) => void;
+    readonly onSubmit: (newData: ElementModel) => void;
     /**
      * Handler to abort changing the entity, discarding the operation.
      */
-    onCancel?: () => void;
+    readonly onCancel?: () => void;
+}
+
+/**
+ * Parameters for {@link PropertyEditor} for a relation target.
+ */
+export interface PropertyEditorOptionsRelation {
+    /**
+     * Type for the target to edit.
+     */
+    readonly type: 'relation';
+    /**
+     * Target relation data to edit.
+     */
+    readonly linkData: LinkModel;
+    /**
+     * Handler to submit changed relation data.
+     */
+    readonly onSubmit: (newData: LinkModel) => void;
+    /**
+     * Handler to abort changing the relation, discarding the operation.
+     */
+    readonly onCancel?: () => void;
 }
 
 /**
@@ -159,7 +193,14 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 modelToEdit = {...target.data, id: event.newIri};
             }
             const onCancel = () => overlay.hideDialog();
-            const content = propertyEditor ? propertyEditor({elementData: target.data, onSubmit, onCancel}) : (
+            const content = propertyEditor ? (
+                propertyEditor({
+                    type: 'entity',
+                    elementData: target.data,
+                    onSubmit,
+                    onCancel,
+                })
+            ) : (
                 <EditEntityForm
                     entity={modelToEdit}
                     onApply={onSubmit}
@@ -211,7 +252,17 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         });
 
         listener.listen(commands, 'editRelation', ({target: link}) => {
-            const content = (
+            const content = propertyEditor ? (
+                propertyEditor({
+                    type: 'relation',
+                    linkData: link.data,
+                    onSubmit: newData => {
+                        editor.changeRelation(link.data, newData);
+                        overlay.hideDialog();
+                    },
+                    onCancel: () => overlay.hideDialog(),
+                })
+            ) : (
                 <EditRelationForm originalLink={link}
                     source={model.getElement(link.sourceId) as EntityElement}
                     target={model.getElement(link.targetId) as EntityElement}

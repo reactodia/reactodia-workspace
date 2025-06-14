@@ -16,7 +16,6 @@ import { AuthoringState } from '../editor/authoringState';
 import { DropdownMenuItem, useInsideDropdown } from './utility/dropdown';
 
 import { useWorkspace } from '../workspace/workspaceContext';
-import { EventObserver } from '../workspace';
 
 const CLASS_NAME = 'reactodia-toolbar-action';
 

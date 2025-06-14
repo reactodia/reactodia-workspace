@@ -92,7 +92,7 @@ export function formatHotkey(ast: HotkeyAst): string {
         result += 'Ctrl+';
     }
     if (modifiers & HotkeyModifier.Meta) {
-        result += '⌘+';
+        result += IsMac ? '⌘+' : 'Meta+';
     }
     if (modifiers & HotkeyModifier.Alt) {
         result += 'Alt+';

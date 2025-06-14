@@ -36,13 +36,13 @@ function StyleCustomizationExample() {
         <Reactodia.Workspace ref={onMount}
             defaultLayout={defaultLayout}
             typeStyleResolver={types => {
-                if (types.indexOf('http://www.w3.org/2000/01/rdf-schema#Class') !== -1) {
+                if (types.includes('http://www.w3.org/2000/01/rdf-schema#Class')) {
                     return {icon: CERTIFICATE_ICON, iconMonochrome: true};
-                } else if (types.indexOf('http://www.w3.org/2002/07/owl#Class') !== -1) {
+                } else if (types.includes('http://www.w3.org/2002/07/owl#Class')) {
                     return {icon: CERTIFICATE_ICON, iconMonochrome: true};
-                } else if (types.indexOf('http://www.w3.org/2002/07/owl#ObjectProperty') !== -1) {
+                } else if (types.includes('http://www.w3.org/2002/07/owl#ObjectProperty')) {
                     return {icon: COG_ICON, iconMonochrome: true};
-                } else if (types.indexOf('http://www.w3.org/2002/07/owl#DatatypeProperty') !== -1) {
+                } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
                     return {color: '#00b9f2'};
                 } else {
                     return undefined;
@@ -155,7 +155,6 @@ const DoubleArrowLinkTemplate: Reactodia.LinkTemplate = {
         width: 20,
         height: 12,
     },
-    spline: 'smooth',
     renderLink: props => (
         <Reactodia.DefaultLink {...props}
             pathProps={{stroke: '#747da8', strokeWidth: 2}}

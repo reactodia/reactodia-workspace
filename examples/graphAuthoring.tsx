@@ -41,7 +41,6 @@ function GraphAuthoringExample() {
                 model.createElement('http://www.w3.org/ns/org#subOrganizationOf'),
                 model.createElement('http://www.w3.org/ns/org#unitOf'),
             ];
-            model.history.execute(Reactodia.setElementExpanded(elements[0], true));
             await Promise.all([
                 model.requestElementData(elements.map(el => el.iri)),
                 model.requestLinks(),
