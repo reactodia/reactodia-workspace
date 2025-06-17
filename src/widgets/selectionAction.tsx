@@ -265,7 +265,7 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
                     }
                 }
                 const fittingBox = getContentFittingBox(elements, links, canvas.renderingState);
-                canvas.zoomToFitRect(fittingBox, {animate: true});
+                void canvas.zoomToFitRect(fittingBox, {animate: true});
             }}
         />
     );
@@ -299,7 +299,7 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
             className={cx(className, `${CLASS_NAME}__layout`)}
             title={title ?? t.text('selection_action.layout.title')}
             onSelect={() => {
-                performLayout({
+                void performLayout({
                     canvas,
                     selectedElements: new Set(elements),
                     animate: true,
@@ -728,7 +728,7 @@ function useCanEstablishLink(
         } else {
             setCanLink(undefined);
             const signal = cancellation.signal;
-            mapAbortedToNull(
+            void mapAbortedToNull(
                 editor.metadataProvider.canConnect(targetData, undefined, linkType, {signal}),
                 signal
             ).then(connections => {

@@ -18,45 +18,45 @@ class DefaultLayouts {
      *
      * @see {@link blockingDefaultLayout}
      */
-    async defaultLayout(
+    defaultLayout = async (
         graph: LayoutGraph,
         state: LayoutState,
         options?: DefaultLayoutOptions
-    ): Promise<LayoutState> {
+    ): Promise<LayoutState> => {
         return blockingDefaultLayout(graph, state, options);
-    }
+    };
 
     /**
      * Force-directed layout algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
      */
-    async forceLayout(
+    forceLayout = async (
         graph: LayoutGraph,
         state: LayoutState,
         options?: ColaForceLayoutOptions
-    ): Promise<LayoutState> {
-        return colaForceLayout(graph, state, options);
-    }
+    ): Promise<LayoutState> => {
+        return Promise.resolve(colaForceLayout(graph, state, options));
+    };
 
     /**
      * Flow layout algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
      */
-    async flowLayout(
+    flowLayout = async (
         graph: LayoutGraph,
         state: LayoutState,
         options?: ColaFlowLayoutOptions
-    ): Promise<LayoutState> {
-        return colaFlowLayout(graph, state, options);
-    }
+    ): Promise<LayoutState> => {
+        return Promise.resolve(colaFlowLayout(graph, state, options));
+    };
 
     /**
      * Remove overlaps algorithm from [cola.js](https://ialab.it.monash.edu/webcola/).
      */
-    async removeOverlaps(
+    removeOverlaps = async (
         graph: LayoutGraph,
         state: LayoutState
-    ): Promise<LayoutState> {
-        return colaRemoveOverlaps(state);
-    }
+    ): Promise<LayoutState> => {
+        return Promise.resolve(colaRemoveOverlaps(state));
+    };
 }
 
 export type { DefaultLayouts };

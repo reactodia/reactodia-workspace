@@ -553,7 +553,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         }).catch(error => {
             if (signal.aborted) { return; }
             console.error(error);
-            this.setState({querying: false, error});
+            this.setState({querying: false, error: error as unknown});
         });
     }
 

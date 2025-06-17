@@ -40,7 +40,7 @@ export function evaluateColaLayout(
 
     evaluateLayout(nodes, links);
 
-    const bounds: { [id: string]: Rect } = Object.create(null);
+    const bounds = Object.create(null) as { [id: string]: Rect };
     for (const [id, node] of nodes) {
         bounds[id] = {
             x: node.x,
@@ -136,7 +136,7 @@ export function colaRemoveOverlaps(state: LayoutState): LayoutState {
 
     cola.removeOverlaps(Array.from(nodeRectangles.values()));
 
-    const bounds: { [id: string]: Rect } = Object.create(null);
+    const bounds = Object.create(null) as { [id: string]: Rect };
     for (const [id, {x, y}] of nodeRectangles) {
         const nodeBounds = Object.hasOwn(state.bounds, id) ? state.bounds[id] : undefined;
         bounds[id] = {
@@ -164,7 +164,7 @@ export function layoutPadded(
     if (!padding) {
         return {state, unwrap: transformed => transformed};
     }
-    const paddedBounds: { [id: string]: Rect } = Object.create(null);
+    const paddedBounds = Object.create(null) as { [id: string]: Rect };
     for (const [id, {x, y, width, height}] of Object.entries(state.bounds)) {
         paddedBounds[id] = {
             x: x - padding.x,
@@ -177,7 +177,7 @@ export function layoutPadded(
     return {
         state: paddedState,
         unwrap: transformed => {
-            const shrinkBounds: { [id: string]: Rect } = Object.create(null);
+            const shrinkBounds = Object.create(null) as { [id: string]: Rect };
             for (const [id, {x, y, width, height}] of Object.entries(transformed.bounds)) {
                 shrinkBounds[id] = {
                     x: x + padding.x,
@@ -203,7 +203,7 @@ export function layoutPaddedBiasFree(
     state: LayoutState,
     padding: Vector | undefined
 ): PaddedBiasFreeLayoutState {
-    const extendedBounds: { [id: string]: Rect } = Object.create(null);
+    const extendedBounds = Object.create(null) as { [id: string]: Rect };
     let compressX = Infinity;
     let compressY = Infinity;
 
@@ -225,7 +225,7 @@ export function layoutPaddedBiasFree(
             const withoutPadding = padded.unwrap(transformed);
             const fittingBox = getContentFittingBoxForLayout(withoutPadding);
 
-            const uncompressedBounds: { [id: string]: Rect } = Object.create(null);
+            const uncompressedBounds = Object.create(null) as { [id: string]: Rect };
             for (const [id, bounds] of Object.entries(withoutPadding.bounds)) {
                 const initialBounds = Object.hasOwn(state.bounds, id) ? state.bounds[id] : undefined;
                 uncompressedBounds[id] = {

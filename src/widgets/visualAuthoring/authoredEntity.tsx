@@ -82,7 +82,7 @@ export function useAuthoredEntity(
             if (!editor.metadataProvider || (authoringEvent && authoringEvent.type === 'entityDelete')) {
                 setAllowedActions(AllowedActions.None);
             } else {
-                mapAbortedToNull(
+                void mapAbortedToNull(
                     editor.metadataProvider.canModifyEntity(entity, {signal: cancellation.signal}),
                     cancellation.signal
                 ).then(canModify => {

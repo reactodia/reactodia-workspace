@@ -309,7 +309,7 @@ function useCanModifyLink(
             const source = graph.getElement(link.sourceId) as EntityElement;
             const target = graph.getElement(link.targetId) as EntityElement;
             const signal = cancellation.signal;
-            mapAbortedToNull(
+            void mapAbortedToNull(
                 editor.metadataProvider.canModifyRelation(
                     link.data, source.data, target.data, {signal}
                 ),

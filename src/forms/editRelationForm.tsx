@@ -68,7 +68,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
         if (!lastValidated.current || !equalLinks(toValidate, lastValidated.current)) {
             const cancellation = new AbortController();
             setValidating(true);
-            validateLinkType(
+            void validateLinkType(
                 toValidate,
                 originalLink.data,
                 workspace,

@@ -70,10 +70,10 @@ function WikidataExample() {
                         <ExampleToolbarMenu />
                         <Reactodia.ToolbarAction
                             title='Clear locally-cached data previously fetched from Wikidata'
-                            onSelect={() => {
+                            onSelect={async () => {
                                 const {model: {dataProvider}} = getContext();
                                 if (dataProvider instanceof Reactodia.IndexedDbCachedProvider) {
-                                    dataProvider.clearCache();
+                                    await dataProvider.clearCache();
                                 }
                             }}>
                             Clear Wikidata cache

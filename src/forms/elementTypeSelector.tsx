@@ -93,16 +93,16 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         this.listener.listen(searchStore.events, 'changeValue', ({source}) => {
             if (source.value.length === 0) {
                 // Clear the search
-                this.searchExistingElements('');
+                void this.searchExistingElements('');
             } else {
                 this.forceUpdate();
             }
         });
         this.listener.listen(searchStore.events, 'executeSearch', ({value}) => {
-            this.searchExistingElements(value);
+            void this.searchExistingElements(value);
         });
 
-        this.fetchPossibleElementTypes();
+        void this.fetchPossibleElementTypes();
     }
 
     componentWillUnmount() {
@@ -244,7 +244,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                         <select className='reactodia-form-control'
                             name='reactodia-element-type-selector-select'
                             value={value}
-                            onChange={this.onElementTypeChange}>
+                            onChange={e => void this.onElementTypeChange(e)}>
                             <option value={PlaceholderEntityType} disabled={true}>
                                 {t.text('visual_authoring.select_entity.type.placeholder')}
                             </option>
@@ -284,7 +284,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                         element={element}
                         disabled={isAlreadyOnDiagram || !hasAppropriateType}
                         selected={element.id === elementValue.value.id}
-                        onClick={(e, model) => this.onSelectExistingItem(model)}
+                        onClick={(e, model) => void this.onSelectExistingItem(model)}
                     />
                 );
             });

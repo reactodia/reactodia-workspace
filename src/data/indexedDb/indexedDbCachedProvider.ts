@@ -275,7 +275,7 @@ export class IndexedDbCachedProvider implements DataProvider {
 
     private onClose = async () => {
         this.closeSignal.removeEventListener('abort', this.onClose);
-        this.closeDatabase();
+        await this.closeDatabase();
     };
 
     private async closeDatabase(): Promise<void> {
@@ -410,7 +410,7 @@ export class IndexedDbCachedProvider implements DataProvider {
         const lock = await this.linkLock.acquire();
         try {
             const ranges = await this.readLinkRanges(db, request);
-            const blocks = await this.selectMissingLinkBlocks(request, ranges);
+            const blocks = this.selectMissingLinkBlocks(request, ranges);
             if (blocks.length > 0) {
                 await this.fetchAndCacheLinks(db, blocks, params.signal);
                 await this.updateLinkRanges(db, ranges, request);
@@ -799,7 +799,8 @@ async function fetchSingleWithDbCache<K extends IDBValidKey, V>(
     {
         const readTx = db.transaction(storeName, 'readonly');
         const readStore = readTx.objectStore(storeName);
-        const cached: V | undefined = await indexedDbRequestAsPromise(
+        const cached = await indexedDbRequestAsPromise<V | undefined>(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             readStore.get(key)
         );
         readTx.commit();
@@ -1068,7 +1069,7 @@ function indexedDbSilentAbort(tx: IDBTransaction): void {
 }
 
 function serializeForDb<T>(value: T): T {
-    return JSON.parse(JSON.stringify(value));
+    return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function isMissingRecord<K extends string>(value: { readonly id: K }): value is MissingRecord<K> {

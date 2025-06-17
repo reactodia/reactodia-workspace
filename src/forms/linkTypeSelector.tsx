@@ -54,7 +54,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
     private updateAll = () => this.forceUpdate();
 
     componentDidMount() {
-        this.fetchPossibleLinkTypes();
+        void this.fetchPossibleLinkTypes();
     }
 
     componentDidUpdate(prevProps: LinkTypeSelectorProps) {
@@ -64,7 +64,7 @@ export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, Sta
             link.target.id === prevProps.link.target.id
         )) {
             this.setState({linkTypes: undefined});
-            this.fetchPossibleLinkTypes();
+            void this.fetchPossibleLinkTypes();
         }
     }
 

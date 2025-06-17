@@ -210,7 +210,7 @@ export function restoreViewport(canvas: CanvasApi): Command {
         return {center, scale};
     }
     function apply({center, scale}: CapturedViewport): void {
-        canvas.centerTo(center, {scale});
+        void canvas.centerTo(center, {scale});
     }
     const initialViewport = capture();
     const command = Command.create(TranslatedText.text('commands.restore_viewport.title'), () => {

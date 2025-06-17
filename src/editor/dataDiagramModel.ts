@@ -575,7 +575,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      */
     createElement(elementIriOrModel: ElementIri | ElementModel): EntityElement {
         const elementIri = typeof elementIriOrModel === 'string'
-            ? elementIriOrModel : (elementIriOrModel as ElementModel).id;
+            ? elementIriOrModel : elementIriOrModel.id;
 
         const elements = this.elements.filter((el): el is EntityElement =>
             el instanceof EntityElement && el.iri === elementIri
@@ -587,7 +587,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
         let data = typeof elementIriOrModel === 'string'
             ? EntityElement.placeholderData(elementIri)
-            : elementIriOrModel as ElementModel;
+            : elementIriOrModel;
         data = {...data, id: data.id};
         const element = new EntityElement({data});
         this.addElement(element);
@@ -1015,7 +1015,7 @@ export interface RequestLinksOptions {
 export function requestElementData(model: DataDiagramModel, elementIris: ReadonlyArray<ElementIri>): Command {
     return Command.effect(
         TranslatedText.text('data_diagram_model.request_entities.command'),
-        () => model.requestElementData(elementIris)
+        () => void model.requestElementData(elementIris)
     );
 }
 
@@ -1032,6 +1032,6 @@ export function restoreLinksBetweenElements(
 ): Command {
     return Command.effect(
         TranslatedText.text('data_diagram_model.request_relations.command'),
-        () => model.requestLinks(options)
+        () => void model.requestLinks(options)
     );
 }

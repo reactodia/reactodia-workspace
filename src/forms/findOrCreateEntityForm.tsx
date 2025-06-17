@@ -90,7 +90,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
             this.context,
             signal
         );
-        Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
+        void Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
             if (signal.aborted) { return; }
             this.setState({isValidating: false});
             this.setElementOrLink({
@@ -238,7 +238,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 AuthoringState.addEntity(editor.authoringState, target.data)
             );
         } else {
-            model.requestLinks({addedElements: [elementValue.value.id]});
+            void model.requestLinks({addedElements: [elementValue.value.id]});
         }
 
         const linkBase = relationFromExtendedLink(linkValue.link, source, target);

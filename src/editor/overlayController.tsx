@@ -202,7 +202,7 @@ export class OverlayController {
         this.updateTaskSpinner();
 
         if (delayed) {
-            delay(delayMs).then(() => {
+            void delay(delayMs).then(() => {
                 if (this._tasks.has(createdTask)) {
                     // Activate all tasks if any activates
                     for (const task of this._tasks) {
@@ -224,7 +224,7 @@ export class OverlayController {
     showSpinnerWhile(operation: Promise<unknown>): void {
         const {translation: t} = this;
         const task = this.startTask();
-        (async () => {
+        void (async () => {
             try {
                 await operation;
             } catch (err) {

@@ -221,7 +221,9 @@ interface MutableElementModel {
 
 export function getElementsInfo(
     response: SparqlResponse<ElementBinding>,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     propertyByPredicate: ReadonlyMap<string, readonly PropertyConfiguration[]> = EMPTY_MAP,
     labelPredicate: PropertyTypeIri,
     openWorldProperties: boolean
@@ -316,7 +318,9 @@ interface MutableLinkModel {
 
 export function getLinksInfo(
     bindings: ReadonlyArray<LinkBinding>,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> = EMPTY_MAP,
     openWorldLinks: boolean = true
 ): LinkModel[] {
@@ -365,6 +369,7 @@ export interface ConnectedLinkType {
 
 export function getConnectedLinkTypes(
     response: SparqlResponse<ConnectedLinkTypeBinding>,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> = EMPTY_MAP,
     openWorldLinks: boolean = true
 ): ConnectedLinkType[] {
@@ -419,7 +424,7 @@ export function getFilteredData(
     labelPredicate: PropertyTypeIri,
     openWorldLinks: boolean
 ): DataProviderLookupItem[] {
-    const predicateToConfig = linkByPredicateType ?? EMPTY_MAP;
+    const predicateToConfig: typeof linkByPredicateType = linkByPredicateType ?? EMPTY_MAP;
 
     const instances = new Map<ElementIri, MutableElementModel>();
     const resultTypes = new Map<ElementIri, Set<ElementTypeIri>>();
@@ -466,13 +471,13 @@ export function getFilteredData(
             model.types.sort();
             const outLinks = new Set(translateLinkPredicates(
                 sourceTypes,
-                outPredicates.get(model.id) ?? EMPTY_SET,
+                outPredicates.get(model.id) ?? (EMPTY_SET as ReadonlySet<string>),
                 predicateToConfig,
                 openWorldLinks
             ));
             const inLinks = new Set(translateLinkPredicates(
                 targetTypes,
-                inPredicates.get(model.id) ?? EMPTY_SET,
+                inPredicates.get(model.id) ?? (EMPTY_SET as ReadonlySet<string>),
                 predicateToConfig,
                 openWorldLinks
             ));

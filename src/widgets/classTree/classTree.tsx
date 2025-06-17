@@ -274,7 +274,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.createElementCancellation.abort();
     }
 
-    private async initClassTree() {
+    private initClassTree() {
         const {workspace: {model}} = this.props;
         const {fetchedGraph} = this.state;
         const {dataProvider} = model;
@@ -282,7 +282,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
             this.refreshClassTree();
         } else if (dataProvider) {
             this.setState({fetchedGraph: undefined}, () => {
-                this.fetchTypeGraph(dataProvider);
+                void this.fetchTypeGraph(dataProvider);
             });
         } else {
             this.refreshClassTree();
@@ -340,13 +340,13 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     };
 
     private onCreateInstance = (node: TreeNode) => {
-        this.createInstanceAt(node.iri);
+        void this.createInstanceAt(node.iri);
     };
 
     private onDragCreate = (node: TreeNode) => {
         const {workspace: {view}} = this.props;
         view.setHandlerForNextDropOnPaper(e => {
-            this.createInstanceAt(node.iri, e);
+            void this.createInstanceAt(node.iri, e);
         });
     };
 
@@ -368,7 +368,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
                 if (newIris.size > 0) {
                     refreshingState = 'loading';
-                    this.queryCreatableTypes(newIris, cancellation.signal);
+                    void this.queryCreatableTypes(newIris, cancellation.signal);
                 }
             }
 
@@ -377,7 +377,10 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         });
     };
 
-    private async queryCreatableTypes(typeIris: Set<ElementTypeIri>, signal: AbortSignal) {
+    private async queryCreatableTypes(
+        typeIris: Set<ElementTypeIri>,
+        signal: AbortSignal
+    ): Promise<void> {
         const {workspace: {editor}} = this.props;
         const {metadataProvider} = editor;
         if (!metadataProvider) {
@@ -404,7 +407,10 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         }
     }
 
-    private async createInstanceAt(elementType: ElementTypeIri, dropEvent?: CanvasDropEvent) {
+    private async createInstanceAt(
+        elementType: ElementTypeIri,
+        dropEvent?: CanvasDropEvent
+    ): Promise<void> {
         const {workspace: {model, view, editor, getCommandBus}} = this.props;
         const batch = model.history.startBatch();
 

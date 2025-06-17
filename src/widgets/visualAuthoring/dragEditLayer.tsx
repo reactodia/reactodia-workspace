@@ -327,7 +327,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         // show spinner while waiting for additional MetadataApi queries
         this.setState({waitingForMetadata: true});
         const selectedPosition = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
-        this.executeEditOperation(selectedPosition);
+        void this.executeEditOperation(selectedPosition);
     };
 
     private async executeEditOperation(selectedPosition: Vector): Promise<void> {

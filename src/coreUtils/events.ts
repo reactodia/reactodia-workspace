@@ -135,7 +135,7 @@ export class EventSource<Data> implements Events<Data>, EventTrigger<Data> {
 
         if (this.anyListeners) {
             for (const anyListener of this.anyListeners) {
-                anyListener({[eventKey]: data} as any);
+                anyListener({[eventKey]: data} as unknown as Partial<Data>);
             }
         }
     }

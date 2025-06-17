@@ -1,14 +1,14 @@
 import type { TypeStyleResolver, LinkTemplate, LinkTemplateResolver } from './diagram/customization';
 
-const classIcon = require('@images/semantic/class.svg');
-const objectPropertyIcon = require('@images/semantic/objectProperty.svg');
-const datatypePropertyIcon = require('@images/semantic/datatypeProperty.svg');
-const personIcon = require('@images/semantic/person.svg');
-const countryIcon = require('@images/semantic/country.svg');
-const organizationIcon = require('@images/semantic/organization.svg');
-const locationIcon = require('@images/semantic/location.svg');
-const eventIcon = require('@images/semantic/event.svg');
-const objectIcon = require('@images/semantic/object.svg');
+const classIcon = require('@images/semantic/class.svg') as string;
+const objectPropertyIcon = require('@images/semantic/objectProperty.svg') as string;
+const datatypePropertyIcon = require('@images/semantic/datatypeProperty.svg') as string;
+const personIcon = require('@images/semantic/person.svg') as string;
+const countryIcon = require('@images/semantic/country.svg') as string;
+const organizationIcon = require('@images/semantic/organization.svg') as string;
+const locationIcon = require('@images/semantic/location.svg') as string;
+const eventIcon = require('@images/semantic/event.svg') as string;
+const objectIcon = require('@images/semantic/object.svg') as string;
 
 /**
  * Built-in type style provider for Semantic Web element types:

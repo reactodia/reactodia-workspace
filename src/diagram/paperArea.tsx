@@ -278,7 +278,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     componentDidMount() {
-        this.adjustPaper(() => this.centerTo());
+        this.adjustPaper(() => void this.centerTo());
 
         const {model, renderingState} = this.props;
         const delayedAdjust = () => this.delayedPaperAdjust.call(this.adjustPaper);
@@ -612,7 +612,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         );
 
         const scale = originMetrics.getTransform().scale * scaleMultiplier;
-        this.centerTo(movedCenter, {scale});
+        void this.centerTo(movedCenter, {scale});
         return true;
     }
 
@@ -689,7 +689,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             e.preventDefault();
             const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
             const pivot = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
-            this.zoomBy(-delta * 0.1, {pivot});
+            void this.zoomBy(-delta * 0.1, {pivot});
         }
     };
 

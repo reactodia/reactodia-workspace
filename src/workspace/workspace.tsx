@@ -243,7 +243,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         this.listener.listen(model.events, 'loadingSuccess', () => {
             for (const canvas of view.findAllCanvases()) {
                 canvas.renderingState.syncUpdate();
-                canvas.zoomToFit();
+                void canvas.zoomToFit();
             }
         });
 
@@ -388,7 +388,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             applyLayout(calculatedLayout, model);
             batch.store();
             if (zoomToFit) {
-                canvas.zoomToFit();
+                await canvas.zoomToFit();
             }
         }
     };
@@ -517,7 +517,7 @@ export function useLoadedWorkspace(
             const latestOnLoad = stateRef.current!.latestOnLoad;
 
             const controller = new AbortController();
-            (async () => {
+            void (async () => {
                 const task = context.overlay.startTask();
                 try {
                     // Move execution into a microtask to avoid React warnings

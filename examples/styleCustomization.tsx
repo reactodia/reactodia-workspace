@@ -5,9 +5,9 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const BOOK_ICON = require('@vscode/codicons/src/icons/book.svg');
-const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg');
-const COG_ICON = require('@vscode/codicons/src/icons/gear.svg');
+const BOOK_ICON = require('@vscode/codicons/src/icons/book.svg') as string;
+const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg') as string;
+const COG_ICON = require('@vscode/codicons/src/icons/gear.svg') as string;
 
 const EXAMPLE_DIAGRAM = require('./resources/exampleDiagram.json') as Reactodia.SerializedDiagram;
 const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
