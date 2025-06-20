@@ -7,12 +7,13 @@ export interface ToSVGOptions {
     styleRoot: HTMLElement | SVGElement;
     layers: ReadonlyArray<SVGSVGElement | HTMLElement>;
     contentBox: Rect;
+    /** @default false */
     preserveDimensions?: boolean;
+    /** @default false */
     convertImagesToDataUris?: boolean;
+    /** @default [] */
     removeByCssSelectors?: ReadonlyArray<string>;
     watermarkSvg?: string;
-    /** @default {x: 100, y: 100} */
-    borderPadding?: Vector;
     /** @default false */
     addXmlHeader?: boolean;
 }
@@ -23,7 +24,6 @@ interface Bounds {
 }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const DEFAULT_BORDER_PADDING: Vector = {x: 100, y: 100};
 const XML_ENCODING_HEADER = '<?xml version="1.0" encoding="UTF-8"?>';
 
 /**
@@ -41,18 +41,12 @@ export function toSVG(options: ToSVGOptions): Promise<string> {
 async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
     const {
         colorSchemeApi,
-        contentBox: bbox,
+        contentBox: viewBox,
         watermarkSvg,
+        preserveDimensions,
+        convertImagesToDataUris,
         removeByCssSelectors = [],
-        borderPadding = DEFAULT_BORDER_PADDING,
     } = options;
-
-    const viewBox: Rect = {
-        x: bbox.x - borderPadding.x,
-        y: bbox.y - borderPadding.y,
-        width: bbox.width + 2 * borderPadding.x,
-        height: bbox.height + 2 * borderPadding.y,
-    };
 
     let cssPropertyValues!: ReturnType<typeof captureCustomCssPropertyValues>;
     let clonedPaperSvg!: ReturnType<typeof composeExportedSvg>;
@@ -69,9 +63,16 @@ async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
     }
 
     // Workaround to include only library-related stylesheets
-    const exportedCssText = extractCSSFromDocument(composedSvg);
+    const appliedCssRules = collectAppliedCssFromDocument(composedSvg);
 
-    if (options.preserveDimensions) {
+    const imageUrls = new Map<string, string | null>();
+    if (convertImagesToDataUris) {
+        collectImageUrlsFromElements(composedSvg, imageUrls);
+        collectImageUrlsFromCssRules(appliedCssRules, imageUrls);
+        collectImageUrlsFromInlineStyles(composedSvg, imageUrls);
+    }
+
+    if (preserveDimensions) {
         composedSvg.setAttribute('width', String(viewBox.width));
         composedSvg.setAttribute('height', String(viewBox.height));
     } else {
@@ -79,40 +80,33 @@ async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         composedSvg.setAttribute('height', '100%');
     }
 
-    
     composedSvg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
 
     if (watermarkSvg) {
         addWatermark(composedSvg, viewBox, watermarkSvg);
     }
 
-    const images = Array.from(composedSvg.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
+    await fetchImages(imageUrls);
+
+    for (const img of composedSvg.querySelectorAll('img')) {
         const exportKey = img.getAttribute('export-key');
         img.removeAttribute('export-key');
         if (exportKey) {
             const {width, height} = imageBounds[exportKey];
             img.setAttribute('width', width.toString());
             img.setAttribute('height', height.toString());
-            if (!options.convertImagesToDataUris) {
-                return Promise.resolve();
+            const exportedUrl = imageUrls.get(img.src);
+            if (exportedUrl) {
+                img.src = exportedUrl;
             }
-            return exportAsDataUri(img).then(dataUri => {
-                if (dataUri && dataUri !== 'data:image/svg+xml,') {
-                    img.src = dataUri;
-                }
-            }).catch(err => {
-                console.warn('Reactodia: Failed to export image: ' + img.src, err);
-            });
-        } else {
-            return Promise.resolve();
         }
-    }));
+    }
+    embedImageUrlsToInlineStyles(composedSvg, imageUrls);
 
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = (
         `<style>${serializeCssPropertyValues(cssPropertyValues)}</style>\n` +
-        `<style>${exportedCssText}</style>`
+        `<style>${exportCssRules(appliedCssRules, imageUrls)}</style>`
     );
     composedSvg.insertBefore(defs, composedSvg.firstChild);
 
@@ -140,10 +134,9 @@ function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {
     svg.insertBefore(image, svg.firstChild);
 }
 
-function extractCSSFromDocument(targetSubtree: Element): string {
-    const exportedParts: string[] = [];
-
+function collectAppliedCssFromDocument(targetSubtree: Element): CSSStyleRule[] {
     const visitedRules = new Set<CSSRule>();
+    const appliedRules: CSSStyleRule[] = [];
     const visitRule = (rule: CSSRule): void => {
         if (visitedRules.has(rule)) {
             return;
@@ -152,7 +145,7 @@ function extractCSSFromDocument(targetSubtree: Element): string {
         if (rule instanceof CSSStyleRule) {
             const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
             if (targetSubtree.querySelector(selectorWithoutPseudo)) {
-                exportedParts.push(rule.cssText);
+                appliedRules.push(rule);
             }
         } else if (rule instanceof CSSLayerBlockRule) {
             for (const subRule of rule.cssRules) {
@@ -178,7 +171,171 @@ function extractCSSFromDocument(targetSubtree: Element): string {
         }
     }
 
-    return exportedParts.join('\n');
+    return appliedRules;
+}
+
+function collectImageUrlsFromElements(
+    target: Element,
+    imageUrls: Map<string, string | null>
+) {
+    for (const img of target.querySelectorAll('img')) {
+        if (img.src && !imageUrls.has(img.src)) {
+            imageUrls.set(img.src, null);
+        }
+    }
+}
+
+function collectImageUrlsFromCssRules(
+    rules: readonly CSSStyleRule[],
+    imageUrls: Map<string, string | null>
+): void {
+    for (const rule of rules) {
+        const maskUrl = parseCssImageUrl(rule.style.getPropertyValue('mask-image'));
+        if (maskUrl && !imageUrls.has(maskUrl)) {
+            imageUrls.set(maskUrl, null);
+        }
+
+        const backgroundUrl = parseCssImageUrl(rule.style.getPropertyValue('background-image'));
+        if (backgroundUrl && !imageUrls.has(backgroundUrl)) {
+            imageUrls.set(backgroundUrl, null);
+        }
+    }
+}
+
+function collectImageUrlsFromInlineStyles(
+    target: Element,
+    imageUrls: Map<string, string | null>
+): void {
+    const visited = new Set<Element>();
+    const visit = (element: Element): void => {
+        if (visited.has(element)) {
+            return;
+        }
+        visited.add(element);
+        if (element instanceof HTMLElement) {
+            const maskUrl = parseCssImageUrl(element.style.maskImage);
+            if (maskUrl && !imageUrls.has(maskUrl)) {
+                imageUrls.set(maskUrl, null);
+            }
+
+            const backgroundUrl = parseCssImageUrl(element.style.backgroundImage);
+            if (backgroundUrl && !imageUrls.has(backgroundUrl)) {
+                imageUrls.set(backgroundUrl, null);
+            }
+        }
+        for (const child of element.children) {
+            visit(child);
+        }
+    };
+    visit(target);
+}
+
+function embedImageUrlsToInlineStyles(
+    target: Element,
+    imageUrls: Map<string, string | null>
+): void {
+    const visited = new Set<Element>();
+    const visit = (element: Element): void => {
+        if (visited.has(element)) {
+            return;
+        }
+        visited.add(element);
+        if (element instanceof HTMLElement) {
+            const maskUrl = parseCssImageUrl(element.style.maskImage);
+            const exportedMaskUrl = maskUrl ? imageUrls.get(maskUrl) : undefined;
+            if (exportedMaskUrl) {
+                element.style.maskImage = serializeCssImageUrl(exportedMaskUrl);
+            }
+
+            const backgroundUrl = parseCssImageUrl(element.style.backgroundImage);
+            const exportedBackgroundUrl = backgroundUrl ? imageUrls.get(backgroundUrl) : undefined;
+            if (exportedBackgroundUrl) {
+                element.style.backgroundImage = serializeCssImageUrl(exportedBackgroundUrl);
+            }
+        }
+        for (const child of element.children) {
+            visit(child);
+        }
+    };
+    visit(target);
+}
+
+async function fetchImages(imageUrls: Map<string, string | null>): Promise<void> {
+    await Promise.all(Array.from(imageUrls.keys(), async sourceUrl => {
+        if (sourceUrl.startsWith('data:')) {
+            return;
+        }
+        try {
+            const dataUri = await exportImageAsDataUri(sourceUrl);
+            if (dataUri && dataUri !== 'data:image/svg+xml,') {
+                imageUrls.set(sourceUrl, dataUri);
+            }
+        } catch (err) {
+            console.warn('Reactodia: Failed to export image: ' + sourceUrl, err);
+        }
+    }));
+}
+
+function exportCssRules(
+    rules: readonly CSSStyleRule[],
+    imageUrls: ReadonlyMap<string, string | null>
+): string {
+    const cssTexts = rules.map(rule => rule.cssText);
+
+    const styleElement = document.createElement('style');
+    document.body.appendChild(styleElement);
+    const sheet = styleElement.sheet;
+
+    try {
+        for (let i = 0; i < rules.length; i++) {
+            const rule = rules[i];
+
+            const maskUrl = parseCssImageUrl(rule.style.getPropertyValue('mask-image'));
+            const exportedMaskUrl = maskUrl ? imageUrls.get(maskUrl) : undefined;
+
+            const backgroundUrl = parseCssImageUrl(rule.style.getPropertyValue('background-image'));
+            const exportedBackgroundUrl = backgroundUrl ? imageUrls.get(backgroundUrl) : undefined;
+
+            if (sheet && (exportedMaskUrl || exportedBackgroundUrl)) {
+                sheet.insertRule(rule.cssText);
+                const ruleCopy = sheet.cssRules[0];
+                if (ruleCopy instanceof CSSStyleRule) {
+                    if (exportedMaskUrl) {
+                        ruleCopy.style.setProperty('mask-image', serializeCssImageUrl(exportedMaskUrl));
+                    }
+                    if (exportedBackgroundUrl) {
+                        ruleCopy.style.setProperty('background-image', serializeCssImageUrl(exportedBackgroundUrl));
+                    }
+                    cssTexts[i] = ruleCopy.cssText;
+                }
+                sheet.deleteRule(0);
+            } 
+        }
+    } finally {
+        document.body.removeChild(styleElement);
+    }
+    return cssTexts.join('\n');
+}
+
+function parseCssImageUrl(imageValue: string | undefined): string | undefined {
+    if (imageValue) {
+        const trimmedValue = imageValue.trim();
+
+        let match = /^url\(\s*'(.*)'\s*\)$/i.exec(trimmedValue);
+        if (match) {
+            return match[1];
+        }
+
+        match = /^url\(\s*"(.*)"\s*\)$/i.exec(trimmedValue);
+        if (match) {
+            return match[1];
+        }
+    }
+    return undefined;
+}
+
+function serializeCssImageUrl(dataUri: string): string {
+    return `url("${dataUri}")`;
 }
 
 function composeExportedSvg(layers: ToSVGOptions['layers'], viewBox: Rect): {
@@ -242,8 +399,7 @@ function findSvgLayerViewport(layer: SVGSVGElement): SVGGElement | undefined {
     return undefined;
 }
 
-async function exportAsDataUri(original: HTMLImageElement): Promise<string> {
-    const url = original.src;
+async function exportImageAsDataUri(url: string): Promise<string> {
     if (!url || url.startsWith('data:')) {
         return url;
     }
@@ -255,16 +411,18 @@ async function exportAsDataUri(original: HTMLImageElement): Promise<string> {
     if (extension === 'svg') {
         try {
             const response = await fetch(url);
-            const svgText = await response.text();
-            if (svgText.length > 0) {
-                return 'data:image/svg+xml,' + encodeURIComponent(svgText);
+            if (response.ok) {
+                const svgText = await response.text();
+                if (svgText.length > 0) {
+                    return 'data:image/svg+xml,' + encodeURIComponent(svgText.replace(/\r\n/g, '\n'));
+                }
             }
         } catch (err) {
             /* Failed to fetch image as SVG */
         }
     }
 
-    const image = await loadCrossOriginImage(original.src);
+    const image = await loadCrossOriginImage(url);
     const canvas = document.createElement('canvas');
     canvas.width = image.width;
     canvas.height = image.height;
