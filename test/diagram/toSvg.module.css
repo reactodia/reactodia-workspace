@@ -1,0 +1,25 @@
+.icon {
+  position: absolute;
+  content: '';
+  display: block;
+  height: 36px;
+  width: 36px;
+}
+
+.inlineMask {
+  mask: url("./toSvg.inline.svg") 0px 0px / contain no-repeat;
+  background-color: lightgreen;
+}
+
+.resourceMask {
+  mask: url("./toSvg.resource.svg") 0px 0px / contain no-repeat;
+  background-color: green;
+}
+
+.inlineBackground {
+  background: url("./toSvg.inline.svg") 0px 0px / contain no-repeat;
+}
+
+.resourceBackground {
+  background: url("./toSvg.resource.svg") 0px 0px / contain no-repeat;
+}
