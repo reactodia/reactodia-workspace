@@ -518,6 +518,12 @@ export interface ZoomOptions {
  */
 export interface ExportSvgOptions {
     /**
+     * Padding size (in pixels) around the content for the exported diagram.
+     *
+     * @default {x: 100, y: 100}
+     */
+    contentPadding?: Vector;
+    /**
      * CSS selectors to exclude specific DOM elements from the exported diagram.
      *
      * By default, any element with `data-reactodia-no-export` is removed.

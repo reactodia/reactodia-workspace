@@ -902,6 +902,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private makeToSVGOptions(baseOptions: ExportSvgOptions): ToSVGOptions {
         const {colorSchemeApi} = this.props;
         const {
+            contentPadding = {x: 100, y: 100},
             removeByCssSelectors = [],
         } = baseOptions;
         const linkLayer = this.linkLayerRef.current;
@@ -910,10 +911,16 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         if (!(linkLayer && labelLayer && elementLayer)) {
             throw new Error('Cannot find element, link or label layers to export');
         }
+        const box = this.getContentFittingBox();
         return {
             colorSchemeApi,
             styleRoot: linkLayer,
-            contentBox: this.getContentFittingBox(),
+            contentBox: {
+                x: box.x - contentPadding.x,
+                y: box.y - contentPadding.y,
+                width: box.width + contentPadding.x * 2,
+                height: box.height + contentPadding.y * 2,
+            },
             layers: [
                 linkLayer,
                 labelLayer,
