@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 
+## [0.30.1] - 2025-06-27
+#### 🐛 Fixed
+- Fix `BaseMetadataProvider` not delegating `canModifyRelation` method from object passed in its constructor.
+- Make `CanvasApi.{exportSvg, exportRaster}` export images referenced in CSS stylesheets or inline styles from `mask` (`mask-image`) or `background` (`background-image`) CSS properties.
+- Fix incomplete styles for exported canvas due to non-captured custom CSS property values in Chromium-based browsers.
+- Fix issues when setting a mutable selection array, e.g. `model.setSelection(model.elements)`.
+- Fix moving elements with `Selection` does not adding an undo command to the history.
+
+#### ⏱ Performance
+- Avoid unnecessary component updates in `Halo` and `HaloLink` when multiple elements are selected.
+
+#### 💅 Polish
+- Expose `contentPadding` option for `CanvasApi.{exportSvg, exportRaster}` methods to configure padding for the exported diagram.
+
 ## [0.30.0] - 2025-06-15
 #### 🚀 New Features
 - Support authoring relation properties:
@@ -473,7 +487,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.1...HEAD
+[0.30.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.0...v0.30.1
 [0.30.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.28.1...v0.29.0
