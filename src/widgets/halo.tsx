@@ -53,22 +53,22 @@ export interface HaloProps {
 export function Halo(props: HaloProps) {
     const {model, canvas} = useCanvas();
 
-    const selection = useObservedProperty(
+    const singleTarget = useObservedProperty(
         model.events,
         'changeSelection',
-        () => model.selection
+        () => {
+            const target = model.selection.length === 1 ? model.selection[0] : undefined;
+            return target instanceof Element ? target : undefined;
+        }
     );
 
-    if (selection.length === 1) {
-        const [target] = selection;
-        if (target instanceof Element) {
-            return (
-                <HaloInner {...props}
-                    target={target}
-                    canvas={canvas}
-                />
-            );
-        }
+    if (singleTarget) {
+        return (
+            <HaloInner {...props}
+                target={singleTarget}
+                canvas={canvas}
+            />
+        );
     }
     return null;
 }

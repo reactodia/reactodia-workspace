@@ -69,19 +69,22 @@ export function HaloLink(props: HaloLinkProps) {
     const {canvas, model} = useCanvas();
 
     const selectionStore = useEventStore(model.events, 'changeSelection');
-    const selection = useSyncStore(selectionStore, () => model.selection);
-
-    if (selection.length === 1) {
-        const [target] = model.selection;
-        if (target instanceof Link) {
-            return (
-                <HaloLinkInner {...props}
-                    target={target}
-                    model={model}
-                    canvas={canvas}
-                />
-            );
+    const singleTarget = useSyncStore(
+        selectionStore,
+        () => {
+            const target = model.selection.length === 1 ? model.selection[0] : undefined;
+            return target instanceof Link ? target : undefined;
         }
+    );
+
+    if (singleTarget) {
+        return (
+            <HaloLinkInner {...props}
+                target={singleTarget}
+                model={model}
+                canvas={canvas}
+            />
+        );
     }
     return null;
 }

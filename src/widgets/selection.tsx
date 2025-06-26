@@ -137,7 +137,7 @@ export function Selection(props: SelectionProps) {
     }, []);
 
     useCanvasHotkey(hotkeySelectAll === undefined ? 'Mod+A' : hotkeySelectAll, () => {
-        model.setSelection([...model.elements]);
+        model.setSelection(model.elements);
     });
 
     if (highlightedBox || selectedElements.length > 1) {

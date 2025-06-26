@@ -1,6 +1,6 @@
 import { moveComparator } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
-import { LabelLanguageSelector, Translation } from '../coreUtils/i18n';
+import { Translation } from '../coreUtils/i18n';
 
 import { LinkTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
@@ -191,11 +191,13 @@ export class DiagramModel implements GraphStructure {
         const previous = this._selection;
         if (previous === value) { return; }
 
+        const nextSelection = Array.from(value);
         // Bring selected elements to front before new selection is observed
-        const selectedElements = value.filter((cell): cell is Element => cell instanceof Element);
+        const selectedElements = nextSelection
+            .filter((cell): cell is Element => cell instanceof Element);
         this.bringElements(selectedElements, 'front');
 
-        this._selection = value;
+        this._selection = nextSelection;
         this.source.trigger('changeSelection', {source: this, previous});
     }
 
