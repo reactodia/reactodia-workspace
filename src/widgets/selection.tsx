@@ -9,6 +9,7 @@ import type { HotkeyString } from '../coreUtils/hotkey';
 
 import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
 import { defineCanvasWidget, useCanvasHotkey } from '../diagram/canvasWidget';
+import { RestoreGeometry } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import {
     Rect, SizeProvider, Vector, boundsOf, findElementAtPoint, getContentFittingBox,
@@ -246,6 +247,13 @@ function SelectionBox(props: SelectionBoxProps) {
     if (!moveControllerRef.current) {
         moveControllerRef.current = new StatefulMoveController(canvas, model);
     }
+
+    React.useEffect(() => {
+        return () => {
+            moveControllerRef.current?.onPointerUp();
+        };
+    }, []);
+
     const moveController = moveControllerRef.current;
     moveController.setElements(selectedElements);
 
@@ -350,6 +358,7 @@ class StatefulMoveController {
     private moveState: {
         readonly origin: Vector;
         readonly positions: ReadonlyMap<Element, Vector>;
+        readonly command: RestoreGeometry;
     } | undefined;
 
     constructor(
@@ -388,7 +397,11 @@ class StatefulMoveController {
         for (const element of elements) {
             positions.set(element, element.position);
         }
-        this.moveState = {origin, positions};
+        this.moveState = {
+            origin,
+            positions,
+            command: RestoreGeometry.capturePartial(elements, []),
+        };
     };
 
     private isToggleSelectionEvent(e: React.MouseEvent): boolean {
@@ -412,9 +425,12 @@ class StatefulMoveController {
         }
     };
 
-    onPointerUp = (e: React.PointerEvent) => {
+    onPointerUp = (e?: React.PointerEvent) => {
         if (this.moveState) {
-            e.preventDefault();
+            e?.preventDefault();
+            if (this.moveState.command.hasChanges()) {
+                this.model.history.registerToUndo(this.moveState.command);
+            }
             this.moveState = undefined;
         }
     };
