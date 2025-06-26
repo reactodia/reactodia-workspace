@@ -48,11 +48,15 @@ async function exportSVG(options: ToSVGOptions): Promise<SVGElement> {
         removeByCssSelectors = [],
     } = options;
 
-    let cssPropertyValues!: ReturnType<typeof captureCustomCssPropertyValues>;
     let clonedPaperSvg!: ReturnType<typeof composeExportedSvg>;
+    let cssPropertyValues!: ReturnType<typeof captureCustomCssPropertyValues>;
     colorSchemeApi.actInColorScheme('light', () => {
-        cssPropertyValues = captureCustomCssPropertyValues(options.styleRoot);
         clonedPaperSvg = composeExportedSvg(options.layers, viewBox);
+
+        const knownProperties = new Set<string>();
+        collectKnownPropertiesFromCssRules(knownProperties);
+        collectKnownPropertiesFromInlineStyles(clonedPaperSvg.composedSvg, knownProperties);
+        cssPropertyValues = captureCustomCssPropertyValues(options.styleRoot, knownProperties);
     });
 
     const {composedSvg, imageBounds} = clonedPaperSvg;
@@ -135,42 +139,13 @@ function addWatermark(svg: SVGElement, viewBox: Rect, watermarkSvg: string) {
 }
 
 function collectAppliedCssFromDocument(targetSubtree: Element): CSSStyleRule[] {
-    const visitedRules = new Set<CSSRule>();
     const appliedRules: CSSStyleRule[] = [];
-    const visitRule = (rule: CSSRule): void => {
-        if (visitedRules.has(rule)) {
-            return;
+    enumerateStylesheets(rule => {
+        const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
+        if (targetSubtree.querySelector(selectorWithoutPseudo)) {
+            appliedRules.push(rule);
         }
-        visitedRules.add(rule);
-        if (rule instanceof CSSStyleRule) {
-            const selectorWithoutPseudo = rule.selectorText.replace(/::[a-zA-Z-]+$/, '');
-            if (targetSubtree.querySelector(selectorWithoutPseudo)) {
-                appliedRules.push(rule);
-            }
-        } else if (rule instanceof CSSLayerBlockRule) {
-            for (const subRule of rule.cssRules) {
-                visitRule(subRule);
-            }
-        }
-    };
-
-    for (let i = 0; i < document.styleSheets.length; i++) {
-        let rules: CSSRuleList;
-        try {
-            const cssSheet = document.styleSheets[i];
-            rules = cssSheet.cssRules || cssSheet.rules;
-            if (!rules) {
-                continue;
-            }
-        } catch (e) {
-            continue;
-        }
-
-        for (const rule of rules) {
-            visitRule(rule);
-        }
-    }
-
+    });
     return appliedRules;
 }
 
@@ -206,12 +181,7 @@ function collectImageUrlsFromInlineStyles(
     target: Element,
     imageUrls: Map<string, string | null>
 ): void {
-    const visited = new Set<Element>();
-    const visit = (element: Element): void => {
-        if (visited.has(element)) {
-            return;
-        }
-        visited.add(element);
+    enumerateDescendants(target, element => {
         if (element instanceof HTMLElement) {
             const maskUrl = parseCssImageUrl(element.style.maskImage);
             if (maskUrl && !imageUrls.has(maskUrl)) {
@@ -223,23 +193,14 @@ function collectImageUrlsFromInlineStyles(
                 imageUrls.set(backgroundUrl, null);
             }
         }
-        for (const child of element.children) {
-            visit(child);
-        }
-    };
-    visit(target);
+    });
 }
 
 function embedImageUrlsToInlineStyles(
     target: Element,
     imageUrls: Map<string, string | null>
 ): void {
-    const visited = new Set<Element>();
-    const visit = (element: Element): void => {
-        if (visited.has(element)) {
-            return;
-        }
-        visited.add(element);
+    enumerateDescendants(target, element => {
         if (element instanceof HTMLElement) {
             const maskUrl = parseCssImageUrl(element.style.maskImage);
             const exportedMaskUrl = maskUrl ? imageUrls.get(maskUrl) : undefined;
@@ -253,11 +214,7 @@ function embedImageUrlsToInlineStyles(
                 element.style.backgroundImage = serializeCssImageUrl(exportedBackgroundUrl);
             }
         }
-        for (const child of element.children) {
-            visit(child);
-        }
-    };
-    visit(target);
+    });
 }
 
 async function fetchImages(imageUrls: Map<string, string | null>): Promise<void> {
@@ -449,16 +406,115 @@ function loadCrossOriginImage(src: string): Promise<HTMLImageElement> {
     return promise;
 }
 
-function captureCustomCssPropertyValues(element: Element): Map<string, string> {
-    const styles = getComputedStyle(element);
+function collectKnownPropertiesFromCssRules(foundProperties: Set<string>): void {
+    enumerateStylesheets(rule => {
+        for (let i = 0; i < rule.style.length; i++) {
+            const property = rule.style[i];
+            if (property.startsWith('--') && !foundProperties.has(property)) {
+                foundProperties.add(property);
+            }
+        }
+    });
+}
+
+function collectKnownPropertiesFromInlineStyles(target: Element, foundProperties: Set<string>): void {
+    const visit = (element: Element) => {
+        if (element instanceof HTMLElement) {
+            for (let i = 0; i < element.style.length; i++) {
+                const property = element.style[i];
+                if (property.startsWith('--') && !foundProperties.has(property)) {
+                    foundProperties.add(property);
+                }
+            }
+        }
+    };
+
+    // Visit all element descendants
+    enumerateDescendants(target, visit);
+
+    // Visit parent element chain
+    let parent = target.parentElement;
+    while (parent) {
+        visit(parent);
+        parent = parent.parentElement;
+    }
+}
+
+function captureCustomCssPropertyValues(
+    element: Element,
+    knownProperties: ReadonlySet<string>
+): Map<string, string> {
     const propertyValues = new Map<string, string>();
+
+    const styles = getComputedStyle(element);
     for (const property of styles) {
         if (property.startsWith('--')) {
             const value = styles.getPropertyValue(property);
             propertyValues.set(property, value);
         }
     }
+
+    // Workaround for Chromium not iterating over custom CSS properties in getComputedStyle():
+    // https://issues.chromium.org/issues/41451306
+    for (const property of knownProperties) {
+        if (!propertyValues.has(property)) {
+            const value = styles.getPropertyValue(property);
+            if (value !== undefined) {
+                propertyValues.set(property, value);
+            }
+        }
+    }
+
     return propertyValues;
+}
+
+function enumerateStylesheets(visit: (rule: CSSStyleRule) => void): void {
+    const visitedRules = new WeakSet<CSSRule>();
+    const visitRule = (rule: CSSRule): void => {
+        if (visitedRules.has(rule)) {
+            return;
+        }
+        visitedRules.add(rule);
+        if (rule instanceof CSSStyleRule) {
+            visit(rule);
+        } else if (rule instanceof CSSLayerBlockRule) {
+            for (const subRule of rule.cssRules) {
+                visitRule(subRule);
+            }
+        }
+    };
+
+    for (let i = 0; i < document.styleSheets.length; i++) {
+        let rules: CSSRuleList;
+        try {
+            const cssSheet = document.styleSheets[i];
+            rules = cssSheet.cssRules || cssSheet.rules;
+            if (!rules) {
+                continue;
+            }
+        } catch (e) {
+            continue;
+        }
+
+        for (const rule of rules) {
+            visitRule(rule);
+        }
+    }
+}
+
+function enumerateDescendants(target: Element, visit: (element: Element) => void): void {
+    const visited = new WeakSet<Element>();
+    const visitElement = (element: Element): void => {
+        if (visited.has(element)) {
+            return;
+        }
+        visited.add(element);
+        visit(element);
+        for (const child of element.children) {
+            visitElement(child);
+        }
+    };
+    visitElement(target);
 }
 
 function serializeCssPropertyValues(propertyValues: ReadonlyMap<string, string>) {
