@@ -150,6 +150,7 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
+        "apply_authored_changes.command": { "$ref": "#/$defs/Value" },
         "discard_change.command": { "$ref": "#/$defs/Value" },
         "entity_add.command": { "$ref": "#/$defs/Value" },
         "entity_change.command": { "$ref": "#/$defs/Value" },

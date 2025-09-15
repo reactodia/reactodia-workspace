@@ -103,6 +103,7 @@
     "drop.command": "Drag and drop onto diagram"
   },
   "editor_controller": {
+    "apply_authored_changes.command": "Apply authored changes to the diagram",
     "discard_change.command": "Discard change",
     "entity_add.command": "Create new entity",
     "entity_change.command": "Edit entity",

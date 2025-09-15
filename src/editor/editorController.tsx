@@ -687,6 +687,79 @@ export class EditorController {
         }
         this.model.regroupLinks(toRegroup);
     }
+
+    /**
+     * Applies changes from {@link authoringState} (including link deletion and entity IRI changes)
+     * to the diagram and resets the authoring state to {@link AuthoringState.empty}.
+     *
+     * The operation puts a command to the {@link DiagramModel.history command history}.
+     */
+    applyAuthoringChanges(): void {
+        const state = this.authoringState;
+
+        const batch = this.model.history.startBatch(
+            TranslatedText.text('editor_controller.apply_authored_changes.command')
+        );
+        for (const event of state.links.values()) {
+            if (event.type === 'relationChange') {
+                batch.history.execute(changeRelationData(this.model, event.before, event.data));
+            }
+        }
+
+        const removedLinks: Link[] = [];
+        for (const link of this.model.links) {
+            if (link instanceof RelationLink) {
+                if (AuthoringState.isDeletedRelation(state, link.data)) {
+                    removedLinks.push(link);
+                }
+            } else if (link instanceof RelationGroup) {
+                if (link.items.some(item => AuthoringState.isDeletedRelation(state, item.data))) {
+                    this.model.history.execute(setRelationGroupItems(
+                        link,
+                        link.items.filter(item => !AuthoringState.isDeletedRelation(state, item.data))
+                    ));
+                }
+            }
+        }
+        for (const link of removedLinks) {
+            this.model.removeLink(link.id);
+        }
+
+        for (const event of state.elements.values()) {
+            if (event.type === 'entityChange') {
+                this.model.history.execute(changeEntityData(
+                    this.model,
+                    event.before.id,
+                    event.newIri === undefined ? event.data : {
+                        ...event.data,
+                        id: event.newIri,
+                    }
+                ));
+            }
+        }
+
+        const removedElements: Element[] = [];
+        for (const element of this.model.elements) {
+            if (element instanceof EntityElement) {
+                if (AuthoringState.isDeletedEntity(state, element.iri)) {
+                    removedElements.push(element);
+                }
+            } else if (element instanceof EntityGroup) {
+                if (element.items.some(item => AuthoringState.isDeletedEntity(state, item.data.id))) {
+                    batch.history.execute(setEntityGroupItems(
+                        element,
+                        element.items.filter(item => !AuthoringState.isDeletedEntity(state, item.data.id))
+                    ));
+                }
+            }
+        }
+        for (const element of removedElements) {
+            this.model.removeElement(element.id);
+        }
+
+        this.setAuthoringState(AuthoringState.empty);
+        batch.store();
+    }
 }
 
 function findEntities(graph: GraphStructure, iri: ElementIri): Array<EntityElement | EntityGroup> {
