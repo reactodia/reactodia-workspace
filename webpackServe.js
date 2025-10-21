@@ -45,5 +45,5 @@ app.use(createProxyMiddleware({
 }));
 
 // eslint-disable-next-line no-console
-console.log(`Running Webpack server at host: "${SERVE_HOST}", port: ${SERVE_PORT}`);
+console.log(`Running Webpack server at http://${SERVE_HOST}:${SERVE_PORT}`);
 const server = app.listen(SERVE_PORT, SERVE_HOST);

@@ -81,6 +81,8 @@ export class OverlayController {
     private readonly view: SharedCanvasState;
     private readonly translation: Translation;
 
+    private readonly overlays = new Set<OverlayReader>();
+
     private _openedDialog: OpenedDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
     private _taskError: { error: unknown } | undefined;
@@ -107,6 +109,7 @@ export class OverlayController {
         view.setCanvasWidget('selectionHandler', {
             element: (
                 <CanvasOverlayHandler
+                    overlays={this.overlays}
                     onCanvasPointerUp={this.onAnyCanvasPointerUp}
                     onCanvasKeydown={this.onAnyCanvasKeydown}
                 />
@@ -324,8 +327,14 @@ export class OverlayController {
             onClose,
         };
 
+        const canvas = this.view.findAnyCanvas();
+        const breakpoint = readOverlayProperty(this.overlays, reader => reader.getDialogViewportBreakpoint());
+        const isSmallViewport = Boolean(
+            canvas && breakpoint !== undefined && canvas.metrics.area.clientWidth <= breakpoint
+        );
+
         const onHide = () => this.hideDialog();
-        if (target) {
+        if (target && !isSmallViewport) {
             this.view.setCanvasWidget('dialog', {
                 element: (
                     <Dialog {...style}
@@ -338,12 +347,13 @@ export class OverlayController {
                         {content}
                     </Dialog>
                 ),
-                attachment: 'overElements'
+                attachment: 'overElements',
             });
         } else {
             this.view.setCanvasWidget('dialog', {
                 element: (
                     <ViewportDialog {...style}
+                        mode={isSmallViewport ? 'fillViewport' : 'centered'}
                         onHide={onHide}>
                         {content}
                     </ViewportDialog>
@@ -446,7 +456,6 @@ function ViewportDialog(props: DialogProps) {
             className='reactodia-viewport-dialog-overlay'>
             <Dialog {...props}
                 dock='e'
-                centered={true}
                 maxSize={maxSize}
             />
         </div>
@@ -469,19 +478,65 @@ function useViewportSize() {
     return size;
 }
 
+interface OverlayReader {
+    getDialogViewportBreakpoint(): number | undefined;
+}
+
 function CanvasOverlayHandler(props: {
+    overlays: Set<OverlayReader>;
     onCanvasPointerUp: (event: CanvasPointerUpEvent) => void;
     onCanvasKeydown: (event: CanvasKeyboardEvent) => void;
 }) {
-    const {onCanvasPointerUp, onCanvasKeydown} = props;
+    const {overlays, onCanvasPointerUp, onCanvasKeydown} = props;
     const {canvas} = useCanvas();
+
+    const ref = React.useRef<HTMLDivElement>(null);
+    React.useLayoutEffect(() => {
+        const overlay = ref.current;
+        if (overlay) {
+            const reader: OverlayReader = {
+                getDialogViewportBreakpoint: () => {
+                    const style = getComputedStyle(overlay);
+                    // Use parseFloat to ignore trailing "px" unit at the end
+                    return style.maxWidth ? parseFloat(style.maxWidth) : undefined;
+                },
+            };
+            overlays.add(reader);
+            return () => {
+                overlays.delete(reader);
+            };
+        }
+    }, [overlays]);
+
     React.useEffect(() => {
         const listener = new EventObserver();
         listener.listen(canvas.events, 'pointerUp', onCanvasPointerUp);
         listener.listen(canvas.events, 'keydown', onCanvasKeydown);
         return () => listener.stopListening();
     }, [onCanvasPointerUp, onCanvasKeydown]);
-    return null;
+
+    return (
+        <div ref={ref}
+            style={{
+                display: 'none',
+                // Use non-custom property to resolve `calc()` and different CSS units
+                maxWidth: 'var(--reactodia-dialog-viewport-breakpoint-s)',
+            }}
+        />
+    );
+}
+
+function readOverlayProperty<T>(
+    readers: Iterable<OverlayReader>,
+    getProperty: (reader: OverlayReader) => T | undefined
+): T | undefined {
+    for (const reader of readers) {
+        const value = getProperty(reader);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+    return undefined;
 }
 
 function getErrorMessage(error: unknown): string | undefined {

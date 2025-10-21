@@ -14,7 +14,7 @@ import { DraggableHandle } from './utility/draggableHandle';
 export interface DialogProps extends DialogStyleProps {
     target?: DialogTarget;
     onHide: () => void;
-    centered?: boolean;
+    mode?: 'centered' | 'fillViewport';
     children: React.ReactNode;
 }
 
@@ -263,7 +263,8 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private onDragHandle = (e: MouseEvent, dx: number, dy: number) => {
-        const {dock = DEFAULT_DOCK, centered} = this.props;
+        const {dock = DEFAULT_DOCK, mode} = this.props;
+        const centered = mode === 'centered';
         let factorX = centered ? 2 : 1;
         let factorY = centered ? 2 : 1;
         switch (dock) {
@@ -286,12 +287,14 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     render() {
         const {
+            mode,
             dock = DEFAULT_DOCK,
             caption,
-            resizableBy = 'all',
+            resizableBy: baseResizableBy = 'all',
             closable = true,
         } = this.props;
 
+        const resizableBy = mode === 'fillViewport' ? 'none' : baseResizableBy;
         const size = this.getCurrentSize();
         const position = this.calculatePosition(size);
         const style: React.CSSProperties = {
@@ -302,10 +305,14 @@ export class Dialog extends React.Component<DialogProps, State> {
         };
 
         return (
-            <div className={CLASS_NAME}
+            <div
+                className={cx(
+                    CLASS_NAME,
+                    mode === 'fillViewport' ? 'reactodia-dialog--fill-viewport' : undefined
+                )}
                 role='dialog'
                 aria-labelledby={caption ? 'reactodia-dialog-caption' : undefined}
-                style={style}>
+                style={mode === 'fillViewport' ? undefined : style}>
                 <div className={`${CLASS_NAME}__header`}>
                     <div id='reactodia-dialog-caption'
                         className={`${CLASS_NAME}__caption`}
