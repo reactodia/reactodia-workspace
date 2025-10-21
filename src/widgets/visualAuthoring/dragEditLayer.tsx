@@ -12,6 +12,7 @@ import { Element, VoidElement } from '../../diagram/elements';
 import { SizeProvider, Vector, boundsOf, findElementAtPoint } from '../../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../../diagram/linkLayer';
 import { SvgPaperLayer } from '../../diagram/paper';
+import { CanvasPlaceAt } from '../../diagram/placeLayer';
 import type { MutableRenderingState } from '../../diagram/renderingState';
 import { Spinner } from '../../diagram/spinner';
 
@@ -75,10 +76,12 @@ export function DragEditLayer(props: DragEditLayerProps) {
     const workspace = useWorkspace();
     const {canvas} = useCanvas();
     return (
-        <DragEditLayerInner {...props}
-            workspace={workspace}
-            canvas={canvas}
-        />
+        <CanvasPlaceAt layer='overElements'>
+            <DragEditLayerInner {...props}
+                workspace={workspace}
+                canvas={canvas}
+            />
+        </CanvasPlaceAt>
     );
 }
 
@@ -111,7 +114,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
     }
 
     componentDidMount() {
-        const {operation} = this.props;
+        const {canvas, operation} = this.props;
 
         this.cancellation = new AbortController();
 
@@ -133,6 +136,7 @@ class DragEditLayerInner extends React.Component<DragEditLayerInnerProps, State>
         this.forceUpdate();
         this.queryCanConnectToAny();
 
+        this.listener.listen(canvas.events, 'changeTransform', () => this.forceUpdate());
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
     }

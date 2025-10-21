@@ -54,7 +54,7 @@ export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
 
 export * from './diagram/canvasApi';
-export { defineCanvasWidget, useCanvasHotkey } from './diagram/canvasWidget';
+export { type CanvasHotkey, useCanvasHotkey } from './diagram/canvasHotkey';
 export {
     RestoreGeometry, setElementState, setElementExpanded, setLinkState,
     changeLinkTypeVisibility, restoreCapturedLinkGeometry, restoreViewport,
@@ -92,6 +92,7 @@ export {
     HtmlPaperLayer, type HtmlPaperLayerProps,
     SvgPaperLayer, type SvgPaperLayerProps,
 } from './diagram/paper';
+export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
 export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
     type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter,

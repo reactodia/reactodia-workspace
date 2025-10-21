@@ -1,7 +1,9 @@
-$accordion-handle: 10;
-$accordion-handle-button: 20;
-$loading-widget: 30;
-$dropdown: 40;
-$toolbar-menu: 50;
-$viewport-dialog: 60;
-$panning-overlay: 70;
+@use "../theme/theme";
+
+$accordion-handle: calc(theme.$z-index-base + 10);
+$accordion-handle-button: calc(theme.$z-index-base + 20);
+$loading-widget: calc(theme.$z-index-base + 30);
+$dropdown: calc(theme.$z-index-base + 40);
+$toolbar-menu: calc(theme.$z-index-base + 50);
+$viewport-dialog: calc(theme.$z-index-base + 60);
+$panning-overlay: calc(theme.$z-index-base + 70);

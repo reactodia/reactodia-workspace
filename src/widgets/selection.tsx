@@ -3,18 +3,19 @@ import * as React from 'react';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver } from '../coreUtils/events';
 import {
-    SyncStore, useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
+    SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 
 import { CanvasApi, CanvasMetrics, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget, useCanvasHotkey } from '../diagram/canvasWidget';
+import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import { RestoreGeometry } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import {
     Rect, SizeProvider, Vector, boundsOf, findElementAtPoint, getContentFittingBox,
 } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
+import { CanvasPlaceAt } from '../diagram/placeLayer';
 
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
@@ -143,19 +144,19 @@ export function Selection(props: SelectionProps) {
 
     if (highlightedBox || selectedElements.length > 1) {
         return (
-            <SelectionBox {...props}
-                model={model}
-                canvas={canvas}
-                selectedElements={selectedElements}
-                highlightedBox={highlightedBox}
-            />
+            <CanvasPlaceAt layer='overElements'>
+                <SelectionBox {...props}
+                    model={model}
+                    canvas={canvas}
+                    selectedElements={selectedElements}
+                    highlightedBox={highlightedBox}
+                />
+            </CanvasPlaceAt>
         );
     } else {
         return null;
     }
 }
-
-defineCanvasWidget(Selection, element => ({element, attachment: 'overElements'}));
 
 interface PageOrigin {
     readonly pageX: number;
@@ -226,6 +227,11 @@ function SelectionBox(props: SelectionBoxProps) {
         itemMargin = 2,
         children,
     } = props;
+
+    useSyncStore(
+        useEventStore(canvas.events, 'changeTransform'),
+        () => canvas.metrics.getTransform()
+    );
 
     const elementBoundsStore = useElementBoundsStore(model, canvas, selectedElements);
     const elementBoundsDebouncedStore = useFrameDebouncedStore(elementBoundsStore);

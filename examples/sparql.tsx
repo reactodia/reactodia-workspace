@@ -62,15 +62,6 @@ function SparqlExample() {
             defaultLayout={defaultLayout}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
-                canvasWidgets={[
-                    <Reactodia.Toolbar key='sparql-settings'
-                        dock='sw'
-                        dockOffsetY={40}>
-                        <SparqlConnectionAction settings={connectionSettings}
-                            applySettings={applyConnectionSettings}
-                        />
-                    </Reactodia.Toolbar>
-                ]}
                 languages={[
                     {code: 'de', label: 'Deutsch'},
                     {code: 'en', label: 'English'},
@@ -82,8 +73,14 @@ function SparqlExample() {
                     {code: 'pt', label: 'português'},
                     {code: 'ru', label: 'Русский'},
                     {code: 'zh', label: '汉语'},
-                ]}
-            />
+                ]}>
+                <Reactodia.Toolbar dock='sw'
+                    dockOffsetY={40}>
+                    <SparqlConnectionAction settings={connectionSettings}
+                        applySettings={applyConnectionSettings}
+                    />
+                </Reactodia.Toolbar> 
+            </Reactodia.DefaultWorkspace>
         </Reactodia.Workspace>
     );
 }

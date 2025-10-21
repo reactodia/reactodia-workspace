@@ -4,9 +4,7 @@ import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils
 
 import { TemplateProperties } from '../data/schema';
 
-import type {
-    CanvasApi, CanvasDropEvent, CanvasWidgetDescription,
-} from './canvasApi';
+import type { CanvasApi, CanvasDropEvent } from './canvasApi';
 import type { ElementTemplate, LinkTemplate, RenameLinkProvider } from './customization';
 import { Element, Link } from './elements';
 import type { LayoutFunction } from './layout';
@@ -23,13 +21,6 @@ export interface SharedCanvasStateEvents {
     changeHighlight: PropertyChange<
         SharedCanvasState,
         CellHighlighter | undefined
-    >;
-    /**
-     * Triggered on {@link SharedCanvasState.widgets} property change.
-     */
-    changeWidgets: PropertyChange<
-        SharedCanvasState,
-        ReadonlyMap<string, CanvasWidgetDescription>
     >;
     /**
      * Triggered on a request to find all canvases using this state.
@@ -86,7 +77,6 @@ export class SharedCanvasState {
 
     private disposed = false;
 
-    private _canvasWidgets: ReadonlyMap<string, CanvasWidgetDescription>;
     private dropOnPaperHandler: ((e: CanvasDropEvent) => void) | undefined;
     private _highlighter: CellHighlighter | undefined;
 
@@ -112,7 +102,6 @@ export class SharedCanvasState {
         const {
             defaultElementTemplate, defaultLinkTemplate, defaultLayout, renameLinkProvider,
         } = options;
-        this._canvasWidgets = new Map();
         this.defaultElementTemplate = defaultElementTemplate;
         this.defaultLinkTemplate = defaultLinkTemplate;
         this.defaultLayout = defaultLayout;
@@ -142,36 +131,6 @@ export class SharedCanvasState {
     findAnyCanvas(): CanvasApi | undefined {
         const canvases = this.findAllCanvases();
         return canvases.length > 0 ? canvases[0] : undefined;
-    }
-
-    /**
-     * Live collection of canvas widgets rendered on each canvas.
-     */
-    get widgets(): ReadonlyMap<string, CanvasWidgetDescription> {
-        return this._canvasWidgets;
-    }
-
-    /**
-     * Adds, changes or removes a canvas widget from being rendered on the canvases.
-     *
-     * @param key unique key for a widget
-     * @param widget widget description with a target widget layer to render on
-     *        or `null` to remove the widget
-     */
-    setCanvasWidget(key: string, widget: CanvasWidgetDescription | null): void {
-        const previous = this._canvasWidgets;
-        const nextWidgets = new Map(previous);
-        if (widget) {
-            const description: CanvasWidgetDescription = {
-                element: React.cloneElement(widget.element, {key}),
-                attachment: widget.attachment,
-            };
-            nextWidgets.set(key, description);
-        } else {
-            nextWidgets.delete(key);
-        }
-        this._canvasWidgets = nextWidgets;
-        this.source.trigger('changeWidgets', {source: this, previous});
     }
 
     /**

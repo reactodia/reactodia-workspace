@@ -8,20 +8,22 @@ import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/schedu
 
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
-    CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions, CanvasWidgetDescription,
+    CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions,
     CanvasPointerMode, ZoomOptions, ExportSvgOptions, ExportRasterOptions,
 } from './canvasApi';
-import { extractCanvasWidget } from './canvasWidget';
 import { RestoreGeometry } from './commands';
 import { Element, Link, Cell, LinkVertex } from './elements';
 import { ElementLayer } from './elementLayer';
 import {
     Vector, Rect, computePolyline, findNearestSegmentIndex, getContentFittingBox,
 } from './geometry';
+import { CommandBatch } from './history';
 import { LinkLabelLayer, LinkLayer, LinkMarkers } from './linkLayer';
 import { DiagramModel } from './model';
-import { CommandBatch } from './history';
 import { Paper, PaperTransform, SvgPaperLayer } from './paper';
+import {
+    CanvasPlaceLayerContext, CanvasPlaceLayer, createPlaceLayerContext,
+} from './placeLayer';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
 import {
     ToSVGOptions, toSVG, toDataURL, fitRectKeepingAspectRatio,
@@ -39,14 +41,7 @@ export interface PaperAreaProps {
 }
 
 interface State {
-    readonly width: number;
-    readonly height: number;
-    readonly originX: number;
-    readonly originY: number;
-    readonly scale: number;
-    readonly paddingX: number;
-    readonly paddingY: number;
-
+    readonly transform: PaperTransform;
     readonly cssAnimations: number;
     readonly cssAnimationDuration: number | undefined;
 }
@@ -104,6 +99,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     private readonly linkLayerRef = React.createRef<SVGSVGElement>();
     private readonly labelLayerRef = React.createRef<HTMLDivElement>();
     private readonly elementLayerRef = React.createRef<HTMLDivElement>();
+    private readonly placeLayerContext: CanvasPlaceLayerContext;
 
     private readonly pageSize = {x: 1500, y: 800};
     private readonly canvasContext: CanvasContext;
@@ -129,16 +125,19 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         super(props);
         const {zoomOptions = {}} = this.props;
         this.state = {
-            width: this.pageSize.x,
-            height: this.pageSize.y,
-            originX: 0,
-            originY: 0,
-            scale: 1,
-            paddingX: 0,
-            paddingY: 0,
+            transform: {
+                width: this.pageSize.x,
+                height: this.pageSize.y,
+                originX: 0,
+                originY: 0,
+                scale: 1,
+                paddingX: 0,
+                paddingY: 0,
+            },
             cssAnimations: 0,
             cssAnimationDuration: undefined,
         };
+        this.placeLayerContext = createPlaceLayerContext();
         this.resizeObserver = new ResizeObserver(this.onResize);
         this.metrics = new (class extends BasePaperMetrics {
             constructor(private readonly paperArea: PaperArea) {
@@ -148,8 +147,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 return this.paperArea.area;
             }
             get transform(): PaperTransform {
-                const {width, height, originX, originY, scale, paddingX, paddingY} = this.paperArea.state;
-                return {width, height, originX, originY, scale, paddingX, paddingY};
+                return this.paperArea.state.transform;
             }
             protected getClientRect(): AreaClientRect {
                 return this.paperArea.area.getBoundingClientRect();
@@ -191,7 +189,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     render() {
-        const {model, renderingState, hideScrollBars, watermarkSvg, watermarkUrl} = this.props;
+        const {model, renderingState, hideScrollBars, watermarkSvg, watermarkUrl, children} = this.props;
         const {cssAnimationDuration} = this.state;
         const paperTransform = this.metrics.getTransform();
 
@@ -205,7 +203,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 ? undefined : `${cssAnimationDuration}ms`,
         } as React.CSSProperties;
 
-        const renderedWidgets = Array.from(this.getAllWidgets());
         return (
             <CanvasContext.Provider value={this.canvasContext}>
                 <div className={className}
@@ -222,6 +219,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                             onPointerDown={this.onPaperPointerDown}
                             onContextMenu={this.onContextMenu}
                             onScrollCapture={this.onPaperScrollCapture}>
+                            <CanvasPlaceLayer layer='underlay'
+                                context={this.placeLayerContext}
+                                className={`${CLASS_NAME}__widgets`}
+                            />
                             <SvgPaperLayer layerRef={this.linkLayerRef}
                                 className={`${CLASS_NAME}__canvas`}
                                 style={{overflow: 'visible'}}
@@ -231,29 +232,27 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                     renderingState={renderingState}
                                 />
                             </SvgPaperLayer>
+                            <CanvasPlaceLayer layer='overLinkGeometry'
+                                context={this.placeLayerContext}
+                                className={`${CLASS_NAME}__widgets`}
+                            />
                             <LinkLabelLayer renderingState={renderingState}
                                 paperTransform={paperTransform}
                                 layerRef={this.labelLayerRef}
                             />
-                            <div className={`${CLASS_NAME}__widgets`}
-                                onPointerDown={this.onWidgetsPointerDown}>
-                                {renderedWidgets
-                                    .filter(w => w.attachment === 'overLinks')
-                                    .map(widget => ensureWidgetGetRendered(widget.element))
-                                }
-                            </div>
+                            <CanvasPlaceLayer layer='overLinks'
+                                context={this.placeLayerContext}
+                                className={`${CLASS_NAME}__widgets`}
+                            />
                             <ElementLayer layerRef={this.elementLayerRef}
                                 model={model}
                                 renderingState={renderingState}
                                 paperTransform={paperTransform}
                             />
-                            <div className={`${CLASS_NAME}__widgets`}
-                                onPointerDown={this.onWidgetsPointerDown}>
-                                {renderedWidgets
-                                    .filter(w => w.attachment === 'overElements')
-                                    .map(widget => ensureWidgetGetRendered(widget.element))
-                                }
-                            </div>
+                            <CanvasPlaceLayer layer='overElements'
+                                context={this.placeLayerContext}
+                                className={`${CLASS_NAME}__widgets`}
+                            />
                         </Paper>
                         {watermarkSvg ? (
                             <a href={watermarkUrl} target='_blank' rel='noreferrer'>
@@ -264,10 +263,9 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                             </a>
                         ) : null}
                     </div>
-                    {renderedWidgets
-                        .filter(w => w.attachment === 'viewport')
-                        .map(widget => ensureWidgetGetRendered(widget.element))
-                    }
+                    <CanvasPlaceLayerContext.Provider value={this.placeLayerContext}>
+                        {children}
+                    </CanvasPlaceLayerContext.Provider>
                 </div>
             </CanvasContext.Provider>
         );
@@ -298,9 +296,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             if (layer !== RenderingLayer.PaperArea) { return; }
             this.delayedPaperAdjust.runSynchronously();
         });
-        this.listener.listen(renderingState.shared.events, 'changeWidgets', () => {
-            this.forceUpdate();
-        });
         this.listener.listen(renderingState.shared.events, 'findCanvas', e => {
             e.canvases.push(this);
         });
@@ -315,9 +310,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     componentDidUpdate(prevProps: PaperAreaProps, prevState: State) {
         if (this.scrollBeforeUpdate) {
-            const {scale, originX, originY, paddingX, paddingY} = this.state;
-            const scrollX = (originX - prevState.originX) * scale + (paddingX - prevState.paddingX);
-            const scrollY = (originY - prevState.originY) * scale + (paddingY - prevState.paddingY);
+            const {scale, originX, originY, paddingX, paddingY} = this.state.transform;
+            const prevTransform = prevState.transform;
+            const scrollX = (originX - prevTransform.originX) * scale + (paddingX - prevTransform.paddingX);
+            const scrollY = (originY - prevTransform.originY) * scale + (paddingY - prevTransform.paddingY);
 
             const scrollLeft = this.scrollBeforeUpdate.left + scrollX;
             const scrollTop = this.scrollBeforeUpdate.top + scrollY;
@@ -340,26 +336,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.resizeObserver.disconnect();
     }
 
-    private *getAllWidgets(): IterableIterator<CanvasWidgetDescription> {
-        const {renderingState, children} = this.props;
-        for (const element of React.Children.toArray(children)) {
-            if (React.isValidElement(element)) {
-                const widget = extractCanvasWidget(element);
-                if (widget) {
-                    yield widget;
-                } else {
-                    console.warn('Unexpected non-widget canvas child: ', element);
-                }
-            }
-        }
-        yield* renderingState.shared.widgets.values();
-    }
-
-    private onWidgetsPointerDown = (e: React.PointerEvent) => {
-        // prevent PaperArea from generating click on a blank area
-        e.stopPropagation();
-    };
-
     /** Returns bounding box of paper content in paper coordinates. */
     private getContentFittingBox() {
         const {model, renderingState} = this.props;
@@ -367,7 +343,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         return getContentFittingBox(elements, links, renderingState);
     }
 
-    private computeAdjustedBox(): Pick<State, 'width' | 'height' | 'originX' | 'originY'> {
+    private computeAdjustedBox(): Pick<PaperTransform, 'width' | 'height' | 'originX' | 'originY'> {
         // bbox in paper coordinates
         const bbox = this.getContentFittingBox();
         const bboxLeft = bbox.x;
@@ -397,12 +373,13 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private adjustPaper = (callback?: () => void) => {
         const {clientWidth, clientHeight} = this.area;
-        const adjusted = {
+        const adjusted: PaperTransform = {
             ...this.computeAdjustedBox(),
             paddingX: Math.ceil(clientWidth),
             paddingY: Math.ceil(clientHeight),
-        } satisfies Partial<State>;
-        const previous = this.state;
+            scale: this.state.transform.scale,
+        };
+        const previous = this.state.transform;
         const samePaperProps = (
             adjusted.width === previous.width &&
             adjusted.height === previous.height &&
@@ -416,7 +393,9 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 left: this.area.scrollLeft,
                 top: this.area.scrollTop,
             };
-            this.setState(adjusted, callback);
+            this.setState({transform: adjusted}, () => {
+                this.source.trigger('changeTransform', {previous, source: this});
+            });
         } else if (callback) {
             callback();
         }
@@ -706,7 +685,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
-        const {width, height} = this.state;
+        const {width, height} = this.state.transform;
         const paperCenter = paperPosition || {x: width / 2, y: height / 2};
         if (typeof options.scale === 'number') {
             const {min, max} = this.zoomOptions;
@@ -735,7 +714,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     getScale() {
-        return this.state.scale;
+        return this.state.transform.scale;
     }
 
     setScale(value: number, options?: ScaleOptions): Promise<void> {
@@ -752,7 +731,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 this.area.clientWidth / 2,
                 this.area.clientHeight / 2
             );
-            const previousScale = this.state.scale;
+            const previousScale = this.state.transform.scale;
             const scaledBy = scale / previousScale;
             viewportState = {
                 center: {
@@ -973,7 +952,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private get viewportState(): ViewportState {
         const {clientWidth, clientHeight} = this.area;
-        const {originX, originY, paddingX, paddingY, scale} = this.state;
+        const {originX, originY, paddingX, paddingY, scale} = this.state.transform;
 
         const scrollCenterX = this.area.scrollLeft + clientWidth / 2 - paddingX;
         const scrollCenterY = this.area.scrollTop + clientHeight / 2 - paddingY;
@@ -1031,12 +1010,12 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private applyViewportState(targetState: ViewportState) {
-        const previousScale = this.state.scale;
+        const previous = this.state.transform;
         const scale = targetState.scale.x;
         const paperCenter = targetState.center;
 
-        this.setState({scale}, () => {
-            const {originX, originY, paddingX, paddingY} = this.state;
+        this.setState({transform: {...previous, scale}}, () => {
+            const {originX, originY, paddingX, paddingY} = this.state.transform;
             const scrollCenterX = (paperCenter.x + originX) * scale;
             const scrollCenterY = (paperCenter.y + originY) * scale;
             const {clientWidth, clientHeight} = this.area;
@@ -1044,8 +1023,9 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             this.area.scrollLeft = scrollCenterX - clientWidth / 2 + paddingX;
             this.area.scrollTop = scrollCenterY - clientHeight / 2 + paddingY;
 
-            if (scale !== previousScale) {
-                this.source.trigger('changeScale', {source: this, previous: previousScale});
+            if (scale !== previous.scale) {
+                this.source.trigger('changeScale', {source: this, previous: previous.scale});
+                this.source.trigger('changeTransform', {previous, source: this});
             }
         });
     }
@@ -1175,10 +1155,6 @@ function clientCoordsFor(container: HTMLElement, e: MouseEvent) {
         x: e.offsetX + (targetBox.left - containerBox.left),
         y: e.offsetY + (targetBox.top - containerBox.top),
     };
-}
-
-function ensureWidgetGetRendered(element: React.ReactElement) {
-    return React.cloneElement(element);
 }
 
 /** Clears accidental text selection in the diagram area. */

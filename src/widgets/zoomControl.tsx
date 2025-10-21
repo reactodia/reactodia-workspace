@@ -5,7 +5,6 @@ import { useObservedProperty } from '../coreUtils/hooks';
 import { useTranslation } from '../coreUtils/i18n';
 
 import { useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 
 import { DockDirection, ViewportDock } from './utility/viewportDock';
 
@@ -105,5 +104,3 @@ export function ZoomControl(props: ZoomControlProps) {
         </ViewportDock>
     );
 }
-
-defineCanvasWidget(ZoomControl, element => ({element, attachment: 'viewport'}));

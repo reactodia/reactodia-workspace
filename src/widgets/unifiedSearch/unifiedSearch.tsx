@@ -7,7 +7,7 @@ import { useTranslation } from '../../coreUtils/i18n';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import { useCanvas } from '../../diagram/canvasApi';
-import { useCanvasHotkey } from '../../diagram/canvasWidget';
+import { useCanvasHotkey } from '../../diagram/canvasHotkey';
 import type { Rect, Size, Vector } from '../../diagram/geometry';
 
 import { DraggableHandle } from '../utility/draggableHandle';

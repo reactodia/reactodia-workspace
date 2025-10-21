@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { useTranslation } from '../coreUtils/i18n';
 
-import { defineCanvasWidget } from '../diagram/canvasWidget';
-
 import { Canvas } from '../widgets/canvas';
 import { ClassTree, ClassTreeProps } from '../widgets/classTree';
 import { ConnectionsMenu } from '../widgets/connectionsMenu';
@@ -69,7 +67,7 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     const {
-        colorScheme, leftColumn, rightColumn,
+        colorScheme, leftColumn, rightColumn, children,
         canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, zoomControl, visualAuthoring, toolbar,
         classTree, instancesSearch, linkToolbox,
@@ -109,6 +107,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                         {toolbar === null ? null : <ClassicToolbar dock='nw' {...toolbar} />}
                         {zoomControl === null ? null : <ZoomControl dock='sw' {...zoomControl} />}
                         {canvasWidgets}
+                        {children}
                     </Canvas>
                 </WorkspaceLayoutItem>
                 <WorkspaceLayoutColumn defaultSize={275}
@@ -206,5 +205,3 @@ export function ClassicToolbar(props: ClassicToolbarProps) {
         </Toolbar>
     );
 }
-
-defineCanvasWidget(ClassicToolbar, element => ({element, attachment: 'viewport'}));
