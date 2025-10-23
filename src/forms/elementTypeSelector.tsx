@@ -310,7 +310,12 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     render() {
         const {searchStore, workspace: {translation: t}} = this.props;
         return (
-            <div className={cx(`${FORM_CLASS}__row`, CLASS_NAME)}>
+            <div
+                className={cx(
+                    `${FORM_CLASS}__row`,
+                    CLASS_NAME,
+                    searchStore.value.length > 0 ? `${CLASS_NAME}--search-existing` : undefined
+                )}>
                 <SearchInput store={searchStore}
                     className={`${CLASS_NAME}__search`}
                     inputProps={{

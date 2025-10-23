@@ -313,7 +313,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                 )}
                 role='dialog'
                 aria-labelledby={caption ? 'reactodia-dialog-caption' : undefined}
-                style={mode === 'fillViewport' ? undefined : style}>
+                style={style}>
                 <div className={`${CLASS_NAME}__header`}>
                     <div id='reactodia-dialog-caption'
                         className={`${CLASS_NAME}__caption`}
@@ -364,7 +364,10 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     private getCurrentSize(): Size {
-        const {defaultSize = DEFAULT_SIZE, maxSize = MAX_SIZE} = this.props;
+        const {mode, defaultSize = DEFAULT_SIZE, maxSize = MAX_SIZE} = this.props;
+        if (mode === 'fillViewport') {
+            return maxSize;
+        }
         return {
             width: Math.min(this.state.width ?? defaultSize.width, maxSize.width),
             height: Math.min(this.state.height ?? defaultSize.height, maxSize.height),

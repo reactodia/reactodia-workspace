@@ -2,9 +2,12 @@
 @use "../theme/theme";
 
 .reactodia-element-selector {
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+
+  &--search-existing {
+    flex: auto;
+  }
 
   &__search {
     flex-shrink: 0;
