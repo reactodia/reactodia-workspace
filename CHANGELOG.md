@@ -5,11 +5,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 #### 🚀 New Features
+- Simplify canvas widgets placement at one or multiple layers:
+  * Canvas children are always assumed to be viewport widgets;
+  * Add `CanvasPlaceAt` component to render its children at specified non-viewport canvas layer instead;
+  * Support new placement layers: `underlay` layer to place components under all canvas content, `overLinkGeometry` layer to place components above link geometry (connections) but under link labels;
+  * **[💥Breaking]** Remove `defineCanvasWidget()` and `SharedCanvasState.setCanvasWidget()` (use `CanvasPlaceAt` to display components at canvas layers instead).
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
+
+#### ⏱ Performance
+- **[💥Breaking]** Canvas widgets are not automatically updated when parent canvas is rendered to reduce unnecessary re-renders, and now require explicit subscriptions:
+  * Subscribe to canvas `changeTransform` event when using `CanvasApi.metrics` to convert between coordinates;
+  * Subscribe to canvas `resize` event to track viewport size;
+  * Subscribe to `changeCells` event from `DiagramModel` to track graph content changes.
 
 #### 💅 Polish
 - Make dialogs fill the available viewport when the viewport width is small:
   * This is controlled by new CSS property `--reactodia-dialog-viewport-breakpoint-s` with default value `600px` which makes dialog fill the viewport if the available width is less or equal to that value.
+- Allow to override base z-index level for workspace components with a set z-index value via `--reactodia-z-index-base` CSS property;
+- Add `changeTransform` event to `CanvasApi.events` which triggers on `CanvasApi.metrics.getTransform()` changes, i.e. when coordinate mapping changes due to scale or canvas size is re-adjusted.
+- Deprecate `canvasWidgets` prop on `DefaultWorkspace` and `ClassicWorkspace` in favor of passing widgets directly as children.
+
+#### 🐛 Fixed
+- Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 
 ## [0.30.1] - 2025-06-27
 #### 🐛 Fixed

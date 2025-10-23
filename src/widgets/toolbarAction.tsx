@@ -7,7 +7,7 @@ import type { HotkeyString } from '../coreUtils/hotkey';
 import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
-import { useCanvasHotkey } from '../diagram/canvasWidget';
+import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import type { Command } from '../diagram/history';
 import { dataURLToBlob } from '../diagram/toSvg';
 

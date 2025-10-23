@@ -3,8 +3,6 @@ import * as React from 'react';
 
 import { useTranslation } from '../coreUtils/i18n';
 
-import { defineCanvasWidget } from '../diagram/canvasWidget';
-
 import { DropdownMenu } from './utility/dropdown';
 import { DockDirection, ViewportDock } from './utility/viewportDock';
 
@@ -78,5 +76,3 @@ export function Toolbar(props: ToolbarProps) {
         </ViewportDock>
     );
 }
-
-defineCanvasWidget(Toolbar, element => ({element, attachment: 'viewport'}));

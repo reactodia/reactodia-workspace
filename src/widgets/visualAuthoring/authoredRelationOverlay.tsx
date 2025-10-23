@@ -9,12 +9,13 @@ import { LinkKey } from '../../data/model';
 import type { ValidationSeverity } from '../../data/validationProvider';
 
 import { CanvasApi, useCanvas } from '../../diagram/canvasApi';
+import { Link } from '../../diagram/elements';
 import {
     Rect, Spline, Vector, computePolyline, getPointAlongPolyline, computePolylineLength,
 } from '../../diagram/geometry';
 import { SvgPaperLayer } from '../../diagram/paper';
+import { CanvasPlaceAt } from '../../diagram/placeLayer';
 import { RenderingLayer } from '../../diagram/renderingState';
-import { Link } from '../../diagram/elements';
 import { HtmlSpinner } from '../../diagram/spinner';
 
 import { AuthoredRelation, AuthoringState } from '../../editor/authoringState';
@@ -84,6 +85,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         this.listener.listen(editor.events, 'changeAuthoringState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeTemporaryState', this.scheduleUpdate);
         this.listener.listen(editor.events, 'changeValidationState', this.scheduleUpdate);
+        this.listener.listen(canvas.events, 'changeTransform', this.performUpdate);
         this.listener.listen(
             canvas.renderingState.events, 'changeElementSize', this.scheduleUpdate
         );
@@ -285,15 +287,25 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
             position: 'absolute', left: 0, top: 0,
             transform: `scale(${scale},${scale})translate(${originX}px,${originY}px)`,
         };
-        return <div className={`${CLASS_NAME}`}>
-            <SvgPaperLayer paperTransform={transform}
-                style={{overflow: 'visible', pointerEvents: 'none'}}>
-                {this.renderLinkStateHighlighting()}
-            </SvgPaperLayer>
-            <div className={`${CLASS_NAME}__validation-layer`} style={htmlTransformStyle}>
-                {this.renderLinkStateLabels()}
-            </div>
-        </div>;
+        return (
+            <>
+                <CanvasPlaceAt layer='overLinkGeometry'>
+                    <div className={CLASS_NAME}>
+                        <SvgPaperLayer paperTransform={transform}
+                            style={{overflow: 'visible', pointerEvents: 'none'}}>
+                            {this.renderLinkStateHighlighting()}
+                        </SvgPaperLayer>
+                    </div>
+                </CanvasPlaceAt>
+                <CanvasPlaceAt layer='overElements'>
+                    <div className={CLASS_NAME}>
+                        <div className={`${CLASS_NAME}__validation-layer`} style={htmlTransformStyle}>
+                            {this.renderLinkStateLabels()}
+                        </div>
+                    </div>
+                </CanvasPlaceAt>
+            </>
+        );
     }
 }
 

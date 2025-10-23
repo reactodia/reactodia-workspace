@@ -3,7 +3,7 @@ import * as React from 'react';
 import { delay } from '../coreUtils/async';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 import {
-    useEventStore, useFrameDebouncedStore, useSyncStoreWithComparator,
+    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 import type { Translation } from '../coreUtils/i18n';
 
@@ -11,6 +11,7 @@ import { CanvasPointerUpEvent, CanvasKeyboardEvent, useCanvas } from '../diagram
 import { Element, Link, LinkVertex } from '../diagram/elements';
 import { Size, Vector } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
+import { CanvasPlaceAt } from '../diagram/placeLayer';
 import type { MutableRenderingState } from '../diagram/renderingState';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
@@ -77,11 +78,11 @@ export class OverlayController {
     private readonly source = new EventSource<OverlayControllerEvents>();
     readonly events: Events<OverlayControllerEvents> = this.source;
 
+    private readonly interalSource = new EventSource<OverlayControllerInternalEvents>();
+
     private readonly model: DiagramModel;
     private readonly view: SharedCanvasState;
     private readonly translation: Translation;
-
-    private readonly overlays = new Set<OverlayReader>();
 
     private _openedDialog: OpenedDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
@@ -94,6 +95,15 @@ export class OverlayController {
         this.view = view;
         this.translation = translation;
 
+        withInternalApi(this)[OverlayInternalApi] = {
+            events: this.interalSource,
+            overlays: new Set<OverlayReader>(),
+            dialog: null,
+            spinner: null,
+            onCanvasPointerUp: this.onAnyCanvasPointerUp,
+            onCanvasKeydown: this.onAnyCanvasKeydown,
+        };
+
         this.listener.listen(this.model.events, 'changeSelection', () => {
             const target = this.model.selection.length === 1 ? this.model.selection[0] : undefined;
             if (this.openedDialog && this.openedDialog.target !== target) {
@@ -104,17 +114,6 @@ export class OverlayController {
             if (this.openedDialog && this.openedDialog.target) {
                 this.hideDialog();
             }
-        });
-
-        view.setCanvasWidget('selectionHandler', {
-            element: (
-                <CanvasOverlayHandler
-                    overlays={this.overlays}
-                    onCanvasPointerUp={this.onAnyCanvasPointerUp}
-                    onCanvasKeydown={this.onAnyCanvasKeydown}
-                />
-            ),
-            attachment: 'viewport',
         });
     }
 
@@ -274,10 +273,11 @@ export class OverlayController {
     }
 
     private setSpinner(props: SpinnerProps | undefined) {
-        this.view.setCanvasWidget('loadingWidget', props ? {
-            element: <LoadingWidget spinnerProps={props} />,
-            attachment: 'viewport',
-        } : null);
+        const internalApi = withInternalApi(this)[OverlayInternalApi];
+        const spinner = props ? <LoadingWidget spinnerProps={props} /> : null;
+        const previous = internalApi.spinner;
+        internalApi.spinner = spinner;
+        this.interalSource.trigger('changeSpinner', {previous, source: this});
     }
 
     /**
@@ -328,15 +328,18 @@ export class OverlayController {
         };
 
         const canvas = this.view.findAnyCanvas();
-        const breakpoint = readOverlayProperty(this.overlays, reader => reader.getDialogViewportBreakpoint());
+        const breakpoint = readOverlayProperty(
+            withInternalApi(this)[OverlayInternalApi].overlays,
+            reader => reader.getDialogViewportBreakpoint()
+        );
         const isSmallViewport = Boolean(
             canvas && breakpoint !== undefined && canvas.metrics.area.clientWidth <= breakpoint
         );
 
         const onHide = () => this.hideDialog();
         if (target && !isSmallViewport) {
-            this.view.setCanvasWidget('dialog', {
-                element: (
+            this.setDialog(
+                <CanvasPlaceAt layer='overElements'>
                     <Dialog {...style}
                         target={
                             target instanceof Element ? DialogTarget.forElement(target) :
@@ -346,20 +349,16 @@ export class OverlayController {
                         onHide={onHide}>
                         {content}
                     </Dialog>
-                ),
-                attachment: 'overElements',
-            });
+                </CanvasPlaceAt>
+            );
         } else {
-            this.view.setCanvasWidget('dialog', {
-                element: (
-                    <ViewportDialog {...style}
-                        mode={isSmallViewport ? 'fillViewport' : 'centered'}
-                        onHide={onHide}>
-                        {content}
-                    </ViewportDialog>
-                ),
-                attachment: 'viewport',
-            });
+            this.setDialog(
+                <ViewportDialog {...style}
+                    mode={isSmallViewport ? 'fillViewport' : 'centered'}
+                    onHide={onHide}>
+                    {content}
+                </ViewportDialog>
+            );
         }
         
         this.source.trigger('changeOpenedDialog', {
@@ -378,9 +377,16 @@ export class OverlayController {
             const previous = this._openedDialog;
             this._openedDialog = undefined;
             previous.onClose?.();
-            this.view.setCanvasWidget('dialog', null);
+            this.setDialog(null);
             this.source.trigger('changeOpenedDialog', {source: this, previous});
         }
+    }
+
+    private setDialog(dialog: React.ReactElement | null): void {
+        const internalApi = withInternalApi(this)[OverlayInternalApi];
+        const previous = internalApi.dialog;
+        internalApi.dialog = dialog;
+        this.interalSource.trigger('changeDialog', {previous, source: this});
     }
 }
 
@@ -415,6 +421,99 @@ const OverlayTaskActive: unique symbol = Symbol('OverlayTask.active');
 
 interface ExtendedOverlayTask extends OverlayTask {
     [OverlayTaskActive]: boolean;
+}
+
+const OverlayInternalApi: unique symbol = Symbol('OverlayController.internalApi');
+
+interface OverlayWithInternalApi {
+    [OverlayInternalApi]: OverlayControllerInternalApi;
+}
+
+interface OverlayControllerInternalApi {
+    readonly events: Events<OverlayControllerInternalEvents>;
+    readonly overlays: Set<OverlayReader>;
+    onCanvasPointerUp(event: CanvasPointerUpEvent): void;
+    onCanvasKeydown(event: CanvasKeyboardEvent): void;
+    dialog: React.ReactElement<any> | null;
+    spinner: React.ReactElement<any> | null;
+}
+
+interface OverlayControllerInternalEvents {
+    changeDialog: PropertyChange<OverlayController, React.ReactElement | null>;
+    changeSpinner: PropertyChange<OverlayController, React.ReactElement | null>;
+}
+
+interface OverlayReader {
+    getDialogViewportBreakpoint(): number | undefined;
+}
+
+function withInternalApi(controller: OverlayController): OverlayWithInternalApi {
+    return controller as Partial<OverlayWithInternalApi> as OverlayWithInternalApi;
+}
+
+function readOverlayProperty<T>(
+    readers: Iterable<OverlayReader>,
+    getProperty: (reader: OverlayReader) => T | undefined
+): T | undefined {
+    for (const reader of readers) {
+        const value = getProperty(reader);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+    return undefined;
+}
+
+export function OverlaySupport(props: {
+    overlay: OverlayController;
+}) {
+    const { overlay } = props;
+    const {canvas} = useCanvas();
+
+    const internalApi = withInternalApi(overlay)[OverlayInternalApi];
+    const {overlays, onCanvasPointerUp, onCanvasKeydown} = internalApi;
+
+    const ref = React.useRef<HTMLDivElement>(null);
+    React.useLayoutEffect(() => {
+        const overlay = ref.current;
+        if (overlay) {
+            const reader: OverlayReader = {
+                getDialogViewportBreakpoint: () => {
+                    const style = getComputedStyle(overlay);
+                    // Use parseFloat to ignore trailing "px" unit at the end
+                    return style.maxWidth ? parseFloat(style.maxWidth) : undefined;
+                },
+            };
+            overlays.add(reader);
+            return () => {
+                overlays.delete(reader);
+            };
+        }
+    }, [overlays]);
+
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(canvas.events, 'pointerUp', onCanvasPointerUp);
+        listener.listen(canvas.events, 'keydown', onCanvasKeydown);
+        return () => listener.stopListening();
+    }, [onCanvasPointerUp, onCanvasKeydown]);
+
+    const dialog = useObservedProperty(internalApi.events, 'changeDialog', () => internalApi.dialog);
+    const spinner = useObservedProperty(internalApi.events, 'changeSpinner', () => internalApi.spinner);
+
+    return (
+        <>
+            <div ref={ref}
+                style={{
+                    display: 'none',
+                    // Use non-custom property to resolve `calc()` and different CSS units
+                    maxWidth: 'var(--reactodia-dialog-viewport-breakpoint-s)',
+                }}
+            />
+            {dialog}
+            {spinner}
+        </>
+    );
 }
 
 function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
@@ -476,67 +575,6 @@ function useViewportSize() {
         (a, b) => a.width === b.width && a.height === b.height
     );
     return size;
-}
-
-interface OverlayReader {
-    getDialogViewportBreakpoint(): number | undefined;
-}
-
-function CanvasOverlayHandler(props: {
-    overlays: Set<OverlayReader>;
-    onCanvasPointerUp: (event: CanvasPointerUpEvent) => void;
-    onCanvasKeydown: (event: CanvasKeyboardEvent) => void;
-}) {
-    const {overlays, onCanvasPointerUp, onCanvasKeydown} = props;
-    const {canvas} = useCanvas();
-
-    const ref = React.useRef<HTMLDivElement>(null);
-    React.useLayoutEffect(() => {
-        const overlay = ref.current;
-        if (overlay) {
-            const reader: OverlayReader = {
-                getDialogViewportBreakpoint: () => {
-                    const style = getComputedStyle(overlay);
-                    // Use parseFloat to ignore trailing "px" unit at the end
-                    return style.maxWidth ? parseFloat(style.maxWidth) : undefined;
-                },
-            };
-            overlays.add(reader);
-            return () => {
-                overlays.delete(reader);
-            };
-        }
-    }, [overlays]);
-
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        listener.listen(canvas.events, 'pointerUp', onCanvasPointerUp);
-        listener.listen(canvas.events, 'keydown', onCanvasKeydown);
-        return () => listener.stopListening();
-    }, [onCanvasPointerUp, onCanvasKeydown]);
-
-    return (
-        <div ref={ref}
-            style={{
-                display: 'none',
-                // Use non-custom property to resolve `calc()` and different CSS units
-                maxWidth: 'var(--reactodia-dialog-viewport-breakpoint-s)',
-            }}
-        />
-    );
-}
-
-function readOverlayProperty<T>(
-    readers: Iterable<OverlayReader>,
-    getProperty: (reader: OverlayReader) => T | undefined
-): T | undefined {
-    for (const reader of readers) {
-        const value = getProperty(reader);
-        if (value !== undefined) {
-            return value;
-        }
-    }
-    return undefined;
 }
 
 function getErrorMessage(error: unknown): string | undefined {

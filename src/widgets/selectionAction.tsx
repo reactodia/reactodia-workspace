@@ -12,7 +12,7 @@ import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 import { LinkTypeIri } from '../data/model';
 
 import { useCanvas } from '../diagram/canvasApi';
-import { useCanvasHotkey } from '../diagram/canvasWidget';
+import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import { setElementExpanded } from '../diagram/commands';
 import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';

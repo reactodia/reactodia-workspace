@@ -212,6 +212,10 @@ export interface CanvasEvents {
      * Triggered on {@link CanvasApi.getScale} property change.
      */
     changeScale: PropertyChange<CanvasApi, number>;
+    /**
+     * Triggered on {@link CanvasApi.metrics.getTransform()} property change.
+     */
+    changeTransform: PropertyChange<CanvasApi, PaperTransform>;
 }
 
 /**
@@ -550,31 +554,6 @@ export interface ExportSvgOptions {
  * @see {@link CanvasApi.exportRaster}
  */
 export interface ExportRasterOptions extends ExportSvgOptions, ToDataURLOptions {}
-
-/**
- * Canvas widget layer to render widget:
- *   - `viewport` - topmost layer, uses client (viewport) coordinates and
- *     does not scale or scroll with the diagram;
- *   - `overElements` - displayed over both elements and links, uses paper coordinates,
- *     scales and scrolls with the diagram;
- *   - `overLinks` - displayed under elements but over links, uses paper coordinates,
- *     scales and scrolls with the diagram.
- */
-export type CanvasWidgetAttachment = 'viewport' | 'overElements' | 'overLinks';
-
-/**
- * Describes canvas widget element to render on the specific widget layer.
- */
-export interface CanvasWidgetDescription {
-    /**
-     * Canvas widget element to render.
-     */
-    element: React.ReactElement;
-    /**
-     * Canvas widget layer to render widget on.
-     */
-    attachment: CanvasWidgetAttachment;
-}
 
 /**
  * Represents a context for everything rendered inside the canvas,

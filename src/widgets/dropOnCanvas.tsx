@@ -6,7 +6,6 @@ import { TranslatedText } from '../coreUtils/i18n';
 import { ElementIri } from '../data/model';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Vector, boundsOf } from '../diagram/geometry';
 
 import { DataDiagramModel, requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
@@ -61,8 +60,6 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
 
     return null;
 }
-
-defineCanvasWidget(DropOnCanvas, element => ({element, attachment: 'viewport'}));
 
 function tryParseDefaultDragAndDropData(e: DragEvent): ElementIri[] {
     const tryGetIri = (type: string, decode: boolean = false) => {

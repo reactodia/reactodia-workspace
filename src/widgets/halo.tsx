@@ -4,9 +4,9 @@ import { AnyListener, EventObserver } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element, ElementEvents } from '../diagram/elements';
 import { boundsOf } from '../diagram/geometry';
+import { CanvasPlaceAt } from '../diagram/placeLayer';
 
 import {
     SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
@@ -64,16 +64,16 @@ export function Halo(props: HaloProps) {
 
     if (singleTarget) {
         return (
-            <HaloInner {...props}
-                target={singleTarget}
-                canvas={canvas}
-            />
+            <CanvasPlaceAt layer='overElements'>
+                <HaloInner {...props}
+                    target={singleTarget}
+                    canvas={canvas}
+                />
+            </CanvasPlaceAt>
         );
     }
     return null;
 }
-
-defineCanvasWidget(Halo, element => ({element, attachment: 'overElements'}));
 
 interface HaloInnerProps extends HaloProps {
     readonly target: Element;
@@ -83,6 +83,7 @@ interface HaloInnerProps extends HaloProps {
 const CLASS_NAME = 'reactodia-halo';
 
 class HaloInner extends React.Component<HaloInnerProps> {
+    private readonly listener = new EventObserver();
     private targetListener = new EventObserver();
 
     constructor(props: HaloInnerProps) {
@@ -91,7 +92,8 @@ class HaloInner extends React.Component<HaloInnerProps> {
     }
 
     componentDidMount() {
-        const {target} = this.props;
+        const {canvas, target} = this.props;
+        this.listener.listen(canvas.events, 'changeTransform', () => this.forceUpdate());
         this.listenToElement(target);
     }
 
@@ -102,6 +104,7 @@ class HaloInner extends React.Component<HaloInnerProps> {
     }
 
     componentWillUnmount() {
+        this.listener.stopListening();
         this.listenToElement(undefined);
     }
 

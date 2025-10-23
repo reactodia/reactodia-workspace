@@ -11,6 +11,7 @@ import { PaperArea } from '../diagram/paperArea';
 import { MutableRenderingState } from '../diagram/renderingState';
 
 import { EntityElement } from '../editor/dataElements';
+import { OverlaySupport } from '../editor/overlayController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -87,7 +88,7 @@ const CLASS_NAME = 'reactodia-canvas';
  * @category Components
  */
 export function Canvas(props: CanvasProps) {
-    const {model, view} = useWorkspace();
+    const {model, view, overlay} = useWorkspace();
     const {
         elementTemplateResolver, linkTemplateResolver, linkRouter,
         showScrollbars, zoomOptions, watermarkSvg, watermarkUrl, children,
@@ -118,6 +119,7 @@ export function Canvas(props: CanvasProps) {
                 watermarkSvg={watermarkSvg}
                 watermarkUrl={watermarkUrl}>
                 {children}
+                <OverlaySupport overlay={overlay} />
             </PaperArea>
         </div>
     );

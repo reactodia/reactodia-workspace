@@ -5,9 +5,8 @@ import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Element } from '../diagram/elements';
-import { Rect, Vector, boundsOf, getContentFittingBox } from '../diagram/geometry';
+import { Rect, Vector, getContentFittingBox } from '../diagram/geometry';
 import {
     PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
 } from '../diagram/paper';
@@ -562,8 +561,6 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         );
     };
 }
-
-defineCanvasWidget(Navigator, element => ({element, attachment: 'viewport'}));
 
 function computeDrawStyle(props: NavigatorProps, styleSource: HTMLElement): DrawStyle {
     const {

@@ -4,13 +4,13 @@ import { EventObserver } from '../coreUtils/events';
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { Link } from '../diagram/elements';
 import {
     Rect, Spline, Vector, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 import type { DiagramModel, GraphStructure } from '../diagram/model';
 import { SvgPaperLayer } from '../diagram/paper';
+import { CanvasPlaceAt } from '../diagram/placeLayer';
 import type { RenderingState } from '../diagram/renderingState';
 
 import {
@@ -89,8 +89,6 @@ export function HaloLink(props: HaloLinkProps) {
     return null;
 }
 
-defineCanvasWidget(HaloLink, element => ({element, attachment: 'overElements'}));
-
 interface HaloLinkInnerProps extends HaloLinkProps {
     target: Link;
     model: DiagramModel;
@@ -111,6 +109,7 @@ const DEFAULT_BUTTON_SIZE = 20;
 const DEFAULT_BUTTON_MARGIN = 5;
 
 class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
+    private readonly listener = new EventObserver();
     private targetListener = new EventObserver();
 
     constructor(props: HaloLinkInnerProps) {
@@ -167,7 +166,8 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     }
 
     componentDidMount() {
-        const {target} = this.props;
+        const {canvas, target} = this.props;
+        this.listener.listen(canvas.events, 'changeTransform', () => this.forceUpdate());
         this.listenToTarget(target);
     }
 
@@ -186,6 +186,7 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
     }
 
     componentWillUnmount() {
+        this.listener.stopListening();
         this.listenToTarget(undefined);
     }
 
@@ -234,21 +235,26 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
         } as React.CSSProperties;
 
         return (
-            <div className={`${CLASS_NAME}`} style={style}>
+            <>    
                 <LinkHighlight actionContext={actionContext}
+                    style={style}
                     margin={highlightMargin}
                     canvas={canvas}
                 />
-                <LinkActionProvidedContext.Provider value={actionContext}>
-                    {children ?? <>
-                        <LinkActionMoveEndpoint dockSide='target' />
-                        <LinkActionMoveEndpoint dockSide='source' />
-                        <LinkActionEdit dockSide='target' dockIndex={1} />
-                        <LinkActionDelete dockSide='target' dockIndex={2} />
-                        <LinkActionRename />
-                    </>}
-                </LinkActionProvidedContext.Provider>
-            </div>
+                <CanvasPlaceAt layer='overElements'>
+                    <div className={CLASS_NAME} style={style}>
+                        <LinkActionProvidedContext.Provider value={actionContext}>
+                            {children ?? <>
+                                <LinkActionMoveEndpoint dockSide='target' />
+                                <LinkActionMoveEndpoint dockSide='source' />
+                                <LinkActionEdit dockSide='target' dockIndex={1} />
+                                <LinkActionDelete dockSide='target' dockIndex={2} />
+                                <LinkActionRename />
+                            </>}
+                        </LinkActionProvidedContext.Provider>
+                    </div>
+                </CanvasPlaceAt>
+            </>
         );
     }
 }
@@ -285,12 +291,13 @@ function computeLinkSpline(
 
 interface LinkHighlightProps {
     actionContext: HaloLinkActionContext;
+    style: React.CSSProperties;
     margin: number;
     canvas: CanvasApi;
 }
 
 function LinkHighlight(props: LinkHighlightProps) {
-    const {actionContext: {link, spline}, margin, canvas} = props;
+    const {actionContext: {link, spline}, style, margin, canvas} = props;
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
@@ -318,14 +325,21 @@ function LinkHighlight(props: LinkHighlightProps) {
     };
 
     return <>
-        <div className={`${CLASS_NAME}__label-highlight`}
-            style={labelHighlightStyle}
-        />
-        <SvgPaperLayer paperTransform={canvas.metrics.getTransform()}
-            style={{overflow: 'visible', pointerEvents: 'none'}}>
-            <path className={`${CLASS_NAME}__path-highlight`}
-                d={spline.toPath()}
-            />
-        </SvgPaperLayer>
+        <CanvasPlaceAt layer='overLinkGeometry'>
+            <SvgPaperLayer paperTransform={canvas.metrics.getTransform()}
+                className={CLASS_NAME}
+                style={{...style, overflow: 'visible', pointerEvents: 'none'}}>
+                <path className={`${CLASS_NAME}__path-highlight`}
+                    d={spline.toPath()}
+                />
+            </SvgPaperLayer>
+        </CanvasPlaceAt>
+        <CanvasPlaceAt layer='overLinks'>
+            <div className={CLASS_NAME} style={style}>
+                <div className={`${CLASS_NAME}__label-highlight`}
+                    style={labelHighlightStyle}
+                />
+            </div>
+        </CanvasPlaceAt>
     </>;
 }

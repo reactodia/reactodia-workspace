@@ -61,23 +61,27 @@ function StyleCustomizationExample() {
                     },
                     linkTemplateResolver: type => DoubleArrowLinkTemplate,
                 }}
-                canvasWidgets={[
-                    <BookDecorations key='book-decorations' />
-                ]}
-                menu={<ExampleToolbarMenu />}
-            />
+                menu={<ExampleToolbarMenu />}>
+                <BookDecorations />
+            </Reactodia.DefaultWorkspace>
         </Reactodia.Workspace>
     );
 }
 
 function BookDecorations() {
     const {model} = Reactodia.useCanvas();
+
+    const [, forceUpdate] = React.useState({});
+    React.useEffect(() => {
+        const listener = new Reactodia.EventObserver();
+        listener.listen(model.events, 'changeCells', () => forceUpdate({}));
+        return () => listener.stopListening();
+    });
+
     return model.elements
         .filter(element => element instanceof Reactodia.EntityElement)
         .map(element => <BookDecoration key={element.id} target={element} />);
 }
-
-Reactodia.defineCanvasWidget(BookDecorations, element => ({element, attachment: 'viewport'}));
 
 function BookDecoration(props: { target: Reactodia.EntityElement }) {
     const {target} = props;

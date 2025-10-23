@@ -43,6 +43,8 @@ export interface BaseDefaultWorkspaceProps {
     canvas?: CanvasProps;
     /**
      * Additional widgets to pass as children to the {@link Canvas} component.
+     *
+     * @deprecated Place additional widgets as direct children instead.
      */
     canvasWidgets?: ReadonlyArray<React.ReactElement>;
     /**
@@ -91,6 +93,10 @@ export interface BaseDefaultWorkspaceProps {
      * If specified as `null`, the component will not be rendered.
      */
     zoomControl?: Partial<ZoomControlProps> | null;
+    /**
+     * Children to the {@link Canvas} component (e.g. additional widgets).
+     */
+    children?: React.ReactNode;
 }
 
 /**
@@ -163,7 +169,7 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        colorScheme,
+        colorScheme, children,
         canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, visualAuthoring, zoomControl,
         menu, search, actions, mainToolbar, actionsToolbar,
@@ -251,6 +257,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                     </Toolbar>
                 )}
                 {canvasWidgets}
+                {children}
             </Canvas>
         </WorkspaceRoot>
     );

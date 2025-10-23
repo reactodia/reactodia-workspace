@@ -5,7 +5,6 @@ import { useObservedProperty } from '../../coreUtils/hooks';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import type { ElementModel, LinkModel } from '../../data/model';
-import { defineCanvasWidget } from '../../diagram/canvasWidget';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
 
@@ -144,15 +143,10 @@ export interface VisualAuthoringCommands {
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
     const {propertyEditor, inputResolver, inlineEntityActions = true} = props;
-    const {model, view, editor, overlay, translation: t, getCommandBus} = useWorkspace();
+    const {model, editor, overlay, translation: t, getCommandBus} = useWorkspace();
 
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
-
-        view.setCanvasWidget('states', {
-            element: <AuthoredRelationOverlay />,
-            attachment: 'overLinks',
-        });
 
         listener.listen(overlay.events, 'changeOpenedDialog', ({previous}) => {
             if (previous && previous.target) {
@@ -162,25 +156,12 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
 
         return () => {
             listener.stopListening();
-            view.setCanvasWidget('states', null);
         };
     }, []);
 
     React.useLayoutEffect(() => {
         const commands = getCommandBus(VisualAuthoringTopic);
         const listener = new EventObserver();
-
-        listener.listen(commands, 'startDragEdit', ({operation}) => {
-            const onFinishEditing = () => {
-                view.setCanvasWidget('dragEditLayer', null);
-            };
-            const dragEditLayer = (
-                <DragEditLayer operation={operation}
-                    onFinishEditing={onFinishEditing}
-                />
-            );
-            view.setCanvasWidget('dragEditLayer', {element: dragEditLayer, attachment: 'overElements'});
-        });
 
         listener.listen(commands, 'editEntity', ({target}) => {
             const onSubmit = (newData: ElementModel) => {
@@ -316,7 +297,13 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         return () => listener.stopListening();
     }, []);
 
-    return <EntityDecorators inlineActions={inlineEntityActions} />;
+    return (
+        <>
+            <AuthoredRelationOverlay />
+            <EntityDecorators inlineActions={inlineEntityActions} />
+            <DragEditState />
+        </>
+    );
 }
 
 function EntityDecoratorsInner(props: {
@@ -370,4 +357,25 @@ function EntityDecoratorsInner(props: {
 
 const EntityDecorators = React.memo(EntityDecoratorsInner);
 
-defineCanvasWidget(VisualAuthoring, element => ({element, attachment: 'viewport'}));
+function DragEditState() {
+    const [layer, setLayer] = React.useState<React.ReactElement | null>(null);
+
+    const {getCommandBus} = useWorkspace();
+
+    React.useLayoutEffect(() => {
+        const commands = getCommandBus(VisualAuthoringTopic);
+        const listener = new EventObserver();
+
+        listener.listen(commands, 'startDragEdit', ({operation}) => {
+            setLayer(
+                <DragEditLayer operation={operation}
+                    onFinishEditing={() => setLayer(null)}
+                />
+            );
+        });
+    
+        return () => listener.stopListening();
+    }, []);
+
+    return layer;
+}

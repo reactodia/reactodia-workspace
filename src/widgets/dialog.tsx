@@ -101,7 +101,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     declare readonly context: CanvasContext;
 
     private unsubscribeFromTarget: Unsubscribe | undefined = undefined;
-    private readonly handler = new EventObserver();
+    private readonly listener = new EventObserver();
 
     private updateAll = () => this.forceUpdate();
 
@@ -113,6 +113,9 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     componentDidMount() {
+        const {canvas, model} = this.context;
+        this.listener.listen(model.events, 'changeLanguage', this.updateAll);
+        this.listener.listen(canvas.events, 'changeTransform', this.updateAll);
         this.listenToTarget(this.props.target);
         if (this.props.target) {
             this.focusOn();
@@ -126,6 +129,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     }
 
     componentWillUnmount() {
+        this.listener.stopListening();
         this.listenToTarget(undefined);
     }
 
@@ -136,14 +140,9 @@ export class Dialog extends React.Component<DialogProps, State> {
         }
 
         if (target) {
-            const {model} = this.context;
-
             const unsubscribeFromStore = target.subscribe(this.updateAll, this.context);
-            this.handler.listen(model.events, 'changeLanguage', this.updateAll);
-
             this.unsubscribeFromTarget = () => {
                 unsubscribeFromStore();
-                this.handler.stopListening();
             };
         }
     }
@@ -287,6 +286,7 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     render() {
         const {
+            target,
             mode,
             dock = DEFAULT_DOCK,
             caption,
@@ -308,6 +308,7 @@ export class Dialog extends React.Component<DialogProps, State> {
             <div
                 className={cx(
                     CLASS_NAME,
+                    target ? 'reactodia-dialog--attached' : undefined,
                     mode === 'fillViewport' ? 'reactodia-dialog--fill-viewport' : undefined
                 )}
                 role='dialog'

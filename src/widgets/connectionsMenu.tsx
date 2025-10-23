@@ -9,7 +9,6 @@ import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/mo
 import { generate128BitID, makeCaseInsensitiveFilter } from '../data/utils';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
-import { defineCanvasWidget } from '../diagram/canvasWidget';
 import { changeLinkTypeVisibility, placeElementsAroundTarget } from '../diagram/commands';
 import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
@@ -197,8 +196,6 @@ export function ConnectionsMenu(props: ConnectionsMenuProps) {
 
     return null;
 }
-
-defineCanvasWidget(ConnectionsMenu, element => ({element, attachment: 'viewport'}));
 
 class VirtualTarget extends VoidElement {
     private readonly listener = new EventObserver();
