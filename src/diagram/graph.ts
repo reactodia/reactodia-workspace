@@ -38,12 +38,17 @@ export class Graph {
     private readonly source = new EventSource<GraphEvents>();
     readonly events: Events<GraphEvents> = this.source;
 
+    private cellsVersion = 1;
     private readonly elements = new OrderedMap<Element>();
     private readonly links = new OrderedMap<Link>();
     private readonly elementLinks = new WeakMap<Element, Link[]>();
     private readonly EMPTY_LINKS: Link[] = [];
 
     private readonly linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
+
+    getCellsVersion(): number {
+        return this.cellsVersion;
+    }
 
     getElements() { return this.elements.items; }
     getLinks() { return this.links.items; }
@@ -86,6 +91,7 @@ export class Graph {
 
     reorderElements(compare: (a: Element, b: Element) => number) {
         this.elements.reorder(compare);
+        this.incrementCellsVersion();
     }
 
     getElement(elementId: string): Element | undefined {
@@ -98,6 +104,7 @@ export class Graph {
         }
         element.events.onAny(this.onElementEvent);
         this.elements.push(element.id, element);
+        this.incrementCellsVersion();
         this.source.trigger('changeCells', {updateAll: false, changedElement: element});
     }
 
@@ -116,6 +123,7 @@ export class Graph {
             }
             this.elements.delete(elementId);
             element.events.offAny(this.onElementEvent);
+            this.incrementCellsVersion();
             this.source.trigger('changeCells', {updateAll: false, changedElement: element, changedLinks});
         }
     }
@@ -151,6 +159,7 @@ export class Graph {
 
         link.events.onAny(this.onLinkEvent);
         this.links.push(link.id, link);
+        this.incrementCellsVersion();
         this.source.trigger('changeCells', {updateAll: false, changedLinks: [link]});
     }
 
@@ -163,6 +172,7 @@ export class Graph {
         if (link) {
             link.events.offAny(this.onLinkEvent);
             this.removeLinkReferences(link);
+            this.incrementCellsVersion();
             if (!(options && options.silent)) {
                 this.source.trigger('changeCells', {updateAll: false, changedLinks: [link]});
             }
@@ -190,6 +200,13 @@ export class Graph {
                     this.elementLinks.delete(target);
                 }
             }
+        }
+    }
+
+    private incrementCellsVersion(): void {
+        this.cellsVersion = this.cellsVersion + 1;
+        if (this.cellsVersion >= Number.MAX_SAFE_INTEGER) {
+            this.cellsVersion = 1;
         }
     }
 

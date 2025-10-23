@@ -64,6 +64,11 @@ export interface GraphStructure {
      */
     get factory(): Rdf.DataFactory;
     /**
+     * Graph content (elements and links) version number which changes on every cell change
+     * (when element or link added/removed/reordered, see {@link DiagramModelEvents.changeCells}).
+     */
+    get cellsVersion(): number;
+    /**
      * All elements (nodes) in the graph.
      */
     get elements(): ReadonlyArray<Element>;
@@ -203,6 +208,10 @@ export class DiagramModel implements GraphStructure {
 
     get factory(): Rdf.DataFactory {
         return this.getTermFactory();
+    }
+
+    get cellsVersion(): number {
+        return this.graph.getCellsVersion();
     }
 
     get elements(): ReadonlyArray<Element> {

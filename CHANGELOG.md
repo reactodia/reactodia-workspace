@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * This is controlled by new CSS property `--reactodia-dialog-viewport-breakpoint-s` with default value `600px` which makes dialog fill the viewport if the available width is less or equal to that value.
 - Allow to override base z-index level for workspace components with a set z-index value via `--reactodia-z-index-base` CSS property;
 - Add `changeTransform` event to `CanvasApi.events` which triggers on `CanvasApi.metrics.getTransform()` changes, i.e. when coordinate mapping changes due to scale or canvas size is re-adjusted.
+- Add `DiagramModel.cellsVersion` property which updates on every element or link addition/removal/reordering to be able to subscribe to `changeCells` event with `useSyncStore()` hook.
 - Deprecate `canvasWidgets` prop on `DefaultWorkspace` and `ClassicWorkspace` in favor of passing widgets directly as children.
 
 #### 🐛 Fixed
