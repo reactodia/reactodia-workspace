@@ -1,7 +1,9 @@
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
-import { useObservedProperty } from '../../coreUtils/hooks';
+import {
+    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
+} from '../../coreUtils/hooks';
 import { Debouncer } from '../../coreUtils/scheduler';
 
 import type { ElementModel, LinkModel } from '../../data/model';
@@ -312,25 +314,19 @@ function EntityDecoratorsInner(props: {
     const {inlineActions} = props;
     const {model, editor} = useWorkspace();
 
-    const inAuthoringMode = useObservedProperty(editor.events, 'changeMode', () => editor.inAuthoringMode);
-
-    const [version, setVersion] = React.useState(0);
-    React.useEffect(() => {
-        const debouncer = new Debouncer();
-        const listener = new EventObserver();
-        const scheduleUpdate = () => setVersion(v => v + 1);
-        listener.listen(model.events, 'changeCells', () => {
-            debouncer.call(scheduleUpdate);
-        });
-        return () => {
-            listener.stopListening();
-            debouncer.dispose();
-        };
-    }, []);
+    const inAuthoringMode = useObservedProperty(
+        editor.events,
+        'changeMode',
+        () => editor.inAuthoringMode
+    );
+    const cellsVersion = useSyncStore(
+        useFrameDebouncedStore(useEventStore(model.events, 'changeCells')),
+        () => model.cellsVersion
+    );
 
     const cachedDecorators = React.useMemo(
         () => new WeakMap<EntityElement, React.ReactNode>(),
-        [inlineActions, version]
+        [inlineActions, cellsVersion]
     );
 
     const decorators: React.ReactNode[] = [];

@@ -71,12 +71,13 @@ function StyleCustomizationExample() {
 function BookDecorations() {
     const {model} = Reactodia.useCanvas();
 
-    const [, forceUpdate] = React.useState({});
-    React.useEffect(() => {
-        const listener = new Reactodia.EventObserver();
-        listener.listen(model.events, 'changeCells', () => forceUpdate({}));
-        return () => listener.stopListening();
-    });
+    // Update decorations when graph content changes
+    Reactodia.useSyncStore(
+        Reactodia.useFrameDebouncedStore(
+            Reactodia.useEventStore(model.events, 'changeCells')
+        ),
+        () => model.cellsVersion
+    );
 
     return model.elements
         .filter(element => element instanceof Reactodia.EntityElement)
