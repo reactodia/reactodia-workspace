@@ -4,6 +4,7 @@ import { TranslatedText } from '../coreUtils/i18n';
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
 import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
+import { TemplateProperties } from '../data/schema';
 
 import { Element, Link } from '../diagram/elements';
 import { Command } from '../diagram/history';
@@ -305,7 +306,11 @@ export class EditorController {
         );
 
         const element = model.createElement(data);
-        element.setExpanded(true);
+        // TODO: customize initial state via MetadataProvider
+        element.setElementState({
+            ...element.elementState,
+            [TemplateProperties.Expanded]: true,
+        });
 
         if (options.temporary) {
             this.setTemporaryState(

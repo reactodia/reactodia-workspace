@@ -25,9 +25,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Add `changeTransform` event to `CanvasApi.events` which triggers on `CanvasApi.metrics.getTransform()` changes, i.e. when coordinate mapping changes due to scale or canvas size is re-adjusted.
 - Add `DiagramModel.cellsVersion` property which updates on every element or link addition/removal/reordering to be able to subscribe to `changeCells` event with `useSyncStore()` hook.
 - Deprecate `canvasWidgets` prop on `DefaultWorkspace` and `ClassicWorkspace` in favor of passing widgets directly as children.
+- Move expanded element state from distinct property on `Element` to be stored in `Element.elementState` with `TemplateProperties.Expanded` property:
+  * All existing properties, methods and commands works as before but use element template state as storage for expanded state;
+  * `changeExpanded` event is removed from element events, use `changeElementState` event instead;
+  * When exporting the diagram the expanded state is serialized only with `elementState` while using `isExpanded` property when importing the diagram for backward compatibility.
+- Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
 
 #### 🐛 Fixed
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
+- Fix element template state not being restored when ungrouping entities.
 
 ## [0.30.1] - 2025-06-27
 #### 🐛 Fixed

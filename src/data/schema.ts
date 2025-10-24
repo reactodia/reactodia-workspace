@@ -28,6 +28,13 @@ export const PlaceholderRelationType: LinkTypeIri = 'urn:reactodia:newLink';
  */
 export enum TemplateProperties {
     /**
+     * Element state property to display the element as expanded
+     * (if supported by its element template).
+     *
+     * @see {@link Element.isExpanded}
+     */
+    Expanded = 'urn:reactodia:expanded',
+    /**
      * Element state property to mark some element data properties as "pinned",
      * i.e. displayed even if element is collapsed.
      *

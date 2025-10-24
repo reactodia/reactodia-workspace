@@ -122,7 +122,7 @@ class HaloInner extends React.Component<HaloInnerProps> {
     }
 
     private onElementEvent: AnyListener<ElementEvents> = data => {
-        if (data.changePosition || data.changeExpanded) {
+        if (data.changePosition) {
             this.forceUpdate();
         }
     };

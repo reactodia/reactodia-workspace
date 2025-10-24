@@ -48,6 +48,10 @@ export interface SerializedLayoutElement {
     '@id': string;
     iri?: ElementIri;
     position: Vector;
+    /**
+     * @deprecated only deserialized to {@link TemplateProperties.Expanded}
+     * in {@link elementState} for compatibility
+     */
     isExpanded?: boolean;
     elementState?: ElementTemplateState;
 }
@@ -192,7 +196,6 @@ function serializeLayout(
                 '@id': element.id,
                 iri: element instanceof EntityElement ? element.iri : undefined,
                 position: element.position,
-                isExpanded: element.isExpanded,
                 elementState: element.elementState,
             });
         }

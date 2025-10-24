@@ -10,6 +10,7 @@ import type { HotkeyString } from '../coreUtils/hotkey';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { LinkTypeIri } from '../data/model';
+import { TemplateProperties } from '../data/schema';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { useCanvasHotkey } from '../diagram/canvasHotkey';
@@ -381,8 +382,13 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
         const elementSet = new Set(elements);
         const listener = new EventObserver();
         listener.listen(model.events, 'elementEvent', ({data}) => {
-            if (data.changeExpanded && elementSet.has(data.changeExpanded.source)) {
-                onChange();
+            if (data.changeElementState && elementSet.has(data.changeElementState.source)) {
+                const previousExpanded = Boolean(
+                    data.changeElementState.previous?.[TemplateProperties.Expanded]
+                );
+                if (data.changeElementState.source.isExpanded !== previousExpanded) {
+                    onChange();
+                }
             }
         });
         return () => listener.stopListening();

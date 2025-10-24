@@ -8,7 +8,6 @@ import { Debouncer } from '../coreUtils/scheduler';
 import { ElementTemplate, TemplateProps } from './customization';
 
 import { useCanvas } from './canvasApi';
-import { setElementExpanded } from './commands';
 import { Element, VoidElement } from './elements';
 import type { Size } from './geometry';
 import { DiagramModel } from './model';
@@ -133,7 +132,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             this.requestRedrawAll(RedrawFlags.None);
         });
         this.listener.listen(model.events, 'elementEvent', ({data}) => {
-            const invalidatesTemplate = data.changeExpanded || data.changeElementState;
+            const invalidatesTemplate = data.changeElementState;
             if (invalidatesTemplate) {
                 this.requestRedraw(invalidatesTemplate.source, RedrawFlags.RecomputeTemplate);
             }
@@ -312,9 +311,6 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         // const angle = model.get('angle') || 0;
         // if (angle) { transform += `rotate(${angle}deg)`; }
 
-        const className = (
-            `reactodia-overlaid-element ${blurred ? 'reactodia-overlaid-element--blurred' : ''}`
-        );
         const style: React.CSSProperties = {position: 'absolute', transform};
         return (
             <>
@@ -336,8 +332,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
                     // eslint-disable-next-line react/no-unknown-property
                     onLoad={this.onLoadOrErrorEvent}
                     // eslint-disable-next-line react/no-unknown-property
-                    onError={this.onLoadOrErrorEvent}
-                    onDoubleClick={this.onDoubleClick}>
+                    onError={this.onLoadOrErrorEvent}>
                     <TemplatedElement {...this.props} />
                 </div>
                 <div className='reactodia-element-decorations'
@@ -356,15 +351,6 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
         if (this.elementRef.current) {
             onResize(state.element, this.elementRef.current);
         }
-    };
-
-    private onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const {model, state: {element}} = this.props;
-        model.history.execute(
-            setElementExpanded(element, !element.isExpanded)
-        );
     };
 
     componentDidMount() {

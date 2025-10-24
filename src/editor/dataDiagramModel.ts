@@ -869,6 +869,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
                 const entity = new EntityElement({
                     data: item.data,
                     position: group.position,
+                    elementState: item.elementState,
                 });
                 this.addElement(entity);
                 ungrouped.push(entity);
@@ -932,6 +933,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
                 const entity = new EntityElement({
                     data: item.data,
                     position: group.position,
+                    elementState: item.elementState,
                 });
                 this.addElement(entity);
                 ungroupedElements.push(entity);

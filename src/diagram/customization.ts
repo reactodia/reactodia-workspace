@@ -91,6 +91,9 @@ export interface TemplateProps {
      * Specifies whether element is in the expanded state.
      *
      * Same as {@link Element.isExpanded}.
+     *
+     * Expanded state is stored in the {@link elementState element state}
+     * with {@link TemplateProperties.Expanded} property.
      */
     readonly isExpanded: boolean;
     /**
