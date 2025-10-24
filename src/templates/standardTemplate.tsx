@@ -8,6 +8,7 @@ import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
+import { setElementExpanded } from '../diagram/commands';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
@@ -60,6 +61,7 @@ const CLASS_NAME = 'reactodia-standard-template';
  * otherwise nothing will be rendered.
  *
  * The template supports the following template state:
+ *   - {@link TemplateProperties.Expanded}
  *   - {@link TemplateProperties.PinnedProperties}
  *
  * Entities can be edited or deleted using corresponding buttons
@@ -171,13 +173,22 @@ export function StandardEntity(props: StandardEntityProps) {
         );
     }
 
+    const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        model.history.execute(
+            setElementExpanded(element, !element.isExpanded)
+        );
+    };
+
     return (
         <div style={rootStyle}
             className={cx(
                 CLASS_NAME,
                 `${CLASS_NAME}--standalone`,
                 getEntityAuthoredStatusClass(data, editor.authoringState)
-            )}>
+            )}
+            onDoubleClick={onDoubleClick}>
             <div className={`${CLASS_NAME}__main`}>
                 <div className={`${CLASS_NAME}__body`}>
                     <div className={`${CLASS_NAME}__body-horizontal`}>

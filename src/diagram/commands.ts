@@ -1,6 +1,7 @@
 import { TranslatedText } from '../coreUtils/i18n';
 
 import type { LinkTypeIri } from '../data/model';
+import { TemplateProperties } from '../data/schema';
 
 import type { CanvasApi } from './canvasApi';
 import type {
@@ -140,6 +141,9 @@ export function setElementState(element: Element, state: ElementTemplateState | 
 
 /**
  * Command to toggle element expanded or collapsed.
+ * 
+ * Expanded state is stored in the {@link Element.elementState element state}
+ * with {@link TemplateProperties.Expanded} property.
  *
  * @category Commands
  */

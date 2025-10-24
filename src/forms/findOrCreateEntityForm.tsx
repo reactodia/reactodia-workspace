@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { TranslatedText } from '../coreUtils/i18n';
 
+import { TemplateProperties } from '../data/schema';
+
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
@@ -233,7 +235,11 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         if (elementValue.isNew) {
             model.addElement(target);
-            target.setExpanded(true);
+            // TODO: customize initial state via MetadataProvider
+            target.setElementState({
+                ...target.elementState,
+                [TemplateProperties.Expanded]: true,
+            });
             editor.setAuthoringState(
                 AuthoringState.addEntity(editor.authoringState, target.data)
             );

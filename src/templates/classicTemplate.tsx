@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementModel, PropertyTypeIri } from '../data/model';
+import { setElementExpanded } from '../diagram/commands';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
@@ -38,6 +39,9 @@ const CLASS_NAME = 'reactodia-classic-template';
  *
  * The template supports displaying only {@link EntityElement} elements,
  * otherwise nothing will be rendered.
+ *
+ * The template supports the following template state:
+ *   - {@link TemplateProperties.Expanded}
  *
  * @category Components
  * @see {@link ClassicTemplate}
@@ -92,6 +96,14 @@ export function ClassicEntity(props: ClassicEntityProps) {
         </div>
     ) : null;
 
+    const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        model.history.execute(
+            setElementExpanded(element, !element.isExpanded)
+        );
+    };
+
     return (
         <div
             className={cx(
@@ -99,7 +111,8 @@ export function ClassicEntity(props: ClassicEntityProps) {
                 isExpanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}
             style={{backgroundColor: color, borderColor: color}}
-            data-expanded={isExpanded}>
+            data-expanded={isExpanded}
+            onDoubleClick={onDoubleClick}>
             <div className={`${CLASS_NAME}__type-line`} title={label}>
                 <div className={`${CLASS_NAME}__type-line-icon`} aria-hidden='true'>
                     <img src={icon} />

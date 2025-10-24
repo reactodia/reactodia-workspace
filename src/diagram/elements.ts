@@ -1,6 +1,7 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri } from '../data/model';
+import { TemplateProperties } from '../data/schema';
 import { generate128BitID } from '../data/utils';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -20,10 +21,6 @@ export interface ElementEvents {
      * Triggered on {@link Element.position} property change.
      */
     changePosition: PropertyChange<Element, Vector>;
-    /**
-     * Triggered on {@link Element.isExpanded} property change.
-     */
-    changeExpanded: PropertyChange<Element, boolean>;
     /**
      * Triggered on {@link Element.elementState} property change.
      */
@@ -72,9 +69,26 @@ export type ElementRedrawLevel = 'render' | 'template';
  * Properties for {@link Element}.
  */
 export interface ElementProps {
+    /**
+     * Unique and immutable {@link Element.id element ID}.
+     *
+     * If not specified, {@link Element.generateId()} is used to create one.
+     */
     id?: string;
+    /**
+     * Initial value for the {@link Element.position element position}.
+     */
     position?: Vector;
+    /**
+     * Initial value for the {@link Element.isExpanded} state.
+     *
+     * If specified as `true`, the value is added to the {@link Element.elementState}
+     * with {@link TemplateProperties.Expanded} property.
+     */
     expanded?: boolean;
+    /**
+     * Initial value for the {@link Element.elementState element template state}.
+     */
     elementState?: ElementTemplateState;
 }
 
@@ -84,13 +98,21 @@ export interface ElementProps {
  * @category Core
  */
 export abstract class Element {
+    /**
+     * Event source to trigger events from derived element types.
+     */
     protected readonly source = new EventSource<ElementEvents>();
+    /**
+     * Events for the graph element.
+     */
     readonly events: Events<ElementEvents> = this.source;
 
+    /**
+     * Unique and immutable element ID on the diagram.
+     */
     readonly id: string;
 
     private _position: Vector;
-    private _expanded: boolean;
     private _elementState: ElementTemplateState | undefined;
 
     constructor(props: ElementProps) {
@@ -103,8 +125,9 @@ export abstract class Element {
 
         this.id = id;
         this._position = position;
-        this._expanded = expanded;
-        this._elementState = elementState;
+        this._elementState = expanded
+            ? {...elementState, [TemplateProperties.Expanded]: expanded}
+            : elementState;
     }
 
     /**
@@ -114,8 +137,22 @@ export abstract class Element {
         return `urn:reactodia:e:${generate128BitID()}`;
     }
 
-    get position(): Vector { return this._position; }
-    setPosition(value: Vector) {
+    /**
+     * Gets the element position on the canvas in paper coordinates. 
+     */
+    get position(): Vector {
+        return this._position;
+    }
+
+    /**
+     * Sets a new value for {@link position} property.
+     *
+     * Triggers {@link ElementEvents.changePosition} event if new value does
+     * not equal to the previous one.
+     *
+     * @see {@link RestoreGeometry}
+     */
+    setPosition(value: Vector): void {
         const previous = this._position;
         const same = (
             previous.x === value.x &&
@@ -126,27 +163,68 @@ export abstract class Element {
         this.source.trigger('changePosition', {source: this, previous});
     }
 
-    get isExpanded(): boolean { return this._expanded; }
-    setExpanded(value: boolean) {
-        const previous = this._expanded;
-        if (previous === value) { return; }
-        this._expanded = value;
-        this.source.trigger('changeExpanded', {source: this, previous});
+    /**
+     * Whether the element should be displayed as expanded
+     * (as defined by the element template).
+     *
+     * Expanded state is stored in the {@link Element.elementState element state}
+     * with {@link TemplateProperties.Expanded} property.
+     */
+    get isExpanded(): boolean {
+        return Boolean(this._elementState?.[TemplateProperties.Expanded]);
     }
 
-    get elementState(): ElementTemplateState | undefined { return this._elementState; }
-    setElementState(value: ElementTemplateState | undefined) {
+    /**
+     * Sets a new value for {@link isExpanded} property.
+     *
+     * Expanded state is stored in the {@link Element.elementState element state}
+     * with {@link TemplateProperties.Expanded} property.
+     *
+     * Triggers {@link ElementEvents.changeElementState} event if new value does
+     * not equal to the previous one.
+     */
+    setExpanded(value: boolean): void {
+        if (value && !this._elementState?.[TemplateProperties.Expanded]) {
+            this.setElementState({...this._elementState, [TemplateProperties.Expanded]: true});
+        } else if (!value && this._elementState?.[TemplateProperties.Expanded]) {
+            const {[TemplateProperties.Expanded]: _, ...withoutExpanded} = this._elementState;
+            this.setElementState(withoutExpanded);
+        }
+    }
+
+    /**
+     * Gets a serializable template-specific state for the element.
+     */
+    get elementState(): ElementTemplateState | undefined {
+        return this._elementState;
+    }
+
+    /**
+     * Sets a new value for {@link elementState} property.
+     *
+     * Triggers {@link ElementEvents.changeElementState} event if new value does
+     * not equal to the previous one.
+     */
+    setElementState(value: ElementTemplateState | undefined): void {
         const previous = this._elementState;
         if (previous === value) { return; }
         this._elementState = value;
         this.source.trigger('changeElementState', {source: this, previous});
     }
 
-    focus() {
+    /**
+     * Focuses on the element template on a canvas (if possible).
+     */
+    focus(): void {
         this.source.trigger('requestedFocus', {source: this});
     }
 
-    redraw(level?: ElementRedrawLevel) {
+    /**
+     * Forces a re-render of the element displayed by a template on a canvas.
+     *
+     * @param level specifies which cached state should be invalidated on re-render
+     */
+    redraw(level?: ElementRedrawLevel): void {
         this.source.trigger('requestedRedraw', {source: this, level});
     }
 }
@@ -201,10 +279,27 @@ export interface LinkEvents {
  * Properties for {@link Link}.
  */
 export interface LinkProps {
+    /**
+     * Unique and immutable {@link Link.id link ID}.
+     *
+     * If not specified, {@link Link.generateId()} is used to create one.
+     */
     id?: string;
+    /**
+     * An immutable link {@link Link.sourceId source} ({@link Element.id element ID}).
+     */
     sourceId: string;
+    /**
+     * An immutable link {@link Link.targetId target} ({@link Element.id element ID}).
+     */
     targetId: string;
+    /**
+     * Initial value for the {@link Link.vertices link vertices (geometry)}.
+     */
     vertices?: ReadonlyArray<Vector>;
+    /**
+     * Initial value for the {@link Link.linkState link template state}.
+     */
     linkState?: LinkTemplateState;
 }
 
@@ -214,9 +309,18 @@ export interface LinkProps {
  * @category Core
  */
 export abstract class Link {
+    /**
+     * Event source to trigger events from derived link types.
+     */
     protected readonly source = new EventSource<LinkEvents>();
+    /**
+     * Events for the graph link.
+     */
     readonly events: Events<LinkEvents> = this.source;
 
+    /**
+     * Unique and immutable link ID on the diagram.
+     */
     readonly id: string;
 
     private _sourceId: string;
@@ -248,31 +352,83 @@ export abstract class Link {
         return `urn:reactodia:l:${generate128BitID()}`;
     }
 
-    get sourceId(): string { return this._sourceId; }
-    get targetId(): string { return this._targetId; }
+    /**
+     * Gets an immutable link source {@link Element.id element ID}.
+     */
+    get sourceId(): string {
+        return this._sourceId;
+    }
+
+    /**
+     * Gets an immutable link target {@link Element.id element ID}.
+     */
+    get targetId(): string {
+        return this._targetId;
+    }
+
+    /**
+     * Gets the link type IRI.
+     */
     get typeId(): LinkTypeIri {
         return this.getTypeId();
     }
 
+    /**
+     * Should return the link type IRI.
+     *
+     * For derived link types without natural type IRIs the synthetic IRIs can be
+     * used, e.g. `my:custom:link`.
+     */
     protected abstract getTypeId(): LinkTypeIri;
 
-    get vertices(): ReadonlyArray<Vector> { return this._vertices; }
-    setVertices(value: ReadonlyArray<Vector>) {
+    /**
+     * Gets the link geometry (intermediate points in paper coordinates in order
+     * from the link source to the target).
+     */
+    get vertices(): ReadonlyArray<Vector> {
+        return this._vertices;
+    }
+
+    /**
+     * Sets a new value for {@link vertices} property.
+     *
+     * Triggers {@link LinkEvents.changeVertices} event if new geometry
+     * does not equal to the previous one.
+     *
+     * @see {@link RestoreGeometry}
+     * @see {@link restoreCapturedLinkGeometry()}
+     */
+    setVertices(value: ReadonlyArray<Vector>): void {
         const previous = this._vertices;
         if (isPolylineEqual(this._vertices, value)) { return; }
         this._vertices = value;
         this.source.trigger('changeVertices', {source: this, previous});
     }
 
-    get linkState(): LinkTemplateState | undefined { return this._linkState; }
-    setLinkState(value: LinkTemplateState | undefined) {
+    /**
+     * Gets a serializable template-specific state for the link.
+     */
+    get linkState(): LinkTemplateState | undefined {
+        return this._linkState;
+    }
+
+    /**
+     * Sets a new value for {@link linkState} property.
+     *
+     * Triggers {@link LinkEvents.changeLinkState} event if new value does
+     * not equal to the previous one.
+     */
+    setLinkState(value: LinkTemplateState | undefined): void {
         const previous = this._linkState;
         if (previous === value) { return; }
         this._linkState = value;
         this.source.trigger('changeLinkState', {source: this, previous});
     }
 
-    redraw() {
+    /**
+     * Forces a re-render of the link displayed by a template on a canvas.
+     */
+    redraw(): void {
         this.source.trigger('requestedRedraw', {source: this});
     }
 }
