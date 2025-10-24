@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 - Fix element template state not being restored when ungrouping entities.
+- Fix missing element decorations after re-importing the same diagram.
 
 ## [0.30.1] - 2025-06-27
 #### 🐛 Fixed
