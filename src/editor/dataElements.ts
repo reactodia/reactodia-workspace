@@ -18,6 +18,11 @@ import {
 import { Command } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
 
+import type {
+    SerializedElement, SerializableElementCell, ElementFromJsonOptions,
+    SerializedLink, SerializableLinkCell, LinkFromJsonOptions,
+} from './serializedDiagram';
+
 /**
  * Event data for {@link EntityElement} events.
  *
@@ -84,6 +89,51 @@ export class EntityElement extends Element {
         this.entitySource.trigger('changeData', {source: this, previous});
         this.entitySource.trigger('requestedRedraw', {source: this, level: 'template'});
     }
+
+    static readonly fromJSONType = 'Element';
+
+    static fromJSON(
+        state: SerializedEntityElement,
+        options: ElementFromJsonOptions
+    ): EntityElement | undefined {
+        const {'@id': id, iri, position, isExpanded, elementState} = state;
+        if (iri) {
+            const initialData = options.getInitialData(iri);
+            return new EntityElement({
+                id,
+                data: initialData ?? EntityElement.placeholderData(iri),
+                position,
+                expanded: isExpanded,
+                elementState: options.mapTemplateState(elementState),
+            });
+        }
+        return undefined;
+    }
+
+    toJSON(): SerializedEntityElement {
+        return {
+            '@type': 'Element',
+            '@id': this.id,
+            iri: this.iri,
+            position: this.position,
+            elementState: this.elementState,
+        };
+    }
+}
+
+EntityElement satisfies SerializableElementCell<EntityElement>;
+
+/**
+ * Serialized entity element state.
+ */
+export interface SerializedEntityElement extends SerializedElement {
+    '@type': 'Element';
+    iri?: ElementIri;
+    /**
+     * @deprecated only deserialized to {@link TemplateProperties.Expanded}
+     * in {@link elementState} for compatibility
+     */
+    isExpanded?: boolean;
 }
 
 /**
@@ -167,7 +217,41 @@ export class EntityGroup extends Element {
             this._itemIris.add(item.data.id);
         }
     }
+
+    static readonly fromJSONType = 'ElementGroup';
+
+    static fromJSON(
+        state: SerializedEntityGroup,
+        options: ElementFromJsonOptions
+    ): EntityGroup | undefined {
+        const {'@id': id, items, position, elementState} = state;
+        const groupItems: EntityGroupItem[] = [];
+        for (const item of items) {
+            const initialData = options.getInitialData(item.iri);
+            groupItems.push({
+                data: initialData ?? EntityElement.placeholderData(item.iri),
+                elementState: options.mapTemplateState(item.elementState),
+            });
+        }
+        return new EntityGroup({id, items: groupItems, position, elementState});
+    }
+
+    toJSON(): SerializedEntityGroup {
+        return {
+            '@type': 'ElementGroup',
+            '@id': this.id,
+            items: this.items.map((item): SerializedEntityGroupItem => ({
+                '@type': 'ElementItem',
+                iri: item.data.id,
+                elementState: item.elementState,
+            })),
+            position: this.position,
+            elementState: this.elementState,
+        };
+    }
 }
+
+EntityGroup satisfies SerializableElementCell<EntityGroup>;
 
 /**
  * Represents a single entity contained in the entity group.
@@ -177,6 +261,23 @@ export class EntityGroup extends Element {
 export interface EntityGroupItem {
     readonly data: ElementModel;
     readonly elementState?: ElementTemplateState | undefined;
+}
+
+/**
+ * Serialized entity group state. 
+ */
+export interface SerializedEntityGroup extends SerializedElement {
+    '@type': 'ElementGroup';
+    items: ReadonlyArray<SerializedEntityGroupItem>;
+}
+
+/**
+ * Serialized entity group item state.
+ */
+export interface SerializedEntityGroupItem {
+    '@type': 'ElementItem';
+    iri: ElementIri;
+    elementState?: ElementTemplateState;
 }
 
 /**
@@ -276,6 +377,68 @@ export class RelationLink extends Link {
             ? this.targetId : this.sourceId;
         return new RelationLink({sourceId, targetId, data});
     }
+
+    static readonly fromJSONType = 'Link';
+
+    static fromJSON(
+        state: SerializedRelationLink,
+        options: LinkFromJsonOptions
+    ): RelationLink | undefined {
+        const {'@id': id, property, vertices, linkState} = state;
+        const {source, target} = options;
+
+        const sourceIri = state.sourceIri ?? (
+            source instanceof EntityElement ? source.data.id : undefined
+        );
+        const targetIri = state.targetIri ?? (
+            target instanceof EntityElement ? target.data.id : undefined
+        );
+        if (sourceIri && targetIri) {
+            const key: LinkModel = {
+                linkTypeId: property,
+                sourceId: sourceIri,
+                targetId: targetIri,
+                properties: {},
+            };
+            const initialData = options.getInitialData(key);
+            return new RelationLink({
+                id,
+                sourceId: source.id,
+                targetId: target.id,
+                data: initialData ?? key,
+                vertices,
+                linkState: options.mapTemplateState(linkState),
+            });
+        }
+
+        return undefined;
+    }
+
+    toJSON(): SerializedRelationLink {
+        return {
+            '@type': 'Link',
+            '@id': this.id,
+            property: this.typeId,
+            source: {'@id': this.sourceId},
+            target: {'@id': this.targetId},
+            sourceIri: this.data.sourceId,
+            targetIri: this.data.targetId,
+            vertices: [...this.vertices],
+            linkState: this.linkState,
+        };
+    }
+}
+
+RelationLink satisfies SerializableLinkCell<RelationLink>;
+
+/**
+ * Serialized relation link state.
+ */
+export interface SerializedRelationLink extends SerializedLink {
+    '@type': 'Link';
+    property: LinkTypeIri;
+    targetIri?: ElementIri;
+    sourceIri?: ElementIri;
 }
 
 /**
@@ -386,7 +549,60 @@ export class RelationGroup extends Link {
             this._targets.add(item.data.targetId);
         }
     }
+
+    static readonly fromJSONType = 'LinkGroup';
+
+    static fromJSON(
+        state: SerializedRelationGroup,
+        options: LinkFromJsonOptions
+    ): RelationGroup | undefined {
+        const {'@id': id, property, vertices, linkState} = state;
+        const {source, target} = options;
+        const groupItems: RelationGroupItem[] = [];
+        for (const item of state.items) {
+            const key: LinkModel = {
+                linkTypeId: state.property,
+                sourceId: item.sourceIri,
+                targetId: item.targetIri,
+                properties: {},
+            };
+            const initialData = options.getInitialData(key);
+            groupItems.push({
+                data: initialData ?? key,
+                linkState: options.mapTemplateState(item.linkState),
+            });
+        }
+        return new RelationGroup({
+            id,
+            typeId: property,
+            sourceId: source.id,
+            targetId: target.id,
+            items: groupItems,
+            vertices,
+            linkState: options.mapTemplateState(linkState),
+        });
+    }
+
+    toJSON(): SerializedRelationGroup {
+        return {
+            '@type': 'LinkGroup',
+            '@id': this.id,
+            property: this.typeId,
+            source: {'@id': this.sourceId},
+            target: {'@id': this.targetId},
+            items: this.items.map((item): SerializedRelationGroupItem => ({
+                '@type': 'LinkItem',
+                sourceIri: item.data.sourceId,
+                targetIri: item.data.targetId,
+                linkState: item.linkState,
+            })),
+            vertices: [...this.vertices],
+            linkState: this.linkState,
+        };
+    }
 }
+
+RelationGroup satisfies SerializableLinkCell<RelationGroup>;
 
 /**
  * Represents a single relation contained in the relation group.
@@ -396,6 +612,25 @@ export class RelationGroup extends Link {
 export interface RelationGroupItem {
     readonly data: LinkModel;
     readonly linkState?: LinkTemplateState | undefined;
+}
+
+/**
+ * Serialized relation group state.
+ */
+export interface SerializedRelationGroup extends SerializedLink {
+    '@type': 'LinkGroup';
+    property: LinkTypeIri;
+    items: ReadonlyArray<SerializedRelationGroupItem>;
+}
+
+/**
+ * Serialized relation group item state.
+ */
+export interface SerializedRelationGroupItem {
+    '@type': 'LinkItem';
+    targetIri: ElementIri;
+    sourceIri: ElementIri;
+    linkState?: LinkTemplateState;
 }
 
 /**

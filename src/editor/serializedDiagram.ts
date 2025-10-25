@@ -1,13 +1,10 @@
-import { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
+import type { ReadonlyHashMap } from '@reactodia/hashmap';
+
+import { ElementIri, ElementModel, LinkKey, LinkModel, LinkTypeIri } from '../data/model';
 import { DiagramContextV1, PlaceholderRelationType, TemplateProperties } from '../data/schema';
 
 import { Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
-
-import {
-    EntityElement, EntityGroup, EntityGroupItem,
-    RelationLink, RelationGroup, RelationGroupItem,
-} from './dataElements';
 
 /**
  * Serialized diagram state in [JSON-LD](https://json-ld.org/) compatible format.
@@ -36,82 +33,117 @@ export interface SerializedLinkOptions {
  */
 export interface SerializedLayout {
     '@type': 'Layout';
-    elements: ReadonlyArray<SerializedLayoutElement | SerializedLayoutElementGroup>;
-    links: ReadonlyArray<SerializedLayoutLink | SerializedLayoutLinkGroup>;
+    elements: ReadonlyArray<SerializedElement>;
+    links: ReadonlyArray<SerializedLink>;
+}
+
+type SerializedState<T> = T extends { toJSON(): infer S } ? Exclude<S, undefined> : never;
+
+type JsonableElement = Element & { toJSON(): SerializedElement };
+
+/**
+ * Static interface (contract) for serializable graph element
+ * classes derived from {@link Element}.
+ *
+ * **Example**:
+ * ```ts
+ * class MyElement extends Reactodia.Element {
+ *   ...
+ *   static readonly fromJSONType = 'MyElement';
+ *   static fromJSON(state: SerializedMyElement): MyElement | undefined {
+ *     ...
+ *   }
+ *   toJSON(): SerializedMyElement {
+ *     ...
+ *   }
+ * }
+ * 
+ * interface SerializedMyElement extends Reactodia.SerializedElement {
+ *   '@type': 'MyElement';
+ *   ...
+ * }
+ * 
+ * MyElement satisfies SerializableElementCell<MyElement>;
+ * ```
+ */
+export interface SerializableElementCell<T extends JsonableElement = JsonableElement> {
+    new (...args: any[]): T;
+    readonly fromJSONType: SerializedState<T>['@type'];
+    fromJSON(state: SerializedState<T>, options: ElementFromJsonOptions): T | undefined;
 }
 
 /**
- * Serialized entity element state.
+ * Options for {@link SerializableElementCell.fromJSON} method.
  */
-export interface SerializedLayoutElement {
-    '@type': 'Element';
+export interface ElementFromJsonOptions {
+    readonly getInitialData: (iri: ElementIri) => ElementModel | undefined;
+    readonly mapTemplateState:
+        (from: ElementTemplateState | undefined) => ElementTemplateState | undefined;
+}
+
+/**
+ * Serialized graph element state.
+ */
+export interface SerializedElement {
+    '@type': string;
     '@id': string;
-    iri?: ElementIri;
     position: Vector;
-    /**
-     * @deprecated only deserialized to {@link TemplateProperties.Expanded}
-     * in {@link elementState} for compatibility
-     */
-    isExpanded?: boolean;
     elementState?: ElementTemplateState;
 }
 
+type JsonableLink = Link & { toJSON(): SerializedLink };
+
 /**
- * Serialized entity group state. 
+ * Static interface (contract) for serializable graph link
+ * classes derived from {@link Link}.
+ *
+ * **Example**:
+ * ```ts
+ * class MyLink extends Reactodia.Link {
+ *   ...
+ *   static readonly fromJSONType = 'MyLink';
+ *   static fromJSON(state: SerializedMyLink): MyLink | undefined {
+ *     ...
+ *   }
+ *   toJSON(): SerializedMyLink {
+ *     ...
+ *   }
+ * }
+ * 
+ * interface SerializedMyLink extends Reactodia.SerializedLink {
+ *   '@type': 'MyLink';
+ *   ...
+ * }
+ * 
+ * MyLink satisfies SerializableLinkCell<MyLink>;
+ * ```
  */
-export interface SerializedLayoutElementGroup {
-    '@type': 'ElementGroup';
+export interface SerializableLinkCell<T extends JsonableLink = JsonableLink> {
+    new (...args: any[]): T;
+    readonly fromJSONType: SerializedState<T>['@type'];
+    fromJSON(state: SerializedState<T>, options: LinkFromJsonOptions): T | undefined;
+}
+
+/**
+ * Options for {@link SerializableLinkCell.fromJSON} method.
+ */
+export interface LinkFromJsonOptions {
+    readonly source: Element;
+    readonly target: Element;
+    readonly getInitialData: (key: LinkKey) => LinkModel | undefined;
+    readonly mapTemplateState:
+        (from: LinkTemplateState | undefined) => LinkTemplateState | undefined;
+}
+
+/**
+ * Serialized graph link state.
+ */
+export interface SerializedLink {
+    '@type': string;
     '@id': string;
-    items: ReadonlyArray<SerializedLayoutElementItem>;
-    position: Vector;
-    elementState?: ElementTemplateState;
-}
-
-/**
- * Serialized entity group item state.
- */
-export interface SerializedLayoutElementItem {
-    '@type': 'ElementItem';
-    iri: ElementIri;
-    elementState?: ElementTemplateState;
-}
-
-/**
- * Serialized relation link state.
- */
-export interface SerializedLayoutLink {
-    '@type': 'Link';
-    '@id': string;
-    property: LinkTypeIri;
     source: { '@id': string };
     target: { '@id': string };
-    targetIri?: ElementIri;
-    sourceIri?: ElementIri;
     vertices?: ReadonlyArray<Vector>;
-    linkState?: LinkTemplateState;
-}
-
-/**
- * Serialized relation group state.
- */
-export interface SerializedLayoutLinkGroup {
-    '@type': 'LinkGroup';
-    '@id': string;
-    property: LinkTypeIri;
-    source: { '@id': string };
-    target: { '@id': string };
-    items: ReadonlyArray<SerializedLayoutLinkItem>;
-    vertices?: ReadonlyArray<Vector>;
-    linkState?: LinkTemplateState;
-}
-
-/**
- * Serialized relation group item state.
- */
-export interface SerializedLayoutLinkItem {
-    '@type': 'LinkItem';
-    targetIri: ElementIri;
-    sourceIri: ElementIri;
     linkState?: LinkTemplateState;
 }
 
@@ -176,62 +208,26 @@ function serializeLayout(
     modelElements: ReadonlyArray<Element>,
     modelLinks: ReadonlyArray<Link>,
 ): SerializedLayout {
-    const elements: Array<SerializedLayoutElement | SerializedLayoutElementGroup> = [];
+    const elements: Array<SerializedElement> = [];
     for (const element of modelElements) {
-        if (element instanceof EntityGroup) {
-            elements.push({
-                '@type': 'ElementGroup',
-                '@id': element.id,
-                items: element.items.map((item): SerializedLayoutElementItem => ({
-                    '@type': 'ElementItem',
-                    iri: item.data.id,
-                    elementState: item.elementState,
-                })),
-                position: element.position,
-                elementState: element.elementState,
-            });
-        } else {
-            elements.push({
-                '@type': 'Element',
-                '@id': element.id,
-                iri: element instanceof EntityElement ? element.iri : undefined,
-                position: element.position,
-                elementState: element.elementState,
-            });
+        if (hasToJSON(element)) {
+            const state = element.toJSON();
+            if (isValidSerializedState(state)) {
+                elements.push(state as SerializedElement);
+            }
         }
     }
-    const links: Array<SerializedLayoutLink | SerializedLayoutLinkGroup> = [];
+
+    const links: Array<SerializedLink> = [];
     for (const link of modelLinks) {
-        if (link instanceof RelationGroup) {
-            links.push({
-                '@type': 'LinkGroup',
-                '@id': link.id,
-                property: link.typeId,
-                source: {'@id': link.sourceId},
-                target: {'@id': link.targetId},
-                items: link.items.map((item): SerializedLayoutLinkItem => ({
-                    '@type': 'LinkItem',
-                    sourceIri: item.data.sourceId,
-                    targetIri: item.data.targetId,
-                    linkState: item.linkState,
-                })),
-                vertices: [...link.vertices],
-                linkState: link.linkState,
-            });
-        } else {
-            links.push({
-                '@type': 'Link',
-                '@id': link.id,
-                property: link.typeId,
-                source: {'@id': link.sourceId},
-                target: {'@id': link.targetId},
-                sourceIri: link instanceof RelationLink ? link.data.sourceId : undefined,
-                targetIri: link instanceof RelationLink ? link.data.targetId : undefined,
-                vertices: [...link.vertices],
-                linkState: link.linkState,
-            });
+        if (hasToJSON(link)) {
+            const state = link.toJSON();
+            if (isValidSerializedState(state)) {
+                links.push(state as SerializedLink);
+            }
         }
     }
+
     return {'@type': 'Layout', elements, links};
 }
 
@@ -239,7 +235,10 @@ function serializeLayout(
  * Options for diagram deserialization.
  */
 export interface DeserializeDiagramOptions {
+    readonly elementCellTypes: readonly SerializableElementCell[];
+    readonly linkCellTypes: readonly SerializableLinkCell[];
     readonly preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
+    readonly preloadedLinks?: ReadonlyHashMap<LinkKey, LinkModel>;
     readonly markLinksAsLayoutOnly?: boolean;
 }
 
@@ -250,7 +249,7 @@ export interface DeserializeDiagramOptions {
  */
 export function deserializeDiagram(
     diagram: SerializedDiagram,
-    options: DeserializeDiagramOptions = {}
+    options: DeserializeDiagramOptions
 ): DeserializedDiagram {
     const {layoutData, linkTypeOptions} = diagram;
     const linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
@@ -279,42 +278,40 @@ function deserializeLayout(
     layout: SerializedLayout,
     options: DeserializeDiagramOptions
 ): DeserializedLayout {
-    const {preloadedElements, markLinksAsLayoutOnly = false} = options;
+    const {preloadedElements, preloadedLinks, markLinksAsLayoutOnly = false} = options;
+
+    const typeToElement = new Map<string, SerializableElementCell>();
+    for (const elementCellType of options.elementCellTypes) {
+        typeToElement.set(elementCellType.fromJSONType, elementCellType);
+    }
+    const elementOptions: ElementFromJsonOptions = {
+        getInitialData: iri => preloadedElements?.get(iri),
+        mapTemplateState: state => state,
+    };
+
+    const typeToLink = new Map<string, SerializableLinkCell>();
+    for (const linkCellType of options.linkCellTypes) {
+        typeToLink.set(linkCellType.fromJSONType, linkCellType);
+    }
+    const getInitialLinkData = (key: LinkKey) => preloadedLinks?.get(key);
+    const mapLinkTemplateState = (state: LinkTemplateState | undefined) =>
+        markLayoutOnly(state, markLinksAsLayoutOnly);
+
     const elements = new Map<string, Element>();
     const links: Link[] = [];
 
     for (const layoutElement of layout.elements) {
-        switch (layoutElement['@type']) {
-            case 'Element': {
-                const {'@id': id, iri, position, isExpanded, elementState} = layoutElement;
-                if (iri) {
-                    const preloadedData = preloadedElements?.get(iri);
-                    const data = preloadedData ?? EntityElement.placeholderData(iri);
-                    const element = new EntityElement({id, data, position, expanded: isExpanded, elementState});
-                    elements.set(element.id, element);
-                }
-                break;
-            }
-            case 'ElementGroup': {
-                const {'@id': id, items, position, elementState} = layoutElement;
-                const groupItems: EntityGroupItem[] = [];
-                for (const item of items) {
-                    const preloadedData = preloadedElements?.get(item.iri);
-                    groupItems.push({
-                        data: preloadedData ?? EntityElement.placeholderData(item.iri),
-                        elementState: item.elementState,
-                    });
-                }
-                const group = new EntityGroup({id, items: groupItems, position, elementState});
-                elements.set(group.id, group);
-                break;
+        const elementClass = typeToElement.get(layoutElement['@type']);
+        if (elementClass) {
+            const element = elementClass.fromJSON(layoutElement, elementOptions);
+            if (element) {
+                elements.set(element.id, element);
             }
         }
-        
     }
 
     for (const layoutLink of layout.links) {
-        const {'@id': id, property, source, target, vertices, linkState} = layoutLink;
+        const {source, target} = layoutLink;
 
         const sourceElement = elements.get(source['@id']);
         const targetElement = elements.get(target['@id']);
@@ -322,56 +319,16 @@ function deserializeLayout(
             continue;
         }
 
-        switch (layoutLink['@type']) {
-            case 'Link': {
-                const sourceIri = layoutLink.sourceIri ?? (
-                    sourceElement instanceof EntityElement ? sourceElement.data.id : undefined
-                );
-                const targetIri = layoutLink.targetIri ?? (
-                    targetElement instanceof EntityElement ? targetElement.data.id : undefined
-                );
-                if (sourceElement && targetElement && sourceIri && targetIri) {
-                    const link = new RelationLink({
-                        id,
-                        sourceId: sourceElement.id,
-                        targetId: targetElement.id,
-                        data: {
-                            linkTypeId: property,
-                            sourceId: sourceIri,
-                            targetId: targetIri,
-                            properties: {},
-                        },
-                        vertices,
-                        linkState: markLayoutOnly(linkState, markLinksAsLayoutOnly),
-                    });
-                    links.push(link);
-                }
-                break;
-            }
-            case 'LinkGroup': {
-                const groupItems: RelationGroupItem[] = [];
-                for (const item of layoutLink.items) {
-                    groupItems.push({
-                        data: {
-                            linkTypeId: property,
-                            sourceId: item.sourceIri,
-                            targetId: item.targetIri,
-                            properties: {},
-                        },
-                        linkState: markLayoutOnly(item.linkState, markLinksAsLayoutOnly),
-                    });
-                }
-                const group = new RelationGroup({
-                    id,
-                    typeId: property,
-                    sourceId: sourceElement.id,
-                    targetId: targetElement.id,
-                    items: groupItems,
-                    vertices,
-                    linkState: linkState,
-                });
-                links.push(group);
-                break;
+        const linkClass = typeToLink.get(layoutLink['@type']);
+        if (linkClass) {
+            const link = linkClass.fromJSON(layoutLink, {
+                source: sourceElement,
+                target: targetElement,
+                getInitialData: getInitialLinkData,
+                mapTemplateState: mapLinkTemplateState,
+            });
+            if (link) {
+                links.push(link);
             }
         }
     }
@@ -404,4 +361,13 @@ export function markLayoutOnly(
         };
     }
     return linkState;
+}
+
+function hasToJSON(instance: object): instance is { toJSON(): { ['@type']?: unknown } } {
+    const withToJson = instance as { toJSON?(): { ['@type']?: unknown } };
+    return Boolean(typeof withToJson.toJSON === 'function');
+}
+
+function isValidSerializedState(state: { ['@type']?: unknown }): boolean {
+    return typeof state === 'object' && state && typeof state['@type'] === 'string';
 }

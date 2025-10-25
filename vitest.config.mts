@@ -8,7 +8,7 @@ const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
     css: {
         modules: {
-            generateScopedName: "[name]__[local]",
+            generateScopedName: '[name]__[local]',
         }
     },
     build: {
@@ -38,7 +38,7 @@ export default defineConfig({
     // "new dependencies optimized: react/jsx-dev-runtime":
     optimizeDeps: {
         include: [
-            "react/jsx-dev-runtime",
+            'react/jsx-dev-runtime',
         ]
     },
 });
