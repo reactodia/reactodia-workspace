@@ -24,7 +24,7 @@ export interface ElementLayerProps {
 
 interface State {
     readonly version: number;
-    readonly elementStates: ReadonlyMap<string, ElementState>;
+    readonly elementStates: ReadonlyMap<Element, ElementState>;
 }
 
 interface ElementState {
@@ -75,7 +75,7 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
                 model,
                 renderingState.shared,
                 this.redrawBatch,
-                new Map<string, ElementState>()
+                new Map<Element, ElementState>()
             )
         };
     }
@@ -86,8 +86,8 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         const {memoizedElements} = this;
 
         const elementsToRender: ElementState[] = [];
-        for (const {id} of model.elements) {
-            const state = elementStates.get(id);
+        for (const element of model.elements) {
+            const state = elementStates.get(element);
             if (state) {
                 elementsToRender.push(state);
             }
@@ -238,15 +238,15 @@ function applyRedrawRequests(
     model: DiagramModel,
     view: SharedCanvasState,
     batch: RedrawBatch,
-    previous: ReadonlyMap<string, ElementState>,
-): ReadonlyMap<string, ElementState> {
+    previous: ReadonlyMap<Element, ElementState>,
+): ReadonlyMap<Element, ElementState> {
     if (batch.forAll === RedrawFlags.None && batch.requests.size === 0) {
         return previous;
     }
-    const computed = new Map<string, ElementState>();
+    const computed = new Map<Element, ElementState>();
     for (const element of model.elements) {
         const elementId = element.id;
-        let state = previous.get(elementId);
+        let state = previous.get(element);
         if (state) {
             const request = (batch.requests.get(elementId) || RedrawFlags.None) | batch.forAll;
             if (request & RedrawFlags.Render) {
@@ -262,10 +262,10 @@ function applyRedrawRequests(
                             ? computeIsBlurred(state.element, view) : state.blurred,
                 };
             }
-            computed.set(elementId, state);
+            computed.set(element, state);
             batch.requests.delete(elementId);
         } else {
-            computed.set(element.id, {
+            computed.set(element, {
                 element,
                 templateProps: computeTemplateProps(element),
                 blurred: computeIsBlurred(element, view),

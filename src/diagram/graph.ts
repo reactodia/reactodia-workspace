@@ -38,7 +38,9 @@ export class Graph {
     private readonly source = new EventSource<GraphEvents>();
     readonly events: Events<GraphEvents> = this.source;
 
-    private cellsVersion = 1;
+    // Initialize with random value to avoid accidental version match
+    // when reloading the graph i.e. when importing a diagram
+    private cellsVersion = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER / 2);
     private readonly elements = new OrderedMap<Element>();
     private readonly links = new OrderedMap<Link>();
     private readonly elementLinks = new WeakMap<Element, Link[]>();
