@@ -111,8 +111,10 @@ export * from './editor/dataDiagramModel';
 export {
     EntityElement, EntityElementEvents, EntityElementProps,
     EntityGroup, EntityGroupEvents, EntityGroupProps, EntityGroupItem,
+    SerializedEntityElement, SerializedEntityGroup, SerializedEntityGroupItem,
     RelationLink, RelationLinkEvents, RelationLinkProps,
     RelationGroup, RelationGroupEvents, RelationGroupProps, RelationGroupItem,
+    SerializedRelationLink, SerializedRelationGroup, SerializedRelationGroupItem,
     ElementType, ElementTypeEvents,
     LinkType, LinkTypeEvents,
     PropertyType, PropertyTypeEvents,
@@ -147,8 +149,8 @@ export { FormInputText, type FormInputTextProps } from './forms/input/formInputT
 
 export {
     SerializedDiagram, SerializedLayout, SerializedLinkOptions,
-    SerializedLayoutElement, SerializedLayoutElementGroup, SerializedLayoutElementItem,
-    SerializedLayoutLink, SerializedLayoutLinkGroup, SerializedLayoutLinkItem,
+    SerializedElement, SerializableElementCell, ElementFromJsonOptions,
+    SerializedLink, SerializableLinkCell, LinkFromJsonOptions,
 } from './editor/serializedDiagram';
 
 export { ClassicTemplate, ClassicEntity, ClassicEntityProps } from './templates/classicTemplate';

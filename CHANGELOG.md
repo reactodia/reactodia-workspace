@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Add `CanvasPlaceAt` component to render its children at specified non-viewport canvas layer instead;
   * Support new placement layers: `underlay` layer to place components under all canvas content, `overLinkGeometry` layer to place components above link geometry (connections) but under link labels;
   * **[💥Breaking]** Remove `defineCanvasWidget()` and `SharedCanvasState.setCanvasWidget()` (use `CanvasPlaceAt` to display components at canvas layers instead).
+- Support to import and export diagram layout with custom element and link cell types (derived from `Element` or `Link`):
+  * Introduce an optional contract for `Element` or `Link`-derived cell types to be serializable: `SerializableElementCell` and `SerializableLinkCell`;
+  * When implemented, the corresponding cell types can be exported and later imported with the diagram;
+  * `DataDiagramModel.importLayout()` will accept known cell types via `elementCellTypes` and `linkCellTypes` to import.
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 
 #### ⏱ Performance

@@ -1,9 +1,11 @@
+import type { ReadonlyHashMap } from '@reactodia/hashmap';
+
 import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
 import { Translation, TranslatedText } from '../coreUtils/i18n';
 
 import {
-    ElementIri, ElementModel, ElementTypeIri, LinkModel, LinkTypeModel,
+    ElementIri, ElementModel, ElementTypeIri, LinkKey, LinkModel, LinkTypeModel,
     LinkTypeIri, PropertyTypeIri, equalLinks,
 } from '../data/model';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
@@ -34,6 +36,7 @@ import { type DataLocaleProvider, DefaultDataLocaleProvider } from './dataLocale
 import {
     SerializedDiagram, SerializedLinkOptions, emptyDiagram,
     serializeDiagram, deserializeDiagram, markLayoutOnly,
+    SerializableElementCell, SerializableLinkCell,
 } from './serializedDiagram';
 import { DataGraph } from './dataGraph';
 
@@ -316,10 +319,35 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          */
         diagram?: SerializedDiagram;
         /**
-         * Pre-cached data for the elements which should be used instead of
+         * Element cell types to deserialize from the imported diagram state.
+         *
+         * Any element cell type not from this list will be silently ignored.
+         *
+         * **Unstable**: this feature is likely to be changed in the future.
+         *
+         * @default [EntityElement, EntityGroup]
+         */
+        elementCellTypes?: readonly SerializableElementCell[];
+        /**
+         * Link cell types to deserialize from the imported diagram state.
+         *
+         * Any link cell type not from this list will be silently ignored.
+         *
+         * **Unstable**: this feature is likely to be changed in the future.
+         *
+         * @default [RelationLink, RelationGroup]
+         */
+        linkCellTypes?: readonly SerializableLinkCell[];
+        /**
+         * Pre-cached data for the entities which should be used instead of
          * being requested from the data provider on import.
          */
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
+        /**
+         * Pre-cached data for the relations which should be used instead of
+         * being requested from the data provider on import.
+         */
+        preloadedLinks?: ReadonlyHashMap<LinkKey, LinkModel>;
         /**
          * Whether links for the between imported elements should be requested
          * from the data provider on import.
@@ -343,7 +371,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             dataProvider,
             locale,
             diagram = emptyDiagram(),
+            elementCellTypes = [EntityElement, EntityGroup],
+            linkCellTypes = [RelationLink, RelationGroup],
             preloadedElements,
+            preloadedLinks,
             validateLinks = false,
             hideUnusedLinkTypes = false,
             signal: parentSignal,
@@ -368,7 +399,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
             this.createGraphElements({
                 diagram,
+                elementCellTypes,
+                linkCellTypes,
                 preloadedElements,
+                preloadedLinks,
                 markLinksAsLayoutOnly: validateLinks,
             });
 
@@ -477,16 +511,28 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
 
     private createGraphElements(params: {
         diagram: SerializedDiagram;
+        elementCellTypes: readonly SerializableElementCell[];
+        linkCellTypes: readonly SerializableLinkCell[];
         preloadedElements?: ReadonlyMap<ElementIri, ElementModel>;
+        preloadedLinks?: ReadonlyHashMap<LinkKey, LinkModel>;
         markLinksAsLayoutOnly: boolean;
     }): void {
-        const {diagram, preloadedElements, markLinksAsLayoutOnly} = params;
+        const {
+            diagram, elementCellTypes, linkCellTypes,
+            preloadedElements, preloadedLinks, markLinksAsLayoutOnly,
+        } = params;
 
         const {
             elements,
             links,
             linkTypeVisibility,
-        } = deserializeDiagram(diagram, {preloadedElements, markLinksAsLayoutOnly});
+        } = deserializeDiagram(diagram, {
+            elementCellTypes,
+            linkCellTypes,
+            preloadedElements,
+            preloadedLinks,
+            markLinksAsLayoutOnly,
+        });
 
         const batch = this.history.startBatch(
             TranslatedText.text('data_diagram_model.import_layout.command')
