@@ -111,7 +111,7 @@ export function SelectionAction(props: SelectionActionProps) {
         disabled, onSelect, onMouseDown, children,
     } = props;
 
-    const actionKey = useCanvasHotkey(hotkey, onSelect);
+    const actionKey = useCanvasHotkey(hotkey, disabled ? undefined : onSelect);
     const titleWithHotkey = title && actionKey ? `${title} (${actionKey.text})` : title;
 
     return (

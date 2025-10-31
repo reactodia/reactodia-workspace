@@ -5,10 +5,12 @@ import { mapAbortedToNull } from '../coreUtils/async';
 import {
     useEventStore, useObservedProperty, useFrameDebouncedStore, useSyncStore,
 } from '../coreUtils/hooks';
+import type { HotkeyString } from '../coreUtils/hotkey';
 
 import type { MetadataCanModifyRelation } from '../data/metadataProvider';
 
 import { useCanvas } from '../diagram/canvasApi';
+import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import { Link } from '../diagram/elements';
 import { GraphStructure } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
@@ -88,6 +90,12 @@ export interface LinkActionStyleProps {
      * Title for the action button.
      */
     title?: string;
+    /**
+     * Keyboard hotkey for the action when it's mounted.
+     *
+     * Passing `null` disables a default hotkey if there is one.
+     */
+    hotkey?: HotkeyString | null;
 }
 
 /**
@@ -122,14 +130,21 @@ const CLASS_NAME = 'reactodia-link-action';
  * @category Components
  */
 export function LinkAction(props: LinkActionProps) {
-    const {dockSide, dockIndex, disabled, className, title, onSelect, onMouseDown, children} = props;
+    const {
+        dockSide, dockIndex, disabled, className, title, hotkey,
+        onSelect, onMouseDown, children,
+    } = props;
+
     const {getPosition} = useLinkActionContext();
+    const actionKey = useCanvasHotkey(hotkey, disabled ? undefined : onSelect);
+    const titleWithHotkey = title && actionKey ? `${title} (${actionKey.text})` : title;
+
     return (
         <button role='button'
             className={cx(className, CLASS_NAME)}
             style={getPosition(dockSide, dockIndex)}
             disabled={disabled}
-            title={title}
+            title={titleWithHotkey}
             onClick={onSelect}
             onMouseDown={onMouseDown}>
             {children}
@@ -231,7 +246,12 @@ export function LinkActionEdit(props: LinkActionEditProps) {
  *
  * @see {@link LinkActionDelete}
  */
-export interface LinkActionDeleteProps extends LinkActionStyleProps {}
+export interface LinkActionDeleteProps extends LinkActionStyleProps {
+    /**
+     * @default "None+Delete"
+     */
+    hotkey?: HotkeyString | null;
+}
 
 /**
  * Link action component to delete the link.
@@ -257,7 +277,7 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
 }
 
 function LinkActionDeleteRelation(props: LinkActionDeleteProps & { link: RelationLink }) {
-    const {link, className, title, ...otherProps} = props;
+    const {link, className, title, hotkey, ...otherProps} = props;
     const {model, editor, translation: t} = useWorkspace();
 
     const canModify = useCanModifyLink(link, model, editor);
@@ -292,6 +312,7 @@ function LinkActionDeleteRelation(props: LinkActionDeleteProps & { link: Relatio
                     ? t.text('link_action.delete_relation.title')
                     : t.text('link_action.delete_relation.title_disabled')
             )}
+            hotkey={hotkey === undefined ? 'None+Delete' : hotkey}
             disabled={!canModify.canDelete}
             onSelect={() => editor.deleteRelation(link.data)}
         />
@@ -346,7 +367,7 @@ function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boo
 }
 
 function LinkActionDeleteAnnotation(props: LinkActionDeleteProps & { link: AnnotationLink }) {
-    const {link, className, title, ...otherProps} = props;
+    const {link, className, title, hotkey, ...otherProps} = props;
     const {editor, translation: t} = useWorkspace();
     return (
         <LinkAction {...otherProps}
@@ -356,6 +377,7 @@ function LinkActionDeleteAnnotation(props: LinkActionDeleteProps & { link: Annot
                 `${CLASS_NAME}__delete`
             )}
             title={title ?? t.text('link_action.delete_annotation.title')}
+            hotkey={hotkey === undefined ? 'None+Delete' : hotkey}
             onSelect={() => editor.removeItems([link])}
         />
     );

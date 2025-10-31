@@ -146,8 +146,10 @@ export class OverlayController {
             target.focus();
         } else if (target instanceof Link) {
             this.model.setSelection([target]);
+            canvas.focus();
         } else if (target instanceof LinkVertex) {
             this.model.setSelection([target.link]);
+            canvas.focus();
         } else if (!target && triggerAsClick) {
             this.model.setSelection([]);
             this.hideDialog();
@@ -432,8 +434,8 @@ interface OverlayWithInternalApi {
 interface OverlayControllerInternalApi {
     readonly events: Events<OverlayControllerInternalEvents>;
     readonly overlays: Set<OverlayReader>;
-    onCanvasPointerUp(event: CanvasPointerUpEvent): void;
-    onCanvasKeydown(event: CanvasKeyboardEvent): void;
+    readonly onCanvasPointerUp: (event: CanvasPointerUpEvent) => void;
+    readonly onCanvasKeydown: (event: CanvasKeyboardEvent) => void;
     dialog: React.ReactElement<any> | null;
     spinner: React.ReactElement<any> | null;
 }
