@@ -279,10 +279,8 @@ const LINK_CLASS = 'reactodia-link';
 function LinkView(props: LinkViewProps) {
     const {link, model, renderingState} = props;
 
-    const template = React.useMemo(
-        () => renderingState.createLinkTemplate(link.typeId),
-        [link.typeId]
-    );
+    const template = renderingState.getLinkTemplate(link);
+    const defaultTemplate = renderingState.shared.defaultLinkResolver(link);
 
     const source = model.getElement(link.sourceId);
     const target = model.getElement(link.targetId);
@@ -310,15 +308,20 @@ function LinkView(props: LinkViewProps) {
         return getPointAlongPolyline(polyline, polylineLength * offset);
     };
 
-    const typeIndex = renderingState.ensureLinkTypeIndex(link.typeId);
+    const markerSource = template.markerSource ?? defaultTemplate.markerSource;
+    const markerTarget = template.markerTarget ?? defaultTemplate.markerTarget;
+    const markerSourceIndex = markerSource
+        ? renderingState.ensureLinkMarkerIndex(markerSource) : undefined;
+    const markerTargetIndex = markerTarget
+        ? renderingState.ensureLinkMarkerIndex(markerTarget) : undefined;
 
     const {highlighter} = renderingState.shared;
     const isBlurred = highlighter && !highlighter(link);
     
     const renderedLink = template.renderLink({
         link,
-        markerSource: `url(#${linkMarkerKey(typeIndex, true)})`,
-        markerTarget: `url(#${linkMarkerKey(typeIndex, false)})`,
+        markerSource: markerSourceIndex ? `url(#${linkMarkerKey(markerSourceIndex, true)})` : '',
+        markerTarget: markerTargetIndex ? `url(#${linkMarkerKey(markerTargetIndex, false)})` : '',
         path: spline.toPath(),
         getPathPosition,
         route,
@@ -674,6 +677,7 @@ class VertexTools extends React.Component<{
 }
 
 export interface LinkMarkersProps {
+    model: DiagramModel;
     renderingState: MutableRenderingState;
 }
 
@@ -682,38 +686,50 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
     private readonly delayedUpdate = new Debouncer();
 
     render() {
-        const {renderingState} = this.props;
+        const {model, renderingState} = this.props;
 
-        const markers: Array<React.ReactElement<LinkMarkerProps>> = [];
+        const sourceMarkers = new Set<LinkMarkerStyle>();
+        const targetMarkers = new Set<LinkMarkerStyle>();
 
-        for (const [linkTypeId, template] of renderingState.getLinkTemplates()) {
-            const defaultTemplate = renderingState.shared.defaultLinkResolver(linkTypeId);
-            const typeIndex = renderingState.ensureLinkTypeIndex(linkTypeId);
+        for (const link of model.links) {
+            const template = renderingState.getLinkTemplate(link);
+            const defaultTemplate = renderingState.shared.defaultLinkResolver(link);
 
-            if (template.markerSource) {
-                markers.push(
-                    <LinkMarker key={typeIndex * 2}
-                        linkTypeIndex={typeIndex}
-                        isStartMarker={true}
-                        style={template.markerSource}
-                        defaultStyle={defaultTemplate.markerSource}
-                    />
-                );
+            const markerSource = template.markerSource ?? defaultTemplate.markerSource;
+            if (markerSource) {
+                sourceMarkers.add(markerSource);
             }
 
-            if (template.markerTarget) {
-                markers.push(
-                    <LinkMarker key={typeIndex * 2 + 1}
-                        linkTypeIndex={typeIndex}
-                        isStartMarker={false}
-                        style={template.markerTarget}
-                        defaultStyle={defaultTemplate.markerTarget}
-                    />
-                );
+            const markerTarget = template.markerTarget ?? defaultTemplate.markerTarget;
+            if (markerTarget) {
+                targetMarkers.add(markerTarget);
             }
         }
-
-        return <defs>{markers}</defs>;
+        
+        return (
+            <defs>
+                {Array.from(sourceMarkers, marker => {
+                    const index = renderingState.ensureLinkMarkerIndex(marker);
+                    return (
+                        <LinkMarker key={index}
+                            markerIndex={index}
+                            isStartMarker={true}
+                            style={marker}
+                        />
+                    );
+                })}
+                {Array.from(targetMarkers, marker => {
+                    const index = renderingState.ensureLinkMarkerIndex(marker);
+                    return (
+                        <LinkMarker key={index}
+                            markerIndex={index}
+                            isStartMarker={false}
+                            style={marker}
+                        />
+                    );
+                })}
+            </defs>
+        );
     }
 
     componentDidMount() {
@@ -738,10 +754,9 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
 }
 
 interface LinkMarkerProps {
-    linkTypeIndex: number;
+    markerIndex: number;
     isStartMarker: boolean;
     style: LinkMarkerStyle;
-    defaultStyle: LinkMarkerStyle | undefined;
 }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -760,19 +775,15 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
             return;
         }
 
-        const {linkTypeIndex, isStartMarker, style, defaultStyle} = this.props;
-        const {
-            d = defaultStyle?.d,
-            width = defaultStyle?.width,
-            height = defaultStyle?.height,
-        } = style;
+        const {markerIndex, isStartMarker, style} = this.props;
+        const {d, width, height} = style;
         if (!(d !== undefined && width !== undefined && height !== undefined)) {
             return;
         }
 
         const className = 'reactodia-link-marker';
         marker.setAttribute('class', className);
-        marker.setAttribute('id', linkMarkerKey(linkTypeIndex, isStartMarker));
+        marker.setAttribute('id', linkMarkerKey(markerIndex, isStartMarker));
         marker.setAttribute('markerWidth', String(width));
         marker.setAttribute('markerHeight', String(height));
         marker.setAttribute('orient', 'auto');
@@ -795,6 +806,6 @@ class LinkMarker extends React.Component<LinkMarkerProps> {
     };
 }
 
-function linkMarkerKey(linkTypeIndex: number, startMarker: boolean) {
-    return `reactodia-marker-${startMarker ? 'start' : 'end'}-${linkTypeIndex}`;
+function linkMarkerKey(markerIndex: number, startMarker: boolean) {
+    return `reactodia-marker-${startMarker ? 'start' : 'end'}-${markerIndex}`;
 }

@@ -118,7 +118,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         const source = model.getElement(link.sourceId)!;
         const target = model.getElement(link.targetId)!;
 
-        const template = canvas.renderingState.getLinkTemplates().get(link.typeId);
+        const template = canvas.renderingState.getLinkTemplate(link);
 
         const route = canvas.renderingState.getRouting(link.id);
         const verticesDefinedByUser = link.vertices || [];

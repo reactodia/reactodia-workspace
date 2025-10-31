@@ -1,7 +1,5 @@
 import type * as React from 'react';
 
-import type { LinkTypeIri } from '../data/model';
-
 import type { Element, ElementTemplateState, Link } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
@@ -15,14 +13,14 @@ import type { GraphStructure } from './model';
  */
 export type TypeStyleResolver = (types: ReadonlyArray<string>) => TypeStyle | undefined;
 /**
- * Provides a custom template to render an element on the canvas.
+ * Provides a custom template to render an element (graph node) on the canvas.
  */
 export type ElementTemplateResolver = (element: Element) =>
     ElementTemplate | ElementTemplateComponent | undefined;
 /**
- * Provides a custom rendering on a diagram for links of specific type.
+ * Provides a custom template to render a link (graph edge) on the canvas.
  */
-export type LinkTemplateResolver = (linkTypeId: LinkTypeIri) => LinkTemplate | undefined;
+export type LinkTemplateResolver = (link: Link) => LinkTemplate | undefined;
 
 /**
  * Common style for a type or set of types to display in various parts of the UI.

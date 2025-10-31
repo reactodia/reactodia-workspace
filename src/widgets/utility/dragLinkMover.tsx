@@ -417,7 +417,7 @@ class DragLinkMoverInner extends React.Component<DragLinkMoverInnerProps, State>
         return (
             <SvgPaperLayer paperTransform={transform}
                 className={CLASS_NAME}>
-                <LinkMarkers renderingState={renderingState} />
+                <LinkMarkers model={model} renderingState={renderingState} />
                 {this.renderHighlight()}
                 {this.renderCanDropIndicator()}
                 {waitingForMetadata ? null : (

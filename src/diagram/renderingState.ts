@@ -10,10 +10,8 @@ import { Debouncer } from '../coreUtils/scheduler';
 
 import {
     ElementTemplate, ElementTemplateComponent, ElementTemplateResolver, LinkTemplateResolver,
-    LinkTemplate, LinkRouter, RoutedLink, RoutedLinks,
+    LinkTemplate, LinkMarkerStyle, LinkRouter, RoutedLink, RoutedLinks,
 } from './customization';
-
-import { LinkTypeIri } from '../data/model';
 
 import { Element, Link } from './elements';
 import { Rect, ShapeGeometry, Size, SizeProvider, boundsOf, isPolylineEqual } from './geometry';
@@ -159,13 +157,13 @@ export interface RenderingState extends SizeProvider {
      */
     getLinkLabelBounds(link: Link): Rect | undefined;
     /**
-     * Resolve template component for the element.
+     * Resolve template for the graph element.
      */
     getElementTemplate(element: Element): ElementTemplate;
     /**
-     * Returns link templates for all types of rendered links.
+     * Resolve template for the graph link.
      */
-    getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate>;
+    getLinkTemplate(link: Link): LinkTemplate;
     /**
      * Returns route data for all links in the graph.
      */
@@ -193,10 +191,10 @@ export class MutableRenderingState implements RenderingState {
     private readonly linkLabelContainer = document.createElement('div');
     private readonly linkLabelBounds = new WeakMap<Link, Rect>();
 
-    private readonly linkTypeIndex = new Map<LinkTypeIri, number>();
-    private static nextLinkTypeIndex = 0;
-
-    private readonly linkTemplates = new Map<LinkTypeIri, LinkTemplate>();
+    private cachedLinkTemplates = new WeakMap<Link, LinkTemplate>();
+    private readonly linkMarkerIndex = new WeakMap<LinkMarkerStyle, number>();
+    private static nextLinkMarkerIndex = 1;
+    
     private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
 
@@ -231,7 +229,7 @@ export class MutableRenderingState implements RenderingState {
             this.scheduleUpdateRoutings();
         });
         this.listener.listen(this.model.events, 'discardGraph', () => {
-            this.linkTemplates.clear();
+            this.cachedLinkTemplates = new WeakMap<Link, LinkTemplate>();
 
             const routings = this.routings;
             this.routings = new Map();
@@ -353,28 +351,27 @@ export class MutableRenderingState implements RenderingState {
         };
     }
 
-    ensureLinkTypeIndex(linkTypeId: LinkTypeIri): number {
-        let typeIndex = this.linkTypeIndex.get(linkTypeId);
-        if (typeIndex === undefined) {
-            typeIndex = MutableRenderingState.nextLinkTypeIndex++;
-            this.linkTypeIndex.set(linkTypeId, typeIndex);
+    ensureLinkMarkerIndex(linkMarker: LinkMarkerStyle): number {
+        let index = this.linkMarkerIndex.get(linkMarker);
+        if (index === undefined) {
+            index = MutableRenderingState.nextLinkMarkerIndex++;
+            if (MutableRenderingState.nextLinkMarkerIndex >= Number.MAX_SAFE_INTEGER) {
+                MutableRenderingState.nextLinkMarkerIndex = 1;
+            }
+            this.linkMarkerIndex.set(linkMarker, index);
         }
-        return typeIndex;
+        return index;
     }
 
-    getLinkTemplates(): ReadonlyMap<LinkTypeIri, LinkTemplate> {
-        return this.linkTemplates;
-    }
-
-    createLinkTemplate(linkTypeId: LinkTypeIri): LinkTemplate {
-        const existingTemplate = this.linkTemplates.get(linkTypeId);
+    getLinkTemplate(link: Link): LinkTemplate {
+        const existingTemplate = this.cachedLinkTemplates.get(link);
         if (existingTemplate) {
             return existingTemplate;
         }
 
-        const template = this.resolveLinkTemplate(linkTypeId)
-            ?? this.shared.defaultLinkResolver(linkTypeId);
-        this.linkTemplates.set(linkTypeId, template);
+        const template = this.resolveLinkTemplate(link)
+            ?? this.shared.defaultLinkResolver(link);
+        this.cachedLinkTemplates.set(link, template);
         this.source.trigger('changeLinkTemplates', {source: this});
         return template;
     }

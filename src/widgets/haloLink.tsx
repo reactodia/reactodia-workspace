@@ -271,7 +271,7 @@ function computeLinkSpline(
         return undefined;
     }
 
-    const template = renderingState.getLinkTemplates().get(link.typeId);
+    const template = renderingState.getLinkTemplate(link);
 
     const route = renderingState.getRouting(link.id);
     const verticesDefinedByUser = link.vertices || [];
