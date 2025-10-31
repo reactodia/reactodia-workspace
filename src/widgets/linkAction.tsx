@@ -13,11 +13,12 @@ import { Link } from '../diagram/elements';
 import { GraphStructure } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
+import { AnnotationLink } from '../editor/annotationCells';
 import { AuthoringState } from '../editor/authoringState';
 import { EntityElement, RelationLink } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
 
-import { VisualAuthoringTopic } from '../workspace/commandBusTopic';
+import { AnnotationTopic, VisualAuthoringTopic } from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 /**
@@ -234,8 +235,9 @@ export interface LinkActionDeleteProps extends LinkActionStyleProps {}
 
 /**
  * Link action component to delete the link.
- *
- * This action is visible only when {@link EditorController.inAuthoringMode graph authoring mode}
+ * 
+ * This action is visible either if the link is an {@link AnnotationLink} or
+ * it is an {@link RelationLink} and {@link EditorController.inAuthoringMode graph authoring mode}
  * is active.
  *
  * Deleting a link adds a command to the command history.
@@ -243,8 +245,19 @@ export interface LinkActionDeleteProps extends LinkActionStyleProps {}
  * @category Components
  */
 export function LinkActionDelete(props: LinkActionDeleteProps) {
-    const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
+
+    if (link instanceof RelationLink) {
+        return <LinkActionDeleteRelation {...props} link={link} />;
+    } else if (link instanceof AnnotationLink) {
+        return <LinkActionDeleteAnnotation {...props} link={link} />;
+    } else {
+        return null;
+    }
+}
+
+function LinkActionDeleteRelation(props: LinkActionDeleteProps & { link: RelationLink }) {
+    const {link, className, title, ...otherProps} = props;
     const {model, editor, translation: t} = useWorkspace();
 
     const canModify = useCanModifyLink(link, model, editor);
@@ -332,6 +345,22 @@ function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boo
     );
 }
 
+function LinkActionDeleteAnnotation(props: LinkActionDeleteProps & { link: AnnotationLink }) {
+    const {link, className, title, ...otherProps} = props;
+    const {editor, translation: t} = useWorkspace();
+    return (
+        <LinkAction {...otherProps}
+            className={cx(
+                className,
+                `${CLASS_NAME}__button`,
+                `${CLASS_NAME}__delete`
+            )}
+            title={title ?? t.text('link_action.delete_annotation.title')}
+            onSelect={() => editor.removeItems([link])}
+        />
+    );
+}
+
 /**
  * Props for {@link LinkActionMoveEndpoint} component.
  *
@@ -340,12 +369,12 @@ function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boo
 export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 'dockIndex'> {}
 
 /**
- * Link action component to change the relation link by moving its endpoint
- * to another entity element.
+ * Link action component to change the link by moving its endpoint to another element.
  *
  * The changed endpoint is specified via {@link LinkActionStyleProps.dockSide dockSide} prop.
  *
- * This action is visible only when {@link EditorController.inAuthoringMode graph authoring mode}
+ * This action is visible either if the link is an {@link AnnotationLink} or
+ * it is an {@link RelationLink} and {@link EditorController.inAuthoringMode graph authoring mode}
  * is active.
  *
  * Changing a link adds a command to the command history.
@@ -353,8 +382,22 @@ export interface LinkActionMoveEndpointProps extends Omit<LinkActionStyleProps, 
  * @category Components
  */
 export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
-    const {dockSide, className, title, ...otherProps} = props;
-    const {link, buttonSize, getAngleInDegrees} = useLinkActionContext();
+    const {link} = useLinkActionContext();
+
+    if (link instanceof RelationLink) {
+        return <LinkActionMoveRelationEndpoint {...props} link={link} />;
+    } else if (link instanceof AnnotationLink) {
+        return <LinkActionMoveAnnotationEndpoint {...props} link={link} />;
+    } else {
+        return null;
+    }
+}
+
+function LinkActionMoveRelationEndpoint(
+    props: LinkActionMoveEndpointProps & { link: RelationLink }
+) {
+    const {link, dockSide, className, title, ...otherProps} = props;
+    const {buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
     const {editor, translation: t, getCommandBus} = useWorkspace();
 
@@ -364,25 +407,18 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
     const linkIsDeleted = useObservedProperty(
         editor.events,
         'changeAuthoringState',
-        () => (
-            link instanceof RelationLink &&
-            AuthoringState.isDeletedRelation(editor.authoringState, link.data)
-        )
+        () => AuthoringState.isDeletedRelation(editor.authoringState, link.data)
     );
 
-    if (!(inAuthoringMode && link instanceof RelationLink)) {
+    if (!inAuthoringMode) {
         return null;
     }
 
-    const angle = getAngleInDegrees(dockSide);
     return (
         <LinkAction {...otherProps}
             dockSide={dockSide}
             dockIndex={0}
-            className={cx(
-                className,
-                `${CLASS_NAME}__endpoint`
-            )}
+            className={cx(className, `${CLASS_NAME}__endpoint`)}
             title={title ?? (
                 dockSide === 'source'
                     ? t.text('link_action.move_relation.move_source_title')
@@ -400,17 +436,68 @@ export function LinkActionMoveEndpoint(props: LinkActionMoveEndpointProps) {
                         }
                     });
             }}>
-            <svg width={buttonSize} height={buttonSize}
-                style={{transform: `rotate(${angle}deg)`}}>
-                <g transform={`scale(${buttonSize})`}>
-                    {dockSide === 'source' ? (
-                        <circle r={0.5} cx={0.5} cy={0.5} fill='currentColor' />
-                    ) : (
-                        <polygon points={'0,0.5 1,1 1,0'} fill='currentColor' />
-                    )}
-                </g>
-            </svg>
+            <LinkEndpointHandle dockSide={dockSide}
+                buttonSize={buttonSize}
+                angle={getAngleInDegrees(dockSide)}
+            />
         </LinkAction>
+    );
+}
+
+function LinkActionMoveAnnotationEndpoint(
+    props: LinkActionMoveEndpointProps & { link: AnnotationLink }
+) {
+    const {link, dockSide, className, title, ...otherProps} = props;
+    const {buttonSize, getAngleInDegrees} = useLinkActionContext();
+    const {canvas} = useCanvas();
+    const {translation: t, getCommandBus} = useWorkspace();
+
+    return (
+        <LinkAction {...otherProps}
+            dockSide={dockSide}
+            dockIndex={0}
+            className={cx(className, `${CLASS_NAME}__endpoint`)}
+            title={title ?? (
+                dockSide === 'source'
+                    ? t.text('link_action.move_relation.move_source_title')
+                    : t.text('link_action.move_relation.move_target_title')
+            )}
+            onMouseDown={e => {
+                const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
+                getCommandBus(AnnotationTopic)
+                    .trigger('startDragOperation', {
+                        operation: {
+                            mode: dockSide === 'source' ? 'moveSource' : 'moveTarget',
+                            link,
+                            point,
+                        },
+                    });
+            }}>
+            <LinkEndpointHandle dockSide={dockSide}
+                buttonSize={buttonSize}
+                angle={getAngleInDegrees(dockSide)}
+            />
+        </LinkAction>
+    );
+}
+
+function LinkEndpointHandle(props: {
+    dockSide: LinkActionStyleProps['dockSide'];
+    buttonSize: number;
+    angle: number;
+}) {
+    const {dockSide, buttonSize, angle} = props;
+    return (
+        <svg width={buttonSize} height={buttonSize}
+            style={{transform: `rotate(${angle}deg)`}}>
+            <g transform={`scale(${buttonSize})`}>
+                {dockSide === 'source' ? (
+                    <circle r={0.5} cx={0.5} cy={0.5} fill='currentColor' />
+                ) : (
+                    <polygon points={'0,0.5 1,1 1,0'} fill='currentColor' />
+                )}
+            </g>
+        </svg>
     );
 }
 

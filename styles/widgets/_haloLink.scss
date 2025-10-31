@@ -1,12 +1,16 @@
+@use "../theme/theme";
+
 .reactodia-halo-link {
   &__label-highlight {
     position: absolute;
     pointer-events: none;
-    border-bottom: 2px solid #d8956d;
+    border-bottom: 2px solid theme.$selection-link-color;
   }
 
   &__path-highlight {
     fill: none;
-    /* Invisible by default but allows to be customized externally */
+    stroke: theme.$selection-link-color;
+    stroke-width: 4;
+    opacity: 0.3;
   }
 }

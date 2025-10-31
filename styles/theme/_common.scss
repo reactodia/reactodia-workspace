@@ -107,7 +107,10 @@
   --reactodia-canvas-background-color: var(--reactodia-background-color);
   --reactodia-viewport-dock-margin: 10px;
 
-  --reactodia-selection-single-box-shadow: 0 0 5px 0 #d8956d inset;
+  --reactodia-selection-link-color: #d8956d;
+  --reactodia-selection-single-box-margin: 5px;
+  --reactodia-selection-single-box-color: #d8956d;
+  --reactodia-selection-single-box-shadow: 0 0 5px 0 var(--reactodia-selection-single-box-color) inset;
 
   --reactodia-navigator-scrollable-pane-fill: var(--reactodia-navigator-background-fill);
   --reactodia-navigator-viewport-fill: var(--reactodia-canvas-background-color);

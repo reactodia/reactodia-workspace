@@ -38,7 +38,8 @@
     "set_entity_group_items.title": "Set entity group items",
     "set_link_state.title": "Change link state",
     "set_relation_data.title": "Set relation link data",
-    "set_relation_group_items.title": "Set relation group items"
+    "set_relation_group_items.title": "Set relation group items",
+    "transform_elements.title": "Resize elements"
   },
   "connections_menu": {
     "all_link.label": "All",
@@ -127,6 +128,7 @@
     "title_extra": "Types: {{entityTypes}}"
   },
   "link_action": {
+    "delete_annotation.title": "Remove annotation link",
     "delete_relation.title": "Delete relation",
     "delete_relation.title_disabled": "Cannot delete the relation",
     "edit_relation.title": "Edit relation",
@@ -138,6 +140,17 @@
   "navigator": {
     "toggle_collapse.title": "Collapse navigator",
     "toggle_expand.title": "Expand navigator"
+  },
+  "note_annotation": {
+    "change_text.command": "Change annotation text",
+    "style_align_center.title": "Align center",
+    "style_align_left.title": "Align left",
+    "style_align_right.title": "Align right",
+    "style_bold.title": "Bold",
+    "style_color_variant.title": "Color variant: {{variant}}",
+    "style_italic.title": "Italic",
+    "style_strikethrough.title": "Strikethrough",
+    "style_underline.title": "Underline"
   },
   "overlay_controller": {
     "multiple_tasks_in_progress": "Multiple tasks are in progress",
@@ -187,6 +200,8 @@
   "selection_action": {
     "add_to_filter.title": "Search for connected elements",
     "anchor.title": "Jump to resource",
+    "annotate.defaultContent": "Annotation",
+    "annotate.title": "Add annotation to this element",
     "connections.title": "Navigate to connected elements",
     "expand.collapse_command": "Collapse elements",
     "expand.expand_command": "Expand elements",

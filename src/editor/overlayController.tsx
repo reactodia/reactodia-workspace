@@ -467,7 +467,7 @@ function readOverlayProperty<T>(
 export function OverlaySupport(props: {
     overlay: OverlayController;
 }) {
-    const { overlay } = props;
+    const {overlay} = props;
     const {canvas} = useCanvas();
 
     const internalApi = withInternalApi(overlay)[OverlayInternalApi];

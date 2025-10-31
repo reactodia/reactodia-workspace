@@ -356,6 +356,10 @@ function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerPro
 
     const allLinkTypeIris = new Set<LinkTypeIri>();
     for (const link of model.links) {
+        if (link.typeId.startsWith('urn:reactodia:')) {
+            // Skip built-in link types
+            continue;
+        }
         allLinkTypeIris.add(link.typeId);
     }
 

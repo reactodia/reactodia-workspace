@@ -15,6 +15,8 @@ import { OverlaySupport } from '../editor/overlayController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+import { AnnotationSupport } from './annotation';
+
 /**
  * Props for {@link Canvas} component.
  *
@@ -88,7 +90,7 @@ const CLASS_NAME = 'reactodia-canvas';
  * @category Components
  */
 export function Canvas(props: CanvasProps) {
-    const {model, view, overlay} = useWorkspace();
+    const {model, view, overlay, getCommandBus} = useWorkspace();
     const {
         elementTemplateResolver, linkTemplateResolver, linkRouter,
         showScrollbars, zoomOptions, watermarkSvg, watermarkUrl, children,
@@ -120,6 +122,7 @@ export function Canvas(props: CanvasProps) {
                 watermarkUrl={watermarkUrl}>
                 {children}
                 <OverlaySupport overlay={overlay} />
+                <AnnotationSupport getCommandBus={getCommandBus} />
             </PaperArea>
         </div>
     );

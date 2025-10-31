@@ -5,10 +5,13 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
 
 @mixin _draggable-handle-side {
   position: absolute;
-  opacity: 0;
   background-color: theme.$draggable-handle-side-color;
 
-  &:hover {
+  &:empty {
+    opacity: 0;
+  }
+
+  &:empty:hover {
     opacity: 0.1;
   }
 }
@@ -17,10 +20,13 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
   position: absolute;
   width: 0;
   height: 0;
-  border-style: solid;
-  border-radius: theme.$border-radius-base;
 
-  &::before {
+  &:empty {
+    border-style: solid;
+    border-radius: theme.$border-radius-base;
+  }
+
+  &:empty::before {
     content: "";
     position: absolute;
     width: 0;
@@ -36,8 +42,11 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
     @include _draggable-handle-side;
 
     width: 100%;
-    height: theme.$draggable-handle-side-width;
     cursor: ns-resize;
+
+    &:empty {
+      height: theme.$draggable-handle-side-width;
+    }
   }
 
   &--dock-n { top: 0; }
@@ -48,9 +57,12 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
     @include _draggable-handle-side;
 
     top: 0;
-    width: theme.$draggable-handle-side-width;
     height: 100%;
     cursor: ew-resize;
+
+    &:empty {
+      width: theme.$draggable-handle-side-width;
+    }
   }
 
   &--dock-w { left: 0; }
@@ -68,7 +80,7 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
     border-color: theme.$draggable-handle-corner-color transparent transparent transparent;
 
     &::before {
-      top: -10px;
+      top: calc(-1 * $corner-size);
       border-color: theme.$draggable-handle-corner-color transparent transparent transparent;
     }
 
@@ -106,7 +118,7 @@ $corner-inner: calc(theme.$draggable-handle-corner-width / 2);
     border-color: transparent transparent theme.$draggable-handle-corner-color transparent;
 
     &::before {
-      bottom: -10px;
+      bottom: calc(-1 * $corner-size);
       border-color: transparent transparent theme.$draggable-handle-corner-color transparent;
     }
 

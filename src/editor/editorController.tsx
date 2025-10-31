@@ -10,6 +10,7 @@ import { Element, Link } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
 
+import { AnnotationLink } from './annotationCells';
 import {
     AuthoringState, AuthoringEvent, TemporaryState,
 } from './authoringState';
@@ -247,8 +248,9 @@ export class EditorController {
      * Removes the specified diagram cells from the diagram
      * and discards any associated graph authoring state.
      *
-     * The links are only removed when its a new relation
-     * added by the graph authoring.
+     * If the link is a {@link RelationLink relation}, it will be removed
+     * only if it's marked as "added" in the graph
+     * {@link EditorController.authoringState authoring state}.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
@@ -270,6 +272,10 @@ export class EditorController {
                     if (AuthoringState.isAddedRelation(this.authoringState, relation)) {
                         this.deleteRelation(relation);
                     }
+                }
+
+                if (!(item instanceof RelationLink || item instanceof RelationGroup)) {
+                    this.model.removeLink(item.id);
                 }
             }
         }

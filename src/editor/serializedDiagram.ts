@@ -1,7 +1,9 @@
 import type { ReadonlyHashMap } from '@reactodia/hashmap';
 
 import { ElementIri, ElementModel, LinkKey, LinkModel, LinkTypeIri } from '../data/model';
-import { DiagramContextV1, PlaceholderRelationType, TemplateProperties } from '../data/schema';
+import {
+    DiagramContextV1, PlaceholderRelationType, TemplateProperties, setTemplateProperty,
+} from '../data/schema';
 
 import { Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
@@ -343,24 +345,7 @@ export function markLayoutOnly(
     linkState: LinkTemplateState | undefined,
     value: boolean
 ): LinkTemplateState | undefined {
-    const previous = (
-        linkState &&
-        Object.prototype.hasOwnProperty.call(linkState, TemplateProperties.LayoutOnly) &&
-        Boolean(linkState[TemplateProperties.LayoutOnly])
-    );
-    if (previous && !value) {
-        const {
-            [TemplateProperties.LayoutOnly]: layoutOnly,
-            ...withoutLayoutOnly
-        } = linkState;
-        return withoutLayoutOnly;
-    } else if (!previous && value) {
-        return {
-            ...linkState,
-            [TemplateProperties.LayoutOnly]: true,
-        };
-    }
-    return linkState;
+    return setTemplateProperty(linkState, TemplateProperties.LayoutOnly, value ? true : undefined);
 }
 
 function hasToJSON(instance: object): instance is { toJSON(): { ['@type']?: unknown } } {

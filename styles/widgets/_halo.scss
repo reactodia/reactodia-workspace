@@ -2,9 +2,41 @@
 
 .reactodia-halo {
   position: absolute;
-  pointer-events: none;
+  left: calc(
+    var(--reactodia-halo-left) - var(--reactodia-selection-single-box-margin)
+  );
+  top: calc(
+    var(--reactodia-halo-top) - var(--reactodia-selection-single-box-margin)
+  );
+  width: calc(
+    var(--reactodia-halo-width) + 2 * var(--reactodia-selection-single-box-margin)
+  );
+  height: calc(
+    var(--reactodia-halo-height) + 2 * var(--reactodia-selection-single-box-margin)
+  );
 
-  border: 1.5px dashed #d8956d;
+  pointer-events: none;
+  border: 1.5px dashed theme.$selection-single-box-color;
   border-radius: theme.$border-radius-s;
   box-shadow: theme.$selection-single-box-shadow;
+
+  &--resizable {
+    border: unset;
+    box-shadow: unset;
+  }
+
+  &__resizer {
+    --reactodia-resizable-box-border-width: 3px;
+    --reactodia-resizable-box-color: #{theme.$color-primary-lighter};
+
+    position: absolute;
+    left: var(--reactodia-selection-single-box-margin);
+    top: var(--reactodia-selection-single-box-margin);
+    right: var(--reactodia-selection-single-box-margin);
+    bottom: var(--reactodia-selection-single-box-margin);
+  }
+
+  &__resizer > * {
+    pointer-events: all;
+  }
 }

@@ -683,11 +683,11 @@ export class LinkMarkers extends React.Component<LinkMarkersProps> {
 
     render() {
         const {renderingState} = this.props;
-        const defaultTemplate = renderingState.shared.defaultLinkTemplate;
 
         const markers: Array<React.ReactElement<LinkMarkerProps>> = [];
 
         for (const [linkTypeId, template] of renderingState.getLinkTemplates()) {
+            const defaultTemplate = renderingState.shared.defaultLinkResolver(linkTypeId);
             const typeIndex = renderingState.ensureLinkTypeIndex(linkTypeId);
 
             if (template.markerSource) {

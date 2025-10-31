@@ -10,7 +10,7 @@ import type { HotkeyString } from '../coreUtils/hotkey';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { LinkTypeIri } from '../data/model';
-import { TemplateProperties } from '../data/schema';
+import { AnnotationContent, TemplateProperties } from '../data/schema';
 
 import { useCanvas } from '../diagram/canvasApi';
 import { useCanvasHotkey } from '../diagram/canvasHotkey';
@@ -20,6 +20,7 @@ import { getContentFittingBox } from '../diagram/geometry';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
+import { AnnotationElement } from '../editor/annotationCells';
 import { AuthoringState } from '../editor/authoringState';
 import { BuiltinDialogType } from '../editor/builtinDialogType';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
@@ -27,7 +28,7 @@ import type { EditorController } from '../editor/editorController';
 import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
 
 import {
-    ConnectionsMenuTopic, InstancesSearchTopic, VisualAuthoringTopic,
+    AnnotationTopic, ConnectionsMenuTopic, InstancesSearchTopic, VisualAuthoringTopic,
 } from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
@@ -323,23 +324,32 @@ export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
  * Elements are collapsed if all of them are expanded, otherwise only collapsed
  * ones are expanded instead.
  *
+ * This action is visible only when at least one of the selected elements
+ * have {@link TemplateProperties.Expanded} property in {@link ElementTemplate.supports}.
+ *
  * Expanding or collapsing the elements adds a command to the command history.
  *
  * @category Components
  */
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
+    const {canvas} = useCanvas();
     const {model, translation: t} = useWorkspace();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
     const debouncedExpandedStore = useFrameDebouncedStore(elementExpandedStore);
+
+    const canExpand = (element: Element) => {
+        const template = canvas.renderingState.getElementTemplate(element);
+        return Boolean(template.supports?.[TemplateProperties.Expanded]);
+    };
     const allExpanded = useSyncStore(
         debouncedExpandedStore,
-        () => elements.every(element => element.isExpanded)
+        () => elements.every(element => !canExpand(element) || element.isExpanded)
     );
 
-    if (elements.every(element => element instanceof EntityGroup)) {
+    if (!elements.some(canExpand)) {
         return null;
     }
 
@@ -365,7 +375,9 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
                             : TranslatedText.text('selection_action.expand.expand_command')
                     );
                     for (const element of elements) {
-                        batch.history.execute(setElementExpanded(element, !allExpanded));
+                        if (canExpand(element)) {
+                            batch.history.execute(setElementExpanded(element, !allExpanded));
+                        }
                     }
                     batch.store();
                 }
@@ -424,6 +436,8 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
 /**
  * Selection action component to display a link to the entity IRI.
  *
+ * This action is visible only if the selected element is an {@link EntityElement}.
+ *
  * @category Components
  */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
@@ -470,6 +484,9 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
 
 /**
  * Selection action component to open a {@link ConnectionsMenu} for the selected entities.
+ *
+ * This action is visible if at least one {@link EntityElement} or {@link EntityGroup}
+ * is selected.
  *
  * @category Components
  */
@@ -530,6 +547,8 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
 /**
  * Selection action component to add the selected entity to the {@link InstancesSearch} filter.
  *
+ * This action is visible only if the selected element is an {@link EntityElement}.
+ *
  * @category Components
  */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
@@ -576,8 +595,9 @@ export interface SelectionActionGroupProps extends SelectionActionStyleProps {
 /**
  * Selection action component to group or ungroup selected elements.
  *
- * Selected elements can be grouped if only entity elements are selected,
- * the elements can be ungrouped if only entity groups are selected.
+ * Selected elements can be grouped if only {@link EntityElement entity elements}
+ * are selected, the elements can be ungrouped if only {@link EntityGroup entity groups}
+ * are selected.
  *
  * Grouping or ungrouping the elements adds a command to the command history.
  *
@@ -606,7 +626,11 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
         }
     };
 
-    if (elements.length === 0 || elements.length === 1 && canGroup) {
+    if (
+        elements.length === 0 ||
+        elements.length === 1 && canGroup ||
+        elements.every(element => element instanceof AnnotationElement)
+    ) {
         return null;
     }
 
@@ -641,33 +665,49 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 }
 
 /**
- * Selection action component to start creating a relation link to an existing
- * or a new entity.
+ * Selection action component to start creating a link to an existing or a new element.
  *
- * This action is visible only when graph authoring mode is active.
+ * This action is visible either if selected element is an {@link AnnotationElement}
+ * it is an {@link EntityElement} and {@link EditorController.inAuthoringMode graph authoring mode}
+ * is active.
  *
  * Creating a link adds a command to the command history.
  *
  * @category Components
  */
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
-    const {className, title, linkType, ...otherProps} = props;
+    const {model} = useCanvas();
+
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const target = elements.length === 1 ? elements[0] : undefined;
+
+    if (target instanceof EntityElement) {
+        return <SelectionActionEstablishRelation {...props} target={target} />;
+    } else if (target instanceof AnnotationElement) {
+        return <SelectionActionEstablishAnnotationLink {...props} target={target} />;
+    } else {
+        return null;
+    }
+}
+
+function SelectionActionEstablishRelation(
+    props: SelectionActionEstablishLinkProps & { target: EntityElement }
+) {
+    const {target, className, title, linkType, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {model, editor, translation: t, getCommandBus} = useWorkspace();
+    const {editor, translation: t, getCommandBus} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
     );
-
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    const target = elements.length === 1 ? elements[0] : undefined;
+    
     const canLink = useCanEstablishLink(
         editor,
         inAuthoringMode ? target : undefined,
         linkType
     );
 
-    if (!(target instanceof EntityElement && inAuthoringMode)) {
+    if (!inAuthoringMode) {
         return null;
     } else if (canLink === undefined) {
         const {dock, dockRow, dockColumn} = props;
@@ -678,6 +718,7 @@ export function SelectionActionEstablishLink(props: SelectionActionEstablishLink
             />
         );
     }
+
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -746,4 +787,90 @@ function useCanEstablishLink(
     }, [targetData, authoringEvent, linkType]);
 
     return canLink;
+}
+
+function SelectionActionEstablishAnnotationLink(
+    props: SelectionActionEstablishLinkProps & { target: AnnotationElement }
+) {
+    const {target, className, title, linkType, ...otherProps} = props;
+    const {canvas} = useCanvas();
+    const {translation: t, getCommandBus} = useWorkspace();
+
+    return (
+        <SelectionAction {...otherProps}
+            className={cx(
+                className,
+                `${CLASS_NAME}__establish-link`
+            )}
+            title={title ?? t.text('selection_action.establish_relation.title')}
+            onMouseDown={e => {
+                const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
+                getCommandBus(AnnotationTopic)
+                    .trigger('startDragOperation', {
+                        operation: {mode: 'connect', source: target, point},
+                    });
+            }}
+        />
+    );
+}
+
+/**
+ * Props for {@link SelectionActionAnnotate} component.
+ *
+ * @see {@link SelectionActionAnnotate}
+ */
+export interface SelectionActionAnnotateProps extends SelectionActionStyleProps {
+    /**
+     * Initial annotation content.
+     *
+     * @default Translation.text('selection_action.annotate.defaultContent')
+     */
+    initialContent?: AnnotationContent | GetInitialAnnotationContent | null;
+}
+
+type GetInitialAnnotationContent = (elements: readonly Element[]) => AnnotationContent | undefined;
+
+/**
+ * Selection action component to create a new annotaion element
+ * connected to the selected elements.
+ *
+ * @category Components
+ */
+export function SelectionActionAnnotate(props: SelectionActionAnnotateProps) {
+    const {className, title, initialContent, ...otherProps} = props;
+    const {model, translation: t, getCommandBus} = useWorkspace();
+
+    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    if (elements.length === 0) {
+        return null;
+    }
+
+    return (
+        <SelectionAction {...otherProps}
+            className={cx(
+                className,
+                `${CLASS_NAME}__annotate`
+            )}
+            title={title ?? t.text('selection_action.annotate.title')}
+            onSelect={() => {
+                let content: AnnotationContent | undefined;
+                if (typeof initialContent === 'function') {
+                    content = initialContent(elements);
+                } else if (initialContent === undefined) {
+                    content = {
+                        type: 'plaintext',
+                        text: t.text('selection_action.annotate.defaultContent'),
+                    };
+                } else if (initialContent !== null) {
+                    content = initialContent;
+                }
+
+                getCommandBus(AnnotationTopic)
+                    .trigger('createAnnotation', {
+                        targets: elements,
+                        content,
+                    });
+            }}
+        />
+    );
 }

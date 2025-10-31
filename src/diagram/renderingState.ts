@@ -115,8 +115,8 @@ export enum RenderingLayer {
 const FIRST_LAYER = RenderingLayer.Element;
 const LAST_LAYER = RenderingLayer.Overlay;
 
-const DEFAULT_ELEMENT_TEMPLATE_RESOLVER: ElementTemplateResolver = types => undefined;
-const DEFAULT_LINK_TEMPLATE_RESOLVER: LinkTemplateResolver = type => undefined;
+const DEFAULT_ELEMENT_TEMPLATE_RESOLVER: ElementTemplateResolver = element => undefined;
+const DEFAULT_LINK_TEMPLATE_RESOLVER: LinkTemplateResolver = linkTypeId => undefined;
 
 /**
  * Stores current rendering state for a single canvas.
@@ -341,7 +341,7 @@ export class MutableRenderingState implements RenderingState {
             }
             resolved = mapped;
         }
-        return resolved ?? this.shared.defaultElementTemplate;
+        return resolved ?? this.shared.defaultElementResolver(element);
     }
 
     getElementShape(element: Element): ShapeGeometry {
@@ -373,7 +373,7 @@ export class MutableRenderingState implements RenderingState {
         }
 
         const template = this.resolveLinkTemplate(linkTypeId)
-            ?? this.shared.defaultLinkTemplate;
+            ?? this.shared.defaultLinkResolver(linkTypeId);
         this.linkTemplates.set(linkTypeId, template);
         this.source.trigger('changeLinkTemplates', {source: this});
         return template;

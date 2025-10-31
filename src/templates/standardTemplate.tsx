@@ -43,6 +43,9 @@ export const StandardTemplate: ElementTemplate = {
             return null;
         }
     },
+    supports: {
+        [TemplateProperties.Expanded]: true,
+    },
 };
 
 /**

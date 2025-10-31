@@ -1,20 +1,20 @@
 import { TranslatedText } from '../coreUtils/i18n';
 
 import type { LinkTypeIri } from '../data/model';
-import { TemplateProperties } from '../data/schema';
+import { TemplateProperties, setTemplateProperty } from '../data/schema';
 
 import type { CanvasApi } from './canvasApi';
 import type {
     Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility,
 } from './elements';
 import {
-    SizeProvider, Vector, boundsOf, isPolylineEqual, calculateAveragePosition,
+    Size, SizeProvider, Vector, boundsOf, isPolylineEqual, calculateAveragePosition,
 } from './geometry';
 import { Command } from './history';
 import type { DiagramModel, GraphStructure } from './model';
 
 /**
- * Command to restore element positions and link geometry (vertices) on a canvas.
+ * Command to restore element positions and sizes, link geometry (vertices) on a canvas.
  *
  * **Example**:
  * ```ts
@@ -32,7 +32,11 @@ export class RestoreGeometry implements Command {
     private static _title = TranslatedText.text('commands.restore_geometry.title');
 
     private constructor(
-        private elementState: ReadonlyArray<{ element: Element; position: Vector }>,
+        private elementState: ReadonlyArray<{
+            element: Element;
+            position: Vector;
+            size: Size | undefined;
+        }>,
         private linkState: ReadonlyArray<{ link: Link; vertices: ReadonlyArray<Vector> }>,
     ) {}
 
@@ -52,7 +56,11 @@ export class RestoreGeometry implements Command {
         links: ReadonlyArray<Link>,
     ): RestoreGeometry {
         return new RestoreGeometry(
-            elements.map(element => ({element, position: element.position})),
+            elements.map(element => ({
+                element,
+                position: element.position,
+                size: getElementSize(element),
+            })),
             links.map(link => ({link, vertices: link.vertices})),
         );
     }
@@ -79,7 +87,10 @@ export class RestoreGeometry implements Command {
     filterOutUnchanged(): RestoreGeometry {
         return new RestoreGeometry(
             this.elementState.filter(
-                ({element, position}) => !Vector.equals(element.position, position)
+                ({element, position, size}) => !(
+                    Vector.equals(element.position, position) &&
+                    getElementSize(element) === size
+                )
             ),
             this.linkState.filter(
                 ({link, vertices}) => !isPolylineEqual(link.vertices, vertices)
@@ -95,14 +106,21 @@ export class RestoreGeometry implements Command {
         // restore in reverse order to workaround position changed event
         // handling in EmbeddedLayer inside nested elements
         // (child's position change causes group to resize or move itself)
-        for (const {element, position} of [...this.elementState].reverse()) {
+        for (const {element, position, size} of [...this.elementState].reverse()) {
             element.setPosition(position);
+            element.setElementState(
+                setTemplateProperty(element.elementState, TemplateProperties.ElementSize, size)
+            );
         }
         for (const {link, vertices} of this.linkState) {
             link.setVertices(vertices);
         }
         return previous;
     }
+}
+
+function getElementSize(element: Element): Size | undefined {
+    return element.elementState?.[TemplateProperties.ElementSize] as Size | undefined;
 }
 
 /**
