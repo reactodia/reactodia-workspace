@@ -20,6 +20,7 @@ import { CanvasPlaceAt } from '../diagram/placeLayer';
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
     SelectionActionExpand, SelectionActionConnections, SelectionActionGroup,
+    SelectionActionAnnotate,
 } from './selectionAction';
 
 /**
@@ -60,6 +61,7 @@ export interface SelectionProps {
      *   <SelectionActionRemove dock='ne' />
      *   <SelectionActionConnections dock='e' />
      *   <SelectionActionExpand dock='s' />
+     *   <SelectionActionAnnotate dock='se' dockColumn={1} />
      * </>
      * ```
      */
@@ -285,6 +287,7 @@ function SelectionBox(props: SelectionBoxProps) {
                         <SelectionActionRemove dock='ne' />
                         <SelectionActionConnections dock='e' />
                         <SelectionActionExpand dock='s' />
+                        <SelectionActionAnnotate dock='se' dockColumn={1} />
                     </>}
                 </div>
                 {/* Render box on top of item overlays for correct pointer event handling */}

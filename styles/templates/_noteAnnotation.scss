@@ -1,0 +1,117 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-note-annotation {
+  width: 200px;
+  height: 120px;
+  display: grid;
+  align-content: center;
+
+  border: 2px solid theme.$color-gray-500;
+  border-radius: theme.$border-radius-s;
+
+  &--variant-default {
+    color: theme.$font-color-base;
+    background-color: theme.$element-background-color;
+    border-color: theme.$color-gray-500;
+  }
+  &--variant-primary {
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
+    border-color: theme.$color-primary;
+  }
+  &--variant-success {
+    color: theme.$color-success-contrast-foreground;
+    background-color: theme.$color-success-contrast-background;
+    border-color: theme.$color-success;
+  }
+  &--variant-info {
+    color: theme.$color-info-contrast-foreground;
+    background-color: theme.$color-info-contrast-background;
+    border-color: theme.$color-info;
+  }
+  &--variant-warning {
+    color: theme.$color-warning-contrast-foreground;
+    background-color: theme.$color-warning-contrast-background;
+    border-color: theme.$color-warning;
+  }
+  &--variant-danger {
+    color: theme.$color-danger-contrast-foreground;
+    background-color: theme.$color-danger-contrast-background;
+    border-color: theme.$color-danger;
+  }
+
+  &--editing {
+    align-content: unset;
+  }
+
+  &__editor {
+    margin: 0;
+    padding: 10px;
+    font-size: 18px;
+    outline: none;
+    word-break: break-all;
+    pointer-events: none;
+  
+    text-align: center;
+  }
+
+  &--editing &__editor {
+    cursor: text;
+    pointer-events: all;
+  }
+
+  &__controls {
+    position: absolute;
+    top: 10px;
+    right: -10px;
+    transform: translate(100%, 0%);
+    width: max-content;
+
+    display: flex;
+    flex-direction: column;
+    gap: theme.$spacing-base;
+  }
+
+  &__style-bold {
+    @include carbon-icon-button("text--bold");
+  }
+  &__style-italic {
+    @include carbon-icon-button("text--italic");
+  }
+  &__style-underline {
+    @include carbon-icon-button("text--underline");
+  }
+  &__style-strikethrough {
+    @include carbon-icon-button("text--strikethrough");
+  }
+
+  &__align-left {
+    @include carbon-icon-button("text--align--left");
+  }
+  &__align-center {
+    @include carbon-icon-button("text--align--center");
+  }
+  &__align-right {
+    @include carbon-icon-button("text--align--right");
+  }
+
+  &__variant {
+    width: 16px;
+    height: 16px;
+    border-radius: theme.$border-radius-s;
+    border-top-style: solid;
+    border-top-width: 16px;
+  }
+}
+
+.reactodia-note-link {
+  &__path {
+    --reactodia-link-stroke-color: #{theme.$color-gray-500};
+    stroke-width: 2;
+  }
+
+  &__label {
+    display: none;
+  }
+}

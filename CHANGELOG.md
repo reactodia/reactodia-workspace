@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Introduce an optional contract for `Element` or `Link`-derived cell types to be serializable: `SerializableElementCell` and `SerializableLinkCell`;
   * When implemented, the corresponding cell types can be exported and later imported with the diagram;
   * `DataDiagramModel.importLayout()` will accept known cell types via `elementCellTypes` and `linkCellTypes` to import.
+- Add `AnnotationElement` and `AnnotationLink` diagram cell types representing diagram-only elements and links which exports and imports with the diagram but does not exists in the data graph:
+  * Rendered by default with new built-in templates `NoteTemplate` and `NoteLinkTemplate` which use `NoteAnnotation`, `NoteEntity` and `NoteLink` template components;
+  * Support annotation elements in `SelectionActionEstablishLink` and new `SelectionActionAnnotate` components;
+  * Support annotation links in `LinkActionDelete`, `LinkActionMoveEndpoint` components.
+- Support user-resizable element templates with `ElementSize` template state property:
+  * Resizable elements display "box with handles" in the `Halo` to change the size;
+  * Changed element sizes are captured and restored by `RestoreGeometry` command.
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 
 #### ⏱ Performance
@@ -21,11 +28,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Subscribe to canvas `changeTransform` event when using `CanvasApi.metrics` to convert between coordinates;
   * Subscribe to canvas `resize` event to track viewport size;
   * Subscribe to `changeCells` event from `DiagramModel` to track graph content changes.
+- Add `TemplateProps.onlySelected` flag to use in the element templates to track if the element is the only one selected without performance penalty.
 
 #### 💅 Polish
 - Make dialogs fill the available viewport when the viewport width is small:
   * This is controlled by new CSS property `--reactodia-dialog-viewport-breakpoint-s` with default value `600px` which makes dialog fill the viewport if the available width is less or equal to that value.
 - Allow to override base z-index level for workspace components with a set z-index value via `--reactodia-z-index-base` CSS property;
+- Make `Halo` margin configurable via CSS property `--reactodia-selection-single-box-margin`.
+- Highlight link path in `HaloLink` with `--reactodia-selection-link-color` color by default.
 - Add `changeTransform` event to `CanvasApi.events` which triggers on `CanvasApi.metrics.getTransform()` changes, i.e. when coordinate mapping changes due to scale or canvas size is re-adjusted.
 - Add `DiagramModel.cellsVersion` property which updates on every element or link addition/removal/reordering to be able to subscribe to `changeCells` event with `useSyncStore()` hook.
 - Deprecate `canvasWidgets` prop on `DefaultWorkspace` and `ClassicWorkspace` in favor of passing widgets directly as children.
@@ -33,12 +43,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * All existing properties, methods and commands works as before but use element template state as storage for expanded state;
   * `changeExpanded` event is removed from element events, use `changeElementState` event instead;
   * When exporting the diagram the expanded state is serialized only with `elementState` while using `isExpanded` property when importing the diagram for backward compatibility.
+- Introduce `ElementTemplate.supports` property for templates to tell its capabilities such as ability to expand/collapse or resized by user.
 - Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
+- Add `setTemplateProperty()` utility function to easily set or unset template state property.
 
 #### 🐛 Fixed
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 - Fix element template state not being restored when ungrouping entities.
 - Fix missing element decorations after re-importing the same diagram.
+- Fix `DraggableHandle` to avoid using stale `onDragHandle` and `onEndDragHandle` prop values.
+
+#### 🔧 Maintenance
+- Use small subset of [carbon design icons](https://github.com/carbon-design-system/carbon-icons) for various buttons.
 
 ## [0.30.1] - 2025-06-27
 #### 🐛 Fixed

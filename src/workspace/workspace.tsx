@@ -8,10 +8,12 @@ import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../cor
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
+import { TemplateProperties, ColorVariant } from '../data/schema';
 import { ValidationProvider } from '../data/validationProvider';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization';
+import { Element } from '../diagram/elements';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
@@ -21,6 +23,7 @@ import {
 } from '../diagram/locale';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 
+import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
 import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
@@ -29,6 +32,7 @@ import {
 } from '../editor/elementGrouping';
 import { OverlayController } from '../editor/overlayController';
 
+import { NoteTemplate, NoteLinkTemplate } from '../templates/noteAnnotation';
 import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
 import { StandardTemplate } from '../templates/standardTemplate';
 
@@ -55,6 +59,10 @@ export interface WorkspaceProps {
      *
      * By default, the colors are assigned deterministically based on total
      * hash of type strings.
+     *
+     * For non-{@link EntityElement entity} elements, the {@link Element.elementState}
+     * is checked for {@link TemplateProperties.ColorVariant} template state property
+     * instead.
      */
     typeStyleResolver?: TypeStyleResolver;
     /**
@@ -133,6 +141,15 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private readonly resolveTypeStyle: TypeStyleResolver;
     private readonly cachedTypeStyles: WeakMap<ReadonlyArray<ElementTypeIri>, ProcessedTypeStyle>;
     private readonly cachedGroupStyles: WeakMap<ReadonlyArray<EntityGroupItem>, ProcessedTypeStyle>;
+    // TODO: use colors from theme directly
+    private readonly annotationStyles = new Map<ColorVariant, ProcessedTypeStyle>([
+        ['default', {color: '#bec3c9'}],
+        ['primary', {color: '#337ab7'}],
+        ['success', {color: '#5cb85c'}],
+        ['info', {color: '#54c7ec'}],
+        ['warning', {color: '#ffba00'}],
+        ['danger', {color: '#c9302c'}],
+    ]);
 
     private readonly layoutTypeProvider: LayoutTypeProvider;
 
@@ -171,8 +188,18 @@ export class Workspace extends React.Component<WorkspaceProps> {
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({
-            defaultElementTemplate: StandardTemplate,
-            defaultLinkTemplate: DefaultLinkTemplate,
+            defaultElementResolver: element => {
+                if (element instanceof AnnotationElement) {
+                    return NoteTemplate;
+                }
+                return StandardTemplate;
+            },
+            defaultLinkResolver: linkTypeId => {
+                if (linkTypeId === AnnotationLink.typeId) {
+                    return NoteLinkTemplate;
+                }
+                return DefaultLinkTemplate;
+            },
             defaultLayout,
             renameLinkProvider,
         });
@@ -281,7 +308,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
         } else if (element instanceof EntityGroup) {
             return this.getGroupTypeStyle(element);
         } else {
-            return this.getElementTypeStyle([]);
+            const style = this.tryGetColorVariantStyle(element);
+            return style ??this.getElementTypeStyle([]);
         }
     };
 
@@ -328,6 +356,16 @@ export class Workspace extends React.Component<WorkspaceProps> {
             this.cachedGroupStyles.set(items, processedStyle);
         }
         return processedStyle;
+    }
+
+    private tryGetColorVariantStyle(element: Element): ProcessedTypeStyle | undefined {
+        const {elementState} = element;
+        const colorVariant = 
+            elementState?.[TemplateProperties.ColorVariant] as ColorVariant | undefined;
+        if (colorVariant || element instanceof AnnotationElement) {
+            return this.annotationStyles.get(colorVariant ?? 'default');
+        }
+        return undefined;
     }
 
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {

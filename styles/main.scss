@@ -10,7 +10,6 @@
 @forward "diagram/spinner";
 
 @forward "editor/authoringState";
-@forward "editor/dragEditLayer";
 @forward "editor/editEntityForm";
 @forward "editor/editRelationForm";
 @forward "editor/elementSelector";
@@ -22,11 +21,13 @@
 @forward "theme/themeLight";
 
 @forward "utility/draggableHandle";
+@forward "utility/dragLinkMover";
 @forward "utility/dropdown";
 @forward "utility/inlineEntity";
 @forward "utility/listElementView";
 @forward "utility/noSearchResults";
 @forward "utility/progressBar";
+@forward "utility/resizableBox";
 @forward "utility/searchInput";
 @forward "utility/searchResults";
 @forward "utility/viewportDock";
@@ -54,5 +55,6 @@
 @forward "templates/classic";
 @forward "templates/defaultLink";
 @forward "templates/groupPaginator";
+@forward "templates/noteAnnotation";
 @forward "templates/round";
 @forward "templates/standard";

@@ -1,0 +1,72 @@
+@use "../theme/theme";
+
+$resizable-box-bar-size: 10px;
+$resizable-box-border-width: var(--reactodia-resizable-box-border-width);
+$resizable-box-color: var(--reactodia-resizable-box-color);
+
+.reactodia-resizable-box {
+  border: $resizable-box-border-width solid $resizable-box-color;
+
+  &__handle {
+    background-color: unset;
+  
+    &.reactodia-draggable-handle--dock-n,
+    &.reactodia-draggable-handle--dock-s,
+    &.reactodia-draggable-handle--dock-w,
+    &.reactodia-draggable-handle--dock-e {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    &.reactodia-draggable-handle--dock-n {
+      margin-top: calc(-0.5 * $resizable-box-border-width);
+    }
+    &.reactodia-draggable-handle--dock-s {
+      margin-bottom: calc(-0.5 * $resizable-box-border-width);
+    }
+    &.reactodia-draggable-handle--dock-w {
+      margin-left: calc(-0.5 * $resizable-box-border-width);
+    }
+    &.reactodia-draggable-handle--dock-e {
+      margin-right: calc(-0.5 * $resizable-box-border-width);
+    }
+
+    rect {
+      stroke-width: 2;
+    }
+
+    circle,
+    rect {
+      stroke: $resizable-box-color;
+      fill: theme.$canvas-background-color;
+    }
+
+    &:hover {
+      circle,
+      rect {
+        fill: $resizable-box-color;
+      }
+    }
+  }
+
+  &__corner {
+    position: absolute;
+    left: -10px;
+    top: -10px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &__vertical {
+    position: absolute;
+    width: 30px;
+    height: $resizable-box-bar-size;
+  }
+
+  &__horizontal {
+    position: absolute;
+    width: $resizable-box-bar-size;
+    height: 30px;
+  }
+}

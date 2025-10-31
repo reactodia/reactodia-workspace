@@ -31,7 +31,8 @@ export {
 } from './data/validationProvider';
 export {
     DiagramContextV1, PlaceholderEntityType, PlaceholderRelationType,
-    TemplateProperties, PinnedProperties,
+    TemplateProperties, PinnedProperties, AnnotationContent, AnnotationTextStyle,
+    ColorVariant, setTemplateProperty,
 } from './data/schema';
 export * from './data/composite/composite';
 export {
@@ -101,6 +102,10 @@ export {
 export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
 export {
+    AnnotationElement, AnnotationLink,
+    SerializedAnnotationElement, SerializedAnnotationLink,
+} from './editor/annotationCells';
+export {
     AuthoringState, AuthoringEvent,
     AuthoredEntity, AuthoredEntityAdd, AuthoredEntityChange, AuthoredEntityDelete,
     AuthoredRelation, AuthoredRelationAdd, AuthoredRelationChange, AuthoredRelationDelete,
@@ -158,6 +163,9 @@ export {
     DefaultLinkTemplate, DefaultLink, DefaultLinkProps,
 } from './templates/defaultLinkTemplate';
 export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
+export {
+    NoteTemplate, NoteAnnotation, NoteEntity, NoteLinkTemplate, NoteLink,
+} from './templates/noteAnnotation';
 export { RoundTemplate, RoundEntity, RoundEntityProps } from './templates/roundTemplate';
 export {
     StandardTemplate, StandardEntity, StandardEntityProps,

@@ -26,3 +26,20 @@
     margin-right: 3px;
   }
 }
+
+@mixin carbon-icon($name) {
+  @include icon("@images/carbon-design/" + $name + ".svg")
+}
+
+@mixin carbon-icon-button($name) {
+  display: flex;
+  align-items: center;
+
+  &::before {
+    @include carbon-icon($name);
+  }
+
+  &:not(:empty)::before {
+    margin-right: 3px;
+  }
+}

@@ -20,6 +20,7 @@ import {
     DiagramModel, DiagramModelEvents, DiagramModelOptions, GraphStructure,
 } from '../diagram/model';
 
+import { AnnotationElement, AnnotationLink } from './annotationCells';
 import {
     EntityElement, EntityGroup, EntityGroupItem,
     RelationLink, RelationGroup, RelationGroupItem,
@@ -325,7 +326,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          *
          * **Unstable**: this feature is likely to be changed in the future.
          *
-         * @default [EntityElement, EntityGroup]
+         * @default [EntityElement, EntityGroup, AnnotationElement]
          */
         elementCellTypes?: readonly SerializableElementCell[];
         /**
@@ -335,7 +336,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          *
          * **Unstable**: this feature is likely to be changed in the future.
          *
-         * @default [RelationLink, RelationGroup]
+         * @default [RelationLink, RelationGroup, AnnotationLink]
          */
         linkCellTypes?: readonly SerializableLinkCell[];
         /**
@@ -371,8 +372,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             dataProvider,
             locale,
             diagram = emptyDiagram(),
-            elementCellTypes = [EntityElement, EntityGroup],
-            linkCellTypes = [RelationLink, RelationGroup],
+            elementCellTypes = [EntityElement, EntityGroup, AnnotationElement],
+            linkCellTypes = [RelationLink, RelationGroup, AnnotationLink],
             preloadedElements,
             preloadedLinks,
             validateLinks = false,

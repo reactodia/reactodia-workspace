@@ -1,17 +1,25 @@
 import * as React from 'react';
+import cx from 'clsx';
 
 import { AnyListener, EventObserver } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
+import { TranslatedText } from '../coreUtils/i18n';
+
+import { TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
+import { RestoreGeometry } from '../diagram/commands';
 import { Element, ElementEvents } from '../diagram/elements';
-import { boundsOf } from '../diagram/geometry';
+import { Rect, boundsOf } from '../diagram/geometry';
+import { Command } from '../diagram/history';
+import type { DiagramModel } from '../diagram/model';
 import { CanvasPlaceAt } from '../diagram/placeLayer';
 
+import { ResizableBox, type ResizableBoxOperation } from './utility/resizableBox';
 import {
     SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
     SelectionActionConnections, SelectionActionAddToFilter, SelectionActionGroup,
-    SelectionActionEstablishLink,
+    SelectionActionEstablishLink, SelectionActionAnnotate,
 } from './selectionAction';
 
 /**
@@ -23,7 +31,7 @@ export interface HaloProps {
     /**
      * Margin between the element and surrounding actions.
      *
-     * @default 5
+     * **Default** is set by `--reactodia-selection-single-box-margin` CSS property.
      */
     margin?: number;
     /**
@@ -38,6 +46,7 @@ export interface HaloProps {
      *   <SelectionActionAnchor dock='w' />
      *   <SelectionActionConnections dock='e' />
      *   <SelectionActionAddToFilter dock='se' />
+     *   <SelectionActionAnnotate dock='se' dockColumn={1} />
      *   <SelectionActionEstablishLink dock='sw' />
      * </>
      * ```
@@ -68,6 +77,7 @@ export function Halo(props: HaloProps) {
                 <HaloInner {...props}
                     target={singleTarget}
                     canvas={canvas}
+                    model={model}
                 />
             </CanvasPlaceAt>
         );
@@ -78,6 +88,7 @@ export function Halo(props: HaloProps) {
 interface HaloInnerProps extends HaloProps {
     readonly target: Element;
     readonly canvas: CanvasApi;
+    readonly model: DiagramModel;
 }
 
 const CLASS_NAME = 'reactodia-halo';
@@ -131,9 +142,13 @@ class HaloInner extends React.Component<HaloInnerProps> {
         const {
             target,
             canvas,
-            margin = 5,
+            model,
+            margin,
             children,
         } = this.props;
+
+        const template = canvas.renderingState.getElementTemplate(target);
+        const resizable = Boolean(template.supports?.[TemplateProperties.ElementSize]);
 
         const bbox = boundsOf(target, canvas.renderingState);
         const {x: x0, y: y0} = canvas.metrics.paperToScrollablePaneCoords(bbox.x, bbox.y);
@@ -141,15 +156,32 @@ class HaloInner extends React.Component<HaloInnerProps> {
             bbox.x + bbox.width,
             bbox.y + bbox.height,
         );
-        const style: React.CSSProperties = {
-            left: x0 - margin,
-            top: y0 - margin,
-            width: ((x1 - x0) + margin * 2),
-            height: ((y1 - y0) + margin * 2),
-        };
+        const style = {
+            '--reactodia-selection-single-box-margin': margin,
+            '--reactodia-halo-left': `${x0}px`,
+            '--reactodia-halo-top': `${y0}px`,
+            '--reactodia-halo-width': `${x1 - x0}px`,
+            '--reactodia-halo-height': `${y1 - y0}px`,
+        } as React.CSSProperties;
 
         return (
-            <div className={CLASS_NAME} style={style}>
+            <div className={cx(CLASS_NAME, resizable ? `${CLASS_NAME}--resizable` : undefined)}
+                style={style}>
+                {resizable && (
+                    <ResizableBox
+                        className={`${CLASS_NAME}__resizer`}
+                        mapCoordsFromPage={(x, y) => canvas.metrics.pageToPaperCoords(x, y)}
+                        startResize={() => {
+                            model.history.registerToUndo(Command.compound(
+                                TranslatedText.text('commands.transform_elements.title'),
+                                [RestoreGeometry.capturePartial([target], [])]
+                            ));
+                            return new ElementResizeOperation(target, bbox);
+                        }}
+                        minWidth={40}
+                        minHeight={40}
+                    />
+                )}
                 {children ?? <>
                     <SelectionActionGroup dock='nw' dockColumn={1} />
                     <SelectionActionRemove dock='ne' />
@@ -157,9 +189,29 @@ class HaloInner extends React.Component<HaloInnerProps> {
                     <SelectionActionAnchor dock='w' />
                     <SelectionActionConnections dock='e' />
                     <SelectionActionAddToFilter dock='se' />
+                    <SelectionActionAnnotate dock='se' dockColumn={1} />
                     <SelectionActionEstablishLink dock='sw' />
                 </>}
             </div>
         );
+    }
+}
+
+class ElementResizeOperation implements ResizableBoxOperation {
+    constructor(
+        private readonly target: Element,
+        readonly initialBounds: Rect
+    ) {}
+
+    onResize({x, y, width, height}: Rect): void {
+        this.target.setPosition({x, y});
+        this.target.setElementState({
+            ...this.target.elementState,
+            [TemplateProperties.ElementSize]: {width, height},
+        });
+    }
+
+    end(): void {
+        /* nothing */
     }
 }

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementModel, PropertyTypeIri } from '../data/model';
+import { TemplateProperties } from '../data/schema';
 import { setElementExpanded } from '../diagram/commands';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
@@ -21,6 +22,9 @@ import { useWorkspace } from '../workspace/workspaceContext';
  */
 export const ClassicTemplate: ElementTemplate = {
     renderElement: props => <ClassicEntity {...props} />,
+    supports: {
+        [TemplateProperties.Expanded]: true,
+    },
 };
 
 /**

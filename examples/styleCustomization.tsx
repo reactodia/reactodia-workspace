@@ -59,7 +59,11 @@ function StyleCustomizationExample() {
                         }
                         return undefined;
                     },
-                    linkTemplateResolver: type => DoubleArrowLinkTemplate,
+                    linkTemplateResolver: type => {
+                        if (!type.startsWith('urn:reactodia:')) {
+                            return DoubleArrowLinkTemplate;
+                        }
+                    },
                 }}
                 menu={<ExampleToolbarMenu />}>
                 <BookDecorations />

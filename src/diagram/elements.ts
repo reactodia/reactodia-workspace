@@ -1,7 +1,7 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri } from '../data/model';
-import { TemplateProperties } from '../data/schema';
+import { TemplateProperties, setTemplateProperty } from '../data/schema';
 import { generate128BitID } from '../data/utils';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -184,12 +184,9 @@ export abstract class Element {
      * not equal to the previous one.
      */
     setExpanded(value: boolean): void {
-        if (value && !this._elementState?.[TemplateProperties.Expanded]) {
-            this.setElementState({...this._elementState, [TemplateProperties.Expanded]: true});
-        } else if (!value && this._elementState?.[TemplateProperties.Expanded]) {
-            const {[TemplateProperties.Expanded]: _, ...withoutExpanded} = this._elementState;
-            this.setElementState(withoutExpanded);
-        }
+        this.setElementState(
+            setTemplateProperty(this._elementState, TemplateProperties.Expanded, value ? true : undefined)
+        );
     }
 
     /**

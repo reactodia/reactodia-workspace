@@ -64,6 +64,30 @@ export interface ElementTemplate {
      * **Note**: this should be a pure function, not a React component by itself.
      */
     readonly renderElement: (props: TemplateProps) => React.ReactNode;
+    /**
+     * Describes a set of {@link TemplateProperties template state properties}
+     * supported by the template.
+     *
+     * These capabilities are used by other components (e.g. selection actions, etc)
+     * while the template itself, however, can read and change any template property
+     * as needed.
+     *
+     * **Example**:
+     * Element template which supports being expanded and resized
+     * by the user:
+     * ```ts
+     * const MyTemplate: Reactodia.ElementTemplate = {
+     *   renderElement: props => { ... },
+     *   supports: {
+     *     [Reactodia.TemplateProperties.Expanded]: true,
+     *     [Reactodia.TemplateProperties.ElementSize]: true,
+     *   }
+     * }
+     * ```
+     *
+     * @default {}
+     */
+    readonly supports?: Record<string, boolean>;
 }
 
 /**
@@ -102,6 +126,12 @@ export interface TemplateProps {
      * Same as {@link Element.elementState}.
      */
     readonly elementState?: ElementTemplateState;
+    /**
+     * Whether the element is the only selected cell on the canvas.
+     *
+     * @see {@link DiagramModel.selection}
+     */
+    readonly onlySelected: boolean;
 }
 
 /**

@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
 
-import { TemplateProperties } from '../data/schema';
+import type { LinkTypeIri } from '../data/model';
+import { TemplateProperties, setTemplateProperty } from '../data/schema';
 
 import type { CanvasApi, CanvasDropEvent } from './canvasApi';
 import type { ElementTemplate, LinkTemplate, RenameLinkProvider } from './customization';
@@ -56,8 +57,8 @@ export type CellHighlighter = (item: Element | Link) => boolean;
 
 /** @hidden */
 export interface SharedCanvasStateOptions {
-    defaultElementTemplate: ElementTemplate;
-    defaultLinkTemplate: LinkTemplate;
+    defaultElementResolver: (element: Element) => ElementTemplate;
+    defaultLinkResolver: (linkType: LinkTypeIri) => LinkTemplate;
     defaultLayout: LayoutFunction;
     renameLinkProvider?: RenameLinkProvider;
 }
@@ -81,13 +82,15 @@ export class SharedCanvasState {
     private _highlighter: CellHighlighter | undefined;
 
     /**
-     * Default element template to use as a fallback.
+     * Default element template resolver to use as a fallback
+     * (returns a default template for any element).
      */
-    readonly defaultElementTemplate: ElementTemplate;
+    readonly defaultElementResolver: (element: Element) => ElementTemplate;
     /**
-     * Default link template to use as a fallback.
+     * Default link template resolver to use as a fallback
+     * (returns a default template for any link).
      */
-    readonly defaultLinkTemplate: LinkTemplate;
+    readonly defaultLinkResolver: (linkTypeId: LinkTypeIri) => LinkTemplate;
     /**
      * Default layout algorithm function to use if it's not specified explicitly.
      */
@@ -100,10 +103,10 @@ export class SharedCanvasState {
     /** @hidden */
     constructor(options: SharedCanvasStateOptions) {
         const {
-            defaultElementTemplate, defaultLinkTemplate, defaultLayout, renameLinkProvider,
+            defaultElementResolver, defaultLinkResolver, defaultLayout, renameLinkProvider,
         } = options;
-        this.defaultElementTemplate = defaultElementTemplate;
-        this.defaultLinkTemplate = defaultLinkTemplate;
+        this.defaultElementResolver = defaultElementResolver;
+        this.defaultLinkResolver = defaultLinkResolver;
         this.defaultLayout = defaultLayout;
         this.renameLinkProvider = renameLinkProvider;
     }
@@ -193,22 +196,15 @@ export class RenameLinkToLinkStateProvider implements RenameLinkProvider {
 
     getLabel(link: Link): string | undefined {
         const {linkState} = link;
-        if (
-            linkState &&
-            Object.prototype.hasOwnProperty.call(linkState, TemplateProperties.CustomLabel)
-        ) {
-            const customLabel = linkState[TemplateProperties.CustomLabel];
-            if (typeof customLabel === 'string') {
-                return customLabel;
-            }
-        }
-        return undefined;
+        const customLabel = linkState?.[TemplateProperties.CustomLabel];
+        return typeof customLabel === 'string' ? customLabel : undefined;
     }
 
     setLabel(link: Link, label: string): void {
-        link.setLinkState({
-            ...link.linkState,
-            [TemplateProperties.CustomLabel]: label.length === 0 ? undefined : label,
-        });
+        link.setLinkState(setTemplateProperty(
+            link.linkState,
+            TemplateProperties.CustomLabel,
+            label.length === 0 ? undefined : label
+        ));
     }
 }

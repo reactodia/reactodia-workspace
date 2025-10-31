@@ -1,5 +1,6 @@
 import type { Events } from '../coreUtils/events';
 
+import type { AnnotationCommands } from '../widgets/annotation';
 import type { ConnectionsMenuCommands } from '../widgets/connectionsMenu';
 import type { InstancesSearchCommands } from '../widgets/instancesSearch';
 import type { UnifiedSearchCommands } from '../widgets/unifiedSearch';
@@ -48,3 +49,6 @@ export const UnifiedSearchTopic = CommandBusTopic.define<UnifiedSearchCommands>(
  * @category Constants
  */
 export const VisualAuthoringTopic = CommandBusTopic.define<VisualAuthoringCommands>();
+
+// Internal topic
+export const AnnotationTopic = CommandBusTopic.define<AnnotationCommands>();

@@ -131,6 +131,22 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         this.listener.listen(model.events, 'changeCellOrder', () => {
             this.requestRedrawAll(RedrawFlags.None);
         });
+        this.listener.listen(model.events, 'changeSelection', ({previous}) => {
+            const previousCell = previous.length === 1 ? previous[0] : undefined;
+            const nextSingle = model.selection.length === 1 ? model.selection[0] : undefined;
+
+            const previousElement = previousCell instanceof Element ? previousCell : undefined;
+            const nextElement = nextSingle instanceof Element ? nextSingle : undefined;
+
+            if (nextElement !== previousElement) {
+                if (previousElement) {
+                    this.requestRedraw(previousElement, RedrawFlags.RecomputeTemplate);
+                }
+                if (nextElement) {
+                    this.requestRedraw(nextElement, RedrawFlags.RecomputeTemplate);
+                }
+            }
+        });
         this.listener.listen(model.events, 'elementEvent', ({data}) => {
             const invalidatesTemplate = data.changeElementState;
             if (invalidatesTemplate) {
@@ -243,6 +259,8 @@ function applyRedrawRequests(
     if (batch.forAll === RedrawFlags.None && batch.requests.size === 0) {
         return previous;
     }
+    const selectedCell = model.selection.length === 1 ? model.selection[0] : undefined;
+    const selectedElement = selectedCell instanceof Element ? selectedCell : undefined;
     const computed = new Map<Element, ElementState>();
     for (const element of model.elements) {
         const elementId = element.id;
@@ -255,7 +273,8 @@ function applyRedrawRequests(
                     templateProps:
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                         (request & RedrawFlags.RecomputeTemplate) === RedrawFlags.RecomputeTemplate
-                            ? computeTemplateProps(state.element) : state.templateProps,
+                            ? computeTemplateProps(state.element, selectedElement)
+                            : state.templateProps,
                     blurred:
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                         (request & RedrawFlags.RecomputeBlurred) === RedrawFlags.RecomputeBlurred
@@ -267,7 +286,7 @@ function applyRedrawRequests(
         } else {
             computed.set(element, {
                 element,
-                templateProps: computeTemplateProps(element),
+                templateProps: computeTemplateProps(element, selectedElement),
                 blurred: computeIsBlurred(element, view),
             });
         }
@@ -276,12 +295,13 @@ function applyRedrawRequests(
     return computed;
 }
 
-function computeTemplateProps(element: Element): TemplateProps {
+function computeTemplateProps(element: Element, selectedElement: Element | undefined): TemplateProps {
     return {
         elementId: element.id,
         element,
         isExpanded: element.isExpanded,
         elementState: element.elementState,
+        onlySelected: element === selectedElement,
     };
 }
 

@@ -73,9 +73,12 @@ export function DraggableHandle(props: DraggableHandleProps) {
     } = props;
 
     const holdState = React.useRef<HoldState>(undefined);
+    const latestOnBegin = useLatest(onBeginDragHandle);
+    const latestOnDrag = useLatest(onDragHandle);
+    const latestOnEnd = useLatest(onEndDragHandle);
 
     const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (holdState.current || e.target !== e.currentTarget) {
+        if (holdState.current) {
             return;
         }
 
@@ -93,7 +96,7 @@ export function DraggableHandle(props: DraggableHandleProps) {
             onPointerMove: e => {
                 e.preventDefault();
                 const {origin} = state;
-                onDragHandle(
+                latestOnDrag.current(
                     e,
                     axis === 'y' ? 0 : e.pageX - origin.pageX,
                     axis === 'x' ? 0 : e.pageY - origin.pageY
@@ -106,7 +109,7 @@ export function DraggableHandle(props: DraggableHandleProps) {
                 target.removeEventListener('pointermove', state.onPointerMove);
                 target.removeEventListener('pointerup', state.onPointerUp);
                 target.removeEventListener('pointercancel', state.onPointerUp);
-                onEndDragHandle?.(e);
+                latestOnEnd.current?.(e);
             },
         };
         currentTarget.addEventListener('pointermove', state.onPointerMove);
@@ -114,7 +117,7 @@ export function DraggableHandle(props: DraggableHandleProps) {
         currentTarget.addEventListener('pointercancel', state.onPointerUp);
         currentTarget.setPointerCapture(pointerId);
 
-        onBeginDragHandle(e);
+        latestOnBegin.current(e);
     };
 
     return (
@@ -128,4 +131,10 @@ export function DraggableHandle(props: DraggableHandleProps) {
             {children}
         </div>
     );
+}
+
+function useLatest<T>(value: T): { readonly current: T } {
+    const ref = React.useRef<T>(value);
+    ref.current = value;
+    return ref;
 }

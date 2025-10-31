@@ -57,7 +57,8 @@
         "set_entity_group_items.title": { "$ref": "#/$defs/Value" },
         "set_link_state.title": { "$ref": "#/$defs/Value" },
         "set_relation_data.title": { "$ref": "#/$defs/Value" },
-        "set_relation_group_items.title": { "$ref": "#/$defs/Value" }
+        "set_relation_group_items.title": { "$ref": "#/$defs/Value" },
+        "transform_elements.title": { "$ref": "#/$defs/Value" }
       }
     },
     "connections_menu": {
@@ -186,6 +187,7 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
+        "delete_annotation.title": { "$ref": "#/$defs/Value" },
         "delete_relation.title": { "$ref": "#/$defs/Value" },
         "delete_relation.title_disabled": { "$ref": "#/$defs/Value" },
         "edit_relation.title": { "$ref": "#/$defs/Value" },
@@ -201,6 +203,21 @@
       "properties": {
         "toggle_collapse.title": { "$ref": "#/$defs/Value" },
         "toggle_expand.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "note_annotation": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "change_text.command": { "$ref": "#/$defs/Value" },
+        "style_align_center.title": { "$ref": "#/$defs/Value" },
+        "style_align_left.title": { "$ref": "#/$defs/Value" },
+        "style_align_right.title": { "$ref": "#/$defs/Value" },
+        "style_bold.title": { "$ref": "#/$defs/Value" },
+        "style_color_variant.title": { "$ref": "#/$defs/Value" },
+        "style_italic.title": { "$ref": "#/$defs/Value" },
+        "style_strikethrough.title": { "$ref": "#/$defs/Value" },
+        "style_underline.title": { "$ref": "#/$defs/Value" }
       }
     },
     "overlay_controller": {
@@ -274,6 +291,8 @@
       "properties": {
         "add_to_filter.title": { "$ref": "#/$defs/Value" },
         "anchor.title": { "$ref": "#/$defs/Value" },
+        "annotate.defaultContent": { "$ref": "#/$defs/Value" },
+        "annotate.title": { "$ref": "#/$defs/Value" },
         "connections.title": { "$ref": "#/$defs/Value" },
         "establish_relation.title": { "$ref": "#/$defs/Value" },
         "establish_relation.title_disabled": { "$ref": "#/$defs/Value" },
