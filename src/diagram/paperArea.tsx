@@ -1010,24 +1010,31 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private applyViewportState(targetState: ViewportState) {
-        const previous = this.state.transform;
+        let previous = this.state.transform;
         const scale = targetState.scale.x;
         const paperCenter = targetState.center;
 
-        this.setState({transform: {...previous, scale}}, () => {
-            const {originX, originY, paddingX, paddingY} = this.state.transform;
-            const scrollCenterX = (paperCenter.x + originX) * scale;
-            const scrollCenterY = (paperCenter.y + originY) * scale;
-            const {clientWidth, clientHeight} = this.area;
+        this.setState(
+            state => {
+                previous = state.transform;
+                return {
+                    transform: {...state.transform, scale},
+                };
+            }, () => {
+                const {originX, originY, paddingX, paddingY} = this.state.transform;
+                const scrollCenterX = (paperCenter.x + originX) * scale;
+                const scrollCenterY = (paperCenter.y + originY) * scale;
+                const {clientWidth, clientHeight} = this.area;
 
-            this.area.scrollLeft = scrollCenterX - clientWidth / 2 + paddingX;
-            this.area.scrollTop = scrollCenterY - clientHeight / 2 + paddingY;
+                this.area.scrollLeft = scrollCenterX - clientWidth / 2 + paddingX;
+                this.area.scrollTop = scrollCenterY - clientHeight / 2 + paddingY;
 
-            if (scale !== previous.scale) {
-                this.source.trigger('changeScale', {source: this, previous: previous.scale});
-                this.source.trigger('changeTransform', {previous, source: this});
+                if (scale !== previous.scale) {
+                    this.source.trigger('changeScale', {source: this, previous: previous.scale});
+                    this.source.trigger('changeTransform', {previous, source: this});
+                }
             }
-        });
+        );
     }
 }
 
