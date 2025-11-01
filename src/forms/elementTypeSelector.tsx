@@ -6,8 +6,9 @@ import { EventObserver } from '../coreUtils/events';
 import { Translation } from '../coreUtils/i18n';
 
 import { PlaceholderEntityType } from '../data/schema';
-import { ElementModel, ElementTypeIri } from '../data/model';
-import { DataProviderLookupItem } from '../data/dataProvider';
+import type { ElementModel, ElementTypeIri } from '../data/model';
+import type { DataProviderLookupItem } from '../data/dataProvider';
+import type { MetadataCreatedEntity } from '../data/metadataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -28,7 +29,7 @@ export interface ElementTypeSelectorProps {
 }
 
 export interface ElementValue {
-    value: ElementModel;
+    value: MetadataCreatedEntity;
     isNew: boolean;
     loading: boolean;
     error?: string;
@@ -188,13 +189,13 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
 
         const {onChange, workspace: {editor: {metadataProvider}}} = this.props;
         const elementTypeIri: ElementTypeIri = (e.target as HTMLSelectElement).value;
-        let elementModel: ElementModel | null;
+        let createdEntity: MetadataCreatedEntity | null;
         try {
-            elementModel = await mapAbortedToNull(
+            createdEntity = await mapAbortedToNull(
                 metadataProvider!.createEntity(elementTypeIri, {signal}),
                 signal
             );
-            if (elementModel === null) {
+            if (createdEntity === null) {
                 return;
             }
         } catch (err) {
@@ -205,7 +206,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
 
         this.setState({elementTypesState: 'none'});
         onChange({
-            value: elementModel,
+            value: createdEntity,
             isNew: true,
             loading: false,
         });
@@ -228,7 +229,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     private renderElementTypeSelector() {
         const {elementValue, workspace: {translation: t}} = this.props;
         const {elementTypes, elementTypesState} = this.state;
-        const value = elementValue.value.types.length ? elementValue.value.types[0] : '';
+        const value = elementValue.value.data.types.length ? elementValue.value.data.types[0] : '';
         if (elementTypesState !== 'none') {
             return (
                 <HtmlSpinner width={20} height={20}
@@ -283,7 +284,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                     <ListElementView key={element.id}
                         element={element}
                         disabled={isAlreadyOnDiagram || !hasAppropriateType}
-                        selected={element.id === elementValue.value.id}
+                        selected={element.id === elementValue.value.data.id}
                         onClick={(e, model) => void this.onSelectExistingItem(model)}
                     />
                 );
@@ -299,12 +300,12 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        onChange({value: data, isNew: false, loading: true});
+        onChange({value: {data}, isNew: false, loading: true});
         const result = await model.dataProvider.elements({elementIds: [data.id]});
         if (signal.aborted) { return; }
 
         const loadedModel = result.get(data.id)!;
-        onChange({value: loadedModel, isNew: false, loading: false});
+        onChange({value: {data: loadedModel}, isNew: false, loading: false});
     }
 
     render() {

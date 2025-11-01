@@ -1,3 +1,5 @@
+import type { ElementTemplateState, LinkTemplateState } from '../diagram/elements';
+
 import type * as Rdf from './rdf/rdfModel';
 import type {
     ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel,
@@ -20,14 +22,14 @@ export interface MetadataProvider {
     createEntity(
         type: ElementTypeIri,
         options: { readonly signal?: AbortSignal }
-    ): Promise<ElementModel>;
+    ): Promise<MetadataCreatedEntity>;
 
     createRelation(
         source: ElementModel,
         target: ElementModel,
         linkType: LinkTypeIri,
         options: { readonly signal?: AbortSignal }
-    ): Promise<LinkModel>;
+    ): Promise<MetadataCreatedRelation>;
 
     canConnect(
         source: ElementModel,
@@ -62,6 +64,16 @@ export interface MetadataProvider {
         types: ReadonlySet<ElementTypeIri>,
         options: { readonly signal?: AbortSignal }
     ): Promise<ReadonlySet<ElementTypeIri>>;
+}
+
+export interface MetadataCreatedEntity {
+    readonly data: ElementModel;
+    readonly elementState?: ElementTemplateState;
+}
+
+export interface MetadataCreatedRelation {
+    readonly data: LinkModel;
+    readonly linkState?: LinkTemplateState;
 }
 
 export interface MetadataCanConnect {
@@ -142,14 +154,16 @@ export class BaseMetadataProvider implements MetadataProvider {
     async createEntity(
         type: ElementTypeIri,
         options: { readonly signal?: AbortSignal; }
-    ): Promise<ElementModel> {
+    ): Promise<MetadataCreatedEntity> {
         if (this.methods.createEntity) {
             return this.methods.createEntity(type, options);
         }
         return {
-            id: '',
-            types: [],
-            properties: {},
+            data: {
+                id: '',
+                types: [],
+                properties: {},
+            },
         };
     }
 
@@ -158,15 +172,17 @@ export class BaseMetadataProvider implements MetadataProvider {
         target: ElementModel,
         linkType: LinkTypeIri,
         options: { readonly signal?: AbortSignal; }
-    ): Promise<LinkModel> {
+    ): Promise<MetadataCreatedRelation> {
         if (this.methods.createRelation) {
             return this.methods.createRelation(source, target, linkType, options);
         }
         return {
-            linkTypeId: linkType,
-            sourceId: source.id,
-            targetId: target.id,
-            properties: {},
+            data: {
+                linkTypeId: linkType,
+                sourceId: source.id,
+                targetId: target.id,
+                properties: {},
+            },
         };
     }
 
