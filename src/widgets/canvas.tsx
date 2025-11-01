@@ -2,15 +2,17 @@ import * as React from 'react';
 
 import { ColorSchemeApi } from '../coreUtils/colorScheme';
 
+import type { LinkTypeIri } from '../data/model';
+
 import type { ZoomOptions } from '../diagram/canvasApi';
 import type {
-    LinkRouter, LinkTemplateResolver, ElementTemplate, ElementTemplateComponent,
+    ElementTemplate, ElementTemplateComponent, LinkTemplate, LinkRouter,
 } from '../diagram/customization';
-import { Element } from '../diagram/elements';
+import { Element, Link } from '../diagram/elements';
 import { PaperArea } from '../diagram/paperArea';
 import { MutableRenderingState } from '../diagram/renderingState';
 
-import { EntityElement } from '../editor/dataElements';
+import { EntityElement, RelationGroup, RelationLink } from '../editor/dataElements';
 import { OverlaySupport } from '../editor/overlayController';
 
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -24,18 +26,23 @@ import { AnnotationSupport } from './annotation';
  */
 export interface CanvasProps {
     /**
-     * Custom provider to render diagram elements.
+     * Custom provider to render diagram elements (graph nodes).
      *
-     * **Default** is to render elements with {@link StandardTemplate}.
+     * **Default** is to render:
+     *  - {@link AnnotationElement} with {@link NoteTemplate};
+     *  - other elements with {@link StandardTemplate} which
+     *    uses {@link StandardEntity} and {@link StandardEntityGroup}.
      */
     elementTemplateResolver?: TypedElementResolver;
     /**
-     * Custom provider to render diagram links of a specific type.
+     * Custom provider to render diagram links (graph edges).
      *
-     * **Default** is to render links with {@link DefaultLinkTemplate} which uses
-     * {@link DefaultLinkPathTemplate} for the link itself.
+     * **Default** is to render:
+     *  - {@link AnnotationLink} with {@link NoteLinkTemplate};
+     *  - other links with {@link StandardLinkTemplate} which
+     *    uses {@link StandardRelation}.
      */
-    linkTemplateResolver?: LinkTemplateResolver;
+    linkTemplateResolver?: TypedLinkResolver;
     /**
      * Custom provider to route (layout) diagram links on the diagram.
      *
@@ -76,11 +83,20 @@ export interface CanvasProps {
 }
 
 /**
- * Provides a custom component to render element on a diagram
- * based on the element itself and its type IRIs if the element is an entity.
+ * Provides a custom component to render an element on the diagram
+ * based on the element itself and its type IRIs if the element is
+ * an {@link EntityElement entity}.
  */
 export type TypedElementResolver = (types: readonly string[], element: Element) =>
     ElementTemplate | ElementTemplateComponent | undefined;
+
+/**
+ * Provides a custom component to render a link on the diagram
+ * based on the link itself and its type IRI if the link is
+ * a {@link RelationLink relation}.
+ */
+export type TypedLinkResolver = (linkType: LinkTypeIri | undefined, link: Link) =>
+    LinkTemplate | undefined;
 
 const CLASS_NAME = 'reactodia-canvas';
 
@@ -105,7 +121,13 @@ export function Canvas(props: CanvasProps) {
                 return elementTemplateResolver(data?.types ?? [], element);
             }
         ) : undefined,
-        linkTemplateResolver,
+        linkTemplateResolver: linkTemplateResolver ? (
+            link => {
+                const linkType = (link instanceof RelationLink || link instanceof RelationGroup)
+                    ? link.typeId : undefined;
+                return linkTemplateResolver(linkType, link);
+            }
+        ) : undefined,
         linkRouter,
     }));
 

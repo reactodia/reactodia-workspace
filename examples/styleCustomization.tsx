@@ -59,8 +59,8 @@ function StyleCustomizationExample() {
                         }
                         return undefined;
                     },
-                    linkTemplateResolver: type => {
-                        if (!type.startsWith('urn:reactodia:')) {
+                    linkTemplateResolver: (linkType, link) => {
+                        if (linkType) {
                             return DoubleArrowLinkTemplate;
                         }
                     },

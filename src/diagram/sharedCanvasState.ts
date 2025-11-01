@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
 
-import type { LinkTypeIri } from '../data/model';
 import { TemplateProperties, setTemplateProperty } from '../data/schema';
 
 import type { CanvasApi, CanvasDropEvent } from './canvasApi';
@@ -58,7 +57,7 @@ export type CellHighlighter = (item: Element | Link) => boolean;
 /** @hidden */
 export interface SharedCanvasStateOptions {
     defaultElementResolver: (element: Element) => ElementTemplate;
-    defaultLinkResolver: (linkType: LinkTypeIri) => LinkTemplate;
+    defaultLinkResolver: (link: Link) => LinkTemplate;
     defaultLayout: LayoutFunction;
     renameLinkProvider?: RenameLinkProvider;
 }
@@ -90,7 +89,7 @@ export class SharedCanvasState {
      * Default link template resolver to use as a fallback
      * (returns a default template for any link).
      */
-    readonly defaultLinkResolver: (linkTypeId: LinkTypeIri) => LinkTemplate;
+    readonly defaultLinkResolver: (link: Link) => LinkTemplate;
     /**
      * Default layout algorithm function to use if it's not specified explicitly.
      */

@@ -227,7 +227,9 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                                 className={`${CLASS_NAME}__canvas`}
                                 style={{overflow: 'visible'}}
                                 paperTransform={paperTransform}>
-                                <LinkMarkers renderingState={renderingState} />
+                                <LinkMarkers model={model}
+                                    renderingState={renderingState}
+                                />
                                 <LinkLayer model={model}
                                     renderingState={renderingState}
                                 />

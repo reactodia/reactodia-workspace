@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Support user-resizable element templates with `ElementSize` template state property:
   * Resizable elements display "box with handles" in the `Halo` to change the size;
   * Changed element sizes are captured and restored by `RestoreGeometry` command.
+- Allow to customize link template separately for each link instead of only based on its link type IRI in `linkTemplateResolver` for `Canvas`.
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 
 #### ⏱ Performance

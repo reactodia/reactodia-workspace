@@ -189,7 +189,9 @@ export {
     ViewportDock, ViewportDockProps, DockDirection,
 } from './widgets/utility/viewportDock';
 export { ClassTree, ClassTreeProps } from './widgets/classTree';
-export { Canvas, CanvasProps, TypedElementResolver } from './widgets/canvas';
+export {
+    Canvas, CanvasProps, TypedElementResolver, TypedLinkResolver,
+} from './widgets/canvas';
 export {
     ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
     PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,

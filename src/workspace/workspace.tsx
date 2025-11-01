@@ -194,8 +194,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
                 }
                 return StandardTemplate;
             },
-            defaultLinkResolver: linkTypeId => {
-                if (linkTypeId === AnnotationLink.typeId) {
+            defaultLinkResolver: link => {
+                if (link instanceof AnnotationLink) {
                     return NoteLinkTemplate;
                 }
                 return DefaultLinkTemplate;

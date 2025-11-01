@@ -1,4 +1,5 @@
-import type { TypeStyleResolver, LinkTemplate, LinkTemplateResolver } from './diagram/customization';
+import type { TypeStyleResolver, LinkTemplate } from './diagram/customization';
+import type { TypedLinkResolver } from './widgets/canvas';
 
 const classIcon = require('@images/semantic/class.svg') as string;
 const objectPropertyIcon = require('@images/semantic/objectProperty.svg') as string;
@@ -97,10 +98,11 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
  *
  * @deprecated These link templates will be removed in later versions
  */
-export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace')): LinkTemplateResolver {
+export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace')): TypedLinkResolver {
     const LINK_SUB_CLASS_OF: LinkTemplate = {
         ...Reactodia.DefaultLinkTemplate,
         markerTarget: {
+            ...Reactodia.DefaultLinkTemplate.markerTarget,
             fill: '#f8a485',
             stroke: '#cf8e76',
         },
@@ -116,6 +118,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     const LINK_DOMAIN: LinkTemplate = {
         ...Reactodia.DefaultLinkTemplate,
         markerTarget: {
+            ...Reactodia.DefaultLinkTemplate.markerTarget,
             fill: '#34c7f3',
             stroke: '#38b5db',
         },
@@ -131,6 +134,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     const LINK_RANGE: LinkTemplate = {
         ...Reactodia.DefaultLinkTemplate,
         markerTarget: {
+            ...Reactodia.DefaultLinkTemplate.markerTarget,
             fill: '#34c7f3',
             stroke: '#38b5db',
         },
@@ -146,6 +150,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     const LINK_TYPE_OF: LinkTemplate = {
         ...Reactodia.DefaultLinkTemplate,
         markerTarget: {
+            ...Reactodia.DefaultLinkTemplate.markerTarget,
             fill: '#8cd965',
             stroke: '#5b9a3b',
         },
@@ -158,6 +163,14 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
         ),
     };
 
+    const LINK_PLACEHOLDER: LinkTemplate = {
+        ...Reactodia.DefaultLinkTemplate,
+        markerTarget: {
+            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            fill: 'none',
+        },
+    };
+
     return type => {
         if (type === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
             return LINK_SUB_CLASS_OF;
@@ -168,7 +181,7 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
         } else if (type === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
             return LINK_TYPE_OF;
         } else if (type === Reactodia.PlaceholderRelationType) {
-            return {...Reactodia.DefaultLinkTemplate, markerTarget: {fill: 'none'}};
+            return LINK_PLACEHOLDER;
         } else {
             return undefined;
         }
