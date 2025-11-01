@@ -49,7 +49,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         this.link = originalLink;
         this.state = {
             elementValue: {
-                value: target.data,
+                value: {data: target.data},
                 isNew: initialTargetIsNew,
                 loading: false,
                 validated: true,
@@ -85,7 +85,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         this.validationCancellation = new AbortController();
         const signal = this.validationCancellation.signal;
 
-        const validateElement = validateElementType(elementValue.value, this.context);
+        const validateElement = validateElementType(elementValue.value.data, this.context);
         const validateLink = validateLinkType(
             dataFromExtendedLink(linkValue.link),
             originalLink.data,
@@ -126,7 +126,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                                     link: {
                                         base: originalLink.data,
                                         source: source.data,
-                                        target: newState.value,
+                                        target: newState.value.data,
                                         direction: 'out',
                                     },
                                     validated: false,
@@ -198,7 +198,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                 editor.setTemporaryState(temporaryState);
                 // Target IRI change may also update link data
                 const batch = model.history.startBatch();
-                batch.history.execute(changeEntityData(model, target.iri, elementValue.value));
+                batch.history.execute(changeEntityData(model, target.iri, elementValue.value.data));
                 batch.discard();
                 
                 temporaryState = TemporaryState.addEntity(temporaryState, target.data);
@@ -222,7 +222,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         if (!elementValue.isNew) {
             editor.setTemporaryState(TemporaryState.removeEntity(
                 editor.temporaryState,
-                elementValue.value
+                elementValue.value.data
             ));
         }
         editor.removeTemporaryCells([target, link]);
@@ -235,16 +235,12 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         if (elementValue.isNew) {
             model.addElement(target);
-            // TODO: customize initial state via MetadataProvider
-            target.setElementState({
-                ...target.elementState,
-                [TemplateProperties.Expanded]: true,
-            });
+            target.setElementState(elementValue.value.elementState);
             editor.setAuthoringState(
                 AuthoringState.addEntity(editor.authoringState, target.data)
             );
         } else {
-            void model.requestLinks({addedElements: [elementValue.value.id]});
+            void model.requestLinks({addedElements: [elementValue.value.data.id]});
         }
 
         const linkBase = relationFromExtendedLink(linkValue.link, source, target);
