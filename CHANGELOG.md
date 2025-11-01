@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Resizable elements display "box with handles" in the `Halo` to change the size;
   * Changed element sizes are captured and restored by `RestoreGeometry` command.
 - Allow to customize link template separately for each link instead of only based on its link type IRI in `linkTemplateResolver` for `Canvas`.
-- Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
+- Support keyboard hotkeys for `LinkAction` components to act on a currently selected link.
 
 #### ⏱ Performance
 - **[💥Breaking]** Canvas widgets are not automatically updated when parent canvas is rendered to reduce unnecessary re-renders, and now require explicit subscriptions:
@@ -51,12 +51,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Change CSS class for default link template from `reactodia-default-link` to `reactodia-standard-link`.
 - Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
 - Add `setTemplateProperty()` utility function to easily set or unset template state property.
+- Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 
 #### 🐛 Fixed
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 - Fix element template state not being restored when ungrouping entities.
 - Fix missing element decorations after re-importing the same diagram.
 - Fix `DraggableHandle` to avoid using stale `onDragHandle` and `onEndDragHandle` prop values.
+- Fix being able to execute disabled `SelectionAction` via keyboard hotkey.
 
 #### 🔧 Maintenance
 - Use small subset of [carbon design icons](https://github.com/carbon-design-system/carbon-icons) for various buttons.
