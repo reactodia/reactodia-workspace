@@ -230,12 +230,15 @@ class EnitityDragConnection implements DragLinkConnection {
                 elementTypes.add(typeIri);
             }
         }
-        const selectedType = elementTypes.size === 1 ? Array.from(elementTypes)[0] : PlaceholderEntityType;
-        const elementModel = await editor.metadataProvider.createEntity(
+        const selectedType = elementTypes.size === 1
+            ? Array.from(elementTypes)[0] : PlaceholderEntityType;
+        const createdEntity = await editor.metadataProvider.createEntity(
             selectedType,
             {signal}
         );
-        return editor.createEntity(elementModel, {temporary: true});
+        const element = editor.createEntity(createdEntity.data, {temporary: true});
+        element.setElementState(createdEntity.elementState);
+        return element;
     }
 
     private async createNewLink(
@@ -285,7 +288,7 @@ class EnitityDragConnection implements DragLinkConnection {
         if (direction === 'in') {
             [effectiveSource, effectiveTarget] = [effectiveTarget, effectiveSource];
         }
-        const data = await editor.metadataProvider.createRelation(
+        const createdRelation = await editor.metadataProvider.createRelation(
             effectiveSource.data,
             effectiveTarget.data,
             linkTypeIri,
@@ -294,7 +297,8 @@ class EnitityDragConnection implements DragLinkConnection {
         const link = new RelationLink({
             sourceId: effectiveSource.id,
             targetId: effectiveTarget.id,
-            data,
+            data: createdRelation.data,
+            linkState: createdRelation.linkState,
         });
         const existingLink = model.findLink(link.typeId, link.sourceId, link.targetId);
         return existingLink instanceof RelationLink

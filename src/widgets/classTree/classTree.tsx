@@ -418,17 +418,18 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.createElementCancellation = new AbortController();
         const signal = this.createElementCancellation.signal;
 
-        const elementModel = await mapAbortedToNull(
+        const createdEntity = await mapAbortedToNull(
             editor.metadataProvider!.createEntity(elementType, {signal}),
             signal
         );
-        if (elementModel === null) {
+        if (createdEntity === null) {
             return;
         }
 
-        const element = editor.createEntity(elementModel);
-        let createAt: [CanvasApi, Vector] | undefined;
+        const element = editor.createEntity(createdEntity.data);
+        element.setElementState(createdEntity.elementState);
 
+        let createAt: [CanvasApi, Vector] | undefined;
         if (dropEvent) {
             createAt = [dropEvent.source, dropEvent.position];
         } else {
