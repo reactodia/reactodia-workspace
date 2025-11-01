@@ -3,11 +3,11 @@ import * as React from 'react';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
-import { PropertyTypeIri } from '../data/model';
+import type { PropertyTypeIri } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
-import { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
-import { LinkLabel, LinkLabelProps } from '../diagram/linkLayer';
+import type { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
+import { LinkLabel, type LinkLabelProps } from '../diagram/linkLayer';
 import { LinkPath, LinkVertices } from '../diagram/linkLayer';
 
 import { RelationGroup, RelationLink } from '../editor/dataElements';
@@ -16,34 +16,36 @@ import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
+import { LinkMarkerArrowhead } from './basicLink';
+
 /**
- * Default link template.
+ * Default link template to display a {@link RelationLink} or
+ * {@link RelationGroup} on the canvas.
  *
- * Uses {@link DefaultLink} to display the link itself.
+ * Uses {@link StandardRelation} to display the link itself.
  *
  * @category Constants
- * @see {@link DefaultLink}
+ * @see {@link StandardRelation}
  */
-export const DefaultLinkTemplate: LinkTemplate = {
-    markerTarget: {
-        d: 'M0,0 L0,8 L9,4 z',
-        width: 9,
-        height: 8,
-    },
-    renderLink: props => <DefaultLink {...props} />,
+export const StandardLinkTemplate: LinkTemplate = {
+    markerTarget: LinkMarkerArrowhead,
+    renderLink: props => <StandardRelation {...props} />,
 };
 
-const CLASS_NAME = 'reactodia-default-link';
-
-const PROPERTY_CLASS = `${CLASS_NAME}__property`;
-const LABEL_CLASS = `${CLASS_NAME}__label`;
+/**
+ * An alias for {@link StandardLinkTemplate}.
+ *
+ * @category Constants
+ * @deprecated Use {@link StandardLinkTemplate} directly instead.
+ */
+export const DefaultLinkTemplate = StandardLinkTemplate;
 
 /**
- * Props for {@link DefaultLink} component.
+ * Props for {@link StandardRelation} component.
  *
- * @see {@link DefaultLink}
+ * @see {@link StandardRelation}
  */
-export interface DefaultLinkProps extends LinkTemplateProps {
+export interface StandardRelationProps extends LinkTemplateProps {
     /**
      * Additional CSS class for the component.
      */
@@ -57,12 +59,12 @@ export interface DefaultLinkProps extends LinkTemplateProps {
      *
      * @see {@link LinkLabelProps.primary}
      */
-    primaryLabelProps?: CustomizedLinkLabelProps;
+    primaryLabelProps?: StandardRelationLabelStyle;
     /**
      * Additional props for each label displaying a property from
      * a relation link data.
      */
-    propertyLabelProps?: CustomizedLinkLabelProps;
+    propertyLabelProps?: StandardRelationLabelStyle;
     /**
      * Starting row shift when displaying relation link data properties.
      *
@@ -77,17 +79,25 @@ export interface DefaultLinkProps extends LinkTemplateProps {
      * {@link propertyLabelStartLine} to avoid overlapping prepended and data labels.
      */
     prependLabels?: React.ReactNode;
+    /**
+     * Additional children for the component.
+     */
+    children?: React.ReactNode;
 }
 
 /**
- * Additional style props for the link labels in {@link DefaultLink}.
+ * Additional style props for the link labels in {@link StandardRelation}.
  *
- * @see {@link DefaultLinkProps}
+ * @see {@link StandardRelationProps}
  */
-type CustomizedLinkLabelProps = Omit<
+type StandardRelationLabelStyle = Omit<
     LinkLabelProps,
-    'primary' | 'link' | 'position' | 'line' | 'content'
+    'primary' | 'link' | 'position' | 'line' | 'children'
 >;
+
+const CLASS_NAME = 'reactodia-standard-link';
+const PROPERTY_CLASS = `${CLASS_NAME}__property`;
+const LABEL_CLASS = `${CLASS_NAME}__label`;
 
 /**
  * Default link template component.
@@ -103,11 +113,12 @@ type CustomizedLinkLabelProps = Omit<
  *
  * @category Components
  */
-export function DefaultLink(props: DefaultLinkProps) {
+export function StandardRelation(props: StandardRelationProps) {
     const {
         link, className, path, pathProps, markerSource, markerTarget, getPathPosition, route,
         primaryLabelProps,
         prependLabels = null,
+        children,
     } = props;
     const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
 
@@ -194,11 +205,29 @@ export function DefaultLink(props: DefaultLinkProps) {
             {link.vertices.length === 0 ? null : (
                 <LinkVertices linkId={link.id} vertices={link.vertices} fill={stroke} />
             )}
+            {children}
         </g>
     );
 }
 
-function LinkProperties(props: DefaultLinkProps) {
+/**
+ * An alias for {@link StandardRelationProps}.
+ *
+ * @deprecated Use {@link StandardRelationProps} directly instead.
+ */
+export interface DefaultLinkProps extends StandardRelationProps {}
+
+/**
+ * An alias for {@link StandardLink}.
+ *
+ * @category Components
+ * @deprecated Use {@link StandardLink} directly instead.
+ */
+export function DefaultLink(props: StandardRelationProps) {
+    return <StandardRelation {...props} />;
+}
+
+function LinkProperties(props: StandardRelationProps) {
     const {
         link, getPathPosition, route, propertyLabelProps,
         propertyLabelStartLine = 1,

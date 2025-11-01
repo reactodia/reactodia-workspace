@@ -106,12 +106,16 @@
 }
 
 .reactodia-note-link {
-  &__path {
-    --reactodia-link-stroke-color: #{theme.$color-gray-500};
+  /* Use :not([attr]) selector to avoid overriding the attribute due to SVG style priority. */
+  &__path:not([stroke]) {
+    stroke: theme.$color-gray-500;
+  }
+  &__path:not([stroke-width]) {
     stroke-width: 2;
   }
 
   &__label {
-    display: none;
+    color: theme.$color-emphasis-600;
+    font-weight: bold;
   }
 }

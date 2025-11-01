@@ -12,11 +12,12 @@ import {
 import { useCanvas } from '../diagram/canvasApi';
 import { setElementState } from '../diagram/commands';
 import type {
-    ElementTemplate, LinkTemplate, LinkTemplateProps, TemplateProps,
+    ElementTemplate, LinkTemplate, TemplateProps,
 } from '../diagram/customization';
 import { ElementDecoration } from '../diagram/elementLayer';
 import { Rect, Size, boundsOf } from '../diagram/geometry';
 import { Command } from '../diagram/history';
+import { LinkLabel, type LinkLabelProps } from '../diagram/linkLayer';
 
 import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
 import { EntityElement } from '../editor/dataElements';
@@ -26,7 +27,7 @@ import { useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { DefaultLink } from './defaultLinkTemplate';
+import { BasicLink, type BasicLinkProps } from './basicLink';
 
 /**
  * Element template to display an {@link AnnotationElement} on a canvas.
@@ -375,15 +376,64 @@ export const NoteLinkTemplate: LinkTemplate = {
 
 const LINK_CLASS = 'reactodia-note-link';
 
-export function NoteLink(props: LinkTemplateProps) {
+/**
+ * Props for {@link NoteLink} component.
+ *
+ * @see {@link NoteLink}
+ */
+export interface NoteLinkProps extends BasicLinkProps {
+    /**
+     * Props for the primary link label.
+     *
+     * By default the label is not shown unless
+     * {@link LinkLabelProps.children} is specified or
+     * the link is renamed with {@link RenameLinkProvider}.
+     *
+     * @see {@link LinkLabelProps.primary}
+     */
+    primaryLabelProps?: NoteLinkLabelStyle;
+}
+
+/**
+ * Additional style props for the link labels in {@link StandardRelation}.
+ *
+ * @see {@link StandardRelationProps}
+ */
+type NoteLinkLabelStyle =
+    Omit<LinkLabelProps, 'primary' | 'link' | 'position'> &
+    Partial<Pick<LinkLabelProps, 'position'>>;
+
+/**
+ * Displays a link for an {@link AnnotationLink} on the canvas.
+ *
+ * {@link RenameLinkProvider} can be used to display a custom label which will
+ * override a default one from {@link NoteLinkProps.primaryLabelProps}.
+ *
+ * @category Components
+ * @see {@link NoteTemplate}
+ */
+export function NoteLink(props: NoteLinkProps) {
+    const {link, getPathPosition, route, primaryLabelProps} = props;
+    const {canvas} = useCanvas();
+    const {renameLinkProvider} = canvas.renderingState.shared;
+    const label = renameLinkProvider?.getLabel(link);
+    const labelContent = label ?? primaryLabelProps?.children
+        ?? (renameLinkProvider?.canRename(link) ? '' : undefined);
     return (
-        <DefaultLink {...props}
+        <BasicLink {...props}
             pathProps={{
                 className: `${LINK_CLASS}__path`,
-            }}
-            primaryLabelProps={{
-                className: `${LINK_CLASS}__label`,
-            }}
-        />
+            }}>
+            {labelContent === undefined ? null : (
+                <LinkLabel {...primaryLabelProps}
+                    primary
+                    textAnchor={route?.labelTextAnchor ?? primaryLabelProps?.textAnchor}
+                    className={cx(`${LINK_CLASS}__label`, primaryLabelProps?.className)}
+                    link={link}
+                    position={primaryLabelProps?.position ?? getPathPosition(0.5)}>
+                    <span>{labelContent}</span>
+                </LinkLabel>
+            )}
+        </BasicLink>
     );
 }

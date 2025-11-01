@@ -475,7 +475,11 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
      * @see {@link importLayout}
      */
     exportLayout(): SerializedDiagram {
-        const knownLinkTypes = new Set(this.graph.getLinks().map(link => link.typeId));
+        const knownLinkTypes = new Set(
+            this.graph.getLinks()
+                .filter(link => link instanceof RelationLink || link instanceof RelationGroup)
+                .map(link => link.typeId)
+        );
         const linkTypeVisibility = new Map<LinkTypeIri, LinkTypeVisibility>();
         for (const linkTypeIri of knownLinkTypes) {
             linkTypeVisibility.set(linkTypeIri, this.getLinkVisibility(linkTypeIri));
@@ -543,10 +547,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             this.setLinkVisibility(linkTypeIri, visibility);
         }
 
-        const usedLinkTypes = new Set<LinkTypeIri>();
         for (const link of links) {
-            const linkType = this.createLinkType(link.typeId);
-            usedLinkTypes.add(linkType.id);
+            if (link instanceof RelationLink || link instanceof RelationGroup) {
+                this.createLinkType(link.typeId);
+            }
         }
 
         for (const element of elements) {
@@ -562,7 +566,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     private hideUnusedLinkTypes(knownLinkTypes: ReadonlyArray<LinkType>): void {
         const usedTypes = new Set<LinkTypeIri>();
         for (const link of this.graph.getLinks()) {
-            usedTypes.add(link.typeId);
+            if (link instanceof RelationLink || link instanceof RelationGroup) {
+                usedTypes.add(link.typeId);
+            }
         }
 
         for (const linkType of knownLinkTypes) {
@@ -641,22 +647,12 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         return element;
     }
 
-    override addLink(link: Link): void {
-        // TODO: postpone creating link type until first render
-        // the same way as with element types
-        this.createLinkType(link.typeId);
-        super.addLink(link);
-    }
-
     private onLinkInfoLoaded(links: LinkModel[]) {
         let allowToCreate: boolean;
         const cancel = () => { allowToCreate = false; };
 
         const batch = this.history.startBatch();
         for (const linkModel of links) {
-            // TODO: postpone creating link type until first render
-            // the same way as with element types
-            this.createLinkType(linkModel.linkTypeId);
             allowToCreate = true;
             this.extendedSource.trigger('createLoadedLink', {source: this, model: linkModel, cancel});
             if (allowToCreate) {

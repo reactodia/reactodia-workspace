@@ -158,15 +158,17 @@ export {
     SerializedLink, SerializableLinkCell, LinkFromJsonOptions,
 } from './editor/serializedDiagram';
 
+export { BasicLink, type BasicLinkProps, LinkMarkerArrowhead } from './templates/basicLink';
 export { ClassicTemplate, ClassicEntity, ClassicEntityProps } from './templates/classicTemplate';
-export {
-    DefaultLinkTemplate, DefaultLink, DefaultLinkProps,
-} from './templates/defaultLinkTemplate';
 export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
 export {
     NoteTemplate, NoteAnnotation, NoteEntity, NoteLinkTemplate, NoteLink,
 } from './templates/noteAnnotation';
 export { RoundTemplate, RoundEntity, RoundEntityProps } from './templates/roundTemplate';
+export {
+    StandardLinkTemplate, StandardRelation, type StandardRelationProps,
+    DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
+} from './templates/standardRelation';
 export {
     StandardTemplate, StandardEntity, StandardEntityProps,
     StandardEntityGroup, StandardEntityGroupProps,
@@ -261,7 +263,8 @@ export {
 } from './workspace/classicWorkspace';
 export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export {
-    Workspace, WorkspaceProps, LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
+    Workspace, WorkspaceProps, DefaultRenameLinkProvider,
+    LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
 } from './workspace/workspace';
 export {
     WorkspaceContext, WorkspaceEventKey, WorkspacePerformLayoutParams,

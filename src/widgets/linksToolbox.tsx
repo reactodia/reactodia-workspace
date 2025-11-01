@@ -9,7 +9,7 @@ import type { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
 import { changeLinkTypeVisibility } from '../diagram/commands';
 import { Element, LinkTypeVisibility } from '../diagram/elements';
 
-import { LinkType, iterateEntitiesOf } from '../editor/dataElements';
+import { LinkType, RelationGroup, RelationLink, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
 import { InstancesSearchTopic } from '../workspace/commandBusTopic';
@@ -356,11 +356,9 @@ function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerPro
 
     const allLinkTypeIris = new Set<LinkTypeIri>();
     for (const link of model.links) {
-        if (link.typeId.startsWith('urn:reactodia:')) {
-            // Skip built-in link types
-            continue;
+        if (link instanceof RelationLink || link instanceof RelationGroup) {
+            allLinkTypeIris.add(link.typeId);
         }
-        allLinkTypeIris.add(link.typeId);
     }
 
     const termFilter = makeCaseInsensitiveFilter(term);

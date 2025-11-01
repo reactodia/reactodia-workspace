@@ -68,9 +68,9 @@ export const SemanticTypeStyles: TypeStyleResolver = types => {
  */
 export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): LinkTemplate {
     return {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         renderLink: props => (
-            <Reactodia.DefaultLink {...props}
+            <Reactodia.StandardRelation {...props}
                 prependLabels={
                     <Reactodia.LinkLabel link={props.link}
                         position={props.getPathPosition(0.5)}
@@ -100,14 +100,14 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
  */
 export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace')): TypedLinkResolver {
     const LINK_SUB_CLASS_OF: LinkTemplate = {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         markerTarget: {
-            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            ...Reactodia.StandardLinkTemplate.markerTarget,
             fill: '#f8a485',
             stroke: '#cf8e76',
         },
         renderLink: props => (
-            <Reactodia.DefaultLink {...props}
+            <Reactodia.StandardRelation {...props}
                 pathProps={{
                     stroke: '#f8a485',
                 }}
@@ -116,14 +116,14 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     };
     
     const LINK_DOMAIN: LinkTemplate = {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         markerTarget: {
-            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            ...Reactodia.StandardLinkTemplate.markerTarget,
             fill: '#34c7f3',
             stroke: '#38b5db',
         },
         renderLink: props => (
-            <Reactodia.DefaultLink {...props}
+            <Reactodia.StandardRelation {...props}
                 pathProps={{
                     stroke: '#34c7f3',
                 }}
@@ -132,14 +132,14 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     };
     
     const LINK_RANGE: LinkTemplate = {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         markerTarget: {
-            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            ...Reactodia.StandardLinkTemplate.markerTarget,
             fill: '#34c7f3',
             stroke: '#38b5db',
         },
         renderLink: props => (
-            <Reactodia.DefaultLink {...props}
+            <Reactodia.StandardRelation {...props}
                 pathProps={{
                     stroke: '#34c7f3',
                 }}
@@ -148,14 +148,14 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     };
     
     const LINK_TYPE_OF: LinkTemplate = {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         markerTarget: {
-            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            ...Reactodia.StandardLinkTemplate.markerTarget,
             fill: '#8cd965',
             stroke: '#5b9a3b',
         },
         renderLink: props => (
-            <Reactodia.DefaultLink {...props}
+            <Reactodia.StandardRelation {...props}
                 pathProps={{
                     stroke: '#8cd965',
                 }}
@@ -164,9 +164,9 @@ export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace'
     };
 
     const LINK_PLACEHOLDER: LinkTemplate = {
-        ...Reactodia.DefaultLinkTemplate,
+        ...Reactodia.StandardLinkTemplate,
         markerTarget: {
-            ...Reactodia.DefaultLinkTemplate.markerTarget,
+            ...Reactodia.StandardLinkTemplate.markerTarget,
             fill: 'none',
         },
     };

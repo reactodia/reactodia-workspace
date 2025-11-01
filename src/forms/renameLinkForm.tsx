@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
 import { Link } from '../diagram/elements';
-
+import { RelationLink, RelationGroup } from '../editor/dataElements';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 const FORM_CLASS = 'reactodia-form';
@@ -16,17 +16,9 @@ export interface RenameLinkFormProps {
 export function RenameLinkForm(props: RenameLinkFormProps) {
     const {link, onFinish} = props;
 
-    const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
+    const {view: {renameLinkProvider}, translation: t} = useWorkspace();
 
-    const linkType = model.getLinkType(link.typeId);
-    const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
-    const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
-
-    const defaultLabel = React.useMemo(
-        () => t.formatLabel(linkTypeLabel, link.typeId, model.language),
-        [link, linkTypeLabel, model.language]
-    );
-
+    const defaultLabel = useDefaultLinkLabel(link);
     const [customLabel, setCustomLabel] = React.useState(
         renameLinkProvider?.getLabel(link) ?? defaultLabel
     );
@@ -64,5 +56,23 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
                 </button>
             </div>
         </div>
+    );
+}
+
+function useDefaultLinkLabel(link: Link): string {
+    const {model, translation: t} = useWorkspace();
+    const linkType = link instanceof RelationLink || link instanceof RelationGroup
+        ? model.getLinkType(link.typeId) : undefined;
+    const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');
+    const linkTypeLabel = useSyncStore(linkTypeChangeStore, () => linkType?.data?.label);
+    return React.useMemo(
+        () => {
+            if (link instanceof RelationLink || link instanceof RelationGroup) {
+                return t.formatLabel(linkTypeLabel, link.typeId, model.language);
+            } else {
+                return '';
+            }
+        },
+        [link, linkTypeLabel, model.language]
     );
 }
