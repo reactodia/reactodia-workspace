@@ -73,7 +73,10 @@ function GraphAuthoringExample() {
 
 class RenameSubclassOfProvider extends Reactodia.RenameLinkToLinkStateProvider {
     override canRename(link: Reactodia.Link): boolean {
-        return link.typeId === 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
+        return (
+            link instanceof Reactodia.AnnotationLink ||
+            link.typeId === 'http://www.w3.org/2000/01/rdf-schema#subClassOf'
+        );
     }
 }
 

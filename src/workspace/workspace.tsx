@@ -13,7 +13,7 @@ import { ValidationProvider } from '../data/validationProvider';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
 import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization';
-import { Element } from '../diagram/elements';
+import { Element, Link } from '../diagram/elements';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
@@ -21,7 +21,7 @@ import {
 import {
     DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
 } from '../diagram/locale';
-import { SharedCanvasState } from '../diagram/sharedCanvasState';
+import { RenameLinkToLinkStateProvider, SharedCanvasState } from '../diagram/sharedCanvasState';
 
 import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
 import { DataDiagramModel } from '../editor/dataDiagramModel';
@@ -33,7 +33,7 @@ import {
 import { OverlayController } from '../editor/overlayController';
 
 import { NoteTemplate, NoteLinkTemplate } from '../templates/noteAnnotation';
-import { DefaultLinkTemplate } from '../templates/defaultLinkTemplate';
+import { StandardLinkTemplate } from '../templates/standardRelation';
 import { StandardTemplate } from '../templates/standardTemplate';
 
 import type { CommandBusTopic } from './commandBusTopic';
@@ -50,7 +50,7 @@ export interface WorkspaceProps {
     /**
      * Overrides default command history implementation.
      *
-     * By default, it uses {@link InMemoryHistory} instance.
+     * By default, {@link InMemoryHistory} instance is used.
      */
     history?: CommandHistory;
     /**
@@ -77,8 +77,12 @@ export interface WorkspaceProps {
     validationProvider?: ValidationProvider;
     /**
      * Provides a strategy to rename diagram links (change labels).
+     *
+     * By default, {@link DefaultRenameLinkProvider} instance is used.
+     *
+     * If specified as `null`, the default provider would not be used.
      */
-    renameLinkProvider?: RenameLinkProvider;
+    renameLinkProvider?: RenameLinkProvider | null;
     /**
      * Overrides how a single label gets selected from multiple of them based on target language.
      */
@@ -198,10 +202,12 @@ export class Workspace extends React.Component<WorkspaceProps> {
                 if (link instanceof AnnotationLink) {
                     return NoteLinkTemplate;
                 }
-                return DefaultLinkTemplate;
+                return StandardLinkTemplate;
             },
             defaultLayout,
-            renameLinkProvider,
+            renameLinkProvider: renameLinkProvider === null ? undefined : (
+                renameLinkProvider ?? new DefaultRenameLinkProvider()
+            ),
         });
 
         const editor = new EditorController({
@@ -585,4 +591,19 @@ export function useLoadedWorkspace(
     }, [context, ...deps]);
 
     return stateRef.current.loadedWorkspace;
+}
+
+/**
+ * Default {@link RenameLinkProvider} implementation for the {@link Workspace workspace}.
+ *
+ * Unless overriden, it allows to rename {@link AnnotationLink} graph links
+ * and stores the changed label in the {@link Link.linkState link template state}.
+ *
+ * @see {@link WorkspaceProps.renameLinkProvider}
+ * @see {@link RenameLinkToLinkStateProvider}
+ */
+export class DefaultRenameLinkProvider extends RenameLinkToLinkStateProvider {
+    override canRename(link: Link): boolean {
+        return link instanceof AnnotationLink;
+    }
 }

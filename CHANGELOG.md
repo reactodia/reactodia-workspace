@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `DataDiagramModel.importLayout()` will accept known cell types via `elementCellTypes` and `linkCellTypes` to import.
 - Add `AnnotationElement` and `AnnotationLink` diagram cell types representing diagram-only elements and links which exports and imports with the diagram but does not exists in the data graph:
   * Rendered by default with new built-in templates `NoteTemplate` and `NoteLinkTemplate` which use `NoteAnnotation`, `NoteEntity` and `NoteLink` template components;
+  * Add `DefaultRenameLinkProvider` and use it by default to allow to change annotation link labels;
   * Support annotation elements in `SelectionActionEstablishLink` and new `SelectionActionAnnotate` components;
   * Support annotation links in `LinkActionDelete`, `LinkActionMoveEndpoint` components.
 - Support user-resizable element templates with `ElementSize` template state property:
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Subscribe to canvas `resize` event to track viewport size;
   * Subscribe to `changeCells` event from `DiagramModel` to track graph content changes.
 - Add `TemplateProps.onlySelected` flag to use in the element templates to track if the element is the only one selected without performance penalty.
+- Avoid eager link type creation for relation links, only create and fetch them on first render.
 
 #### 💅 Polish
 - Make dialogs fill the available viewport when the viewport width is small:
@@ -45,6 +47,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `changeExpanded` event is removed from element events, use `changeElementState` event instead;
   * When exporting the diagram the expanded state is serialized only with `elementState` while using `isExpanded` property when importing the diagram for backward compatibility.
 - Introduce `ElementTemplate.supports` property for templates to tell its capabilities such as ability to expand/collapse or resized by user.
+- Deprecate `DefaultLinkTemplate` and `DefaultLink` and alias them to `StandardLinkTemplate` and `StandardRelation`:
+  * Change CSS class for default link template from `reactodia-default-link` to `reactodia-standard-link`.
 - Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
 - Add `setTemplateProperty()` utility function to easily set or unset template state property.
 

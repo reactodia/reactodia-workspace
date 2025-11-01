@@ -305,24 +305,23 @@ function LinkHighlight(props: LinkHighlightProps) {
         () => canvas.renderingState.getLinkLabelBounds(link)
     );
 
-    if (!labelBounds) {
-        return null;
+    let labelHighlightStyle: React.CSSProperties | undefined;
+    if (labelBounds) {
+        const {x: x0, y: y0} = canvas.metrics.paperToScrollablePaneCoords(
+            labelBounds.x,
+            labelBounds.y
+        );
+        const {x: x1, y: y1} = canvas.metrics.paperToScrollablePaneCoords(
+            labelBounds.x + labelBounds.width,
+            labelBounds.y + labelBounds.height
+        );
+        labelHighlightStyle = {
+            left: x0 - margin,
+            top: y0 - margin,
+            width: x1 - x0 + margin * 2,
+            height: y1 - y0 + margin * 2,
+        };
     }
-
-    const {x: x0, y: y0} = canvas.metrics.paperToScrollablePaneCoords(
-        labelBounds.x,
-        labelBounds.y
-    );
-    const {x: x1, y: y1} = canvas.metrics.paperToScrollablePaneCoords(
-        labelBounds.x + labelBounds.width,
-        labelBounds.y + labelBounds.height
-    );
-    const labelHighlightStyle: React.CSSProperties = {
-        left: x0 - margin,
-        top: y0 - margin,
-        width: x1 - x0 + margin * 2,
-        height: y1 - y0 + margin * 2,
-    };
 
     return <>
         <CanvasPlaceAt layer='overLinkGeometry'>
@@ -334,12 +333,14 @@ function LinkHighlight(props: LinkHighlightProps) {
                 />
             </SvgPaperLayer>
         </CanvasPlaceAt>
-        <CanvasPlaceAt layer='overLinks'>
-            <div className={CLASS_NAME} style={style}>
-                <div className={`${CLASS_NAME}__label-highlight`}
-                    style={labelHighlightStyle}
-                />
-            </div>
-        </CanvasPlaceAt>
+        {labelHighlightStyle && (
+            <CanvasPlaceAt layer='overLinks'>
+                <div className={CLASS_NAME} style={style}>
+                    <div className={`${CLASS_NAME}__label-highlight`}
+                        style={labelHighlightStyle}
+                    />
+                </div>
+            </CanvasPlaceAt>
+        )}
     </>;
 }

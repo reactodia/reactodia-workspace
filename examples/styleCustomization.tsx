@@ -165,7 +165,7 @@ const DoubleArrowLinkTemplate: Reactodia.LinkTemplate = {
         height: 12,
     },
     renderLink: props => (
-        <Reactodia.DefaultLink {...props}
+        <Reactodia.StandardRelation {...props}
             pathProps={{stroke: '#747da8', strokeWidth: 2}}
             primaryLabelProps={{
                 style: {color: '#747da8'},

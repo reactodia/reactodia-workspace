@@ -676,82 +676,72 @@ class VertexTools extends React.Component<{
     };
 }
 
-export interface LinkMarkersProps {
+function LinkMarkersInner(props: {
     model: DiagramModel;
     renderingState: MutableRenderingState;
-}
+}) {
+    const {model, renderingState} = props;
 
-export class LinkMarkers extends React.Component<LinkMarkersProps> {
-    private readonly listener = new EventObserver();
-    private readonly delayedUpdate = new Debouncer();
+    const [cellsVersion, setCellsVersion] = React.useState(model.cellsVersion);
 
-    render() {
-        const {model, renderingState} = this.props;
+    React.useEffect(() => {
+        const listener = new EventObserver();
+        const delayedUpdate = new Debouncer();
 
-        const sourceMarkers = new Set<LinkMarkerStyle>();
-        const targetMarkers = new Set<LinkMarkerStyle>();
-
-        for (const link of model.links) {
-            const template = renderingState.getLinkTemplate(link);
-            const defaultTemplate = renderingState.shared.defaultLinkResolver(link);
-
-            const markerSource = template.markerSource ?? defaultTemplate.markerSource;
-            if (markerSource) {
-                sourceMarkers.add(markerSource);
-            }
-
-            const markerTarget = template.markerTarget ?? defaultTemplate.markerTarget;
-            if (markerTarget) {
-                targetMarkers.add(markerTarget);
-            }
-        }
-        
-        return (
-            <defs>
-                {Array.from(sourceMarkers, marker => {
-                    const index = renderingState.ensureLinkMarkerIndex(marker);
-                    return (
-                        <LinkMarker key={index}
-                            markerIndex={index}
-                            isStartMarker={true}
-                            style={marker}
-                        />
-                    );
-                })}
-                {Array.from(targetMarkers, marker => {
-                    const index = renderingState.ensureLinkMarkerIndex(marker);
-                    return (
-                        <LinkMarker key={index}
-                            markerIndex={index}
-                            isStartMarker={false}
-                            style={marker}
-                        />
-                    );
-                })}
-            </defs>
-        );
-    }
-
-    componentDidMount() {
-        const {renderingState} = this.props;
-        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
+        listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
             if (layer !== RenderingLayer.Link) { return; }
-            this.delayedUpdate.runSynchronously();
+            delayedUpdate.runSynchronously();
         });
-        this.listener.listen(renderingState.events, 'changeLinkTemplates', () => {
-            this.delayedUpdate.call(() => this.forceUpdate());
+        listener.listen(renderingState.events, 'changeLinkTemplates', () => {
+            delayedUpdate.call(() => setCellsVersion(model.cellsVersion));
         });
-    }
+    }, []);
 
-    shouldComponentUpdate() {
-        return false;
-    }
+    const sourceMarkers = new Set<LinkMarkerStyle>();
+    const targetMarkers = new Set<LinkMarkerStyle>();
 
-    componentWillUnmount() {
-        this.listener.stopListening();
-        this.delayedUpdate.dispose();
+    for (const link of model.links) {
+        const template = renderingState.getLinkTemplate(link);
+        const defaultTemplate = renderingState.shared.defaultLinkResolver(link);
+
+        const markerSource = template.markerSource ?? defaultTemplate.markerSource;
+        if (markerSource) {
+            sourceMarkers.add(markerSource);
+        }
+
+        const markerTarget = template.markerTarget ?? defaultTemplate.markerTarget;
+        if (markerTarget) {
+            targetMarkers.add(markerTarget);
+        }
     }
+        
+    return (
+        <defs>
+            {Array.from(sourceMarkers, marker => {
+                const index = renderingState.ensureLinkMarkerIndex(marker);
+                return (
+                    <LinkMarker key={index}
+                        markerIndex={index}
+                        isStartMarker={true}
+                        style={marker}
+                    />
+                );
+            })}
+            {Array.from(targetMarkers, marker => {
+                const index = renderingState.ensureLinkMarkerIndex(marker);
+                return (
+                    <LinkMarker key={index}
+                        markerIndex={index}
+                        isStartMarker={false}
+                        style={marker}
+                    />
+                );
+            })}
+        </defs>
+    );
 }
+
+export const LinkMarkers = React.memo(LinkMarkersInner, () => true);
 
 interface LinkMarkerProps {
     markerIndex: number;
