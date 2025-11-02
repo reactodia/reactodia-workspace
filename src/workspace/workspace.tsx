@@ -33,8 +33,8 @@ import {
 import { OverlayController } from '../editor/overlayController';
 
 import { NoteTemplate, NoteLinkTemplate } from '../templates/noteAnnotation';
-import { StandardLinkTemplate } from '../templates/standardRelation';
-import { StandardTemplate } from '../templates/standardTemplate';
+import { StandardTemplate } from '../templates/standardElement';
+import { StandardLinkTemplate } from '../templates/standardLink';
 
 import type { CommandBusTopic } from './commandBusTopic';
 import {
