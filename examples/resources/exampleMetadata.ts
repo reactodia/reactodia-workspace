@@ -33,22 +33,29 @@ export class ExampleMetadataProvider extends Reactodia.BaseMetadataProvider {
                     .toString(16).substring(1);
                 const typeLabel = Reactodia.Rdf.getLocalName(type) ?? 'Entity';
                 return {
-                    id: `${type}_${random32BitDigits}`,
-                    types: [type],
-                    properties: {
-                        [Reactodia.rdfs.label]: [
-                            Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)
-                        ]
+                    data: {
+                        id: `${type}_${random32BitDigits}`,
+                        types: [type],
+                        properties: {
+                            [Reactodia.rdfs.label]: [
+                                Reactodia.Rdf.DefaultDataFactory.literal(`New ${typeLabel}`)
+                            ]
+                        },
                     },
+                    elementState: type === owl.Class ? {
+                        [Reactodia.TemplateProperties.Expanded]: true,
+                    } : undefined,
                 };
             },
             createRelation: async (source, target, linkType, {signal}) => {
                 await Reactodia.delay(SIMULATED_DELAY, {signal: signal});
                 return {
-                    sourceId: source.id,
-                    targetId: target.id,
-                    linkTypeId: linkType,
-                    properties: {},
+                    data: {
+                        sourceId: source.id,
+                        targetId: target.id,
+                        linkTypeId: linkType,
+                        properties: {},
+                    },
                 };
             },
             canConnect: async (source, target, linkType, {signal}) => {

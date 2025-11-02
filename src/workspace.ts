@@ -22,8 +22,9 @@ export { Debouncer, animateInterval } from './coreUtils/scheduler';
 export * from './data/dataProvider';
 export * from './data/model';
 export {
-    MetadataProvider, MetadataCanConnect, MetadataCanModifyEntity, MetadataCanModifyRelation,
-    MetadataEntityShape, MetadataRelationShape, MetadataPropertyShape, BaseMetadataProvider,
+    MetadataProvider, MetadataCreatedEntity, MetadataCreatedRelation, MetadataCanConnect,
+    MetadataCanModifyEntity, MetadataCanModifyRelation, MetadataEntityShape,
+    MetadataRelationShape, MetadataPropertyShape, BaseMetadataProvider,
 } from './data/metadataProvider';
 export {
     ValidationProvider, ValidationEvent, ValidationResult, ValidatedElement, ValidatedLink,

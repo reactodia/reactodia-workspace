@@ -53,7 +53,17 @@ export const StandardTemplate: ElementTemplate = {
  *
  * @see {@link StandardEntity}
  */
-export interface StandardEntityProps extends TemplateProps {}
+export interface StandardEntityProps extends TemplateProps {
+    /**
+     * When set to `true`, allows to edite or delete the entity
+     * using corresponding buttons in the expanded state.
+     *
+     * @default false
+     * @deprecated Edities can be editied or deleted via inline action decorators
+     * when {@link VisualAuthoringProps.inlineEntityActions} is enabled.
+     */
+    showActions?: boolean;
+}
 
 const CLASS_NAME = 'reactodia-standard-template';
 
@@ -67,14 +77,11 @@ const CLASS_NAME = 'reactodia-standard-template';
  *   - {@link TemplateProperties.Expanded}
  *   - {@link TemplateProperties.PinnedProperties}
  *
- * Entities can be edited or deleted using corresponding buttons
- * from the expanded state.
- *
  * @category Components
  * @see {@link StandardTemplate}
  */
 export function StandardEntity(props: StandardEntityProps) {
-    const {element, isExpanded, elementState} = props;
+    const {showActions, element, isExpanded, elementState} = props;
     const workspace = useWorkspace();
     const {model, editor, translation: t, getElementTypeStyle} = workspace;
 
@@ -226,7 +233,7 @@ export function StandardEntity(props: StandardEntityProps) {
                     <div className={`${CLASS_NAME}__dropdown-content`}>
                         {renderIri(data)}
                         <PropertyList data={data} />
-                        {editor.inAuthoringMode ? <>
+                        {showActions && editor.inAuthoringMode ? <>
                             <hr className={`${CLASS_NAME}__hr`}
                                 data-reactodia-no-export='true'
                             />
@@ -521,6 +528,9 @@ function PropertyList(props: {
     );
 }
 
+/**
+ * @deprecated
+ */
 function Actions(props: {
     target: Element;
     entityContext: AuthoredEntityContext;

@@ -312,11 +312,6 @@ export class EditorController {
         );
 
         const element = model.createElement(data);
-        // TODO: customize initial state via MetadataProvider
-        element.setElementState({
-            ...element.elementState,
-            [TemplateProperties.Expanded]: true,
-        });
 
         if (options.temporary) {
             this.setTemporaryState(
