@@ -139,7 +139,7 @@ export function StandardRelation(props: StandardRelationProps) {
                     renamedLabel ? `${LABEL_CLASS}--renamed` : undefined,
                     primaryLabelProps?.className
                 )}
-                title={primaryLabelProps?.title ?? t.text('default_link_template.label.title', {
+                title={primaryLabelProps?.title ?? t.text('standard_link.label.title', {
                     relation: label,
                     relationIri: model.locale.formatIri(link.typeId),
                 })}
@@ -158,20 +158,20 @@ export function StandardRelation(props: StandardRelationProps) {
                     <LinkLabel className={`${CLASS_NAME}__source-count`}
                         link={link}
                         position={getPathPosition(0.1)}
-                        title={t.text('default_link_template.group_source.title', {
+                        title={t.text('standard_link.group_source.title', {
                             value: link.itemSources.size,
                         })}>
-                        {t.text('default_link_template.group_source.value', {
+                        {t.text('standard_link.group_source.value', {
                             value: link.itemSources.size,
                         })}
                     </LinkLabel>
                     <LinkLabel className={`${CLASS_NAME}__target-count`}
                         link={link}
                         position={getPathPosition(0.9)}
-                        title={t.text('default_link_template.group_target.title', {
+                        title={t.text('standard_link.group_target.title', {
                             value: link.itemTargets.size,
                         })}>
-                        {t.text('default_link_template.group_target.value', {
+                        {t.text('standard_link.group_target.value', {
                             value: link.itemTargets.size,
                         })}
                     </LinkLabel>
@@ -258,7 +258,7 @@ function LinkProperties(props: StandardRelationProps) {
                 line={propertyLabelStartLine + index}
                 textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
                 className={cx(PROPERTY_CLASS, propertyLabelProps?.className)}
-                title={propertyLabelProps?.title ?? t.text('default_link_template.property.title', {
+                title={propertyLabelProps?.title ?? t.text('standard_link.property.title', {
                     property: property.label,
                     propertyIri: model.locale.formatIri(property.iri),
                 })}>

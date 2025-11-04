@@ -1,5 +1,5 @@
+import type { LinkTypeIri } from './data/model';
 import type { TypeStyleResolver, LinkTemplate } from './diagram/customization';
-import type { TypedLinkResolver } from './widgets/canvas';
 
 const classIcon = require('@images/semantic/class.svg') as string;
 const objectPropertyIcon = require('@images/semantic/objectProperty.svg') as string;
@@ -98,7 +98,9 @@ export function makeLinkStyleShowIri(Reactodia: typeof import('./workspace')): L
  *
  * @deprecated These link templates will be removed in later versions
  */
-export function makeOntologyLinkTemplates(Reactodia: typeof import('./workspace')): TypedLinkResolver {
+export function makeOntologyLinkTemplates(
+    Reactodia: typeof import('./workspace')
+): (linkType: LinkTypeIri | undefined) => LinkTemplate | undefined {
     const LINK_SUB_CLASS_OF: LinkTemplate = {
         ...Reactodia.StandardLinkTemplate,
         markerTarget: {

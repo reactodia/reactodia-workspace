@@ -47,8 +47,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * `changeExpanded` event is removed from element events, use `changeElementState` event instead;
   * When exporting the diagram the expanded state is serialized only with `elementState` while using `isExpanded` property when importing the diagram for backward compatibility.
 - Introduce `ElementTemplate.supports` property for templates to tell its capabilities such as ability to expand/collapse or resized by user.
-- Deprecate `DefaultLinkTemplate` and `DefaultLink` and alias them to `StandardLinkTemplate` and `StandardRelation`:
-  * Change CSS class for default link template from `reactodia-default-link` to `reactodia-standard-link`.
+- Use consistent naming for standard element and link templates:
+  * Deprecate `DefaultLinkTemplate` and `DefaultLink` and alias them to `StandardLinkTemplate` and `StandardRelation`;
+  * Change CSS class for standard element template from `reactodia-standard-template` to `reactodia-standard-element`;
+  * Change CSS class for default link template from `reactodia-default-link` to `reactodia-standard-link`;
+  * Change translation groups from `standard_template` / `default_link_template` to `standard_element` / `standard_link`.
 - Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
 - Add `setTemplateProperty()` utility function to easily set or unset template state property.
 - Change `MetadataProvider.{createEntity, createRelation}` to return result object with initial template state in addition to the data to customize the created cells (i.e. new elements can be expanded or collapsed).

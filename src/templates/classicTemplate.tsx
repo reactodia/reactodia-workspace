@@ -67,7 +67,7 @@ export function ClassicEntity(props: ClassicEntityProps) {
 
     const typesLabel = types.length > 0
         ?  model.locale.formatEntityTypeList(data, model.language)
-        : t.text('standard_template.default_type');
+        : t.text('standard_element.default_type');
     const label = model.locale.formatEntityLabel(data, model.language);
     const imageUrl = model.locale.selectEntityImageUrl(data);
 
@@ -83,7 +83,7 @@ export function ClassicEntity(props: ClassicEntityProps) {
         <div>
             <div className={`${CLASS_NAME}__expander`}>
                 <div className={`${CLASS_NAME}__iri-heading`}>
-                    {t.text('standard_template.iri.label')}
+                    {t.text('standard_element.iri.label')}
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
                     <a className={`${CLASS_NAME}__iri`}
@@ -174,7 +174,7 @@ function PropertyList(props: {
                     <div key={iri} className={`${CLASS_NAME}__property-row`}>
                         <WithFetchStatus type='propertyType' target={iri}>
                             <div className={`${CLASS_NAME}__property-label`}
-                                title={t.text('standard_template.property.title', {
+                                title={t.text('standard_element.property.title', {
                                     property: label,
                                     propertyIri: model.locale.formatIri(iri),
                                 })}>
@@ -189,6 +189,6 @@ function PropertyList(props: {
             })}
         </div>;
     } else {
-        return <div>{t.text('standard_template.no_properties')}</div>;
+        return <div>{t.text('standard_element.no_properties')}</div>;
     }
 }

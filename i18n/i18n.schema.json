@@ -116,18 +116,6 @@
         "iri_blank": { "$ref": "#/$defs/Value" }
       }
     },
-    "default_link_template": {
-      "$ref": "#/$defs/Group",
-      "additionalProperties": false,
-      "properties": {
-        "group_source.title": { "$ref": "#/$defs/Value" },
-        "group_source.value": { "$ref": "#/$defs/Value" },
-        "group_target.title": { "$ref": "#/$defs/Value" },
-        "group_target.value": { "$ref": "#/$defs/Value" },
-        "label.title": { "$ref": "#/$defs/Value" },
-        "property.title": { "$ref": "#/$defs/Value" }
-      }
-    },
     "default_workspace": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
@@ -309,7 +297,7 @@
         "zoom_to_fit.title": { "$ref": "#/$defs/Value" }
       }
     },
-    "standard_template": {
+    "standard_element": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
@@ -327,6 +315,18 @@
         "no_properties": { "$ref": "#/$defs/Value" },
         "property.title": { "$ref": "#/$defs/Value" },
         "ungroup.title": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "standard_link": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "group_source.title": { "$ref": "#/$defs/Value" },
+        "group_source.value": { "$ref": "#/$defs/Value" },
+        "group_target.title": { "$ref": "#/$defs/Value" },
+        "group_target.value": { "$ref": "#/$defs/Value" },
+        "label.title": { "$ref": "#/$defs/Value" },
+        "property.title": { "$ref": "#/$defs/Value" }
       }
     },
     "toolbar": {

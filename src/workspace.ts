@@ -167,13 +167,13 @@ export {
 } from './templates/noteAnnotation';
 export { RoundTemplate, RoundEntity, RoundEntityProps } from './templates/roundTemplate';
 export {
-    StandardLinkTemplate, StandardRelation, type StandardRelationProps,
-    DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
-} from './templates/standardRelation';
-export {
     StandardTemplate, StandardEntity, StandardEntityProps,
     StandardEntityGroup, StandardEntityGroupProps,
-} from './templates/standardTemplate';
+} from './templates/standardElement';
+export {
+    StandardLinkTemplate, StandardRelation, type StandardRelationProps,
+    DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
+} from './templates/standardLink';
 
 export { DraggableHandle, DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {

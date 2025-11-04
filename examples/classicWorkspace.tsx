@@ -55,11 +55,11 @@ function ClassicWorkspaceExample() {
                         }
                         return undefined;
                     },
-                    linkTemplateResolver: (linkType, link) => {
+                    linkTemplateResolver: linkType => {
                         if (linkType === 'http://www.w3.org/2000/01/rdf-schema#subClassOf') {
                             return Reactodia.DefaultLinkTemplate;
                         }
-                        return OntologyLinkTemplates(linkType, link);
+                        return OntologyLinkTemplates(linkType);
                     },
                 }}
                 toolbar={{

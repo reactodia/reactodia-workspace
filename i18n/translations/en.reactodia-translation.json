@@ -84,14 +84,6 @@
     "iri": "<{{value}}>",
     "iri_blank": "(blank node)"
   },
-  "default_link_template": {
-    "group_source.title": "{{value}} source elements",
-    "group_source.value": "{{value}}",
-    "group_target.title": "{{value}} target elements",
-    "group_target.value": "{{value}}",
-    "label.title": "{{relation}} {{relationIri}}",
-    "property.title": "{{property}} {{propertyIri}}"
-  },
   "default_workspace": {
     "search_section_entities.label": "Entities",
     "search_section_entities.title": "Entity lookup",
@@ -217,7 +209,7 @@
     "remove.title_single": "Remove an element from the diagram",
     "zoom_to_fit.title": "Zoom to fit selected elements into view"
   },
-  "standard_template": {
+  "standard_element": {
     "blank_node": "(blank node)",
     "default_type": "Thing",
     "delete.label": "Delete",
@@ -232,6 +224,14 @@
     "no_properties": "no properties",
     "property.title": "{{property}} {{propertyIri}}",
     "ungroup.title": "Ungroup an entity"
+  },
+  "standard_link": {
+    "group_source.title": "{{value}} source elements",
+    "group_source.value": "{{value}}",
+    "group_target.title": "{{value}} target elements",
+    "group_target.value": "{{value}}",
+    "label.title": "{{relation}} {{relationIri}}",
+    "property.title": "{{property}} {{propertyIri}}"
   },
   "toolbar": {
     "menu_toggle.title": "Open menu"
