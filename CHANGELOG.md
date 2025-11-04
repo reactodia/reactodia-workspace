@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 🐛 Fixed
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
+- Fix `HaloLink` link path highlighting not updating on link re-route.
 - Fix element template state not being restored when ungrouping entities.
 - Fix missing element decorations after re-importing the same diagram.
 - Fix `DraggableHandle` to avoid using stale `onDragHandle` and `onEndDragHandle` prop values.

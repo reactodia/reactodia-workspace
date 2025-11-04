@@ -206,6 +206,11 @@ class HaloLinkInner extends React.Component<HaloLinkInnerProps, State> {
                     this.updateActionContext();
                 }
             });
+            this.targetListener.listen(canvas.renderingState.events, 'changeRoutings', e => {
+                if (e.previous.get(link.id) !== e.source.getRouting(link.id)) {
+                    this.updateActionContext();
+                }
+            });
         }
     }
 
