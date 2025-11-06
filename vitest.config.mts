@@ -1,8 +1,9 @@
-/// <reference types="vitest" />
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
-    
+
+import { playwright } from '@vitest/browser-playwright';
+import { defineConfig } from 'vitest/config';
+
 const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
@@ -26,12 +27,12 @@ export default defineConfig({
     },
     test: {
         browser: {
-            provider: 'playwright',
+            provider: playwright(),
             enabled: true,
             screenshotFailures: false,
             instances: [
                 {browser: 'chromium'},
-            ]
+            ],
         },
     },
     // To avoid warning about reloading due to
