@@ -24,7 +24,7 @@ describe('toSvg()', () => {
             paddingY: 0,
             scale: 1,
         };
-        render(
+        await render(
             <div>
                 <SvgPaperLayer layerRef={svgLayerRef}
                     paperTransform={paperTransform}>
@@ -81,7 +81,7 @@ describe('toSvg()', () => {
             styles.inlineBackground,
             styles.resourceBackground,
         ];
-        render (
+        await render (
             <div>
                 <SvgPaperLayer layerRef={svgLayerRef}
                     paperTransform={paperTransform}>
@@ -183,7 +183,7 @@ describe('toSvg()', () => {
             paddingY: 0,
             scale: 1,
         };
-        render(
+        await render(
             <div>
                 <SvgPaperLayer layerRef={svgLayerRef}
                     paperTransform={paperTransform}>
