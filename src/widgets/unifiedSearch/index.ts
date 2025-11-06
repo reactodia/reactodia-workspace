@@ -4,8 +4,8 @@ export {
     SearchSectionLinkTypes,
 } from './builtinSearchSections';
 export {
-    UnifiedSearchSectionProvidedContext, useUnifiedSearchSection,
+    type UnifiedSearchSectionProvidedContext, useUnifiedSearchSection,
 } from './searchSection';
 export {
-    UnifiedSearch, UnifiedSearchProps, UnifiedSearchCommands, UnifiedSearchSection,
+    UnifiedSearch, type UnifiedSearchProps, type UnifiedSearchCommands, type UnifiedSearchSection,
 } from './unifiedSearch';

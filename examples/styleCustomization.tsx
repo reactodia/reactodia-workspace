@@ -5,14 +5,17 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const BOOK_ICON = require('@vscode/codicons/src/icons/book.svg') as string;
-const CERTIFICATE_ICON = require('@vscode/codicons/src/icons/symbol-class.svg') as string;
-const COG_ICON = require('@vscode/codicons/src/icons/gear.svg') as string;
+import BOOK_ICON from '@vscode/codicons/src/icons/book.svg';
+import CERTIFICATE_ICON from '@vscode/codicons/src/icons/symbol-class.svg';
+import COG_ICON from '@vscode/codicons/src/icons/gear.svg';
 
-const EXAMPLE_DIAGRAM = require('./resources/exampleDiagram.json') as Reactodia.SerializedDiagram;
-const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
+import EXAMPLE_DIAGRAM from './resources/exampleDiagram.json';
+import TURTLE_DATA from './resources/orgOntology.ttl?raw';
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
+    new URL('../src/layout.worker.ts', import.meta.url),
+    {type: 'module'}
+));
 
 function StyleCustomizationExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
@@ -23,7 +26,7 @@ function StyleCustomizationExample() {
         const dataProvider = new Reactodia.RdfDataProvider();
         dataProvider.addGraph(new N3.Parser().parse(TURTLE_DATA));
 
-        const diagram = tryLoadLayoutFromLocalStorage() ?? EXAMPLE_DIAGRAM;
+        const diagram = tryLoadLayoutFromLocalStorage() ?? (EXAMPLE_DIAGRAM as Reactodia.SerializedDiagram);
         await model.importLayout({
             diagram,
             dataProvider: dataProvider,
@@ -101,7 +104,7 @@ function BookDecoration(props: { target: Reactodia.EntityElement }) {
         <Reactodia.ElementDecoration target={target}>
             <div
                 style={{
-                    mask: `url(${BOOK_ICON}) 0px 0px / contain no-repeat`,
+                    mask: `url("${BOOK_ICON}") 0px 0px / contain no-repeat`,
                     backgroundColor: 'orange',
                     height: '36px',
                     width: '36px',

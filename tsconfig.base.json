@@ -11,6 +11,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "removeComments": true,
+    "isolatedModules": true,
   },
   "include": [
     "./src/**/*.ts",

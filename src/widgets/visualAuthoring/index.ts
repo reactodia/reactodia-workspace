@@ -1,6 +1,8 @@
-export { AuthoredEntityContext, useAuthoredEntity } from './authoredEntity';
-export { DragEditOperation, DragEditConnect, DragEditMoveEndpoint } from './dragEditLayer';
+export { type AuthoredEntityContext, useAuthoredEntity } from './authoredEntity';
 export {
-    VisualAuthoring, VisualAuthoringProps, VisualAuthoringCommands,
-    PropertyEditor, PropertyEditorOptions,
+    type DragEditOperation, type DragEditConnect, type DragEditMoveEndpoint,
+} from './dragEditLayer';
+export {
+    VisualAuthoring, type VisualAuthoringProps, type VisualAuthoringCommands,
+    type PropertyEditor, type PropertyEditorOptions,
 } from './visualAuthoring';

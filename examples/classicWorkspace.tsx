@@ -8,9 +8,12 @@ const OntologyLinkTemplates = makeOntologyLinkTemplates(Reactodia);
 import { ExampleMetadataProvider, ExampleValidationProvider } from './resources/exampleMetadata';
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const TURTLE_DATA = require('./resources/orgOntology.ttl') as string;
+import TURTLE_DATA from './resources/orgOntology.ttl?raw';
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
+    new URL('../src/layout.worker.ts', import.meta.url),
+    {type: 'module'}
+));
 
 function ClassicWorkspaceExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);

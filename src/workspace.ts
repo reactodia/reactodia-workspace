@@ -1,49 +1,52 @@
-require('../styles/main.scss');
+import '../styles/main.scss';
 
 export { AbortScope, mapAbortedToNull, delay } from './coreUtils/async';
 export { moveComparator, shallowArrayEqual } from './coreUtils/collections';
 export { useColorScheme } from './coreUtils/colorScheme';
 export {
-    Listener, AnyListener, AnyEvent, PropertyChange,
-    Events, EventTrigger, EventObserver, EventSource,
+    type Listener, type AnyListener, type AnyEvent, type PropertyChange,
+    type Events, type EventTrigger, EventObserver, EventSource,
 } from './coreUtils/events';
 export {
-    SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
+    type SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
     useSyncStore, useSyncStoreWithComparator,
 } from './coreUtils/hooks';
 export type { HotkeyString } from './coreUtils/hotkey';
 export {
-    LabelLanguageSelector, TranslatedProperty, TranslatedText, Translation, useTranslation,
+    type LabelLanguageSelector, type TranslatedProperty, TranslatedText, type Translation,
+    useTranslation,
 } from './coreUtils/i18n';
-export { KeyedObserver, KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
+export { KeyedObserver, type KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
 export { useWorker } from './coreUtils/workers';
 export { Debouncer, animateInterval } from './coreUtils/scheduler';
 
 export * from './data/dataProvider';
 export * from './data/model';
 export {
-    MetadataProvider, MetadataCreatedEntity, MetadataCreatedRelation, MetadataCanConnect,
-    MetadataCanModifyEntity, MetadataCanModifyRelation, MetadataEntityShape,
-    MetadataRelationShape, MetadataPropertyShape, BaseMetadataProvider,
+    type MetadataProvider, type MetadataCreatedEntity, type MetadataCreatedRelation,
+    type MetadataCanConnect, type MetadataCanModifyEntity, type MetadataCanModifyRelation,
+    type MetadataEntityShape, type MetadataRelationShape, type MetadataPropertyShape,
+    BaseMetadataProvider,
 } from './data/metadataProvider';
 export {
-    ValidationProvider, ValidationEvent, ValidationResult, ValidatedElement, ValidatedLink,
-    ValidationSeverity,
+    type ValidationProvider,type  ValidationEvent, type ValidationResult, type ValidatedElement,
+    type ValidatedLink, type ValidationSeverity,
 } from './data/validationProvider';
 export {
     DiagramContextV1, PlaceholderEntityType, PlaceholderRelationType,
-    TemplateProperties, PinnedProperties, AnnotationContent, AnnotationTextStyle,
-    ColorVariant, setTemplateProperty,
+    TemplateProperties, type PinnedProperties, type AnnotationContent, type AnnotationTextStyle,
+    type ColorVariant, setTemplateProperty,
 } from './data/schema';
 export * from './data/composite/composite';
 export {
-    DecoratedDataProvider, DecoratedDataProviderOptions, DecoratedMethodName, delayProviderDecorator,
+    DecoratedDataProvider, type DecoratedDataProviderOptions, type DecoratedMethodName,
+    delayProviderDecorator,
 } from './data/decorated/decoratedDataProvider';
 export { EmptyDataProvider } from './data/decorated/emptyDataProvider';
 export {
-    IndexedDbCachedProvider, IndexedDbCachedProviderOptions,
+    IndexedDbCachedProvider, type IndexedDbCachedProviderOptions,
 } from './data/indexedDb/indexedDbCachedProvider';
-export { MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
+export { type MemoryDataset, IndexQuadBy, indexedDataset } from './data/rdf/memoryDataset';
 export * from './data/rdf/rdfDataProvider';
 /**
  * Utility namespace to work with [RDF.js model](https://rdf.js.org/data-model-spec/).
@@ -64,87 +67,88 @@ export {
 } from './diagram/commands';
 export * from './diagram/customization';
 export {
-    Element, ElementEvents, ElementProps, ElementTemplateState,
-    Link, LinkEvents, LinkProps, LinkTemplateState, LinkVertex,
-    Cell, VoidElement, LinkTypeVisibility,
+    Element, type ElementEvents, type ElementProps, type ElementTemplateState,
+    Link, type LinkEvents, type LinkProps, type LinkTemplateState,
+    type Cell, LinkVertex, VoidElement, type LinkTypeVisibility,
 } from './diagram/elements';
 export { ElementDecoration } from './diagram/elementLayer';
 export {
-    Rect, ShapeGeometry, Size, SizeProvider, Vector, boundsOf, calculateAveragePosition,
+    Rect, type ShapeGeometry, type Size, type SizeProvider, Vector,
+    boundsOf, calculateAveragePosition,
     computePolyline, computePolylineLength, findElementAtPoint, findNearestSegmentIndex,
     getContentFittingBox, getPointAlongPolyline, isPolylineEqual, pathFromPolyline,
 } from './diagram/geometry';
-export { CellsChangedEvent } from './diagram/graph';
+export { type CellsChangedEvent } from './diagram/graph';
 export * from './diagram/history';
 export {
-    CalculatedLayout, LayoutGraph, LayoutState, LayoutNode, LayoutLink,
-    LayoutTypeProvider, LayoutFunction,
+    type CalculatedLayout, type LayoutGraph, type LayoutState, type LayoutNode, type LayoutLink,
+    type LayoutTypeProvider, type LayoutFunction,
     calculateLayout, applyLayout, uniformGrid, translateToPositiveQuadrant,
 } from './diagram/layout';
-export { DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
+export { type DefaultLayouts, defineLayoutWorker } from './diagram/layoutDefault';
 export {
-    LinkPath, LinkPathProps,
-    LinkLabel, LinkLabelProps,
-    LinkVertices, LinkVerticesProps,
+    LinkPath, type LinkPathProps,
+    LinkLabel, type LinkLabelProps,
+    LinkVertices, type LinkVerticesProps,
 } from './diagram/linkLayer';
-export { DefaultLinkRouter, DefaultLinkRouterOptions } from './diagram/linkRouter';
-export { type DiagramModel, DiagramModelEvents, GraphStructure } from './diagram/model';
+export { DefaultLinkRouter, type DefaultLinkRouterOptions } from './diagram/linkRouter';
+export { type DiagramModel, type DiagramModelEvents, type GraphStructure } from './diagram/model';
 export {
     type PaperTransform, paneTopLeft, totalPaneSize,
     HtmlPaperLayer, type HtmlPaperLayerProps,
     SvgPaperLayer, type SvgPaperLayerProps,
 } from './diagram/paper';
 export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
-export { RenderingState, RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
+export { type RenderingState, type RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
 export {
-    type SharedCanvasState, SharedCanvasStateEvents, CellHighlighter,
-    FindCanvasEvent, RenameLinkToLinkStateProvider,
+    type SharedCanvasState, type SharedCanvasStateEvents, type CellHighlighter,
+    type FindCanvasEvent, RenameLinkToLinkStateProvider,
 } from './diagram/sharedCanvasState';
-export { Spinner, SpinnerProps, HtmlSpinner } from './diagram/spinner';
+export { Spinner, type SpinnerProps, HtmlSpinner } from './diagram/spinner';
 
 export {
     AnnotationElement, AnnotationLink,
-    SerializedAnnotationElement, SerializedAnnotationLink,
+    type SerializedAnnotationElement, type SerializedAnnotationLink,
 } from './editor/annotationCells';
 export {
-    AuthoringState, AuthoringEvent,
-    AuthoredEntity, AuthoredEntityAdd, AuthoredEntityChange, AuthoredEntityDelete,
-    AuthoredRelation, AuthoredRelationAdd, AuthoredRelationChange, AuthoredRelationDelete,
+    AuthoringState, type AuthoringEvent, type AuthoredEntity, type AuthoredRelation,
+    type AuthoredEntityAdd, type AuthoredEntityChange, type AuthoredEntityDelete,
+    type AuthoredRelationAdd, type AuthoredRelationChange, type AuthoredRelationDelete,
     TemporaryState,
 } from './editor/authoringState';
 export { BuiltinDialogType } from './editor/builtinDialogType';
 export * from './editor/dataDiagramModel';
 export {
-    EntityElement, EntityElementEvents, EntityElementProps,
-    EntityGroup, EntityGroupEvents, EntityGroupProps, EntityGroupItem,
-    SerializedEntityElement, SerializedEntityGroup, SerializedEntityGroupItem,
-    RelationLink, RelationLinkEvents, RelationLinkProps,
-    RelationGroup, RelationGroupEvents, RelationGroupProps, RelationGroupItem,
-    SerializedRelationLink, SerializedRelationGroup, SerializedRelationGroupItem,
-    ElementType, ElementTypeEvents,
-    LinkType, LinkTypeEvents,
-    PropertyType, PropertyTypeEvents,
+    EntityElement, type EntityElementEvents, type EntityElementProps,
+    EntityGroup, type EntityGroupEvents, type EntityGroupProps, type EntityGroupItem,
+    type SerializedEntityElement, type SerializedEntityGroup, type SerializedEntityGroupItem,
+    RelationLink, type RelationLinkEvents, type RelationLinkProps,
+    RelationGroup, type RelationGroupEvents, type RelationGroupProps, type RelationGroupItem,
+    type SerializedRelationLink, type SerializedRelationGroup, type SerializedRelationGroupItem,
+    ElementType, type ElementTypeEvents,
+    LinkType, type LinkTypeEvents,
+    PropertyType, type PropertyTypeEvents,
     changeEntityData, setEntityElementData, setEntityGroupItems, iterateEntitiesOf,
     changeRelationData, setRelationGroupItems, setRelationLinkData, iterateRelationsOf,
 } from './editor/dataElements';
 export {
-    ChangeOperationsEvent, FetchOperation, FetchOperationFail,
-    FetchOperationTargetType, FetchOperationTypeToTarget,
-    FetchOperationElement, FetchOperationLink, FetchOperationElementType,
-    FetchOperationLinkType, FetchOperationPropertyType,
+    type ChangeOperationsEvent, type FetchOperation, type FetchOperationFail,
+    type FetchOperationTargetType, type FetchOperationTypeToTarget,
+    type FetchOperationElement, type FetchOperationLink, type FetchOperationElementType,
+    type FetchOperationLinkType, type FetchOperationPropertyType,
 } from './editor/dataFetcher';
 export {
-    type DataLocaleProvider, DefaultDataLocaleProvider, DefaultDataLocaleProviderOptions,
+    type DataLocaleProvider, DefaultDataLocaleProvider, type DefaultDataLocaleProviderOptions,
 } from './editor/dataLocaleProvider';
-export { EditorEvents, EditorController } from './editor/editorController';
+export { type EditorEvents, EditorController } from './editor/editorController';
 export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from './editor/observedElement';
 export {
-    OverlayController, OverlayControllerEvents, OverlayTask,
+    OverlayController, type OverlayControllerEvents, type OverlayTask,
 } from './editor/overlayController';
-export { ValidationState, ElementValidation, LinkValidation } from './editor/validation';
-export { WithFetchStatus, WithFetchStatusProps } from './editor/withFetchStatus';
+export { ValidationState, type ElementValidation, type LinkValidation } from './editor/validation';
+export { WithFetchStatus, type WithFetchStatusProps } from './editor/withFetchStatus';
 
 export type {
     FormInputSingleProps, FormInputMultiProps, FormInputMultiUpdater,
@@ -154,127 +158,131 @@ export { FormInputList, type FormInputListProps } from './forms/input/formInputL
 export { FormInputText, type FormInputTextProps } from './forms/input/formInputText';
 
 export {
-    SerializedDiagram, SerializedLayout, SerializedLinkOptions,
-    SerializedElement, SerializableElementCell, ElementFromJsonOptions,
-    SerializedLink, SerializableLinkCell, LinkFromJsonOptions,
+    type SerializedDiagram, type SerializedLayout, type SerializedLinkOptions,
+    type SerializedElement, type SerializableElementCell, type ElementFromJsonOptions,
+    type SerializedLink, type SerializableLinkCell, type LinkFromJsonOptions,
 } from './editor/serializedDiagram';
 
 export { BasicLink, type BasicLinkProps, LinkMarkerArrowhead } from './templates/basicLink';
-export { ClassicTemplate, ClassicEntity, ClassicEntityProps } from './templates/classicTemplate';
-export { GroupPaginator, GroupPaginatorProps } from './templates/groupPaginator';
+export {
+    ClassicTemplate, ClassicEntity, type ClassicEntityProps,
+} from './templates/classicTemplate';
+export { GroupPaginator, type GroupPaginatorProps } from './templates/groupPaginator';
 export {
     NoteTemplate, NoteAnnotation, NoteEntity, NoteLinkTemplate, NoteLink,
 } from './templates/noteAnnotation';
-export { RoundTemplate, RoundEntity, RoundEntityProps } from './templates/roundTemplate';
+export { RoundTemplate, RoundEntity, type RoundEntityProps } from './templates/roundTemplate';
 export {
-    StandardTemplate, StandardEntity, StandardEntityProps,
-    StandardEntityGroup, StandardEntityGroupProps,
+    StandardTemplate, StandardEntity, type StandardEntityProps,
+    StandardEntityGroup, type StandardEntityGroupProps,
 } from './templates/standardElement';
 export {
     StandardLinkTemplate, StandardRelation, type StandardRelationProps,
     DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
 } from './templates/standardLink';
 
-export { DraggableHandle, DraggableHandleProps } from './widgets/utility/draggableHandle';
+export { DraggableHandle, type DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {
-    DropdownMenu, DropdownMenuProps, DropdownMenuItem, DropdownMenuItemProps,
+    DropdownMenu, type DropdownMenuProps, DropdownMenuItem, type DropdownMenuItemProps,
 } from './widgets/utility/dropdown';
 export {
-    ListElementView, ListElementViewProps, highlightSubstring, startDragElements,
+    ListElementView, type ListElementViewProps, highlightSubstring, startDragElements,
 } from './widgets/utility/listElementView';
-export { ProgressBar, ProgressBarProps, ProgressState } from './widgets/utility/progressBar';
 export {
-    SearchInputStore, SearchInputStoreEvents, SearchInputStoreChangeValueEvent,
-    UseSearchInputStoreOptions, useSearchInputStore,
+    ProgressBar, type ProgressBarProps, type ProgressState,
+} from './widgets/utility/progressBar';
+export {
+    type SearchInputStore, type SearchInputStoreEvents, type SearchInputStoreChangeValueEvent,
+    type UseSearchInputStoreOptions, useSearchInputStore,
 } from './widgets/utility/searchInput';
-export { SearchResults, SearchResultsProps } from './widgets/utility/searchResults';
+export { SearchResults, type SearchResultsProps } from './widgets/utility/searchResults';
 export {
-    ViewportDock, ViewportDockProps, DockDirection,
+    ViewportDock, type ViewportDockProps, type DockDirection,
 } from './widgets/utility/viewportDock';
-export { ClassTree, ClassTreeProps } from './widgets/classTree';
+export { ClassTree, type ClassTreeProps } from './widgets/classTree';
 export {
-    Canvas, CanvasProps, TypedElementResolver, TypedLinkResolver,
+    Canvas, type CanvasProps, type TypedElementResolver, type TypedLinkResolver,
 } from './widgets/canvas';
 export {
-    ConnectionsMenu, ConnectionsMenuProps, ConnectionsMenuCommands,
-    PropertySuggestionHandler, PropertySuggestionParams, PropertyScore,
+    ConnectionsMenu, type ConnectionsMenuProps, type ConnectionsMenuCommands,
+    type PropertySuggestionHandler, type PropertySuggestionParams, type PropertyScore,
 } from './widgets/connectionsMenu';
 export type { DialogStyleProps } from './widgets/dialog';
-export { DropOnCanvas, DropOnCanvasProps } from './widgets/dropOnCanvas';
-export { Halo, HaloProps } from './widgets/halo';
-export { HaloLink, HaloLinkProps } from './widgets/haloLink';
+export { DropOnCanvas, type DropOnCanvasProps } from './widgets/dropOnCanvas';
+export { Halo, type HaloProps } from './widgets/halo';
+export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {
-    InstancesSearch, InstancesSearchProps, InstancesSearchCommands,
+    InstancesSearch, type InstancesSearchProps, type InstancesSearchCommands,
 } from './widgets/instancesSearch';
 export {
     type LinkActionContext, useLinkActionContext,
-    LinkAction, LinkActionProps, LinkActionStyleProps,
-    LinkActionSpinner, LinkActionSpinnerProps,
-    LinkActionEdit, LinkActionEditProps,
-    LinkActionDelete, LinkActionDeleteProps,
-    LinkActionMoveEndpoint, LinkActionMoveEndpointProps,
-    LinkActionRename, LinkActionRenameProps,
+    LinkAction, type LinkActionProps, type LinkActionStyleProps,
+    LinkActionSpinner, type LinkActionSpinnerProps,
+    LinkActionEdit, type LinkActionEditProps,
+    LinkActionDelete, type LinkActionDeleteProps,
+    LinkActionMoveEndpoint, type LinkActionMoveEndpointProps,
+    LinkActionRename, type LinkActionRenameProps,
 } from './widgets/linkAction';
-export { LinkTypesToolbox, LinkTypesToolboxProps } from './widgets/linksToolbox';
-export { Navigator, NavigatorProps } from './widgets/navigator';
-export { Selection, SelectionProps } from './widgets/selection';
+export { LinkTypesToolbox, type LinkTypesToolboxProps } from './widgets/linksToolbox';
+export { Navigator, type NavigatorProps } from './widgets/navigator';
+export { Selection, type SelectionProps } from './widgets/selection';
 export {
-    SelectionAction, SelectionActionProps, SelectionActionStyleProps,
-    SelectionActionSpinner, SelectionActionSpinnerProps,
-    SelectionActionRemove, SelectionActionRemoveProps,
-    SelectionActionZoomToFit, SelectionActionZoomToFitProps,
-    SelectionActionLayout, SelectionActionLayoutProps,
-    SelectionActionExpand, SelectionActionExpandProps,
-    SelectionActionAnchor, SelectionActionAnchorProps,
-    SelectionActionConnections, SelectionActionConnectionsProps,
-    SelectionActionAddToFilter, SelectionActionAddToFilterProps,
-    SelectionActionGroup, SelectionActionGroupProps,
-    SelectionActionEstablishLink, SelectionActionEstablishLinkProps,
+    SelectionAction, type SelectionActionProps, type SelectionActionStyleProps,
+    SelectionActionSpinner, type SelectionActionSpinnerProps,
+    SelectionActionRemove, type SelectionActionRemoveProps,
+    SelectionActionZoomToFit, type SelectionActionZoomToFitProps,
+    SelectionActionLayout, type SelectionActionLayoutProps,
+    SelectionActionExpand, type SelectionActionExpandProps,
+    SelectionActionAnchor, type SelectionActionAnchorProps,
+    SelectionActionConnections, type SelectionActionConnectionsProps,
+    SelectionActionAddToFilter, type SelectionActionAddToFilterProps,
+    SelectionActionGroup, type SelectionActionGroupProps,
+    SelectionActionEstablishLink, type SelectionActionEstablishLinkProps,
 } from './widgets/selectionAction';
-export { Toolbar, ToolbarProps } from './widgets/toolbar';
+export { Toolbar,type  ToolbarProps } from './widgets/toolbar';
 export {
-    ToolbarAction, ToolbarActionProps, ToolbarActionStyleProps,
-    ToolbarActionOpen, ToolbarActionOpenProps,
-    ToolbarActionSave, ToolbarActionSaveProps,
-    ToolbarActionClearAll, ToolbarActionClearAllProps,
-    ToolbarActionExport, ToolbarActionExportProps,
-    ToolbarActionUndo, ToolbarActionUndoProps,
-    ToolbarActionRedo, ToolbarActionRedoProps,
-    ToolbarActionLayout, ToolbarActionLayoutProps,
-    ToolbarLanguageSelector, ToolbarLanguageSelectorProps, WorkspaceLanguage,
+    ToolbarAction, type ToolbarActionProps, type ToolbarActionStyleProps,
+    ToolbarActionOpen, type ToolbarActionOpenProps,
+    ToolbarActionSave, type ToolbarActionSaveProps,
+    ToolbarActionClearAll, type ToolbarActionClearAllProps,
+    ToolbarActionExport, type ToolbarActionExportProps,
+    ToolbarActionUndo, type ToolbarActionUndoProps,
+    ToolbarActionRedo, type ToolbarActionRedoProps,
+    ToolbarActionLayout, type ToolbarActionLayoutProps,
+    ToolbarLanguageSelector, type ToolbarLanguageSelectorProps, type WorkspaceLanguage,
 } from './widgets/toolbarAction';
 export {
-    UnifiedSearch, UnifiedSearchProps, UnifiedSearchCommands, UnifiedSearchSection,
-    UnifiedSearchSectionProvidedContext, useUnifiedSearchSection,
+    UnifiedSearch, type UnifiedSearchProps, type UnifiedSearchCommands, type UnifiedSearchSection,
+    type UnifiedSearchSectionProvidedContext, useUnifiedSearchSection,
     SearchSectionElementTypes,
     SearchSectionEntities,
     SearchSectionLinkTypes,
 } from './widgets/unifiedSearch';
 export {
-    VisualAuthoring, VisualAuthoringProps, VisualAuthoringCommands,
-    AuthoredEntityContext, useAuthoredEntity,
-    PropertyEditor, PropertyEditorOptions,
-    DragEditOperation, DragEditConnect, DragEditMoveEndpoint,
+    VisualAuthoring, type VisualAuthoringProps, type VisualAuthoringCommands,
+    type AuthoredEntityContext, useAuthoredEntity,
+    type PropertyEditor, type PropertyEditorOptions,
+    type DragEditOperation, type DragEditConnect, type DragEditMoveEndpoint,
 } from './widgets/visualAuthoring';
-export { ZoomControl, ZoomControlProps } from './widgets/zoomControl';
+export { ZoomControl, type ZoomControlProps } from './widgets/zoomControl';
 
 export {
-    ClassicWorkspace, ClassicWorkspaceProps,
-    ClassicToolbar, ClassicToolbarProps,
+    ClassicWorkspace, type ClassicWorkspaceProps,
+    ClassicToolbar, type ClassicToolbarProps,
 } from './workspace/classicWorkspace';
-export { DefaultWorkspace, DefaultWorkspaceProps } from './workspace/defaultWorkspace';
+export { DefaultWorkspace, type DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export {
-    Workspace, WorkspaceProps, DefaultRenameLinkProvider,
-    LoadedWorkspace, LoadedWorkspaceParams, useLoadedWorkspace,
+    Workspace, type WorkspaceProps, DefaultRenameLinkProvider,
+    type LoadedWorkspace, type LoadedWorkspaceParams, useLoadedWorkspace,
 } from './workspace/workspace';
 export {
-    WorkspaceContext, WorkspaceEventKey, WorkspacePerformLayoutParams,
-    WorkspaceGroupParams, WorkspaceUngroupAllParams, WorkspaceUngroupSomeParams,
-    ProcessedTypeStyle, useWorkspace,
+    WorkspaceContext, WorkspaceEventKey, type WorkspacePerformLayoutParams,
+    type WorkspaceGroupParams, type WorkspaceUngroupAllParams, type WorkspaceUngroupSomeParams,
+    type ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
 export {
     CommandBusTopic,
     ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic, VisualAuthoringTopic,
 } from './workspace/commandBusTopic';
 export * from './workspace/workspaceLayout';
-export { WorkspaceRoot, WorkspaceRootProps } from './workspace/workspaceRoot';
+export { WorkspaceRoot, type WorkspaceRootProps } from './workspace/workspaceRoot';
