@@ -67,28 +67,26 @@ export default tseslint.config(
         },
     },
     {
-        files: ['**/eslint.config.mjs', '**/*.config.mts'],
-        languageOptions: {
-            globals: {
-                ...globals.node,
-            },
-        },
-    },
-    {
-        files: ['**/*.config.js', '**/webpackServe.js'],
+        files: ['**/eslint.config.mjs'],
         languageOptions: {
             globals: {
                 ...globals.node,
             },
         },
         rules: {
-            'indent': ['warn', 2, {
-                flatTernaryExpressions: true,
-                SwitchCase: 1,
-            }],
             '@typescript-eslint/no-require-imports': 'off',
+            '@typescript-eslint/no-unsafe-argument': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@typescript-eslint/no-unsafe-call': 'off',
+            '@typescript-eslint/no-unsafe-member-access': 'off',
         },
-    }
+    },
+    {
+        files: ['**/vite.config.mts'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
 );

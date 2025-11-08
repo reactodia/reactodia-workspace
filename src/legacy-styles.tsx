@@ -1,15 +1,15 @@
 import type { LinkTypeIri } from './data/model';
 import type { TypeStyleResolver, LinkTemplate } from './diagram/customization';
 
-const classIcon = require('@images/semantic/class.svg') as string;
-const objectPropertyIcon = require('@images/semantic/objectProperty.svg') as string;
-const datatypePropertyIcon = require('@images/semantic/datatypeProperty.svg') as string;
-const personIcon = require('@images/semantic/person.svg') as string;
-const countryIcon = require('@images/semantic/country.svg') as string;
-const organizationIcon = require('@images/semantic/organization.svg') as string;
-const locationIcon = require('@images/semantic/location.svg') as string;
-const eventIcon = require('@images/semantic/event.svg') as string;
-const objectIcon = require('@images/semantic/object.svg') as string;
+import classIcon from '@images/semantic/class.svg';
+import objectPropertyIcon from '@images/semantic/objectProperty.svg';
+import datatypePropertyIcon from '@images/semantic/datatypeProperty.svg';
+import personIcon from '@images/semantic/person.svg';
+import countryIcon from '@images/semantic/country.svg';
+import organizationIcon from '@images/semantic/organization.svg';
+import locationIcon from '@images/semantic/location.svg';
+import eventIcon from '@images/semantic/event.svg';
+import objectIcon from '@images/semantic/object.svg';
 
 /**
  * Built-in type style provider for Semantic Web element types:

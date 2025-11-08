@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "./examples/**/*.ts",
+    "./examples/**/*.tsx",
+    "./i18n/**/*.ts",
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./test/**/*.ts",
+    "./test/**/*.tsx",
+    "./typings/typings.d.ts"
+  ]
+}
