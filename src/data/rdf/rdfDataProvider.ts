@@ -338,7 +338,7 @@ export class RdfDataProvider implements DataProvider {
                     primarySet.has(t.subject) && secondarySet.has(t.object) ||
                     secondarySet.has(t.subject) && primarySet.has(t.object)
                 ) &&
-                (!linkTypeSet || !linkTypeSet.has(t.predicate.value))
+                (!linkTypeSet || linkTypeSet.has(t.predicate.value))
             ) {
                 const properties = findProperties(this.dataset, t);
                 links.push({
