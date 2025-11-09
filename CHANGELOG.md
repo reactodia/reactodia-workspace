@@ -59,6 +59,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Deprecate and hide by default "Edit" and "Delete" action buttons in `StandardEntity` expanded state (can be re-enabled by setting `showActions` prop to `true`).
 
 #### 🐛 Fixed
+- Fix `RdfDataProvider.links()` returning empty results when called with `linkTypeIds` parameter.
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 - Fix `HaloLink` link path highlighting not updating on link re-route.
 - Fix element template state not being restored when ungrouping entities.
