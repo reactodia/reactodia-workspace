@@ -9,10 +9,7 @@ const GRAPH_DATA =
     'https://raw.githubusercontent.com/reactodia/reactodia-workspace/' +
     'master/examples/resources/orgOntology.ttl';
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
-    {type: 'module'}
-));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function BasicExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);

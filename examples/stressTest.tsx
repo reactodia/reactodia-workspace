@@ -4,10 +4,7 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
-    {type: 'module'}
-));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function StressTestExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);

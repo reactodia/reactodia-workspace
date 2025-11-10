@@ -12,10 +12,7 @@ import {
     SparqlConnectionSettings, SparqlConnectionAction, showConnectionDialog,
 } from './resources/sparqlConnection';
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
-    {type: 'module'}
-));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function SparqlExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);

@@ -3,12 +3,9 @@ import * as Reactodia from '../src/workspace';
 
 import { ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage } from './resources/common';
 
-declare const __REACTODIA_WIKIDATA_ENDPOINT__: string | undefined;
+declare const WIKIDATA_ENDPOINT: string | undefined;
 
-const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
-    {type: 'module'}
-));
+const Layouts = Reactodia.defineLayoutWorker(() => new Worker('layout.worker.js'));
 
 function WikidataExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
@@ -18,12 +15,12 @@ function WikidataExample() {
 
         const sparqlProvider = new Reactodia.SparqlDataProvider(
             {
-                endpointUrl: __REACTODIA_WIKIDATA_ENDPOINT__ || '/wikidata',
+                endpointUrl: WIKIDATA_ENDPOINT || '/wikidata',
                 imagePropertyUris: [
                     'http://www.wikidata.org/prop/direct/P18',
                     'http://www.wikidata.org/prop/direct/P154',
                 ],
-                queryMethod: __REACTODIA_WIKIDATA_ENDPOINT__ ? 'GET' : 'POST',
+                queryMethod: WIKIDATA_ENDPOINT ? 'GET' : 'POST',
             },
             {
                 ...Reactodia.WikidataSettings,
