@@ -579,10 +579,35 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     /**
+     * Requests to load all {@link EntityElement entities} with
+     * {@link EntityElement.isPlaceholderData placeholder data} and all
+     * {@link RelationLink relations} connected to them.
+     *
+     * @see {@link DataDiagramModel.requestElementData}
+     * @see {@link DataDiagramModel.requestLinks}
+     */
+    async requestData(): Promise<void> {
+        const targets = new Set<ElementIri>();
+        for (const element of this.elements) {
+            for (const entity of iterateEntitiesOf(element)) {
+                if (EntityElement.isPlaceholderData(entity)) {
+                    targets.add(entity.id);
+                }
+            }
+        }
+
+        const elements = Array.from(targets);
+        await Promise.all([
+            this.fetcher.fetchElementData(targets),
+            this.requestLinks({addedElements: elements}),
+        ]);
+    }
+
+    /**
      * Requests to fetch the data for the specified elements from a data provider.
      */
     requestElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {
-        return this.fetcher.fetchElementData(elementIris);
+        return this.fetcher.fetchElementData(new Set<ElementIri>(elementIris));
     }
 
     /**
@@ -618,8 +643,8 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     /**
      * Creates or gets an existing entity element on the diagram.
      *
-     * If element is specified as an IRI only, then the placeholder data will
-     * be used.
+     * If element is specified as an IRI only, then the
+     * {@link EntityElement.placeholderData placeholder data} will be used.
      *
      * If multiple entity elements with the same IRI is on the diagram,
      * the first one in the order will be returned.

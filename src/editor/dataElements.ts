@@ -9,6 +9,7 @@ import {
     PropertyTypeIri, PropertyTypeModel,
     equalLinks, hashLink,
 } from '../data/model';
+import { PlaceholderDataProperty } from '../data/schema';
 
 import {
     Element, ElementEvents, ElementProps, ElementTemplateState,
@@ -64,13 +65,33 @@ export class EntityElement extends Element {
      *
      * This data can be used to display an entity in the UI
      * until the actual data is loaded from a data provider.
+     * 
+     * @see {@link PlaceholderDataProperty}
      */
     static placeholderData(iri: ElementIri): ElementModel {
         return {
             id: iri,
             types: [],
-            properties: {},
+            properties: {
+                [PlaceholderDataProperty]: [],
+            },
         };
+    }
+
+    /**
+     * Returns `true` if the `data` is an empty placeholder (not yet loaded) data,
+     * otherwise `false`.
+     *
+     * The entity data is considered to be a placeholder data if `data.properties`
+     * contains `PlaceholderDataProperty` key with a empty or non-empty values.
+     *
+     * @see {@link PlaceholderDataProperty}
+     */
+    static isPlaceholderData(data: ElementModel): boolean {
+        return (
+            Object.prototype.hasOwnProperty.call(data.properties, PlaceholderDataProperty) &&
+            data.properties[PlaceholderDataProperty] !== undefined
+        );
     }
 
     protected get entitySource(): EventSource<EntityElementEvents> {

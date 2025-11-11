@@ -6,6 +6,7 @@ import {
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../data/model';
 import { DataProvider } from '../data/dataProvider';
+import { PlaceholderDataProperty } from '../data/schema';
 
 import { Graph } from '../diagram/graph';
 
@@ -264,39 +265,44 @@ export class DataFetcher {
         return reasons;
     }
 
-    fetchElementData(elementIris: ReadonlyArray<ElementIri>): Promise<void> {
-        if (elementIris.length === 0) {
+    fetchElementData(targets: ReadonlySet<ElementIri>): Promise<void> {
+        if (targets.size === 0) {
             return Promise.resolve();
         }
         const operation: FetchOperationElement = {
             type: 'element',
-            targets: new Set(elementIris),
+            targets,
         };
         const task = this.dataProvider
-            .elements({elementIds: [...elementIris], signal: this.signal})
-            .then(this.onElementInfoLoaded);
+            .elements({elementIds: Array.from(targets), signal: this.signal})
+            .then(result => this.onElementInfoLoaded(targets, result));
         this.addOperation(operation, task);
         return task;
     }
 
-    private onElementInfoLoaded = (elements: Map<ElementIri, ElementModel>) => {
+    private onElementInfoLoaded(
+        targets: ReadonlySet<ElementIri>,
+        elements: Map<ElementIri, ElementModel>
+    ): void {
         for (const element of this.graph.getElements()) {
             if (element instanceof EntityElement) {
                 const loadedModel = elements.get(element.iri);
                 if (loadedModel) {
                     element.setData(loadedModel);
+                } else if (targets.has(element.iri)) {
+                    element.setData(unsetPlaceholder(element.data));
                 }
             } else if (element instanceof EntityGroup) {
                 let hasLoadedModel = false;
                 for (const item of element.items) {
-                    if (elements.has(item.data.id)) {
+                    if (targets.has(item.data.id)) {
                         hasLoadedModel = true;
                     }
                 }
                 if (hasLoadedModel) {
                     const loadedItems = element.items.map((item): EntityGroupItem => {
-                        const loadedData = elements.get(item.data.id);
-                        return loadedData ? {...item, data: loadedData} : item;
+                        const nextData = elements.get(item.data.id) ?? unsetPlaceholder(item.data);
+                        return nextData === item.data ? item : {...item, data: nextData};
                     });
                     element.setItems(loadedItems);
                 }
@@ -359,4 +365,12 @@ export class DataFetcher {
             }
         }
     };
+}
+
+function unsetPlaceholder(data: ElementModel): ElementModel {
+    if (EntityElement.isPlaceholderData(data)) {
+        const {[PlaceholderDataProperty]: _, ...restProperties} = data.properties;
+        return {...data, properties: restProperties};
+    }
+    return data;
 }

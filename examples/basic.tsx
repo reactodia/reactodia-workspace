@@ -29,9 +29,9 @@ function BasicExample() {
         await model.createNewDiagram({dataProvider, signal});
         const elementTypeId = 'http://www.w3.org/2002/07/owl#Class';
         for (const {element} of await dataProvider.lookup({elementTypeId})) {
-            model.createElement(element);
+            model.createElement(element.id);
         }
-        await model.requestLinks();
+        await model.requestData();
 
         // Layout elements on canvas
         await performLayout({signal});

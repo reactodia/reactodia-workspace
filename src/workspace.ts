@@ -33,7 +33,7 @@ export {
     type ValidatedLink, type ValidationSeverity,
 } from './data/validationProvider';
 export {
-    DiagramContextV1, PlaceholderEntityType, PlaceholderRelationType,
+    DiagramContextV1, PlaceholderDataProperty, PlaceholderEntityType, PlaceholderRelationType,
     TemplateProperties, type PinnedProperties, type AnnotationContent, type AnnotationTextStyle,
     type ColorVariant, setTemplateProperty,
 } from './data/schema';

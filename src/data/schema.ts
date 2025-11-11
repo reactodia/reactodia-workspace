@@ -1,4 +1,4 @@
-import type { ElementTypeIri, LinkTypeIri } from './model';
+import type { ElementTypeIri, LinkTypeIri, PropertyTypeIri } from './model';
 
 /**
  * [JSON-LD](https://json-ld.org/) context IRI (`@context` value) for the
@@ -7,6 +7,13 @@ import type { ElementTypeIri, LinkTypeIri } from './model';
  * @category Constants
  */
 export const DiagramContextV1 = 'https://ontodia.org/context/v1.json';
+/**
+ * Property type to mark placeholder (i.e. not loaded yet) entity data.
+ *
+ * @category Constants
+ * @see {@link EntityElement.placeholderData}
+ */
+export const PlaceholderDataProperty: PropertyTypeIri = 'urn:reactodia:isPlaceholder';
 /**
  * Type for a newly created temporary entity in graph authoring mode.
  *

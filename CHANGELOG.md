@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Add `changeTransform` event to `CanvasApi.events` which triggers on `CanvasApi.metrics.getTransform()` changes, i.e. when coordinate mapping changes due to scale or canvas size is re-adjusted.
 - Add `DiagramModel.cellsVersion` property which updates on every element or link addition/removal/reordering to be able to subscribe to `changeCells` event with `useSyncStore()` hook.
 - Deprecate `canvasWidgets` prop on `DefaultWorkspace` and `ClassicWorkspace` in favor of passing widgets directly as children.
+- Mark placeholder entity data with `PlaceholderDataProperty` property key to distinguish not-loaded-yet elements with `EntityElement.isPlaceholderData()`:
+  * Add `DataDiagramModel.requestData()` as a convenient method to load all placeholder entities at once.
 - Move expanded element state from distinct property on `Element` to be stored in `Element.elementState` with `TemplateProperties.Expanded` property:
   * All existing properties, methods and commands works as before but use element template state as storage for expanded state;
   * `changeExpanded` event is removed from element events, use `changeElementState` event instead;
