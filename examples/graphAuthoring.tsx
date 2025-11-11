@@ -36,18 +36,18 @@ function GraphAuthoringExample() {
         });
 
         if (!diagram) {
-            const elements = [
-                model.createElement('http://www.w3.org/ns/org#Organization'),
-                model.createElement('http://www.w3.org/ns/org#FormalOrganization'),
-                model.createElement('http://www.w3.org/ns/org#hasMember'),
-                model.createElement('http://www.w3.org/ns/org#hasSubOrganization'),
-                model.createElement('http://www.w3.org/ns/org#subOrganizationOf'),
-                model.createElement('http://www.w3.org/ns/org#unitOf'),
+            const entities = [
+                'http://www.w3.org/ns/org#Organization',
+                'http://www.w3.org/ns/org#FormalOrganization',
+                'http://www.w3.org/ns/org#hasMember',
+                'http://www.w3.org/ns/org#hasSubOrganization',
+                'http://www.w3.org/ns/org#subOrganizationOf',
+                'http://www.w3.org/ns/org#unitOf',
             ];
-            await Promise.all([
-                model.requestElementData(elements.map(el => el.iri)),
-                model.requestLinks(),
-            ]);
+            for (const entity of entities) {
+                model.createElement(entity);
+            }
+            await model.requestData();
             await performLayout({signal});
         }
     }, []);
