@@ -145,6 +145,16 @@ export class SharedCanvasState {
     }
 
     /**
+     * Returns `true` if there is a previously set drop handler on a canvas,
+     * otherwise `false`.
+     *
+     * **Experimental**: this feature will likely change in the future.
+     */
+    hasHandlerForNextDropOnPaper(): boolean {
+        return Boolean(this.dropOnPaperHandler);
+    }
+
+    /**
      * Tries to run previously set drop handler on a canvas,
      * then removes the handler if it was set.
      *

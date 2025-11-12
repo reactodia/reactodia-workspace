@@ -1105,3 +1105,13 @@ export function restoreLinksBetweenElements(
         () => void model.requestLinks(options)
     );
 }
+
+export function getAllPresentEntities(graph: DataGraphStructure): Set<ElementIri> {
+    const presentOnDiagram = new Set<ElementIri>();
+    for (const element of graph.elements) {
+        for (const entity of iterateEntitiesOf(element)) {
+            presentOnDiagram.add(entity.id);
+        }
+    }
+    return presentOnDiagram;
+}

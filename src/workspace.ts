@@ -117,7 +117,10 @@ export {
     TemporaryState,
 } from './editor/authoringState';
 export { BuiltinDialogType } from './editor/builtinDialogType';
-export * from './editor/dataDiagramModel';
+export {
+    type DataDiagramModel, type DataDiagramModelEvents, type DataGraphStructure,
+    requestElementData, restoreLinksBetweenElements, type RequestLinksOptions,
+} from './editor/dataDiagramModel';
 export {
     EntityElement, type EntityElementEvents, type EntityElementProps,
     EntityGroup, type EntityGroupEvents, type EntityGroupProps, type EntityGroupItem,
@@ -208,7 +211,10 @@ export {
     type PropertySuggestionHandler, type PropertySuggestionParams, type PropertyScore,
 } from './widgets/connectionsMenu';
 export type { DialogStyleProps } from './widgets/dialog';
-export { DropOnCanvas, type DropOnCanvasProps } from './widgets/dropOnCanvas';
+export {
+    DropOnCanvas, type DropOnCanvasProps, type DropOnCanvasItem, type DropItemElement,
+    defaultGetDroppedOnCanvasItems,
+} from './widgets/dropOnCanvas';
 export { Halo, type HaloProps } from './widgets/halo';
 export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {

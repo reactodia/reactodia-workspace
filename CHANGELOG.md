@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Resizable elements display "box with handles" in the `Halo` to change the size;
   * Changed element sizes are captured and restored by `RestoreGeometry` command.
 - Allow to customize link template separately for each link instead of only based on its link type IRI in `linkTemplateResolver` for `Canvas`.
+- Allow to configure `DropOnCanvas` to allow only some drop events and provide items to place on the canvas.
 - Support keyboard hotkeys for `LinkAction` components to act on a currently selected link.
 
 #### ⏱ Performance
