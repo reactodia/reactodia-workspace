@@ -5,8 +5,8 @@ import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementModel, ElementIri } from '../../data/model';
 
-import type { DataGraphStructure } from '../../editor/dataDiagramModel';
-import { EntityElement, iterateEntitiesOf } from '../../editor/dataElements';
+import { getAllPresentEntities } from '../../editor/dataDiagramModel';
+import { EntityElement } from '../../editor/dataElements';
 
 import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -305,14 +305,4 @@ class SearchResultsInner extends React.Component<SearchResultsInnerProps> {
 
         item.focus();
     }
-}
-
-export function getAllPresentEntities(graph: DataGraphStructure): Set<ElementIri> {
-    const presentOnDiagram = new Set<ElementIri>();
-    for (const element of graph.elements) {
-        for (const entity of iterateEntitiesOf(element)) {
-            presentOnDiagram.add(entity.id);
-        }
-    }
-    return presentOnDiagram;
 }

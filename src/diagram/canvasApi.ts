@@ -176,6 +176,11 @@ export interface CanvasEvents {
      */
     scroll: CanvasScrollEvent;
     /**
+     * Triggered on [dragover](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dragover_event)
+     * event from a drag and drop operation on the canvas.
+     */
+    dragover: CanvasDragoverEvent;
+    /**
      * Triggered on [drop](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/drop_event)
      * event from a drag and drop operation on the canvas.
      */
@@ -267,6 +272,29 @@ export interface CanvasScrollEvent {
      * Original (raw) event data.
      */
     readonly sourceEvent: Event;
+}
+
+/**
+ * Event data for canvas dragover event from a drag and drop operation.
+ */
+export interface CanvasDragoverEvent {
+    /**
+     * Event source (canvas).
+     */
+    readonly source: CanvasApi;
+    /**
+     * Original (raw) event data.
+     */
+    readonly sourceEvent: DragEvent;
+    /**
+     * Position of the dragged item in paper coordinates.
+     */
+    readonly position: Vector;
+    /**
+     * If called from any handler, allows the drop operation to proceed;
+     * otherwise the drop event would be cancelled.
+     */
+    readonly allowDrop: () => void;
 }
 
 /**

@@ -525,12 +525,17 @@ export function getContentFittingBox(
 /**
  * Computes average center position of element bounding boxes.
  *
+ * When `elements` is empty, returns `{x: 0, y: 0}`.
+ *
  * @category Geometry
  */
 export function calculateAveragePosition(
     elements: ReadonlyArray<Element>,
     sizeProvider: SizeProvider
 ): Vector {
+    if (elements.length === 0) {
+        return {x: 0, y: 0};
+    }
     let xSum = 0;
     let ySum = 0;
     for (const element of elements) {

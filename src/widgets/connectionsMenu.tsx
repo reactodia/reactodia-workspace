@@ -16,7 +16,9 @@ import { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { BuiltinDialogType } from '../editor/builtinDialogType';
-import { requestElementData, restoreLinksBetweenElements } from '../editor/dataDiagramModel';
+import {
+    requestElementData, restoreLinksBetweenElements, getAllPresentEntities,
+} from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -27,7 +29,7 @@ import { type WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../works
 import { ConnectionsMenuTopic, InstancesSearchTopic } from '../workspace/commandBusTopic';
 
 import { highlightSubstring } from './utility/listElementView';
-import { SearchResults, getAllPresentEntities } from './utility/searchResults';
+import { SearchResults } from './utility/searchResults';
 
 /**
  * Props for {@link ConnectionsMenu} component.

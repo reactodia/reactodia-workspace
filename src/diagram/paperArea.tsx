@@ -8,7 +8,7 @@ import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/schedu
 
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
-    CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions,
+    CanvasDragoverEvent, CanvasDropEvent, CenterToOptions, ScaleOptions, ViewportOptions,
     CanvasPointerMode, ZoomOptions, ExportSvgOptions, ExportRasterOptions,
 } from './canvasApi';
 import { RestoreGeometry } from './commands';
@@ -812,13 +812,33 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     private onDragOver = (e: DragEvent) => {
-        // Necessary. Allows us to drop.
-        if (e.preventDefault) { e.preventDefault(); }
-        if (e.dataTransfer) {
-            e.dataTransfer.dropEffect = 'move';
+        const {renderingState} = this.props;
+        if (renderingState.shared.hasHandlerForNextDropOnPaper()) {
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'move';
+            }
+            // Allow to drop
+            e?.preventDefault();
+        } else {
+            const {x, y} = clientCoordsFor(this.area, e);
+            const position = this.metrics.clientToPaperCoords(x, y);
+            let allowDrop = false;
+            const event: CanvasDragoverEvent = {
+                source: this,
+                sourceEvent: e,
+                position,
+                allowDrop: () => {
+                    allowDrop = true;
+                },
+            };
+            this.source.trigger('dragover', event);
+            if (allowDrop) {
+                // Allow to drop
+                e?.preventDefault();
+            } else if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = 'none';
+            }
         }
-        const {x, y} = clientCoordsFor(this.area, e);
-        return false;
     };
 
     private onDragDrop = (e: DragEvent) => {
