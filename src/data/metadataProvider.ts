@@ -1,4 +1,4 @@
-import type { ElementTemplateState, LinkTemplateState } from '../diagram/elements';
+import type { TemplateState } from '../data/schema';
 
 import type * as Rdf from './rdf/rdfModel';
 import type {
@@ -68,12 +68,12 @@ export interface MetadataProvider {
 
 export interface MetadataCreatedEntity {
     readonly data: ElementModel;
-    readonly elementState?: ElementTemplateState;
+    readonly elementState?: TemplateState;
 }
 
 export interface MetadataCreatedRelation {
     readonly data: LinkModel;
-    readonly linkState?: LinkTemplateState;
+    readonly linkState?: TemplateState;
 }
 
 export interface MetadataCanConnect {

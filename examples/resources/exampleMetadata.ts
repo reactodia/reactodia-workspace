@@ -42,9 +42,11 @@ export class ExampleMetadataProvider extends Reactodia.BaseMetadataProvider {
                             ]
                         },
                     },
-                    elementState: type === owl.Class ? {
-                        [Reactodia.TemplateProperties.Expanded]: true,
-                    } : undefined,
+                    elementState: type === owl.Class
+                        ? Reactodia.setTemplateProperty(
+                            {}, Reactodia.TemplateProperties.Expanded, true
+                        )
+                        : undefined,
                 };
             },
             createRelation: async (source, target, linkType, {signal}) => {

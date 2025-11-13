@@ -9,12 +9,11 @@ import {
     PropertyTypeIri, PropertyTypeModel,
     equalLinks, hashLink,
 } from '../data/model';
-import { PlaceholderDataProperty } from '../data/schema';
+import { PlaceholderDataProperty, type TemplateState } from '../data/schema';
 
 import {
-    Element, ElementEvents, ElementProps, ElementTemplateState,
+    Element, ElementEvents, ElementProps,
     Link, LinkEvents, LinkProps,
-    LinkTemplateState,
 } from '../diagram/elements';
 import { Command } from '../diagram/history';
 import { DiagramModel } from '../diagram/model';
@@ -281,7 +280,7 @@ EntityGroup satisfies SerializableElementCell<EntityGroup>;
  */
 export interface EntityGroupItem {
     readonly data: ElementModel;
-    readonly elementState?: ElementTemplateState | undefined;
+    readonly elementState?: TemplateState | undefined;
 }
 
 /**
@@ -298,7 +297,7 @@ export interface SerializedEntityGroup extends SerializedElement {
 export interface SerializedEntityGroupItem {
     '@type': 'ElementItem';
     iri: ElementIri;
-    elementState?: ElementTemplateState;
+    elementState?: TemplateState;
 }
 
 /**
@@ -632,7 +631,7 @@ RelationGroup satisfies SerializableLinkCell<RelationGroup>;
  */
 export interface RelationGroupItem {
     readonly data: LinkModel;
-    readonly linkState?: LinkTemplateState | undefined;
+    readonly linkState?: TemplateState | undefined;
 }
 
 /**
@@ -651,7 +650,7 @@ export interface SerializedRelationGroupItem {
     '@type': 'LinkItem';
     targetIri: ElementIri;
     sourceIri: ElementIri;
-    linkState?: LinkTemplateState;
+    linkState?: TemplateState;
 }
 
 /**

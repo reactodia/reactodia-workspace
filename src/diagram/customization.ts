@@ -1,6 +1,8 @@
 import type * as React from 'react';
 
-import type { Element, ElementTemplateState, Link } from './elements';
+import type { TemplateState, TemplateProperty } from '../data/schema';
+
+import type { Element, Link } from './elements';
 import type { SizeProvider, Vector } from './geometry';
 import type { GraphStructure } from './model';
 
@@ -85,7 +87,7 @@ export interface ElementTemplate {
      *
      * @default {}
      */
-    readonly supports?: Record<string, boolean>;
+    readonly supports?: Record<TemplateProperty, boolean>;
 }
 
 /**
@@ -123,7 +125,7 @@ export interface TemplateProps {
      *
      * Same as {@link Element.elementState}.
      */
-    readonly elementState?: ElementTemplateState;
+    readonly elementState?: TemplateState;
     /**
      * Whether the element is the only selected cell on the canvas.
      *

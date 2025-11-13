@@ -5,7 +5,7 @@ import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import type { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
-import { PinnedProperties, TemplateProperties } from '../data/schema';
+import { PinnedProperties, TemplateProperties, getTemplateProperty, setTemplateProperty } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -125,8 +125,7 @@ export function StandardEntity(props: StandardEntityProps) {
         if (isExpanded || !elementState) {
             return undefined;
         }
-        const pinned = elementState[TemplateProperties.PinnedProperties] as PinnedProperties;
-        return pinned;
+        return getTemplateProperty(elementState, TemplateProperties.PinnedProperties);
     }
 
     function renderIri(data: ElementModel) {
@@ -347,16 +346,18 @@ export function StandardEntityGroup(props: StandardEntityGroupProps) {
             ))}
             <GroupPaginator pageIndex={pageIndex}
                 pageCount={pageCount}
-                onChangePage={page => element.setElementState({
-                    ...element.elementState,
-                    [TemplateProperties.GroupPageIndex]: page,
-                })}
+                onChangePage={page => element.setElementState(setTemplateProperty(
+                    element.elementState,
+                    TemplateProperties.GroupPageIndex,
+                    page,
+                ))}
                 pageSize={pageSize}
                 pageSizes={groupPageSizes}
-                onChangePageSize={size => element.setElementState({
-                    ...element.elementState,
-                    [TemplateProperties.GroupPageSize]: size,
-                })}
+                onChangePageSize={size => element.setElementState(setTemplateProperty(
+                    element.elementState,
+                    TemplateProperties.GroupPageSize,
+                    size,
+                ))}
             />
         </div>
     );
