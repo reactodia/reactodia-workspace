@@ -427,7 +427,9 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         }
 
         const element = editor.createEntity(createdEntity.data);
-        element.setElementState(createdEntity.elementState);
+        if (createdEntity.elementState) {
+            element.setElementState(createdEntity.elementState);
+        }
 
         let createAt: [CanvasApi, Vector] | undefined;
         if (dropEvent) {

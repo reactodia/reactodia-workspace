@@ -396,7 +396,7 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
         listener.listen(model.events, 'elementEvent', ({data}) => {
             if (data.changeElementState && elementSet.has(data.changeElementState.source)) {
                 const previousExpanded = Boolean(
-                    data.changeElementState.previous?.[TemplateProperties.Expanded]
+                    data.changeElementState.previous.get(TemplateProperties.Expanded)
                 );
                 if (data.changeElementState.source.isExpanded !== previousExpanded) {
                     onChange();

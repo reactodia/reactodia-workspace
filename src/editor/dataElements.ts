@@ -9,7 +9,9 @@ import {
     PropertyTypeIri, PropertyTypeModel,
     equalLinks, hashLink,
 } from '../data/model';
-import { PlaceholderDataProperty, type TemplateState } from '../data/schema';
+import {
+    PlaceholderDataProperty, TemplateState, type SerializedTemplateState,
+} from '../data/schema';
 
 import {
     Element, ElementEvents, ElementProps,
@@ -124,7 +126,9 @@ export class EntityElement extends Element {
                 data: initialData ?? EntityElement.placeholderData(iri),
                 position,
                 expanded: isExpanded,
-                elementState: options.mapTemplateState(elementState),
+                elementState: options.mapTemplateState(
+                    TemplateState.fromJSON(elementState)
+                ),
             });
         }
         return undefined;
@@ -136,7 +140,7 @@ export class EntityElement extends Element {
             '@id': this.id,
             iri: this.iri,
             position: this.position,
-            elementState: this.elementState,
+            elementState: this.elementState.toJSON(),
         };
     }
 }
@@ -250,10 +254,17 @@ export class EntityGroup extends Element {
             const initialData = options.getInitialData(item.iri);
             groupItems.push({
                 data: initialData ?? EntityElement.placeholderData(item.iri),
-                elementState: options.mapTemplateState(item.elementState),
+                elementState: options.mapTemplateState(
+                    TemplateState.fromJSON(item.elementState)
+                ),
             });
         }
-        return new EntityGroup({id, items: groupItems, position, elementState});
+        return new EntityGroup({
+            id,
+            items: groupItems,
+            position,
+            elementState: TemplateState.fromJSON(elementState),
+        });
     }
 
     toJSON(): SerializedEntityGroup {
@@ -263,10 +274,10 @@ export class EntityGroup extends Element {
             items: this.items.map((item): SerializedEntityGroupItem => ({
                 '@type': 'ElementItem',
                 iri: item.data.id,
-                elementState: item.elementState,
+                elementState: item.elementState?.toJSON(),
             })),
             position: this.position,
-            elementState: this.elementState,
+            elementState: this.elementState.toJSON(),
         };
     }
 }
@@ -297,7 +308,7 @@ export interface SerializedEntityGroup extends SerializedElement {
 export interface SerializedEntityGroupItem {
     '@type': 'ElementItem';
     iri: ElementIri;
-    elementState?: TemplateState;
+    elementState?: SerializedTemplateState;
 }
 
 /**
@@ -427,7 +438,9 @@ export class RelationLink extends Link {
                 targetId: target.id,
                 data: initialData ?? key,
                 vertices,
-                linkState: options.mapTemplateState(linkState),
+                linkState: options.mapTemplateState(
+                    TemplateState.fromJSON(linkState)
+                ),
             });
         }
 
@@ -444,7 +457,7 @@ export class RelationLink extends Link {
             sourceIri: this.data.sourceId,
             targetIri: this.data.targetId,
             vertices: [...this.vertices],
-            linkState: this.linkState,
+            linkState: this.linkState.toJSON(),
         };
     }
 }
@@ -589,7 +602,9 @@ export class RelationGroup extends Link {
             const initialData = options.getInitialData(key);
             groupItems.push({
                 data: initialData ?? key,
-                linkState: options.mapTemplateState(item.linkState),
+                linkState: options.mapTemplateState(
+                    TemplateState.fromJSON(item.linkState)
+                ),
             });
         }
         return new RelationGroup({
@@ -599,7 +614,9 @@ export class RelationGroup extends Link {
             targetId: target.id,
             items: groupItems,
             vertices,
-            linkState: options.mapTemplateState(linkState),
+            linkState: options.mapTemplateState(
+                TemplateState.fromJSON(linkState)
+            ),
         });
     }
 
@@ -614,10 +631,10 @@ export class RelationGroup extends Link {
                 '@type': 'LinkItem',
                 sourceIri: item.data.sourceId,
                 targetIri: item.data.targetId,
-                linkState: item.linkState,
+                linkState: item.linkState?.toJSON(),
             })),
             vertices: [...this.vertices],
-            linkState: this.linkState,
+            linkState: this.linkState.toJSON(),
         };
     }
 }
@@ -650,7 +667,7 @@ export interface SerializedRelationGroupItem {
     '@type': 'LinkItem';
     targetIri: ElementIri;
     sourceIri: ElementIri;
-    linkState?: TemplateState;
+    linkState?: SerializedTemplateState;
 }
 
 /**

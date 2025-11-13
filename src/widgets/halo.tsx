@@ -5,7 +5,7 @@ import { AnyListener, EventObserver } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
 import { TranslatedText } from '../coreUtils/i18n';
 
-import { setTemplateProperty, TemplateProperties } from '../data/schema';
+import { TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { RestoreGeometry } from '../diagram/commands';
@@ -205,11 +205,12 @@ class ElementResizeOperation implements ResizableBoxOperation {
 
     onResize({x, y, width, height}: Rect): void {
         this.target.setPosition({x, y});
-        this.target.setElementState(setTemplateProperty(
-            this.target.elementState,
-            TemplateProperties.ElementSize,
-            {width, height},
-        ));
+        this.target.setElementState(
+            this.target.elementState.set(
+                TemplateProperties.ElementSize,
+                {width, height}
+            )
+        );
     }
 
     end(): void {

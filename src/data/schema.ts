@@ -37,18 +37,82 @@ export const PlaceholderRelationType: LinkTypeIri = 'urn:reactodia:newLink';
 export type TemplateProperty<K extends string = string, V = unknown> = K & { __value: V };
 
 /**
- * Utility function to define typed {@link TemplateProperty template property}.
+ * Contains a state with typed values for any defined
+ * {@link TemplateProperties template properties}.
  *
- * **Example**:
- * ```ts
- * const MyNumberProperty = templateProperty('urn:my:prop1').of<number>();
- * ```
+ * Each property value should be JSON-serializable to be able
+ * to export and import it as part of the serialized diagram layout.
  */
-export function templateProperty<K extends string>(key: K): { of<V>(): TemplateProperty<K, V> } {
-    return {
-        of: <V>() => key as TemplateProperty<K, V>,
-    };
-};
+export class TemplateState {
+    static empty = new TemplateState(undefined);
+
+    constructor(
+        private readonly value: { [property: string]: unknown } | undefined
+    ) {}
+
+    /**
+     * Utility function to define typed {@link TemplateProperty template property}.
+     *
+     * **Example**:
+     * ```ts
+     * const MyNumberProperty = TemplateState.property('urn:my:prop1').of<number>();
+     * ```
+     */
+    static property<K extends string>(key: K): { of<V>(): TemplateProperty<K, V> } {
+        return {
+            of: <V>() => key as TemplateProperty<K, V>,
+        };
+    }
+
+    /**
+     * Gets typed {@link TemplateProperties template property} value from
+     * a template state.
+     */
+    get<V>(property: TemplateProperty<string, V>): V | undefined {
+        return this.value?.[property] as V | undefined;
+    }
+
+    /**
+     * Sets optional typed {@link TemplateProperties template property} value
+     * on a template state.
+     *
+     * This function never mutates the original state and always return
+     * either original state (if the property value is the same) or newly
+     * created updated state.
+     *
+     * If the `value` is `undefined`, the property will be removed from the `state`,
+     * otherwise the new value will be set.
+     */
+    set<V>(property: TemplateProperty<string, V>, value: V): TemplateState {
+        const state = this.value;
+        if (value !== undefined) {
+            if (state?.[property] !== value) {
+                return new TemplateState({...state, [property]: value});
+            }
+        } else if (state?.[property] !== undefined) {
+            const {[property]: _, ...withoutProperty} = state;
+            return new TemplateState(withoutProperty);
+        }
+        return this;
+    }
+
+    static fromJSON(
+        value: { readonly [property: string]: unknown } | undefined
+    ): TemplateState {
+        return value === undefined ? TemplateState.empty : new TemplateState(value);
+    }
+
+    toJSON(): SerializedTemplateState | undefined {
+        return this.value ? {...this.value} : undefined;
+    }
+}
+
+/**
+ * Serialized template state.
+ *
+ * @see {@link TemplateState}
+ */
+export type SerializedTemplateState = { readonly [property: string]: unknown };
 
 /**
  * Well-known {@link TemplateProperty template properties} for
@@ -64,13 +128,13 @@ export namespace TemplateProperties {
      * @see {@link Element.isExpanded}
      */
     export const Expanded =
-        templateProperty('urn:reactodia:expanded').of<boolean>();
+        TemplateState.property('urn:reactodia:expanded').of<boolean>();
     /**
      * Element state property for user-modifiable template size
      * (if element template supports changing its size).
      */
     export const ElementSize =
-        templateProperty('urn:reactodia:elementSize').of<Size>();
+        TemplateState.property('urn:reactodia:elementSize').of<Size>();
     /**
      * Element state property to mark some element data properties as "pinned",
      * i.e. displayed even if element is collapsed.
@@ -78,38 +142,38 @@ export namespace TemplateProperties {
      * @see {@link PinnedProperties}
      */
     export const PinnedProperties =
-        templateProperty('urn:reactodia:pinnedProperties').of<PinnedProperties>();
+        TemplateState.property('urn:reactodia:pinnedProperties').of<PinnedProperties>();
     /**
      * Link state property to change to name of a specific link only on the diagram
      * (instead of displaying link type label).
      */
     export const CustomLabel =
-        templateProperty('urn:reactodia:customLabel').of<string>();
+        TemplateState.property('urn:reactodia:customLabel').of<string>();
     /**
      * Link state property to mark link as present only on the diagram but
      * missing from the data returned by a data provider.
      */
     export const LayoutOnly =
-        templateProperty('urn:reactodia:layoutOnly').of<boolean>();
+        TemplateState.property('urn:reactodia:layoutOnly').of<boolean>();
     /**
      * Element state property for selected page index when element is a group
      * of multiple items displayed with pagination.
      */
     export const GroupPageIndex =
-        templateProperty('urn:reactodia:groupPageIndex').of<number>();
+        TemplateState.property('urn:reactodia:groupPageIndex').of<number>();
     /**
      * Element state property for selected page size when element is a group
      * of multiple items displayed with pagination.
      */
     export const GroupPageSize =
-        templateProperty('urn:reactodia:groupPageSize').of<number>();
+        TemplateState.property('urn:reactodia:groupPageSize').of<number>();
     /**
      * Element state property for the annotation content.
      *
      * @see {@link AnnotationContent}
      */
     export const AnnotationContent =
-        templateProperty('urn:reactodia:annotationContent').of<AnnotationContent>();
+        TemplateState.property('urn:reactodia:annotationContent').of<AnnotationContent>();
     /**
      * Element or link state property to select a color variant for its style
      * from a predefined list.
@@ -117,7 +181,7 @@ export namespace TemplateProperties {
      * @see {@link ColorVariant}
      */
     export const ColorVariant =
-        templateProperty('urn:reactodia:colorVariant').of<ColorVariant>();
+        TemplateState.property('urn:reactodia:colorVariant').of<ColorVariant>();
 }
 
 /**
@@ -175,54 +239,3 @@ export const DefaultColorVariants: readonly ColorVariant[] = [
     'warning',
     'danger',
 ];
-
-/**
- * Contains a state with typed values for any defined
- * {@link TemplateProperties template properties}.
- *
- * Each property value should be JSON-serializable to be able
- * to export and import it as part of the serialized diagram layout.
- *
- * @see {@link getTemplateProperty}
- * @see {@link setTemplateProperty}
- */
-export interface TemplateState {
-    readonly [property: TemplateProperty<string, unknown>]: void;
-}
-
-/**
- * Gets typed {@link TemplateProperties template property} value from
- * a template state.
- */
-export function getTemplateProperty<K extends string, V>(
-    state: TemplateState | undefined,
-    property: TemplateProperty<K, V>
-): V | undefined {
-    return state?.[property] as V | undefined;
-}
-
-/**
- * Sets optional typed {@link TemplateProperties template property} value
- * on a template state.
- *
- * This function never mutates the original state and always return
- * either original state (if the property value is the same) or newly
- * created updated state.
- *
- * If the `value` is `undefined`, the property will be removed from the `state`,
- * otherwise the new value will be set.
- */
-export function setTemplateProperty<K extends string, V>(
-    state: TemplateState | undefined,
-    property: TemplateProperty<K, V>,
-    value: V | undefined
-): TemplateState | undefined {
-    if (value !== undefined) {
-        return state?.[property] === value
-            ? state : {...state, [property]: value};
-    } else if (state?.[property] !== undefined) {
-        const {[property]: _, ...withoutProperty} = state;
-        return withoutProperty;
-    }
-    return state;
-}

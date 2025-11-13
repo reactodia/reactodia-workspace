@@ -34,9 +34,8 @@ export {
 } from './data/validationProvider';
 export {
     DiagramContextV1, PlaceholderDataProperty, PlaceholderEntityType, PlaceholderRelationType,
-    TemplateProperties, type TemplateState, type PinnedProperties, type AnnotationContent,
-    type AnnotationTextStyle, type ColorVariant,
-    templateProperty, getTemplateProperty, setTemplateProperty,
+    TemplateProperties, TemplateState, type TemplateProperty, type PinnedProperties,
+    type AnnotationContent, type AnnotationTextStyle, type ColorVariant,
 } from './data/schema';
 export * from './data/composite/composite';
 export {

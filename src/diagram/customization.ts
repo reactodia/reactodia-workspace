@@ -125,7 +125,7 @@ export interface TemplateProps {
      *
      * Same as {@link Element.elementState}.
      */
-    readonly elementState?: TemplateState;
+    readonly elementState: TemplateState;
     /**
      * Whether the element is the only selected cell on the canvas.
      *

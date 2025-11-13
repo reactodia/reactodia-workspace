@@ -1,9 +1,7 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri } from '../data/model';
-import {
-    type TemplateState, TemplateProperties, getTemplateProperty, setTemplateProperty,
-} from '../data/schema';
+import { TemplateState, TemplateProperties } from '../data/schema';
 import { generate128BitID } from '../data/utils';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -26,7 +24,7 @@ export interface ElementEvents {
     /**
      * Triggered on {@link Element.elementState} property change.
      */
-    changeElementState: PropertyChange<Element, TemplateState | undefined>;
+    changeElementState: PropertyChange<Element, TemplateState>;
     /**
      * Triggered on a request to set DOM focus on the element.
      */
@@ -115,20 +113,20 @@ export abstract class Element {
     readonly id: string;
 
     private _position: Vector;
-    private _elementState: TemplateState | undefined;
+    private _elementState: TemplateState;
 
     constructor(props: ElementProps) {
         const {
             id = Element.generateId(),
             position = {x: 0, y: 0},
             expanded = false,
-            elementState,
+            elementState = TemplateState.empty,
         } = props;
 
         this.id = id;
         this._position = position;
         this._elementState = expanded
-            ? {...elementState, [TemplateProperties.Expanded]: expanded}
+            ? elementState.set(TemplateProperties.Expanded, expanded)
             : elementState;
     }
 
@@ -173,7 +171,7 @@ export abstract class Element {
      * with {@link TemplateProperties.Expanded} property.
      */
     get isExpanded(): boolean {
-        return Boolean(getTemplateProperty(this._elementState, TemplateProperties.Expanded));
+        return Boolean(this._elementState.get(TemplateProperties.Expanded));
     }
 
     /**
@@ -187,14 +185,14 @@ export abstract class Element {
      */
     setExpanded(value: boolean): void {
         this.setElementState(
-            setTemplateProperty(this._elementState, TemplateProperties.Expanded, value ? true : undefined)
+            this._elementState.set(TemplateProperties.Expanded, value ? true : undefined)
         );
     }
 
     /**
      * Gets a serializable template-specific state for the element.
      */
-    get elementState(): TemplateState | undefined {
+    get elementState(): TemplateState {
         return this._elementState;
     }
 
@@ -204,7 +202,7 @@ export abstract class Element {
      * Triggers {@link ElementEvents.changeElementState} event if new value does
      * not equal to the previous one.
      */
-    setElementState(value: TemplateState | undefined): void {
+    setElementState(value: TemplateState): void {
         const previous = this._elementState;
         if (previous === value) { return; }
         this._elementState = value;
@@ -250,7 +248,7 @@ export interface LinkEvents {
     /**
      * Triggered on {@link Link.linkState} property change.
      */
-    changeLinkState: PropertyChange<Link, TemplateState | undefined>;
+    changeLinkState: PropertyChange<Link, TemplateState>;
     /**
      * Triggered on a request to re-render link on a canvas.
      *
@@ -317,7 +315,7 @@ export abstract class Link {
 
     private _vertices: ReadonlyArray<Vector>;
 
-    private _linkState: TemplateState | undefined;
+    private _linkState: TemplateState;
 
     constructor(props: LinkProps) {
         const {
@@ -325,7 +323,7 @@ export abstract class Link {
             sourceId,
             targetId,
             vertices = [],
-            linkState,
+            linkState = TemplateState.empty,
         } = props;
         this.id = id;
         this._sourceId = sourceId;
@@ -397,7 +395,7 @@ export abstract class Link {
     /**
      * Gets a serializable template-specific state for the link.
      */
-    get linkState(): TemplateState | undefined {
+    get linkState(): TemplateState {
         return this._linkState;
     }
 
@@ -407,7 +405,7 @@ export abstract class Link {
      * Triggers {@link LinkEvents.changeLinkState} event if new value does
      * not equal to the previous one.
      */
-    setLinkState(value: TemplateState | undefined): void {
+    setLinkState(value: TemplateState): void {
         const previous = this._linkState;
         if (previous === value) { return; }
         this._linkState = value;
