@@ -2,7 +2,9 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 
-import { TemplateProperties, type AnnotationContent } from '../../data/schema';
+import {
+    TemplateProperties, type AnnotationContent, setTemplateProperty,
+} from '../../data/schema';
 
 import { useCanvas } from '../../diagram/canvasApi';
 import { placeElementsAroundTarget } from '../../diagram/commands';
@@ -48,9 +50,9 @@ export function AnnotationSupport(props: Pick<WorkspaceContext, 'getCommandBus'>
             const batch = model.history.startBatch();
 
             const annotation = new AnnotationElement({
-                elementState: content ? {
-                    [TemplateProperties.AnnotationContent]: content,
-                } : undefined,
+                elementState: content
+                    ? setTemplateProperty({}, TemplateProperties.AnnotationContent, content)
+                    : undefined,
             });
             model.addElement(annotation);
 
