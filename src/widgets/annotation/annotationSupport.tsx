@@ -3,7 +3,7 @@ import * as React from 'react';
 import { EventObserver } from '../../coreUtils/events';
 
 import {
-    TemplateProperties, type AnnotationContent, setTemplateProperty,
+    TemplateState, TemplateProperties, type AnnotationContent,
 } from '../../data/schema';
 
 import { useCanvas } from '../../diagram/canvasApi';
@@ -51,7 +51,7 @@ export function AnnotationSupport(props: Pick<WorkspaceContext, 'getCommandBus'>
 
             const annotation = new AnnotationElement({
                 elementState: content
-                    ? setTemplateProperty({}, TemplateProperties.AnnotationContent, content)
+                    ? TemplateState.empty.set(TemplateProperties.AnnotationContent, content)
                     : undefined,
             });
             model.addElement(annotation);

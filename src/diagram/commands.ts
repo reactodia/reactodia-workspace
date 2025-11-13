@@ -1,9 +1,7 @@
 import { TranslatedText } from '../coreUtils/i18n';
 
 import type { LinkTypeIri } from '../data/model';
-import {
-    type TemplateState, TemplateProperties, getTemplateProperty, setTemplateProperty,
-} from '../data/schema';
+import { TemplateState, TemplateProperties } from '../data/schema';
 
 import type { CanvasApi } from './canvasApi';
 import type {
@@ -111,7 +109,7 @@ export class RestoreGeometry implements Command {
         for (const {element, position, size} of [...this.elementState].reverse()) {
             element.setPosition(position);
             element.setElementState(
-                setTemplateProperty(element.elementState, TemplateProperties.ElementSize, size)
+                element.elementState.set(TemplateProperties.ElementSize, size)
             );
         }
         for (const {link, vertices} of this.linkState) {
@@ -122,7 +120,7 @@ export class RestoreGeometry implements Command {
 }
 
 function getElementSize(element: Element): Size | undefined {
-    return element.elementState?.[TemplateProperties.ElementSize] as Size | undefined;
+    return element.elementState.get(TemplateProperties.ElementSize);
 }
 
 /**
@@ -151,7 +149,7 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
  *
  * @category Commands
  */
-export function setElementState(element: Element, state: TemplateState | undefined): Command {
+export function setElementState(element: Element, state: TemplateState): Command {
     return Command.create(TranslatedText.text('commands.set_element_state.title'), () => {
         const previous = element.elementState;
         element.setElementState(state);
@@ -184,7 +182,7 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
  *
  * @category Commands
  */
-export function setLinkState(link: Link, state: TemplateState | undefined): Command {
+export function setLinkState(link: Link, state: TemplateState): Command {
     return Command.create(TranslatedText.text('commands.set_link_state.title'), () => {
         const previous = link.linkState;
         link.setLinkState(state);

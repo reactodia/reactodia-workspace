@@ -8,6 +8,7 @@ import {
     ElementIri, ElementModel, ElementTypeIri, LinkKey, LinkModel, LinkTypeModel,
     LinkTypeIri, PropertyTypeIri, equalLinks,
 } from '../data/model';
+import { TemplateState } from '../data/schema';
 import { EmptyDataProvider } from '../data/decorated/emptyDataProvider';
 import { DataProvider } from '../data/dataProvider';
 import * as Rdf from '../data/rdf/rdfModel';
@@ -727,16 +728,23 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         target: EntityElement | EntityGroup,
         data: LinkModel
     ): RelationLink | RelationGroup {
-        const existingLinks = Array.from(this.graph.iterateLinks(source.id, target.id, data.linkTypeId));
+        const existingLinks = Array.from(
+            this.graph.iterateLinks(source.id, target.id, data.linkTypeId)
+        );
         for (const link of existingLinks) {
             if (link instanceof RelationLink && equalLinks(link.data, data)) {
                 this.history.execute(setLinkState(link, markLayoutOnly(link.linkState, false)));
                 this.history.execute(setRelationLinkData(link, data));
                 return link;
             } else if (link instanceof RelationGroup && link.itemKeys.has(data)) {
-                const items = link.items.map((item): RelationGroupItem => equalLinks(item.data, data)
-                    ? {...item, data, linkState: markLayoutOnly(item.linkState, false)}
-                    : item
+                const items = link.items.map((item): RelationGroupItem =>
+                    equalLinks(item.data, data)
+                        ? {
+                            ...item,
+                            data,
+                            linkState: markLayoutOnly(item.linkState ?? TemplateState.empty, false)
+                        }
+                        : item
                 );
                 this.history.execute(setRelationGroupItems(link, items));
                 return link;

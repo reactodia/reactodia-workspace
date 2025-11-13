@@ -5,7 +5,7 @@ import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import type { Translation } from '../coreUtils/i18n';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
-import { PinnedProperties, TemplateProperties, getTemplateProperty, setTemplateProperty } from '../data/schema';
+import { PinnedProperties, TemplateProperties } from '../data/schema';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { setElementExpanded } from '../diagram/commands';
@@ -122,10 +122,7 @@ export function StandardEntity(props: StandardEntityProps) {
     }
 
     function findPinnedProperties(): PinnedProperties | undefined {
-        if (isExpanded || !elementState) {
-            return undefined;
-        }
-        return getTemplateProperty(elementState, TemplateProperties.PinnedProperties);
+        return isExpanded ? undefined : elementState.get(TemplateProperties.PinnedProperties);
     }
 
     function renderIri(data: ElementModel) {
@@ -306,13 +303,11 @@ export function StandardEntityGroup(props: StandardEntityGroupProps) {
         '--reactodia-standard-group-color': groupColor,
     } as React.CSSProperties;
 
-    const pageSizeFromState = elementState?.[TemplateProperties.GroupPageSize];
-    let pageSize = typeof pageSizeFromState === 'number' ? pageSizeFromState : groupPageSize;
+    let pageSize = elementState.get(TemplateProperties.GroupPageSize) ?? groupPageSize;
     pageSize = Number.isFinite(pageSize) ? pageSize : groupPageSize;
 
     const pageCount = Math.max(Math.ceil(items.length / pageSize), 1);
-    const groupPageFromState = elementState?.[TemplateProperties.GroupPageIndex];
-    let pageIndex = typeof groupPageFromState === 'number' ? groupPageFromState : 0;
+    let pageIndex = elementState.get(TemplateProperties.GroupPageIndex) ?? 0;
     pageIndex = Number.isFinite(pageIndex) ? pageIndex : 0;
     pageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
 
@@ -346,18 +341,14 @@ export function StandardEntityGroup(props: StandardEntityGroupProps) {
             ))}
             <GroupPaginator pageIndex={pageIndex}
                 pageCount={pageCount}
-                onChangePage={page => element.setElementState(setTemplateProperty(
-                    element.elementState,
-                    TemplateProperties.GroupPageIndex,
-                    page,
-                ))}
+                onChangePage={page => element.setElementState(
+                    element.elementState.set(TemplateProperties.GroupPageIndex,page)
+                )}
                 pageSize={pageSize}
                 pageSizes={groupPageSizes}
-                onChangePageSize={size => element.setElementState(setTemplateProperty(
-                    element.elementState,
-                    TemplateProperties.GroupPageSize,
-                    size,
-                ))}
+                onChangePageSize={size => element.setElementState(
+                    element.elementState.set(TemplateProperties.GroupPageSize, size)
+                )}
             />
         </div>
     );

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
 
-import { TemplateProperties, setTemplateProperty } from '../data/schema';
+import { TemplateProperties } from '../data/schema';
 
 import type { CanvasApi, CanvasDropEvent } from './canvasApi';
 import type { ElementTemplate, LinkTemplate, RenameLinkProvider } from './customization';
@@ -205,15 +205,16 @@ export class RenameLinkToLinkStateProvider implements RenameLinkProvider {
 
     getLabel(link: Link): string | undefined {
         const {linkState} = link;
-        const customLabel = linkState?.[TemplateProperties.CustomLabel];
+        const customLabel = linkState.get(TemplateProperties.CustomLabel);
         return typeof customLabel === 'string' ? customLabel : undefined;
     }
 
     setLabel(link: Link, label: string): void {
-        link.setLinkState(setTemplateProperty(
-            link.linkState,
-            TemplateProperties.CustomLabel,
-            label.length === 0 ? undefined : label
-        ));
+        link.setLinkState(
+            link.linkState.set(
+                TemplateProperties.CustomLabel,
+                label.length === 0 ? undefined : label
+            )
+        );
     }
 }

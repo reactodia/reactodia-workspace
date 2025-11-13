@@ -195,7 +195,7 @@ export function StandardRelation(props: StandardRelationProps) {
                     ...pathProps,
                     className: cx(`${CLASS_NAME}__path`, pathProps?.className),
                     stroke,
-                    strokeDasharray: linkState?.[TemplateProperties.LayoutOnly]
+                    strokeDasharray: linkState.get(TemplateProperties.LayoutOnly)
                         ? '5,5' : pathProps?.strokeDasharray,
                 }}
                 markerSource={markerSource}

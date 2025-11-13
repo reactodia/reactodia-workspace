@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { TranslatedText } from '../coreUtils/i18n';
 
-import { TemplateProperties } from '../data/schema';
-
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState, TemporaryState } from '../editor/authoringState';
@@ -235,7 +233,9 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
 
         if (elementValue.isNew) {
             model.addElement(target);
-            target.setElementState(elementValue.value.elementState);
+            if (elementValue.value.elementState) {
+                target.setElementState(elementValue.value.elementState);
+            }
             editor.setAuthoringState(
                 AuthoringState.addEntity(editor.authoringState, target.data)
             );

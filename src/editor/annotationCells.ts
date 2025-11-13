@@ -1,4 +1,5 @@
 import type { LinkTypeIri } from '../data/model';
+import { TemplateState } from '../data/schema';
 
 import { Element, Link } from '../diagram/elements';
 
@@ -18,7 +19,9 @@ export class AnnotationElement extends Element {
         return new AnnotationElement({
             id,
             position,
-            elementState: options.mapTemplateState(elementState),
+            elementState: options.mapTemplateState(
+                TemplateState.fromJSON(elementState)
+            ),
         });
     }
 
@@ -27,7 +30,7 @@ export class AnnotationElement extends Element {
             '@type': 'Annotation',
             '@id': this.id,
             position: this.position,
-            elementState: this.elementState,
+            elementState: this.elementState.toJSON(),
         };
     }
 }
@@ -57,7 +60,9 @@ export class AnnotationLink extends Link {
             sourceId: options.source.id,
             targetId: options.target.id,
             vertices,
-            linkState: options.mapTemplateState(linkState),
+            linkState: options.mapTemplateState(
+                TemplateState.fromJSON(linkState)
+            ),
         });
     }
 
@@ -68,7 +73,7 @@ export class AnnotationLink extends Link {
             source: {'@id': this.sourceId},
             target: {'@id': this.targetId},
             vertices: this.vertices,
-            linkState: this.linkState,
+            linkState: this.linkState.toJSON(),
         };
     }
 }

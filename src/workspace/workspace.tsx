@@ -8,7 +8,7 @@ import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../cor
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
-import { TemplateProperties, ColorVariant, getTemplateProperty } from '../data/schema';
+import { TemplateProperties, ColorVariant } from '../data/schema';
 import { ValidationProvider } from '../data/validationProvider';
 
 import { RestoreGeometry, restoreViewport } from '../diagram/commands';
@@ -366,7 +366,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private tryGetColorVariantStyle(element: Element): ProcessedTypeStyle | undefined {
         const {elementState} = element;
-        const colorVariant = getTemplateProperty(elementState, TemplateProperties.ColorVariant);
+        const colorVariant = elementState.get(TemplateProperties.ColorVariant);
         if (colorVariant || element instanceof AnnotationElement) {
             return this.annotationStyles.get(colorVariant ?? 'default');
         }

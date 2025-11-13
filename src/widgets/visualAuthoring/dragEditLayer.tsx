@@ -237,7 +237,9 @@ class EnitityDragConnection implements DragLinkConnection {
             {signal}
         );
         const element = editor.createEntity(createdEntity.data, {temporary: true});
-        element.setElementState(createdEntity.elementState);
+        if (createdEntity.elementState) {
+            element.setElementState(createdEntity.elementState);
+        }
         return element;
     }
 

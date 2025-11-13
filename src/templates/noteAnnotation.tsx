@@ -5,8 +5,8 @@ import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import type { PropertyTypeIri } from '../data/model';
 import {
-    TemplateProperties, type AnnotationContent, type AnnotationTextStyle,
-    type ColorVariant, DefaultColorVariants, setTemplateProperty,
+    TemplateState, TemplateProperties, type AnnotationContent, type AnnotationTextStyle,
+    type ColorVariant, DefaultColorVariants,
 } from '../data/schema';
 
 import { useCanvas } from '../diagram/canvasApi';
@@ -74,7 +74,7 @@ export interface NoteAnnotationProps extends TemplateProps {}
 export function NoteAnnotation(props: NoteAnnotationProps) {
     const {element, elementState} = props;
     const {model} = useCanvas();
-    const content = elementState?.[TemplateProperties.AnnotationContent] as AnnotationContent | undefined;
+    const content = elementState.get(TemplateProperties.AnnotationContent);
     return (
         <NoteAnnotationView {...props}
             content={content}
@@ -82,11 +82,13 @@ export function NoteAnnotation(props: NoteAnnotationProps) {
                 model.history.execute(Command.compound(
                     TranslatedText.text('note_annotation.change_text.command'),
                     [
-                        setElementState(element, setTemplateProperty(
-                            element.elementState,
-                            TemplateProperties.AnnotationContent,
-                            changedContent
-                        ))
+                        setElementState(
+                            element,
+                            element.elementState.set(
+                                TemplateProperties.AnnotationContent,
+                                changedContent
+                            )
+                        )
                     ],
                 ));
             }}
@@ -177,9 +179,8 @@ function NoteAnnotationView(props: NoteAnnotationViewProps) {
     
     const [isEditing, setEditing] = React.useState(false);
 
-    const size = elementState?.[TemplateProperties.ElementSize] as Size | undefined;
-    const colorVariant =
-        elementState?.[TemplateProperties.ColorVariant] as ColorVariant | undefined;
+    const size = elementState.get(TemplateProperties.ElementSize);
+    const colorVariant = elementState.get(TemplateProperties.ColorVariant);
     const plaintext = (content?.type === 'plaintext' ? content : undefined) ?? {
         type: 'plaintext',
         text: '',
@@ -232,8 +233,7 @@ function NoteAnnotationView(props: NoteAnnotationViewProps) {
                         setVariant={changedVariant => {
                             model.history.execute(setElementState(
                                 element,
-                                setTemplateProperty(
-                                    element.elementState,
+                                element.elementState.set(
                                     TemplateProperties.ColorVariant,
                                     changedVariant
                                 )
