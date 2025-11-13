@@ -56,7 +56,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Change CSS class for default link template from `reactodia-default-link` to `reactodia-standard-link`;
   * Change translation groups from `standard_template` / `default_link_template` to `standard_element` / `standard_link`.
 - Move "expand/collapse on double click" global element behavior to `StandardEntity` and `ClassicEntity` implementation only.
-- Add `setTemplateProperty()` utility function to easily set or unset template state property.
+- Make template state properties typed (only affects TypeScript types, the representation is the same):
+  * Use `templateProperty('key').of<Type>()` to define template properties;
+  * Use `getTemplateProperty()` and `setTemplateProperty()` functions to get or set/unset template state properties.
 - Change `MetadataProvider.{createEntity, createRelation}` to return result object with initial template state in addition to the data to customize the created cells (i.e. new elements can be expanded or collapsed).
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 - Deprecate and hide by default "Edit" and "Delete" action buttons in `StandardEntity` expanded state (can be re-enabled by setting `showActions` prop to `true`).

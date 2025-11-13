@@ -1,11 +1,13 @@
 import { TranslatedText } from '../coreUtils/i18n';
 
 import type { LinkTypeIri } from '../data/model';
-import { TemplateProperties, setTemplateProperty } from '../data/schema';
+import {
+    type TemplateState, TemplateProperties, getTemplateProperty, setTemplateProperty,
+} from '../data/schema';
 
 import type { CanvasApi } from './canvasApi';
 import type {
-    Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility,
+    Element, Link, LinkTypeVisibility,
 } from './elements';
 import {
     Size, SizeProvider, Vector, boundsOf, isPolylineEqual, calculateAveragePosition,
@@ -149,7 +151,7 @@ export function restoreCapturedLinkGeometry(link: Link): Command {
  *
  * @category Commands
  */
-export function setElementState(element: Element, state: ElementTemplateState | undefined): Command {
+export function setElementState(element: Element, state: TemplateState | undefined): Command {
     return Command.create(TranslatedText.text('commands.set_element_state.title'), () => {
         const previous = element.elementState;
         element.setElementState(state);
@@ -182,7 +184,7 @@ export function setElementExpanded(element: Element, expanded: boolean): Command
  *
  * @category Commands
  */
-export function setLinkState(link: Link, state: LinkTemplateState | undefined): Command {
+export function setLinkState(link: Link, state: TemplateState | undefined): Command {
     return Command.create(TranslatedText.text('commands.set_link_state.title'), () => {
         const previous = link.linkState;
         link.setLinkState(state);

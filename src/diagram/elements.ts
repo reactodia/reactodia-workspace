@@ -1,7 +1,9 @@
 import { EventSource, Events, PropertyChange } from '../coreUtils/events';
 
 import { LinkTypeIri } from '../data/model';
-import { TemplateProperties, setTemplateProperty } from '../data/schema';
+import {
+    type TemplateState, TemplateProperties, getTemplateProperty, setTemplateProperty,
+} from '../data/schema';
 import { generate128BitID } from '../data/utils';
 
 import { Vector, isPolylineEqual } from './geometry';
@@ -24,7 +26,7 @@ export interface ElementEvents {
     /**
      * Triggered on {@link Element.elementState} property change.
      */
-    changeElementState: PropertyChange<Element, ElementTemplateState | undefined>;
+    changeElementState: PropertyChange<Element, TemplateState | undefined>;
     /**
      * Triggered on a request to set DOM focus on the element.
      */
@@ -89,7 +91,7 @@ export interface ElementProps {
     /**
      * Initial value for the {@link Element.elementState element template state}.
      */
-    elementState?: ElementTemplateState;
+    elementState?: TemplateState;
 }
 
 /**
@@ -113,7 +115,7 @@ export abstract class Element {
     readonly id: string;
 
     private _position: Vector;
-    private _elementState: ElementTemplateState | undefined;
+    private _elementState: TemplateState | undefined;
 
     constructor(props: ElementProps) {
         const {
@@ -171,7 +173,7 @@ export abstract class Element {
      * with {@link TemplateProperties.Expanded} property.
      */
     get isExpanded(): boolean {
-        return Boolean(this._elementState?.[TemplateProperties.Expanded]);
+        return Boolean(getTemplateProperty(this._elementState, TemplateProperties.Expanded));
     }
 
     /**
@@ -192,7 +194,7 @@ export abstract class Element {
     /**
      * Gets a serializable template-specific state for the element.
      */
-    get elementState(): ElementTemplateState | undefined {
+    get elementState(): TemplateState | undefined {
         return this._elementState;
     }
 
@@ -202,7 +204,7 @@ export abstract class Element {
      * Triggers {@link ElementEvents.changeElementState} event if new value does
      * not equal to the previous one.
      */
-    setElementState(value: ElementTemplateState | undefined): void {
+    setElementState(value: TemplateState | undefined): void {
         const previous = this._elementState;
         if (previous === value) { return; }
         this._elementState = value;
@@ -227,16 +229,6 @@ export abstract class Element {
 }
 
 /**
- * Contains a template-specific state for an element.
- *
- * Each property value should be JSON-serializable to be able
- * to export and import it as part of the serialized diagram layout.
- */
-export interface ElementTemplateState {
-    [propertyIri: string]: unknown;
-}
-
-/**
  * Diagram element represented by an invisible single point.
  *
  * @category Core
@@ -258,7 +250,7 @@ export interface LinkEvents {
     /**
      * Triggered on {@link Link.linkState} property change.
      */
-    changeLinkState: PropertyChange<Link, LinkTemplateState | undefined>;
+    changeLinkState: PropertyChange<Link, TemplateState | undefined>;
     /**
      * Triggered on a request to re-render link on a canvas.
      *
@@ -297,7 +289,7 @@ export interface LinkProps {
     /**
      * Initial value for the {@link Link.linkState link template state}.
      */
-    linkState?: LinkTemplateState;
+    linkState?: TemplateState;
 }
 
 /**
@@ -325,7 +317,7 @@ export abstract class Link {
 
     private _vertices: ReadonlyArray<Vector>;
 
-    private _linkState: LinkTemplateState | undefined;
+    private _linkState: TemplateState | undefined;
 
     constructor(props: LinkProps) {
         const {
@@ -405,7 +397,7 @@ export abstract class Link {
     /**
      * Gets a serializable template-specific state for the link.
      */
-    get linkState(): LinkTemplateState | undefined {
+    get linkState(): TemplateState | undefined {
         return this._linkState;
     }
 
@@ -415,7 +407,7 @@ export abstract class Link {
      * Triggers {@link LinkEvents.changeLinkState} event if new value does
      * not equal to the previous one.
      */
-    setLinkState(value: LinkTemplateState | undefined): void {
+    setLinkState(value: TemplateState | undefined): void {
         const previous = this._linkState;
         if (previous === value) { return; }
         this._linkState = value;
@@ -428,16 +420,6 @@ export abstract class Link {
     redraw(): void {
         this.source.trigger('requestedRedraw', {source: this});
     }
-}
-
-/**
- * Contains a template-specific state for a link.
- *
- * Each property value should be JSON-serializable to be able
- * to export and import it as part of the serialized diagram layout.
- */
-export interface LinkTemplateState {
-    [propertyIri: string]: unknown;
 }
 
 /**

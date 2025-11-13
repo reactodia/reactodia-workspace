@@ -34,8 +34,9 @@ export {
 } from './data/validationProvider';
 export {
     DiagramContextV1, PlaceholderDataProperty, PlaceholderEntityType, PlaceholderRelationType,
-    TemplateProperties, type PinnedProperties, type AnnotationContent, type AnnotationTextStyle,
-    type ColorVariant, setTemplateProperty,
+    TemplateProperties, type TemplateState, type PinnedProperties, type AnnotationContent,
+    type AnnotationTextStyle, type ColorVariant,
+    templateProperty, getTemplateProperty, setTemplateProperty,
 } from './data/schema';
 export * from './data/composite/composite';
 export {
@@ -67,8 +68,8 @@ export {
 } from './diagram/commands';
 export * from './diagram/customization';
 export {
-    Element, type ElementEvents, type ElementProps, type ElementTemplateState,
-    Link, type LinkEvents, type LinkProps, type LinkTemplateState,
+    Element, type ElementEvents, type ElementProps,
+    Link, type LinkEvents, type LinkProps,
     type Cell, LinkVertex, VoidElement, type LinkTypeVisibility,
 } from './diagram/elements';
 export { ElementDecoration } from './diagram/elementLayer';

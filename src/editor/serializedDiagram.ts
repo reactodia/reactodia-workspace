@@ -2,10 +2,11 @@ import type { ReadonlyHashMap } from '@reactodia/hashmap';
 
 import { ElementIri, ElementModel, LinkKey, LinkModel, LinkTypeIri } from '../data/model';
 import {
-    DiagramContextV1, PlaceholderRelationType, TemplateProperties, setTemplateProperty,
+    DiagramContextV1, PlaceholderRelationType, type TemplateState, TemplateProperties,
+    setTemplateProperty,
 } from '../data/schema';
 
-import { Element, ElementTemplateState, Link, LinkTemplateState, LinkTypeVisibility } from '../diagram/elements';
+import { Element, Link, LinkTypeVisibility } from '../diagram/elements';
 import { Vector } from '../diagram/geometry';
 
 /**
@@ -80,7 +81,7 @@ export interface SerializableElementCell<T extends JsonableElement = JsonableEle
 export interface ElementFromJsonOptions {
     readonly getInitialData: (iri: ElementIri) => ElementModel | undefined;
     readonly mapTemplateState:
-        (from: ElementTemplateState | undefined) => ElementTemplateState | undefined;
+        (from: TemplateState | undefined) => TemplateState | undefined;
 }
 
 /**
@@ -90,7 +91,7 @@ export interface SerializedElement {
     '@type': string;
     '@id': string;
     position: Vector;
-    elementState?: ElementTemplateState;
+    elementState?: TemplateState;
 }
 
 type JsonableLink = Link & { toJSON(): SerializedLink };
@@ -134,7 +135,7 @@ export interface LinkFromJsonOptions {
     readonly target: Element;
     readonly getInitialData: (key: LinkKey) => LinkModel | undefined;
     readonly mapTemplateState:
-        (from: LinkTemplateState | undefined) => LinkTemplateState | undefined;
+        (from: TemplateState | undefined) => TemplateState | undefined;
 }
 
 /**
@@ -146,7 +147,7 @@ export interface SerializedLink {
     source: { '@id': string };
     target: { '@id': string };
     vertices?: ReadonlyArray<Vector>;
-    linkState?: LinkTemplateState;
+    linkState?: TemplateState;
 }
 
 /**
@@ -296,7 +297,7 @@ function deserializeLayout(
         typeToLink.set(linkCellType.fromJSONType, linkCellType);
     }
     const getInitialLinkData = (key: LinkKey) => preloadedLinks?.get(key);
-    const mapLinkTemplateState = (state: LinkTemplateState | undefined) =>
+    const mapLinkTemplateState = (state: TemplateState | undefined) =>
         markLayoutOnly(state, markLinksAsLayoutOnly);
 
     const elements = new Map<string, Element>();
@@ -342,9 +343,9 @@ function deserializeLayout(
 }
 
 export function markLayoutOnly(
-    linkState: LinkTemplateState | undefined,
+    linkState: TemplateState | undefined,
     value: boolean
-): LinkTemplateState | undefined {
+): TemplateState | undefined {
     return setTemplateProperty(linkState, TemplateProperties.LayoutOnly, value ? true : undefined);
 }
 
