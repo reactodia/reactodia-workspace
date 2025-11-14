@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npx playwright install chromium
       - run: npm run test-build
       - run: npm test
       - run: npm run validate-translations
