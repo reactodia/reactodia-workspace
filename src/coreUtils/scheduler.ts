@@ -33,7 +33,7 @@ export class Debouncer {
     }
 
     private schedule() {
-        if (typeof this.scheduled === 'undefined') {
+        if (this.scheduled === undefined) {
             if (this.timeout === 'frame') {
                 this.scheduled = requestAnimationFrame(this.runSynchronously);
             } else {

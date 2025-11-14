@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
-import { Debouncer } from '../../coreUtils/scheduler';
 
 import { LinkKey } from '../../data/model';
 import type { ValidationSeverity } from '../../data/validationProvider';
@@ -59,14 +58,18 @@ const DEFAULT_LINK_LABEL_MARGIN = 5;
 
 class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerProps> {
     private readonly listener = new EventObserver();
-    private readonly delayedUpdate = new Debouncer();
 
     componentDidMount() {
         this.listenEvents();
     }
 
     componentWillUnmount() {
+        const {canvas} = this.props;
         this.listener.stopListening();
+        canvas.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.Overlay,
+            this.performUpdate
+        );
     }
 
     private listenEvents() {
@@ -92,15 +95,14 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
         this.listener.listen(
             canvas.renderingState.events, 'changeLinkLabelBounds', this.scheduleUpdate
         );
-        this.listener.listen(canvas.renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer === RenderingLayer.Overlay) {
-                this.delayedUpdate.runSynchronously();
-            }
-        });
     }
 
     private scheduleUpdate = () => {
-        this.delayedUpdate.call(this.performUpdate);
+        const {canvas} = this.props;
+        canvas.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.Overlay,
+            this.performUpdate
+        );
     };
 
     private performUpdate = () => {

@@ -76,12 +76,13 @@ function StyleCustomizationExample() {
 }
 
 function BookDecorations() {
-    const {model} = Reactodia.useCanvas();
+    const {canvas, model} = Reactodia.useCanvas();
 
     // Update decorations when graph content changes
     Reactodia.useSyncStore(
-        Reactodia.useFrameDebouncedStore(
-            Reactodia.useEventStore(model.events, 'changeCells')
+        Reactodia.useLayerDebouncedStore(
+            Reactodia.useEventStore(model.events, 'changeCells'),
+            canvas.renderingState
         ),
         () => model.cellsVersion
     );

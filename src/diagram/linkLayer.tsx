@@ -1,9 +1,9 @@
 import cx from 'clsx';
 import * as React from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
+import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
 import { useCanvas } from './canvasApi';
 import { restoreCapturedLinkGeometry } from './commands';
@@ -15,7 +15,9 @@ import {
 } from './geometry';
 import { DiagramModel } from './model';
 import { type PaperTransform, HtmlPaperLayer } from './paper';
-import { MutableRenderingState, RenderingLayer } from './renderingState';
+import {
+    type MutableRenderingState, RenderingLayer, useLayerDebouncedStore,
+} from './renderingState';
 
 export interface LinkLayerProps {
     model: DiagramModel;
@@ -44,7 +46,6 @@ const CLASS_NAME = 'reactodia-link-layer';
 
 export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
     private readonly listener = new EventObserver();
-    private readonly delayedUpdate = new Debouncer();
 
     private providedContext: LinkLayerContext;
 
@@ -53,7 +54,6 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
     private scheduledToUpdate = new Set<string>();
 
     private labelMeasureRequests = new Set<MeasurableLabel>();
-    private delayedMeasureLabels = new Debouncer();
 
     private readonly memoizedLinks = new WeakMap<Link, React.ReactElement>();
 
@@ -135,18 +135,6 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
             updateChangedRoutes(newRoutes, previous);
             updateChangedRoutes(previous, newRoutes);
         });
-        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            switch (layer) {
-                case RenderingLayer.Link: {
-                    this.delayedUpdate.runSynchronously();
-                    break;
-                }
-                case RenderingLayer.LinkLabel: {
-                    this.delayedMeasureLabels.runSynchronously();
-                    break;
-                }
-            }
-        });
     }
 
     shouldComponentUpdate(nextProps: LinkLayerProps, nextState: LinkLayerState): boolean {
@@ -159,8 +147,14 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.delayedUpdate.dispose();
-        this.delayedMeasureLabels.dispose();
+        this.props.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.Link,
+            this.performUpdate
+        );
+        this.props.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.LinkLabel,
+            this.measureLabels
+        );
     }
 
     private scheduleUpdateAll = () => {
@@ -168,14 +162,20 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
             this.updateState = UpdateRequest.All;
             this.scheduledToUpdate = new Set<string>();
         }
-        this.delayedUpdate.call(this.performUpdate);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.Link,
+            this.performUpdate
+        );
     };
 
     private scheduleUpdateLink(linkId: string) {
         if (this.updateState === UpdateRequest.Partial) {
             this.scheduledToUpdate.add(linkId);
         }
-        this.delayedUpdate.call(this.performUpdate);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.Link,
+            this.performUpdate
+        );
     }
 
     private popShouldUpdatePredicate(): (model: Link) => boolean {
@@ -189,7 +189,10 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
 
     private scheduleLabelMeasure = (label: MeasurableLabel) => {
         this.labelMeasureRequests.add(label);
-        this.delayedMeasureLabels.call(this.measureLabels);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.LinkLabel,
+            this.measureLabels
+        );
     };
 
     private clearLabelMeasure = (label: MeasurableLabel) => {
@@ -218,8 +221,10 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
     };
 
     private performUpdate = () => {
-        this.setState({
-            shouldUpdateLink: this.popShouldUpdatePredicate(),
+        flushSync(() => {
+            this.setState({
+                shouldUpdateLink: this.popShouldUpdatePredicate(),
+            });
         });
     };
 
@@ -682,20 +687,14 @@ function LinkMarkersInner(props: {
 }) {
     const {model, renderingState} = props;
 
-    const [cellsVersion, setCellsVersion] = React.useState(model.cellsVersion);
-
-    React.useEffect(() => {
-        const listener = new EventObserver();
-        const delayedUpdate = new Debouncer();
-
-        listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer !== RenderingLayer.Link) { return; }
-            delayedUpdate.runSynchronously();
-        });
-        listener.listen(renderingState.events, 'changeLinkTemplates', () => {
-            delayedUpdate.call(() => setCellsVersion(model.cellsVersion));
-        });
-    }, []);
+    useSyncStore(
+        useLayerDebouncedStore(
+            useEventStore(renderingState.events, 'changeLinkTemplates'),
+            renderingState,
+            RenderingLayer.Link
+        ),
+        () => model.cellsVersion
+    );
 
     const sourceMarkers = new Set<LinkMarkerStyle>();
     const targetMarkers = new Set<LinkMarkerStyle>();

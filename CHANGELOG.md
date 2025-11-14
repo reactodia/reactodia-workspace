@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Subscribe to canvas `resize` event to track viewport size;
   * Subscribe to `changeCells` event from `DiagramModel` to track graph content changes.
 - Add `TemplateProps.onlySelected` flag to use in the element templates to track if the element is the only one selected without performance penalty.
+- Avoid per-layer frame delay when processing canvas layer updates without calling `RenderingState.syncUpdate()`:
+  * Add `useLayerDebouncedStore()` hook as more flexible way to debounce and update with the canvas layer.
 - Avoid eager link type creation for relation links, only create and fetch them on first render.
 
 #### 💅 Polish
@@ -62,6 +64,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Deprecate and hide by default "Edit" and "Delete" action buttons in `StandardEntity` expanded state (can be re-enabled by setting `showActions` prop to `true`).
 
 #### 🐛 Fixed
+- Fix link rendering lagging behind when moving elements. 
 - Fix `RdfDataProvider.links()` returning empty results when called with `linkTypeIds` parameter.
 - Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
 - Fix `HaloLink` link path highlighting not updating on link re-route.

@@ -99,7 +99,9 @@ export {
     SvgPaperLayer, type SvgPaperLayerProps,
 } from './diagram/paper';
 export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
-export { type RenderingState, type RenderingStateEvents, RenderingLayer } from './diagram/renderingState';
+export {
+    type RenderingState, type RenderingStateEvents, RenderingLayer, useLayerDebouncedStore,
+} from './diagram/renderingState';
 export {
     type SharedCanvasState, type SharedCanvasStateEvents, type CellHighlighter,
     type FindCanvasEvent, RenameLinkToLinkStateProvider,

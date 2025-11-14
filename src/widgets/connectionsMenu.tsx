@@ -2,7 +2,6 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
 import { TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, LinkTypeIri, LinkTypeModel } from '../data/model';
@@ -13,6 +12,7 @@ import { changeLinkTypeVisibility, placeElementsAroundTarget } from '../diagram/
 import { Element, VoidElement } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
+import { RenderingLayer } from '../diagram/renderingState';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { BuiltinDialogType } from '../editor/builtinDialogType';
@@ -330,7 +330,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     private readonly handler = new EventObserver();
     private readonly linkTypesListener = new EventObserver();
 
-    private readonly delayedUpdateAll = new Debouncer();
     private suggestionCancellation = new AbortController();
 
     private linksScrolledListRef = React.createRef<HTMLUListElement>();
@@ -358,7 +357,8 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     private updateAll = () => this.forceUpdate();
 
     private scheduleUpdateAll = () => {
-        this.delayedUpdateAll.call(this.updateAll);
+        const {canvas} = this.props;
+        canvas.renderingState.scheduleOnLayerUpdate(RenderingLayer.Overlay, this.updateAll);
     };
 
     componentDidMount() {
@@ -397,9 +397,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     componentWillUnmount() {
+        const {canvas} = this.props;
         this.handler.stopListening();
         this.linkTypesListener.stopListening();
-        this.delayedUpdateAll.dispose();
+        canvas.renderingState.cancelOnLayerUpdate(RenderingLayer.Overlay, this.updateAll);
         this.suggestionCancellation.abort();
     }
 

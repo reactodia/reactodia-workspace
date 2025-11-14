@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { flushSync } from 'react-dom';
 import cx from 'clsx';
 
 import { AnyListener, EventObserver } from '../coreUtils/events';
@@ -126,7 +127,9 @@ class HaloInner extends React.Component<HaloInnerProps> {
             this.targetListener.listenAny(element.events, this.onElementEvent);
             this.targetListener.listen(canvas.renderingState.events, 'changeElementSize', e => {
                 if (e.source === element) {
-                    this.forceUpdate();
+                    flushSync(() => {
+                        this.forceUpdate();
+                    });
                 }
             });
         }
@@ -134,7 +137,9 @@ class HaloInner extends React.Component<HaloInnerProps> {
 
     private onElementEvent: AnyListener<ElementEvents> = data => {
         if (data.changePosition) {
-            this.forceUpdate();
+            flushSync(() => {
+                this.forceUpdate();
+            });
         }
     };
 

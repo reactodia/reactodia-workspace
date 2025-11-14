@@ -6,7 +6,6 @@ import { multimapAdd } from '../../coreUtils/collections';
 import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import { Translation } from '../../coreUtils/i18n';
-import { Debouncer } from '../../coreUtils/scheduler';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/dataProvider';
@@ -137,7 +136,6 @@ const EMPTY_CREATABLE_TYPES: ReadonlyMap<ElementTypeIri, boolean> = new Map();
 class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     private readonly listener = new EventObserver();
     private readonly searchListener = new EventObserver();
-    private readonly delayedClassUpdate = new Debouncer();
 
     private loadClassesOperation = new AbortController();
     private refreshOperation = new AbortController();
@@ -268,7 +266,6 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     componentWillUnmount() {
         this.listener.stopListening();
         this.searchListener.stopListening();
-        this.delayedClassUpdate.dispose();
         this.loadClassesOperation.abort();
         this.refreshOperation.abort();
         this.createElementCancellation.abort();

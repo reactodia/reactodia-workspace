@@ -3,7 +3,6 @@ import * as React from 'react';
 import { createPortal, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
 
 import { ElementTemplate, TemplateProps } from './customization';
 
@@ -60,11 +59,9 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         requests: new Map<string, RedrawFlags>(),
         forAll: RedrawFlags.None,
     };
-    private delayedRedraw = new Debouncer();
     private readonly memoizedElements = new WeakMap<ElementState, React.ReactElement>();
 
     private sizeRequests = new Map<string, SizeUpdateRequest>();
-    private delayedUpdateSizes = new Debouncer();
 
     constructor(props: ElementLayerProps) {
         super(props);
@@ -178,21 +175,18 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         this.listener.listen(renderingState.shared.events, 'changeHighlight', () => {
             this.requestRedrawAll(RedrawFlags.RecomputeBlurred);
         });
-        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            flushSync(() => {
-                if (layer === RenderingLayer.Element) {
-                    this.delayedRedraw.runSynchronously();
-                } else if (layer === RenderingLayer.ElementSize) {
-                    this.delayedUpdateSizes.runSynchronously();
-                }
-            });
-        });
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
-        this.delayedRedraw.dispose();
-        this.delayedUpdateSizes.dispose();
+        this.props.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.Element,
+            this.redrawElements
+        );
+        this.props.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.ElementSize,
+            this.recomputeQueuedSizes
+        );
     }
 
     private requestRedraw = (element: Element, request: RedrawFlags) => {
@@ -203,12 +197,18 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
         }
         const existing = this.redrawBatch.requests.get(element.id) || RedrawFlags.None;
         this.redrawBatch.requests.set(element.id, existing | request);
-        this.delayedRedraw.call(this.redrawElements);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.Element,
+            this.redrawElements
+        );
     };
 
     private requestRedrawAll(request: RedrawFlags) {
         this.redrawBatch.forAll |= request;
-        this.delayedRedraw.call(this.redrawElements);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.Element,
+            this.redrawElements
+        );
     }
 
     private redrawElements = () => {
@@ -217,21 +217,26 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             forAll: RedrawFlags.None,
             requests: new Map<string, RedrawFlags>(),
         };
-        this.setState((state, props) => ({
-            version: committedBatch.forAll === RedrawFlags.Discard
-                ? (state.version + 1) : state.version,
-            elementStates: applyRedrawRequests(
-                props.model,
-                props.renderingState.shared,
-                committedBatch,
-                state.elementStates
-            )
-        }));
+        flushSync(() => {
+            this.setState((state, props) => ({
+                version: committedBatch.forAll === RedrawFlags.Discard
+                    ? (state.version + 1) : state.version,
+                elementStates: applyRedrawRequests(
+                    props.model,
+                    props.renderingState.shared,
+                    committedBatch,
+                    state.elementStates
+                )
+            }));
+        });
     };
 
     private requestSizeUpdate = (element: Element, node: HTMLDivElement) => {
         this.sizeRequests.set(element.id, {element, node});
-        this.delayedUpdateSizes.call(this.recomputeQueuedSizes);
+        this.props.renderingState.scheduleOnLayerUpdate(
+            RenderingLayer.ElementSize,
+            this.recomputeQueuedSizes
+        );
     };
 
     private recomputeQueuedSizes = () => {
