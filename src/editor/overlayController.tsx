@@ -3,7 +3,7 @@ import * as React from 'react';
 import { delay } from '../coreUtils/async';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
 import {
-    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStoreWithComparator,
+    useEventStore, useObservedProperty, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 import type { Translation } from '../coreUtils/i18n';
 
@@ -12,7 +12,7 @@ import { Element, Link, LinkVertex } from '../diagram/elements';
 import { Size, Vector } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
 import { CanvasPlaceAt } from '../diagram/placeLayer';
-import type { MutableRenderingState } from '../diagram/renderingState';
+import { type MutableRenderingState, useLayerDebouncedStore } from '../diagram/renderingState';
 import { SharedCanvasState } from '../diagram/sharedCanvasState';
 import { Spinner, SpinnerProps } from '../diagram/spinner';
 
@@ -565,8 +565,9 @@ function ViewportDialog(props: DialogProps) {
 
 function useViewportSize() {
     const {canvas} = useCanvas();
-    const resizeStore = useFrameDebouncedStore(
-        useEventStore(canvas.events, 'resize')
+    const resizeStore = useLayerDebouncedStore(
+        useEventStore(canvas.events, 'resize'),
+        canvas.renderingState
     );
     const size = useSyncStoreWithComparator(
         resizeStore,

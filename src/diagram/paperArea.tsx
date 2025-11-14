@@ -1,10 +1,11 @@
 import cx from 'clsx';
 import * as React from 'react';
+import { flushSync } from 'react-dom';
 
 import { delay } from '../coreUtils/async';
 import type { ColorSchemeApi } from '../coreUtils/colorScheme';
 import { EventObserver, Events, EventSource } from '../coreUtils/events';
-import { Debouncer, animateInterval, easeInOutBezier } from '../coreUtils/scheduler';
+import { animateInterval, easeInOutBezier } from '../coreUtils/scheduler';
 
 import {
     CanvasContext, CanvasApi, CanvasEvents, CanvasMetrics, CanvasAreaMetrics,
@@ -108,7 +109,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private movingState: PointerMoveState | undefined;
 
-    private delayedPaperAdjust = new Debouncer();
     private scrollBeforeUpdate: undefined | {
         left: number;
         top: number;
@@ -281,7 +281,12 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.adjustPaper(() => void this.centerTo());
 
         const {model, renderingState} = this.props;
-        const delayedAdjust = () => this.delayedPaperAdjust.call(this.adjustPaper);
+        const delayedAdjust = () => {
+            renderingState.scheduleOnLayerUpdate(
+                RenderingLayer.PaperArea,
+                this.adjustPaper
+            );
+        };
         this.listener.listen(model.events, 'changeCells', delayedAdjust);
         this.listener.listen(model.events, 'elementEvent', ({data}) => {
             if (data.changePosition) {
@@ -294,10 +299,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             }
         });
         this.listener.listen(renderingState.events, 'changeElementSize', delayedAdjust);
-        this.listener.listen(renderingState.events, 'syncUpdate', ({layer}) => {
-            if (layer !== RenderingLayer.PaperArea) { return; }
-            this.delayedPaperAdjust.runSynchronously();
-        });
         this.listener.listen(renderingState.shared.events, 'findCanvas', e => {
             e.canvases.push(this);
         });
@@ -330,7 +331,10 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     componentWillUnmount() {
         this.stopListeningToPointerMove();
         this.listener.stopListening();
-        this.delayedPaperAdjust.dispose();
+        this.renderingState.cancelOnLayerUpdate(
+            RenderingLayer.PaperArea,
+            this.adjustPaper
+        );
         this.area.removeEventListener('dragover', this.onDragOver);
         this.area.removeEventListener('drop', this.onDragDrop);
         this.area.removeEventListener('scroll', this.onScroll);
@@ -535,7 +539,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                     y: elementY + y - pointerY,
                 });
                 this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
-                renderingState.syncUpdate();
             }
         } else if (target instanceof Link) {
             e.preventDefault();
@@ -548,7 +551,6 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             const location = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
             target.moveTo(location);
             this.source.trigger('pointerMove', {source: this, sourceEvent: e, target, panning});
-            renderingState.syncUpdate();
         }
     };
 
@@ -958,18 +960,20 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     private changeGraphAnimationCount(change: number, newDuration?: number) {
         const beforeAnimating = this.isAnimatingGraph();
-        this.setState(
-            previous => ({
-                cssAnimations: previous.cssAnimations + change,
-                cssAnimationDuration: newDuration ?? previous.cssAnimationDuration,
-            }),
-            () => {
-                const afterAnimating = this.isAnimatingGraph();
-                if (afterAnimating !== beforeAnimating) {
-                    this.source.trigger('changeAnimatingGraph', {source: this, previous: beforeAnimating});
+        flushSync(() => {
+            this.setState(
+                previous => ({
+                    cssAnimations: previous.cssAnimations + change,
+                    cssAnimationDuration: newDuration ?? previous.cssAnimationDuration,
+                }),
+                () => {
+                    const afterAnimating = this.isAnimatingGraph();
+                    if (afterAnimating !== beforeAnimating) {
+                        this.source.trigger('changeAnimatingGraph', {source: this, previous: beforeAnimating});
+                    }
                 }
-            }
-        );
+            );
+        });
     }
 
     private get viewportState(): ViewportState {

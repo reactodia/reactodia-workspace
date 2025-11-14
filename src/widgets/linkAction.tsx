@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import {
-    useEventStore, useObservedProperty, useFrameDebouncedStore, useSyncStore,
+    useEventStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 
@@ -13,6 +13,7 @@ import { useCanvas } from '../diagram/canvasApi';
 import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import { Link } from '../diagram/elements';
 import { GraphStructure } from '../diagram/model';
+import { useLayerDebouncedStore } from '../diagram/renderingState';
 import { HtmlSpinner } from '../diagram/spinner';
 
 import { AnnotationLink } from '../editor/annotationCells';
@@ -324,10 +325,11 @@ function useCanModifyLink(
     graph: GraphStructure,
     editor: EditorController
 ): MetadataCanModifyRelation | undefined {
+    const {canvas} = useCanvas();
     const [canModify, setCanModify] = React.useState<MetadataCanModifyRelation | undefined>();
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
-    const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
+    const debouncedStateStore = useLayerDebouncedStore(authoringStateStore, canvas.renderingState);
     const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
 
     React.useEffect(() => {

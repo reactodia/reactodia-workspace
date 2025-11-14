@@ -2,13 +2,14 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 import {
-    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
+    useEventStore, useObservedProperty, useSyncStore,
 } from '../../coreUtils/hooks';
-import { Debouncer } from '../../coreUtils/scheduler';
 
 import type { ElementModel, LinkModel } from '../../data/model';
+import { useCanvas } from '../../diagram/canvasApi';
 import { Link } from '../../diagram/elements';
 import { Size } from '../../diagram/geometry';
+import { useLayerDebouncedStore } from '../../diagram/renderingState';
 
 import { AuthoringState } from '../../editor/authoringState';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
@@ -312,6 +313,7 @@ function EntityDecoratorsInner(props: {
     inlineActions: boolean;
 }) {
     const {inlineActions} = props;
+    const {canvas} = useCanvas();
     const {model, editor} = useWorkspace();
 
     const inAuthoringMode = useObservedProperty(
@@ -320,7 +322,10 @@ function EntityDecoratorsInner(props: {
         () => editor.inAuthoringMode
     );
     const cellsVersion = useSyncStore(
-        useFrameDebouncedStore(useEventStore(model.events, 'changeCells')),
+        useLayerDebouncedStore(
+            useEventStore(model.events, 'changeCells'),
+            canvas.renderingState
+        ),
         () => model.cellsVersion
     );
 

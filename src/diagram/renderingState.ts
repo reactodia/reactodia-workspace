@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { multimapAdd, multimapDelete } from '../coreUtils/collections';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
+import { type SyncStore } from '../coreUtils/hooks';
 import {
     type HotkeyAst, formatHotkey, sameHotkeyAst, hashHotkeyAst, eventToHotkeyAst,
 } from '../coreUtils/hotkey';
@@ -78,6 +79,9 @@ export interface RenderingStateEvents {
  * The layers are organized in such way that changes from an earlier layer
  * only affect rendering on the later layers. This way the full rendering
  * could be done by rendering on each layer in order.
+ *
+ * Each layer index should be considered unspecified, only relative
+ * layer order is guaranteed to not change.
  */
 export enum RenderingLayer {
     /**
@@ -149,6 +153,24 @@ export interface RenderingState extends SizeProvider {
      */
     syncUpdate(): void;
     /**
+     * Schedules a callback until next canvas {@link RenderingLayer} update.
+     *
+     * If the same `callback` is scheduled on the same layer, it will run only
+     * once on the layer update.
+     *
+     * @see {@link RenderingState.cancelOnLayerUpdate}
+     * @see {@link useLayerDebouncedStore}
+     */
+    scheduleOnLayerUpdate(layer: RenderingLayer, callback: () => void): void;
+    /**
+     * Cancels the previously scheduled callback via
+     * {@link RenderingState.scheduleOnLayerUpdate}.
+     *
+     * If the `callback` is not currently scheduled on the specified `layer`,
+     * nothing will be done.
+     */
+    cancelOnLayerUpdate(layer: RenderingLayer, callback: () => void): void;
+    /**
      * Returns computed element size in paper coordinates.
      */
     getElementSize(element: Element): Size | undefined;
@@ -179,6 +201,9 @@ export class MutableRenderingState implements RenderingState {
     private readonly source = new EventSource<RenderingStateEvents>();
     readonly events: Events<RenderingStateEvents> = this.source;
 
+    private readonly scheduledByLayer = new Map<RenderingLayer, Set<() => void>>();
+    private readonly layerUpdater = new Debouncer();
+
     private readonly model: DiagramModel;
     private readonly resolveElementTemplate: ElementTemplateResolver;
     private readonly resolveLinkTemplate: LinkTemplateResolver;
@@ -195,7 +220,6 @@ export class MutableRenderingState implements RenderingState {
     private readonly linkMarkerIndex = new WeakMap<LinkMarkerStyle, number>();
     private static nextLinkMarkerIndex = 1;
     
-    private readonly delayedUpdateRoutings = new Debouncer();
     private routings: RoutedLinks = new Map<string, RoutedLink>();
 
     private readonly hotkeyHandlers = new HashMap<HotkeyAst, Set<() => void>>(
@@ -233,18 +257,13 @@ export class MutableRenderingState implements RenderingState {
 
             const routings = this.routings;
             this.routings = new Map();
-            this.delayedUpdateRoutings.dispose();
+            this.cancelOnLayerUpdate(RenderingLayer.LinkRoutes, this.updateRoutings);
 
             this.source.trigger('changeLinkTemplates', {source: this});
             this.source.trigger('changeRoutings', {source: this, previous: routings});
         });
         this.listener.listen(this.events, 'changeElementSize', () => {
             this.scheduleUpdateRoutings();
-        });
-        this.listener.listen(this.events, 'syncUpdate', ({layer}) => {
-            if (layer === RenderingLayer.LinkRoutes) {
-                this.delayedUpdateRoutings.runSynchronously();
-            }
         });
 
         this.updateRoutings();
@@ -253,14 +272,46 @@ export class MutableRenderingState implements RenderingState {
     /** @hidden */
     dispose() {
         this.listener.stopListening();
-        this.delayedUpdateRoutings.dispose();
+        this.layerUpdater.dispose();
+        this.cancelOnLayerUpdate(RenderingLayer.LinkRoutes, this.updateRoutings);
     }
 
     syncUpdate() {
-        for (let layer = FIRST_LAYER; layer <= LAST_LAYER; layer++) {
-            this.source.trigger('syncUpdate', {layer});
+        this.layerUpdater.dispose();
+        this.runLayerUpdate();
+    }
+
+    scheduleOnLayerUpdate(layer: RenderingLayer, callback: () => void): void {
+        multimapAdd(this.scheduledByLayer, layer, callback);
+        this.layerUpdater.call(this.runLayerUpdate);
+    }
+
+    cancelOnLayerUpdate(layer: RenderingLayer, callback: () => void): void {
+        const callbackSet = this.scheduledByLayer.get(layer);
+        if (callbackSet) {
+            callbackSet.delete(callback);
         }
     }
+
+    private runLayerUpdate = () => {
+        const toRun = new Set<() => void>();
+        for (let layer = FIRST_LAYER; layer <= LAST_LAYER; layer++) {
+            const callbackSet = this.scheduledByLayer.get(layer);
+            if (callbackSet && callbackSet.size > 0) {
+                for (const callback of callbackSet) {
+                    toRun.add(callback);
+                }
+                callbackSet.clear();
+
+                for (const callback of toRun) {
+                    callback();
+                }
+                toRun.clear();
+            }
+
+            this.source.trigger('syncUpdate', {layer});
+        }
+    };
 
     ensureDecorationContainer(target: Element | Link): HTMLDivElement {
         let container = this.decorationContainers.get(target);
@@ -385,7 +436,7 @@ export class MutableRenderingState implements RenderingState {
     }
 
     private scheduleUpdateRoutings() {
-        this.delayedUpdateRoutings.call(this.updateRoutings);
+        this.scheduleOnLayerUpdate(RenderingLayer.LinkRoutes, this.updateRoutings);
     }
 
     private updateRoutings = () => {
@@ -439,4 +490,27 @@ function sameRoutedLink(a: RoutedLink, b: RoutedLink): boolean {
         a.labelTextAnchor === b.labelTextAnchor &&
         isPolylineEqual(a.vertices, b.vertices)
     );
+}
+
+/**
+ * Transforms event store in a way that the result store debounces the changes
+ * until the next time the specified canvas {@link RenderingLayer layer} updates.
+ *
+ * @category Hooks
+ */
+export function useLayerDebouncedStore(
+    subscribe: SyncStore,
+    renderingState: RenderingState,
+    layer = RenderingLayer.Overlay
+): SyncStore {
+    return React.useCallback<SyncStore>(onChange => {
+        const onUpdate = () => onChange();
+        const dispose = subscribe(() => {
+            renderingState.scheduleOnLayerUpdate(layer, onUpdate);
+        });
+        return () => {
+            renderingState.cancelOnLayerUpdate(layer, onUpdate);
+            dispose();
+        };
+    }, [subscribe, renderingState, layer]);
 }

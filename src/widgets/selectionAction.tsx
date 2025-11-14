@@ -4,7 +4,7 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 import {
-    SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
+    SyncStore, useEventStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
@@ -19,6 +19,7 @@ import { Element, Link } from '../diagram/elements';
 import { getContentFittingBox } from '../diagram/geometry';
 import type { DiagramModel } from '../diagram/model';
 import { HtmlSpinner } from '../diagram/spinner';
+import { useLayerDebouncedStore } from '../diagram/renderingState';
 
 import { AnnotationElement } from '../editor/annotationCells';
 import { AuthoringState } from '../editor/authoringState';
@@ -338,14 +339,13 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
-    const debouncedExpandedStore = useFrameDebouncedStore(elementExpandedStore);
 
     const canExpand = (element: Element) => {
         const template = canvas.renderingState.getElementTemplate(element);
         return Boolean(template.supports?.[TemplateProperties.Expanded]);
     };
     const allExpanded = useSyncStore(
-        debouncedExpandedStore,
+        useLayerDebouncedStore(elementExpandedStore, canvas.renderingState),
         () => elements.every(element => !canExpand(element) || element.isExpanded)
     );
 
@@ -752,6 +752,7 @@ function useCanEstablishLink(
     target: Element | undefined,
     linkType: LinkTypeIri | undefined
 ): boolean | undefined {
+    const {canvas} = useCanvas();
     const [canLink, setCanLink] = React.useState<boolean | undefined>();
 
     const entityTarget = target instanceof EntityElement ? target : undefined;
@@ -759,8 +760,10 @@ function useCanEstablishLink(
     const targetData = useSyncStore(loadDataStore, () => entityTarget?.data);
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
-    const debouncedStateStore = useFrameDebouncedStore(authoringStateStore);
-    const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
+    const authoringState = useSyncStore(
+        useLayerDebouncedStore(authoringStateStore, canvas.renderingState),
+        () => editor.authoringState
+    );
     const authoringEvent = target instanceof EntityElement
         ? authoringState.elements.get(target.iri) : undefined;
 

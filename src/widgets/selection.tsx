@@ -3,7 +3,7 @@ import * as React from 'react';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver } from '../coreUtils/events';
 import {
-    SyncStore, useEventStore, useFrameDebouncedStore, useSyncStore, useSyncStoreWithComparator,
+    SyncStore, useEventStore, useSyncStore, useSyncStoreWithComparator,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 
@@ -16,6 +16,7 @@ import {
 } from '../diagram/geometry';
 import { DiagramModel } from '../diagram/model';
 import { CanvasPlaceAt } from '../diagram/placeLayer';
+import { useLayerDebouncedStore } from '../diagram/renderingState';
 
 import {
     SelectionActionRemove, SelectionActionZoomToFit, SelectionActionLayout,
@@ -236,9 +237,8 @@ function SelectionBox(props: SelectionBoxProps) {
     );
 
     const elementBoundsStore = useElementBoundsStore(model, canvas, selectedElements);
-    const elementBoundsDebouncedStore = useFrameDebouncedStore(elementBoundsStore);
     const fittingBox = useSyncStoreWithComparator(
-        elementBoundsDebouncedStore,
+        useLayerDebouncedStore(elementBoundsStore, canvas.renderingState),
         () => getContentFittingBox(selectedElements, [], canvas.renderingState),
         Rect.equals
     );
