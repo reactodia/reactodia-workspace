@@ -2,26 +2,27 @@ import * as React from 'react';
 
 import { useTranslation } from '../coreUtils/i18n';
 
-import { Canvas, CanvasProps } from '../widgets/canvas';
-import { ConnectionsMenu, ConnectionsMenuProps } from '../widgets/connectionsMenu';
-import { DropOnCanvas, DropOnCanvasProps } from '../widgets/dropOnCanvas';
-import { Halo, HaloProps } from '../widgets/halo';
-import { HaloLink, HaloLinkProps } from '../widgets/haloLink';
-import { Navigator, NavigatorProps } from '../widgets/navigator';
-import { Selection, SelectionProps } from '../widgets/selection';
-import { Toolbar, ToolbarProps } from '../widgets/toolbar';
+import { AnnotationSupport, type AnnotationSupportProps } from '../widgets/annotation';
+import { Canvas, type CanvasProps } from '../widgets/canvas';
+import { ConnectionsMenu, type ConnectionsMenuProps } from '../widgets/connectionsMenu';
+import { DropOnCanvas, type DropOnCanvasProps } from '../widgets/dropOnCanvas';
+import { Halo, type HaloProps } from '../widgets/halo';
+import { HaloLink, type HaloLinkProps } from '../widgets/haloLink';
+import { Navigator, type NavigatorProps } from '../widgets/navigator';
+import { Selection, type SelectionProps } from '../widgets/selection';
+import { Toolbar, type ToolbarProps } from '../widgets/toolbar';
 import {
     ToolbarActionClearAll, ToolbarActionExport, ToolbarActionUndo, ToolbarActionRedo,
     ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
 } from '../widgets/toolbarAction';
 import {
-    UnifiedSearch, UnifiedSearchProps, UnifiedSearchSection,
+    UnifiedSearch, type UnifiedSearchProps, type UnifiedSearchSection,
     SearchSectionElementTypes,
     SearchSectionEntities,
     SearchSectionLinkTypes,
 } from '../widgets/unifiedSearch';
-import { VisualAuthoring, VisualAuthoringProps } from '../widgets/visualAuthoring';
-import { ZoomControl, ZoomControlProps } from '../widgets/zoomControl';
+import { VisualAuthoring, type VisualAuthoringProps } from '../widgets/visualAuthoring';
+import { ZoomControl, type ZoomControlProps } from '../widgets/zoomControl';
 
 import { WorkspaceRoot } from './workspaceRoot';
 
@@ -47,6 +48,12 @@ export interface BaseDefaultWorkspaceProps {
      * @deprecated Place additional widgets as direct children instead.
      */
     canvasWidgets?: ReadonlyArray<React.ReactElement>;
+    /**
+     * Props for the {@link AnnotationSupport} canvas widget.
+     *
+     * If specified as `null`, the component will not be rendered.
+     */
+    annotations?: Partial<AnnotationSupportProps> | null;
     /**
      * Props for the {@link ConnectionMenu} canvas widget.
      *
@@ -169,8 +176,8 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        colorScheme, children,
-        canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
+        colorScheme, children, canvas, canvasWidgets,
+        annotations, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, visualAuthoring, zoomControl,
         menu, search, actions, mainToolbar, actionsToolbar,
         languages = [],
@@ -224,6 +231,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
         <WorkspaceRoot colorScheme={colorScheme}>
             <Canvas {...canvas}>
                 <VisualAuthoring {...visualAuthoring} />
+                {annotations === null ? null : <AnnotationSupport {...annotations} />}
                 {connectionsMenu === null ? null : <ConnectionsMenu {...connectionsMenu} />}
                 {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}
                 {halo === null ? null : <Halo {...halo} />}

@@ -147,6 +147,11 @@ export {
 } from './editor/dataLocaleProvider';
 export { type EditorEvents, EditorController } from './editor/editorController';
 export {
+    groupEntities, type GroupEntitiesParams,
+    ungroupAllEntities, type UngroupAllEntitiesParams,
+    ungroupSomeEntities, type UngroupSomeEntitiesParams,
+} from './editor/elementGrouping';
+export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from './editor/observedElement';
 export {
@@ -186,6 +191,9 @@ export {
     DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
 } from './templates/standardLink';
 
+export {
+    AnnotationSupport, type AnnotationSupportProps, type AnnotationCommands,
+} from './widgets/annotation';
 export { DraggableHandle, type DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {
     DropdownMenu, type DropdownMenuProps, DropdownMenuItem, type DropdownMenuItemProps,
@@ -246,6 +254,7 @@ export {
     SelectionActionAddToFilter, type SelectionActionAddToFilterProps,
     SelectionActionGroup, type SelectionActionGroupProps,
     SelectionActionEstablishLink, type SelectionActionEstablishLinkProps,
+    SelectionActionAnnotate, type SelectionActionAnnotateProps,
 } from './widgets/selectionAction';
 export { Toolbar,type  ToolbarProps } from './widgets/toolbar';
 export {
@@ -285,12 +294,12 @@ export {
 } from './workspace/workspace';
 export {
     WorkspaceContext, WorkspaceEventKey, type WorkspacePerformLayoutParams,
-    type WorkspaceGroupParams, type WorkspaceUngroupAllParams, type WorkspaceUngroupSomeParams,
     type ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
 export {
     CommandBusTopic,
-    ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic, VisualAuthoringTopic,
+    AnnotationTopic, ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic,
+    VisualAuthoringTopic,
 } from './workspace/commandBusTopic';
 export * from './workspace/workspaceLayout';
 export { WorkspaceRoot, type WorkspaceRootProps } from './workspace/workspaceRoot';

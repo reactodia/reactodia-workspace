@@ -93,7 +93,7 @@ export interface ElementProps {
 }
 
 /**
- * Abstract base class for diagram elements (graph nodes).
+ * Diagram element (graph node).
  *
  * @category Core
  */
@@ -291,7 +291,7 @@ export interface LinkProps {
 }
 
 /**
- * Abstract base class for diagram links (graph edges)
+ * Diagram link (graph edge)
  *
  * @category Core
  */

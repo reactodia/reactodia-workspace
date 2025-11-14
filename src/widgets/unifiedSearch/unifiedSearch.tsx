@@ -120,6 +120,7 @@ export interface UnifiedSearchSection {
  * Events for {@link UnifiedSearch} event bus.
  *
  * @see {@link UnifiedSearch}
+ * @see {@link UnifiedSearchTopic}
  */
 export interface UnifiedSearchCommands {
     /**

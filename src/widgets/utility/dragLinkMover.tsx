@@ -34,8 +34,14 @@ export interface DragLinkMoverProps {
     onFinish?: () => void;
 }
 
+/**
+ * Describes a drag operation on a graph link (edge).
+ */
 export type DragLinkOperation = DragLinkOperationConnect | DragLinkOperationMove;
 
+/**
+ * Drag operation to connect an element with some other element.
+ */
 export interface DragLinkOperationConnect {
     /**
      * Drag link operation type.
@@ -52,6 +58,9 @@ export interface DragLinkOperationConnect {
 
 }
 
+/**
+ * Drag operation to move link endpoint to another element.
+ */
 export interface DragLinkOperationMove {
     /**
      * Drag link operation type.

@@ -65,8 +65,9 @@ export interface NoteAnnotationProps extends TemplateProps {}
  * in the {@link Element.elementState element state}.
  *
  * The template supports the following template state:
+ *   - {@link TemplateProperties.AnnotationContent}
+ *   - {@link TemplateProperties.ColorVariant}
  *   - {@link TemplateProperties.ElementSize}
- *   - {@link TemplateProperties.AnnotationText}
  *
  * @category Components
  * @see {@link NoteTemplate}
@@ -357,6 +358,13 @@ function NoteStyleControls(props: {
     );
 }
 
+/**
+ * Link template to display an {@link AnnotationLink} on a canvas.
+ *
+ * Uses {@link NoteLink} component to render an annotation link.
+ *
+ * @category Constants
+ */
 export const NoteLinkTemplate: LinkTemplate = {
     markerTarget: {
         fill: 'var(--reactodia-canvas-background-color)',
@@ -395,9 +403,9 @@ export interface NoteLinkProps extends BasicLinkProps {
 }
 
 /**
- * Additional style props for the link labels in {@link StandardRelation}.
+ * Additional style props for the link labels in {@link NoteLink}.
  *
- * @see {@link StandardRelationProps}
+ * @see {@link NoteLinkProps}
  */
 type NoteLinkLabelStyle =
     Omit<LinkLabelProps, 'primary' | 'link' | 'position'> &

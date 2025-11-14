@@ -14,17 +14,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Introduce an optional contract for `Element` or `Link`-derived cell types to be serializable: `SerializableElementCell` and `SerializableLinkCell`;
   * When implemented, the corresponding cell types can be exported and later imported with the diagram;
   * `DataDiagramModel.importLayout()` will accept known cell types via `elementCellTypes` and `linkCellTypes` to import.
-- Add `AnnotationElement` and `AnnotationLink` diagram cell types representing diagram-only elements and links which exports and imports with the diagram but does not exists in the data graph:
+- Support diagram-only annotations:
+  * Add `AnnotationElement` and `AnnotationLink` elements and links which exports and imports with the diagram but does not exists in the data graph;
   * Rendered by default with new built-in templates `NoteTemplate` and `NoteLinkTemplate` which use `NoteAnnotation`, `NoteEntity` and `NoteLink` template components;
-  * Add `DefaultRenameLinkProvider` and use it by default to allow to change annotation link labels;
+  * Add `AnnotationSupport` canvas widget which enables annotations in the UI (can be configured or disabled via `annotations` prop on `DefaultWorkspace` and `ClassicWorkspace`);
   * Support annotation elements in `SelectionActionEstablishLink` and new `SelectionActionAnnotate` components;
   * Support annotation links in `LinkActionDelete`, `LinkActionMoveEndpoint` components.
+  * Add `DefaultRenameLinkProvider` and use it by default to allow to change annotation link labels.
 - Support user-resizable element templates with `ElementSize` template state property:
   * Resizable elements display "box with handles" in the `Halo` to change the size;
   * Changed element sizes are captured and restored by `RestoreGeometry` command.
 - Allow to customize link template separately for each link instead of only based on its link type IRI in `linkTemplateResolver` for `Canvas`.
 - Allow to configure `DropOnCanvas` to allow only some drop events and provide items to place on the canvas.
 - Support keyboard hotkeys for `LinkAction` components to act on a currently selected link.
+
+#### 🐛 Fixed
+- Fix link rendering lagging behind when moving elements.
+- Fix `RdfDataProvider.links()` returning empty results when called with `linkTypeIds` parameter.
+- Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
+- Fix `HaloLink` link path highlighting not updating on link re-route.
+- Fix element template state not being restored when ungrouping entities.
+- Fix missing element decorations after re-importing the same diagram.
+- Fix `DraggableHandle` to avoid using stale `onDragHandle` and `onEndDragHandle` prop values.
+- Fix being able to execute disabled `SelectionAction` via keyboard hotkey.
+- Fix throwing an error while trying to access `CanvasApi.metrics` members before the `Canvas` is fully mounted.
 
 #### ⏱ Performance
 - **[💥Breaking]** Canvas widgets are not automatically updated when parent canvas is rendered to reduce unnecessary re-renders, and now require explicit subscriptions:
@@ -62,18 +75,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Change `MetadataProvider.{createEntity, createRelation}` to return result object with initial template state in addition to the data to customize the created cells (i.e. new elements can be expanded or collapsed).
 - Add `EditorController.applyAuthoringChanges()` method to apply current authoring changes to the diagram (i.e. change entity data, delete relations, etc) and reset the change state to be empty.
 - Deprecate and hide by default "Edit" and "Delete" action buttons in `StandardEntity` expanded state (can be re-enabled by setting `showActions` prop to `true`).
-
-#### 🐛 Fixed
-- Fix link rendering lagging behind when moving elements. 
-- Fix `RdfDataProvider.links()` returning empty results when called with `linkTypeIds` parameter.
-- Fix `HaloLink` and visual authoring link path highlight being rendered on top on elements by placing it onto `overLinkGeometry` widget layer instead.
-- Fix `HaloLink` link path highlighting not updating on link re-route.
-- Fix element template state not being restored when ungrouping entities.
-- Fix missing element decorations after re-importing the same diagram.
-- Fix `DraggableHandle` to avoid using stale `onDragHandle` and `onEndDragHandle` prop values.
-- Fix being able to execute disabled `SelectionAction` via keyboard hotkey.
+- Deprecate `WorkpaceContext.{group, ungroupAll, ungroupSome}` methods in favor of free functions `groupEntities()`, `ungroupAllEntities()`, `ungroupSomeEntities()`.
 
 #### 🔧 Maintenance
+- Use Vite to build the library instead of Webpack to reduce build time by 70% and produced bundle size by 38%.
+- Update Vitest to v4.
 - Use small subset of [carbon design icons](https://github.com/carbon-design-system/carbon-icons) for various buttons.
 
 ## [0.30.1] - 2025-06-27

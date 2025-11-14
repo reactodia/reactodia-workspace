@@ -144,13 +144,13 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
                 super();
             }
             get area() {
-                return this.paperArea.area;
+                return this.paperArea.area ?? EMPTY_AREA;
             }
             get transform(): PaperTransform {
                 return this.paperArea.state.transform;
             }
             protected getClientRect(): AreaClientRect {
-                return this.paperArea.area.getBoundingClientRect();
+                return this.paperArea.area?.getBoundingClientRect() ?? EMPTY_AREA_RECT;
             }
         })(this);
         this.canvasContext = {
@@ -1178,6 +1178,22 @@ interface AreaClientRect {
     readonly top: number;
     readonly bottom: number;
 }
+
+const EMPTY_AREA: CanvasAreaMetrics = {
+    clientWidth: 0,
+    clientHeight: 0,
+    offsetWidth: 0,
+    offsetHeight: 0,
+    scrollLeft: 0,
+    scrollTop: 0,
+};
+
+const EMPTY_AREA_RECT: AreaClientRect = {
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+};
 
 function clientCoordsFor(container: HTMLElement, e: MouseEvent) {
     const target = (e.target instanceof SVGElement && e.target.ownerSVGElement !== null)

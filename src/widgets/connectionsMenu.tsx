@@ -53,6 +53,7 @@ export interface ConnectionsMenuProps {
  * Events for {@link ConnectionsMenu} event bus.
  *
  * @see {@link ConnectionsMenu}
+ * @see {@link ConnectionsMenuTopic}
  */
 export interface ConnectionsMenuCommands {
     /**

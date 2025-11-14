@@ -47,7 +47,7 @@ export interface EntityElementProps extends ElementProps {
 }
 
 /**
- * Diagram element representing an graph entity referenced by an IRI.
+ * Data graph entity represented by a diagram element and referenced by an IRI.
  *
  * @category Core
  */
@@ -149,6 +149,8 @@ EntityElement satisfies SerializableElementCell<EntityElement>;
 
 /**
  * Serialized entity element state.
+ *
+ * @see {@link EntityElement}
  */
 export interface SerializedEntityElement extends SerializedElement {
     '@type': 'Element';
@@ -198,7 +200,7 @@ export interface EntityGroupProps extends ElementProps {
 }
 
 /**
- * Diagram element representing a group of multiple graph entities.
+ * A group of multiple data graph entities represented by a diagram element.
  *
  * @category Core
  */
@@ -295,7 +297,9 @@ export interface EntityGroupItem {
 }
 
 /**
- * Serialized entity group state. 
+ * Serialized entity group state.
+ *
+ * @see {@link EntityGroup}
  */
 export interface SerializedEntityGroup extends SerializedElement {
     '@type': 'ElementGroup';
@@ -304,6 +308,9 @@ export interface SerializedEntityGroup extends SerializedElement {
 
 /**
  * Serialized entity group item state.
+ *
+ * @see {@link EntityGroup}
+ * @see {@link SerializedEntityGroup}
  */
 export interface SerializedEntityGroupItem {
     '@type': 'ElementItem';
@@ -361,7 +368,7 @@ export interface RelationLinkProps extends LinkProps {
 }
 
 /**
- * Diagram link representing a graph relation, uniquely identified by
+ * Data graph relation represented by a diagram link, uniquely identified by
  * (source entity IRI, target entity IRI, link type IRI) tuple.
  *
  * @category Core
@@ -466,6 +473,8 @@ RelationLink satisfies SerializableLinkCell<RelationLink>;
 
 /**
  * Serialized relation link state.
+ *
+ * @see {@link RelationLink}
  */
 export interface SerializedRelationLink extends SerializedLink {
     '@type': 'Link';
@@ -513,7 +522,7 @@ export interface RelationGroupProps extends LinkProps {
 }
 
 /**
- * Diagram link representing a group of multiple graph relations.
+ * A group of multiple data graph relations represented by a diagram link.
  *
  * @category Core
  */
@@ -653,6 +662,8 @@ export interface RelationGroupItem {
 
 /**
  * Serialized relation group state.
+ *
+ * @see {@link RelationGroup}
  */
 export interface SerializedRelationGroup extends SerializedLink {
     '@type': 'LinkGroup';
@@ -662,6 +673,9 @@ export interface SerializedRelationGroup extends SerializedLink {
 
 /**
  * Serialized relation group item state.
+ *
+ * @see {@link RelationGroup}
+ * @see {@link SerializedRelationGroup}
  */
 export interface SerializedRelationGroupItem {
     '@type': 'LinkItem';

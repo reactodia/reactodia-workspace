@@ -319,13 +319,10 @@ class EnitityDragConnection implements DragLinkConnection {
                 .trigger('editRelation', {target: modifiedLink});
         } else if (createdTarget && modifiedLink) {
             model.setSelection([createdTarget]);
-            const source = model.getElement(modifiedLink.sourceId) as EntityElement;
             getCommandBus(VisualAuthoringTopic)
                 .trigger('findOrCreateEntity', {
                     link: modifiedLink,
-                    source,
                     target: createdTarget,
-                    targetIsNew: true,
                 });
         }
     }

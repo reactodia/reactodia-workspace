@@ -74,6 +74,9 @@ export interface InstancesSearchProps {
 
 /**
  * Events for {@link InstancesSearch} event bus.
+ *
+ * @see {@link InstancesSearch}
+ * @see {@link InstancesSearchTopic}
  */
 export interface InstancesSearchCommands {
     /**
