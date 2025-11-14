@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [0.31.0] - 2025-11-15
 #### 🚀 New Features
 - Simplify canvas widgets placement at one or multiple layers:
   * Canvas children are always assumed to be viewport widgets;
@@ -564,7 +566,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.1...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.1...v0.31.0
 [0.30.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.0...v0.30.1
 [0.30.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.29.0...v0.29.1

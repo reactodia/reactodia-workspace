@@ -47,7 +47,7 @@ function BasicExample() {
         for (const {element} of await dataProvider.lookup({elementTypeId})) {
             model.createElement(element);
         }
-        await model.requestLinks();
+        await model.requestData();
 
         // Layout elements on canvas
         await performLayout({signal});
@@ -65,9 +65,18 @@ Look for more examples in the [documentation](https://reactodia.github.io/docs/c
 
 ## Development
 
+### Build
+
+The library uses [Vite](https://vite.dev/) for local development and to build the output bundles:
+
+* Run `npm run start` to serve examples locally.
+* Run `npm run build && npm run typings` to build the `dist` folder with output bundles and library TypeScript typings.
+
 ### Tests
 
 The library uses [Vitest](https://vitest.dev/) as a testing framework: run `npm run test` to execute all tests.
+
+The tests use [Vitest Browser Mode](https://vitest.dev/guide/browser/) so the following command should be executed first to download browser binaries for the [Playwright]: `npx playwright install chromium`.
 
 See [Vitest Debugging](https://vitest.dev/guide/debugging) documentation page for an integrated debugger setup for the tests (e.g. VSCode debugger).
 
