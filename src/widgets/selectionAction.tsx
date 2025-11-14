@@ -26,7 +26,7 @@ import { AuthoringState } from '../editor/authoringState';
 import { BuiltinDialogType } from '../editor/builtinDialogType';
 import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
-import { groupEntitiesAnimated, ungroupAllEntitiesAnimated } from '../editor/elementGrouping';
+import { groupEntities, ungroupAllEntities } from '../editor/elementGrouping';
 
 import {
     AnnotationTopic, ConnectionsMenuTopic, InstancesSearchTopic, VisualAuthoringTopic,
@@ -35,6 +35,7 @@ import { useWorkspace } from '../workspace/workspaceContext';
 
 import type { DockDirection } from './utility/viewportDock';
 
+import type { AnnotationCommands } from './annotation';
 import type { ConnectionsMenuCommands } from './connectionsMenu';
 import type { InstancesSearchCommands } from './instancesSearch';
 
@@ -616,11 +617,11 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
 
     const onSelect = async () => {
         if (canGroup) {
-            const group = await groupEntitiesAnimated(elements, canvas, workspace);
+            const group = await groupEntities(workspace, {elements, canvas});
             model.setSelection([group]);
             group.focus();
         } else if (canUngroup) {
-            const ungrouped = await ungroupAllEntitiesAnimated(elements, canvas, workspace);
+            const ungrouped = await ungroupAllEntities(workspace, {groups: elements, canvas});
             model.setSelection(ungrouped);
             canvas.focus();
         }
@@ -799,6 +800,14 @@ function SelectionActionEstablishAnnotationLink(
     const {canvas} = useCanvas();
     const {translation: t, getCommandBus} = useWorkspace();
 
+    const commands = getCommandBus(AnnotationTopic);
+    const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
+    commands.trigger('findCapabilities', event);
+
+    if (event.capabilities.length === 0) {
+        return null;
+    }
+
     return (
         <SelectionAction {...otherProps}
             className={cx(
@@ -844,7 +853,12 @@ export function SelectionActionAnnotate(props: SelectionActionAnnotateProps) {
     const {model, translation: t, getCommandBus} = useWorkspace();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    if (elements.length === 0) {
+
+    const commands = getCommandBus(AnnotationTopic);
+    const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
+    commands.trigger('findCapabilities', event);
+
+    if (elements.length === 0 || event.capabilities.length === 0) {
         return null;
     }
 

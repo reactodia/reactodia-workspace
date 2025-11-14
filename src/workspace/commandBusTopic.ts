@@ -26,6 +26,12 @@ export class CommandBusTopic<T> {
 }
 
 /**
+ * Event bus to connect {@link AnnotationSupport} to other components.
+ *
+ * @category Constants
+ */
+export const AnnotationTopic = CommandBusTopic.define<AnnotationCommands>();
+/**
  * Event bus to connect {@link ConnectionMenu} to other components.
  *
  * @category Constants
@@ -49,6 +55,3 @@ export const UnifiedSearchTopic = CommandBusTopic.define<UnifiedSearchCommands>(
  * @category Constants
  */
 export const VisualAuthoringTopic = CommandBusTopic.define<VisualAuthoringCommands>();
-
-// Internal topic
-export const AnnotationTopic = CommandBusTopic.define<AnnotationCommands>();

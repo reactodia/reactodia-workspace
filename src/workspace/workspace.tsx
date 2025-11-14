@@ -28,7 +28,7 @@ import { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement, EntityGroup, EntityGroupItem } from '../editor/dataElements';
 import { EditorController } from '../editor/editorController';
 import {
-    groupEntitiesAnimated, ungroupAllEntitiesAnimated, ungroupSomeEntitiesAnimated,
+    groupEntities, ungroupAllEntities, ungroupSomeEntities,
 } from '../editor/elementGrouping';
 import { OverlayController } from '../editor/overlayController';
 
@@ -436,16 +436,16 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     };
 
-    private onGroup: WorkspaceContext['group'] = ({elements, canvas}) => {
-        return groupEntitiesAnimated(elements, canvas, this.workspaceContext);
+    private onGroup: WorkspaceContext['group'] = params => {
+        return groupEntities(this.workspaceContext, params);
     };
 
-    private onUngroupAll: WorkspaceContext['ungroupAll'] = ({groups, canvas}) => {
-        return ungroupAllEntitiesAnimated(groups, canvas, this.workspaceContext);
+    private onUngroupAll: WorkspaceContext['ungroupAll'] = params => {
+        return ungroupAllEntities(this.workspaceContext, params);
     };
 
-    private onUngroupSome: WorkspaceContext['ungroupSome'] = ({group, entities, canvas}) => {
-        return ungroupSomeEntitiesAnimated(group, entities, canvas, this.workspaceContext);
+    private onUngroupSome: WorkspaceContext['ungroupSome'] = params => {
+        return ungroupSomeEntities(this.workspaceContext, params);
     };
 }
 

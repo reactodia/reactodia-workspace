@@ -15,6 +15,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
 import { EntityElement, EntityGroup } from '../editor/dataElements';
+import { ungroupSomeEntities } from '../editor/elementGrouping';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -55,11 +56,11 @@ export const StandardTemplate: ElementTemplate = {
  */
 export interface StandardEntityProps extends TemplateProps {
     /**
-     * When set to `true`, allows to edite or delete the entity
+     * When set to `true`, allows to edit or delete the entity
      * using corresponding buttons in the expanded state.
      *
      * @default false
-     * @deprecated Edities can be editied or deleted via inline action decorators
+     * @deprecated Entities can be edited or deleted via inline action decorators
      * when {@link VisualAuthoringProps.inlineEntityActions} is enabled.
      */
     showActions?: boolean;
@@ -363,7 +364,7 @@ interface StandardEntityGroupItemProps extends TemplateProps {
 
 function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
     const {data, target, canvas, workspace} = props;
-    const {model, editor, translation: t, ungroupSome, getElementTypeStyle} = workspace;
+    const {model, editor, translation: t, getElementTypeStyle} = workspace;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
@@ -398,7 +399,7 @@ function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
                     )}
                     data-reactodia-no-export='true'
                     title={t.text('standard_element.ungroup.title')}
-                    onClick={() => void ungroupSome({
+                    onClick={() => void ungroupSomeEntities(workspace, {
                         group: target,
                         entities: new Set([data.id]),
                         canvas,

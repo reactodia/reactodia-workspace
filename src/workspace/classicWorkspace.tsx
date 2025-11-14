@@ -2,17 +2,18 @@ import * as React from 'react';
 
 import { useTranslation } from '../coreUtils/i18n';
 
+import { AnnotationSupport } from '../widgets/annotation';
 import { Canvas } from '../widgets/canvas';
-import { ClassTree, ClassTreeProps } from '../widgets/classTree';
+import { ClassTree, type ClassTreeProps } from '../widgets/classTree';
 import { ConnectionsMenu } from '../widgets/connectionsMenu';
 import { DropOnCanvas } from '../widgets/dropOnCanvas';
 import { Halo } from '../widgets/halo';
 import { HaloLink } from '../widgets/haloLink';
-import { InstancesSearch, InstancesSearchProps } from '../widgets/instancesSearch';
-import { LinkTypesToolbox, LinkTypesToolboxProps } from '../widgets/linksToolbox';
+import { InstancesSearch, type InstancesSearchProps } from '../widgets/instancesSearch';
+import { LinkTypesToolbox, type LinkTypesToolboxProps } from '../widgets/linksToolbox';
 import { Navigator } from '../widgets/navigator';
 import { Selection } from '../widgets/selection';
-import { Toolbar, ToolbarProps } from '../widgets/toolbar';
+import { Toolbar, type ToolbarProps } from '../widgets/toolbar';
 import {
     ToolbarActionClearAll, ToolbarActionExport, ToolbarActionUndo, ToolbarActionRedo,
     ToolbarActionLayout, ToolbarLanguageSelector, WorkspaceLanguage,
@@ -22,7 +23,8 @@ import { ZoomControl } from '../widgets/zoomControl';
 
 import type { BaseDefaultWorkspaceProps } from './defaultWorkspace';
 import {
-    WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem, WorkspaceLayoutContainerProps,
+    WorkspaceLayoutRow, WorkspaceLayoutColumn, WorkspaceLayoutItem,
+    type WorkspaceLayoutContainerProps,
 } from './workspaceLayout';
 import { WorkspaceRoot } from './workspaceRoot';
 
@@ -67,8 +69,8 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     const {
-        colorScheme, leftColumn, rightColumn, children,
-        canvas, canvasWidgets, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
+        colorScheme, leftColumn, rightColumn, children, canvas, canvasWidgets,
+        annotations, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, zoomControl, visualAuthoring, toolbar,
         classTree, instancesSearch, linkToolbox,
     } = props;
@@ -92,6 +94,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                 <WorkspaceLayoutItem id='canvas'>
                     <Canvas {...canvas}>
                         <VisualAuthoring {...visualAuthoring} />
+                        {annotations === null ? null : <AnnotationSupport {...annotations} />}
                         {connectionsMenu === null ? null : (
                             <ConnectionsMenu {...connectionsMenu} />
                         )}

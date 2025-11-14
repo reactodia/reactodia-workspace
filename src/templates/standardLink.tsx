@@ -218,10 +218,10 @@ export function StandardRelation(props: StandardRelationProps) {
 export interface DefaultLinkProps extends StandardRelationProps {}
 
 /**
- * An alias for {@link StandardLink}.
+ * An alias for {@link StandardRelation}.
  *
  * @category Components
- * @deprecated Use {@link StandardLink} directly instead.
+ * @deprecated Use {@link StandardRelation} directly instead.
  */
 export function DefaultLink(props: StandardRelationProps) {
     return <StandardRelation {...props} />;

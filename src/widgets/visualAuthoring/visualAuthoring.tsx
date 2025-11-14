@@ -8,7 +8,6 @@ import {
 import type { ElementModel, LinkModel } from '../../data/model';
 import { useCanvas } from '../../diagram/canvasApi';
 import { Link } from '../../diagram/elements';
-import { Size } from '../../diagram/geometry';
 import { useLayerDebouncedStore } from '../../diagram/renderingState';
 
 import { AuthoringState } from '../../editor/authoringState';
@@ -21,7 +20,6 @@ import type { FormInputOrDefaultResolver } from '../../forms/input/inputCommon';
 import { EditRelationForm } from '../../forms/editRelationForm';
 import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
-import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
@@ -117,24 +115,59 @@ export interface PropertyEditorOptionsRelation {
  * Events for {@link VisualAuthoring} event bus.
  *
  * @see {@link VisualAuthoring}
+ * @see {@link VisualAuthoringTopic}
  */
 export interface VisualAuthoringCommands {
+    /**
+     * Can be triggered to start drag operaton on a relation.
+     */
     startDragEdit: {
+        /**
+         * Drag relation operation to initiate.
+         */
         readonly operation: DragEditOperation;
     };
+    /**
+     * Can be triggered to open dialog to edit an entity.
+     */
     editEntity: {
+        /**
+         * Target entity element to edit.
+         */
         readonly target: EntityElement;
     };
+    /**
+     * Can be triggered to open dialog to find existing or create a new entity
+     * at the relation endpoint, then replace the `target` with it.
+     */
     findOrCreateEntity: {
+        /**
+         * Target relation link connected to an exising or a new entity.
+         */
         readonly link: RelationLink;
-        readonly source: EntityElement;
+        /**
+         * An exising or a new entity element to replace.
+         */
         readonly target: EntityElement;
-        readonly targetIsNew: boolean;
     };
+    /**
+     * Can be triggered to open dialog to edit a relation.
+     */
     editRelation: {
+        /**
+         * Target relation link to edit.
+         */
         readonly target: RelationLink;
     };
+    /**
+     * Can be triggered to open dialog to {@link RenameLinkProvider rename a link}.
+     *
+     * @deprecated Use {@link AnnotationCommands.renameLink} from {@link AnnotationTopic} instead.
+     */
     renameLink: {
+        /**
+         * Target link to rename (change its label).
+         */
         readonly target: Link;
     };
 }
@@ -208,7 +241,9 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         });
 
         listener.listen(commands, 'findOrCreateEntity', e => {
-            const {link, source, target, targetIsNew} = e;
+            const {link, target} = e;
+            const source = model.getElement(link.sourceId) as EntityElement;
+            const targetIsNew = editor.temporaryState.elements.has(target.iri);
             const content = (
                 <FindOrCreateEntityForm source={source}
                     target={target}
@@ -276,24 +311,6 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 },
                 content,
                 onClose: () => editor.removeTemporaryCells([link]),
-            });
-        });
-
-        listener.listen(commands, 'renameLink', ({target: link}) => {
-            const defaultSize: Size = {width: 300, height: 165};
-            overlay.showDialog({
-                target: link,
-                dialogType: BuiltinDialogType.renameLink,
-                style: {
-                    defaultSize,
-                    resizableBy: 'x',
-                    caption: t.text('visual_authoring.rename_link.dialog.caption'),
-                },
-                content: (
-                    <RenameLinkForm link={link}
-                        onFinish={() => overlay.hideDialog()}
-                    />
-                ),
             });
         });
 

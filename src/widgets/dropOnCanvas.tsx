@@ -92,8 +92,10 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
                 for (const item of items) {
                     if (item.type === 'element') {
                         let addElement = false;
+                        let hasEntity = false;
                         
                         for (const entity of iterateEntitiesOf(item.element)) {
+                            hasEntity = true;
                             if (!(presentOnDiagram.has(entity.id) || addedIris.has(entity.id))) {
                                 addElement = true;
                                 addedIris.add(entity.id);
@@ -103,7 +105,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
                             }
                         }
 
-                        if (addElement) {
+                        if (!hasEntity || addElement) {
                             placedElements.push(item.element);
                         }
                     }
@@ -127,6 +129,7 @@ export function DropOnCanvas(props: DropOnCanvasProps) {
                 }
     
                 model.setSelection(placedElements);
+                canvas.renderingState.syncUpdate();
     
                 triggerWorkspaceEvent(WorkspaceEventKey.editorAddElements);
             }

@@ -24,6 +24,8 @@ import { EditorController } from '../editor/editorController';
 import { AnnotationTopic, VisualAuthoringTopic } from '../workspace/commandBusTopic';
 import { useWorkspace } from '../workspace/workspaceContext';
 
+import type { AnnotationCommands } from './annotation';
+
 /**
  * Represents rendering context for the link action.
  */
@@ -476,6 +478,14 @@ function LinkActionMoveAnnotationEndpoint(
     const {canvas} = useCanvas();
     const {translation: t, getCommandBus} = useWorkspace();
 
+    const commands = getCommandBus(AnnotationTopic);
+    const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
+    commands.trigger('findCapabilities', event);
+
+    if (event.capabilities.length === 0) {
+        return null;
+    }
+
     return (
         <LinkAction {...otherProps}
             dockSide={dockSide}
@@ -571,7 +581,7 @@ export function LinkActionRename(props: LinkActionRenameProps) {
             style={style}
             title={title ?? t.text('link_action.rename_link.title')}
             onClick={() =>
-                getCommandBus(VisualAuthoringTopic)
+                getCommandBus(AnnotationTopic)
                     .trigger('renameLink', {target: link})
             }
         />

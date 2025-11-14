@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { Events, EventTrigger } from '../coreUtils/events';
 import type { Translation } from '../coreUtils/i18n';
 
-import type { ElementIri, ElementTypeIri } from '../data/model';
+import type { ElementTypeIri } from '../data/model';
 
 import type { CanvasApi } from '../diagram/canvasApi';
 import type { TypeStyle } from '../diagram/customization';
@@ -14,6 +14,9 @@ import type { SharedCanvasState } from '../diagram/sharedCanvasState';
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import type { EntityElement, EntityGroup } from '../editor/dataElements';
 import type { EditorController } from '../editor/editorController';
+import type {
+    GroupEntitiesParams, UngroupAllEntitiesParams, UngroupSomeEntitiesParams,
+} from '../editor/elementGrouping';
 import type { OverlayController } from '../editor/overlayController';
 
 import type { CommandBusTopic } from './commandBusTopic';
@@ -79,24 +82,27 @@ export interface WorkspaceContext {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.group}
+     * @deprecated Use {@link groupEntities()} function instead.
      */
-    readonly group: (params: WorkspaceGroupParams) => Promise<EntityGroup>;
+    readonly group: (params: GroupEntitiesParams) => Promise<EntityGroup>;
     /**
      * Ungroups **with animation** one or many entity groups into all contained elements.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.ungroupAll}
+     * @deprecated Use {@link ungroupAllEntities()} function instead.
      */
-    readonly ungroupAll: (params: WorkspaceUngroupAllParams) => Promise<EntityElement[]>;
+    readonly ungroupAll: (params: UngroupAllEntitiesParams) => Promise<EntityElement[]>;
     /**
      * Ungroups **with animation** some entities from an entity group.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.ungroupSome}
+     * @deprecated Use {@link ungroupSomeEntities()} function instead.
      */
-    readonly ungroupSome: (params: WorkspaceUngroupSomeParams) => Promise<EntityElement[]>;
+    readonly ungroupSome: (params: UngroupSomeEntitiesParams) => Promise<EntityElement[]>;
     /**
      * Triggers a well-known workspace event.
      */
@@ -143,58 +149,6 @@ export interface WorkspacePerformLayoutParams {
      * Signal to cancel computing and applying the layout.
      */
     signal?: AbortSignal;
-}
-
-/**
- * Options for {@link WorkspaceContext.group} method.
- *
- * @see {@link WorkspaceContext.group}
- */
-export interface WorkspaceGroupParams {
-    /**
-     * Selected elements to group.
-     */
-    elements: ReadonlyArray<EntityElement>;
-    /**
-     * Target canvas to get element sizes from for animation.
-     */
-    canvas: CanvasApi;
-}
-
-/**
- * Options for {@link WorkspaceContext.ungroupAll} method.
- *
- * @see {@link WorkspaceContext.ungroupAll}
- */
-export interface WorkspaceUngroupAllParams {
-    /**
-     * Selected groups to ungroup all entities from.
-     */
-    groups: ReadonlyArray<EntityGroup>;
-    /**
-     * Target canvas to get element sizes from for animation.
-     */
-    canvas: CanvasApi;
-}
-
-/**
- * Options for {@link WorkspaceContext.ungroupSome} method.
- *
- * @see {@link WorkspaceContext.ungroupSome}
- */
-export interface WorkspaceUngroupSomeParams {
-    /**
-     * Selected group to ungroup some entities from.
-     */
-    group: EntityGroup;
-    /**
-     * Subset of entities to ungroup from the target group.
-     */
-    entities: ReadonlySet<ElementIri>;
-    /**
-     * Target canvas to get element sizes from for animation.
-     */
-    canvas: CanvasApi;
 }
 
 /**

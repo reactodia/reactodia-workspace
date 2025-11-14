@@ -8,6 +8,9 @@ import type {
     SerializedLink, SerializableLinkCell, LinkFromJsonOptions,
 } from './serializedDiagram';
 
+/**
+ * Diagram-only annotation element, exported and imported with the diagram.
+ */
 export class AnnotationElement extends Element {
     static readonly fromJSONType = 'Annotation';
 
@@ -37,10 +40,18 @@ export class AnnotationElement extends Element {
 
 AnnotationElement satisfies SerializableElementCell<AnnotationElement>;
 
+/**
+ * Serialized annotation element state.
+ *
+ * @see {@link AnnotationElement}
+ */
 export interface SerializedAnnotationElement extends SerializedElement {
     '@type': 'Annotation';
 }
 
+/**
+ * Diagram-only annotation link, exported and imported with the diagram.
+ */
 export class AnnotationLink extends Link {
     static readonly typeId: LinkTypeIri = 'urn:reactodia:annotates';
 
@@ -80,6 +91,11 @@ export class AnnotationLink extends Link {
 
 AnnotationLink satisfies SerializableLinkCell<AnnotationLink>;
 
+/**
+ * Serialized annotation link state.
+ *
+ * @see {@link AnnotationLink}
+ */
 export interface SerializedAnnotationLink extends SerializedLink {
     '@type': 'AnnotationLink';
 }

@@ -10,12 +10,38 @@ import { EntityElement, EntityGroup } from './dataElements';
 
 import type { WorkspaceContext } from '../workspace/workspaceContext';
 
-export async function groupEntitiesAnimated(
-    elements: ReadonlyArray<EntityElement>,
-    canvas: CanvasApi,
-    workspace: WorkspaceContext
+/**
+ * Parameters for {@link groupEntities} function.
+ */
+export interface GroupEntitiesParams {
+    /**
+     * Selected elements to group.
+     */
+    elements: ReadonlyArray<EntityElement>;
+    /**
+     * Target canvas to get element sizes from for animation.
+     */
+    canvas: CanvasApi;
+}
+
+/**
+ * Groups **with animation** multiple {@link EntityElement entity elements} into
+ * an {@link EntityGroup entity group}.
+ *
+ * The grouping operation is performed with {@link DataDiagramModel.group} method.
+ *
+ * The operation puts a command to the {@link DiagramModel.history command history}.
+ *
+ * @see {@link ungroupAllEntities}
+ * @see {@link ungroupSomeEntities}
+ */
+export async function groupEntities(
+    workspace: WorkspaceContext,
+    params: GroupEntitiesParams
 ): Promise<EntityGroup> {
     const {model} = workspace;
+    const {elements, canvas} = params;
+
     const batch = model.history.startBatch(
         TranslatedText.text('workspace.group_entities.command')
     );
@@ -60,12 +86,38 @@ export async function groupEntitiesAnimated(
     return group;
 }
 
-export async function ungroupAllEntitiesAnimated(
-    groups: ReadonlyArray<EntityGroup>,
-    canvas: CanvasApi,
-    workspace: WorkspaceContext
+/**
+ * Parameters for {@link ungroupAllEntities} function.
+ */
+export interface UngroupAllEntitiesParams {
+    /**
+     * Selected groups to ungroup all entities from.
+     */
+    groups: ReadonlyArray<EntityGroup>;
+    /**
+     * Target canvas to get element sizes from for animation.
+     */
+    canvas: CanvasApi;
+}
+
+/**
+ * Ungroups **with animation** one or many {@link EntityGroup entity groups} into
+ * all contained {@link EntityElement entity elements}.
+ *
+ * The ungrouping operation is performed with {@link DataDiagramModel.ungroupAll} method.
+ *
+ * The operation puts a command to the {@link DiagramModel.history command history}.
+ *
+ * @see {@link groupEntities}
+ * @see {@link ungroupSomeEntities}
+ */
+export async function ungroupAllEntities(
+    workspace: WorkspaceContext,
+    params: UngroupAllEntitiesParams
 ): Promise<EntityElement[]> {
     const {model, performLayout} = workspace;
+    const {groups, canvas} = params;
+
     const batch = model.history.startBatch(
         TranslatedText.text('workspace.ungroup_entities.command')
     );
@@ -82,13 +134,42 @@ export async function ungroupAllEntitiesAnimated(
     return ungrouped;
 }
 
-export async function ungroupSomeEntitiesAnimated(
-    group: EntityGroup,
-    entities: ReadonlySet<ElementIri>,
-    canvas: CanvasApi,
-    workspace: WorkspaceContext
+/**
+ * Parameters for {@link ungroupSomeEntities} function.
+ */
+export interface UngroupSomeEntitiesParams {
+    /**
+     * Selected group to ungroup some entities from.
+     */
+    group: EntityGroup;
+    /**
+     * Subset of entities to ungroup from the target group.
+     */
+    entities: ReadonlySet<ElementIri>;
+    /**
+     * Target canvas to get element sizes from for animation.
+     */
+    canvas: CanvasApi;
+}
+
+/**
+ * Ungroups **with animation** some {@link EntityElement entity elements} from
+ * an {@link EntityGroup entity group}.
+ *
+ * The ungrouping operation is performed with {@link DataDiagramModel.ungroupSome} method.
+ *
+ * The operation puts a command to the {@link DiagramModel.history command history}.
+ *
+ * @see {@link groupEntities}
+ * @see {@link ungroupAllEntities}
+ */
+export async function ungroupSomeEntities(
+    workspace: WorkspaceContext,
+    params: UngroupSomeEntitiesParams
 ): Promise<EntityElement[]> {
     const {model} = workspace;
+    const {group, entities, canvas} = params;
+
     const batch = model.history.startBatch(
         TranslatedText.text('workspace.ungroup_entities.command')
     );
