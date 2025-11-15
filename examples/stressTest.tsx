@@ -52,7 +52,6 @@ function StressTestExample() {
 
             const canvas = view.findAnyCanvas();
             if (canvas) {
-                canvas.renderingState.syncUpdate();
                 await canvas.zoomToFit();
             }
         }
