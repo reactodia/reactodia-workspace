@@ -93,13 +93,13 @@ export enum RenderingLayer {
      */
     ElementSize,
     /**
-     * Layer to adjust scrollable area for the underlying canvas.
-     */
-    PaperArea,
-    /**
      * Layer to route links (compute link geometry).
      */
     LinkRoutes,
+    /**
+     * Layer to adjust scrollable area for the underlying canvas.
+     */
+    PaperArea,
     /**
      * Layer to render link templates.
      */
@@ -278,7 +278,7 @@ export class MutableRenderingState implements RenderingState {
 
     syncUpdate() {
         this.layerUpdater.dispose();
-        this.runLayerUpdate();
+        this.updateLayersUpTo(LAST_LAYER);
     }
 
     scheduleOnLayerUpdate(layer: RenderingLayer, callback: () => void): void {
@@ -293,9 +293,11 @@ export class MutableRenderingState implements RenderingState {
         }
     }
 
-    private runLayerUpdate = () => {
+    private runLayerUpdate = () => this.updateLayersUpTo(LAST_LAYER);
+
+    updateLayersUpTo(lastLayer: RenderingLayer): void {
         const toRun = new Set<() => void>();
-        for (let layer = FIRST_LAYER; layer <= LAST_LAYER; layer++) {
+        for (let layer = FIRST_LAYER; layer <= lastLayer; layer++) {
             const callbackSet = this.scheduledByLayer.get(layer);
             if (callbackSet && callbackSet.size > 0) {
                 for (const callback of callbackSet) {

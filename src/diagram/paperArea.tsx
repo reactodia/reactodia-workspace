@@ -689,32 +689,38 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     }
 
     centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
+        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
         const {width, height} = this.state.transform;
         const paperCenter = paperPosition || {x: width / 2, y: height / 2};
+        return this.centerToPosition(paperCenter, options);
+    }
+
+    centerContent(options: ViewportOptions = {}): Promise<void> {
+        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
+        const bbox = this.getContentFittingBox();
+        return this.centerTo({
+            x: bbox.x + bbox.width / 2,
+            y: bbox.y + bbox.height / 2,
+        }, options);
+    }
+
+    private centerToPosition(paperPosition: Vector, options: CenterToOptions) {
         if (typeof options.scale === 'number') {
             const {min, max} = this.zoomOptions;
             let scale = options.scale;
             scale = Math.max(scale, min);
             scale = Math.min(scale, max);
             const viewportState: Partial<ViewportState> = {
-                center: paperCenter,
+                center: paperPosition,
                 scale: {x: scale, y: scale},
             };
             return this.setViewportState(viewportState, options);
         } else {
             const viewportState: Partial<ViewportState> = {
-                center: paperCenter,
+                center: paperPosition,
             };
             return this.setViewportState(viewportState, options);
         }
-    }
-
-    centerContent(options: ViewportOptions = {}): Promise<void> {
-        const bbox = this.getContentFittingBox();
-        return this.centerTo({
-            x: bbox.x + bbox.width / 2,
-            y: bbox.y + bbox.height / 2,
-        }, options);
     }
 
     getScale() {
@@ -766,11 +772,12 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
 
     zoomToFit(options: ViewportOptions = {}): Promise<void> {
         const {model, renderingState} = this.props;
-        const {elements} = model;
+        const {elements, links} = model;
         if (elements.length === 0) {
             return this.centerTo();
         }
-        const bbox = getContentFittingBox(elements, [], renderingState);
+        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
+        const bbox = getContentFittingBox(elements, links, renderingState);
         return this.zoomToFitRect(bbox, options);
     }
 

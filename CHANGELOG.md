@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix incorrect canvas viewport position when `zoomToFit()` or similar operation is called immediately after element position changes;
 
 ## [0.31.0] - 2025-11-15
 #### 🚀 New Features
