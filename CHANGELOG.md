@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Fix incorrect canvas viewport position when `zoomToFit()` or similar operation is called immediately after element position changes;
+- Omit properties without values in `StandardEntity`, `StandardRelation` and `ClassicEntity`.
 
 ## [0.31.0] - 2025-11-15
 #### 🚀 New Features

@@ -462,9 +462,15 @@ function PropertyList(props: {
     const {data, shouldInclude} = props;
     const {model, translation: t} = useWorkspace();
 
-    let propertyIris: PropertyTypeIri[] = Object.keys(data.properties);
-    if (shouldInclude) {
-        propertyIris = propertyIris.filter(shouldInclude);
+    const propertyIris: PropertyTypeIri[] = [];
+    for (const iri in data.properties) {
+        if (
+            Object.prototype.hasOwnProperty.call(data.properties, iri) &&
+            data.properties[iri].length > 0 &&
+            (!shouldInclude || shouldInclude(iri))
+        ) {
+            propertyIris.push(iri);
+        }
     }
 
     useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);

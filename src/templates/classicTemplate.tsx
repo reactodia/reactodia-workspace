@@ -146,7 +146,16 @@ function PropertyList(props: {
     const {data} = props;
     const {model, translation: t} = useWorkspace();
 
-    const propertyIris: PropertyTypeIri[] = Object.keys(data.properties);
+    const propertyIris: PropertyTypeIri[] = [];
+    for (const iri in data.properties) {
+        if (
+            Object.prototype.hasOwnProperty.call(data.properties, iri) &&
+            data.properties[iri].length > 0
+        ) {
+            propertyIris.push(iri);
+        }
+    }
+
     useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
     
     const properties = propertyIris.map(iri => {
