@@ -141,6 +141,7 @@ export function AnnotationSupport(props: AnnotationSupportProps) {
             batch.store();
             canvas.renderingState.syncUpdate();
         });
+        return () => listener.stopListening();
     }, []);
 
     return (

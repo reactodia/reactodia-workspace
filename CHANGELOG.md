@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix `AnnotationSupport` not unsubscribing from `AnnotationTopic` at unmount which causes tow annotations to be created from `SelectionActionAnnotate` in React development mode.
 
 ## [0.31.1] - 2025-11-18
 #### 🐛 Fixed
