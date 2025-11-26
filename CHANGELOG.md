@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Fix `AnnotationSupport` not unsubscribing from `AnnotationTopic` at unmount which causes tow annotations to be created from `SelectionActionAnnotate` in React development mode.
+- Fix undo/redo history not working after panning or pinch-zoom gesture on touch devices.
 
 ## [0.31.1] - 2025-11-18
 #### 🐛 Fixed
