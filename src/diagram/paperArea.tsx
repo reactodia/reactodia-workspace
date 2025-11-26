@@ -647,23 +647,25 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
             document.removeEventListener('pointermove', this.onPointerMove);
             document.removeEventListener('pointerup', this.onPointerUp);
             document.removeEventListener('pointercancel', this.onPointerCancel);
-        }
 
-        if (e && movingState && !movingState.pinchOrigin) {
-            const {pointerMoved, target, batch, restoreGeometry} = movingState;
-            this.source.trigger('pointerUp', {
-                source: this,
-                sourceEvent: e,
-                target,
-                panning: Boolean(movingState.panningOrigin),
-                triggerAsClick: !pointerMoved,
-            });
+            const {pointerMoved, target, batch, restoreGeometry, pinchOrigin} = movingState;
+            if (e && !pinchOrigin) {
+                this.source.trigger('pointerUp', {
+                    source: this,
+                    sourceEvent: e,
+                    target,
+                    panning: Boolean(movingState.panningOrigin),
+                    triggerAsClick: !pointerMoved,
+                });
 
-            const restore = restoreGeometry.filterOutUnchanged();
-            if (restore.hasChanges()) {
-                batch.history.registerToUndo(restore);
+                const restore = restoreGeometry.filterOutUnchanged();
+                if (restore.hasChanges()) {
+                    batch.history.registerToUndo(restore);
+                }
+                batch.store();
+            } else {
+                batch.discard();
             }
-            batch.store();
         }
     };
 
