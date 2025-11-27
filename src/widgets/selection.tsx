@@ -411,6 +411,9 @@ class StatefulMoveController {
             positions,
             command: RestoreGeometry.capturePartial(elements, []),
         };
+        // Re-focus on canvas when clicking on the selection box
+        // to allow keyboard hotkeys for selection actions to work
+        canvas.focus();
     };
 
     private isToggleSelectionEvent(e: React.MouseEvent): boolean {
