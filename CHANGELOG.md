@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed
