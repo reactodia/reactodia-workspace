@@ -10,7 +10,7 @@ import {
     equalLinks, hashLink,
 } from '../data/model';
 import {
-    PlaceholderDataProperty, TemplateState, type SerializedTemplateState,
+    PlaceholderDataProperty, TemplateProperties, TemplateState, type SerializedTemplateState,
 } from '../data/schema';
 
 import {
@@ -623,9 +623,9 @@ export class RelationGroup extends Link {
             targetId: target.id,
             items: groupItems,
             vertices,
-            linkState: options.mapTemplateState(
-                TemplateState.fromJSON(linkState)
-            ),
+            linkState: options
+                .mapTemplateState(TemplateState.fromJSON(linkState))
+                .set(TemplateProperties.LayoutOnly, undefined),
         });
     }
 
