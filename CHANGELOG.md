@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
 
+#### 💅 Polish
+- Allow to set `className` and `style` on workspace root when using `DefaultWorkspace` or `ClassicWorkspace`.
+
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed
 - Fix `AnnotationSupport` not unsubscribing from `AnnotationTopic` at unmount which causes tow annotations to be created from `SelectionActionAnnotate` in React development mode.

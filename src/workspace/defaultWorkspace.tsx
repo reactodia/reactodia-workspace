@@ -28,6 +28,14 @@ import { WorkspaceRoot } from './workspaceRoot';
 
 export interface BaseDefaultWorkspaceProps {
     /**
+     * Additional CSS class for the {@link WorkspaceRoot} component.
+     */
+    className?: string;
+    /**
+     * Additional CSS styles for the {@link WorkspaceRoot} component.
+     */
+    style?: React.CSSProperties;
+    /**
      * Sets a color scheme for the UI components.
      *
      * If set to `auto`, the component will track the following places in order:
@@ -176,7 +184,7 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
  */
 export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const {
-        colorScheme, children, canvas, canvasWidgets,
+        className, style, colorScheme, children, canvas, canvasWidgets,
         annotations, connectionsMenu, dropOnCanvas, halo, haloLink, selection,
         navigator, visualAuthoring, zoomControl,
         menu, search, actions, mainToolbar, actionsToolbar,
@@ -228,7 +236,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     const menuDropUp = menuDock === 's' || menuDock === 'sw' || menuDock === 'se';
 
     return (
-        <WorkspaceRoot colorScheme={colorScheme}>
+        <WorkspaceRoot className={className} style={style} colorScheme={colorScheme}>
             <Canvas {...canvas}>
                 <VisualAuthoring {...visualAuthoring} />
                 {annotations === null ? null : <AnnotationSupport {...annotations} />}
