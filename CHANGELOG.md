@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
+- Fix `flushSync was called from inside a lifecycle method` React warning when calling `centerTo()`, `centerContent()`, `zoomToFit()` on `CanvasApi` from a lifecycle method.
 
 #### 💅 Polish
 - Allow to set `className` and `style` on workspace root when using `DefaultWorkspace` or `ClassicWorkspace`.
