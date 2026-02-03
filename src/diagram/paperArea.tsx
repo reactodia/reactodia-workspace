@@ -690,15 +690,15 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         this.rootRef.current?.focus({preventScroll: true});
     }
 
-    centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
-        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
+    async centerTo(paperPosition?: Vector, options: CenterToOptions = {}): Promise<void> {
+        await this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
         const {width, height} = this.state.transform;
         const paperCenter = paperPosition || {x: width / 2, y: height / 2};
         return this.centerToPosition(paperCenter, options);
     }
 
-    centerContent(options: ViewportOptions = {}): Promise<void> {
-        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
+    async centerContent(options: ViewportOptions = {}): Promise<void> {
+        await this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
         const bbox = this.getContentFittingBox();
         return this.centerTo({
             x: bbox.x + bbox.width / 2,
@@ -772,13 +772,13 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         return this.zoomBy(-this.zoomOptions.step, scaleOptions);
     }
 
-    zoomToFit(options: ViewportOptions = {}): Promise<void> {
+    async zoomToFit(options: ViewportOptions = {}): Promise<void> {
         const {model, renderingState} = this.props;
         const {elements, links} = model;
         if (elements.length === 0) {
             return this.centerTo();
         }
-        this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
+        await this.renderingState.updateLayersUpTo(RenderingLayer.PaperArea);
         const bbox = getContentFittingBox(elements, links, renderingState);
         return this.zoomToFitRect(bbox, options);
     }

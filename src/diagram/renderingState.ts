@@ -141,6 +141,11 @@ export interface RenderingState extends SizeProvider {
      * This method should be used before reading from the rendering state
      * after any render-impacting change was made to the diagram content.
      *
+     * **Note**: it is recommended to avoid calling this method from a React
+     * lifecycle hook (e.g. `useEffect()` or `componentDidMount()`) due to
+     * the warning related to using `flushSync()` to immediately apply changes.
+     * (It can be called from a microtask instead.)
+     *
      * **Example**:
      * ```ts
      * // Add new element to the diagram
@@ -277,8 +282,7 @@ export class MutableRenderingState implements RenderingState {
     }
 
     syncUpdate() {
-        this.layerUpdater.dispose();
-        this.updateLayersUpTo(LAST_LAYER);
+        this.syncUpdateLayersUpTo(LAST_LAYER);
     }
 
     scheduleOnLayerUpdate(layer: RenderingLayer, callback: () => void): void {
@@ -293,9 +297,17 @@ export class MutableRenderingState implements RenderingState {
         }
     }
 
-    private runLayerUpdate = () => this.updateLayersUpTo(LAST_LAYER);
+    private runLayerUpdate = () => this.syncUpdateLayersUpTo(LAST_LAYER);
 
-    updateLayersUpTo(lastLayer: RenderingLayer): void {
+    updateLayersUpTo(lastLayer: RenderingLayer): Promise<void> {
+        // Run layer updates in a microtask to avoid React warnings
+        // for calling `flushSync()` from lifecycle methods:
+        return Promise.resolve().then(() => this.syncUpdateLayersUpTo(lastLayer));
+    }
+
+    private syncUpdateLayersUpTo(lastLayer: RenderingLayer): void {
+        this.layerUpdater.dispose();
+
         const toRun = new Set<() => void>();
         for (let layer = FIRST_LAYER; layer <= lastLayer; layer++) {
             const callbackSet = this.scheduledByLayer.get(layer);
