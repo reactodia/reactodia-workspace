@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 
-import { LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
+import { ElementModel, LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
 import type { MetadataProvider, MetadataRelationShape } from '../data/metadataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
@@ -15,7 +15,7 @@ import { ProgressBar } from '../widgets/utility/progressBar';
 import { useWorkspace } from '../workspace/workspaceContext';
 
 import {
-    type ExtendedLink, LinkTypeSelector, type ValidatedLink,
+    LinkTypeSelector, type ValidatedLink,
     dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
 } from './linkTypeSelector';
 
@@ -25,35 +25,66 @@ import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-relation-form';
 
-export interface EditRelationFormProps {
-    originalLink: RelationLink;
-    source: EntityElement;
-    target: EntityElement;
-    onChangeTarget: (newTarget: RelationLink) => void;
-    onAfterApply: () => void;
-    onCancel: () => void;
-    resolveInput: FormInputGroupProps['resolveInput'];
+export interface RelationEditorProvidedProps {
+    status: 'ok' | 'validating' | 'invalid';
+
+    linkData: LinkModel;
+    linkSource: ElementModel;
+    linkTarget: ElementModel;
+
+    updateData: (update: (previous: LinkModel) => LinkModel) => void;
+    applyChanges: () => void;
 }
 
-export function EditRelationForm(props: EditRelationFormProps) {
+interface RelationEditorContext {
+    readonly value: ValidatedLink;
+    readonly setValue: (nextValue: ValidatedLink) => void;
+    readonly validating: boolean;
+}
+
+const RelationEditorContext = React.createContext<RelationEditorContext | null>(null);
+
+export function RelationEditor(props: {
+    relation: RelationLink;
+    onChangeTarget: (newLink: RelationLink) => void;
+    children: (props: RelationEditorProvidedProps) => React.ReactNode;
+}) {
+    const {relation, onChangeTarget, children} = props;
+    const {model} = useWorkspace();
     const [version, setVersion] = React.useState(0);
+    const relationSource = model.getElement(relation.sourceId) as EntityElement;
+    const relationTarget = model.getElement(relation.targetId) as EntityElement;
     React.useLayoutEffect(() => {
         // Reset the form completely on source/target changes
         setVersion(previous => previous + 1);
-    }, [props.source, props.target]);
-    return <EditRelationFormInner key={version} {...props} />;
+    }, [relationSource, relationTarget]);
+    return (
+        <RelationEditorInner key={version}
+            original={relation}
+            originalSource={relationSource}
+            originalTarget={relationTarget}
+            onChangeTarget={onChangeTarget}>
+            {children}
+        </RelationEditorInner>
+    );
 }
 
-function EditRelationFormInner(props: EditRelationFormProps) {
-    const {originalLink, source, target, onChangeTarget, onAfterApply, onCancel, resolveInput} = props;
+function RelationEditorInner(props: {
+    original: RelationLink;
+    originalSource: EntityElement;
+    originalTarget: EntityElement;
+    onChangeTarget: (newLink: RelationLink) => void;
+    children: (props: RelationEditorProvidedProps) => React.ReactNode;
+}) {
+    const {original, originalSource, originalTarget, onChangeTarget, children} = props;
     const workspace = useWorkspace();
     const {editor, translation: t} = workspace;
 
     const [value, setValue] = React.useState((): ValidatedLink => ({
         link: {
-            base: props.originalLink.data,
-            source: props.source.data,
-            target: props.target.data,
+            base: original.data,
+            source: originalSource.data,
+            target: originalTarget.data,
             direction: 'out',
         },
         validated: true,
@@ -70,7 +101,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
             setValidating(true);
             void validateLinkType(
                 toValidate,
-                originalLink.data,
+                original.data,
                 workspace,
                 cancellation.signal,
             ).then(error => {
@@ -89,20 +120,88 @@ function EditRelationFormInner(props: EditRelationFormProps) {
 
     React.useEffect(() => {
         if (
-            editor.temporaryState.links.has(originalLink.data) &&
+            editor.temporaryState.links.has(original.data) &&
             value.validated &&
             value.allowChange
         ) {
             const toApply = dataFromExtendedLink(value.link);
-            if (!equalLinks(originalLink.data, toApply)) {
-                const linkBase = relationFromExtendedLink(value.link, source, target);
+            if (!equalLinks(original.data, toApply)) {
+                const linkBase = relationFromExtendedLink(value.link, originalSource, originalTarget);
                 const recreatedTarget = editor.createRelation(linkBase, {temporary: true});
                 onChangeTarget(recreatedTarget);
             }
         }
     }, [value]);
 
-    const [metadata, metadataError] = useRelationMetadata(editor.metadataProvider, value.link);
+    const context = React.useMemo(
+        (): RelationEditorContext => ({value, setValue, validating}),
+        [value, validating]
+    );
+
+    return (
+        <RelationEditorContext.Provider value={context}>
+            {children({
+                status: (
+                    validating ? 'validating' :
+                    value.error ? 'invalid' :
+                    'ok'
+                ),
+                linkData: dataFromExtendedLink(value.link),
+                linkSource: value.link.source,
+                linkTarget: value.link.target,
+                updateData: update => {
+                    setValue((previous): ValidatedLink => {
+                        const nextData = update(dataFromExtendedLink(previous.link));
+                        const previousProperties = previous.link.base.properties;
+                        if (nextData.properties === previousProperties) {
+                            return previous;
+                        }
+                        return {
+                            ...previous,
+                            link: {
+                                ...previous.link,
+                                base: {
+                                    ...previous.link.base,
+                                    properties: nextData.properties,
+                                }
+                            }
+                        };
+                    });
+                },
+                applyChanges: () => {
+                    const toApply = dataFromExtendedLink(value.link);
+
+                    if (editor.temporaryState.links.has(original.data)) {
+                        editor.removeTemporaryCells([original]);
+                        const linkBase = relationFromExtendedLink(value.link, originalSource, originalTarget);
+                        editor.createRelation(linkBase);
+                    } else if (!(
+                        equalLinks(original.data, toApply) &&
+                        equalProperties(original.data.properties, toApply.properties)
+                    )) {
+                        editor.changeRelation(original.data, toApply);
+                    }
+                },
+            })}
+        </RelationEditorContext.Provider>
+    );
+}
+
+export interface DefaultEditRelationFormProps extends RelationEditorProvidedProps {
+    closeDialog: () => void;
+    resolveInput: FormInputGroupProps['resolveInput'];
+}
+
+export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
+    const {
+        status, linkData, linkSource, linkTarget,
+        updateData, applyChanges, closeDialog, resolveInput,
+    } = props;
+    const {editor, translation: t} = useWorkspace();
+
+    const [metadata, metadataError] = useRelationMetadata(
+        editor.metadataProvider, linkData, linkSource, linkTarget
+    );
     const languages = React.useMemo(
         () => editor.metadataProvider?.getLiteralLanguages() ?? [], []
     );
@@ -111,8 +210,8 @@ function EditRelationFormInner(props: EditRelationFormProps) {
         property: PropertyTypeIri,
         updater: FormInputMultiUpdater
     ): void => {
-        setValue((previous): ValidatedLink => {
-            const properties = previous.link.base.properties;
+        updateData(previous => {
+            const {properties} = previous;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
             const nextValues = updater(values ?? []);
@@ -120,57 +219,19 @@ function EditRelationFormInner(props: EditRelationFormProps) {
             if (nextValues.length === 0) {
                 delete nextProperties[property];
             }
-            return {
-                ...previous,
-                link: {
-                    ...previous.link,
-                    base: {
-                        ...previous.link.base,
-                        properties: nextProperties,
-                    }
-                }
-            };
+            return {...previous, properties: nextProperties};
         });
     };
 
     const onApply = () => {
-        const toApply = dataFromExtendedLink(value.link);
-
-        if (editor.temporaryState.links.has(originalLink.data)) {
-            editor.removeTemporaryCells([originalLink]);
-            const linkBase = relationFromExtendedLink(value.link, source, target);
-            editor.createRelation(linkBase);
-        } else if (!(
-            equalLinks(originalLink.data, toApply) &&
-            equalProperties(originalLink.data.properties, toApply.properties)
-        )) {
-            editor.changeRelation(originalLink.data, toApply);
-        }
-
-        onAfterApply();
+        applyChanges();
+        closeDialog();
     };
 
-    const linkIsValid = !value.error;
     return (
         <div className={FORM_CLASS}>
             <div className={`reactodia-scrollable ${FORM_CLASS}__body`}>
-                <LinkTypeSelector link={value.link}
-                    error={value.error}
-                    onChange={link => setValue({
-                        link,
-                        error: undefined,
-                        validated: false,
-                        allowChange: false,
-                    })}
-                />
-                {validating ? (
-                    <div className={`${FORM_CLASS}__progress`}>
-                        <ProgressBar state='loading'
-                            title={t.text('visual_authoring.edit_relation.validation_progress.title')}
-                            height={10}
-                        />
-                    </div>
-                ) : null}
+                <RelationTypeSelector />
                 {!metadata ? (
                     <div className={cx(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
                         <HtmlSpinner width={30} height={30}
@@ -182,7 +243,7 @@ function EditRelationFormInner(props: EditRelationFormProps) {
                         languages={languages}
                         extraPropertyShape={metadata.shape.extraProperty}
                         propertyShapes={metadata.shape.properties}
-                        propertyValues={value.link.base.properties}
+                        propertyValues={linkData.properties}
                         onChangeData={onChangeProperty}
                         resolveInput={resolveInput}
                     />
@@ -191,17 +252,53 @@ function EditRelationFormInner(props: EditRelationFormProps) {
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                     onClick={onApply}
-                    disabled={!linkIsValid || validating}
+                    disabled={status !== 'ok'}
                     title={t.text('visual_authoring.dialog.apply.title')}>
                     {t.text('visual_authoring.dialog.apply.label')}
                 </button>
                 <button className='reactodia-btn reactodia-btn-secondary'
-                    onClick={onCancel}
+                    onClick={closeDialog}
                     title={t.text('visual_authoring.dialog.cancel.title')}>
                     {t.text('visual_authoring.dialog.cancel.label')}
                 </button>
             </div>
         </div>
+    );
+}
+
+/**
+ * Component to change relation type and/or its direction from a custom property editor
+ * for the {@link VisualAuthoring}.
+ *
+ * @category Components
+ */
+export function RelationTypeSelector() {
+    const {translation: t} = useWorkspace();
+    const context = React.useContext(RelationEditorContext);
+    if (!context) {
+        throw new Error('Reactodia: Cannot use <RelationTypeSelector> outside relation editor');
+    }
+    const {value, setValue, validating} = context;
+    return (
+        <>
+            <LinkTypeSelector link={value.link}
+                error={value.error}
+                onChange={link => setValue({
+                    link,
+                    error: undefined,
+                    validated: false,
+                    allowChange: false,
+                })}
+            />
+            {validating ? (
+                <div className={`${FORM_CLASS}__progress`}>
+                    <ProgressBar state='loading'
+                        title={t.text('visual_authoring.edit_relation.validation_progress.title')}
+                        height={10}
+                    />
+                </div>
+            ) : null}
+        </>
     );
 }
 
@@ -211,7 +308,9 @@ interface RelationMetadata {
 
 function useRelationMetadata(
     metadataProvider: MetadataProvider | undefined,
-    link: ExtendedLink,
+    link: LinkModel,
+    linkSource: ElementModel,
+    linkTarget: ElementModel
 ): readonly [shape: RelationMetadata | undefined, error?: unknown] {
     const [shape, setShape] = React.useState<RelationMetadata>();
     const [shapeError, setShapeError] = React.useState<unknown>();
@@ -222,11 +321,10 @@ function useRelationMetadata(
             setShapeError(undefined);
             const cancellation = new AbortController();
             const signal = cancellation.signal;
-            const data = dataFromExtendedLink(link);
             mapAbortedToNull(
                 Promise.all([
-                    metadataProvider.canModifyRelation(data, link.source, link.target, {signal}),
-                    metadataProvider.getRelationShape(data.linkTypeId, {signal}),
+                    metadataProvider.canModifyRelation(link, linkSource, linkTarget, {signal}),
+                    metadataProvider.getRelationShape(link.linkTypeId, {signal}),
                 ]),
                 signal
             ).then(
@@ -246,7 +344,7 @@ function useRelationMetadata(
         } else {
             setShape({shape: null});
         }
-    }, [link.base.linkTypeId, link.source, link.target]);
+    }, [link.linkTypeId, linkSource, linkTarget]);
 
     return [shape, shapeError];
 }

@@ -7,9 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
 - Fix `flushSync was called from inside a lifecycle method` React warning when calling `centerTo()`, `centerContent()`, `zoomToFit()` on `CanvasApi` from a lifecycle method.
+- Use default property editor for entities or relations when `VisualAuthoring.propertyEditor` returns `undefined`.
 
 #### 💅 Polish
 - Allow to set `className` and `style` on workspace root when using `DefaultWorkspace` or `ClassicWorkspace`.
+- Allow to customize relation property editor with the built-in relation type selector `RelationTypeSelector`.
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed

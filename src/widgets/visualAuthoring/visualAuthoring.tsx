@@ -17,7 +17,7 @@ import { EntityElement, RelationLink } from '../../editor/dataElements';
 import { FormInputList } from '../../forms/input/formInputList';
 import { FormInputText } from '../../forms/input/formInputText';
 import type { FormInputOrDefaultResolver } from '../../forms/input/inputCommon';
-import { EditRelationForm } from '../../forms/editRelationForm';
+import { RelationEditor, DefaultEditRelationForm } from '../../forms/editRelationForm';
 import { EditEntityForm } from '../../forms/editEntityForm';
 import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
 
@@ -53,9 +53,11 @@ export interface VisualAuthoringProps {
 }
 
 /**
- * Provides custom editor for the entity data.
+ * Provides custom editor for the entity or relation data:
+ *  - for `undefined` return value the default editor will be used;
+ *  - otherwise the inline dialog will display the provided editor.
  */
-export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
+export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement | undefined;
 
 /**
  * Parameters for {@link PropertyEditor}.
@@ -91,6 +93,8 @@ export interface PropertyEditorOptionsEntity {
 
 /**
  * Parameters for {@link PropertyEditor} for a relation target.
+ *
+ * @see {@link RelationTypeSelector}
  */
 export interface PropertyEditorOptionsRelation {
     /**
@@ -98,11 +102,35 @@ export interface PropertyEditorOptionsRelation {
      */
     readonly type: 'relation';
     /**
-     * Target relation data to edit.
+     * Relation editor status:
+     *  - `ok`: relation is valid and ready to be submitted;
+     *  - `validating`: relation is checked whether it can be created or changed
+     *    to the selected type;
+     *  - `invalid`: relation cannot be created or changed to the selected type.
+     */
+    readonly status: 'ok' | 'validating' | 'invalid';
+    /**
+     * Current relation data to edit.
      */
     readonly linkData: LinkModel;
     /**
-     * Handler to submit changed relation data.
+     * Data for the current relation source.
+     */
+    readonly linkSource: ElementModel;
+    /**
+     * Data for the current relation target.
+     */
+    readonly linkTarget: ElementModel;
+    /**
+     * Handler to update current relation data in the property editor.
+     *
+     * **Note**: only relation properties can be changed via `updater`.
+     */
+    readonly onUpdate: (updater: (previous: LinkModel) => LinkModel) => void;
+    /**
+     * Handler to submit final relation data to change it.
+     *
+     * **Note**: only relation properties can be changed from `newData`.
      */
     readonly onSubmit: (newData: LinkModel) => void;
     /**
@@ -210,24 +238,27 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                 modelToEdit = {...target.data, id: event.newIri};
             }
             const onCancel = () => overlay.hideDialog();
-            const content = propertyEditor ? (
-                propertyEditor({
-                    type: 'entity',
-                    elementData: target.data,
-                    onSubmit,
-                    onCancel,
-                })
-            ) : (
-                <EditEntityForm
-                    entity={modelToEdit}
-                    onApply={onSubmit}
-                    onCancel={onCancel}
-                    resolveInput={(property, inputProps) => {
-                        const input = inputResolver?.(property, inputProps);
-                        return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
-                    }}
-                />
-            );
+
+            let content = propertyEditor?.({
+                type: 'entity',
+                elementData: target.data,
+                onSubmit,
+                onCancel,
+            });
+            if (content === undefined) {
+                content = (
+                    <EditEntityForm
+                        entity={modelToEdit}
+                        onApply={onSubmit}
+                        onCancel={onCancel}
+                        resolveInput={(property, inputProps) => {
+                            const input = inputResolver?.(property, inputProps);
+                            return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
+                        }}
+                    />
+                );
+            }
+
             overlay.showDialog({
                 target,
                 dialogType: BuiltinDialogType.editEntity,
@@ -271,37 +302,45 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         });
 
         listener.listen(commands, 'editRelation', ({target: link}) => {
-            const content = propertyEditor ? (
-                propertyEditor({
-                    type: 'relation',
-                    linkData: link.data,
-                    onSubmit: newData => {
-                        editor.changeRelation(link.data, newData);
-                        overlay.hideDialog();
-                    },
-                    onCancel: () => overlay.hideDialog(),
-                })
-            ) : (
-                <EditRelationForm originalLink={link}
-                    source={model.getElement(link.sourceId) as EntityElement}
-                    target={model.getElement(link.targetId) as EntityElement}
+            const caption = editor.temporaryState.links.has(link.data)
+                ? t.text('visual_authoring.edit_relation.dialog.caption_new')
+                : t.text('visual_authoring.edit_relation.dialog.caption');
+            const content = (
+                <RelationEditor relation={link}
                     onChangeTarget={newTarget => {
                         // Close current dialog before opening a new one to avoid
                         // target temporary link removal
                         overlay.hideDialog();
                         commands.trigger('editRelation', {target: newTarget});
+                    }}>
+                    {providedProps => {
+                        const closeDialog = () => overlay.hideDialog();
+                        const editor = propertyEditor?.({
+                            type: 'relation',
+                            status: providedProps.status,
+                            linkData: providedProps.linkData,
+                            linkSource: providedProps.linkSource,
+                            linkTarget: providedProps.linkTarget,
+                            onUpdate: providedProps.updateData,
+                            onSubmit: newData => {
+                                providedProps.updateData(() => newData);
+                                providedProps.applyChanges();
+                                closeDialog();
+                            },
+                            onCancel: closeDialog,
+                        });
+                        return editor ?? (
+                            <DefaultEditRelationForm {...providedProps}
+                                closeDialog={closeDialog}
+                                resolveInput={(property, inputProps) => {
+                                    const input = inputResolver?.(property, inputProps);
+                                    return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
+                                }}
+                            />
+                        );
                     }}
-                    onAfterApply={() => overlay.hideDialog()}
-                    onCancel={() => overlay.hideDialog()}
-                    resolveInput={(property, inputProps) => {
-                        const input = inputResolver?.(property, inputProps);
-                        return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
-                    }}
-                />
+                </RelationEditor>
             );
-            const caption = editor.temporaryState.links.has(link.data)
-                ? t.text('visual_authoring.edit_relation.dialog.caption_new')
-                : t.text('visual_authoring.edit_relation.dialog.caption');
             overlay.showDialog({
                 target: link,
                 dialogType: BuiltinDialogType.editRelation,
