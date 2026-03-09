@@ -110,17 +110,17 @@ export function DragEditLayer(props: DragEditLayerProps) {
                 (!target || target instanceof EntityElement) &&
                 (!targetEvent || targetEvent.type !== 'entityDelete')
             )) {
-                return new EnitityDragConnection([], workspace);
+                return new EntityDragConnection([], workspace);
             }
 
             const canConnect = await metadataProvider.canConnect(
                 source.data,
-                undefined,
+                target?.data,
                 link.data.linkTypeId === PlaceholderRelationType
                     ? undefined : link.data.linkTypeId,
                 {signal}
             );
-            return new EnitityDragConnection(canConnect, workspace);
+            return new EntityDragConnection(canConnect, workspace);
         },
         [metadataProvider]
     );
@@ -147,7 +147,7 @@ export function DragEditLayer(props: DragEditLayerProps) {
     );
 }
 
-class EnitityDragConnection implements DragLinkConnection {
+class EntityDragConnection implements DragLinkConnection {
     constructor(
         private readonly connections: ReadonlyArray<MetadataCanConnect>,
         private readonly workspace: WorkspaceContext
