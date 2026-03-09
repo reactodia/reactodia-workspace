@@ -250,6 +250,10 @@ export function getElementsInfo(
         }
     }
 
+    for (const instance of instances.values()) {
+        instance.types.sort();
+    }
+
     return instances;
 }
 

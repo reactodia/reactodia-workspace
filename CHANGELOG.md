@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
 - Fix `flushSync was called from inside a lifecycle method` React warning when calling `centerTo()`, `centerContent()`, `zoomToFit()` on `CanvasApi` from a lifecycle method.
 - Use default property editor for entities or relations when `VisualAuthoring.propertyEditor` returns `undefined`.
+- Fix `prepareLabels` option for `SparqlDataProvider` to be applied for `knownElementTypes()`, `knownLinkTypes()`, `elementTypes()`, `linkTypes()`, `propertyTypes()` and `elements`.
+- Fix `SparqlDataProvider.elements()` to always return entities with sorted types.
 
 #### 💅 Polish
 - Allow to set `className` and `style` on workspace root when using `DefaultWorkspace` or `ClassicWorkspace`.

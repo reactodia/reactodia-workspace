@@ -317,7 +317,7 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(properties.values(), this.options.prepareLabels, signal);
+            await attachLabels(Array.from(properties.values()), this.options.prepareLabels, signal);
         }
 
         return properties;
@@ -349,7 +349,7 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(classes.values(), this.options.prepareLabels, signal);
+            await attachLabels(Array.from(classes.values()), this.options.prepareLabels, signal);
         }
 
         return classes;
@@ -381,7 +381,7 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         if (this.options.prepareLabels) {
-            await attachLabels(linkTypes.values(), this.options.prepareLabels, signal);
+            await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
         }
 
         return linkTypes;
@@ -407,7 +407,7 @@ export class SparqlDataProvider implements DataProvider {
         const linkTypes = getLinkTypes(result);
 
         if (this.options.prepareLabels) {
-            await attachLabels(linkTypes.values(), this.options.prepareLabels, signal);
+            await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
         }
 
         return Array.from(linkTypes.values());
@@ -454,7 +454,7 @@ export class SparqlDataProvider implements DataProvider {
 
         if (this.options.prepareLabels) {
             await attachProperties(
-                elementModels.values(),
+                Array.from(elementModels.values()),
                 this.options.prepareLabels,
                 this.labelPredicate,
                 signal
@@ -1063,11 +1063,11 @@ interface LabeledItem {
 }
 
 async function attachLabels(
-    items: Iterable<LabeledItem>,
+    items: readonly LabeledItem[],
     fetchLabels: NonNullable<SparqlDataProviderOptions['prepareLabels']>,
     signal: AbortSignal | undefined
 ): Promise<void> {
-    const resources = new Set<string>(Array.from(items, item => item.id));
+    const resources = new Set(items.map(item => item.id));
     const labels = await fetchLabels(resources, signal);
     for (const item of items) {
         const itemLabels = labels.get(item.id);
@@ -1080,19 +1080,17 @@ async function attachLabels(
 type MutableProperties = Record<PropertyTypeIri, Array<Rdf.NamedNode | Rdf.Literal>>;
 
 async function attachProperties(
-    items: Iterable<ElementModel>,
+    items: readonly ElementModel[],
     fetchProperties: NonNullable<SparqlDataProviderOptions['prepareLabels']>,
     propertyIri: PropertyTypeIri,
     signal: AbortSignal | undefined
 ) {
-    const resources = new Set<string>(Array.from(items, item => item.id));
+    const resources = new Set(items.map(item => item.id));
     const properties = await fetchProperties(resources, signal);
     for (const item of items) {
         const itemValues = properties.get(item.id);
         if (itemValues) {
-            for (const value of itemValues) {
-                appendProperty(item.properties as MutableProperties, propertyIri, value);
-            }
+            (item.properties as MutableProperties)[propertyIri] = itemValues;
         }
     }
 }

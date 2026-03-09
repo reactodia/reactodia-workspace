@@ -2,11 +2,12 @@ import { expect, describe, it, vi } from 'vitest';
 
 import { IndexedDbCachedProvider } from '../../src/data/indexedDb/indexedDbCachedProvider';
 import type {
-    ElementIri, ElementTypeIri, LinkModel, LinkTypeIri, PropertyTypeIri,
+    ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from '../../src/data/model';
 import {
     MockDataProvider, element, elementType, linkType, propertyType, missing,
 } from '../mock/mockDataProvider';
+import { compareLinks } from '../utilities/dataCompare';
 
 describe('IndexedDbCachedProvider', () => {
     it('caches data once for known element/link types', async () => {
@@ -498,28 +499,3 @@ describe('IndexedDbCachedProvider', () => {
         }
     });
 });
-
-function compareLinks(a: LinkModel, b: LinkModel): number {
-    let result = (
-        a.sourceId < b.sourceId ? -1 :
-        a.sourceId > b.sourceId ? 1 :
-        0
-    );
-    if (result !== 0) {
-        return result;
-    }
-    result = (
-        a.targetId < b.targetId ? -1 :
-        a.targetId > b.targetId ? 1 :
-        0
-    );
-    if (result !== 0) {
-        return result;
-    }
-    result = (
-        a.linkTypeId < b.linkTypeId ? -1 :
-        a.linkTypeId > b.linkTypeId ? 1 :
-        0
-    );
-    return result;
-}
