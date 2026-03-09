@@ -632,7 +632,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private onPaperScrollCapture = (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => {
-        if (cell instanceof Element && this.movingState) {
+        if (cell instanceof Element && this.movingState?.target === cell) {
             // Prevent element move when interacting with nested scrollbars
             this.stopListeningToPointerMove();
         }

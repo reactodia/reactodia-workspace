@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
+- Fix being unable to pan the canvas in Firefox when an graph element with a scrollbar inside was present.
 - Fix `flushSync was called from inside a lifecycle method` React warning when calling `centerTo()`, `centerContent()`, `zoomToFit()` on `CanvasApi` from a lifecycle method.
 - Use default property editor for entities or relations when `VisualAuthoring.propertyEditor` returns `undefined`.
 - Fix `prepareLabels` option for `SparqlDataProvider` to be applied for `knownElementTypes()`, `knownLinkTypes()`, `elementTypes()`, `linkTypes()`, `propertyTypes()` and `elements`.
