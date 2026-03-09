@@ -352,6 +352,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         this.refreshOperation.abort();
         this.refreshOperation = cancellation;
 
+        let queryTypeIris: Set<ElementTypeIri> | undefined;
         this.setState((state, props) => {
             const {workspace: {model, editor, translation: t}} = props;
             const classTree = state.fetchedGraph?.classTree;
@@ -365,12 +366,16 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
                 if (newIris.size > 0) {
                     refreshingState = 'loading';
-                    void this.queryCreatableTypes(newIris, cancellation.signal);
+                    queryTypeIris = newIris;
                 }
             }
 
             const roots = createRoots(classTree, model, t);
             return applyFilters({...state, roots: sortTree(roots), refreshingState});
+        }, () => {
+            if (queryTypeIris) {
+                void this.queryCreatableTypes(queryTypeIris, cancellation.signal);
+            }
         });
     };
 
