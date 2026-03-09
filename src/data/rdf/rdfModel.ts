@@ -9,9 +9,10 @@ export type BlankNode = RdfJs.BlankNode;
 export type Literal = RdfJs.Literal;
 export type Variable = RdfJs.Variable;
 export type DefaultGraph = RdfJs.DefaultGraph;
+export type BaseQuad = RdfJs.BaseQuad;
 export type Quad = RdfJs.Quad;
 
-export type Term = NamedNode | BlankNode | Literal | Variable | DefaultGraph | Quad;
+export type Term = NamedNode | BlankNode | Literal | Variable | DefaultGraph | BaseQuad;
 export type DataFactory = RdfJs.DataFactory;
 
 export const DefaultDataFactory: RdfJs.DataFactory = N3.DataFactory;
