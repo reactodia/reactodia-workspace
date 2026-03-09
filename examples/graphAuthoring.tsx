@@ -69,6 +69,13 @@ function GraphAuthoringExample() {
                         ? <Reactodia.FormInputList {...inputProps} valueInput={MultilineTextInput} />
                         : undefined,
                 }}
+                languages={[
+                    {code: 'en', label: 'English'},
+                    {code: 'es', label: 'Español'},
+                    {code: 'fr', label: 'Français'},
+                    {code: 'it', label: 'Italiano'},
+                    {code: 'ja', label: '日本語'},
+                ]}
             />
         </Reactodia.Workspace>
     );

@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
+import { useObservedProperty } from '../coreUtils/hooks';
 import { Translation } from '../coreUtils/i18n';
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { PlaceholderEntityType } from '../data/schema';
 import type { ElementModel, ElementTypeIri } from '../data/model';
@@ -14,6 +16,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
 import { EntityElement } from '../editor/dataElements';
+import { subscribeElementTypes } from '../editor/observedElement';
 
 import { ListElementView } from '../widgets/utility/listElementView';
 import { NoSearchResults } from '../widgets/utility/noSearchResults';
@@ -84,13 +87,6 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     componentDidMount() {
         const {searchStore, workspace: {model}} = this.props;
 
-        this.listener.listen(model.events, 'elementTypeEvent', ({data}) => {
-            const {elementTypes} = this.state;
-            const changeEvent = data.changeData;
-            if (changeEvent && elementTypes && elementTypes.includes(changeEvent.source.id)) {
-                this.forceUpdate();
-            }
-        });
         this.listener.listen(searchStore.events, 'changeValue', ({source}) => {
             if (source.value.length === 0) {
                 // Clear the search
@@ -143,9 +139,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                 elementTypeSet.add(type);
             }
         }
-        const elementTypes = Array.from(elementTypeSet)
-            .sort(makeElementTypeComparatorByLabel(model, t));
-        this.setState({elementTypes});
+        this.setState({elementTypes: Array.from(elementTypeSet)});
     }
 
     private async searchExistingElements(searchString: string) {
@@ -212,20 +206,6 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         });
     };
 
-    private renderPossibleElementType = (elementType: ElementTypeIri) => {
-        const {workspace: {model, translation: t}} = this.props;
-        const type = model.getElementType(elementType);
-        const label = t.formatLabel(type?.data?.label, elementType, model.language);
-        return (
-            <option key={elementType} value={elementType}>
-                {t.text('visual_authoring.select_entity.entity_type.label', {
-                    type: label,
-                    typeIri: elementType,
-                })}
-            </option>
-        );
-    };
-
     private renderElementTypeSelector() {
         const {elementValue, workspace: {translation: t}} = this.props;
         const {elementTypes, elementTypesState} = this.state;
@@ -249,9 +229,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                             <option value={PlaceholderEntityType} disabled={true}>
                                 {t.text('visual_authoring.select_entity.type.placeholder')}
                             </option>
-                            {
-                                elementTypes.map(this.renderPossibleElementType)
-                            }
+                            <ElementTypeOptions elementTypes={elementTypes} />
                         </select>
                     ) : <div><HtmlSpinner width={20} height={20} /></div>
                 }
@@ -349,12 +327,42 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 }
 
-function makeElementTypeComparatorByLabel(model: DataDiagramModel, t: Translation) {
+function ElementTypeOptions(props: {
+    elementTypes: readonly ElementTypeIri[];
+}) {
+    const {elementTypes} = props;
+    const {model, translation: t} = useWorkspace();
+
+    const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
+    useKeyedSyncStore(subscribeElementTypes, elementTypes, model);
+    const sortedTypes = [...elementTypes].sort(
+        makeElementTypeComparatorByLabel(model, t, language)
+    );
+
+    return (
+        <>
+            {sortedTypes.map(elementType => {
+                const type = model.getElementType(elementType);
+                const label = t.formatLabel(type?.data?.label, elementType, language);
+                return (
+                    <option key={elementType} value={elementType}>
+                        {t.text('visual_authoring.select_entity.entity_type.label', {
+                            type: label,
+                            typeIri: elementType,
+                        })}
+                    </option>
+                );
+            })}
+        </>
+    );
+}
+
+function makeElementTypeComparatorByLabel(model: DataDiagramModel, t: Translation, language: string) {
     return (a: ElementTypeIri, b: ElementTypeIri) => {
         const typeA = model.getElementType(a);
         const typeB = model.getElementType(b);
-        const labelA = t.formatLabel(typeA?.data?.label, a, model.language);
-        const labelB = t.formatLabel(typeB?.data?.label, b, model.language);
+        const labelA = t.formatLabel(typeA?.data?.label, a, language);
+        const labelB = t.formatLabel(typeB?.data?.label, b, language);
         return labelA.localeCompare(labelB);
     };
 }

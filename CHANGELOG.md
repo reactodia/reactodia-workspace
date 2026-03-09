@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix a freeze when opening a class tree in authoring mode when `MetadataProvider.filterConstructibleTypes()` returns without any delay.
 - Fix calling `MetadataProvider.canConnect()` with only source and without target when dragging over an element to establish a new link.
 - Fix `flushSync was called from inside a lifecycle method` React warning when calling `centerTo()`, `centerContent()`, `zoomToFit()` on `CanvasApi` from a lifecycle method.
+- Fix labels not loading for element and link type selectors in `VisualAuthoring` dialogs unless already preloaded from the diagram.
 - Use default property editor for entities or relations when `VisualAuthoring.propertyEditor` returns `undefined`.
 - Fix `prepareLabels` option for `SparqlDataProvider` to be applied for `knownElementTypes()`, `knownLinkTypes()`, `elementTypes()`, `linkTypes()`, `propertyTypes()` and `elements`.
 - Fix `SparqlDataProvider.elements()` to always return entities with sorted types.

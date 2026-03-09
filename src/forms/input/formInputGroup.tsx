@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import { useObservedProperty } from '../../coreUtils/hooks';
 import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
-import { useTranslation } from '../../coreUtils/i18n';
 
 import { PropertyTypeIri } from '../../data/model';
 import * as Rdf from '../../data/rdf/rdfModel';
@@ -34,6 +34,7 @@ export function FormInputGroup(props: FormInputGroupProps) {
         className, languages, propertyShapes, extraPropertyShape, propertyValues, onChangeData, resolveInput,
     } = props;
     const {model, translation: t} = useWorkspace();
+    const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
 
     const propertyIris: PropertyTypeIri[] = Array.from(propertyShapes.keys());
     if (extraPropertyShape) {
@@ -62,7 +63,7 @@ export function FormInputGroup(props: FormInputGroupProps) {
                 ? propertyValues[iri] : undefined;
             labelledProperties.push({
                 iri,
-                label: t.formatLabel(property?.data?.label, iri, model.language),
+                label: t.formatLabel(property?.data?.label, iri, language),
                 shape,
                 values: values ?? [],
             });
@@ -108,7 +109,7 @@ function Property(props: {
     resolveInput: FormInputGroupProps['resolveInput'];
 }) {
     const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
-    const t = useTranslation();
+    const {model, translation: t} = useWorkspace();
 
     const updateValues = React.useCallback((updater: FormInputMultiUpdater) => {
         onChange(iri, updater);
@@ -130,7 +131,7 @@ function Property(props: {
             <label
                 title={t.text('visual_authoring.property.title', {
                     property: label,
-                    propertyIri: iri,
+                    propertyIri: model.locale.formatIri(iri),
                 })}>
                 <WithFetchStatus type='propertyType' target={iri}>
                     <span>
