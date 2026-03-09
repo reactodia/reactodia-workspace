@@ -1,25 +1,21 @@
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
-import { EventObserver } from '../coreUtils/events';
+import { useObservedProperty } from '../coreUtils/hooks';
 import { Translation } from '../coreUtils/i18n';
+import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
+import type { MetadataProvider } from '../data/metadataProvider';
 import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../data/model';
 import { PlaceholderRelationType } from '../data/schema';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
 import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement, LinkType, RelationLink, iterateRelationsOf } from '../editor/dataElements';
+import { EntityElement, RelationLink, iterateRelationsOf } from '../editor/dataElements';
+import { subscribeLinkTypes } from '../editor/observedElement';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
-
-export interface LinkTypeSelectorProps {
-    link: ExtendedLink;
-    onChange: (link: ExtendedLink) => void;
-    disabled?: boolean;
-    error?: React.ReactNode | null;
-}
+import { useWorkspace, WorkspaceContext } from '../workspace/workspaceContext';
 
 export interface ExtendedLink {
     base: Omit<LinkModel, 'sourceId' | 'targetId'>;
@@ -28,180 +24,137 @@ export interface ExtendedLink {
     direction: LinkDirection;
 }
 
-interface State {
-    linkTypes?: ReadonlyArray<DirectedLinkType>;
-}
-
 interface DirectedLinkType {
+    readonly key: number;
     readonly iri: LinkTypeIri;
     readonly direction: LinkDirection;
 }
 
 const FORM_CLASS = 'reactodia-form';
 
-export class LinkTypeSelector extends React.Component<LinkTypeSelectorProps, State> {
-    static contextType = WorkspaceContext;
-    declare readonly context: WorkspaceContext;
+export function LinkTypeSelector(props: {
+    link: ExtendedLink;
+    onChange: (link: ExtendedLink) => void;
+    disabled?: boolean;
+    error?: React.ReactNode | null;
+}) {
+    const {link, onChange, disabled, error} = props;
+    const {editor, translation: t} = useWorkspace();
 
-    private readonly listener = new EventObserver();
-    private fetchTypesCancellation = new AbortController();
+    const [linkTypes, setLinkTypes] = React.useState<readonly DirectedLinkType[]>();
+    const [fetchState, setFetchState] = React.useState<{ type: 'loading' | 'error'; error?: unknown }>();
 
-    constructor(props: LinkTypeSelectorProps) {
-        super(props);
-        this.state = {};
-    }
-
-    private updateAll = () => this.forceUpdate();
-
-    componentDidMount() {
-        void this.fetchPossibleLinkTypes();
-    }
-
-    componentDidUpdate(prevProps: LinkTypeSelectorProps) {
-        const {link} = this.props;
-        if (!(
-            link.source.id === prevProps.link.source.id &&
-            link.target.id === prevProps.link.target.id
-        )) {
-            this.setState({linkTypes: undefined});
-            void this.fetchPossibleLinkTypes();
-        }
-    }
-
-    componentWillUnmount() {
-        this.listener.stopListening();
-        this.fetchTypesCancellation.abort();
-    }
-
-    private async fetchPossibleLinkTypes() {
-        const {model, editor: {metadataProvider}, translation: t} = this.context;
-        const {link} = this.props;
-        if (!metadataProvider) {
-            return;
-        }
-
-        this.fetchTypesCancellation.abort();
-        this.fetchTypesCancellation = new AbortController();
-        const signal = this.fetchTypesCancellation.signal;
-
-        const connections = await mapAbortedToNull(
-            metadataProvider.canConnect(
-                link.source,
-                link.target,
-                undefined,
-                {signal}
-            ),
-            signal
-        );
-        if (connections === null) {
-            return;
-        }
-
-        const inLinkSet = new Set<LinkTypeIri>();
-        const outLinkSet = new Set<LinkTypeIri>();
-        for (const {inLinks, outLinks} of connections) {
-            for (const linkType of inLinks) {
-                inLinkSet.add(linkType);
-            }
-            for (const linkType of outLinks) {
-                outLinkSet.add(linkType);
-            }
-        }
-
-        const dataLinkTypes: DirectedLinkType[] = [];
-        for (const linkType of outLinkSet) {
-            dataLinkTypes.push({iri: linkType, direction: 'out'});
-        }
-        for (const linkType of inLinkSet) {
-            dataLinkTypes.push({iri: linkType, direction: 'in'});
-        }
-        dataLinkTypes.sort(makeLinkTypeComparatorByLabelAndDirection(model, t));
-
-        this.setState({linkTypes: dataLinkTypes});
-        this.listenToLinkLabels(dataLinkTypes.map(type => model.createLinkType(type.iri)));
-    }
-
-    private listenToLinkLabels(linkTypes: ReadonlyArray<LinkType>) {
-        for (const linkType of linkTypes) {
-            this.listener.listen(linkType.events, 'changeData', this.updateAll);
-        }
-    }
-
-    private onChangeType = (e: React.FormEvent<HTMLSelectElement>) => {
-        const {link} = this.props;
-        const index = Number(e.currentTarget.value);
-        const {iri, direction} = this.state.linkTypes![index];
-        const changedLink: ExtendedLink = {
-            ...link,
-            base: {
-                ...link.base,
-                linkTypeId: iri,
-            },
-            direction,
-        };
-        this.props.onChange(changedLink);
-    };
-
-    private renderPossibleLinkType = (
-        {iri, direction}: DirectedLinkType, index: number
-    ) => {
-        const {model, translation: t} = this.context;
-        const {link} = this.props;
-        const data = model.getLinkType(iri);
-        const label = t.formatLabel(data?.data?.label, iri, model.language);
-        let [sourceLabel, targetLabel] = [link.source, link.target].map(element =>
-            model.locale.formatEntityLabel(element, model.language)
-        );
-        if (direction === 'in') {
-            [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
-        }
-        return (
-            <option key={index} value={index}>
-                {t.text('visual_authoring.select_relation.relation_type.label', {
-                    relation: label,
-                    source: sourceLabel,
-                    target: targetLabel,
-                })}
-            </option>
-        );
-    };
-
-    render() {
-        const {translation: t} = this.context;
-        const {link, disabled, error} = this.props;
-        const {linkTypes} = this.state;
-        const selectedIndex = (linkTypes ?? []).findIndex(({iri, direction}) =>
-            iri === link.base.linkTypeId && direction === link.direction
-        );
-        return (
-            <div className={`${FORM_CLASS}__control-row`}>
-                <label>{t.text('visual_authoring.select_relation.type.label')}</label>
-                {
-                    linkTypes ? (
-                        <select className='reactodia-form-control'
-                            name='reactodia-link-type-selector-select'
-                            value={selectedIndex}
-                            onChange={this.onChangeType}
-                            disabled={disabled}>
-                            <option value={-1} disabled={true}>
-                                {t.text('visual_authoring.select_relation.type.placeholder')}
-                            </option>
-                            {linkTypes.map(this.renderPossibleLinkType)}
-                        </select>
-                    ) : <div><HtmlSpinner width={20} height={20} /></div>
+    React.useEffect(() => {
+        const controller = new AbortController();
+        setFetchState({type: 'loading'});
+        fetchPossibleLinkTypes({
+            link,
+            metadataProvider: editor.metadataProvider,
+            signal: controller.signal,
+        }).then(
+            linkTypes => {
+                if (!controller.signal.aborted) {
+                    setLinkTypes(linkTypes);
+                    setFetchState(undefined);
                 }
-                {error ? <span className={`${FORM_CLASS}__control-error`}>{error}</span> : null}
-            </div>
+            },
+            error => {
+                if (!controller.signal.aborted) {
+                    setLinkTypes([]);
+                    setFetchState({type: 'error', error});
+                }
+            },
         );
-    }
+        return () => controller.abort();
+    }, [link.source.id, link.target.id]);
+
+    const selectedType = (linkTypes ?? []).find(({iri, direction}) =>
+        iri === link.base.linkTypeId && direction === link.direction
+    );
+    const onChangeType = (e: React.FormEvent<HTMLSelectElement>) => {
+        const key = Number(e.currentTarget.value);
+        const nextType = linkTypes?.find(linkType => linkType.key === key);
+        if (nextType) {
+            const changedLink: ExtendedLink = {
+                ...link,
+                base: {
+                    ...link.base,
+                    linkTypeId: nextType.iri,
+                },
+                direction: nextType.direction,
+            };
+            onChange(changedLink);
+        }
+    };
+
+    return (
+        <div className={`${FORM_CLASS}__control-row`}>
+            <label>{t.text('visual_authoring.select_relation.type.label')}</label>
+            {linkTypes && !fetchState ? (
+                <select className='reactodia-form-control'
+                    name='reactodia-link-type-selector-select'
+                    value={selectedType?.key ?? -1}
+                    onChange={onChangeType}
+                    disabled={disabled}>
+                    <option value={-1} disabled={true}>
+                        {t.text('visual_authoring.select_relation.type.placeholder')}
+                    </option>
+                    <LinkTypeOptions link={link} linkTypes={linkTypes} />
+                </select>
+            ) : (
+                <div>
+                    <HtmlSpinner width={20} height={20} errorOccurred={fetchState?.type === 'error'} />
+                </div>
+            )}
+            {error ? <span className={`${FORM_CLASS}__control-error`}>{error}</span> : null}
+        </div>
+    );
 }
 
-function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: Translation) {
+function LinkTypeOptions(props: {
+    link: ExtendedLink;
+    linkTypes: readonly DirectedLinkType[];
+}) {
+    const {link, linkTypes} = props;
+    const {model, translation: t} = useWorkspace();
+
+    const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
+    useKeyedSyncStore(subscribeLinkTypes, linkTypes.map(type => type.iri), model);
+    const sortedLinkTypes = [...linkTypes].sort(
+        makeLinkTypeComparatorByLabelAndDirection(model, t, language)
+    );
+
+    return (
+        <>
+            {sortedLinkTypes.map(({key, iri, direction}: DirectedLinkType) => {
+                const data = model.getLinkType(iri);
+                const label = t.formatLabel(data?.data?.label, iri, model.language);
+                let [sourceLabel, targetLabel] = [link.source, link.target].map(element =>
+                    model.locale.formatEntityLabel(element, model.language)
+                );
+                if (direction === 'in') {
+                    [sourceLabel, targetLabel] = [targetLabel, sourceLabel];
+                }
+                return (
+                    <option key={key} value={key}>
+                        {t.text('visual_authoring.select_relation.relation_type.label', {
+                            relation: label,
+                            source: sourceLabel,
+                            target: targetLabel,
+                        })}
+                    </option>
+                );
+            })}
+        </>
+    );
+}
+
+function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: Translation, language: string) {
     return (a: DirectedLinkType, b: DirectedLinkType) => {
         const aData = model.getLinkType(a.iri);
         const bData = model.getLinkType(b.iri);
-        const labelA = t.formatLabel(aData?.data?.label, a.iri, model.language);
-        const labelB = t.formatLabel(bData?.data?.label, b.iri, model.language);
+        const labelA = t.formatLabel(aData?.data?.label, a.iri, language);
+        const labelB = t.formatLabel(bData?.data?.label, b.iri, language);
         const labelCompareResult = labelA.localeCompare(labelB);
         if (labelCompareResult !== 0) {
             return labelCompareResult;
@@ -214,6 +167,54 @@ function makeLinkTypeComparatorByLabelAndDirection(model: DataDiagramModel, t: T
         }
         return 0;
     };
+}
+
+async function fetchPossibleLinkTypes(params: {
+    link: ExtendedLink;
+    metadataProvider: MetadataProvider | undefined;
+    signal: AbortSignal;
+}): Promise<DirectedLinkType[]> {
+    const {link, metadataProvider, signal} = params;
+    if (!metadataProvider) {
+        return [];
+    }
+
+    const connections = await mapAbortedToNull(
+        metadataProvider.canConnect(
+            link.source,
+            link.target,
+            undefined,
+            {signal}
+        ),
+        signal
+    );
+    if (connections === null) {
+        return [];
+    }
+
+    const inLinkSet = new Set<LinkTypeIri>();
+    const outLinkSet = new Set<LinkTypeIri>();
+    for (const {inLinks, outLinks} of connections) {
+        for (const linkType of inLinks) {
+            inLinkSet.add(linkType);
+        }
+        for (const linkType of outLinks) {
+            outLinkSet.add(linkType);
+        }
+    }
+
+    let nextKey = 1;
+    const dataLinkTypes: DirectedLinkType[] = [];
+    for (const linkType of outLinkSet) {
+        dataLinkTypes.push({key: nextKey, iri: linkType, direction: 'out'});
+        nextKey++;
+    }
+    for (const linkType of inLinkSet) {
+        dataLinkTypes.push({key: nextKey, iri: linkType, direction: 'in'});
+        nextKey++;
+    }
+
+    return dataLinkTypes;
 }
 
 export function dataFromExtendedLink(link: ExtendedLink): LinkModel {
