@@ -5,7 +5,7 @@ import { TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import type { PropertyTypeIri } from '../data/model';
 import {
-    TemplateState, TemplateProperties, type AnnotationContent, type AnnotationTextStyle,
+    TemplateProperties, type AnnotationContent, type AnnotationTextStyle,
     type ColorVariant, DefaultColorVariants,
 } from '../data/schema';
 
@@ -15,7 +15,7 @@ import type {
     ElementTemplate, LinkTemplate, TemplateProps,
 } from '../diagram/customization';
 import { ElementDecoration } from '../diagram/elementLayer';
-import { Rect, Size, boundsOf } from '../diagram/geometry';
+import { Rect, boundsOf } from '../diagram/geometry';
 import { Command } from '../diagram/history';
 import { LinkLabel, type LinkLabelProps } from '../diagram/linkLayer';
 
@@ -27,7 +27,7 @@ import { useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 
 import { useWorkspace } from '../workspace/workspaceContext';
 
-import { BasicLink, type BasicLinkProps } from './basicLink';
+import { BasicLink, type BasicLinkProps, LinkMarkerCircle } from './basicLink';
 
 /**
  * Element template to display an {@link AnnotationElement} on a canvas.
@@ -367,12 +367,8 @@ function NoteStyleControls(props: {
  */
 export const NoteLinkTemplate: LinkTemplate = {
     markerTarget: {
+        ...LinkMarkerCircle,
         fill: 'var(--reactodia-canvas-background-color)',
-        stroke: 'var(--reactodia-color-emphasis-500)',
-        strokeWidth: 2,
-        d: 'M 7 2 a 5 5 0 1 0 0.0001 0 Z',
-        width: 14,
-        height: 14,
     },
     renderLink: props => {
         if (props.link instanceof AnnotationLink) {
