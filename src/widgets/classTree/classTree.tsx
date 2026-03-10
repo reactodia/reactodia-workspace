@@ -413,7 +413,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         elementType: ElementTypeIri,
         dropEvent?: CanvasDropEvent
     ): Promise<void> {
-        const {workspace: {model, view, editor, getCommandBus}} = this.props;
+        const {workspace: {model, view, editor, translation: t, getCommandBus}} = this.props;
         const batch = model.history.startBatch();
 
         this.createElementCancellation.abort();
@@ -421,7 +421,11 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         const signal = this.createElementCancellation.signal;
 
         const createdEntity = await mapAbortedToNull(
-            editor.metadataProvider!.createEntity(elementType, {signal}),
+            editor.metadataProvider!.createEntity(elementType, {
+                translation: t,
+                language: model.language,
+                signal,
+            }),
             signal
         );
         if (createdEntity === null) {

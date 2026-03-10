@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Allow to customize relation property editor with the built-in relation type selector `RelationTypeSelector`.
 - Export `LinkMarkerCircle` and `LinkMarkerDiamond` built-in link marker styles in addition to existing `LinkMarkerArrowhead`:
   * Built-in link markers now use `context-stroke` as `stroke`/`fill` value to match link path color.
+- Provide `translation` and current `language` to `createEntity()` and `createRelation()` methods of `MetadataProvider`.
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed

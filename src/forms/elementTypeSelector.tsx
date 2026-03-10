@@ -181,12 +181,16 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        const {onChange, workspace: {editor: {metadataProvider}}} = this.props;
+        const {onChange, workspace: {model, editor: {metadataProvider}, translation: t}} = this.props;
         const elementTypeIri: ElementTypeIri = (e.target as HTMLSelectElement).value;
         let createdEntity: MetadataCreatedEntity | null;
         try {
             createdEntity = await mapAbortedToNull(
-                metadataProvider!.createEntity(elementTypeIri, {signal}),
+                metadataProvider!.createEntity(elementTypeIri, {
+                    translation: t,
+                    language: model.language,
+                    signal,
+                }),
                 signal
             );
             if (createdEntity === null) {
