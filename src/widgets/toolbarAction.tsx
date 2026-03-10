@@ -165,9 +165,12 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
      * Enable mode for the action:
      *   - `layout` - the action is enabled when there are unsaved changes
      *     to the diagram layout (when a command history is non-empty);
-     *   - `authoring` - the action is enabled when graph authoring state is non-empty.
+     *   - `authoring` - the action is enabled when graph authoring state is non-empty;
+     *   - `any` - the action is enable when any of the above conditions apply.
+     *
+     * @default "any"
      */
-    mode: 'layout' | 'authoring';
+    mode?: 'layout' | 'authoring' | 'any';
     /**
      * Handler for the action.
      */
@@ -184,7 +187,7 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
  * @category Components
  */
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
-    const {className, title, mode, onSelect, children, ...otherProps} = props;
+    const {className, title, mode = 'any', onSelect, children, ...otherProps} = props;
     const {model, editor, translation: t} = useWorkspace();
     const hasLayoutChanges = useObservedProperty(
         model.history.events,
@@ -205,6 +208,8 @@ export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     } else if (mode === 'authoring') {
         enabled = canPersistChanges;
         defaultTitle = t.text('toolbar_action.save_authoring.title');
+    } else {
+        enabled = hasLayoutChanges || canPersistChanges;
     }
 
     return (
