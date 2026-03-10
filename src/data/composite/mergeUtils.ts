@@ -1,15 +1,13 @@
-import { HashSet } from '@reactodia/hashmap';
+import { HashMap, HashSet } from '@reactodia/hashmap';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
+    ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkKey, LinkModel,
     PropertyTypeIri, PropertyTypeModel, ElementIri, ElementTypeIri, LinkTypeIri,
     hashLink, equalLinks, hashSubtypeEdge, equalSubtypeEdges,
 } from '../model';
 import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import type { DataProviderDefinition } from './composite';
-
-const DATA_PROVIDER_PROPERTY = 'urn:reactodia:sourceProvider';
 
 export type CompositeResponse<T> = readonly [T, DataProviderDefinition];
 
@@ -96,14 +94,15 @@ function mergeMapResponses<K extends string, V>(
 }
 
 export function mergeElementInfo(
-    responses: CompositeResponse<Map<ElementIri, ElementModel>>[]
+    responses: CompositeResponse<Map<ElementIri, ElementModel>>[],
+    originProperty: PropertyTypeIri
 ): Map<ElementIri, ElementModel> {
     const result = new Map<ElementIri, ElementModel>();
     for (const [response, provider] of responses) {
         for (const [key, baseModel] of response) {
             const model: ElementModel = {
                 ...baseModel,
-                properties: addSourceProperty(baseModel.properties, provider),
+                properties: addOriginProperty(baseModel.properties, provider, originProperty),
             };
             const existing = result.get(key);
             result.set(key, existing ? mergeElementModels(existing, model) : model);
@@ -112,14 +111,20 @@ export function mergeElementInfo(
     return result;
 }
 
-function addSourceProperty(
-    properties: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
-    source: DataProviderDefinition
-): { [id: string]: Array<Rdf.NamedNode | Rdf.Literal> } {
-    return {
-        ...properties,
-        [DATA_PROVIDER_PROPERTY]: [source.provider.factory.literal(source.name)],
-    };
+function addOriginProperty(
+    properties: { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> },
+    source: DataProviderDefinition,
+    originProperty: PropertyTypeIri
+): { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> } {
+    const originValue = (
+        source.origin ? source.origin :
+        source.origin === null || source.name === undefined ? null :
+        source.provider.factory.literal(source.name)
+    );
+    if (!originValue) {
+        return properties;
+    }
+    return {...properties, [originProperty]: [originValue]};
 }
 
 function mergeElementModels(a: ElementModel, b: ElementModel): ElementModel {
@@ -167,18 +172,29 @@ function mergeProperties(
     return result;
 }
 
-export function mergeLinksInfo(responses: CompositeResponse<LinkModel[]>[]): LinkModel[] {
-    const resultSet = new HashSet(hashLink, equalLinks);
-    const result: LinkModel[] = [];
-    for (const [response] of responses) {
-        for (const link of response) {
-            if (!resultSet.has(link)) {
-                resultSet.add(link);
-                result.push(link);
+export function mergeLinksInfo(
+    responses: CompositeResponse<LinkModel[]>[],
+    originProperty: PropertyTypeIri
+): LinkModel[] {
+    const resultSet = new HashMap<LinkKey, LinkModel>(hashLink, equalLinks);
+    for (const [response, source] of responses) {
+        for (const rawLink of response) {
+            const link: LinkModel = {
+                ...rawLink,
+                properties: addOriginProperty(rawLink.properties, source, originProperty),
+            };
+            const existing = resultSet.get(link);
+            if (existing) {
+                resultSet.set(link, {
+                    ...existing,
+                    properties: mergeProperties(existing.properties, link.properties),
+                });
+            } else {
+                resultSet.set(link, link);
             }
         }
     }
-    return result;
+    return Array.from(resultSet.values());
 }
 
 export function mergeConnectedLinkStats(
@@ -211,14 +227,15 @@ interface MutableLookupItem {
 }
 
 export function mergeLookup(
-    responses: CompositeResponse<DataProviderLookupItem[]>[]
+    responses: CompositeResponse<DataProviderLookupItem[]>[],
+    originProperty: PropertyTypeIri
 ): DataProviderLookupItem[] {
     const linkedElements = new Map<ElementIri, MutableLookupItem>();
     for (const [response, provider] of responses) {
         for (const {element: baseElement, inLinks, outLinks} of response) {
             const element: ElementModel = {
                 ...baseElement,
-                properties: addSourceProperty(baseElement.properties, provider),
+                properties: addOriginProperty(baseElement.properties, provider, originProperty),
             };
             const existing = linkedElements.get(element.id);
             if (existing) {

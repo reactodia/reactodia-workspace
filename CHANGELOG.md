@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Provide `translation` and current `language` to `createEntity()` and `createRelation()` methods of `MetadataProvider`.
 - Add `RdfDataProvider.clear()` to clear all added graphs to the provider.
 - Add `datatypePredicates` option for `RdfDataProvider` to explicitly place connected `NamedNode` property values into entity/relation properties as if they were literals.
+- Add `originProperty` option to `CompositeDataProvider` and `origin` to `DataProviderDefinition` to attach information about source provider for an entity or relation as a property value:
+  * `DataProviderDefinition.origin` replaces previous non-configurable `name` prop (which is marked as deprecated now).
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed

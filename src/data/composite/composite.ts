@@ -29,6 +29,14 @@ export interface CompositeDataProviderOptions {
      * Base data providers to combine result data from.
      */
     providers: ReadonlyArray<DataProviderDefinition>;
+    /**
+     * Property to append {@link DataProviderDefinition.origin} to entities and relations
+     * originated from a nested data provider.
+     * 
+     * @default "urn:reactodia:sourceProvider"
+     * @see {@link DataProviderDefinition.origin}
+     */
+    originProperty?: PropertyTypeIri;
 }
 
 /**
@@ -39,13 +47,25 @@ export interface CompositeDataProviderOptions {
 export interface DataProviderDefinition {
     /**
      * Provider name to assist in debugging.
+     *
+     * @deprecated Use {@link DataProviderDefinition.origin} instead.
      */
-    readonly name: string;
+    readonly name?: string;
     /**
      * Data provider to combine data from.
      */
     readonly provider: DataProvider;
+    /**
+     * Value to append to entities and relations originated from this provider
+     * on {@link CompositeDataProviderOptions.originProperty originProperty} property.
+     *
+     * If not specified, uses {@link DataProviderDefinition.name} literal unless
+     * explicitly disabled by using `null`.
+     */
+    readonly origin?: Rdf.NamedNode | Rdf.Literal | null;
 }
+
+const DEFAULT_ORIGIN_PROPERTY = 'urn:reactodia:sourceProvider';
 
 /**
  * Provides graph data by combining results from multiple other data providers.
@@ -55,9 +75,12 @@ export interface DataProviderDefinition {
 export class CompositeDataProvider implements DataProvider {
     readonly providers: ReadonlyArray<DataProviderDefinition>;
 
+    private readonly originProperty: PropertyTypeIri;
+
     constructor(options: CompositeDataProviderOptions) {
-        const {providers} = options;
+        const {providers, originProperty} = options;
         this.providers = providers;
+        this.originProperty = originProperty ?? DEFAULT_ORIGIN_PROPERTY;
     }
 
     get factory(): Rdf.DataFactory {
@@ -116,7 +139,10 @@ export class CompositeDataProvider implements DataProvider {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
     }): Promise<Map<ElementIri, ElementModel>> {
-        return this.requestWithMerge(p => p.elements(params), mergeElementInfo);
+        return this.requestWithMerge(
+            p => p.elements(params),
+            results => mergeElementInfo(results, this.originProperty)
+        );
     }
 
     links(params: {
@@ -125,7 +151,10 @@ export class CompositeDataProvider implements DataProvider {
         linkTypeIds?: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
-        return this.requestWithMerge(p => p.links(params), mergeLinksInfo);
+        return this.requestWithMerge(
+            p => p.links(params),
+            results => mergeLinksInfo(results, this.originProperty)
+        );
     }
 
     connectedLinkStats(params: {
@@ -137,6 +166,9 @@ export class CompositeDataProvider implements DataProvider {
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
-        return this.requestWithMerge(p => p.lookup(params), mergeLookup);
+        return this.requestWithMerge(
+            p => p.lookup(params),
+            results => mergeLookup(results, this.originProperty)
+        );
     }
 }
