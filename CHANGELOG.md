@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [0.32.0] - 2026-03-10
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).
 - Fix being unable to pan the canvas in Firefox when an graph element with a scrollbar inside was present.
@@ -601,7 +603,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.2...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.2...v0.32.0
 [0.31.2]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.1...v0.31.2
 [0.31.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.0...v0.31.1
 [0.31.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.30.1...v0.31.0

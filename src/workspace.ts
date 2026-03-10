@@ -190,7 +190,8 @@ export {
     StandardEntityGroup, type StandardEntityGroupProps,
 } from './templates/standardElement';
 export {
-    StandardLinkTemplate, StandardRelation, type StandardRelationProps,
+    StandardLinkTemplate, StandardRelation,
+    type StandardRelationProps, type StandardRelationLabelStyle,
     DefaultLinkTemplate, DefaultLink, type DefaultLinkProps,
 } from './templates/standardLink';
 

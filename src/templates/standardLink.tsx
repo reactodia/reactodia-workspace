@@ -65,6 +65,8 @@ export interface StandardRelationProps extends LinkTemplateProps {
      * a relation link data.
      *
      * If specified function returns `null`, the property will be hidden.
+     *
+     * @see {@link LinkLabelProps}
      */
     propertyLabelProps?:
         StandardRelationLabelStyle |
@@ -94,7 +96,7 @@ export interface StandardRelationProps extends LinkTemplateProps {
  *
  * @see {@link StandardRelationProps}
  */
-type StandardRelationLabelStyle = Omit<
+export type StandardRelationLabelStyle = Omit<
     LinkLabelProps,
     'primary' | 'link' | 'position' | 'line' | 'children'
 >;
