@@ -577,12 +577,12 @@ export interface ToDataURLOptions {
     /**
      * Maximum exported image size when neither `width` nor `height` is specified.
      *
-     * @default {width: 4096, height: 4096}
+     * @default {width: 8192, height: 8192}
      */
     maxFallbackSize?: Size;
 }
 
-const DEFAULT_MAX_FALLBACK_SIZE: Size = {width: 4096, height: 4096};
+const DEFAULT_MAX_FALLBACK_SIZE: Size = {width: 8192, height: 8192};
 
 /**
  * @category Core

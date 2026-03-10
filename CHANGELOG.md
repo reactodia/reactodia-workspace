@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Add `datatypePredicates` option for `RdfDataProvider` to explicitly place connected `NamedNode` property values into entity/relation properties as if they were literals.
 - Add `originProperty` option to `CompositeDataProvider` and `origin` to `DataProviderDefinition` to attach information about source provider for an entity or relation as a property value:
   * `DataProviderDefinition.origin` replaces previous non-configurable `name` prop (which is marked as deprecated now).
+- Add `any` option for `ToolbarActionSave` property `mode` to be able to save when either diagram or authoring state has changes.
+- Increase default maximum fallback size when exporting a raster image to 8192x8192 px as it well supported in the current browsers.
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed
