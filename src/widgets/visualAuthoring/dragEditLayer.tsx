@@ -220,7 +220,7 @@ class EntityDragConnection implements DragLinkConnection {
     private async createNewElement(
         signal: AbortSignal
     ): Promise<EntityElement> {
-        const {editor} = this.workspace;
+        const {model, editor, translation: t} = this.workspace;
         if (!editor.metadataProvider) {
             throw new Error('Cannot create new entity without metadata provider');
         }
@@ -234,7 +234,7 @@ class EntityDragConnection implements DragLinkConnection {
             ? Array.from(elementTypes)[0] : PlaceholderEntityType;
         const createdEntity = await editor.metadataProvider.createEntity(
             selectedType,
-            {signal}
+            {translation: t, language: model.language, signal}
         );
         const element = editor.createEntity(createdEntity.data, {temporary: true});
         if (createdEntity.elementState) {
@@ -248,7 +248,7 @@ class EntityDragConnection implements DragLinkConnection {
         target: EntityElement,
         signal: AbortSignal
     ): Promise<RelationLink> {
-        const {model, editor} = this.workspace;
+        const {model, editor, translation: t} = this.workspace;
         if (!editor.metadataProvider) {
             throw new Error('Cannot create new relation without metadata provider');
         }
@@ -294,7 +294,7 @@ class EntityDragConnection implements DragLinkConnection {
             effectiveSource.data,
             effectiveTarget.data,
             linkTypeIri,
-            {signal}
+            {translation: t, language: model.language, signal}
         );
         const link = new RelationLink({
             sourceId: effectiveSource.id,

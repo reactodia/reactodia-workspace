@@ -1,9 +1,10 @@
-import type { TemplateState } from '../data/schema';
+import { Translation } from '../coreUtils/i18n';
 
 import type * as Rdf from './rdf/rdfModel';
 import type {
     ElementModel, ElementTypeIri, LinkTypeIri, PropertyTypeIri, LinkModel,
 } from './model';
+import type { TemplateState } from './schema';
 
 /**
  * Provides a strategy to visual graph authoring: which parts of the graph
@@ -21,14 +22,14 @@ export interface MetadataProvider {
 
     createEntity(
         type: ElementTypeIri,
-        options: { readonly signal?: AbortSignal }
+        options: MetadataCreateOptions
     ): Promise<MetadataCreatedEntity>;
 
     createRelation(
         source: ElementModel,
         target: ElementModel,
         linkType: LinkTypeIri,
-        options: { readonly signal?: AbortSignal }
+        options: MetadataCreateOptions
     ): Promise<MetadataCreatedRelation>;
 
     canConnect(
@@ -64,6 +65,12 @@ export interface MetadataProvider {
         types: ReadonlySet<ElementTypeIri>,
         options: { readonly signal?: AbortSignal }
     ): Promise<ReadonlySet<ElementTypeIri>>;
+}
+
+export interface MetadataCreateOptions {
+    readonly translation: Translation;
+    readonly language: string;
+    readonly signal?: AbortSignal;
 }
 
 export interface MetadataCreatedEntity {
@@ -153,7 +160,7 @@ export class BaseMetadataProvider implements MetadataProvider {
 
     async createEntity(
         type: ElementTypeIri,
-        options: { readonly signal?: AbortSignal; }
+        options: MetadataCreateOptions
     ): Promise<MetadataCreatedEntity> {
         if (this.methods.createEntity) {
             return this.methods.createEntity(type, options);
@@ -171,7 +178,7 @@ export class BaseMetadataProvider implements MetadataProvider {
         source: ElementModel,
         target: ElementModel,
         linkType: LinkTypeIri,
-        options: { readonly signal?: AbortSignal; }
+        options: MetadataCreateOptions
     ): Promise<MetadataCreatedRelation> {
         if (this.methods.createRelation) {
             return this.methods.createRelation(source, target, linkType, options);
