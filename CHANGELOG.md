@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Export `LinkMarkerCircle` and `LinkMarkerDiamond` built-in link marker styles in addition to existing `LinkMarkerArrowhead`:
   * Built-in link markers now use `context-stroke` as `stroke`/`fill` value to match link path color.
 - Provide `translation` and current `language` to `createEntity()` and `createRelation()` methods of `MetadataProvider`.
+- Add `RdfDataProvider.clear()` to clear all added graphs to the provider.
+- Add `datatypePredicates` option for `RdfDataProvider` to explicitly place connected `NamedNode` property values into entity/relation properties as if they were literals.
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed

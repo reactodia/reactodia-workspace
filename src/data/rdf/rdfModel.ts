@@ -124,13 +124,52 @@ export function equalTerms(a: Term, b: Term): boolean {
                 && a.language === language;
         }
         case 'Quad': {
-            const { subject, predicate, object, graph } = b as Quad;
+            const { subject, predicate, object, graph } = b as BaseQuad;
             return (
                 equalTerms(a.subject, subject) &&
                 equalTerms(a.predicate, predicate) &&
                 equalTerms(a.object, object) &&
                 equalTerms(a.graph, graph)
             );
+        }
+    }
+}
+
+export function compareTerms(a: Term, b: Term): number {
+    if (a.termType !== b.termType) {
+        return a.termType < b.termType ? -1 : 1;
+    }
+    switch (a.termType) {
+        case 'NamedNode':
+        case 'BlankNode':
+        case 'Variable': {
+            if (a.value !== b.value) {
+                return a.value < b.value ? -1 : 1;
+            }
+            return 0;
+        }
+        case 'Literal': {
+            const other = b as Literal;
+            if (a.value !== other.value) {
+                return a.value < other.value ? -1 : 1;
+            } else if (a.datatype !== other.datatype) {
+                return a.datatype < other.datatype ? -1 : 1;
+            } else if (a.language !== other.language) {
+                return a.language < other.language ? -1 : 1;
+            }
+            return 0;
+        }
+        case 'Quad': {
+            const other = b as BaseQuad;
+            return (
+                compareTerms(a.graph, other.graph) ||
+                compareTerms(a.subject, other.subject) ||
+                compareTerms(a.predicate, other.predicate) ||
+                compareTerms(a.object, other.object)
+            );
+        }
+        default: {
+            return 0;
         }
     }
 }

@@ -31,17 +31,30 @@ export interface RdfDataProviderOptions {
      */
     readonly factory?: Rdf.DataFactory;
     /**
+     * RDF graph predicate to determine resource types.
+     *
      * @default "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
      */
     readonly typePredicate?: string;
     /**
+     * RDF graph predicate for entity, type and property labels.
+     *
      * @default "http://www.w3.org/2000/01/rdf-schema#label"
      */
     readonly labelPredicate?: string | null;
     /**
+     * RDF graph predicate for entity thumbnail IRIs.
+     *
      * @default "https://schema.org/thumbnailUrl"
      */
     readonly imagePredicate?: string | null;
+    /**
+     * RDF graph predicates which should be treated as "datatype properties"
+     * for entities and relations.
+     *
+     * @default []
+     */
+    readonly datatypePredicates?: readonly string[];
     /**
      * **Default**:
      * ```json
@@ -85,6 +98,7 @@ export class RdfDataProvider implements DataProvider {
     private readonly typePredicate: Rdf.NamedNode;
     private readonly labelPredicate: Rdf.NamedNode | null;
     private readonly imagePredicate: Rdf.NamedNode | null;
+    private readonly datatypePredicates: ReadonlySet<PropertyTypeIri>;
     private readonly elementTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
     private readonly elementSubtypePredicate: Rdf.NamedNode | null;
     private readonly linkTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
@@ -105,6 +119,7 @@ export class RdfDataProvider implements DataProvider {
             ? null : this.factory.namedNode(options.labelPredicate ?? rdfs.label);
         this.imagePredicate = options.imagePredicate === null
             ? null : this.factory.namedNode(options.imagePredicate ?? schema.thumbnailUrl);
+        this.datatypePredicates = new Set(options.datatypePredicates ?? []);
         this.elementTypeBaseTypes = (options.elementTypeBaseTypes ?? [owl.Class, rdfs.Class])
             .map(iri => this.factory.namedNode(iri));
         this.elementSubtypePredicate = options.elementSubtypePredicate === null
@@ -113,6 +128,10 @@ export class RdfDataProvider implements DataProvider {
             .map(iri => this.factory.namedNode(iri));
     }
 
+    /**
+     * Adds [RDF/JS-compatible](https://rdf.js.org/data-model-spec/) graph in a form of quads (triplets)
+     * to be able to query it via this provider's methods.
+     */
     addGraph(quads: Iterable<Rdf.Quad>): void {
         if (this.acceptBlankNodes) {
             this.dataset.addAll(quads);
@@ -129,10 +148,31 @@ export class RdfDataProvider implements DataProvider {
         }
     }
 
+    /**
+     * Removes all previously added graphs to this provider so it becomes empty.
+     */
+    clear(): void {
+        this.dataset.clear();
+    }
+
+    /**
+     * Encodes [RDF/JS-compatible](https://rdf.js.org/data-model-spec/) resource-like term
+     * (named node or blank) into a plain string:
+     *  - IRI (named node) value is returned as-is;
+     *  - blank node is value is prepended with a prefix `urn:reactodia:blank:rdf:`.
+     *
+     * @see {@link RdfDataProvider.decodeTerm}
+     */
     encodeTerm(term: Rdf.NamedNode | Rdf.BlankNode): string {
         return encodeTerm(term);
     }
 
+    /**
+     * Decodes a previously encoded by {@link RdfDataProvider.encodeTerm()} resource-like term
+     * (named node or blank) back from a plain string.
+     *
+     * @see {@link RdfDataProvider.encodeTerm}
+     */
     decodeTerm(
         iri: ElementIri | ElementTypeIri | LinkTypeIri | PropertyTypeIri
     ): Rdf.NamedNode | Rdf.BlankNode {
@@ -300,7 +340,7 @@ export class RdfDataProvider implements DataProvider {
                 const model: ElementModel = {
                     id: elementId,
                     types: findTypes(this.dataset, elementIri, this.typePredicate),
-                    properties: findProperties(this.dataset, elementIri),
+                    properties: findProperties(this.dataset, elementIri, this.datatypePredicates),
                 };
                 result.set(elementId, model);
             }
@@ -340,7 +380,7 @@ export class RdfDataProvider implements DataProvider {
                 ) &&
                 (!linkTypeSet || linkTypeSet.has(t.predicate.value))
             ) {
-                const properties = findProperties(this.dataset, t);
+                const properties = findProperties(this.dataset, t, this.datatypePredicates);
                 links.push({
                     sourceId: this.encodeTerm(t.subject),
                     targetId: this.encodeTerm(t.object),
@@ -616,12 +656,19 @@ function findLiterals(
 
 function findProperties(
     dataset: MemoryDataset,
-    subject: Rdf.NamedNode | Rdf.BlankNode | Rdf.Quad
+    subject: Rdf.NamedNode | Rdf.BlankNode | Rdf.Quad,
+    datatypePredicates: ReadonlySet<PropertyTypeIri>
 ): { [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> } {
     const properties: { [id: string]: Array<Rdf.NamedNode | Rdf.Literal> } = {};
-    for (const t of dataset.iterateMatches(subject, null, null)) {
-        if (t.predicate.termType === 'NamedNode' && t.object.termType === 'Literal') {
-            const propertyId = encodeTerm(t.predicate);
+    for (const {predicate, object: v} of dataset.iterateMatches(subject, null, null)) {
+        if (predicate.termType !== 'NamedNode') {
+            continue;
+        }
+        if (
+            v.termType === 'Literal' ||
+            v.termType === 'NamedNode' && datatypePredicates.has(predicate.value)
+        ) {
+            const propertyId = encodeTerm(predicate);
             let values: Array<Rdf.NamedNode | Rdf.Literal>;
             if (Object.prototype.hasOwnProperty.call(properties, propertyId)) {
                 values = properties[propertyId];
@@ -629,7 +676,7 @@ function findProperties(
                 values = [];
                 properties[propertyId] = values;
             }
-            values.push(t.object);
+            values.push(v);
         }
     }
     return properties;
