@@ -173,7 +173,9 @@ export {
     type SerializedLink, type SerializableLinkCell, type LinkFromJsonOptions,
 } from './editor/serializedDiagram';
 
-export { BasicLink, type BasicLinkProps, LinkMarkerArrowhead } from './templates/basicLink';
+export {
+    BasicLink, type BasicLinkProps, LinkMarkerArrowhead, LinkMarkerCircle, LinkMarkerDiamond,
+} from './templates/basicLink';
 export {
     ClassicTemplate, ClassicEntity, type ClassicEntityProps,
 } from './templates/classicTemplate';

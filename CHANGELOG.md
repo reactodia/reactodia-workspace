@@ -17,11 +17,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 #### 💅 Polish
 - Allow to set `className` and `style` on workspace root when using `DefaultWorkspace` or `ClassicWorkspace`.
+- Allow to customize link label style separately for each property type in `StandardRelation`.
 - Allow to customize relation property editor with the built-in relation type selector `RelationTypeSelector`.
+- Export `LinkMarkerCircle` and `LinkMarkerDiamond` built-in link marker styles in addition to existing `LinkMarkerArrowhead`:
+  * Built-in link markers now use `context-stroke` as `stroke`/`fill` value to match link path color.
 
 ## [0.31.2] - 2025-11-28
 #### 🐛 Fixed
-- Fix `AnnotationSupport` not unsubscribing from `AnnotationTopic` at unmount which causes tow annotations to be created from `SelectionActionAnnotate` in React development mode.
+- Fix `AnnotationSupport` not unsubscribing from `AnnotationTopic` at unmount which causes two annotations to be created from `SelectionActionAnnotate` in React development mode.
 - Fix undo/redo history not working after panning or pinch-zoom gesture on touch devices.
 - Fix keyboard hotkeys for selection actions not working after focusing on search input then clicking back on the selection box.
 

@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
-import type { PropertyTypeIri } from '../data/model';
+import type { LinkModel, PropertyTypeIri } from '../data/model';
 import { TemplateProperties } from '../data/schema';
 
 import type { LinkTemplate, LinkTemplateProps } from '../diagram/customization';
@@ -63,8 +63,12 @@ export interface StandardRelationProps extends LinkTemplateProps {
     /**
      * Additional props for each label displaying a property from
      * a relation link data.
+     *
+     * If specified function returns `null`, the property will be hidden.
      */
-    propertyLabelProps?: StandardRelationLabelStyle;
+    propertyLabelProps?:
+        StandardRelationLabelStyle |
+        ((propertyIri: PropertyTypeIri) => StandardRelationLabelStyle | undefined | null);
     /**
      * Starting row shift when displaying relation link data properties.
      *
@@ -247,15 +251,27 @@ function LinkProperties(props: StandardRelationProps) {
 
     useKeyedSyncStore(subscribePropertyTypes, propertyIris, model);
 
-    const properties = propertyIris.map(iri => {
+    type RenderedProperty = {
+        iri: PropertyTypeIri;
+        label: string;
+        values: LinkModel['properties'][string];
+        style: StandardRelationLabelStyle | undefined;
+    };
+    const properties: RenderedProperty[] = [];
+    for (const iri of propertyIris) {
         const property = model.getPropertyType(iri);
         const selectedValues = t.selectValues(data.properties[iri], model.language);
-        return {
-            iri,
-            label: t.formatLabel(property?.data?.label, iri, model.language),
-            values: selectedValues.length === 0 ? data.properties[iri] : selectedValues,
-        };
-    });
+        const style = typeof propertyLabelProps === 'function'
+            ? propertyLabelProps(iri) : propertyLabelProps;
+        if (style !== null) {
+            properties.push({
+                iri,
+                label: t.formatLabel(property?.data?.label, iri, model.language),
+                values: selectedValues.length === 0 ? data.properties[iri] : selectedValues,
+                style,
+            });
+        }
+    }
     properties.sort((a, b) => a.label.localeCompare(b.label));
 
     return <>
@@ -265,9 +281,9 @@ function LinkProperties(props: StandardRelationProps) {
                 link={link}
                 position={getPathPosition(0.5)}
                 line={propertyLabelStartLine + index}
-                textAnchor={route?.labelTextAnchor ?? propertyLabelProps?.textAnchor}
-                className={cx(PROPERTY_CLASS, propertyLabelProps?.className)}
-                title={propertyLabelProps?.title ?? t.text('standard_link.property.title', {
+                textAnchor={route?.labelTextAnchor ?? property.style?.textAnchor}
+                className={cx(PROPERTY_CLASS, property.style?.className)}
+                title={property.style?.title ?? t.text('standard_link.property.title', {
                     property: property.label,
                     propertyIri: model.locale.formatIri(property.iri),
                 })}>
