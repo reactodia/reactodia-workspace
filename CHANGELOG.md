@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
 - Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
 
+#### 💅 Polish
+- Remove superfluous "Type" fields from the default "Edit entity" dialog.
+
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed
 - Avoid marking grouped relation as "layout only" when importing a diagram (only grouped relation links themselves).

@@ -93,22 +93,6 @@ export function EditEntityForm(props: {
                         readonly: !metadata.editable.canChangeIri,
                     })}
                 </div>
-                <div className={`${FORM_CLASS}__row`}>
-                    <label>
-                        {t.text('visual_authoring.edit_entity.type.label')}
-                        {data.types.map(type => (
-                            <input key={type}
-                                className='reactodia-form-control'
-                                name='reactodia-edit-entity-type'
-                                title={type}
-                                value={t.formatLabel(
-                                    model.getElementType(type)?.data?.label, type, model.language
-                                )}
-                                disabled={true}
-                            />
-                        ))}
-                    </label>
-                </div>
                 <FormInputGroup className={`${CLASS_NAME}__properties`}
                     languages={languages}
                     extraPropertyShape={metadata.shape.extraProperty}
