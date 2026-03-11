@@ -270,7 +270,6 @@
     "dialog.cancel.title": "Cancel the dialog",
     "edit_entity.dialog.caption": "Edit entity",
     "edit_entity.iri.label": "IRI",
-    "edit_entity.type.label": "Type",
     "edit_relation.dialog.caption": "Edit relation",
     "edit_relation.dialog.caption_new": "Establish new relation",
     "edit_relation.validation_progress.title": "Validating selected link type",
