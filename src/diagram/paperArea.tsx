@@ -670,7 +670,7 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
     };
 
     private onWheel = (e: WheelEvent) => {
-        if (this.shouldStartZooming(e)) {
+        if (this.shouldZoom(e)) {
             e.preventDefault();
             const delta = Math.max(-1, Math.min(1, e.deltaY || e.deltaX));
             const pivot = this.metrics.pageToPaperCoords(e.pageX, e.pageY);
@@ -678,8 +678,22 @@ export class PaperArea extends React.Component<PaperAreaProps, State> implements
         }
     };
 
-    private shouldStartZooming(e: MouseEvent | React.MouseEvent<any>) {
-        return Boolean(e.ctrlKey) === this.zoomOptions.requireCtrl;
+    private shouldZoom(e: WheelEvent): boolean {
+        const {requireCtrl} = this.zoomOptions;
+        const target = e.target;
+        if (requireCtrl) {
+            return e.ctrlKey;
+        } else if (e.ctrlKey) {
+            return true;
+        }
+        return this.isEventFromCellLayer(e) && target instanceof Node && (
+            this.rootRef.current === target ||
+            this.area === target || (
+                !hasScrollableParent(target, this.linkLayerRef.current) &&
+                !hasScrollableParent(target, this.labelLayerRef.current) &&
+                !hasScrollableParent(target, this.elementLayerRef.current)
+            )
+        );
     }
 
     private onResize: ResizeObserverCallback = () => {
@@ -1221,4 +1235,21 @@ function clearTextSelectionInArea() {
         const selection = document.getSelection();
         selection?.removeAllRanges?.();
     }
+}
+
+function hasScrollableParent(target: Node, parent: Node | null): boolean {
+    if (!(parent && parent.contains(target))) {
+        return false;
+    }
+    let current: Node | null = target;
+    while (current && current !== parent) {
+        if (current instanceof window.Element) {
+            const style = getComputedStyle(current);
+            if (style.overflowX === 'scroll' || style.overflowY === 'scroll') {
+                return true;
+            }
+        }
+        current = current.parentNode;
+    }
+    return false;
 }
