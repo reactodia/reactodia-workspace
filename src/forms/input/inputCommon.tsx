@@ -45,6 +45,10 @@ export interface FormInputSingleProps {
      * RDF/JS-compatible term factory to create RDF terms.
      */
     factory: Rdf.DataFactory;
+    /**
+     * Whether the property input should be read-only (disabled).
+     */
+    readonly?: boolean;
 }
 
 /**
@@ -75,6 +79,10 @@ export interface FormInputMultiProps {
      * RDF/JS-compatible term factory to create RDF terms.
      */
     factory: Rdf.DataFactory;
+    /**
+     * Whether the property input should be read-only (disabled).
+     */
+    readonly?: boolean;
 }
 
 /**

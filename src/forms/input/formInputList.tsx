@@ -24,7 +24,9 @@ export interface FormInputListProps extends FormInputMultiProps {
 }
 
 function FormInputListInner(props: FormInputListProps) {
-    const {shape, languages, values, updateValues, factory, valueInput: ValueInput} = props;
+    const {
+        shape, languages, values, updateValues, factory, valueInput: ValueInput, readonly,
+    } = props;
     const t = useTranslation();
 
     const {minCount = 0, maxCount = Infinity} = shape;
@@ -56,8 +58,9 @@ function FormInputListInner(props: FormInputListProps) {
                             });
                         }}
                         factory={factory}
+                        readonly={readonly}
                     />
-                    {values.length <= minCount ? null : (
+                    {readonly || values.length <= minCount ? null : (
                         <button type='button'
                             className={cx(
                                 'reactodia-btn',
@@ -78,7 +81,7 @@ function FormInputListInner(props: FormInputListProps) {
                     )}
                 </div>
             ))}
-            {values.length >= maxCount ? null : (
+            {readonly || values.length >= maxCount ? null : (
                 <div key='add' className={`${CLASS_NAME}__row`}>
                     <button type='button'
                         className={cx(

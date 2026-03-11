@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
+- Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed

@@ -5,7 +5,7 @@ import { mapAbortedToNull } from '../coreUtils/async';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import type {
-    MetadataProvider, MetadataEntityShape, MetadataPropertyShape,
+    MetadataProvider, MetadataCanModifyEntity, MetadataEntityShape, MetadataPropertyShape,
 } from '../data/metadataProvider';
 
 import { HtmlSpinner } from '../diagram/spinner';
@@ -32,7 +32,7 @@ export function EditEntityForm(props: {
         setData(entity);
     }, [entity]);
 
-    const [shape, shapeError] = useEntityShape(editor.metadataProvider, entity);
+    const [metadata, metadataError] = useEntityMetadata(editor.metadataProvider, entity);
     const languages = React.useMemo(
         () => editor.metadataProvider?.getLiteralLanguages() ?? [], []
     );
@@ -69,11 +69,11 @@ export function EditEntityForm(props: {
         });
     }, []);
 
-    if (!shape) {
+    if (!metadata) {
         return (
             <div className={cx(FORM_CLASS, CLASS_NAME, `${CLASS_NAME}--loading`)}>
                 <HtmlSpinner width={30} height={30}
-                    errorOccurred={Boolean(shapeError)}
+                    errorOccurred={Boolean(metadataError)}
                 />
             </div>
         );
@@ -90,6 +90,7 @@ export function EditEntityForm(props: {
                         values: iriValues,
                         updateValues: onChangeIri,
                         factory: model.factory,
+                        readonly: !metadata.editable.canChangeIri,
                     })}
                 </div>
                 <div className={`${FORM_CLASS}__row`}>
@@ -110,11 +111,12 @@ export function EditEntityForm(props: {
                 </div>
                 <FormInputGroup className={`${CLASS_NAME}__properties`}
                     languages={languages}
-                    extraPropertyShape={shape.extraProperty}
-                    propertyShapes={shape.properties}
+                    extraPropertyShape={metadata.shape.extraProperty}
+                    propertyShapes={metadata.shape.properties}
                     propertyValues={data.properties}
                     onChangeData={onChangeProperty}
                     resolveInput={resolveInput}
+                    readonly={!metadata.editable.canEdit}
                 />
             </div>
             <div className={`${FORM_CLASS}__controls`}>
@@ -143,43 +145,49 @@ const IRI_SHAPE: MetadataPropertyShape = {
     minCount: 1,
     maxCount: 1,
 };
-const LABEL_SHAPE: MetadataPropertyShape = {
-    valueShape: {termType: 'Literal'},
-};
 
-function useEntityShape(
+interface EntityMetadata {
+    readonly editable: MetadataCanModifyEntity;
+    readonly shape: MetadataEntityShape;
+}
+
+function useEntityMetadata(
     metadataProvider: MetadataProvider | undefined,
     entity: ElementModel
-): readonly [shape: MetadataEntityShape | undefined, error?: unknown] {
-    const [shape, setShape] = React.useState<MetadataEntityShape>();
-    const [shapeError, setShapeError] = React.useState<unknown>();
+): readonly [shape: EntityMetadata | undefined, error?: unknown] {
+    const [metadata, setMetadata] = React.useState<EntityMetadata>();
+    const [metadataError, setMetadataError] = React.useState<unknown>();
 
     React.useEffect(() => {
         if (metadataProvider) {
-            setShape(undefined);
-            setShapeError(undefined);
+            setMetadata(undefined);
+            setMetadataError(undefined);
             const cancellation = new AbortController();
             const signal = cancellation.signal;
             mapAbortedToNull(
-                metadataProvider.getEntityShape(entity.types, {signal}),
+                Promise.all([
+                    metadataProvider.canModifyEntity(entity, {signal}),
+                    metadataProvider.getEntityShape(entity.types, {signal}),
+                ]),
                 signal
             ).then(
                 result => {
                     if (result === null) {
                         return;
                     }
-                    setShape(result);
+                    const [editable, shape] = result;
+                    setMetadata({editable, shape});
                 },
                 error => {
                     console.error('Failed to load entity shape:', error);
-                    setShapeError(error);
+                    setMetadataError(error);
                 }
             );
             return () => cancellation.abort();
         } else {
-            setShape(DEFAULT_ENTITY_SHAPE);
+            setMetadata({editable: {}, shape: DEFAULT_ENTITY_SHAPE});
         }
     }, [entity]);
 
-    return [shape, shapeError];
+    return [metadata, metadataError];
 }

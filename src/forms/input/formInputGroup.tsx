@@ -27,11 +27,13 @@ export interface FormInputGroupProps {
     onChangeData: (property: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
     resolveInput: (property: PropertyTypeIri, props: FormInputMultiProps) =>
         React.ReactElement | null;
+    readonly?: boolean;
 }
 
 export function FormInputGroup(props: FormInputGroupProps) {
     const {
-        className, languages, propertyShapes, extraPropertyShape, propertyValues, onChangeData, resolveInput,
+        className, languages, propertyShapes, extraPropertyShape, propertyValues,
+        onChangeData, resolveInput, readonly,
     } = props;
     const {model, translation: t} = useWorkspace();
     const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
@@ -85,6 +87,7 @@ export function FormInputGroup(props: FormInputGroupProps) {
                     onChange={onChangeData}
                     factory={model.factory}
                     resolveInput={resolveInput}
+                    readonly={Boolean(readonly)}
                 />
             )}
         </div>
@@ -107,6 +110,7 @@ function Property(props: {
     onChange: (iri: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
     factory: Rdf.DataFactory;
     resolveInput: FormInputGroupProps['resolveInput'];
+    readonly: boolean;
 }) {
     const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
     const {model, translation: t} = useWorkspace();

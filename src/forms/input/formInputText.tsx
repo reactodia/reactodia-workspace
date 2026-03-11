@@ -41,7 +41,7 @@ export interface FormInputTextProps extends FormInputSingleProps {
  */
 export function FormInputText(props: FormInputTextProps) {
     const {
-        shape: {valueShape}, languages, value: term, setValue, factory,
+        shape: {valueShape}, languages, value: term, setValue, factory, readonly,
         multiline, placeholder,
     } = props;
 
@@ -64,11 +64,13 @@ export function FormInputText(props: FormInputTextProps) {
                     const changedValue = e.currentTarget.value;
                     setValue(setTermValue(term, changedValue, factory));
                 }}
+                disabled={readonly}
             />
             {hasLanguageSelector ? (
                 <LanguageSelector language={term.termType === 'Literal' ? term.language : ''}
                     languages={languages}
                     onChangeLanguage={language => setValue(setTermLanguage(term, language, factory))}
+                    disabled={readonly}
                 />
             ) : null}
         </>
@@ -79,15 +81,17 @@ function LanguageSelector(props: {
     language: string;
     languages: ReadonlyArray<string>;
     onChangeLanguage: (language: string) => void;
+    disabled?: boolean;
 }) {
-    const {language, languages, onChangeLanguage} = props;
+    const {language, languages, onChangeLanguage, disabled} = props;
     if (languages.length === 0 && !language) {
         return null;
     }
     return (
         <select className={cx('reactodia-form-control', `${CLASS_NAME}__language`)}
             value={language}
-            onChange={e => onChangeLanguage(e.currentTarget.value)}>
+            onChange={e => onChangeLanguage(e.currentTarget.value)}
+            disabled={disabled}>
             <option value=''>—</option>
             {language && !languages.includes(language) ? (
                 <option value={language}>{language}</option>
