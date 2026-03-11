@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed
