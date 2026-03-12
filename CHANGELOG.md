@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
 - Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
+- Move link vertices together with source and target elements if both are selected in `Selection` component.
 
 #### 💅 Polish
 - Remove superfluous "Type" fields from the default "Edit entity" dialog.
