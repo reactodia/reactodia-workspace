@@ -308,6 +308,15 @@ export class MutableRenderingState implements RenderingState {
     private syncUpdateLayersUpTo(lastLayer: RenderingLayer): void {
         this.layerUpdater.dispose();
 
+        // Check if we perform only a partial update and should reschedule the rest
+        let shouldReschedule = false;
+        for (let layer = (lastLayer + 1) as RenderingLayer; layer <= LAST_LAYER; layer++) {
+            const callbackSet = this.scheduledByLayer.get(layer);
+            if (callbackSet && callbackSet.size > 0) {
+                shouldReschedule = true;
+            }
+        }
+
         const toRun = new Set<() => void>();
         for (let layer = FIRST_LAYER; layer <= lastLayer; layer++) {
             const callbackSet = this.scheduledByLayer.get(layer);
@@ -324,6 +333,10 @@ export class MutableRenderingState implements RenderingState {
             }
 
             this.source.trigger('syncUpdate', {layer});
+        }
+
+        if (shouldReschedule) {
+            this.layerUpdater.call(this.runLayerUpdate);
         }
     };
 
