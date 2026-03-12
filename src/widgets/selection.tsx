@@ -367,6 +367,7 @@ class StatefulMoveController {
     private moveState: {
         readonly origin: Vector;
         readonly positions: ReadonlyMap<Element, Vector>;
+        readonly links: ReadonlyMap<Link, readonly Vector[]>;
         readonly command: RestoreGeometry;
     } | undefined;
 
@@ -395,21 +396,39 @@ class StatefulMoveController {
     };
 
     onPointerDown = (e: React.PointerEvent) => {
-        const {canvas, elements} = this;
+        const {canvas, model, elements} = this;
         if (this.isToggleSelectionEvent(e)) {
             return;
         }
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
         const origin = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
+
+        const elementIds = new Set<string>();
+        for (const element of elements) {
+            elementIds.add(element.id);
+        }
+
         const positions = new Map<Element, Vector>();
+        const links = new Map<Link, readonly Vector[]>();
         for (const element of elements) {
             positions.set(element, element.position);
+            for (const link of model.getElementLinks(element)) {
+                if (
+                    link.vertices.length > 0 &&
+                    link.sourceId === element.id &&
+                    elementIds.has(link.targetId)
+                ) {
+                    links.set(link, link.vertices);
+                }
+            }
         }
+
         this.moveState = {
             origin,
             positions,
-            command: RestoreGeometry.capturePartial(elements, []),
+            links,
+            command: RestoreGeometry.capturePartial(elements, Array.from(links.keys())),
         };
         // Re-focus on canvas when clicking on the selection box
         // to allow keyboard hotkeys for selection actions to work
@@ -432,6 +451,9 @@ class StatefulMoveController {
                     x: position.x + dx,
                     y: position.y + dy,
                 });
+            }
+            for (const [link, vertices] of moveState.links) {
+                link.setVertices(vertices.map(p => ({x: p.x + dx, y: p.y + dy})));
             }
             canvas.renderingState.syncUpdate();
         }
