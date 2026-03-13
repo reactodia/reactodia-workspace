@@ -113,11 +113,17 @@ export function DragEditLayer(props: DragEditLayerProps) {
                 return new EntityDragConnection([], workspace);
             }
 
+            const linkTypeId = link.data.linkTypeId === PlaceholderRelationType
+                ? undefined : link.data.linkTypeId;
+            if (target && linkTypeId && model.findLink(linkTypeId, source.id, target.id)) {
+                // Link already exists
+                return new EntityDragConnection([], workspace);
+            }
+
             const canConnect = await metadataProvider.canConnect(
                 source.data,
                 target?.data,
-                link.data.linkTypeId === PlaceholderRelationType
-                    ? undefined : link.data.linkTypeId,
+                linkTypeId,
                 {signal}
             );
             return new EntityDragConnection(canConnect, workspace);
