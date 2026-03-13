@@ -150,7 +150,8 @@
         "relation_move_source.command": { "$ref": "#/$defs/Value" },
         "relation_move_target.command": { "$ref": "#/$defs/Value" },
         "remove_items.command": { "$ref": "#/$defs/Value" },
-        "set_authoring_state.command": { "$ref": "#/$defs/Value" }
+        "set_authoring_state.command": { "$ref": "#/$defs/Value" },
+        "validate_entity_failed.message": { "$ref": "#/$defs/Value" }
       }
     },
     "group_paginator": {

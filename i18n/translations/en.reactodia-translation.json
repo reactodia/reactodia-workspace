@@ -107,7 +107,8 @@
     "relation_move_source.command": "Move relation source",
     "relation_move_target.command": "Move relation target",
     "remove_items.command": "Remove diagram items",
-    "set_authoring_state.command": "Create, change or delete entities and relations"
+    "set_authoring_state.command": "Create, change or delete entities and relations",
+    "validate_entity_failed.message": "Failed to validate entity"
   },
   "group_paginator": {
     "current_page.label": "{{page}} of {{pageCount}}",

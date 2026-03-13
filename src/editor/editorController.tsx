@@ -1,16 +1,15 @@
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
-import { TranslatedText } from '../coreUtils/i18n';
+import { TranslatedText, type Translation } from '../coreUtils/i18n';
 
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
 import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
-import { TemplateProperties } from '../data/schema';
 
 import { Element, Link } from '../diagram/elements';
+import type { CellsChangedEvent } from '../diagram/graph';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
 
-import { AnnotationLink } from './annotationCells';
 import {
     AuthoringState, AuthoringEvent, TemporaryState,
 } from './authoringState';
@@ -24,6 +23,7 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 /** @hidden */
 export interface EditorProps {
     readonly model: DataDiagramModel;
+    readonly translation: Translation;
     readonly metadataProvider?: MetadataProvider;
     readonly validationProvider?: ValidationProvider;
 }
@@ -67,6 +67,7 @@ export class EditorController {
     readonly events: Events<EditorEvents> = this.source;
 
     private readonly model: DataDiagramModel;
+    private readonly translation: Translation;
 
     private _inAuthoringMode = false;
     private _metadataProvider: MetadataProvider | undefined;
@@ -79,8 +80,9 @@ export class EditorController {
 
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, metadataProvider, validationProvider} = props;
+        const {model, translation, metadataProvider, validationProvider} = props;
         this.model = model;
+        this.translation = translation;
         this._metadataProvider = metadataProvider;
         this._validationProvider = validationProvider;
 
@@ -98,6 +100,9 @@ export class EditorController {
         });
         this.listener.listen(this.events, 'changeAuthoringState', e => {
             this.validateChangedFrom(e.previous);
+        });
+        this.listener.listen(model.events, 'changeCells', e => {
+            this.validateChangedCells(e);
         });
     }
 
@@ -214,6 +219,45 @@ export class EditorController {
         this.revalidateEntities(changedElements);
     }
 
+    private validateChangedCells(e: CellsChangedEvent): void {
+        if (!(this.validationProvider && this.inAuthoringMode)) {
+            return;
+        }
+
+        if (e.updateAll) {
+            this.validateChangedFrom(AuthoringState.empty);
+            return;
+        }
+
+        const state = this.authoringState;
+        let toRevalidate: Set<ElementIri> | undefined;
+        if (e.changedElement) {
+            for (const entity of iterateEntitiesOf(e.changedElement)) {
+                if (state.elements.has(entity.id)) {
+                    if (!toRevalidate) {
+                        toRevalidate = new Set<ElementIri>();
+                    }
+                    toRevalidate.add(entity.id);
+                }
+            }
+        } else if (e.changedLinks) {
+            for (const link of e.changedLinks) {
+                for (const relation of iterateRelationsOf(link)) {
+                    if (state.links.has(relation)) {
+                        if (!toRevalidate) {
+                            toRevalidate = new Set<ElementIri>();
+                        }
+                        toRevalidate.add(relation.sourceId);
+                    }
+                }
+            }
+        }
+
+        if (toRevalidate) {
+            this.revalidateEntities(toRevalidate);
+        }
+    }
+
     /**
      * Forces re-validation for the specified entities.
      */
@@ -226,6 +270,8 @@ export class EditorController {
             this.validationProvider,
             this.model,
             this,
+            this.translation,
+            this.model.language,
             this.cancellation.signal
         );
     }
