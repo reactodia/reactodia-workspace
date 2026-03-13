@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Fix stale rendering (i.e. missing links after moving an endpoint until an element move) due to the lost scheduled layer updates.
 - Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
+- Disallow moving relation source or target to another entity in authoring mode if the relation after move already exists on the canvas.
 - Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
 - Move link vertices together with source and target elements if both are selected in `Selection` component.
 
