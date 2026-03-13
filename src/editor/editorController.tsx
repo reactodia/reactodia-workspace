@@ -376,16 +376,17 @@ export class EditorController {
     /**
      * Changes an existing entity with graph authoring.
      *
-     * If no entities with target IRI found on the diagram,
+     * If `target` is specified as an IRI and no entities with that IRI found on the diagram,
      * no changes will be applied to the graph authoring state.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
-    changeEntity(targetIri: ElementIri, newData: ElementModel): void {
+    changeEntity(target: ElementIri | ElementModel, newData: ElementModel): void {
         const {model} = this;
 
-        const elements = findEntities(model, targetIri);
-        const oldData = findAnyEntityData(elements, targetIri);
+        const oldData = typeof target === 'string'
+            ? findAnyEntityData(findEntities(model, target), target)
+            : target;
         if (!oldData) {
             return;
         }
@@ -396,8 +397,8 @@ export class EditorController {
 
         const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
-        const event = newState.elements.get(targetIri) || newState.elements.get(newData.id);
-        model.history.execute(changeEntityData(model, targetIri, event!.data));
+        const event = newState.elements.get(oldData.id) || newState.elements.get(newData.id);
+        model.history.execute(changeEntityData(model, oldData.id, event!.data));
         this.setAuthoringState(newState);
 
         batch.store();
@@ -406,16 +407,17 @@ export class EditorController {
     /**
      * Deletes an existing entity with graph authoring.
      *
-     * If no entities with target IRI found on the diagram,
+     * If `target` is specified as an IRI and no entities with that IRI found on the diagram,
      * no changes will be applied to the graph authoring state.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
-    deleteEntity(elementIri: ElementIri): void {
+    deleteEntity(target: ElementIri | ElementModel): void {
         const {model} = this;
 
-        const elements = findEntities(model, elementIri);
-        const oldData = findAnyEntityData(elements, elementIri);
+        const oldData = typeof target === 'string'
+            ? findAnyEntityData(findEntities(model, target), target)
+            : target;
         if (!oldData) {
             return;
         }
@@ -426,14 +428,14 @@ export class EditorController {
         );
 
         // Remove new connected links
-        for (const element of elements) {
+        for (const element of findEntities(model, oldData.id)) {
             this.removeRelationsFromLinks(
                 model.getElementLinks(element),
                 relation => AuthoringState.isAddedRelation(state, relation)
             );
         }
 
-        const event = state.elements.get(elementIri);
+        const event = state.elements.get(oldData.id);
         if (event) {
             this.discardChange(event);
         }

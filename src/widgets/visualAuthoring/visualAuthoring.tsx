@@ -162,7 +162,7 @@ export interface VisualAuthoringCommands {
         /**
          * Target entity element to edit.
          */
-        readonly target: EntityElement;
+        readonly target: EntityElement | ElementModel;
     };
     /**
      * Can be triggered to open dialog to find existing or create a new entity
@@ -228,27 +228,29 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         const listener = new EventObserver();
 
         listener.listen(commands, 'editEntity', ({target}) => {
+            const targetData = target instanceof EntityElement ? target.data : target;
+            let dataWithNewIri = targetData;
+            const event = editor.authoringState.elements.get(targetData.id);
+            if (event && event.type == 'entityChange' && event.newIri) {
+                dataWithNewIri = {...dataWithNewIri, id: event.newIri};
+            }
+
             const onSubmit = (newData: ElementModel) => {
                 overlay.hideDialog();
-                editor.changeEntity(target.data.id, newData);
+                editor.changeEntity(targetData, newData);
             };
-            let modelToEdit = target.data;
-            const event = editor.authoringState.elements.get(target.data.id);
-            if (event && event.type == 'entityChange' && event.newIri) {
-                modelToEdit = {...target.data, id: event.newIri};
-            }
             const onCancel = () => overlay.hideDialog();
 
             let content = propertyEditor?.({
                 type: 'entity',
-                elementData: target.data,
+                elementData: dataWithNewIri,
                 onSubmit,
                 onCancel,
             });
             if (content === undefined) {
                 content = (
                     <EditEntityForm
-                        entity={modelToEdit}
+                        entity={dataWithNewIri}
                         onApply={onSubmit}
                         onCancel={onCancel}
                         resolveInput={(property, inputProps) => {
@@ -260,7 +262,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             }
 
             overlay.showDialog({
-                target,
+                target: target instanceof EntityElement ? target : undefined,
                 dialogType: BuiltinDialogType.editEntity,
                 style: {
                     caption: t.text('visual_authoring.edit_entity.dialog.caption'),

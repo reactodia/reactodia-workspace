@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Remove superfluous "Type" fields from the default "Edit entity" dialog.
 - Provide `translation` and current `language` to `ValidationProvider.validate()` method.
 - Allow to specify related property IRI when returning a validation item for a relation from `ValidationProvider`.
+- Allow to open "Edit entity" dialog from `VisualAuthoring` for an entity not present on the canvas (e.g. to edit related or well-known entities).
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed
