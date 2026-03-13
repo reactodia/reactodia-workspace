@@ -1,5 +1,5 @@
 import type { LinkTypeIri } from '../data/model';
-import { TemplateState } from '../data/schema';
+import { TemplateProperties, TemplateState } from '../data/schema';
 
 import { Element, Link } from '../diagram/elements';
 
@@ -71,9 +71,9 @@ export class AnnotationLink extends Link {
             sourceId: options.source.id,
             targetId: options.target.id,
             vertices,
-            linkState: options.mapTemplateState(
-                TemplateState.fromJSON(linkState)
-            ),
+            linkState: options
+                .mapTemplateState(TemplateState.fromJSON(linkState))
+                .set(TemplateProperties.LayoutOnly, undefined),
         });
     }
 

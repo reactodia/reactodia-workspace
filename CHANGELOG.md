@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
 - Move link vertices together with source and target elements if both are selected in `Selection` component.
 - Re-validate entities and links with `ValidationProvider` when added or removed via undo/redo.
+- Fix marking `AnnotationLink` with `TemplateProperties.LayoutOnly` when importing a diagram layout.
 
 #### 💅 Polish
 - Remove superfluous "Type" fields from the default "Edit entity" dialog.
