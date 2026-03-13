@@ -10,9 +10,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Disallow moving relation source or target to another entity in authoring mode if the relation after move already exists on the canvas.
 - Disable changing an entity IRI in a form when `MetadataProvider.canModifyEntity()` disallows it.
 - Move link vertices together with source and target elements if both are selected in `Selection` component.
+- Re-validate entities and links with `ValidationProvider` when added or removed via undo/redo.
 
 #### 💅 Polish
 - Remove superfluous "Type" fields from the default "Edit entity" dialog.
+- Provide `translation` and current `language` to `ValidationProvider.validate()` method.
+- Allow to specify related property IRI when returning a validation item for a relation from `ValidationProvider`.
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed

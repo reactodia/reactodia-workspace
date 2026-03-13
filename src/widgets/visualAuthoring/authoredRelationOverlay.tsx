@@ -259,7 +259,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     }
 
     private renderLinkValidations(key: LinkKey): React.ReactElement | null {
-        const {workspace: {editor}} = this.props;
+        const {workspace: {model, editor, translation: t}} = this.props;
         const {validationState} = editor;
 
         const validation = validationState.links.get(key);
@@ -267,7 +267,20 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
             return null;
         }
 
-        const title = validation.items.map(item => item.message).join('\n');
+        const title = validation.items.map(item => {
+            if (item.propertyType) {
+                const propertyType = model.getPropertyType(item.propertyType);
+                const source = t.formatLabel(
+                    propertyType?.data?.label,
+                    item.propertyType,
+                    model.language
+                );
+                return `${source}: ${item.message}`;
+            } else {
+                return item.message;
+            }
+        }).join('\n');
+
         const severity = getMaxSeverity(validation.items);
         return (
             <div className={cx(`${CLASS_NAME}__item-validation`, getSeverityClass(severity))}

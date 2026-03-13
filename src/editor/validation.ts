@@ -1,6 +1,7 @@
 import { HashMap, type ReadonlyHashMap } from '@reactodia/hashmap';
 
 import { mapAbortedToNull } from '../coreUtils/async';
+import type { Translation } from '../coreUtils/i18n';
 
 import { ElementIri, LinkKey, LinkModel, hashLink, equalLinks } from '../data/model';
 import {
@@ -150,6 +151,8 @@ export function validateElements(
     validationProvider: ValidationProvider,
     graph: DataGraphStructure,
     editor: EditorController,
+    translation: Translation,
+    language: string,
     signal: AbortSignal | undefined
 ): void {
     const previousState = editor.validationState;
@@ -176,6 +179,8 @@ export function validateElements(
                     outboundLinks,
                     state: editor.authoringState,
                     graph,
+                    translation,
+                    language,
                     signal,
                 };
                 const result = mapAbortedToNull(validationProvider.validate(event), signal);
@@ -185,7 +190,9 @@ export function validateElements(
                 newState.elements.set(entity.id, loadingElement);
                 outboundLinks.forEach(link => newState.links.set(link, loadingLink));
 
-                void processValidationResult(result, loadingElement, loadingLink, event, editor);
+                void processValidationResult(
+                    result, loadingElement, loadingLink, event, editor, translation
+                );
             } else {
                 // use previous state for element and outbound links
                 newState.elements.set(entity.id, previousState.elements.get(entity.id)!);
@@ -205,6 +212,7 @@ async function processValidationResult(
     previousLink: LinkValidation,
     e: ValidationEvent,
     editor: EditorController,
+    translation: Translation
 ) {
     let result: ValidationResult | null;
     try {
@@ -214,12 +222,12 @@ async function processValidationResult(
             return;
         }
     } catch (err) {
-        console.error('Failed to validate element', e.target, err);
         const items: ReadonlyArray<ValidatedElement | ValidatedLink> = [{
             type: 'element',
             target: e.target.id,
             severity: 'error',
-            message: 'Failed to validate element',
+            message: translation.text('editor_controller.validate_entity_failed.message'),
+            errorCause: err,
         }];
         result = {items};
     }

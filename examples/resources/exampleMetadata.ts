@@ -180,11 +180,16 @@ export class ExampleValidationProvider implements Reactodia.ValidationProvider {
     async validate(
         event: Reactodia.ValidationEvent
     ): Promise<Reactodia.ValidationResult> {
+        const {target, outboundLinks, graph, state, translation, language, signal} = event;
         const items: Array<Reactodia.ValidatedElement | Reactodia.ValidatedLink> = [];
 
-        if (event.target.types.includes(owl.Class)) {
-            event.state.links.forEach(e => {
-                if (e.type === 'relationAdd' && e.data.sourceId === event.target.id) {
+        if (target.types.includes(owl.Class)) {
+            state.links.forEach(e => {
+                if (e.type === 'relationAdd' && e.data.sourceId === target.id) {
+                    const linkType = graph.getLinkType(e.data.linkTypeId);
+                    const linkLabel = translation.formatLabel(
+                        linkType?.data?.label, e.data.linkTypeId, language
+                    );
                     items.push({
                         type: 'link',
                         target: e.data,
@@ -193,41 +198,42 @@ export class ExampleValidationProvider implements Reactodia.ValidationProvider {
                     });
                     items.push({
                         type: 'element',
-                        target: event.target.id,
+                        target: target.id,
                         severity: 'warning',
-                        message: `Cannot create <${e.data.linkTypeId}> link from a Class`,
+                        message: `Cannot create "${linkLabel}" relation from a Class`,
                     });
                 }
             });
         }
 
         if (
-            event.state.elements.has(event.target.id) &&
-            event.target.types.includes(owl.ObjectProperty)
+            state.elements.has(target.id) &&
+            target.types.includes(owl.ObjectProperty)
         ) {
-            if (!event.outboundLinks.some(link => link.linkTypeId === rdfs.subPropertyOf)) {
+            if (!outboundLinks.some(link => link.linkTypeId === rdfs.subPropertyOf)) {
                 items.push({
                     type: 'element',
-                    target: event.target.id,
+                    target: target.id,
                     severity: 'info',
                     message: 'It might be a good idea to make the property a sub-property of another',
                 });
             }
         }
 
-        for (const link of event.outboundLinks) {
+        for (const link of outboundLinks) {
             const { [rdfs.comment]: comments } = link.properties;
             if (comments && !comments.every(comment => comment.termType === 'Literal' && comment.language)) {
                 items.push({
                     type: 'link',
                     target: link,
                     severity: 'error',
-                    message: 'rdfs:comment value should have a language',
+                    message: 'value should have a language',
+                    propertyType: rdfs.comment,
                 });
             }
         }
 
-        await Reactodia.delay(SIMULATED_DELAY, {signal: event.signal});
+        await Reactodia.delay(SIMULATED_DELAY, {signal});
         return {items};
     }
 }
