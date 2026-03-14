@@ -4,6 +4,13 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Allow to open "Edit entity" dialog from `VisualAuthoring` for an entity not present on the canvas (e.g. to edit related or well-known entities).
+- Extends metadata support for editing an entity or relation properties:
+  * Allow to order properties with `MetadataPropertyShape.order`;
+  * Allow to specify default value with `MetadataValueShape.defaultValue`;
+  * Provide `source` and `target` entities to `MetadataProvider.getRelationShape()`.
+
 #### 🐛 Fixed
 - Fix stale rendering (i.e. missing links after moving an endpoint until an element move) due to the lost scheduled layer updates.
 - Fix unable to scroll inside canvas components and templates when `requireCtrl` in `zoomOptions` is set `false`.
@@ -17,7 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Remove superfluous "Type" fields from the default "Edit entity" dialog.
 - Provide `translation` and current `language` to `ValidationProvider.validate()` method.
 - Allow to specify related property IRI when returning a validation item for a relation from `ValidationProvider`.
-- Allow to open "Edit entity" dialog from `VisualAuthoring` for an entity not present on the canvas (e.g. to edit related or well-known entities).
+- Display language selector in `FormInputText` only when shape `datatype` is `rdf:langString` or `uniqueLang` is set to either `true` or `false` (the selector will be hidden by default when `datatype` is `xsd:string`).
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed

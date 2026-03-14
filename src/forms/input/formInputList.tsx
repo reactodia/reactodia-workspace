@@ -91,7 +91,7 @@ function FormInputListInner(props: FormInputListProps) {
                         )}
                         title={t.text('visual_authoring.property.add_value.title')}
                         onClick={() => updateValues(previous => {
-                            return [...previous, makeEmptyTerm(shape.valueShape, factory)];
+                            return [...previous, makeDefaultTerm(shape.valueShape, factory)];
                         })}
                     />
                 </div>
@@ -117,16 +117,16 @@ export const FormInputList = React.memo(
     )
 );
 
-function makeEmptyTerm(
+function makeDefaultTerm(
     valueShape: MetadataValueShape,
     factory: Rdf.DataFactory
 ): Rdf.NamedNode | Rdf.Literal {
     switch (valueShape.termType) {
         case 'NamedNode': {
-            return factory.namedNode('');
+            return valueShape.defaultValue ?? factory.namedNode('');
         }
         default: {
-            return factory.literal('', valueShape.datatype);
+            return valueShape.defaultValue ?? factory.literal('', valueShape.datatype);
         }
     }
 }

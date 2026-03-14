@@ -51,7 +51,7 @@ export function FormInputText(props: FormInputTextProps) {
     const hasLanguageSelector = valueShape.termType === 'Literal' && (
         !valueShape.datatype ||
         valueShape.datatype.value === rdf.langString ||
-        valueShape.datatype.value === xsd.string
+        valueShape.uniqueLang !== undefined
     );
 
     return (
