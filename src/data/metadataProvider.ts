@@ -58,6 +58,8 @@ export interface MetadataProvider {
 
     getRelationShape(
         linkType: LinkTypeIri,
+        source: ElementModel,
+        target: ElementModel,
         options: { readonly signal?: AbortSignal }
     ): Promise<MetadataRelationShape>;
 
@@ -128,13 +130,25 @@ export interface MetadataPropertyShape {
      * @default Infinity
      */
     readonly maxCount?: number;
+    /**
+     * Relative order for the property compared the other for the display purposes.
+     *
+     * If `undefined` or have the same `order` value, the properties will be ordered
+     * based on their labels.
+     */
+    readonly order?: number;
 }
 
 export type MetadataValueShape =
-    | { readonly termType: 'NamedNode' }
+    | { 
+        readonly termType: 'NamedNode';
+        readonly defaultValue?: Rdf.NamedNode;
+    }
     | {
         readonly termType: 'Literal';
         readonly datatype?: Rdf.NamedNode;
+        readonly uniqueLang?: boolean;
+        readonly defaultValue?: Rdf.Literal;
     };
 
 /**
@@ -241,10 +255,12 @@ export class BaseMetadataProvider implements MetadataProvider {
 
     async getRelationShape(
         linkType: LinkTypeIri,
+        source: ElementModel,
+        target: ElementModel,
         options: { readonly signal?: AbortSignal; }
     ): Promise<MetadataRelationShape> {
         if (this.methods.getRelationShape) {
-            return this.methods.getRelationShape(linkType, options);
+            return this.methods.getRelationShape(linkType, source, target, options);
         }
         return {
             properties: this.emptyProperties,

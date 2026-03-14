@@ -72,7 +72,7 @@ export function FormInputGroup(props: FormInputGroupProps) {
         }
     }
 
-    labelledProperties.sort((a, b) => a.label.localeCompare(b.label));
+    labelledProperties.sort(compareProperties);
 
     return (
         <div role='list'
@@ -99,6 +99,17 @@ interface LabelledProperty {
     readonly label: string;
     readonly shape: MetadataPropertyShape;
     readonly values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+}
+
+function compareProperties(a: LabelledProperty, b: LabelledProperty): number {
+    if (!(a.shape.order === undefined && b.shape.order === undefined)) {
+        const aOrder = a.shape.order ?? Infinity;
+        const bOrder = b.shape.order ?? Infinity;
+        if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+        }
+    }
+    return a.label.localeCompare(b.label);
 }
 
 function Property(props: {

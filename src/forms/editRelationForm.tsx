@@ -324,7 +324,12 @@ function useRelationMetadata(
             mapAbortedToNull(
                 Promise.all([
                     metadataProvider.canModifyRelation(link, linkSource, linkTarget, {signal}),
-                    metadataProvider.getRelationShape(link.linkTypeId, {signal}),
+                    metadataProvider.getRelationShape(
+                        link.linkTypeId,
+                        linkSource,
+                        linkTarget,
+                        {signal}
+                    ),
                 ]),
                 signal
             ).then(

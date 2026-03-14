@@ -158,7 +158,7 @@ export class ExampleMetadataProvider extends Reactodia.BaseMetadataProvider {
                     properties,
                 };
             },
-            getRelationShape: async (linkType, {signal}) => {
+            getRelationShape: async (linkType, source, target, {signal}) => {
                 await Reactodia.delay(SIMULATED_DELAY, {signal: signal});
                 const properties = new Map<Reactodia.PropertyTypeIri, Reactodia.MetadataPropertyShape>();
                 if (this.editableRelations.has(linkType)) {
