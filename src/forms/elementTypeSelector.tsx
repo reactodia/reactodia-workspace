@@ -4,7 +4,7 @@ import * as React from 'react';
 import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 import { useObservedProperty } from '../coreUtils/hooks';
-import { Translation } from '../coreUtils/i18n';
+import { useTranslation, type Translation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { PlaceholderEntityType } from '../data/schema';
@@ -46,10 +46,12 @@ export function ElementTypeSelector(props: ElementTypeSelectorProps) {
         submitTimeout: 200,
     });
     const workspace = useWorkspace();
+    const translation = useTranslation();
     return (
         <ElementTypeSelectorInner {...props}
             searchStore={searchStore}
             workspace={workspace}
+            translation={translation}
         />
     );
 }
@@ -57,6 +59,7 @@ export function ElementTypeSelector(props: ElementTypeSelectorProps) {
 interface ElementTypeSelectorInnerProps extends ElementTypeSelectorProps {
     searchStore: SearchInputStore;
     workspace: WorkspaceContext;
+    translation: Translation;
 }
 
 interface State {
@@ -111,7 +114,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
 
     private async fetchPossibleElementTypes() {
         const {
-            source, workspace: {model, editor: {metadataProvider}, translation: t},
+            source, workspace: {editor: {metadataProvider}}, translation: t,
         } = this.props;
         if (!metadataProvider) {
             return;
@@ -181,7 +184,9 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
         this.loadingItemCancellation = new AbortController();
         const signal = this.loadingItemCancellation.signal;
 
-        const {onChange, workspace: {model, editor: {metadataProvider}, translation: t}} = this.props;
+        const {
+            onChange, workspace: {model, editor: {metadataProvider}}, translation: t,
+        } = this.props;
         const elementTypeIri: ElementTypeIri = (e.target as HTMLSelectElement).value;
         let createdEntity: MetadataCreatedEntity | null;
         try {
@@ -211,7 +216,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     };
 
     private renderElementTypeSelector() {
-        const {elementValue, workspace: {translation: t}} = this.props;
+        const {elementValue, translation: t} = this.props;
         const {elementTypes, elementTypesState} = this.state;
         const value = elementValue.value.data.types.length ? elementValue.value.data.types[0] : '';
         if (elementTypesState !== 'none') {
@@ -291,7 +296,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 
     render() {
-        const {searchStore, workspace: {translation: t}} = this.props;
+        const {searchStore, translation: t} = this.props;
         return (
             <div
                 className={cx(
@@ -335,7 +340,8 @@ function ElementTypeOptions(props: {
     elementTypes: readonly ElementTypeIri[];
 }) {
     const {elementTypes} = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
     useKeyedSyncStore(subscribeElementTypes, elementTypes, model);
@@ -373,9 +379,8 @@ function makeElementTypeComparatorByLabel(model: DataDiagramModel, t: Translatio
 
 export function validateElementType(
     element: ElementModel,
-    workspace: WorkspaceContext
+    t: Translation
 ): Promise<Pick<ElementValue, 'error' | 'allowChange'>> {
-    const {translation: t} = workspace;
     const isElementTypeSelected = element.types.indexOf(PlaceholderEntityType) < 0;
     const error = isElementTypeSelected
         ? undefined

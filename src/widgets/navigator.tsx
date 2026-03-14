@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { useColorScheme } from '../coreUtils/colorScheme';
 import { EventObserver } from '../coreUtils/events';
+import { useTranslation, type Translation } from '../coreUtils/i18n';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
@@ -144,11 +145,13 @@ export interface NavigatorStrokeStyle {
 export function Navigator(props: NavigatorProps) {
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
+    const t = useTranslation();
     const colorScheme = useColorScheme();
     return (
         <NavigatorInner {...props}
             canvas={canvas}
             workspace={workspace}
+            translation={t}
             colorScheme={colorScheme}
         />
     );
@@ -157,6 +160,7 @@ export function Navigator(props: NavigatorProps) {
 interface NavigatorInnerProps extends NavigatorProps {
     canvas: CanvasApi;
     workspace: WorkspaceContext;
+    translation: Translation;
     colorScheme: ReturnType<typeof useColorScheme>;
 }
 
@@ -477,7 +481,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             dock = 'se', dockOffsetX, dockOffsetY,
             width = DEFAULT_WIDTH,
             height = DEFAULT_HEIGHT,
-            workspace: {translation: t}
+            translation: t,
         } = this.props;
         const {expanded, allowExpand} = this.state;
         const expandedWhenAllowed = expanded && allowExpand;

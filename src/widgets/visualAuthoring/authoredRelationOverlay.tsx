@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
 
 import { LinkKey } from '../../data/model';
 import type { ValidationSeverity } from '../../data/validationProvider';
@@ -33,6 +34,7 @@ export interface AuthoredRelationOverlayProps {
 export function AuthoredRelationOverlay(props: AuthoredRelationOverlayProps) {
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
+    const t = useTranslation();
     const {editor} = workspace;
 
     const inAuthoringMode = useObservedProperty(editor.events, 'changeMode', () => editor.inAuthoringMode);
@@ -44,6 +46,7 @@ export function AuthoredRelationOverlay(props: AuthoredRelationOverlayProps) {
         <LinkStateWidgetInner {...props}
             workspace={workspace}
             canvas={canvas}
+            translation={t}
         />
     );
 }
@@ -51,6 +54,7 @@ export function AuthoredRelationOverlay(props: AuthoredRelationOverlayProps) {
 interface AuthoredRelationOverlayInnerProps extends AuthoredRelationOverlayProps {
     workspace: WorkspaceContext;
     canvas: CanvasApi;
+    translation: Translation;
 }
 
 const CLASS_NAME = 'reactodia-authoring-state';
@@ -173,7 +177,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     }
 
     private renderLinkStatus(state: AuthoredRelation | undefined) {
-        const {workspace: {editor, translation: t}} = this.props;
+        const {workspace: {editor}, translation: t} = this.props;
 
         if (!state) {
             return null;
@@ -259,7 +263,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
     }
 
     private renderLinkValidations(key: LinkKey): React.ReactElement | null {
-        const {workspace: {model, editor, translation: t}} = this.props;
+        const {workspace: {model, editor}, translation: t} = this.props;
         const {validationState} = editor;
 
         const validation = validationState.links.get(key);

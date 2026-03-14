@@ -2,13 +2,14 @@ import cx from 'clsx';
 import { hcl } from 'd3-color';
 import * as React from 'react';
 
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
 import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
 import { ElementModel } from '../../data/model';
-
+import type { DataDiagramModel } from '../../editor/dataDiagramModel';
 import { subscribeElementTypes } from '../../editor/observedElement';
 
-import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 /**
  * Props for {@link ListElementView} component.
@@ -54,11 +55,12 @@ const CLASS_NAME = 'reactodia-list-element-view';
  * @category Components
  */
 export function ListElementView(props: ListElementViewProps) {
-    const workspace = useWorkspace();
-    const {model, getElementTypeStyle} = workspace;
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
     } = props;
+
+    const {model, getElementTypeStyle} = useWorkspace();
+    const t = useTranslation();
 
     useKeyedSyncStore(subscribeElementTypes, element.types, model);
 
@@ -89,7 +91,7 @@ export function ListElementView(props: ListElementViewProps) {
         <li className={combinedClass}
             role='option'
             draggable={!disabled && Boolean(onDragStart)}
-            title={formatEntityTitle(element, workspace)}
+            title={formatEntityTitle(element, model, t)}
             style={providedStyle}
             onClick={onItemClick}
             onDragStart={onDragStart}>
@@ -159,9 +161,11 @@ export function highlightSubstring(
     return <span>{before}<span {...highlightProps}>{highlighted}</span>{after}</span>;
 }
 
-export function formatEntityTitle(entity: ElementModel, workspace: WorkspaceContext): string {
-    const {model, translation: t} = workspace;
-
+export function formatEntityTitle(
+    entity: ElementModel,
+    model: DataDiagramModel,
+    t: Translation
+): string {
     const entityIri = model.locale.formatIri(entity.id);
     const entityLabel = model.locale.formatEntityLabel(entity, model.language);
     const entityTypes = model.locale.formatEntityTypeList(entity, model.language);

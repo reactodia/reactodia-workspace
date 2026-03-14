@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { useObservedProperty } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
 import { PropertyTypeIri } from '../../data/model';
@@ -35,7 +36,8 @@ export function FormInputGroup(props: FormInputGroupProps) {
         className, languages, propertyShapes, extraPropertyShape, propertyValues,
         onChangeData, resolveInput, readonly,
     } = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
     const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
 
     const propertyIris: PropertyTypeIri[] = Array.from(propertyShapes.keys());
@@ -124,7 +126,8 @@ function Property(props: {
     readonly: boolean;
 }) {
     const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const updateValues = React.useCallback((updater: FormInputMultiUpdater) => {
         onChange(iri, updater);

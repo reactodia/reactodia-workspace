@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty, useEventStore, useSyncStore } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 
 import type { ValidationSeverity } from '../../data/validationProvider';
 
@@ -27,7 +28,8 @@ export function AuthoredEntityDecorator(props: {
 }) {
     const {target, inlineActions} = props;
     const {canvas} = useCanvas();
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
 
     const onlyTargetSelected = useObservedProperty(
         model.events,
@@ -201,7 +203,8 @@ function InlineActions(props: {
     allActions: boolean;
 }) {
     const {target, state, allActions} = props;
-    const {editor, translation: t} = useWorkspace();
+    const {editor} = useWorkspace();
+    const t = useTranslation();
 
     const authored = useAuthoredEntity(target.data, allActions);
 

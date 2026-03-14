@@ -200,7 +200,8 @@ export interface SelectionActionRemoveProps extends SelectionActionStyleProps {
 export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {className, title, hotkey, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     
     let newEntities = 0;
@@ -293,7 +294,8 @@ export interface SelectionActionLayoutProps extends SelectionActionStyleProps {}
 export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
-    const {translation: t, performLayout} = useWorkspace();
+    const {performLayout} = useWorkspace();
+    const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length <= 1) {
         return null;
@@ -336,7 +338,8 @@ export interface SelectionActionExpandProps extends SelectionActionStyleProps {}
 export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {className, title, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
@@ -493,7 +496,8 @@ export interface SelectionActionConnectionsProps extends SelectionActionStylePro
  */
 export function SelectionActionConnections(props: SelectionActionConnectionsProps) {
     const {className, title, ...otherProps} = props;
-    const {model, overlay, translation: t, getCommandBus} = useWorkspace();
+    const {model, overlay, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const menuOpened = useObservedProperty(
         overlay.events,
@@ -554,7 +558,8 @@ export interface SelectionActionAddToFilterProps extends SelectionActionStylePro
  */
 export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProps) {
     const {className, title, ...otherProps} = props;
-    const {model, translation: t, getCommandBus} = useWorkspace();
+    const {model, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     const commands = getCommandBus(InstancesSearchTopic);
@@ -608,7 +613,8 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
     const {className, title, hotkey, ...otherProps} = props;
     const {canvas} = useCanvas();
     const workspace = useWorkspace();
-    const {model, translation: t} = workspace;
+    const t = useTranslation();
+    const {model} = workspace;
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
 
@@ -696,7 +702,8 @@ function SelectionActionEstablishRelation(
 ) {
     const {target, className, title, linkType, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {editor, translation: t, getCommandBus} = useWorkspace();
+    const {editor, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -798,7 +805,8 @@ function SelectionActionEstablishAnnotationLink(
 ) {
     const {target, className, title, linkType, ...otherProps} = props;
     const {canvas} = useCanvas();
-    const {translation: t, getCommandBus} = useWorkspace();
+    const {getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const commands = getCommandBus(AnnotationTopic);
     const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
@@ -850,7 +858,8 @@ type GetInitialAnnotationContent = (elements: readonly Element[]) => AnnotationC
  */
 export function SelectionActionAnnotate(props: SelectionActionAnnotateProps) {
     const {className, title, initialContent, ...otherProps} = props;
-    const {model, translation: t, getCommandBus} = useWorkspace();
+    const {model, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
 

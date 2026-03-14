@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { EventObserver } from '../coreUtils/events';
 import { Debouncer } from '../coreUtils/scheduler';
-import { TranslatedText } from '../coreUtils/i18n';
+import { useTranslation, type Translation, TranslatedText } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
 import { DataProviderLookupParams, DataProviderLookupItem } from '../data/dataProvider';
@@ -150,12 +150,14 @@ export function InstancesSearch(props: InstancesSearchProps) {
     });
     const effectiveSearchStore = searchStore ?? uncontrolledSearch;
     const workspace = useWorkspace();
+    const t = useTranslation();
     return (
         <InstancesSearchInner {...props}
             isControlled={Boolean(searchStore)}
             searchStore={effectiveSearchStore}
             minSearchTermLength={minSearchTermLength}
             workspace={workspace}
+            translation={t}
         />
     );
 }
@@ -165,6 +167,7 @@ interface InstancesSearchInnerProps extends InstancesSearchProps {
     searchStore: SearchInputStore;
     minSearchTermLength: number;
     workspace: WorkspaceContext;
+    translation: Translation;
 }
 
 interface State {
@@ -307,7 +310,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     render() {
         const {
             className, isControlled, searchStore, minSearchTermLength,
-            workspace: {translation: t},
+            translation: t,
         } = this.props;
 
         const progressState: ProgressState = (
@@ -396,7 +399,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     };
 
     private renderCriteria(): React.ReactElement<any> {
-        const {workspace: {model, translation: t}} = this.props;
+        const {workspace: {model}, translation: t} = this.props;
         const {criteria} = this.state;
         const criterions: React.ReactElement<any>[] = [];
 

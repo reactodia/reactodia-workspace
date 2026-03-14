@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { useObservedProperty } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
-import { Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
+import { type Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
 import { useCanvasHotkey } from '../diagram/canvasHotkey';
@@ -188,7 +188,8 @@ export interface ToolbarActionSaveProps extends Omit<ToolbarActionStyleProps, 'd
  */
 export function ToolbarActionSave(props: ToolbarActionSaveProps) {
     const {className, title, mode = 'any', onSelect, children, ...otherProps} = props;
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
     const hasLayoutChanges = useObservedProperty(
         model.history.events,
         'historyChanged',
@@ -239,7 +240,8 @@ export interface ToolbarActionClearAllProps extends ToolbarActionStyleProps {}
  */
 export function ToolbarActionClearAll(props: ToolbarActionClearAllProps) {
     const {className, title, ...otherProps} = props;
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
     return (
         <ToolbarAction {...otherProps}
             className={cx(className, `${CLASS_NAME}__clear-all`)}
@@ -473,7 +475,8 @@ export interface ToolbarActionLayoutProps extends Omit<ToolbarActionStyleProps, 
 export function ToolbarActionLayout(props: ToolbarActionLayoutProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
-    const {translation: t, performLayout} = useWorkspace();
+    const {performLayout} = useWorkspace();
+    const t = useTranslation();
     const diagramIsEmpty = useObservedProperty(
         model.events,
         'changeCells',

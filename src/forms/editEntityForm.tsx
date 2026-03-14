@@ -2,6 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import type {
@@ -25,7 +26,8 @@ export function EditEntityForm(props: {
     resolveInput: FormInputGroupProps['resolveInput'];
 }) {
     const {entity, onApply, onCancel, resolveInput} = props;
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
 
     const [data, setData] = React.useState(entity);
     React.useEffect(() => {

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { TranslatedText } from '../coreUtils/i18n';
+import { type Translation, TranslatedText } from '../coreUtils/i18n';
 
 import { HtmlSpinner } from '../diagram/spinner';
 
@@ -23,6 +23,7 @@ export interface FindOrCreateEntityFormProps {
     originalLink: RelationLink;
     onAfterApply: () => void;
     onCancel: () => void;
+    translation: Translation;
 }
 
 interface State {
@@ -75,7 +76,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     private validate() {
-        const {originalLink} = this.props;
+        const {originalLink, translation: t} = this.props;
         const {elementValue, linkValue} = this.state;
         this.setState({isValidating: true});
 
@@ -83,11 +84,12 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
         this.validationCancellation = new AbortController();
         const signal = this.validationCancellation.signal;
 
-        const validateElement = validateElementType(elementValue.value.data, this.context);
+        const validateElement = validateElementType(elementValue.value.data, t);
         const validateLink = validateLinkType(
             dataFromExtendedLink(linkValue.link),
             originalLink.data,
             this.context,
+            t,
             signal
         );
         void Promise.all([validateElement, validateLink]).then(([elementError, linkError]) => {
@@ -101,8 +103,7 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
     }
 
     render() {
-        const {translation: t} = this.context;
-        const {source, originalLink} = this.props;
+        const {source, originalLink, translation: t} = this.props;
         const {elementValue, linkValue, isValidating} = this.state;
         const isValid = !elementValue.error && !linkValue.error;
         return (

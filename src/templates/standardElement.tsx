@@ -2,7 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
-import type { Translation } from '../coreUtils/i18n';
+import { useTranslation, type Translation } from '../coreUtils/i18n';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import { PinnedProperties, TemplateProperties } from '../data/schema';
@@ -83,8 +83,8 @@ const CLASS_NAME = 'reactodia-standard-element';
  */
 export function StandardEntity(props: StandardEntityProps) {
     const {showActions, element, isExpanded, elementState} = props;
-    const workspace = useWorkspace();
-    const {model, editor, translation: t, getElementTypeStyle} = workspace;
+    const {model, editor, getElementTypeStyle} = useWorkspace();
+    const t = useTranslation();    
 
     const data = element instanceof EntityElement ? element.data : undefined;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
@@ -96,7 +96,7 @@ export function StandardEntity(props: StandardEntityProps) {
 
     const label = model.locale.formatEntityLabel(data, model.language);
     const imageUrl = model.locale.selectEntityImageUrl(data);
-    const typesLabel = formatEntityTypes(data, workspace);
+    const typesLabel = formatEntityTypes(data, model, t);
     const typeStyle = getElementTypeStyle(data.types);
     const rootStyle = {
         '--reactodia-element-style-color': typeStyle.color,
@@ -364,13 +364,14 @@ interface StandardEntityGroupItemProps extends TemplateProps {
 
 function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
     const {data, target, canvas, workspace} = props;
-    const {model, editor, translation: t, getElementTypeStyle} = workspace;
+    const t = useTranslation();
+    const {model, editor, getElementTypeStyle} = workspace;
 
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     const label = model.locale.formatEntityLabel(data, model.language);
     const iri = model.locale.formatIri(data.id);
-    const typesLabel = formatEntityTypes(data, workspace);
+    const typesLabel = formatEntityTypes(data, model, t);
     const title = t.text('standard_element.group_item.title', {
         entity: label,
         entityIri: iri,
@@ -430,9 +431,9 @@ function hasPinnedProperties(data: ElementModel, pinned: PinnedProperties): bool
 
 function formatEntityTypes(
     data: ElementModel,
-    workspace: WorkspaceContext
+    model: WorkspaceContext['model'],
+    t: Translation
 ): string {
-    const {model, translation: t} = workspace;
     return data.types.length === 0
         ? t.text('standard_element.default_type')
         : model.locale.formatEntityTypeList(data, model.language);
@@ -460,7 +461,8 @@ function PropertyList(props: {
     shouldInclude?: (iri: PropertyTypeIri) => boolean;
 }) {
     const {data, shouldInclude} = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const propertyIris: PropertyTypeIri[] = [];
     for (const iri in data.properties) {
