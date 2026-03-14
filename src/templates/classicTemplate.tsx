@@ -1,6 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useTranslation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementModel, PropertyTypeIri } from '../data/model';
@@ -55,7 +56,8 @@ export function ClassicEntity(props: ClassicEntityProps) {
     const data = element instanceof EntityElement ? element.data : undefined;
 
     const workspace = useWorkspace();
-    const {model, translation: t, getElementTypeStyle} = workspace;
+    const t = useTranslation();
+    const {model, getElementTypeStyle} = workspace;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     if (!data) {
@@ -144,7 +146,8 @@ function PropertyList(props: {
     data: ElementModel;
 }) {
     const {data} = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const propertyIris: PropertyTypeIri[] = [];
     for (const iri in data.properties) {

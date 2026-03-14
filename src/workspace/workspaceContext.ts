@@ -45,6 +45,8 @@ export interface WorkspaceContext {
     readonly overlay: OverlayController;
     /**
      * Provides a translation for UI text strings.
+     *
+     * @deprecated Use {@link useTranslation()} hook to get the {@link Translation} instead.
      */
     readonly translation: Translation;
     /**

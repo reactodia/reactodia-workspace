@@ -5,7 +5,7 @@ import { mapAbortedToNull } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
 import { EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
-import { Translation } from '../../coreUtils/i18n';
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
 
 import { ElementTypeIri, ElementTypeModel, ElementTypeGraph, SubtypeEdge } from '../../data/model';
 import { DataProvider } from '../../data/dataProvider';
@@ -90,6 +90,7 @@ export function ClassTree(props: ClassTreeProps) {
         () => normalizeSearchText(effectiveSearchStore.value)
     );
     const workspace = useWorkspace();
+    const t = useTranslation();
     return (
         <ClassTreeInner {...props}
             isControlled={Boolean(searchStore)}
@@ -97,6 +98,7 @@ export function ClassTree(props: ClassTreeProps) {
             normalizedTerm={normalizedTerm}
             minSearchTermLength={minSearchTermLength}
             workspace={workspace}
+            translation={t}
         />
     );
 }
@@ -107,6 +109,7 @@ interface ClassTreeInnerProps extends ClassTreeProps {
     normalizedTerm: string;
     minSearchTermLength: number;
     workspace: WorkspaceContext;
+    translation: Translation;
 }
 
 interface State {
@@ -157,7 +160,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
     render() {
         const {
             className, isControlled, searchStore, normalizedTerm, minSearchTermLength,
-            workspace: {editor, translation: t},
+            workspace: {editor}, translation: t,
         } = this.props;
         const {
             fetchedGraph, refreshingState, appliedSearchText, roots, filteredRoots, selectedNode,
@@ -354,7 +357,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
 
         let queryTypeIris: Set<ElementTypeIri> | undefined;
         this.setState((state, props) => {
-            const {workspace: {model, editor, translation: t}} = props;
+            const {workspace: {model, editor}, translation: t} = props;
             const classTree = state.fetchedGraph?.classTree;
             if (!classTree) {
                 return {refreshingState: 'none'};
@@ -413,7 +416,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         elementType: ElementTypeIri,
         dropEvent?: CanvasDropEvent
     ): Promise<void> {
-        const {workspace: {model, view, editor, translation: t, getCommandBus}} = this.props;
+        const {workspace: {model, view, editor, getCommandBus}, translation: t} = this.props;
         const batch = model.history.startBatch();
 
         this.createElementCancellation.abort();

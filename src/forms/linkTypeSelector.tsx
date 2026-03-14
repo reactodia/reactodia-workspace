@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
 import { useObservedProperty } from '../coreUtils/hooks';
-import { Translation } from '../coreUtils/i18n';
+import { useTranslation, type Translation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import type { MetadataProvider } from '../data/metadataProvider';
@@ -39,7 +39,8 @@ export function LinkTypeSelector(props: {
     error?: React.ReactNode | null;
 }) {
     const {link, onChange, disabled, error} = props;
-    const {editor, translation: t} = useWorkspace();
+    const {editor} = useWorkspace();
+    const t = useTranslation();
 
     const [linkTypes, setLinkTypes] = React.useState<readonly DirectedLinkType[]>();
     const [fetchState, setFetchState] = React.useState<{ type: 'loading' | 'error'; error?: unknown }>();
@@ -116,7 +117,8 @@ function LinkTypeOptions(props: {
     linkTypes: readonly DirectedLinkType[];
 }) {
     const {link, linkTypes} = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
     const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
     useKeyedSyncStore(subscribeLinkTypes, linkTypes.map(type => type.iri), model);
@@ -256,9 +258,10 @@ export async function validateLinkType(
     currentLink: LinkModel,
     originalLink: LinkModel,
     workspace: WorkspaceContext,
+    t: Translation,
     signal: AbortSignal | undefined
 ): Promise<Pick<ValidatedLink, 'error' | 'allowChange'>> {
-    const {model, editor, translation: t} = workspace;
+    const {model, editor} = workspace;
     if (currentLink.linkTypeId === PlaceholderRelationType) {
         return {
             error: t.text('visual_authoring.select_relation.validation.error_required'),

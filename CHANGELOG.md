@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Provide `translation` and current `language` to `ValidationProvider.validate()` method.
 - Allow to specify related property IRI when returning a validation item for a relation from `ValidationProvider`.
 - Display language selector in `FormInputText` only when shape `datatype` is `rdf:langString` or `uniqueLang` is set to either `true` or `false` (the selector will be hidden by default when `datatype` is `xsd:string`).
+- Deprecate getting `Translation` instance from `WorkspaceContext`: use `useTranslation()` hook instead to be able to subscribe to translation bundle changes in the future.
 
 ## [0.32.0] - 2026-03-10
 #### 🐛 Fixed

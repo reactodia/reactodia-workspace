@@ -131,7 +131,8 @@ export function NoteEntity(props: NoteEntityProps) {
         textProperty = 'http://www.w3.org/ns/oa#bodyValue',
     } = props;
 
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
 
     const data = element instanceof EntityElement ? element.data : undefined;
     const entityContext = useAuthoredEntity(data, true);
