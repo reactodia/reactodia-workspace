@@ -4,7 +4,9 @@ import { hcl } from 'd3-color';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver, EventSource } from '../coreUtils/events';
-import { LabelLanguageSelector, TranslationBundle, TranslatedText } from '../coreUtils/i18n';
+import {
+    LabelLanguageSelector, type Translation, TranslationBundle, TranslatedText,
+} from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
@@ -158,6 +160,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private readonly layoutTypeProvider: LayoutTypeProvider;
 
     private readonly workspaceContext: WorkspaceContext;
+    private translation: Translation;
 
     /** @hidden */
     constructor(props: WorkspaceProps) {
@@ -182,13 +185,13 @@ export class Workspace extends React.Component<WorkspaceProps> {
             translationBundles.push(DefaultTranslationBundle);
         }
 
-        const translation = new DefaultTranslation(translationBundles, selectLabelLanguage);
+        this.translation = new DefaultTranslation(translationBundles, selectLabelLanguage);
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
         this.cachedGroupStyles = new WeakMap();
 
-        const model = new DataDiagramModel({history, translation});
+        const model = new DataDiagramModel({history, translation: this.translation});
         model.setLanguage(defaultLanguage);
 
         const view = new SharedCanvasState({
@@ -212,7 +215,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const editor = new EditorController({
             model,
-            translation,
+            translation: this.translation,
             metadataProvider,
             validationProvider,
         });
@@ -220,7 +223,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         const overlay = new OverlayController({
             model,
             view,
-            translation,
+            translation: this.translation,
         });
 
         this.layoutTypeProvider = {
@@ -237,7 +240,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             view,
             editor,
             overlay,
-            translation,
+            translation: this.translation,
             disposeSignal: this.cancellation.signal,
             getCommandBus: this.getCommandBus,
             getElementStyle: this.getElementStyle,
@@ -261,7 +264,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
     render() {
         const {children} = this.props;
         return (
-            <TranslationProvider translation={this.workspaceContext.translation}>
+            <TranslationProvider translation={this.translation}>
                 <WorkspaceContext.Provider value={this.workspaceContext}>
                     {children}
                 </WorkspaceContext.Provider>
@@ -379,7 +382,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
             canvas: targetCanvas, layoutFunction, selectedElements, animate, signal,
             zoomToFit = true,
         } = params;
-        const {model, view, overlay, translation: t, disposeSignal} = this.workspaceContext;
+        const {model, view, overlay, disposeSignal} = this.workspaceContext;
+        const t = this.translation;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
         if (!canvas) {

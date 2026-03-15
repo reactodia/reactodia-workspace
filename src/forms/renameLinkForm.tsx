@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { Link } from '../diagram/elements';
 import { RelationLink, RelationGroup } from '../editor/dataElements';
@@ -16,7 +17,8 @@ export interface RenameLinkFormProps {
 export function RenameLinkForm(props: RenameLinkFormProps) {
     const {link, onFinish} = props;
 
-    const {view: {renameLinkProvider}, translation: t} = useWorkspace();
+    const {view: {renameLinkProvider}} = useWorkspace();
+    const t = useTranslation();
 
     const defaultLabel = useDefaultLinkLabel(link);
     const [customLabel, setCustomLabel] = React.useState(
@@ -60,7 +62,8 @@ export function RenameLinkForm(props: RenameLinkFormProps) {
 }
 
 function useDefaultLinkLabel(link: Link): string {
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
     const linkType = link instanceof RelationLink || link instanceof RelationGroup
         ? model.getLinkType(link.typeId) : undefined;
     const linkTypeChangeStore = useEventStore(linkType?.events, 'changeData');

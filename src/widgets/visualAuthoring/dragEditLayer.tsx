@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
+
 import { MetadataCanConnect } from '../../data/metadataProvider';
 import { ElementTypeIri, LinkTypeIri } from '../../data/model';
 import { PlaceholderEntityType, PlaceholderRelationType } from '../../data/schema';
@@ -69,6 +71,7 @@ export interface DragEditMoveEndpoint {
 export function DragEditLayer(props: DragEditLayerProps) {
     const {operation, onFinishEditing} = props;
     const workspace = useWorkspace();
+    const t = useTranslation();
     const {model, editor} = workspace;
     const {metadataProvider} = editor;
 
@@ -110,14 +113,14 @@ export function DragEditLayer(props: DragEditLayerProps) {
                 (!target || target instanceof EntityElement) &&
                 (!targetEvent || targetEvent.type !== 'entityDelete')
             )) {
-                return new EntityDragConnection([], workspace);
+                return new EntityDragConnection([], workspace, t);
             }
 
             const linkTypeId = link.data.linkTypeId === PlaceholderRelationType
                 ? undefined : link.data.linkTypeId;
             if (target && linkTypeId && model.findLink(linkTypeId, source.id, target.id)) {
                 // Link already exists
-                return new EntityDragConnection([], workspace);
+                return new EntityDragConnection([], workspace, t);
             }
 
             const canConnect = await metadataProvider.canConnect(
@@ -126,7 +129,7 @@ export function DragEditLayer(props: DragEditLayerProps) {
                 linkTypeId,
                 {signal}
             );
-            return new EntityDragConnection(canConnect, workspace);
+            return new EntityDragConnection(canConnect, workspace, t);
         },
         [metadataProvider]
     );
@@ -156,7 +159,8 @@ export function DragEditLayer(props: DragEditLayerProps) {
 class EntityDragConnection implements DragLinkConnection {
     constructor(
         private readonly connections: ReadonlyArray<MetadataCanConnect>,
-        private readonly workspace: WorkspaceContext
+        private readonly workspace: WorkspaceContext,
+        private readonly translation: Translation
     ) {}
 
     get allowed(): boolean {
@@ -226,7 +230,7 @@ class EntityDragConnection implements DragLinkConnection {
     private async createNewElement(
         signal: AbortSignal
     ): Promise<EntityElement> {
-        const {model, editor, translation: t} = this.workspace;
+        const {model, editor} = this.workspace;
         if (!editor.metadataProvider) {
             throw new Error('Cannot create new entity without metadata provider');
         }
@@ -240,7 +244,7 @@ class EntityDragConnection implements DragLinkConnection {
             ? Array.from(elementTypes)[0] : PlaceholderEntityType;
         const createdEntity = await editor.metadataProvider.createEntity(
             selectedType,
-            {translation: t, language: model.language, signal}
+            {translation: this.translation, language: model.language, signal}
         );
         const element = editor.createEntity(createdEntity.data, {temporary: true});
         if (createdEntity.elementState) {
@@ -254,7 +258,7 @@ class EntityDragConnection implements DragLinkConnection {
         target: EntityElement,
         signal: AbortSignal
     ): Promise<RelationLink> {
-        const {model, editor, translation: t} = this.workspace;
+        const {model, editor} = this.workspace;
         if (!editor.metadataProvider) {
             throw new Error('Cannot create new relation without metadata provider');
         }
@@ -300,7 +304,7 @@ class EntityDragConnection implements DragLinkConnection {
             effectiveSource.data,
             effectiveTarget.data,
             linkTypeIri,
-            {translation: t, language: model.language, signal}
+            {translation: this.translation, language: model.language, signal}
         );
         const link = new RelationLink({
             sourceId: effectiveSource.id,

@@ -2,7 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { EventObserver } from '../coreUtils/events';
-import { TranslatedText, useTranslation } from '../coreUtils/i18n';
+import { useTranslation, type Translation, TranslatedText } from '../coreUtils/i18n';
 import { Debouncer } from '../coreUtils/scheduler';
 
 import type { ElementIri, ElementModel, LinkTypeIri } from '../data/model';
@@ -79,12 +79,14 @@ export function LinkTypesToolbox(props: LinkTypesToolboxProps) {
     });
     const effectiveSearchStore = searchStore ?? uncontrolledSearch;
     const workspace = useWorkspace();
+    const t = useTranslation();
     return (
         <LinkTypesToolboxInner {...props}
             isControlled={Boolean(searchStore)}
             searchStore={effectiveSearchStore}
             minSearchTermLength={minSearchTermLength}
             workspace={workspace}
+            translation={t}
         />
     );
 }
@@ -97,6 +99,7 @@ interface LinkTypesToolboxInnerProps extends LinkTypesToolboxProps {
     searchStore: SearchInputStore;
     minSearchTermLength: number;
     workspace: WorkspaceContext;
+    translation: Translation;
 }
 
 interface State {
@@ -227,9 +230,8 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
 
     render() {
         const {
-            className, isControlled, searchStore, minSearchTermLength, workspace,
+            className, isControlled, searchStore, minSearchTermLength, workspace, translation: t,
         } = this.props;
-        const {translation: t} = workspace;
         const {filteredLinks} = this.state;
 
         const connectedLinks = filteredLinks.links.filter(link =>
@@ -351,7 +353,8 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
 function applyFilter(state: State, term: string, props: LinkTypesToolboxInnerProps): State {
     const {
         trackSelected = DEFAULT_TRACK_SELECTED,
-        workspace: {model, translation: t},
+        workspace: {model},
+        translation: t,
     } = props;
 
     const allLinkTypeIris = new Set<LinkTypeIri>();
@@ -405,7 +408,8 @@ function LinkInToolBox(props: {
 }) {
     const {link, filterKey, onAddToFilter} = props;
     const workspace = useWorkspace();
-    const {model, translation: t} = workspace;
+    const t = useTranslation();
+    const {model} = workspace;
     return (
         <li data-linktypeid={link.iri}
             className={`${CLASS_NAME}__link-item`}>

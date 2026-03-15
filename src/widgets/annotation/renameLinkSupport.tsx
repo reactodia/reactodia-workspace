@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
+import { useTranslation } from '../../coreUtils/i18n';
 
 import { Size } from '../../diagram/geometry';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
@@ -12,7 +13,8 @@ import { useWorkspace } from '../../workspace/workspaceContext';
 import type { AnnotationCommands } from './annotationSupport';
 
 export function RenameLinkSupport() {
-    const {overlay, translation: t, getCommandBus} = useWorkspace();
+    const {overlay, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     React.useLayoutEffect(() => {
         const onRenameLink = ({target: link}: AnnotationCommands['renameLink']) => {

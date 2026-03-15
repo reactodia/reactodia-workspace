@@ -2,6 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { ElementModel, LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
 import type { MetadataProvider, MetadataRelationShape } from '../data/metadataProvider';
@@ -78,7 +79,8 @@ function RelationEditorInner(props: {
 }) {
     const {original, originalSource, originalTarget, onChangeTarget, children} = props;
     const workspace = useWorkspace();
-    const {editor, translation: t} = workspace;
+    const t = useTranslation();
+    const {editor} = workspace;
 
     const [value, setValue] = React.useState((): ValidatedLink => ({
         link: {
@@ -103,6 +105,7 @@ function RelationEditorInner(props: {
                 toValidate,
                 original.data,
                 workspace,
+                t,
                 cancellation.signal,
             ).then(error => {
                 if (cancellation.signal.aborted) { return; }
@@ -197,7 +200,8 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
         status, linkData, linkSource, linkTarget,
         updateData, applyChanges, closeDialog, resolveInput,
     } = props;
-    const {editor, translation: t} = useWorkspace();
+    const {editor} = useWorkspace();
+    const t = useTranslation();
 
     const [metadata, metadataError] = useRelationMetadata(
         editor.metadataProvider, linkData, linkSource, linkTarget
@@ -273,7 +277,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
  * @category Components
  */
 export function RelationTypeSelector() {
-    const {translation: t} = useWorkspace();
+    const t = useTranslation();
     const context = React.useContext(RelationEditorContext);
     if (!context) {
         throw new Error('Reactodia: Cannot use <RelationTypeSelector> outside relation editor');

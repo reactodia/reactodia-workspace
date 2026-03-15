@@ -4,6 +4,7 @@ import { EventObserver } from '../../coreUtils/events';
 import {
     useEventStore, useObservedProperty, useSyncStore,
 } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 
 import type { ElementModel, LinkModel } from '../../data/model';
 import { useCanvas } from '../../diagram/canvasApi';
@@ -207,7 +208,8 @@ export interface VisualAuthoringCommands {
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
     const {propertyEditor, inputResolver, inlineEntityActions = true} = props;
-    const {model, editor, overlay, translation: t, getCommandBus} = useWorkspace();
+    const {model, editor, overlay, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     React.useLayoutEffect(() => {
         const listener = new EventObserver();
@@ -289,6 +291,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                         }
                     }}
                     onCancel={() => overlay.hideDialog()}
+                    translation={t}
                 />
             );
             overlay.showDialog({

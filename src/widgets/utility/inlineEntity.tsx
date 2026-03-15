@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { useTranslation } from '../../coreUtils/i18n';
+
 import { ElementModel } from '../../data/model';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
@@ -12,8 +14,8 @@ export function InlineEntity(props: {
     target: ElementModel;
 }) {
     const {target} = props;
-    const workspace = useWorkspace();
-    const {model, getElementTypeStyle} = workspace;
+    const {model, getElementTypeStyle} = useWorkspace();
+    const t = useTranslation();
     const label = model.locale.formatEntityLabel(target, model.language);
     const {color} = getElementTypeStyle(target.types);
     const style = {
@@ -22,7 +24,7 @@ export function InlineEntity(props: {
     return (
         <span className={CLASS_NAME}
             style={style}
-            title={formatEntityTitle(target, workspace)}>
+            title={formatEntityTitle(target, model, t)}>
             <span className={`${CLASS_NAME}__label`}>
                 {label}
             </span>

@@ -1,6 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useTranslation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import type { LinkModel, PropertyTypeIri } from '../data/model';
@@ -126,7 +127,8 @@ export function StandardRelation(props: StandardRelationProps) {
         prependLabels = null,
         children,
     } = props;
-    const {model, view: {renameLinkProvider}, translation: t} = useWorkspace();
+    const {model, view: {renameLinkProvider}} = useWorkspace();
+    const t = useTranslation();
 
     useKeyedSyncStore(subscribeLinkTypes, [link.typeId], model);
 
@@ -134,7 +136,8 @@ export function StandardRelation(props: StandardRelationProps) {
     let labelContent: React.ReactElement | null = null;
     if (model.getLinkVisibility(link.typeId) === 'visible') {
         const linkType = model.getLinkType(link.typeId);
-        const label = renamedLabel ?? t.formatLabel(linkType?.data?.label, link.typeId, model.language);
+        const label = renamedLabel
+            ?? t.formatLabel(linkType?.data?.label, link.typeId, model.language);
 
         labelContent = <>
             <LinkLabel {...primaryLabelProps}
@@ -238,7 +241,8 @@ function LinkProperties(props: StandardRelationProps) {
         link, getPathPosition, route, propertyLabelProps,
         propertyLabelStartLine = 1,
     } = props;
-    const {model, translation: t} = useWorkspace();
+    const {model} = useWorkspace();
+    const t = useTranslation();
     const {data} = link as RelationLink;
 
     const propertyIris: PropertyTypeIri[] = [];

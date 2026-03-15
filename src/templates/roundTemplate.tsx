@@ -1,6 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useTranslation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
@@ -60,7 +61,8 @@ const CLASS_NAME = 'reactodia-round-entity';
 export function RoundEntity(props: RoundEntityProps) {
     const {element, className, style, showTypes} = props;
     const workspace = useWorkspace();
-    const {model, translation: t, getElementTypeStyle} = workspace;
+    const t = useTranslation();
+    const {model, getElementTypeStyle} = workspace;
 
     const data = element instanceof EntityElement ? element.data : undefined;
     useKeyedSyncStore(subscribeElementTypes, data && showTypes ? data.types : [], model);

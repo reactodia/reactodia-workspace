@@ -6,6 +6,7 @@ import {
     useEventStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
+import { useTranslation } from '../coreUtils/i18n';
 
 import type { MetadataCanModifyRelation } from '../data/metadataProvider';
 
@@ -197,7 +198,8 @@ export interface LinkActionEditProps extends LinkActionStyleProps {}
 export function LinkActionEdit(props: LinkActionEditProps) {
     const {className, title, ...otherProps} = props;
     const {link} = useLinkActionContext();
-    const {model, editor, translation: t, getCommandBus} = useWorkspace();
+    const {model, editor, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -281,7 +283,8 @@ export function LinkActionDelete(props: LinkActionDeleteProps) {
 
 function LinkActionDeleteRelation(props: LinkActionDeleteProps & { link: RelationLink }) {
     const {link, className, title, hotkey, ...otherProps} = props;
-    const {model, editor, translation: t} = useWorkspace();
+    const {model, editor} = useWorkspace();
+    const t = useTranslation();
 
     const canModify = useCanModifyLink(link, model, editor);
     const linkIsDeleted = useObservedProperty(
@@ -372,7 +375,8 @@ function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boo
 
 function LinkActionDeleteAnnotation(props: LinkActionDeleteProps & { link: AnnotationLink }) {
     const {link, className, title, hotkey, ...otherProps} = props;
-    const {editor, translation: t} = useWorkspace();
+    const {editor} = useWorkspace();
+    const t = useTranslation();
     return (
         <LinkAction {...otherProps}
             className={cx(
@@ -425,7 +429,8 @@ function LinkActionMoveRelationEndpoint(
     const {link, dockSide, className, title, ...otherProps} = props;
     const {buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {editor, translation: t, getCommandBus} = useWorkspace();
+    const {editor, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const inAuthoringMode = useObservedProperty(
         editor.events, 'changeMode', () => editor.inAuthoringMode
@@ -476,7 +481,8 @@ function LinkActionMoveAnnotationEndpoint(
     const {link, dockSide, className, title, ...otherProps} = props;
     const {buttonSize, getAngleInDegrees} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {translation: t, getCommandBus} = useWorkspace();
+    const {getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const commands = getCommandBus(AnnotationTopic);
     const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
@@ -555,7 +561,8 @@ export function LinkActionRename(props: LinkActionRenameProps) {
     const {className, title} = props;
     const {link} = useLinkActionContext();
     const {canvas} = useCanvas();
-    const {view: {renameLinkProvider}, translation: t, getCommandBus} = useWorkspace();
+    const {view: {renameLinkProvider}, getCommandBus} = useWorkspace();
+    const t = useTranslation();
 
     const labelBoundsStore = useEventStore(canvas.renderingState.events, 'changeLinkLabelBounds');
     const labelBounds = useSyncStore(
