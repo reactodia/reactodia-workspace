@@ -1,15 +1,17 @@
 import * as React from 'react';
 
-import { AccordionItem, AccordionItemProps } from './accordionItem';
+import { AccordionItem, AccordionItemProps, ItemProvidedProps } from './accordionItem';
 
 export interface AccordionProps {
     onStartResize?: (direction: 'vertical' | 'horizontal') => void;
     onResize?: (direction: 'vertical' | 'horizontal') => void;
     /** AccordionItem[] */
-    children?: React.ReactElement<AccordionItemProps> | ReadonlyArray<React.ReactElement<AccordionItemProps>>;
-    direction?: 'vertical' | 'horizontal';
+    children?: AccordionChild | ReadonlyArray<AccordionChild>;
+    direction: 'vertical' | 'horizontal';
     animationDuration?: number;
 }
+
+type AccordionChild = React.ReactElement<AccordionItemProps> | null;
 
 interface DefaultItemProps {
     defaultSize?: number;
@@ -24,35 +26,25 @@ interface State {
      *
      * Unset until first resize or toggle initiated by user.
      */
-    readonly sizes: number[];
+    readonly sizes: readonly number[];
     /**
      * Items' sizes in percent.
      */
-    readonly percents: string[];
+    readonly percents: readonly string[];
     /**
      * Per-item collapsed state: true if corresponding item is collapsed;
      * otherwise false.
      */
-    readonly collapsed: boolean[];
+    readonly collapsed: readonly boolean[];
     readonly resizing: boolean;
 }
 
 const CLASS_NAME = 'reactodia-accordion';
 
-type DefaultPropKeys = 'direction' | 'animationDuration';
-type ProvidedProps =
-    Omit<AccordionProps, DefaultPropKeys> &
-    Required<Pick<AccordionProps, DefaultPropKeys>>;
-
 export class Accordion extends React.Component<AccordionProps, State> {
-    static defaultProps: Required<Pick<AccordionProps, DefaultPropKeys>> = {
-        direction: 'vertical',
-        animationDuration: 300,
-    };
-
     private element: HTMLDivElement | undefined | null;
 
-    private items: AccordionItem[] = [];
+    private items: Array<AccordionItem | null> = [];
     private dragOrigin: {
         sizes: ReadonlyArray<number>;
         collapsed: ReadonlyArray<boolean>;
@@ -79,17 +71,18 @@ export class Accordion extends React.Component<AccordionProps, State> {
     }
 
     componentDidUpdate(prevProps: AccordionProps, prevState: State) {
-        const {direction, children, onResize, animationDuration} = this.props as ProvidedProps;
+        const {direction, children, onResize, animationDuration} = this.props;
         if (React.Children.count(children) !== React.Children.count(prevProps.children)) {
             this.updateSizes();
         }
         const {sizes, resizing} = this.state;
         if (sizes !== prevState.sizes && onResize) {
-            if (resizing) {
+            const duration = animationDuration ?? getAnimationDuration(this.element);
+            if (resizing || !duration) {
                 onResize(direction);
             } else {
                 // triggers the callback after finishing CSS animation
-                setTimeout(() => onResize(direction), animationDuration);
+                setTimeout(() => onResize(direction), duration);
             }
         }
     }
@@ -113,12 +106,16 @@ export class Accordion extends React.Component<AccordionProps, State> {
         const defaultProps = new Map<number, DefaultItemProps>();
         React.Children.forEach(children, (child, index) => {
             if (typeof child !== 'object') { return; }
-            const {defaultSize, defaultCollapsed, collapsedSize, minSize} = child.props;
-            // enables the scrollbar in the accordion if at least one item has min size
-            if (minSize !== undefined) {
-                this.isScrollable = true;
+            if (child) {
+                const {defaultSize, defaultCollapsed, collapsedSize, minSize} = child.props;
+                // enables the scrollbar in the accordion if at least one item has min size
+                if (minSize !== undefined) {
+                    this.isScrollable = true;
+                }
+                defaultProps.set(index, {defaultSize, defaultCollapsed, collapsedSize, minSize});
+            } else {
+                defaultProps.set(index, {});
             }
-            defaultProps.set(index, {defaultSize, defaultCollapsed, collapsedSize, minSize});
         });
         this.defaultProps = defaultProps;
         this.setState(({collapsed}) => {
@@ -195,16 +192,17 @@ export class Accordion extends React.Component<AccordionProps, State> {
 
         return React.Children.map(children, (child, index) => {
             if (typeof child !== 'object') {
-                throw new Error('Accordion should have only AccordionItem elements as children');
+                throw new Error('Reactodia: Accordion should have only AccordionItem elements as children');
+            } else if (child === null) {
+                return child;
             }
+
             const lastChild = index === React.Children.count(children) - 1;
             const size = collapsed[index] ? sizes[index] : percents[index];
 
-            const additionalProps: AccordionItemProps & React.ClassAttributes<AccordionItem> = {
+            const additionalProps: ItemProvidedProps & React.ClassAttributes<AccordionItem> = {
                 ref: element => {
-                    if (element) {
-                        this.items[index] = element;
-                    }
+                    this.items[index] = element;
                 },
                 collapsed: collapsed[index],
                 size,
@@ -225,7 +223,7 @@ export class Accordion extends React.Component<AccordionProps, State> {
             collapsed: [...this.state.collapsed],
         };
         this.setState({resizing: true}, () => {
-            const {direction, onStartResize} = this.props as ProvidedProps;
+            const {direction, onStartResize} = this.props;
             if (onStartResize) {
                 onStartResize(direction);
             }
@@ -252,6 +250,9 @@ export class Accordion extends React.Component<AccordionProps, State> {
 
     private sizeWhenCollapsed = (index: number) => {
         const item = this.items[index];
+        if (!item) {
+            return 0;
+        }
         const {collapsedSize} = this.defaultProps.get(index)!;
         if (collapsedSize !== undefined) {
             return collapsedSize;
@@ -396,5 +397,18 @@ class SizeDistributor {
     leftoverSize() {
         const sizeSum = this.sizes.reduce((sum, size) => sum + size, 0);
         return Math.max(this.totalSize - sizeSum, 0);
+    }
+}
+
+function getAnimationDuration(element: HTMLElement | undefined | null): number | undefined {
+    if (element) {
+        const style = getComputedStyle(element);
+        const value = style.getPropertyValue('--reactodia-accordion-transition-duration');
+        const match = /^([0-9.]+)(s|ms)$/.exec(value);
+        if (match) {
+            const duration = Number(match[1]);
+            const unit = match[2] === 's' ? 1000 : 1;
+            return Number.isFinite(duration) ? duration * unit : undefined;
+        }
     }
 }

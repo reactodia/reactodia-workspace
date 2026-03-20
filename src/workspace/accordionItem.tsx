@@ -7,7 +7,8 @@ export enum DockSide {
     Right,
 }
 
-export interface AccordionItemProps extends ParentProvidedProps {
+export interface AccordionItemProps extends ItemProvidedProps {
+    id: string;
     heading?: React.ReactNode;
     bodyClassName?: string;
     bodyRef?: (body: HTMLDivElement) => void;
@@ -21,7 +22,7 @@ export interface AccordionItemProps extends ParentProvidedProps {
 /**
  * Props provided by {@link Accordion}.
  */
-interface ParentProvidedProps {
+export interface ItemProvidedProps {
     collapsed?: boolean;
     size?: number | string;
     direction?: 'vertical' | 'horizontal';
@@ -38,16 +39,7 @@ interface State {
     resizing?: boolean;
 }
 
-type DefaultPropKeys = 'direction';
-type ProvidedProps =
-    Omit<AccordionItemProps, DefaultPropKeys & keyof ParentProvidedProps> &
-    Required<Pick<AccordionItemProps, DefaultPropKeys>>;
-
 export class AccordionItem extends React.Component<AccordionItemProps, State> {
-    static defaultProps: Partial<AccordionItemProps> = {
-        direction: 'vertical',
-    };
-
     private _element = React.createRef<HTMLDivElement>();
     private _header = React.createRef<HTMLDivElement>();
 
@@ -79,7 +71,7 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
         const {
             heading, bodyClassName, children, bodyRef,
             collapsed, size, direction, onBeginDragHandle, onDragHandle, onEndDragHandle, dockSide,
-        } = this.props as ProvidedProps;
+        } = this.props;
         const {resizing} = this.state;
         const shouldRenderHandle = onBeginDragHandle && onDragHandle && onEndDragHandle;
         const style: React.CSSProperties = this.isVertical ? {height: size} : {width: size};

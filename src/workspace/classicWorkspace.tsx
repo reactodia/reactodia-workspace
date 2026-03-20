@@ -32,15 +32,19 @@ export interface ClassicWorkspaceProps extends BaseDefaultWorkspaceProps {
     /**
      * Props for the left layout column of the default workspace.
      *
+     * If specified as `null`, the component will not be rendered.
+     *
      * @default {defaultSize: 275}
      */
-    leftColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
+    leftColumn?: Omit<WorkspaceLayoutContainerProps, 'children'> | null;
     /**
      * Props for the right layout column of the default workspace.
      *
+     * If specified as `null`, the component will not be rendered.
+     *
      * @default {defaultSize: 275, defaultCollapsed: true}
      */
-    rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'>;
+    rightColumn?: Omit<WorkspaceLayoutContainerProps, 'children'> | null;
     /**
      * Props for the {@link ClassicToolbar} canvas widget.
      *
@@ -81,17 +85,19 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
     return (
         <WorkspaceRoot className={className} style={style} colorScheme={colorScheme}>
             <WorkspaceLayoutRow>
-                <WorkspaceLayoutColumn defaultSize={275}
-                    {...leftColumn}>
-                    <WorkspaceLayoutItem id='classes'
-                        heading={t.text('classic_workspace.class_tree.heading')}>
-                        <ClassTree {...classTree} />
-                    </WorkspaceLayoutItem>
-                    <WorkspaceLayoutItem id='instances'
-                        heading={t.text('classic_workspace.instances.heading')}>
-                        <InstancesSearch {...instancesSearch} />
-                    </WorkspaceLayoutItem>
-                </WorkspaceLayoutColumn>
+                {leftColumn === null ? null : (
+                    <WorkspaceLayoutColumn defaultSize={275}
+                        {...leftColumn}>
+                        <WorkspaceLayoutItem id='classes'
+                            heading={t.text('classic_workspace.class_tree.heading')}>
+                            <ClassTree {...classTree} />
+                        </WorkspaceLayoutItem>
+                        <WorkspaceLayoutItem id='instances'
+                            heading={t.text('classic_workspace.instances.heading')}>
+                            <InstancesSearch {...instancesSearch} />
+                        </WorkspaceLayoutItem>
+                    </WorkspaceLayoutColumn>
+                )}
                 <WorkspaceLayoutItem id='canvas'>
                     <Canvas {...canvas}>
                         <VisualAuthoring {...visualAuthoring} />
@@ -114,14 +120,16 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                         {children}
                     </Canvas>
                 </WorkspaceLayoutItem>
-                <WorkspaceLayoutColumn defaultSize={275}
-                    defaultCollapsed={true}
-                    {...rightColumn}>
-                    <WorkspaceLayoutItem id='connections'
-                        heading={t.text('classic_workspace.connections.heading')}>
-                        <LinkTypesToolbox {...linkToolbox} />
-                    </WorkspaceLayoutItem>
-                </WorkspaceLayoutColumn>
+                {rightColumn === null ? null : (
+                    <WorkspaceLayoutColumn defaultSize={275}
+                        defaultCollapsed={true}
+                        {...rightColumn}>
+                        <WorkspaceLayoutItem id='connections'
+                            heading={t.text('classic_workspace.connections.heading')}>
+                            <LinkTypesToolbox {...linkToolbox} />
+                        </WorkspaceLayoutItem>
+                    </WorkspaceLayoutColumn>
+                )}
             </WorkspaceLayoutRow>
         </WorkspaceRoot>
     );

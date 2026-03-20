@@ -61,7 +61,13 @@ interface CommonWorkspaceLayoutProps {
  */
 export interface WorkspaceLayoutContainerProps extends CommonWorkspaceLayoutProps {
     /**
+     * Unique layout container ID withing the layout component tree.
+     */
+    id?: string;
+    /**
      * Expand/collapse animation duration for the child layout items.
+     *
+     * **Default** is set by `--reactodia-accordion-transition-duration` CSS property.
      */
     animationDuration?: number;
     /**
@@ -70,7 +76,8 @@ export interface WorkspaceLayoutContainerProps extends CommonWorkspaceLayoutProp
     children: WorkspaceChild | ReadonlyArray<WorkspaceChild>;
 }
 
-type WorkspaceChild = React.ReactElement<WorkspaceLayoutContainerProps | WorkspaceLayoutItemProps>;
+type WorkspaceChild =
+    React.ReactElement<WorkspaceLayoutContainerProps | WorkspaceLayoutItemProps> | null;
 
 /**
  * Layout component to display a row of resizable sub-components.
@@ -157,6 +164,10 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
     const resizeContext = React.useContext(WorkspaceLayoutResizeContext);
     const childCount = React.Children.count(children);
     const items = React.Children.map(children, (child, index) => {
+        if (child === null) {
+            return child;
+        }
+        const childId = child.props.id ?? `${type}-child-${index}`;
         let dockSide: DockSide | undefined;
         if (type === 'row' && !child.props.undocked) {
             if (index === 0) {
@@ -171,9 +182,8 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
         }
         return (
             <AccordionItem
-                key={child.type === WorkspaceLayoutItem
-                    ? (child.props as WorkspaceLayoutItemProps).id : index
-                }
+                id={childId}
+                key={childId}
                 heading={child.type === WorkspaceLayoutItem
                     ? (child.props as WorkspaceLayoutItemProps).heading : undefined
                 }
@@ -189,7 +199,7 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
     return (
         <Accordion direction={type === 'row' ? 'horizontal' : 'vertical'}
             onStartResize={resizeContext?.onStartResize}
-            onResize={resizeContext?.onResize}
+            onResize={resizeContext?.onResize ?? (() => undefined)}
             animationDuration={animationDuration}>
             {items}
         </Accordion>
