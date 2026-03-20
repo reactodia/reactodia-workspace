@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Allow to select multiple elements with `Selection` with touch when `CanvasApi.pointerMode` is `selection`;
   * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
   * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
+- Support conditionally rendering `WorkspaceLayout*` child components by passing `null` instead of a child to remove it:
+  * Allow to hide left and right panels in `ClassicWorkspace` by passing `null` to the corresponding props.
 
 #### 💅 Polish
 - Provide `onlySelected` property to link templates the same way as for element templates.
