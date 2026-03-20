@@ -1,9 +1,8 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
 import {
-    useEventStore, useObservedProperty, useSyncStore,
+    useAsync, useEventStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 import { useTranslation } from '../coreUtils/i18n';
@@ -205,7 +204,9 @@ export function LinkActionEdit(props: LinkActionEditProps) {
         editor.events, 'changeMode', () => editor.inAuthoringMode
     );
 
-    const canModify = useCanModifyLink(inAuthoringMode ? link : undefined, model, editor);
+    const fetchedCanModify = useCanModifyLink(inAuthoringMode ? link : undefined, model, editor);
+    const canModify = fetchedCanModify.status === 'completed' ? fetchedCanModify.data : undefined;
+
     const linkIsDeleted = useObservedProperty(
         editor.events,
         'changeAuthoringState',
@@ -286,7 +287,9 @@ function LinkActionDeleteRelation(props: LinkActionDeleteProps & { link: Relatio
     const {model, editor} = useWorkspace();
     const t = useTranslation();
 
-    const canModify = useCanModifyLink(link, model, editor);
+    const fetchedCanModify = useCanModifyLink(link, model, editor);
+    const canModify = fetchedCanModify.status === 'completed' ? fetchedCanModify.data : undefined;
+
     const linkIsDeleted = useObservedProperty(
         editor.events,
         'changeAuthoringState',
@@ -329,41 +332,30 @@ function useCanModifyLink(
     link: Link | undefined,
     graph: GraphStructure,
     editor: EditorController
-): MetadataCanModifyRelation | undefined {
+) {
     const {canvas} = useCanvas();
-    const [canModify, setCanModify] = React.useState<MetadataCanModifyRelation | undefined>();
 
     const authoringStateStore = useEventStore(editor.events, 'changeAuthoringState');
     const debouncedStateStore = useLayerDebouncedStore(authoringStateStore, canvas.renderingState);
     const authoringState = useSyncStore(debouncedStateStore, () => editor.authoringState);
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        if (!(editor.metadataProvider && link instanceof RelationLink)) {
-            setCanModify({});
-            return;
-        }
-        if (isSourceOrTargetDeleted(authoringState, link)) {
-            setCanModify({});
-        } else {
-            setCanModify(undefined);
-            const source = graph.getElement(link.sourceId) as EntityElement;
-            const target = graph.getElement(link.targetId) as EntityElement;
-            const signal = cancellation.signal;
-            void mapAbortedToNull(
-                editor.metadataProvider.canModifyRelation(
-                    link.data, source.data, target.data, {signal}
-                ),
-                signal
-            ).then(canModify => {
-                if (canModify === null) { return; }
-                setCanModify(canModify);
-            });
-        }
-        return () => cancellation.abort();
-    }, [link, authoringState]);
-
-    return canModify;
+    return useAsync({
+        input: [editor.metadataProvider, link, authoringState],
+        load: async ([provider, relation, state], {signal}): Promise<MetadataCanModifyRelation> => {
+            if (
+                provider &&
+                relation instanceof RelationLink &&
+                !isSourceOrTargetDeleted(state, relation)
+            ) {
+                const source = graph.getElement(relation.sourceId) as EntityElement;
+                const target = graph.getElement(relation.targetId) as EntityElement;
+                return provider.canModifyRelation(
+                    relation.data, source.data, target.data, {signal}
+                );
+            }
+            return {};
+        },
+    });
 }
 
 function isSourceOrTargetDeleted(state: AuthoringState, link: RelationLink): boolean {

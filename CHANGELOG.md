@@ -11,11 +11,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Allow to select multiple elements with `Selection` with touch when `CanvasApi.pointerMode` is `selection`;
   * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
   * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
+- Allow to customize how resource anchors and asset URLs (e.g. images or downloadable files) are resolved via `DataLocaleProvider.{prepareAnchor, resolveAssetUrl}`:
+  * Resolve anchors and image thumbnail URLs in `StandardEntity`, `ClassicEntity` and `SelectionActionAnchor`;
+  * Add `useResolvedAssetUrl()` helper hook to simplify resolving asset URLs from components;
 - Support conditionally rendering `WorkspaceLayout*` child components by passing `null` instead of a child to remove it:
   * Allow to hide left and right panels in `ClassicWorkspace` by passing `null` to the corresponding props.
 
 #### 💅 Polish
+- Expose `useAsync()` utility hook to simplify data loading from via a single Promise-returning task.
 - Provide `onlySelected` property to link templates the same way as for element templates.
+- Allow to configure whether `ClassTree` and `SearchSectionElementTypes` tree items should be draggable.
 
 #### 🔧 Maintenance
 - Preparations to extract generic scrollable paper component `Paper` from diagram-specific state and logic:

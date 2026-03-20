@@ -489,7 +489,7 @@ export const CanvasContext = React.createContext<CanvasContext | null>(null);
 export function useCanvas(): CanvasContext {
     const context = React.useContext(CanvasContext);
     if (!context) {
-        throw new Error('Missing Reactodia canvas context');
+        throw new Error('Reactodia: missing canvas context');
     }
     return context;
 }

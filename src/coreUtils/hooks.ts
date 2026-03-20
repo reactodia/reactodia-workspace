@@ -135,3 +135,69 @@ export function useSyncStoreWithComparator<R>(
         }
     );
 }
+
+/**
+ * Result from {@link useAsync} hook.
+ */
+export interface UseAsyncResult<T> {
+    /**
+     * The last successfully loaded value.
+     *
+     * (Does not reset on error or when reloading is in progress.)
+     */
+    readonly data: T | undefined;
+    /**
+     * Load operation status.
+     */
+    readonly status: 'loading' | 'error' | 'completed';
+    /**
+     * Load operation error.
+     */
+    readonly error?: unknown;
+}
+
+/**
+ * Asynchronously loads a value by specified `load` function for an `input` dependencies.
+ *
+ * Reloads the result when an `input` dependency array changes (shallow equality). 
+ *
+ * @category Hooks
+ */
+export function useAsync<const I extends React.DependencyList, T>(params: {
+    input: I;
+    load: (input: I, options: { signal: AbortSignal }) => Promise<T> | undefined;
+}): UseAsyncResult<T> {
+    const {input, load} = params;
+    const latestLoad = React.useRef(load);
+    const [result, setResult] = React.useState<UseAsyncResult<T>>({
+        data: undefined,
+        status: 'loading',
+    });
+    React.useEffect(() => {
+        latestLoad.current = load;
+    });
+    React.useEffect(() => {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        const task = latestLoad.current(input, {signal});
+        if (task) {
+            setResult(previous => ({...previous, status: 'loading', error: undefined}));
+            task.then(
+                data => {
+                    if (!signal.aborted) {
+                        setResult({data, status: 'completed', error: undefined});
+                    }
+                },
+                error => {
+                    if (!signal.aborted) {
+                        setResult(previous => ({...previous, status: 'error', error}));
+                    }
+                }
+            );
+        } else {
+            setResult({data: undefined, status: 'completed', error: undefined});
+        }
+        return () => controller.abort();
+    }, input);
+    return result;
+}

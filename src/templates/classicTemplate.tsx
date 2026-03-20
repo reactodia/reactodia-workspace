@@ -9,6 +9,7 @@ import { TemplateProperties } from '../data/schema';
 import { setElementExpanded } from '../diagram/commands';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
+import { useResolvedAssetUrl } from '../editor/dataLocaleProvider';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -60,6 +61,11 @@ export function ClassicEntity(props: ClassicEntityProps) {
     const {model, getElementTypeStyle} = workspace;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
+    const {data: imageUrl} = useResolvedAssetUrl(
+        model.locale,
+        data ? model.locale.selectEntityImageUrl(data) : undefined
+    );
+
     if (!data) {
         return null;
     }
@@ -71,7 +77,6 @@ export function ClassicEntity(props: ClassicEntityProps) {
         ?  model.locale.formatEntityTypeList(data, model.language)
         : t.text('standard_element.default_type');
     const label = model.locale.formatEntityLabel(data, model.language);
-    const imageUrl = model.locale.selectEntityImageUrl(data);
 
     const image = imageUrl === undefined ? undefined : (
         <div className={`${CLASS_NAME}__thumbnail`}>
@@ -88,11 +93,9 @@ export function ClassicEntity(props: ClassicEntityProps) {
                     {t.text('standard_element.iri.label')}
                 </div>
                 <div className={`${CLASS_NAME}__iri-container`}>
-                    <a className={`${CLASS_NAME}__iri`}
-                        title={data.id}
-                        href={data.id}
-                        target='_blank'
-                        rel='noreferrer'>
+                    <a {...model.locale.prepareAnchor(data.id)}
+                        className={`${CLASS_NAME}__iri`}
+                        title={data.id}>
                         {data.id}
                     </a>
                 </div>

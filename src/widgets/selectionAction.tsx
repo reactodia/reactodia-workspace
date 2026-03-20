@@ -1,10 +1,9 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
 import { EventObserver } from '../coreUtils/events';
 import {
-    SyncStore, useEventStore, useObservedProperty, useSyncStore,
+    SyncStore, useAsync, useEventStore, useObservedProperty, useSyncStore,
 } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 import { TranslatedText, useTranslation } from '../coreUtils/i18n';
@@ -423,17 +422,9 @@ function useElementExpandedStore(model: DiagramModel, elements: ReadonlyArray<El
  */
 export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
     /**
-     * Props for the inner `<a>` element.
+     * Additional props for the inner `<a>` element.
      *
-     * **Default**:
-     * ```ts
-     * {
-     *     role: 'button',
-     *     href: '{target.iri}',
-     *     target: '_blank',
-     *     rel: 'noreferrer',
-     * }
-     * ```
+     * See {@link DataLocaleProvider.prepareAnchor()} for default anchor props.
      */
     anchorProps?: React.HTMLProps<HTMLAnchorElement>;
     /**
@@ -451,7 +442,7 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
  */
 export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title, anchorProps, onSelect} = props;
-    const {model} = useCanvas();
+    const {model} = useWorkspace();
     const t = useTranslation();
     const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
     if (elements.length !== 1) {
@@ -461,11 +452,10 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     if (!(target instanceof EntityElement)) {
         return null;
     }
+    const preparedAnchor = model.locale.prepareAnchor(target.iri);
     return (
-        <a role='button'
-            href={target.iri}
-            target='_blank'
-            rel='noreferrer'
+        <a {...preparedAnchor}
+            role='button'
             {...anchorProps}
             className={cx(
                 CLASS_NAME,
@@ -478,6 +468,8 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
             onClick={e => {
                 if (onSelect) {
                     onSelect(target, e);
+                } else {
+                    preparedAnchor.onClick?.(e);
                 }
             }}
         />
@@ -767,7 +759,6 @@ function useCanEstablishLink(
     linkType: LinkTypeIri | undefined
 ): boolean | undefined {
     const {canvas} = useCanvas();
-    const [canLink, setCanLink] = React.useState<boolean | undefined>();
 
     const entityTarget = target instanceof EntityElement ? target : undefined;
     const loadDataStore = useEventStore(entityTarget?.events, 'changeData');
@@ -781,29 +772,24 @@ function useCanEstablishLink(
     const authoringEvent = target instanceof EntityElement
         ? authoringState.elements.get(target.iri) : undefined;
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        if (!(editor.metadataProvider && targetData)) {
-            setCanLink(false);
-            return;
-        }
-        if (authoringEvent && authoringEvent.type === 'entityDelete') {
-            setCanLink(false);
-        } else {
-            setCanLink(undefined);
-            const signal = cancellation.signal;
-            void mapAbortedToNull(
-                editor.metadataProvider.canConnect(targetData, undefined, linkType, {signal}),
-                signal
-            ).then(connections => {
-                if (connections === null) { return; }
-                setCanLink(connections.length > 0);
-            });
-        }
-        return () => cancellation.abort();
-    }, [targetData, authoringEvent, linkType]);
+    const {data: canLink, status} = useAsync({
+        input: [editor.metadataProvider, targetData, authoringEvent, linkType],
+        load: async ([provider, targetData, authoringEvent, linkType], {signal}) => {
+            if (
+                provider &&
+                targetData &&
+                !(authoringEvent && authoringEvent.type === 'entityDelete')
+            ) {
+                const connections = await provider.canConnect(
+                    targetData, undefined, linkType, {signal}
+                );
+                return connections.length > 0;
+            }
+            return false;
+        },
+    });
 
-    return canLink;
+    return status === 'completed' ? canLink : undefined;
 }
 
 function SelectionActionEstablishAnnotationLink(

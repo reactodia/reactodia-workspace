@@ -10,6 +10,7 @@ export {
 export {
     type SyncStore, useEventStore, useFrameDebouncedStore, useObservedProperty,
     useSyncStore, useSyncStoreWithComparator,
+    type UseAsyncResult, useAsync,
 } from './coreUtils/hooks';
 export type { HotkeyString } from './coreUtils/hotkey';
 export {
@@ -148,6 +149,7 @@ export {
 } from './editor/dataFetcher';
 export {
     type DataLocaleProvider, DefaultDataLocaleProvider, type DefaultDataLocaleProviderOptions,
+    useResolvedAssetUrl,
 } from './editor/dataLocaleProvider';
 export { type EditorEvents, EditorController } from './editor/editorController';
 export {
