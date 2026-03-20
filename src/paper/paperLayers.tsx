@@ -1,104 +1,6 @@
 import * as React from 'react';
 
-import { Cell, LinkVertex } from './elements';
-import { Vector } from './geometry';
-import { DiagramModel } from './model';
-
-export interface PaperProps {
-    model: DiagramModel;
-    paperTransform: PaperTransform;
-    onPointerDown?: (e: React.PointerEvent<HTMLElement>, cell: Cell | undefined) => void;
-    onContextMenu?: (e: React.MouseEvent<HTMLElement>, cell: Cell | undefined) => void;
-    onScrollCapture?: (e: React.UIEvent<HTMLElement>, cell: Cell | undefined) => void;
-    children: React.ReactNode;
-}
-
-const CLASS_NAME = 'reactodia-paper';
-
-export class Paper extends React.Component<PaperProps> {
-    render() {
-        const {paperTransform, children} = this.props;
-        const {width, height, scale, paddingX, paddingY} = paperTransform;
-
-        const scaledWidth = width * scale;
-        const scaledHeight = height * scale;
-        // using padding instead of margin in combination with setting width and height
-        // on .paper element to avoid "over-constrained" margins, see an explanation here:
-        // https://stackoverflow.com/questions/11695354
-        const style: React.CSSProperties = {
-            width: scaledWidth + paddingX,
-            height: scaledHeight + paddingY,
-            marginLeft: paddingX,
-            marginTop: paddingY,
-            paddingRight: paddingX,
-            paddingBottom: paddingY,
-        };
-        
-
-        return (
-            <div className={CLASS_NAME}
-                style={style}
-                onPointerDown={this.onPointerDown}
-                onContextMenu={this.onContextMenu}
-                onScrollCapture={this.onScrollCapture}>
-                {children}
-            </div>
-        );
-    }
-
-    private onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        const {model, onPointerDown} = this.props;
-        if (onPointerDown) {
-            const cell = e.target instanceof Element
-                ? findCell(e.target, e.currentTarget, model)
-                : undefined;
-            onPointerDown(e, cell);
-        }
-    };
-
-    private onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-        const {model, onContextMenu} = this.props;
-        if (onContextMenu) {
-            const cell = e.target instanceof Element
-                ? findCell(e.target, e.currentTarget, model)
-                : undefined;
-            onContextMenu(e, cell);
-        }
-    };
-
-    private onScrollCapture = (e: React.UIEvent<HTMLElement>) => {
-        const {model, onScrollCapture} = this.props;
-        if (onScrollCapture) {
-            const cell = e.target instanceof Element
-                ? findCell(e.target, e.currentTarget, model)
-                : undefined;
-            onScrollCapture(e, cell);
-        }
-    };
-}
-
-function findCell(bottom: Element, top: Element, model: DiagramModel): Cell | undefined {
-    let target: Node | null = bottom;
-    let vertexIndex: number | undefined;
-    while (true) {
-        if (target instanceof Element) {
-            if (target.hasAttribute('data-element-id')) {
-                return model.getElement(target.getAttribute('data-element-id')!);
-            } else if (target.hasAttribute('data-link-id')) {
-                const link = model.getLink(target.getAttribute('data-link-id')!);
-                if (!link) {
-                    return undefined;
-                }
-                return typeof vertexIndex === 'number' ? new LinkVertex(link, vertexIndex) : link;
-            } else if (target.hasAttribute('data-vertex')) {
-                vertexIndex = Number(target.getAttribute('data-vertex'));
-            }
-        }
-        if (!target || target === top) { break; }
-        target = target.parentNode;
-    }
-    return undefined;
-}
+import { Rect, Size, Vector } from './baseGeometry';
 
 /**
  * Transformation data between paper and scrollable pane coordinates.
@@ -203,6 +105,64 @@ export function SvgPaperLayer(props: SvgPaperLayerProps) {
                 {children}
             </g>
         </svg>
+    );
+}
+
+export function emptyPane(pageSize: Size): PaperTransform {
+    return {
+        width: pageSize.width,
+        height: pageSize.height,
+        originX: 0,
+        originY: 0,
+        scale: 1,
+        paddingX: 0,
+        paddingY: 0,
+    };
+}
+
+export function adjustPane(
+    contentBounds: Rect,
+    paneClientSize: Size,
+    pageSize: Size,
+    scale: number
+): PaperTransform {
+    // bbox in paper coordinates
+    const bbox = contentBounds;
+    const bboxLeft = bbox.x;
+    const bboxTop = bbox.y;
+    const bboxRight = bbox.x + bbox.width;
+    const bboxBottom = bbox.y + bbox.height;
+
+    const {width: gridWidth, height: gridHeight} = pageSize;
+
+    // bbox in integer grid coordinates (open-closed intervals)
+    const bboxGrid = {
+        left: Math.floor(bboxLeft / gridWidth),
+        top: Math.floor(bboxTop / gridHeight),
+        right: Math.ceil(bboxRight / gridWidth),
+        bottom: Math.ceil(bboxBottom / gridHeight),
+    };
+
+    return {
+        width: Math.max(bboxGrid.right - bboxGrid.left, 1) * gridWidth,
+        height: Math.max(bboxGrid.bottom - bboxGrid.top, 1) * gridHeight,
+        originX: -bboxGrid.left * gridWidth,
+        originY: -bboxGrid.top * gridHeight,
+        paddingX: Math.ceil(paneClientSize.width),
+        paddingY: Math.ceil(paneClientSize.height),
+        scale,
+    };
+}
+
+export function equalTransforms(a: PaperTransform, b: PaperTransform): boolean {
+    return (
+        a.width === b.width &&
+        a.height === b.height &&
+        a.originX === b.originX &&
+        a.originY === b.originY &&
+        a.paddingX === b.paddingX &&
+        a.paddingY === b.paddingY &&
+        a.scale === b.scale
     );
 }
 

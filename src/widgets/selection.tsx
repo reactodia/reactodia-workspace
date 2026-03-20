@@ -233,7 +233,7 @@ function SelectionBox(props: SelectionBoxProps) {
 
     useSyncStore(
         useEventStore(canvas.events, 'changeTransform'),
-        () => canvas.metrics.getTransform()
+        () => canvas.metrics.transform
     );
 
     const elementBoundsStore = useElementBoundsStore(model, canvas, selectedElements);

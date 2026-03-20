@@ -683,7 +683,7 @@ export function createRequest(criteria: SearchCriteria): DataProviderLookupParam
 }
 
 function getViewportPlacementPosition(canvas: CanvasApi, fractionX: number, fractionY: number): Vector {
-    const viewport = canvas.metrics.area;
+    const viewport = canvas.metrics.pane;
     return canvas.metrics.clientToPaperCoords(
         viewport.clientWidth * fractionX,
         viewport.clientHeight * fractionY

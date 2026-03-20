@@ -4,6 +4,21 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Support proper graph manipulation on touchscreen devices:
+  * Allow to move and resize elements on touchscreen;
+  * Allow to manipulate link vertices on touchscreen (only in Firefox for now due to [bug](https://gsap.com/community/forums/topic/15870-svg-draggable-chrome-android-problems/));
+  * Allow to select multiple elements with `Selection` with touch when `CanvasApi.pointerMode` is `selection`;
+  * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
+  * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
+
+#### 💅 Polish
+- Provide `onlySelected` property to link templates the same way as for element templates.
+
+#### 🔧 Maintenance
+- Preparations to extract generic scrollable paper component `Paper` from diagram-specific state and logic:
+  * Replace `reactodia-paper-area` CSS class by `reactodia-canvas-area` and `reactodia-paper`.
+  * Deprecate `CanvasMetrics.area` in favor of `CanvasMetrics.pane`.
 
 ## [0.33.0] - 2026-03-16
 #### 🚀 New Features

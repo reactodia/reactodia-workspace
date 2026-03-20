@@ -38,7 +38,7 @@ export interface ZoomControlProps {
      *
      * In `selection` mode the actions are exchanged.
      *
-     * @default false
+     * @default true
      * @see {@link CanvasApi.pointerMode}
      */
     showPointerModeToggle?: boolean;
@@ -52,7 +52,7 @@ const CLASS_NAME = 'reactodia-zoom-control';
  * @category Components
  */
 export function ZoomControl(props: ZoomControlProps) {
-    const {dock, dockOffsetX, dockOffsetY, showPointerModeToggle} = props;
+    const {dock, dockOffsetX, dockOffsetY, showPointerModeToggle = true} = props;
     const {canvas} = useCanvas();
     const t = useTranslation();
     const pointerMode = useObservedProperty(

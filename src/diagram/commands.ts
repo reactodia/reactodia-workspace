@@ -226,9 +226,9 @@ export function restoreViewport(canvas: CanvasApi): Command {
     }
     function capture(): CapturedViewport {
         const {metrics} = canvas;
-        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const {clientWidth, clientHeight} = canvas.metrics.pane;
         const center = metrics.clientToPaperCoords(clientWidth / 2, clientHeight / 2);
-        const {scale} = metrics.getTransform();
+        const {scale} = metrics.transform;
         return {center, scale};
     }
     function apply({center, scale}: CapturedViewport): void {

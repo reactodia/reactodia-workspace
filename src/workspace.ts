@@ -17,8 +17,8 @@ export {
     useTranslation,
 } from './coreUtils/i18n';
 export { KeyedObserver, type KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
+export { Debouncer } from './coreUtils/scheduler';
 export { useWorker } from './coreUtils/workers';
-export { Debouncer, animateInterval } from './coreUtils/scheduler';
 
 export * from './data/dataProvider';
 export * from './data/model';
@@ -59,7 +59,15 @@ export * from './data/rdf/vocabulary';
 export * from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
 
-export * from './diagram/canvasApi';
+export {
+    type CanvasApi, type CanvasMetrics, type CanvasPaneMetrics, type CanvasEvents,
+    type CanvasPointerEvent, type CanvasPointerUpEvent, type CanvasScrollEvent,
+    type CanvasDragoverEvent, type CanvasDropEvent, type CanvasContextMenuEvent,
+    type CanvasResizeEvent, type CanvasKeyboardEvent,
+    type CanvasPointerMode, type ZoomOptions, type ScaleOptions, type CenterToOptions,
+    type ViewportOptions, type ExportSvgOptions, type ExportRasterOptions,
+    useCanvas,
+} from './diagram/canvasApi';
 export { type CanvasHotkey, useCanvasHotkey } from './diagram/canvasHotkey';
 export {
     RestoreGeometry, setElementState, setElementExpanded, setLinkState,
@@ -94,11 +102,6 @@ export {
 } from './diagram/linkLayer';
 export { DefaultLinkRouter, type DefaultLinkRouterOptions } from './diagram/linkRouter';
 export { type DiagramModel, type DiagramModelEvents, type GraphStructure } from './diagram/model';
-export {
-    type PaperTransform, paneTopLeft, totalPaneSize,
-    HtmlPaperLayer, type HtmlPaperLayerProps,
-    SvgPaperLayer, type SvgPaperLayerProps,
-} from './diagram/paper';
 export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
 export {
     type RenderingState, type RenderingStateEvents, RenderingLayer, useLayerDebouncedStore,
@@ -158,6 +161,11 @@ export {
 export {
     OverlayController, type OverlayControllerEvents, type OverlayTask,
 } from './editor/overlayController';
+export {
+    type SerializedDiagram, type SerializedLayout, type SerializedLinkOptions,
+    type SerializedElement, type SerializableElementCell, type ElementFromJsonOptions,
+    type SerializedLink, type SerializableLinkCell, type LinkFromJsonOptions,
+} from './editor/serializedDiagram';
 export { ValidationState, type ElementValidation, type LinkValidation } from './editor/validation';
 export { WithFetchStatus, type WithFetchStatusProps } from './editor/withFetchStatus';
 
@@ -168,11 +176,12 @@ export type {
 export { FormInputList, type FormInputListProps } from './forms/input/formInputList';
 export { FormInputText, type FormInputTextProps } from './forms/input/formInputText';
 
+export { animateInterval } from './paper/animateInterval';
 export {
-    type SerializedDiagram, type SerializedLayout, type SerializedLinkOptions,
-    type SerializedElement, type SerializableElementCell, type ElementFromJsonOptions,
-    type SerializedLink, type SerializableLinkCell, type LinkFromJsonOptions,
-} from './editor/serializedDiagram';
+    type PaperTransform, paneTopLeft, totalPaneSize,
+    HtmlPaperLayer, type HtmlPaperLayerProps,
+    SvgPaperLayer, type SvgPaperLayerProps,
+} from './paper/paperLayers';
 
 export {
     BasicLink, type BasicLinkProps, LinkMarkerArrowhead, LinkMarkerCircle, LinkMarkerDiamond,

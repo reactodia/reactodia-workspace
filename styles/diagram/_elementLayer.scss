@@ -9,6 +9,10 @@
     filter: grayscale(100%);
     opacity: 0.5;
   }
+
+  &--only-selected {
+    touch-action: none;
+  }
 }
 
 .reactodia-element-decorations {

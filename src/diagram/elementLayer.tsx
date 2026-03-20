@@ -4,13 +4,13 @@ import { createPortal, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 
-import { ElementTemplate, TemplateProps } from './customization';
+import { HtmlPaperLayer, type PaperTransform } from '../paper/paperLayers';
 
 import { useCanvas } from './canvasApi';
+import { ElementTemplate, TemplateProps } from './customization';
 import { Element, VoidElement } from './elements';
 import type { Size } from './geometry';
 import { DiagramModel } from './model';
-import { HtmlPaperLayer, type PaperTransform } from './paper';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
 import { SharedCanvasState } from './sharedCanvasState';
 
@@ -325,7 +325,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
     private readonly listener = new EventObserver();
 
     render(): React.ReactElement<any> {
-        const {state: {element, blurred}} = this.props;
+        const {state: {element, blurred, templateProps}} = this.props;
         if (element instanceof VoidElement) {
             return <div />;
         }
@@ -342,7 +342,9 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
                 <div
                     className={cx(
                         OVERLAID_ELEMENT_CLASS,
-                        blurred ? `${OVERLAID_ELEMENT_CLASS}--blurred` : undefined
+                        blurred ? `${OVERLAID_ELEMENT_CLASS}--blurred` : undefined,
+                        templateProps.onlySelected
+                            ? `${OVERLAID_ELEMENT_CLASS}--only-selected` : undefined,
                     )}
                     style={style}
                     // set `element-id` to translate mouse events to paper

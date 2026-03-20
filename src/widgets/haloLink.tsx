@@ -9,9 +9,10 @@ import {
     Rect, Spline, Vector, computePolyline, computePolylineLength, getPointAlongPolyline,
 } from '../diagram/geometry';
 import type { DiagramModel, GraphStructure } from '../diagram/model';
-import { SvgPaperLayer } from '../diagram/paper';
 import { CanvasPlaceAt } from '../diagram/placeLayer';
 import type { RenderingState } from '../diagram/renderingState';
+
+import { SvgPaperLayer } from '../paper/paperLayers';
 
 import {
     LinkActionContext, LinkActionProvidedContext, LinkActionMoveEndpoint, LinkActionEdit,
@@ -330,7 +331,7 @@ function LinkHighlight(props: LinkHighlightProps) {
 
     return <>
         <CanvasPlaceAt layer='overLinkGeometry'>
-            <SvgPaperLayer paperTransform={canvas.metrics.getTransform()}
+            <SvgPaperLayer paperTransform={canvas.metrics.transform}
                 className={CLASS_NAME}
                 style={{...style, overflow: 'visible', pointerEvents: 'none'}}>
                 <path className={`${CLASS_NAME}__path-highlight`}

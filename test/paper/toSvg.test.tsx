@@ -4,8 +4,8 @@ import { expect, describe, it } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { ColorSchemeApi } from '../../src/coreUtils/colorScheme';
-import { HtmlPaperLayer, SvgPaperLayer, type PaperTransform } from '../../src/diagram/paper';
-import { toSVG } from '../../src/diagram/toSvg';
+import { HtmlPaperLayer, SvgPaperLayer, type PaperTransform } from '../../src/paper/paperLayers';
+import { toSVG } from '../../src/paper/toSvg';
 
 import IconResource from './toSvg.resource.svg';
 import IconInline from './toSvg.inline.svg';
