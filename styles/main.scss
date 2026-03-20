@@ -4,9 +4,9 @@
 @forward "shared/form";
 @forward "shared/formControl";
 
+@forward "diagram/canvasArea";
 @forward "diagram/elementLayer";
 @forward "diagram/linkLayer";
-@forward "diagram/paperArea";
 @forward "diagram/spinner";
 
 @forward "editor/authoringState";
@@ -16,6 +16,8 @@
 @forward "editor/loadingWidget";
 @forward "editor/propertyInput";
 @forward "editor/withFetchStatus";
+
+@forward "paper/paper";
 
 @forward "theme/themeDark";
 @forward "theme/themeLight";

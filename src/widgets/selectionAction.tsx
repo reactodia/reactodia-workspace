@@ -94,6 +94,10 @@ export interface SelectionActionProps extends SelectionActionStyleProps {
      */
     onMouseDown?: (e: React.MouseEvent) => void;
     /**
+     * Raw handler for pointer down event on the action button.
+     */
+    onPointerDown?: (e: React.PointerEvent) => void;
+    /**
      * Action content.
      */
     children?: React.ReactNode;
@@ -110,7 +114,7 @@ const CLASS_NAME = 'reactodia-selection-action';
 export function SelectionAction(props: SelectionActionProps) {
     const {
         dock, dockRow, dockColumn, className, title, hotkey,
-        disabled, onSelect, onMouseDown, children,
+        disabled, onSelect, onMouseDown, onPointerDown, children,
     } = props;
 
     const actionKey = useCanvasHotkey(hotkey, disabled ? undefined : onSelect);
@@ -123,7 +127,8 @@ export function SelectionAction(props: SelectionActionProps) {
             title={titleWithHotkey}
             disabled={disabled}
             onClick={onSelect}
-            onMouseDown={onMouseDown}>
+            onMouseDown={onMouseDown}
+            onPointerDown={onPointerDown}>
             {children}
         </button>
     );
@@ -739,7 +744,8 @@ function SelectionActionEstablishRelation(
                     ? t.text('selection_action.establish_relation.title')
                     : t.text('selection_action.establish_relation.title_disabled')
             )}
-            onMouseDown={e => {
+            onPointerDown={e => {
+                e.preventDefault();
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 getCommandBus(VisualAuthoringTopic)
                     .trigger('startDragEdit', {
@@ -823,7 +829,8 @@ function SelectionActionEstablishAnnotationLink(
                 `${CLASS_NAME}__establish-link`
             )}
             title={title ?? t.text('selection_action.establish_relation.title')}
-            onMouseDown={e => {
+            onPointerDown={e => {
+                e.preventDefault();
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 getCommandBus(AnnotationTopic)
                     .trigger('startDragOperation', {

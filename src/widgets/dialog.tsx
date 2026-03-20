@@ -178,7 +178,7 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     private getViewPortScrollablePoints(): {min: Vector; max: Vector} {
         const {canvas} = this.context;
-        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const {clientWidth, clientHeight} = canvas.metrics.pane;
         const min = canvas.metrics.clientToScrollablePaneCoords(0, 0);
         const max = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
         return {min, max};

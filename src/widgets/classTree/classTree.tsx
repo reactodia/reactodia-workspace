@@ -632,7 +632,7 @@ function filterOnlyCreatable(
 }
 
 function getViewportCenterInPaperCoords(canvas: CanvasApi): Vector {
-    const viewport = canvas.metrics.area;
+    const viewport = canvas.metrics.pane;
     return canvas.metrics.clientToPaperCoords(
         viewport.clientWidth / 2,
         viewport.clientHeight / 2

@@ -4,6 +4,10 @@
   &--blurred {
     opacity: 0.5;
   }
+  &--only-selected {
+    /* TODO: does not work in Chrome, maybe can be fixed with "touchstart"? */
+    touch-action: none;
+  }
 }
 
 .reactodia-link-path {
@@ -28,7 +32,7 @@
   &__vertex:not([fill]) {
     fill: theme.$link-stroke-color;
   }
-  .reactodia-link:not(:hover) &__vertex {
+  .reactodia-link:not(:hover):not(.reactodia-link--only-selected) &__vertex {
     fill: transparent;
   }
 
@@ -42,7 +46,8 @@
       > circle { fill: theme.$color-emphasis-900; }
     }
   }
-  .reactodia-link:hover &__handle {
+  .reactodia-link:hover &__handle,
+  .reactodia-link--only-selected &__handle {
     opacity: 0.8;
   }
 }

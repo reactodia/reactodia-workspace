@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { ColorSchemeApi } from '../coreUtils/colorScheme';
-
 import type { LinkTypeIri } from '../data/model';
 
 import type { ZoomOptions } from '../diagram/canvasApi';
@@ -9,7 +7,7 @@ import type {
     ElementTemplate, ElementTemplateComponent, LinkTemplate, LinkRouter,
 } from '../diagram/customization';
 import { Element, Link } from '../diagram/elements';
-import { PaperArea } from '../diagram/paperArea';
+import { CanvasArea } from '../diagram/canvasArea';
 import { MutableRenderingState } from '../diagram/renderingState';
 
 import { EntityElement, RelationGroup, RelationLink } from '../editor/dataElements';
@@ -131,21 +129,18 @@ export function Canvas(props: CanvasProps) {
         linkRouter,
     }));
 
-    const colorSchemeApi = React.useContext(ColorSchemeApi);
-
     return (
         <div className={CLASS_NAME}>
-            <PaperArea model={model}
+            <CanvasArea model={model}
                 renderingState={renderingState}
-                colorSchemeApi={colorSchemeApi}
                 zoomOptions={zoomOptions}
-                hideScrollBars={!showScrollbars}
+                showScrollBars={showScrollbars}
                 watermarkSvg={watermarkSvg}
                 watermarkUrl={watermarkUrl}>
                 {children}
                 <OverlaySupport overlay={overlay} />
                 <RenameLinkSupport />
-            </PaperArea>
+            </CanvasArea>
         </div>
     );
 }

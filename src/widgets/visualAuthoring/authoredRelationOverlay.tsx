@@ -13,7 +13,6 @@ import { Link } from '../../diagram/elements';
 import {
     Rect, Spline, Vector, computePolyline, getPointAlongPolyline, computePolylineLength,
 } from '../../diagram/geometry';
-import { SvgPaperLayer } from '../../diagram/paper';
 import { CanvasPlaceAt } from '../../diagram/placeLayer';
 import { RenderingLayer } from '../../diagram/renderingState';
 import { HtmlSpinner } from '../../diagram/spinner';
@@ -21,6 +20,8 @@ import { HtmlSpinner } from '../../diagram/spinner';
 import { AuthoredRelation, AuthoringState } from '../../editor/authoringState';
 import { RelationLink } from '../../editor/dataElements';
 import { getMaxSeverity } from '../../editor/validation';
+
+import { SvgPaperLayer } from '../../paper/paperLayers';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -300,7 +301,7 @@ class LinkStateWidgetInner extends React.Component<AuthoredRelationOverlayInnerP
 
     render() {
         const {canvas} = this.props;
-        const transform = canvas.metrics.getTransform();
+        const transform = canvas.metrics.transform;
         const {scale, originX, originY} = transform;
         const htmlTransformStyle: React.CSSProperties = {
             position: 'absolute', left: 0, top: 0,

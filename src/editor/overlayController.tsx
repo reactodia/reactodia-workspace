@@ -335,7 +335,7 @@ export class OverlayController {
             reader => reader.getDialogViewportBreakpoint()
         );
         const isSmallViewport = Boolean(
-            canvas && breakpoint !== undefined && canvas.metrics.area.clientWidth <= breakpoint
+            canvas && breakpoint !== undefined && canvas.metrics.pane.clientWidth <= breakpoint
         );
 
         const onHide = () => this.hideDialog();
@@ -572,7 +572,7 @@ function useViewportSize() {
     const size = useSyncStoreWithComparator(
         resizeStore,
         (): Size => {
-            const {clientWidth, clientHeight} = canvas.metrics.area;
+            const {clientWidth, clientHeight} = canvas.metrics.pane;
             return {width: clientWidth, height: clientHeight};
         },
         (a, b) => a.width === b.width && a.height === b.height

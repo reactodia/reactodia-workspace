@@ -5,12 +5,13 @@ import { EventObserver } from '../coreUtils/events';
 import { useTranslation, type Translation } from '../coreUtils/i18n';
 import { Debouncer } from '../coreUtils/scheduler';
 
+import {
+    PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
+} from '../paper/paperLayers';
+
 import { CanvasApi, useCanvas } from '../diagram/canvasApi';
 import { Element } from '../diagram/elements';
 import { Rect, Vector, getContentFittingBox } from '../diagram/geometry';
-import {
-    PaperTransform, totalPaneSize, paneTopLeft, paneFromPaperCoords, paperFromPaneCoords
-} from '../diagram/paper';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { DockDirection, ViewportDock } from './utility/viewportDock';
@@ -268,7 +269,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             height = DEFAULT_HEIGHT,
         } = this.props;
 
-        const pt = canvas.metrics.getTransform();
+        const pt = canvas.metrics.transform;
         this.calculateTransform(pt);
 
         const style = computeDrawStyle(this.props, this.canvas);
@@ -293,7 +294,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
 
         ctx.save();
 
-        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const {clientWidth, clientHeight} = canvas.metrics.pane;
         const viewportStart = canvas.metrics.clientToScrollablePaneCoords(0, 0);
         const viewportEnd = canvas.metrics.clientToScrollablePaneCoords(clientWidth, clientHeight);
 
@@ -457,7 +458,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             height = DEFAULT_HEIGHT,
         } = this.props;
         const {expanded, autoToggle, allowExpand} = this.state;
-        const {clientWidth, clientHeight} = canvas.metrics.area;
+        const {clientWidth, clientHeight} = canvas.metrics.pane;
         const strictExpanded = (
             width < clientWidth * MAX_SIZE_FRACTION &&
             height < clientHeight * MAX_SIZE_FRACTION
@@ -541,7 +542,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         if (this.isDraggingViewport) {
             const {canvas} = this.props;
             const canvasCoords = this.canvasFromPageCoords(e.pageX, e.pageY);
-            const paperTransform = canvas.metrics.getTransform();
+            const paperTransform = canvas.metrics.transform;
             const paperCoords = paperFromCanvasCoords(canvasCoords, paperTransform, this.transform);
             void canvas.centerTo(paperCoords);
         }

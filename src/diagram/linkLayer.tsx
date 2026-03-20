@@ -5,6 +5,8 @@ import { createPortal, flushSync } from 'react-dom';
 import { EventObserver } from '../coreUtils/events';
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
 
+import { HtmlPaperLayer, type PaperTransform } from '../paper/paperLayers';
+
 import { useCanvas } from './canvasApi';
 import { restoreCapturedLinkGeometry } from './commands';
 import { LinkMarkerStyle, RoutedLink } from './customization';
@@ -14,7 +16,6 @@ import {
     getPointAlongPolyline,
 } from './geometry';
 import { DiagramModel } from './model';
-import { type PaperTransform, HtmlPaperLayer } from './paper';
 import {
     type MutableRenderingState, RenderingLayer, useLayerDebouncedStore,
 } from './renderingState';
@@ -89,6 +90,22 @@ export class LinkLayer extends React.Component<LinkLayerProps, LinkLayerState> {
                     for (const link of e.changedLinks) {
                         this.scheduleUpdateLink(link.id);
                     }
+                }
+            }
+        });
+        this.listener.listen(model.events, 'changeSelection', ({previous}) => {
+            const previousCell = previous.length === 1 ? previous[0] : undefined;
+            const nextSingle = model.selection.length === 1 ? model.selection[0] : undefined;
+
+            const previousLink = previousCell instanceof Link ? previousCell : undefined;
+            const nextLink = nextSingle instanceof Link ? nextSingle : undefined;
+
+            if (nextLink !== previousLink) {
+                if (previousLink) {
+                    this.scheduleUpdateLink(previousLink.id);
+                }
+                if (nextLink) {
+                    this.scheduleUpdateLink(nextLink.id);
                 }
             }
         });
@@ -322,6 +339,7 @@ function LinkView(props: LinkViewProps) {
 
     const {highlighter} = renderingState.shared;
     const isBlurred = highlighter && !highlighter(link);
+    const onlySelected = model.selection.length === 1 && model.selection[0] === link;
     
     const renderedLink = template.renderLink({
         link,
@@ -330,12 +348,17 @@ function LinkView(props: LinkViewProps) {
         path: spline.toPath(),
         getPathPosition,
         route,
+        onlySelected,
     });
     return (
         <g data-link-id={link.id}
             data-source-id={link.sourceId}
             data-target-id={link.targetId}
-            className={cx(LINK_CLASS, isBlurred ? `${LINK_CLASS}--blurred` : undefined)}>
+            className={cx(
+                LINK_CLASS,
+                isBlurred ? `${LINK_CLASS}--blurred` : undefined,
+                onlySelected ? `${LINK_CLASS}--only-selected` : undefined,
+            )}>
             {renderedLink}
         </g>
     );

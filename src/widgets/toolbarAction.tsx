@@ -6,15 +6,13 @@ import { useObservedProperty } from '../coreUtils/hooks';
 import type { HotkeyString } from '../coreUtils/hotkey';
 import { type Translation, TranslatedText, useTranslation } from '../coreUtils/i18n';
 
+import { dataURLToBlob } from '../paper/toSvg';
+
 import { ExportRasterOptions, useCanvas } from '../diagram/canvasApi';
 import { useCanvasHotkey } from '../diagram/canvasHotkey';
 import type { Command } from '../diagram/history';
-import { dataURLToBlob } from '../diagram/toSvg';
-
 import { AuthoringState } from '../editor/authoringState';
-
 import { DropdownMenuItem, useInsideDropdown } from './utility/dropdown';
-
 import { useWorkspace } from '../workspace/workspaceContext';
 
 const CLASS_NAME = 'reactodia-toolbar-action';

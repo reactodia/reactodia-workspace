@@ -203,30 +203,36 @@ export interface LinkTemplateProps {
     /**
      * Target link to render.
      */
-    link: Link;
+    readonly link: Link;
     /**
      * SVG path for the link geometry.
      */
-    path: string;
+    readonly path: string;
     /**
      * Provides paper position along the link at the specified offset.
      *
      * Offset of `0.0` corresponds to the source
      * and `1.0` corresponds to the target of the link.
      */
-    getPathPosition: (offset: number) => Vector;
+    readonly getPathPosition: (offset: number) => Vector;
     /**
      * SVG path marker for the link source.
      */
-    markerSource: string;
+    readonly markerSource: string;
     /**
      * SVG path marker for the link target.
      */
-    markerTarget: string;
+    readonly markerTarget: string;
     /**
      * Route data (geometry) for the link.
      */
-    route?: RoutedLink;
+    readonly route?: RoutedLink;
+    /**
+     * Whether the link is the only selected cell on the canvas.
+     *
+     * @see {@link DiagramModel.selection}
+     */
+    readonly onlySelected: boolean;
 }
 
 /**

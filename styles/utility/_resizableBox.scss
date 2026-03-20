@@ -9,6 +9,7 @@ $resizable-box-color: var(--reactodia-resizable-box-color);
 
   &__handle {
     background-color: unset;
+    touch-action: none;
   
     &.reactodia-draggable-handle--dock-n,
     &.reactodia-draggable-handle--dock-s,

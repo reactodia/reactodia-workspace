@@ -140,6 +140,7 @@
   }
 
   &__establish-link {
+    touch-action: none;
     background-image: url("@codicons/plug.svg");
   }
 

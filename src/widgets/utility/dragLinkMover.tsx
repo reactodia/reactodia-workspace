@@ -8,10 +8,11 @@ import { Element, Link, VoidElement } from '../../diagram/elements';
 import { Vector, boundsOf, findElementAtPoint } from '../../diagram/geometry';
 import { LinkLayer, LinkMarkers } from '../../diagram/linkLayer';
 import { DiagramModel } from '../../diagram/model';
-import { SvgPaperLayer } from '../../diagram/paper';
 import { CanvasPlaceAt } from '../../diagram/placeLayer';
 import type { MutableRenderingState } from '../../diagram/renderingState';
 import { Spinner } from '../../diagram/spinner';
+
+import { SvgPaperLayer } from '../../paper/paperLayers';
 
 export interface DragLinkMoverProps {
     operation: DragLinkOperation;
@@ -173,16 +174,18 @@ class DragLinkMoverInner extends React.Component<DragLinkMoverInnerProps, State>
         this.queryCanConnectToAny();
 
         this.listener.listen(canvas.events, 'changeTransform', () => this.forceUpdate());
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('pointermove', this.onPointerMove);
+        document.addEventListener('pointerup', this.onPointerUp);
+        document.addEventListener('pointercancel', this.onPointerUp);
     }
 
     componentWillUnmount() {
         this.listener.stopListening();
         this.cancellation.abort();
         this.canDropOnElementCancellation.abort();
-        document.removeEventListener('mousemove', this.onMouseMove);
-        document.removeEventListener('mouseup', this.onMouseUp);
+        document.removeEventListener('pointermove', this.onPointerMove);
+        document.removeEventListener('pointerup', this.onPointerUp);
+        document.removeEventListener('pointercancel', this.onPointerUp);
         this.cleanup();
     }
 
@@ -229,7 +232,7 @@ class DragLinkMoverInner extends React.Component<DragLinkMoverInnerProps, State>
         return temporaryElement;
     }
 
-    private onMouseMove = (e: MouseEvent) => {
+    private onPointerMove = (e: PointerEvent) => {
         const {model, canvas} = this.props;
         const {targetElement, waitingForMetadata} = this.state;
 
@@ -327,7 +330,7 @@ class DragLinkMoverInner extends React.Component<DragLinkMoverInnerProps, State>
         );
     }
 
-    private onMouseUp = (e: MouseEvent) => {
+    private onPointerUp = (e: PointerEvent) => {
         const {canvas} = this.props;
         if (this.state.waitingForMetadata) { return; }
         // show spinner while waiting for additional MetadataApi queries
@@ -421,7 +424,7 @@ class DragLinkMoverInner extends React.Component<DragLinkMoverInnerProps, State>
             return null;
         }
 
-        const transform = canvas.metrics.getTransform();
+        const transform = canvas.metrics.transform;
         const renderingState = canvas.renderingState as MutableRenderingState;
         return (
             <SvgPaperLayer paperTransform={transform}

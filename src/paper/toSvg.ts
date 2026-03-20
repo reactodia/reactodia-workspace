@@ -1,6 +1,6 @@
 import type { ColorSchemeApi } from '../coreUtils/colorScheme';
 
-import { Rect, Size, Vector } from './geometry';
+import { Rect, Size, Vector, fitRectKeepingAspectRatio } from './baseGeometry';
 
 export interface ToSVGOptions {
     colorSchemeApi: ColorSchemeApi;
@@ -651,8 +651,7 @@ function loadImage(source: string): Promise<HTMLImageElement> {
 
 function computeAutofit(itemSize: Bounds, containerSize: Partial<Bounds>) {
     const fit = fitRectKeepingAspectRatio(
-        itemSize.width,
-        itemSize.height,
+        itemSize,
         containerSize.width,
         containerSize.height,
     );
@@ -680,25 +679,6 @@ function fallbackContainerSize(itemSize: Bounds, maxCanvasSize: Size): Bounds {
     const width = Math.floor(itemSize.width * resolutionScale);
     const height = Math.floor(itemSize.height * resolutionScale);
     return {width, height};
-}
-
-export function fitRectKeepingAspectRatio(
-    sourceWidth: number,
-    sourceHeight: number,
-    targetWidth: number | undefined,
-    targetHeight: number | undefined,
-): { width: number; height: number } {
-    if (!(typeof targetWidth === 'number' || typeof targetHeight === 'number')) {
-        return {width: sourceWidth, height: sourceHeight};
-    }
-    const sourceAspectRatio = sourceWidth / sourceHeight;
-    targetWidth = typeof targetWidth === 'number' ? targetWidth : targetHeight! * sourceAspectRatio;
-    targetHeight = typeof targetHeight === 'number' ? targetHeight : targetWidth / sourceAspectRatio;
-    if (targetHeight * sourceAspectRatio <= targetWidth) {
-        return {width: targetHeight * sourceAspectRatio, height: targetHeight};
-    } else {
-        return {width: targetWidth, height: targetWidth / sourceAspectRatio};
-    }
 }
 
 /**
