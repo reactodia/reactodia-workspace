@@ -7,6 +7,14 @@ const DEFAULT_HORIZONTAL_COLLAPSED_SIZE = 28;
 
 interface CommonWorkspaceLayoutProps {
     /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
+    /**
+     * Additional CSS styles for the component.
+     */
+    style?: React.CSSProperties;
+    /**
      * Default size for the layout component.
      *
      * The size is `width` if the component is inside layout row
@@ -160,7 +168,7 @@ export interface WorkspaceLayoutResizeContext {
 export const WorkspaceLayoutResizeContext = React.createContext<WorkspaceLayoutResizeContext | null>(null);
 
 function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'column') {
-    const {animationDuration, children} = props;
+    const {className, style, animationDuration, children} = props;
     const resizeContext = React.useContext(WorkspaceLayoutResizeContext);
     const childCount = React.Children.count(children);
     const items = React.Children.map(children, (child, index) => {
@@ -184,8 +192,16 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
             <AccordionItem
                 id={childId}
                 key={childId}
-                heading={child.type === WorkspaceLayoutItem
-                    ? (child.props as WorkspaceLayoutItemProps).heading : undefined
+                className={
+                    child.type === WorkspaceLayoutItem ? child.props.className : undefined
+                }
+                style={
+                    child.type === WorkspaceLayoutItem ? child.props.style : undefined
+                }
+                heading={
+                    child.type === WorkspaceLayoutItem
+                        ? (child.props as WorkspaceLayoutItemProps).heading
+                        : undefined
                 }
                 dockSide={dockSide}
                 defaultSize={child.props.defaultSize}
@@ -197,7 +213,9 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
         );
     });
     return (
-        <Accordion direction={type === 'row' ? 'horizontal' : 'vertical'}
+        <Accordion className={className}
+            style={style}
+            direction={type === 'row' ? 'horizontal' : 'vertical'}
             onStartResize={resizeContext?.onStartResize}
             onResize={resizeContext?.onResize ?? (() => undefined)}
             animationDuration={animationDuration}>

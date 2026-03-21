@@ -254,6 +254,7 @@ class LinkTypesToolboxInner extends React.Component<LinkTypesToolboxInnerProps, 
                             className={`${CLASS_NAME}__filter`}
                             inputProps={{
                                 name: 'reactodia-link-types-filter',
+                                placeholder: t.text('search_link_types.input.placeholder'),
                             }}
                         />
                     )}
