@@ -1,8 +1,8 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
 import { useTranslation } from '../coreUtils/i18n';
+import { useAsync } from '../coreUtils/hooks';
 
 import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
 import type {
@@ -141,39 +141,24 @@ function useEntityMetadata(
     metadataProvider: MetadataProvider | undefined,
     entity: ElementModel
 ): readonly [shape: EntityMetadata | undefined, error?: unknown] {
-    const [metadata, setMetadata] = React.useState<EntityMetadata>();
-    const [metadataError, setMetadataError] = React.useState<unknown>();
-
-    React.useEffect(() => {
-        if (metadataProvider) {
-            setMetadata(undefined);
-            setMetadataError(undefined);
-            const cancellation = new AbortController();
-            const signal = cancellation.signal;
-            mapAbortedToNull(
-                Promise.all([
-                    metadataProvider.canModifyEntity(entity, {signal}),
-                    metadataProvider.getEntityShape(entity.types, {signal}),
-                ]),
-                signal
-            ).then(
-                result => {
-                    if (result === null) {
-                        return;
-                    }
-                    const [editable, shape] = result;
-                    setMetadata({editable, shape});
-                },
-                error => {
-                    console.error('Failed to load entity shape:', error);
-                    setMetadataError(error);
-                }
-            );
-            return () => cancellation.abort();
-        } else {
-            setMetadata({editable: {}, shape: DEFAULT_ENTITY_SHAPE});
+    const {data, status, error} = useAsync({
+        input: [metadataProvider, entity],
+        load: async ([provider, target], {signal}): Promise<EntityMetadata> => {
+            if (provider) {
+                const [editable, shape] = await Promise.all([
+                    provider.canModifyEntity(target, {signal}),
+                    provider.getEntityShape(target.types, {signal}),
+                ]);
+                return {editable, shape};
+            } else {
+                return {editable: {}, shape: DEFAULT_ENTITY_SHAPE};
+            }
         }
-    }, [entity]);
+    });
 
-    return [metadata, metadataError];
+    if (data && status === 'completed') {
+        return [data];
+    } else {
+        return [undefined, error];
+    }
 }

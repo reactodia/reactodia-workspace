@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../../coreUtils/async';
-import { useObservedProperty } from '../../coreUtils/hooks';
+import { useAsync, useObservedProperty } from '../../coreUtils/hooks';
 
 import { ElementIri, ElementModel } from '../../data/model';
 
@@ -65,8 +64,6 @@ export function useAuthoredEntity(
     const {editor, getCommandBus} = useWorkspace();
 
     const entity = editor.inAuthoringMode ? data : undefined;
-
-    const [allowedActions, setAllowedActions] = React.useState<AllowedActions | undefined>();
    
     const authoringEvent = useObservedProperty(
         editor.events,
@@ -74,29 +71,25 @@ export function useAuthoredEntity(
         () => entity ? editor.authoringState.elements.get(entity.id) : undefined
     );
 
-    React.useEffect(() => {
-        const cancellation = new AbortController();
-        if (!entity) {
-            setAllowedActions(AllowedActions.None);
-        } else if (shouldLoad) {
-            if (!editor.metadataProvider || (authoringEvent && authoringEvent.type === 'entityDelete')) {
-                setAllowedActions(AllowedActions.None);
-            } else {
-                void mapAbortedToNull(
-                    editor.metadataProvider.canModifyEntity(entity, {signal: cancellation.signal}),
-                    cancellation.signal
-                ).then(canModify => {
-                    if (canModify === null) { return; }
-                    const {canEdit, canDelete} = canModify;
-                    setAllowedActions(
-                        (canEdit ? AllowedActions.Edit : AllowedActions.None) |
-                        (canDelete ? AllowedActions.Delete : AllowedActions.None)
-                    );
-                });
+    const fetchedActions = useAsync({
+        input: [editor.metadataProvider, entity, authoringEvent, shouldLoad],
+        load: async ([provider, entity, authoringEvent, shouldLoad], {signal}) => {
+            if (
+                provider &&
+                entity &&
+                shouldLoad &&
+                !(authoringEvent && authoringEvent.type === 'entityDelete')
+            ) {
+                const {canEdit, canDelete} = await provider.canModifyEntity(entity, {signal});
+                return (
+                    (canEdit ? AllowedActions.Edit : AllowedActions.None) |
+                    (canDelete ? AllowedActions.Delete : AllowedActions.None)
+                );
             }
-        }
-        return () => cancellation.abort();
-    }, [entity, authoringEvent, shouldLoad]);
+            return AllowedActions.None;
+        },
+    });
+    const allowedActions = fetchedActions.status === 'completed' ? fetchedActions.data : undefined;
 
     if (!entity) {
         return NO_AUTHORING_CONTEXT;

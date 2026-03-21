@@ -15,6 +15,7 @@ import { HtmlSpinner } from '../diagram/spinner';
 
 import { AuthoringState } from '../editor/authoringState';
 import { EntityElement, EntityGroup } from '../editor/dataElements';
+import { useResolvedAssetUrl } from '../editor/dataLocaleProvider';
 import { ungroupSomeEntities } from '../editor/elementGrouping';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
@@ -90,12 +91,16 @@ export function StandardEntity(props: StandardEntityProps) {
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
     const entityContext = useAuthoredEntity(data, isExpanded);
 
+    const {data: imageUrl} = useResolvedAssetUrl(
+        model.locale,
+        data ? model.locale.selectEntityImageUrl(data) : undefined
+    );
+
     if (!data) {
         return null;
     }
 
     const label = model.locale.formatEntityLabel(data, model.language);
-    const imageUrl = model.locale.selectEntityImageUrl(data);
     const typesLabel = formatEntityTypes(data, model, t);
     const typeStyle = getElementTypeStyle(data.types);
     const rootStyle = {
@@ -139,9 +144,7 @@ export function StandardEntity(props: StandardEntityProps) {
                     <div className={`${CLASS_NAME}__iri-value`}>
                         {isEncodedBlank(finalIri)
                             ? <span>{t.text('standard_element.blank_node')}</span>
-                            : <a href={finalIri}
-                                target='_blank'
-                                rel='noreferrer'
+                            : <a {...model.locale.prepareAnchor(finalIri)}
                                 title={finalIri}>
                                 {finalIri}
                             </a>}

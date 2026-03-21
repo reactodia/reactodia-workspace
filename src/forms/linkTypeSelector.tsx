@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { mapAbortedToNull } from '../coreUtils/async';
-import { useObservedProperty } from '../coreUtils/hooks';
+import { useObservedProperty, useAsync } from '../coreUtils/hooks';
 import { useTranslation, type Translation } from '../coreUtils/i18n';
 import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 
@@ -42,32 +42,13 @@ export function LinkTypeSelector(props: {
     const {editor} = useWorkspace();
     const t = useTranslation();
 
-    const [linkTypes, setLinkTypes] = React.useState<readonly DirectedLinkType[]>();
-    const [fetchState, setFetchState] = React.useState<{ type: 'loading' | 'error'; error?: unknown }>();
+    const fetchedTypes = useAsync({
+        input: [editor.metadataProvider, link.source.id, link.target.id],
+        load: ([provider], {signal}) =>
+            fetchPossibleLinkTypes({link, metadataProvider: provider, signal}),
+    });
 
-    React.useEffect(() => {
-        const controller = new AbortController();
-        setFetchState({type: 'loading'});
-        fetchPossibleLinkTypes({
-            link,
-            metadataProvider: editor.metadataProvider,
-            signal: controller.signal,
-        }).then(
-            linkTypes => {
-                if (!controller.signal.aborted) {
-                    setLinkTypes(linkTypes);
-                    setFetchState(undefined);
-                }
-            },
-            error => {
-                if (!controller.signal.aborted) {
-                    setLinkTypes([]);
-                    setFetchState({type: 'error', error});
-                }
-            },
-        );
-        return () => controller.abort();
-    }, [link.source.id, link.target.id]);
+    const linkTypes = fetchedTypes.status === 'completed' ? fetchedTypes.data : undefined;
 
     const selectedType = (linkTypes ?? []).find(({iri, direction}) =>
         iri === link.base.linkTypeId && direction === link.direction
@@ -91,7 +72,7 @@ export function LinkTypeSelector(props: {
     return (
         <div className={`${FORM_CLASS}__control-row`}>
             <label>{t.text('visual_authoring.select_relation.type.label')}</label>
-            {linkTypes && !fetchState ? (
+            {linkTypes && fetchedTypes.status === 'completed' ? (
                 <select className='reactodia-form-control'
                     name='reactodia-link-type-selector-select'
                     value={selectedType?.key ?? -1}
@@ -104,7 +85,7 @@ export function LinkTypeSelector(props: {
                 </select>
             ) : (
                 <div>
-                    <HtmlSpinner width={20} height={20} errorOccurred={fetchState?.type === 'error'} />
+                    <HtmlSpinner width={20} height={20} errorOccurred={fetchedTypes.status === 'error'} />
                 </div>
             )}
             {error ? <span className={`${FORM_CLASS}__control-error`}>{error}</span> : null}

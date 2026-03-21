@@ -190,7 +190,7 @@ export const WorkspaceContext = React.createContext<WorkspaceContext | null>(nul
 export function useWorkspace(): WorkspaceContext {
     const context = React.useContext(WorkspaceContext);
     if (!context) {
-        throw new Error('Missing Reactodia workspace context');
+        throw new Error('Reactodia: missing workspace context');
     }
     return context;
 }

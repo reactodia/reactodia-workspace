@@ -31,8 +31,14 @@ export function SearchSectionElementTypes(props: {
      * @default 2
      */
     minSearchTermLength?: number;
+    /**
+     * Whether tree items can be dragged out e.g. onto the canvas.
+     *
+     * @default true
+     */
+    draggableItems?: boolean;
 }) {
-    const {searchTimeout = 200, minSearchTermLength = 2} = props;
+    const {searchTimeout = 200, minSearchTermLength = 2, draggableItems} = props;
     const {searchStore, shouldRender} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
@@ -41,6 +47,7 @@ export function SearchSectionElementTypes(props: {
     return shouldRender ? (
         <ClassTree className={SECTION_ELEMENT_TYPES_CLASS}
             searchStore={searchStore}
+            draggableItems={draggableItems}
         />
     ) : null;
 }

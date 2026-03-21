@@ -10,30 +10,28 @@ import { highlightSubstring } from '../utility/listElementView';
 
 import { TreeNode } from './treeModel';
 
-interface CommonProps {
+export interface ClassTreeContext {
     searchText?: string;
     selectedNode?: TreeNode;
     onSelect: (node: TreeNode) => void;
     creatableClasses: ReadonlyMap<ElementTypeIri, boolean>;
     onClickCreate: (node: TreeNode) => void;
     onDragCreate: (node: TreeNode) => void;
+    draggableItems: boolean;
 }
 
-export interface LeafProps extends CommonProps {
-    node: TreeNode;
-}
-
-interface State {
-    expanded?: boolean;
-}
+export const ClassTreeContext = React.createContext<ClassTreeContext | null>(null);
 
 const CLASS_NAME = 'reactodia-class-tree-item';
 
-export function Leaf(props: LeafProps) {
+export function Leaf(props: {
+    node: TreeNode;
+}) {
     const {node, ...otherProps} = props;
     const {
         selectedNode, searchText, onSelect, creatableClasses, onClickCreate, onDragCreate,
-    } = otherProps;
+        draggableItems,
+    } = useClassTreeContext();
 
     const {getElementTypeStyle} = useWorkspace();
     const t = useTranslation();
@@ -76,7 +74,7 @@ export function Leaf(props: LeafProps) {
         <div className={CLASS_NAME}
             style={providedStyle}
             role='treeitem'
-            aria-expanded={expanded}
+            aria-expanded={node.derived.length === 0 ? undefined : expanded}
             aria-selected={selected}>
             <div className={`${CLASS_NAME}__row`}>
                 <div className={toggleClass}
@@ -88,7 +86,8 @@ export function Leaf(props: LeafProps) {
                     onClick={e => {
                         e.preventDefault();
                         onSelect(node);
-                    }}>
+                    }}
+                    draggable={draggableItems}>
                     <div className={`${CLASS_NAME}__icon-container`}>
                         {typeStyle.icon ? (
                             <img role='presentation'
@@ -135,21 +134,27 @@ export function Leaf(props: LeafProps) {
     );
 }
 
-export interface ForestProps extends CommonProps {
+export function Forest(props: {
     className?: string;
     nodes: ReadonlyArray<TreeNode>;
     root?: boolean;
     footer?: React.ReactNode;
-}
-
-export function Forest(props: ForestProps) {
-    const {className, nodes, root, footer, ...otherProps} = props;
+}) {
+    const {className, nodes, root, footer} = props;
     return (
         <div className={className} role={root ? 'tree' : undefined}>
             {nodes.map(node => (
-                <Leaf key={`node-${node.iri}`} node={node} {...otherProps} />
+                <Leaf key={`node-${node.iri}`} node={node} />
             ))}
             {footer}
         </div>
     );
+}
+
+function useClassTreeContext(): ClassTreeContext {
+    const context = React.useContext(ClassTreeContext);
+    if (!context) {
+        throw new Error('Reactodia: missing class tree context');
+    }
+    return context;
 }

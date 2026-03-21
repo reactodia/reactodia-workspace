@@ -1,8 +1,8 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
 import { useTranslation } from '../coreUtils/i18n';
+import { useAsync } from '../coreUtils/hooks';
 
 import { ElementModel, LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
 import type { MetadataProvider, MetadataRelationShape } from '../data/metadataProvider';
@@ -316,44 +316,29 @@ function useRelationMetadata(
     linkSource: ElementModel,
     linkTarget: ElementModel
 ): readonly [shape: RelationMetadata | undefined, error?: unknown] {
-    const [shape, setShape] = React.useState<RelationMetadata>();
-    const [shapeError, setShapeError] = React.useState<unknown>();
-
-    React.useEffect(() => {
-        if (metadataProvider) {
-            setShape(undefined);
-            setShapeError(undefined);
-            const cancellation = new AbortController();
-            const signal = cancellation.signal;
-            mapAbortedToNull(
-                Promise.all([
-                    metadataProvider.canModifyRelation(link, linkSource, linkTarget, {signal}),
-                    metadataProvider.getRelationShape(
+    const {data, status, error} = useAsync({
+        input: [metadataProvider, link.linkTypeId, linkSource, linkTarget],
+        load: ([provider, _typeId, source, target], {signal}) => {
+            if (provider) {
+                return Promise.all([
+                    provider.canModifyRelation(link, source, target, {signal}),
+                    provider.getRelationShape(
                         link.linkTypeId,
                         linkSource,
                         linkTarget,
                         {signal}
                     ),
-                ]),
-                signal
-            ).then(
-                result => {
-                    if (result === null) {
-                        return;
-                    }
-                    const [status, shape] = result;
-                    setShape({shape: status.canEdit ? shape : null});
-                },
-                error => {
-                    console.error('Failed to load relation metadata:', error);
-                    setShapeError(error);
-                }
-            );
-            return () => cancellation.abort();
-        } else {
-            setShape({shape: null});
+                ]);
+            } else {
+                return undefined;
+            }
         }
-    }, [link.linkTypeId, linkSource, linkTarget]);
+    });
 
-    return [shape, shapeError];
+    if (data && status === 'completed') {
+        const [loadedStatus, loadedShape] = data;
+        return [{shape: loadedStatus.canEdit ? loadedShape : null}];
+    } else {
+        return [undefined, error];
+    }
 }

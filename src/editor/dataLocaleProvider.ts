@@ -1,4 +1,5 @@
 import type { Translation } from '../coreUtils/i18n';
+import { type UseAsyncResult, useAsync } from '../coreUtils/hooks';
 
 import { ElementModel, PropertyTypeIri, isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
@@ -38,6 +39,17 @@ export interface DataLocaleProvider {
      * @param language target language code
      */
     formatEntityTypeList(entity: ElementModel, language: string): string;
+    /**
+     * Provides props for an anchor (`<a>` link) to a resource IRI.
+     */
+    prepareAnchor(
+        targetIri: string
+    ): Pick<React.ComponentProps<'a'>, 'draggable' | 'href' | 'target' | 'rel' | 'onClick'>;
+    /**
+     * Asynchronously resolves an IRI/URL to referenced data asset for display or download,
+     * e.g. an image (thumbnail) or a downloadable file.
+     */
+    resolveAssetUrl(assetIri: string, options: { signal?: AbortSignal }): Promise<string>;
 }
 
 /**
@@ -170,6 +182,54 @@ export class DefaultDataLocaleProvider implements DataLocaleProvider {
         labelList.sort();
         return labelList.join(', ');
     }
+
+    /**
+     * Provides props for an anchor (`<a>` link) to a resource IRI.
+     *
+     * **By default**: returns
+     * ```
+     * {
+     *     href: targetIri,
+     *     target: '_blank',
+     *     rel: 'noreferrer',
+     * }
+     * ```
+     */
+    prepareAnchor(targetIri: string): Pick<React.ComponentProps<'a'>, 'href' | 'target' | 'rel' | 'onClick'> {
+        return {
+            href: targetIri,
+            target: '_blank',
+            rel: 'noreferrer',
+        };
+    }
+
+    /**
+     * Asynchronously resolves an IRI/URL to referenced data asset for display or download,
+     * e.g. an image (thumbnail) or a downloadable file.
+     *
+     * **By default**: returns the asset IRI/URL as-is.
+     */
+    resolveAssetUrl(assetIri: string, options: { signal?: AbortSignal }): Promise<string> {
+        return Promise.resolve(assetIri);
+    }
+}
+
+/**
+ * Helper hook to resolve IRI/URL to referenced data asset with
+ * {@link DataLocaleProvider.resolveAssetUrl}.
+ *
+ * @category Hooks
+ */
+export function useResolvedAssetUrl(
+    locale: DataLocaleProvider,
+    assetIri: string | undefined
+): UseAsyncResult<string | undefined> {
+    return useAsync({
+        input: [locale, assetIri],
+        load: ([locale, assetIri], {signal}) => {
+            return assetIri === undefined ? undefined : locale.resolveAssetUrl(assetIri, {signal});
+        },
+    });
 }
 
 function filterInLiterals(terms: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>): readonly Rdf.Literal[] {
