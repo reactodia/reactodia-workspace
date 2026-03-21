@@ -36,6 +36,7 @@
   }
 
   &__endpoint {
+    touch-action: none;
     color: theme.$color-primary;
     background: transparent;
   }

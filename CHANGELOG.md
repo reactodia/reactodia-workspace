@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Allow to manipulate link vertices on touchscreen (only in Firefox for now due to [bug](https://gsap.com/community/forums/topic/15870-svg-draggable-chrome-android-problems/));
   * Allow to select multiple elements with `Selection` with touch when `CanvasApi.pointerMode` is `selection`;
   * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
+  * Allow to move link source or target with `LinkActionMoveEndpoint` on touchscreen;
   * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
 - Allow to customize how resource anchors and asset URLs (e.g. images or downloadable files) are resolved via `DataLocaleProvider.{prepareAnchor, resolveAssetUrl}`:
   * Resolve anchors and image thumbnail URLs in `StandardEntity`, `ClassicEntity` and `SelectionActionAnchor`;

@@ -120,6 +120,10 @@ export interface LinkActionProps extends LinkActionStyleProps {
      */
     onMouseDown?: (e: React.MouseEvent) => void;
     /**
+     * Raw handler for pointer down event on the action button.
+     */
+    onPointerDown?: (e: React.PointerEvent) => void;
+    /**
      * Action content.
      */
     children?: React.ReactNode;
@@ -135,7 +139,7 @@ const CLASS_NAME = 'reactodia-link-action';
 export function LinkAction(props: LinkActionProps) {
     const {
         dockSide, dockIndex, disabled, className, title, hotkey,
-        onSelect, onMouseDown, children,
+        onSelect, onMouseDown, onPointerDown, children,
     } = props;
 
     const {getPosition} = useLinkActionContext();
@@ -149,7 +153,8 @@ export function LinkAction(props: LinkActionProps) {
             disabled={disabled}
             title={titleWithHotkey}
             onClick={onSelect}
-            onMouseDown={onMouseDown}>
+            onMouseDown={onMouseDown}
+            onPointerDown={onPointerDown}>
             {children}
         </button>
     );
@@ -448,7 +453,8 @@ function LinkActionMoveRelationEndpoint(
                     : t.text('link_action.move_relation.move_target_title')
             )}
             disabled={linkIsDeleted}
-            onMouseDown={e => {
+            onPointerDown={e => {
+                e.preventDefault();
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 getCommandBus(VisualAuthoringTopic)
                     .trigger('startDragEdit', {
@@ -494,7 +500,8 @@ function LinkActionMoveAnnotationEndpoint(
                     ? t.text('link_action.move_relation.move_source_title')
                     : t.text('link_action.move_relation.move_target_title')
             )}
-            onMouseDown={e => {
+            onPointerDown={e => {
+                e.preventDefault();
                 const point = canvas.metrics.pageToPaperCoords(e.pageX, e.pageY);
                 getCommandBus(AnnotationTopic)
                     .trigger('startDragOperation', {
