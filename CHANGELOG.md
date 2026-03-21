@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Expose `useAsync()` utility hook to simplify data loading from via a single Promise-returning task.
 - Provide `onlySelected` property to link templates the same way as for element templates.
 - Allow to configure whether `ClassTree` and `SearchSectionElementTypes` tree items should be draggable.
+- Allow to configure `SparqlDataProvider.lookup()` via `lookupQuery` and `filterInnerPrelude` settings.
 
 #### 🔧 Maintenance
 - Preparations to extract generic scrollable paper component `Paper` from diagram-specific state and logic:

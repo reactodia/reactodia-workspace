@@ -190,6 +190,46 @@ export interface SparqlDataProviderSettings {
     linkTypesStatisticsQuery: string;
 
     /**
+     * SELECT query to lookup entities with {@link DataProvider.lookup()}.
+     *
+     * Parametrized variables:
+     *   - `${outerProjection}`
+     *   - `${innerProjection}`
+     *   - `${filterInnerPrelude}` from {@link filterInnerPrelude}
+     *   - `${filterByType}` from {@link filterTypePattern}
+     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
+     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
+     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *   - `${filterByText}` from {@link fullTextSearch}
+     *     (when {@link DataProviderLookupParams.text} is provided)
+     *   - `${filterAdditionalRestriction}` from {@link filterAdditionalRestriction}
+     *   - `${orderBy}` (when {@link DataProviderLookupParams.text} is provided)
+     *   - `${limit}` (when {@link DataProviderLookupParams.limit} is provided)
+     *   - `${queryTypes}` from {@link filterTypePattern}
+     *     (when {@link DataProviderLookupParams.refElementId} is provided and
+     *     {@link linkConfigurations} is non-empty)
+     *   - `${queryElementInfo}` from {@link filterElementInfoPattern}
+     *
+     * Expected bindings:
+     *   - `?inst` element IRI
+     *   - `?class` element type
+     *   - `?label` element label
+     *   - `?link` connected via link type
+     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *   - `?direction` connected via link direction (`"in"` or `"out"`)
+     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *   - `?score` element lookup score (higher ordered first)
+     *     (for order only; when {@link DataProviderLookupParams.text} is provided)
+     */
+    lookupQuery: string;
+
+    /**
+     * SPARQL query pattern to prepend before inner lookup query
+     * e.g. to specify query evaluation hints.
+     */
+    filterInnerPrelude?: string;
+
+    /**
      * SPARQL query pattern to restrict lookup results in case when
      * {@link DataProviderLookupParams.refElementLinkId} is not specified.
      *
@@ -211,6 +251,11 @@ export interface SparqlDataProviderSettings {
     /**
      * SPARQL pattern which describes how to fetch elements info similar to `elementInfoQuery`
      * but within the lookup query.
+     *
+     * Expected bindings:
+     *   - `?inst` element IRI
+     *   - `?class` element type
+     *   - `?label` element label
      *
      * Parametrized variables:
      *   - `${dataLabelProperty}` `dataLabelProperty` property from the settings
@@ -441,6 +486,22 @@ export const RdfSettings: SparqlDataProviderSettings = {
 
     linkTypesOfQuery: '',
     linkTypesStatisticsQuery: '',
+
+    lookupQuery:
+`SELECT \${outerProjection} WHERE {
+    \${filterInnerPrelude}
+    {
+        SELECT DISTINCT \${innerProjection} WHERE {
+            \${filterByType}
+            \${filterByRefElementLink}
+            \${filterByText}
+            \${filterAdditionalRestriction}
+        } \${orderBy} \${limit}
+    }
+    \${queryTypes}
+    \${queryElementInfo}
+} \${orderBy}`,
+
     filterRefElementLinkPattern: '',
     filterTypePattern: '',
     filterAdditionalRestriction: '',
