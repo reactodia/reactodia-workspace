@@ -580,7 +580,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     }
 
     render() {
-        const {connectionSearch, objectSearch} = this.props;
+        const {connectionSearch, objectSearch, translation: t} = this.props;
         const {panel} = this.state;
         return (
             <div className={CLASS_NAME}>
@@ -589,6 +589,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     store={panel === 'connections' ? connectionSearch : objectSearch}
                     inputProps={{
                         name: 'reactodia-connection-menu-filter',
+                        placeholder: t.text('connections_menu.input.placeholder'),
                     }}>
                     {this.renderSortSwitches()}
                 </SearchInput>
@@ -1234,7 +1235,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                         disabled={nonPresented.length === 0}
                         title={t.text('connections_menu.select_all.title')}
                     />
-                    {t.text('connections_menu.select_all.label')}
+                    <span>{t.text('connections_menu.select_all.label')}</span>
                 </label>
                 <div className={`${CLASS_NAME}__objects-spacer`} aria-hidden='true' />
                 {this.renderCounter(active.length)}

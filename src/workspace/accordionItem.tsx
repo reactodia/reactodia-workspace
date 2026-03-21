@@ -1,4 +1,5 @@
 import * as React from 'react';
+import cx from 'clsx';
 
 import { DraggableHandle } from '../widgets/utility/draggableHandle';
 
@@ -10,6 +11,8 @@ export enum DockSide {
 export interface AccordionItemProps extends ItemProvidedProps {
     id: string;
     heading?: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
     bodyClassName?: string;
     bodyRef?: (body: HTMLDivElement) => void;
     children?: React.ReactNode;
@@ -69,23 +72,25 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
 
     render() {
         const {
-            heading, bodyClassName, children, bodyRef,
+            heading, className, style, bodyClassName, children, bodyRef,
             collapsed, size, direction, onBeginDragHandle, onDragHandle, onEndDragHandle, dockSide,
         } = this.props;
         const {resizing} = this.state;
         const shouldRenderHandle = onBeginDragHandle && onDragHandle && onEndDragHandle;
-        const style: React.CSSProperties = this.isVertical ? {height: size} : {width: size};
+        const providedStyle: React.CSSProperties = this.isVertical ? {height: size} : {width: size};
 
         // unmount child component when the accordion item is collapsed and has dockSide
         const isMounted = !(collapsed && dockSide);
         return (
-            <div
-                className={
-                    `${CLASS_NAME} ${CLASS_NAME}--${collapsed ? 'collapsed' : 'expanded'} ${CLASS_NAME}--${direction}
-                    ${resizing ? `${CLASS_NAME}--resizing` : ''}`
-                }
-                ref={this._element}
-                style={style}>
+            <div ref={this._element}
+                className={cx(
+                    CLASS_NAME,
+                    collapsed ? `${CLASS_NAME}--collapsed`: `${CLASS_NAME}--expanded`,
+                    `${CLASS_NAME}--${direction}`,
+                    resizing ? `${CLASS_NAME}--resizing` : undefined,
+                    className
+                )}
+                style={{...style, ...providedStyle}}>
                 <div className={`${CLASS_NAME}__inner`}>
                     {heading ? <div className={`${CLASS_NAME}__header`}
                         ref={this._header}
@@ -93,7 +98,7 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
                     <div className={`${CLASS_NAME}__body`}>
                         {children && isMounted
                             ? children
-                            : <div ref={bodyRef} className={`${bodyClassName || ''}`} />}
+                            : <div ref={bodyRef} className={bodyClassName} />}
                     </div>
                 </div>
                 {shouldRenderHandle ? (

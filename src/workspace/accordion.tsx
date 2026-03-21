@@ -1,8 +1,11 @@
 import * as React from 'react';
+import cx from 'clsx';
 
 import { AccordionItem, AccordionItemProps, ItemProvidedProps } from './accordionItem';
 
 export interface AccordionProps {
+    className?: string;
+    style?: React.CSSProperties;
     onStartResize?: (direction: 'vertical' | 'horizontal') => void;
     onResize?: (direction: 'vertical' | 'horizontal') => void;
     /** AccordionItem[] */
@@ -170,13 +173,18 @@ export class Accordion extends React.Component<AccordionProps, State> {
     }
 
     render() {
-        const {direction} = this.props;
+        const {className, style, direction} = this.props;
         const {resizing} = this.state;
-        const resizingClassName = resizing ? `${CLASS_NAME}--resizing` : '';
-        const scrollableClassName = this.isScrollable ? `${CLASS_NAME}--scrollable` : '';
         return (
-            <div className={`${CLASS_NAME} ${CLASS_NAME}--${direction} ${resizingClassName} ${scrollableClassName}`}
-                ref={this.onElementMount}>
+            <div ref={this.onElementMount}
+                className={cx(
+                    CLASS_NAME,
+                    `${CLASS_NAME}--${direction}`,
+                    resizing ? `${CLASS_NAME}--resizing` : undefined,
+                    this.isScrollable ? `${CLASS_NAME}--scrollable` : undefined,
+                    className
+                )}
+                style={style}>
                 {this.renderItems()}
             </div>
         );
