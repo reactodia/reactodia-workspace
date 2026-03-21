@@ -766,12 +766,12 @@ export class SparqlDataProvider implements DataProvider {
         let outerProjection = '?inst ?class ?label';
         let innerProjection = '?inst';
 
-        let refQueryPart = '';
-        let refQueryTypes = '';
+        let filterByRefElementLink = '';
+        let queryTypes = '';
         if (params.refElementId) {
             outerProjection += ' ?link ?direction';
             innerProjection += ' ?link ?direction';
-            refQueryPart = this.createRefQueryPart({
+            filterByRefElementLink = this.createRefQueryPart({
                 elementId: params.refElementId,
                 linkId: params.refElementLinkId,
                 direction: params.linkDirection,
@@ -779,32 +779,37 @@ export class SparqlDataProvider implements DataProvider {
 
             if (this.settings.linkConfigurations.length > 0) {
                 outerProjection += ' ?classAll';
-                refQueryTypes = this.settings.filterTypePattern.replace(/[?$]class\b/g, '?classAll');
+                queryTypes = this.settings.filterTypePattern.replace(/[?$]class\b/g, '?classAll');
             }
         }
 
-        let elementTypePart = '';
+        let filterByType = '';
         if (params.elementTypeId) {
             const elementTypeIri = escapeIri(params.elementTypeId);
-            elementTypePart = this.settings.filterTypePattern.replace(/[?$]class\b/g, elementTypeIri);
+            filterByType = this.settings.filterTypePattern.replace(/[?$]class\b/g, elementTypeIri);
         }
 
         const {
-            defaultPrefix, dataLabelProperty, filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
+            defaultPrefix, dataLabelProperty, lookupQuery, filterOnlyLanguages,
+            filterElementInfoPattern, fullTextSearch,
         } = this.settings;
 
-        const elementInfoPart = resolveTemplate(filterElementInfoPattern, {
+        const queryElementInfo = resolveTemplate(filterElementInfoPattern, {
             dataLabelProperty,
             labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
 
-        let textSearchPart = '';
+        let filterByText = '';
+        let orderBy = '';
         if (params.text) {
             innerProjection += ' ?score';
             if (this.settings.fullTextSearch.extractLabel) {
-                textSearchPart += sparqlExtractLabel('?inst', '?extractedLabel');
+                filterByText += sparqlExtractLabel('?inst', '?extractedLabel');
             }
-            textSearchPart = resolveTemplate(fullTextSearch.queryPattern, {text: params.text, dataLabelProperty});
+            filterByText = resolveTemplate(fullTextSearch.queryPattern, {text: params.text, dataLabelProperty});
+            if (filterByText) {
+                orderBy = 'ORDER BY DESC(?score)';
+            }
         }
 
         let limitPart = '';
@@ -812,25 +817,20 @@ export class SparqlDataProvider implements DataProvider {
             limitPart = `LIMIT ${params.limit}`;
         }
 
-        return `${defaultPrefix}
-            ${fullTextSearch.prefix}
-
-        SELECT ${outerProjection}
-        WHERE {
-            {
-                SELECT DISTINCT ${innerProjection} WHERE {
-                    ${elementTypePart}
-                    ${refQueryPart}
-                    ${textSearchPart}
-                    ${this.settings.filterAdditionalRestriction}
-                }
-                ${textSearchPart ? 'ORDER BY DESC(?score)' : ''}
-                ${limitPart}
-            }
-            ${refQueryTypes}
-            ${elementInfoPart}
-        } ${textSearchPart ? 'ORDER BY DESC(?score)' : ''}
-        `;
+        const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
+        return completePrefix + resolveTemplate(lookupQuery, {
+            innerProjection,
+            outerProjection,
+            filterInnerPrelude: this.settings.filterInnerPrelude,
+            filterByType,
+            filterByRefElementLink,
+            filterByText,
+            filterAdditionalRestriction: this.settings.filterAdditionalRestriction,
+            orderBy,
+            limit: limitPart,
+            queryTypes,
+            queryElementInfo,
+        });
     }
 
     /**
