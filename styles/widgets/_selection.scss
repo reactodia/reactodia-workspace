@@ -8,6 +8,7 @@
 
   &__selectedBox {
     position: absolute;
+    touch-action: none;
     background-color: rgba(255, 166, 0, 0.06);
     border: 1px solid orange;
     border-radius: theme.$border-radius-s;
