@@ -1,6 +1,5 @@
 import type { ReadonlyHashMap } from '@reactodia/hashmap';
 
-import { AbortScope } from '../coreUtils/async';
 import { AnyEvent, EventSource, Events } from '../coreUtils/events';
 import { Translation, TranslatedText } from '../coreUtils/i18n';
 
@@ -157,7 +156,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     private readonly translation: Translation;
 
     private dataGraph = new DataGraph();
-    private loadingScope: AbortScope | undefined;
+    private loadingScope: AbortController | undefined;
     private _dataProvider: DataProvider;
     private _locale: DataLocaleProvider;
     private fetcher: DataFetcher;
@@ -390,11 +389,15 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             translation: this.translation,
         });
 
-        this.loadingScope = new AbortScope(parentSignal);
+        const scope = new AbortController();
+        this.loadingScope = scope;
+        const onParentSignalAbort = () => scope.abort();
+
         this.extendedSource.trigger('loadingStart', {source: this});
         const signal = this.loadingScope.signal;
-
+        
         try {
+            parentSignal?.addEventListener('abort', onParentSignalAbort);
             signal.throwIfAborted();
 
             this.setLinkSettings(diagram.linkTypeOptions ?? []);
@@ -438,6 +441,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             this.extendedSource.trigger('loadingError', {source: this, error});
             throw new Error('Reactodia: failed to import a layout', {cause: error});
         } finally {
+            parentSignal?.removeEventListener('abort', onParentSignalAbort);
             this.loadingScope?.abort();
             this.loadingScope = undefined;
         }
