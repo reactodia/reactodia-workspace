@@ -257,8 +257,14 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                     onClick={onApply}
                     disabled={status !== 'ok'}
-                    title={t.text('visual_authoring.dialog.apply.title')}>
-                    {t.text('visual_authoring.dialog.apply.label')}
+                    title={
+                        t.textOptional('visual_authoring.edit_relation.dialog.apply.title') ??
+                        t.text('visual_authoring.dialog.apply.title')
+                    }>
+                    {(
+                        t.textOptional('visual_authoring.edit_relation.dialog.apply.label') ??
+                        t.text('visual_authoring.dialog.apply.label')
+                    )}
                 </button>
                 <button className='reactodia-btn reactodia-btn-secondary'
                     onClick={closeDialog}

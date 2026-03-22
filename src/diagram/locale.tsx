@@ -17,7 +17,7 @@ export class DefaultTranslation implements Translation {
         protected readonly selectLabelLanguage: LabelLanguageSelector = defaultSelectLabel
     ) {}
 
-    private getString(key: TranslationKey): string {
+    private getString(key: TranslationKey): string | undefined {
         const dotIndex = key.indexOf('.');
         if (!(dotIndex > 0 && dotIndex < key.length)) {
             throw new Error(`Reactodia: Invalid translation key: ${key}`);
@@ -25,21 +25,31 @@ export class DefaultTranslation implements Translation {
         const group = key.substring(0, dotIndex);
         const leaf = key.substring(dotIndex + 1);
         for (const bundle of this.bundles) {
-            const text = getString(bundle, group, leaf);
-            if (text !== undefined) {
+            const text = lookupString(bundle, group, leaf);
+            if (!(text === null || text === undefined)) {
                 return text;
             }
         }
-        return key;
+        return undefined;
     }
 
     text(key: TranslationKey, placeholders?: Record<string, string | number | boolean>): string {
+        return this.textOptional(key, placeholders) ?? key;
+    }
+
+    textOptional(
+        key: TranslationKey,
+        placeholders?: Record<string, string | number | boolean>
+    ): string | undefined {
         const template = this.getString(key);
+        if (template === undefined) {
+            return undefined;
+        }
         return formatPlaceholders(template, placeholders);
     }
 
     template(key: TranslationKey, parts: Record<string, React.ReactNode>): React.ReactNode {
-        const template = this.getString(key);
+        const template = this.getString(key) ?? key;
         return templatePlaceholders(template, parts);
     }
 
@@ -79,7 +89,7 @@ export class DefaultTranslation implements Translation {
     }
 }
 
-function getString(
+function lookupString(
     bundle: Partial<TranslationBundle>,
     group: string,
     leaf: string

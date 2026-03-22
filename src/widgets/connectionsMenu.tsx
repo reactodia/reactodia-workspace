@@ -589,7 +589,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     store={panel === 'connections' ? connectionSearch : objectSearch}
                     inputProps={{
                         name: 'reactodia-connection-menu-filter',
-                        placeholder: t.text('connections_menu.input.placeholder'),
+                        placeholder: t.textOptional('connections_menu.input.placeholder'),
                     }}>
                     {this.renderSortSwitches()}
                 </SearchInput>

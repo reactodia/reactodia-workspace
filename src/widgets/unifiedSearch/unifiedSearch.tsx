@@ -394,7 +394,10 @@ function SearchToggle(props: {
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
                 style={{minWidth}}
-                placeholder={t.text('unified_search.input.placeholder')}
+                placeholder={
+                    t.textOptional('unified_search.input.placeholder') ??
+                    t.text('search_defaults.input.placeholder')
+                }
                 name='reactodia-search'
                 value={searchTerm}
                 onClick={() => setExpanded(true)}

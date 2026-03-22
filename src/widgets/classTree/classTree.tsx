@@ -190,7 +190,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                             <SearchInput store={searchStore}
                                 inputProps={{
                                     name: 'reactodia-class-tree-filter',
-                                    placeholder: t.text('search_element_types.input.placeholder'),
+                                    placeholder: t.textOptional('search_element_types.input.placeholder'),
                                 }}
                             />
                         )}

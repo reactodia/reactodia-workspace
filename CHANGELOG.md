@@ -18,13 +18,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Support conditionally rendering `WorkspaceLayout*` child components by passing `null` instead of a child to remove it:
   * Allow to hide left and right panels in `ClassicWorkspace` by passing `null` to the corresponding props;
   * Allow to provide `className` and `style` to `WorkspaceLayout*` components.
+- Add `Translation.textOptional()` to support common translation string defaults with ability to provide separate string for each case:
+  * Use `search_defaults.input.placeholder` for a search input field;
+  * Use `visual_authoring.dialog.apply.{label, text}` for an "Apply" button in `VisualAuthoring` dialogs.
 
 #### 💅 Polish
 - Expose `useAsync()` utility hook to simplify data loading from via a single Promise-returning task.
 - Provide `onlySelected` property to link templates the same way as for element templates.
 - Allow to configure whether `ClassTree` and `SearchSectionElementTypes` tree items should be draggable.
 - Allow to configure `SparqlDataProvider.lookup()` via `lookupQuery` and `filterInnerPrelude` settings.
-- Add separate translation keys for input placeholders on every search input field.
 
 #### 🔧 Maintenance
 - Preparations to extract generic scrollable paper component `Paper` from diagram-specific state and logic:

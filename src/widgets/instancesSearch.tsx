@@ -336,7 +336,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                         className={`${CLASS_NAME}__text-criteria`}
                         inputProps={{
                             name: 'reactodia-instances-search-text',
-                            placeholder: t.text('search_entities.input.placeholder'),
+                            placeholder: t.textOptional('search_entities.input.placeholder'),
                         }}
                     />
                 )}
