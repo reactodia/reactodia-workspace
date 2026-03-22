@@ -20,43 +20,6 @@ export function mapAbortedToNull<T>(
 }
 
 /**
- * Creates a derived abort signal, i.e. `AbortSignal` instance
- * which is automatically aborted when parent signal is aborted,
- * but can be aborted separately the same way as normal `AbortController`.
- *
- * @category Utilities
- */
-export class AbortScope {
-    private readonly controller: AbortController;
-    private readonly parentSignal: AbortSignal | undefined;
-    private onAbort: (() => void) | undefined;
-
-    constructor(parentSignal: AbortSignal | undefined) {
-        this.controller = new AbortController();
-        if (parentSignal) {
-            this.parentSignal = undefined;
-            this.onAbort = () => this.controller.abort();
-            parentSignal.addEventListener('abort', this.onAbort);
-        }
-    }
-
-    get signal(): AbortSignal {
-        return this.controller.signal;
-    }
-
-    [Symbol.dispose]() {
-        this.controller.abort();
-        if (this.parentSignal && this.onAbort) {
-            this.parentSignal.removeEventListener('abort', this.onAbort);
-        }
-    }
-
-    abort() {
-        this[Symbol.dispose]();
-    }
-}
-
-/**
  * Waits a specified timeout in milliseconds the resolves the result promise.
  *
  * Can be cancelled via specified `AbortSignal`, in which case the promise

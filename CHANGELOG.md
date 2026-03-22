@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Preparations to extract generic scrollable paper component `Paper` from diagram-specific state and logic:
   * Replace `reactodia-paper-area` CSS class by `reactodia-canvas-area` and `reactodia-paper`.
   * Deprecate `CanvasMetrics.area` in favor of `CanvasMetrics.pane`.
+- Remove `AbortScope` utility class (can be trivially replaced by the built-in [`AbortSignal.any()`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static) function).
 
 ## [0.33.0] - 2026-03-16
 #### 🚀 New Features
