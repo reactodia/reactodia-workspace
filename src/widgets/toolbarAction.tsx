@@ -338,7 +338,11 @@ export function ToolbarActionExport(props: ToolbarActionExportProps) {
                 className={cx(className, `${CLASS_NAME}__print`)}
                 title={title ?? t.text('toolbar_action.export_print.title')}
                 onSelect={async () => {
-                    const printWindow = window.open('', undefined, 'width=1280,height=720')!;
+                    const printWindow = window.open('', undefined, 'width=1280,height=720');
+                    if (!printWindow) {
+                        console.error('Reactodia: failed to open print preview window');
+                        return;
+                    }
                     const svg = await canvas.exportSvg();
                     printWindow.document.write(svg);
                     printWindow.document.close();
