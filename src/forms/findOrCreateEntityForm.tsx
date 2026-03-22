@@ -160,8 +160,14 @@ export class FindOrCreateEntityForm extends React.Component<FindOrCreateEntityFo
                     <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
                         onClick={this.onApply}
                         disabled={elementValue.loading || !isValid || isValidating}
-                        title={t.text('visual_authoring.dialog.apply.title')}>
-                        {t.text('visual_authoring.dialog.apply.label')}
+                        title={
+                            t.textOptional('visual_authoring.find_or_create.dialog.apply.title') ??
+                            t.text('visual_authoring.dialog.apply.title')
+                        }>
+                        {(
+                            t.textOptional('visual_authoring.find_or_create.dialog.apply.label') ??
+                            t.text('visual_authoring.dialog.apply.label')
+                        )}
                     </button>
                     <button className='reactodia-btn reactodia-btn-secondary'
                         onClick={this.props.onCancel}

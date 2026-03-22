@@ -309,7 +309,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                     inputProps={{
                         className: `${CLASS_NAME}__search-input`,
                         name: 'reactodia-element-type-selector-search',
-                        placeholder: t.text('visual_authoring.select_entity.input.placeholder'),
+                        placeholder: t.textOptional('visual_authoring.select_entity.input.placeholder'),
                         autoFocus: true,
                     }}>
                     <span className={`${CLASS_NAME}__search-icon`} />

@@ -38,22 +38,34 @@ export type TranslationKey = TranslationKeyOf<DefaultBundleData>;
  *
  * @category Core
  */
-export interface Translation {
+export interface Translation<K extends string = TranslationKey> {
     /**
      * Formats a translation string by replacing placeholders with
      * provided values.
      */
     text(
-        key: TranslationKey,
+        key: K,
         placeholders?: Record<string, string | number | boolean>
     ): string;
+
+    /**
+     * Formats a translation string by replacing placeholders with
+     * provided values if the string exists.
+     *
+     * Returns `undefined` if a translation string is `null` or does exists
+     * for the specified `key`.
+     */
+    textOptional(
+        key: K,
+        placeholders?: Record<string, string | number | boolean>
+    ): string | undefined;
 
     /**
      * Templates a translation string into React Fragment by replacing
      * placeholders with provided React nodes (elements, etc).
      */
     template(
-        key: TranslationKey,
+        key: K,
         parts: Record<string, React.ReactNode>
     ): React.ReactNode;
 
@@ -201,7 +213,7 @@ type DeepPath<T> = T extends object ? (
  */
 export class TranslatedText {
     private constructor(
-        private readonly key: TranslationKey,
+        private readonly key: string,
         private readonly placeholders: Record<string, string | number | boolean> | undefined
     ) {}
 
@@ -221,7 +233,7 @@ export class TranslatedText {
     /**
      * Resolves a translation string referenced by the current instance.
      */
-    resolve(translation: Translation): string {
+    resolve(translation: Translation<any>): string {
         return translation.text(this.key, this.placeholders);
     }
 }

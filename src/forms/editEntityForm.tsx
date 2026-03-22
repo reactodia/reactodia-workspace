@@ -108,9 +108,15 @@ export function EditEntityForm(props: {
             <div className={`${FORM_CLASS}__controls`}>
                 <button type='button'
                     className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                    title={t.text('visual_authoring.dialog.apply.title')}
+                    title={
+                        t.textOptional('visual_authoring.edit_entity.dialog.apply.title') ??
+                        t.text('visual_authoring.dialog.apply.title')
+                    }
                     onClick={() => onApply(data)}>
-                    {t.text('visual_authoring.dialog.apply.label')}
+                    {(
+                        t.textOptional('visual_authoring.edit_entity.dialog.apply.label') ??
+                        t.text('visual_authoring.dialog.apply.label')
+                    )}
                 </button>
                 <button type='button'
                     className='reactodia-btn reactodia-btn-secondary'
