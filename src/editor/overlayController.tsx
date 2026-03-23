@@ -35,13 +35,16 @@ export interface OverlayControllerEvents {
     /**
      * Triggered on {@link OverlayController.openedDialog} property change.
      */
-    changeOpenedDialog: PropertyChange<OverlayController, OpenedDialog | undefined>;
+    changeOpenedDialog: PropertyChange<OverlayController, OverlayDialog | undefined>;
 }
 
 /**
  * Describes a dialog opened as an overlay for the canvas.
+ *
+ * @see {@link OverlayController.openedDialog}
+ * @see {@link OverlayController.showDialog}
  */
-export interface OpenedDialog {
+export interface OverlayDialog {
     /**
      * Dialog target (anchor).
      */
@@ -64,9 +67,31 @@ export interface OpenedDialog {
 /**
  * Nominal (branded) type for known overlay dialog type.
  *
- * @see {@link OpenedDialog.knownType}
+ * @see {@link OverlayDialog.knownType}
  */
 export type OverlayDialogType = string & { overlayDialogTypeBrand: void };
+
+/**
+ * Provides defaults and persists changes to
+ * the {@link OverlayController.showDialog overlay dialog} properties.
+ *
+ * @category Core
+ */
+export interface OverlayDialogDefaultsProvider {
+    /**
+     * Provides size defaults for an opened dialog: `defaultSize`, `minSize` and `maxSize`.
+     *
+     * **Note**: returned defaults will override corresponding values passed as `style`
+     * to {@link OverlayController.showDialog}.
+     */
+    getDialogSize(
+        dialog: OverlayDialog
+    ): Pick<DialogStyleProps, 'defaultSize' | 'minSize' | 'maxSize'> | undefined;
+    /**
+     * Stores the new dialog size after it has been resized by the user.
+     */
+    persistDialogSize(dialog: OverlayDialog, size: Size): void;
+}
 
 /**
  * Controls UI overlays for the canvases, including dialogs and tasks.
@@ -78,13 +103,14 @@ export class OverlayController {
     private readonly source = new EventSource<OverlayControllerEvents>();
     readonly events: Events<OverlayControllerEvents> = this.source;
 
-    private readonly interalSource = new EventSource<OverlayControllerInternalEvents>();
+    private readonly internalSource = new EventSource<OverlayControllerInternalEvents>();
 
     private readonly model: DiagramModel;
     private readonly view: SharedCanvasState;
     private readonly translation: Translation;
+    private dialogDefaultsProvider: OverlayDialogDefaultsProvider;
 
-    private _openedDialog: OpenedDialog | undefined;
+    private _openedDialog: OverlayDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
     private _taskError: { error: unknown } | undefined;
 
@@ -94,9 +120,10 @@ export class OverlayController {
         this.model = model;
         this.view = view;
         this.translation = translation;
+        this.dialogDefaultsProvider = new DefaultDialogDefaultsProvider();
 
         withInternalApi(this)[OverlayInternalApi] = {
-            events: this.interalSource,
+            events: this.internalSource,
             overlays: new Set<OverlayReader>(),
             dialog: null,
             spinner: null,
@@ -122,8 +149,17 @@ export class OverlayController {
      *
      * Returns `undefined` if no dialog is opened.
      */
-    get openedDialog(): OpenedDialog | undefined {
+    get openedDialog(): OverlayDialog | undefined {
         return this._openedDialog;
+    }
+
+    /**
+     * Sets dialog defaults provider to use.
+     *
+     * By default, uses {@link DefaultDialogDefaultsProvider}.
+     */
+    setDialogDefaultsProvider(provider: OverlayDialogDefaultsProvider): void {
+        this.dialogDefaultsProvider = provider;
     }
 
     /** @hidden */
@@ -279,7 +315,7 @@ export class OverlayController {
         const spinner = props ? <LoadingWidget spinnerProps={props} /> : null;
         const previous = internalApi.spinner;
         internalApi.spinner = spinner;
-        this.interalSource.trigger('changeSpinner', {previous, source: this});
+        this.internalSource.trigger('changeSpinner', {previous, source: this});
     }
 
     /**
@@ -322,12 +358,13 @@ export class OverlayController {
         }
 
         const previousDialog = this._openedDialog;
-        this._openedDialog = {
+        const openedDialog: OverlayDialog = {
             target,
             knownType: dialogType,
             holdSelection,
             onClose,
         };
+        this._openedDialog = openedDialog;
 
         const canvas = this.view.findAnyCanvas();
         const breakpoint = readOverlayProperty(
@@ -338,16 +375,31 @@ export class OverlayController {
             canvas && breakpoint !== undefined && canvas.metrics.pane.clientWidth <= breakpoint
         );
 
+        let styleWithDefaults = style;
+        const defaults = this.dialogDefaultsProvider.getDialogSize(openedDialog);
+        if (defaults) {
+            styleWithDefaults = {
+                ...style,
+                defaultSize: defaults.defaultSize ?? style.defaultSize,
+                minSize: defaults.minSize ?? style.minSize,
+                maxSize: defaults.maxSize ?? style.maxSize,
+            };
+        }
+
+        const onResize: DialogProps['onResize'] = size => {
+            this.dialogDefaultsProvider.persistDialogSize(openedDialog, size);
+        };
         const onHide = () => this.hideDialog();
         if (target && !isSmallViewport) {
             this.setDialog(
                 <CanvasPlaceAt layer='overElements'>
-                    <Dialog {...style}
+                    <Dialog {...styleWithDefaults}
                         target={
                             target instanceof Element ? DialogTarget.forElement(target) :
                             target instanceof Link ? DialogTarget.forLink(target) :
                             target
                         }
+                        onResize={onResize}
                         onHide={onHide}>
                         {content}
                     </Dialog>
@@ -355,8 +407,9 @@ export class OverlayController {
             );
         } else {
             this.setDialog(
-                <ViewportDialog {...style}
+                <ViewportDialog {...styleWithDefaults}
                     mode={isSmallViewport ? 'fillViewport' : 'centered'}
+                    onResize={onResize}
                     onHide={onHide}>
                     {content}
                 </ViewportDialog>
@@ -388,7 +441,7 @@ export class OverlayController {
         const internalApi = withInternalApi(this)[OverlayInternalApi];
         const previous = internalApi.dialog;
         internalApi.dialog = dialog;
-        this.interalSource.trigger('changeDialog', {previous, source: this});
+        this.internalSource.trigger('changeDialog', {previous, source: this});
     }
 }
 
@@ -588,4 +641,34 @@ function getErrorMessage(error: unknown): string | undefined {
         }
     }
     return undefined;
+}
+
+/**
+ * Default dialog defaults provider which persists changed dialog size in-memory
+ * for each {@link OverlayDialog.knownType}.
+ *
+ * Dialogs without {@link OverlayDialog.knownType} are ignored.
+ *
+ * @category Core
+ */
+export class DefaultDialogDefaultsProvider implements OverlayDialogDefaultsProvider {
+    private lastDialogSize = new Map<OverlayDialogType, Size>();
+
+    getDialogSize(
+        dialog: OverlayDialog
+    ): Pick<DialogStyleProps, 'defaultSize' | 'minSize' | 'maxSize'> | undefined {
+        if (dialog.knownType) {
+            const lastSize = this.lastDialogSize.get(dialog.knownType);
+            if (lastSize) {
+                return {defaultSize: lastSize};
+            }
+        }
+        return undefined;
+    }
+
+    persistDialogSize(dialog: OverlayDialog, size: Size): void {
+        if (dialog.knownType) {
+            this.lastDialogSize.set(dialog.knownType, size);
+        }
+    }
 }
