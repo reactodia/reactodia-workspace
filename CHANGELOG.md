@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Add `Translation.textOptional()` to support common translation string defaults with ability to provide separate string for each case:
   * Use `search_defaults.input.placeholder` for a search input field;
   * Use `visual_authoring.dialog.apply.{label, text}` for an "Apply" button in `VisualAuthoring` dialogs.
-- Allow to customize default dialog sizes for built-in dialogs and persist user-changed sizes with `OverlayController.setDialogDefaultsProvider()`:
+- Allow to customize default dialog sizes for built-in dialogs and persist user-changed sizes with `dialogSettingsProvider` prop on `Workspace`:
   * Default provider persists user-changed dialog sizes in-memory based on `dialogType`.
 
 #### 💅 Polish

@@ -32,7 +32,9 @@ import { EditorController } from '../editor/editorController';
 import {
     groupEntities, ungroupAllEntities, ungroupSomeEntities,
 } from '../editor/elementGrouping';
-import { OverlayController } from '../editor/overlayController';
+import {
+    OverlayController, type DialogSettingsProvider, DefaultDialogSettingsProvider,
+} from '../editor/overlayController';
 
 import { NoteTemplate, NoteLinkTemplate } from '../templates/noteAnnotation';
 import { StandardTemplate } from '../templates/standardElement';
@@ -67,6 +69,12 @@ export interface WorkspaceProps {
      * instead.
      */
     typeStyleResolver?: TypeStyleResolver;
+    /**
+     * Provides defaults and persists changes to {@link OverlayDialog overlay dialog} properties.
+     *
+     * By default, {@link DefaultDialogSettingsProvider} instance is used.
+     */
+    dialogSettingsProvider?: DialogSettingsProvider;
     /**
      * Provides an strategy to visually edit graph data.
      * 
@@ -168,6 +176,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
         const {
             history = new InMemoryHistory(),
+            dialogSettingsProvider = new DefaultDialogSettingsProvider(),
             metadataProvider,
             validationProvider,
             renameLinkProvider,
@@ -224,6 +233,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
             model,
             view,
             translation: this.translation,
+            dialogSettingsProvider,
         });
 
         this.layoutTypeProvider = {

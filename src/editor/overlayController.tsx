@@ -24,6 +24,7 @@ export interface OverlayControllerProps {
     readonly model: DiagramModel;
     readonly view: SharedCanvasState;
     readonly translation: Translation;
+    readonly dialogSettingsProvider: DialogSettingsProvider;
 }
 
 /**
@@ -72,12 +73,11 @@ export interface OverlayDialog {
 export type OverlayDialogType = string & { overlayDialogTypeBrand: void };
 
 /**
- * Provides defaults and persists changes to
- * the {@link OverlayController.showDialog overlay dialog} properties.
+ * Provides defaults and persists changes to {@link OverlayDialog overlay dialog} properties.
  *
  * @category Core
  */
-export interface OverlayDialogDefaultsProvider {
+export interface DialogSettingsProvider {
     /**
      * Provides size defaults for an opened dialog: `defaultSize`, `minSize` and `maxSize`.
      *
@@ -108,7 +108,7 @@ export class OverlayController {
     private readonly model: DiagramModel;
     private readonly view: SharedCanvasState;
     private readonly translation: Translation;
-    private dialogDefaultsProvider: OverlayDialogDefaultsProvider;
+    private readonly dialogSettingsProvider: DialogSettingsProvider;
 
     private _openedDialog: OverlayDialog | undefined;
     private _tasks = new Set<ExtendedOverlayTask>();
@@ -116,11 +116,11 @@ export class OverlayController {
 
     /** @hidden */
     constructor(props: OverlayControllerProps) {
-        const {model, view, translation} = props;
+        const {model, view, translation, dialogSettingsProvider} = props;
         this.model = model;
         this.view = view;
         this.translation = translation;
-        this.dialogDefaultsProvider = new DefaultDialogDefaultsProvider();
+        this.dialogSettingsProvider = dialogSettingsProvider;
 
         withInternalApi(this)[OverlayInternalApi] = {
             events: this.internalSource,
@@ -151,15 +151,6 @@ export class OverlayController {
      */
     get openedDialog(): OverlayDialog | undefined {
         return this._openedDialog;
-    }
-
-    /**
-     * Sets dialog defaults provider to use.
-     *
-     * By default, uses {@link DefaultDialogDefaultsProvider}.
-     */
-    setDialogDefaultsProvider(provider: OverlayDialogDefaultsProvider): void {
-        this.dialogDefaultsProvider = provider;
     }
 
     /** @hidden */
@@ -376,18 +367,18 @@ export class OverlayController {
         );
 
         let styleWithDefaults = style;
-        const defaults = this.dialogDefaultsProvider.getDialogSize(openedDialog);
-        if (defaults) {
+        const sizeOverrides = this.dialogSettingsProvider.getDialogSize(openedDialog);
+        if (sizeOverrides) {
             styleWithDefaults = {
                 ...style,
-                defaultSize: defaults.defaultSize ?? style.defaultSize,
-                minSize: defaults.minSize ?? style.minSize,
-                maxSize: defaults.maxSize ?? style.maxSize,
+                defaultSize: sizeOverrides.defaultSize ?? style.defaultSize,
+                minSize: sizeOverrides.minSize ?? style.minSize,
+                maxSize: sizeOverrides.maxSize ?? style.maxSize,
             };
         }
 
         const onResize: DialogProps['onResize'] = size => {
-            this.dialogDefaultsProvider.persistDialogSize(openedDialog, size);
+            this.dialogSettingsProvider.persistDialogSize(openedDialog, size);
         };
         const onHide = () => this.hideDialog();
         if (target && !isSmallViewport) {
@@ -644,14 +635,14 @@ function getErrorMessage(error: unknown): string | undefined {
 }
 
 /**
- * Default dialog defaults provider which persists changed dialog size in-memory
+ * Default dialog settings provider which persists changed dialog size in-memory
  * for each {@link OverlayDialog.knownType}.
  *
  * Dialogs without {@link OverlayDialog.knownType} are ignored.
  *
  * @category Core
  */
-export class DefaultDialogDefaultsProvider implements OverlayDialogDefaultsProvider {
+export class DefaultDialogSettingsProvider implements DialogSettingsProvider {
     private lastDialogSize = new Map<OverlayDialogType, Size>();
 
     getDialogSize(
