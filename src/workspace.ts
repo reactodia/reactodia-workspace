@@ -162,7 +162,7 @@ export {
 } from './editor/observedElement';
 export {
     OverlayController, type OverlayControllerEvents, type OverlayTask, type OverlayDialog,
-    type OverlayDialogType, type OverlayDialogDefaultsProvider, DefaultDialogDefaultsProvider,
+    type OverlayDialogType, type DialogSettingsProvider, DefaultDialogSettingsProvider,
 } from './editor/overlayController';
 export {
     type SerializedDiagram, type SerializedLayout, type SerializedLinkOptions,
