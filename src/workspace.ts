@@ -161,7 +161,8 @@ export {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from './editor/observedElement';
 export {
-    OverlayController, type OverlayControllerEvents, type OverlayTask,
+    OverlayController, type OverlayControllerEvents, type OverlayTask, type OverlayDialog,
+    type OverlayDialogType, type OverlayDialogDefaultsProvider, DefaultDialogDefaultsProvider,
 } from './editor/overlayController';
 export {
     type SerializedDiagram, type SerializedLayout, type SerializedLinkOptions,

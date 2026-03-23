@@ -13,6 +13,7 @@ import { DraggableHandle } from './utility/draggableHandle';
 
 export interface DialogProps extends DialogStyleProps {
     target?: DialogTarget;
+    onResize?: (size: Size) => void;
     onHide: () => void;
     mode?: 'centered' | 'fillViewport';
     children: React.ReactNode;
@@ -336,7 +337,8 @@ export class Dialog extends React.Component<DialogProps, State> {
                         dock={dock === 'n' ? 'n' : 's'}
                         axis='y'
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandle}>
+                        onDragHandle={this.onDragHandle}
+                        onEndDragHandle={this.onEndDragHandle}>
                     </DraggableHandle>
                 ) : null}
                 {resizableBy === 'x' || resizableBy === 'all' ? (
@@ -344,7 +346,8 @@ export class Dialog extends React.Component<DialogProps, State> {
                         dock={dock === 'w' ? 'w' : 'e'}
                         axis='x'
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandle}>
+                        onDragHandle={this.onDragHandle}
+                        onEndDragHandle={this.onEndDragHandle}>
                     </DraggableHandle>
                 ): null}
                 {resizableBy === 'none' ? null : (
@@ -356,7 +359,8 @@ export class Dialog extends React.Component<DialogProps, State> {
                         }
                         axis={resizableBy}
                         onBeginDragHandle={this.onStartDragging}
-                        onDragHandle={this.onDragHandle}>
+                        onDragHandle={this.onDragHandle}
+                        onEndDragHandle={this.onEndDragHandle}>
                     </DraggableHandle>
                 )}
             </div>
@@ -379,6 +383,17 @@ export class Dialog extends React.Component<DialogProps, State> {
         const {onHide} = this.props;
         canvas.focus();
         onHide();
+    };
+
+    private onEndDragHandle = () => {
+        const {onResize} = this.props;
+        if (!onResize) {
+            return;
+        }
+        const {width, height} = this.getCurrentSize();
+        if (this.startSize && !(width === this.startSize.x && height === this.startSize.y)) {
+            onResize({width, height});
+        }
     };
 }
 
