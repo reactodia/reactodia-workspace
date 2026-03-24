@@ -100,7 +100,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                 )}
                 <WorkspaceLayoutItem id='canvas'>
                     <Canvas {...canvas}>
-                        <VisualAuthoring {...visualAuthoring} />
+                        {visualAuthoring ? <VisualAuthoring {...visualAuthoring} /> : null}
                         {annotations === null ? null : <AnnotationSupport {...annotations} />}
                         {connectionsMenu === null ? null : (
                             <ConnectionsMenu {...connectionsMenu} />

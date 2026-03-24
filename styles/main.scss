@@ -14,8 +14,11 @@
 @forward "editor/editRelationForm";
 @forward "editor/elementSelector";
 @forward "editor/loadingWidget";
-@forward "editor/propertyInput";
 @forward "editor/withFetchStatus";
+
+@forward "forms/inlineDiagnostic";
+@forward "forms/inputFile";
+@forward "forms/inputs";
 
 @forward "paper/paper";
 

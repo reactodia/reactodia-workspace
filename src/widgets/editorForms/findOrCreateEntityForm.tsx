@@ -1,15 +1,15 @@
 import * as React from 'react';
 
-import { type Translation, TranslatedText } from '../coreUtils/i18n';
+import { type Translation, TranslatedText } from '../../coreUtils/i18n';
 
-import { HtmlSpinner } from '../diagram/spinner';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { AuthoringState, TemporaryState } from '../editor/authoringState';
-import { EntityElement, RelationLink, changeEntityData } from '../editor/dataElements';
+import { AuthoringState, TemporaryState } from '../../editor/authoringState';
+import { EntityElement, RelationLink, changeEntityData } from '../../editor/dataElements';
 
-import { ProgressBar } from '../widgets/utility/progressBar';
+import { ProgressBar } from '../utility/progressBar';
 
-import { WorkspaceContext } from '../workspace/workspaceContext';
+import { WorkspaceContext } from '../../workspace/workspaceContext';
 
 import { ElementTypeSelector, ElementValue, validateElementType } from './elementTypeSelector';
 import {

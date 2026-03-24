@@ -96,6 +96,10 @@
       "types": "./dist/typings/workspace.d.ts",
       "import": "./dist/workspace.js"
     },
+    "./forms": {
+      "types": "./dist/typings/forms/index.d.ts",
+      "import": "./dist/forms.js"
+    },
     "./layout-sync": {
       "types": "./dist/typings/layout-sync.d.ts",
       "import": "./dist/layout-sync.js"
@@ -110,6 +114,9 @@
     }
   },
   "files": [
+    "dist/common",
+    "dist/forms.js",
+    "dist/forms.js.map",
     "dist/layout.worker.js",
     "dist/layout.worker.js.map",
     "dist/layout-sync.js",

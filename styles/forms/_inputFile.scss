@@ -1,0 +1,90 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-property-input-file {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 2px dashed theme.$border-color-base;
+
+  &[data-reactodia-drag-state="accept"] {
+    background-color: theme.$color-success-contrast-background;
+    border-color: theme.$color-success;
+  }
+
+  &[data-reactodia-drag-state="reject"] {
+    background-color: theme.$color-danger-contrast-background;
+    border-color: theme.$color-danger;
+  }
+
+  &__input {
+    display: none;
+  }
+
+  &__spinner {
+    flex: auto;
+    display: grid;
+    justify-content: center;
+  }
+
+  &__placeholder {
+    flex: auto;
+    text-align: center;
+  }
+
+  &__hint {
+    color: theme.$color-emphasis-600;
+    margin-bottom: 4px;
+  }
+
+  &__item {
+    border: theme.$border-width-base solid theme.$border-color-base;
+    border-radius: theme.$border-radius-s;
+    display: flex;
+    gap: 4px;
+    padding: 2px;
+    color: theme.$color-primary-contrast-foreground;
+  }
+
+  &__item-file {
+    @include codicon("file");
+    flex: 0 0 auto;
+    display: grid;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__item-image,
+  &__item-file {
+    width: 60px;
+    height: 60px;
+    background-color: theme.$color-primary-contrast-background;
+  }
+
+  &__item-properties {
+    flex: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  &__item-label {
+    font-weight: bold;
+  }
+
+  &__item-label,
+  &__item-property {
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  &__item-remove[class] {
+    @include codicon-button("trash");
+    align-self: stretch;
+    border: none;
+    padding: 6px 4px;
+  }
+}

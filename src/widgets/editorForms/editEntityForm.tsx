@@ -1,31 +1,34 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { useTranslation } from '../coreUtils/i18n';
-import { useAsync } from '../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
+import { useAsync } from '../../coreUtils/hooks';
 
-import { ElementModel, ElementIri, PropertyTypeIri } from '../data/model';
+import type { ElementModel, ElementIri, PropertyTypeIri } from '../../data/model';
 import type {
     MetadataProvider, MetadataCanModifyEntity, MetadataEntityShape, MetadataPropertyShape,
-} from '../data/metadataProvider';
+} from '../../data/metadataProvider';
 
-import { HtmlSpinner } from '../diagram/spinner';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { useWorkspace } from '../workspace/workspaceContext';
+import type { InputMultiUpdater, InputMultiProps } from '../../forms';
 
-import { type FormInputMultiUpdater } from './input/inputCommon';
-import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup';
+import { useWorkspace } from '../../workspace/workspaceContext';
+
+import type { PropertyEditorOptionsEntity } from '../visualAuthoring/visualAuthoring';
+
+import { InputGroup } from './inputGroup';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
 
-export function EditEntityForm(props: {
-    entity: ElementModel;
-    onApply: (entity: ElementModel) => void;
-    onCancel: () => void;
-    resolveInput: FormInputGroupProps['resolveInput'];
-}) {
-    const {entity, onApply, onCancel, resolveInput} = props;
+export interface DefaultEditEntityFormProps extends PropertyEditorOptionsEntity {
+    resolveInput: (property: PropertyTypeIri, inputProps: InputMultiProps) =>
+        React.ReactElement | null;
+}
+
+export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
+    const {elementData: entity, onSubmit, onCancel, resolveInput} = props;
     const {model, editor} = useWorkspace();
     const t = useTranslation();
 
@@ -40,7 +43,7 @@ export function EditEntityForm(props: {
     );
 
     const iriValues = React.useMemo(() => [model.factory.namedNode(data.id)], [data.id]);
-    const onChangeIri = React.useCallback((updater: FormInputMultiUpdater) => {
+    const onChangeIri = React.useCallback((updater: InputMultiUpdater) => {
         setData(previous => {
             const nextIriValues = updater([model.factory.namedNode(previous.id)]);
             if (nextIriValues.length === 0) {
@@ -53,7 +56,7 @@ export function EditEntityForm(props: {
 
     const onChangeProperty = React.useCallback((
         property: PropertyTypeIri,
-        updater: FormInputMultiUpdater
+        updater: InputMultiUpdater
     ): void => {
         setData(previous => {
             const properties = previous.properties;
@@ -93,16 +96,17 @@ export function EditEntityForm(props: {
                         updateValues: onChangeIri,
                         factory: model.factory,
                         readonly: !metadata.editable.canChangeIri,
+                        placeholder: t.text('visual_authoring.edit_entity.iri.placeholder'),
                     })}
                 </div>
-                <FormInputGroup className={`${CLASS_NAME}__properties`}
+                <InputGroup className={`${CLASS_NAME}__properties`}
                     languages={languages}
                     extraPropertyShape={metadata.shape.extraProperty}
                     propertyShapes={metadata.shape.properties}
                     propertyValues={data.properties}
                     onChangeData={onChangeProperty}
-                    resolveInput={resolveInput}
                     readonly={!metadata.editable.canEdit}
+                    resolveInput={resolveInput}
                 />
             </div>
             <div className={`${FORM_CLASS}__controls`}>
@@ -112,7 +116,7 @@ export function EditEntityForm(props: {
                         t.textOptional('visual_authoring.edit_entity.dialog.apply.title') ??
                         t.text('visual_authoring.dialog.apply.title')
                     }
-                    onClick={() => onApply(data)}>
+                    onClick={() => onSubmit(data)}>
                     {(
                         t.textOptional('visual_authoring.edit_entity.dialog.apply.label') ??
                         t.text('visual_authoring.dialog.apply.label')

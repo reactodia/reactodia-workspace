@@ -111,6 +111,13 @@
     "set_authoring_state.command": "Create, change or delete entities and relations",
     "validate_entity_failed.message": "Failed to validate entity"
   },
+  "forms": {
+    "input_file.drag_hint": "Drag files over or",
+    "input_file.remove_value.title": "Remove the file",
+    "input_file.select_files.label": "Select files",
+    "input_list.add_value.title": "Add new property value",
+    "input_list.remove_value.title": "Remove the property value"
+  },
   "group_paginator": {
     "current_page.label": "{{page}} of {{pageCount}}",
     "go_next.title": "Go to the next page",
@@ -277,6 +284,7 @@
     "edit_entity.dialog.apply.title": null,
     "edit_entity.dialog.caption": "Edit entity",
     "edit_entity.iri.label": "IRI",
+    "edit_entity.iri.placeholder": "Entity IRI",
     "edit_relation.dialog.apply.label": null,
     "edit_relation.dialog.apply.title": null,
     "edit_relation.dialog.caption": "Edit relation",
@@ -289,9 +297,7 @@
     "find_or_create.dialog.caption": "Establish New Connection",
     "find_or_create.loading.label": "Loading entity...",
     "find_or_create.validation_progress.title": "Validating selected element and link types",
-    "property.add_value.title": "Add new property value",
     "property.label": "{{property}}",
-    "property.remove_value.title": "Remove the property value",
     "property.text_value.placeholder": "Property value",
     "property.title": "{{property}} {{propertyIri}}",
     "rename_link.dialog.apply.label": null,

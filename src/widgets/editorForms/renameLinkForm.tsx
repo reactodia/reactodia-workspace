@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { useEventStore, useSyncStore } from '../coreUtils/hooks';
-import { useTranslation } from '../coreUtils/i18n';
+import { useEventStore, useSyncStore } from '../../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
 
-import { Link } from '../diagram/elements';
-import { RelationLink, RelationGroup } from '../editor/dataElements';
-import { useWorkspace } from '../workspace/workspaceContext';
+import { Link } from '../../diagram/elements';
+import { RelationLink, RelationGroup } from '../../editor/dataElements';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 const FORM_CLASS = 'reactodia-form';
 

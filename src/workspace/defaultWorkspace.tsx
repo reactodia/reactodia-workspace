@@ -101,7 +101,7 @@ export interface BaseDefaultWorkspaceProps {
     /**
      * Props for the {@link VisualAuthoring} context component.
      */
-    visualAuthoring?: Omit<VisualAuthoringProps, 'commands' | 'children'>;
+    visualAuthoring?: VisualAuthoringProps;
     /**
      * Props for the {@link ZoomControl} canvas widget.
      *
@@ -264,7 +264,7 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
     return (
         <WorkspaceRoot className={className} style={style} colorScheme={colorScheme}>
             <Canvas {...canvas}>
-                <VisualAuthoring {...visualAuthoring} />
+                {visualAuthoring ? <VisualAuthoring {...visualAuthoring} /> : null}
                 {annotations === null ? null : <AnnotationSupport {...annotations} />}
                 {connectionsMenu === null ? null : <ConnectionsMenu {...connectionsMenu} />}
                 {dropOnCanvas === null ? null : <DropOnCanvas {...dropOnCanvas} />}

@@ -1,28 +1,14 @@
 import * as React from 'react';
 
-import * as Rdf from '../../data/rdf/rdfModel';
-import { PropertyTypeIri } from '../../data/model';
+import type * as Rdf from '../../data/rdf/rdfModel';
+import type { PropertyTypeIri } from '../../data/model';
 
 import type { MetadataPropertyShape } from '../../data/metadataProvider';
 
 /**
- * Resolves an input component to edit a specific entity or relation property.
- *
- * If the resolver returns `undefined` then the default input will be used,
- * else if it returns `null` then the input will be hidden,
- * otherwise the returned input will be used.
- *
- * @see {@link VisualAuthoring.inputResolver}
- */
-export type FormInputOrDefaultResolver = (property: PropertyTypeIri, inputProps: FormInputMultiProps) =>
-    React.ReactElement | undefined | null;
-
-/**
  * Props for a property input accepting a single value to edit.
- *
- * @see {@link FormInputOrDefaultResolver}
  */
-export interface FormInputSingleProps {
+export interface InputSingleProps {
     /**
      * Property shape metadata.
      */
@@ -49,14 +35,16 @@ export interface FormInputSingleProps {
      * Whether the property input should be read-only (disabled).
      */
     readonly?: boolean;
+    /**
+     * Input placeholder text (if applicable).
+     */
+    placeholder?: string;
 }
 
 /**
  * Props for a property input accepting multiple values to edit.
- *
- * @see {@link FormInputOrDefaultResolver}
  */
-export interface FormInputMultiProps {
+export interface InputMultiProps {
     /**
      * Property shape metadata.
      */
@@ -74,7 +62,7 @@ export interface FormInputMultiProps {
     /**
      * Sets the current list (or set) of values for the edited property.
      */
-    updateValues: (updater: FormInputMultiUpdater) => void;
+    updateValues: (updater: InputMultiUpdater) => void;
     /**
      * RDF/JS-compatible term factory to create RDF terms.
      */
@@ -83,12 +71,22 @@ export interface FormInputMultiProps {
      * Whether the property input should be read-only (disabled).
      */
     readonly?: boolean;
+    /**
+     * Input placeholder text (if applicable).
+     */
+    placeholder?: string;
 }
+
+/**
+ * Resolves an input component to edit a specific entity or relation property.
+ */
+export type InputMultiResolver =
+    (property: PropertyTypeIri, inputProps: InputMultiProps) => React.ReactElement;
 
 /**
  * Pure function to update a previous set of property values into a new one.
  *
- * @see {@link FormInputMultiProps.updateValues}
+ * @see {@link InputMultiProps.updateValues}
  */
-export type FormInputMultiUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
+export type InputMultiUpdater = (previous: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>) =>
     ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;

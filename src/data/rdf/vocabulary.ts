@@ -46,7 +46,10 @@ const NAMESPACE_SCHEMA = 'http://schema.org/';
  */
 export const schema = {
     $namespace: NAMESPACE_SCHEMA,
+    encodingFormat: `${NAMESPACE_SCHEMA}encodingFormat`,
+    fileSize: `${NAMESPACE_SCHEMA}fileSize`,
     thumbnailUrl: `${NAMESPACE_SCHEMA}thumbnailUrl`,
+    uploadDate: `${NAMESPACE_SCHEMA}uploadDate`,
 } as const;
 
 const NAMESPACE_XSD = 'http://www.w3.org/2001/XMLSchema#';
@@ -57,5 +60,6 @@ const NAMESPACE_XSD = 'http://www.w3.org/2001/XMLSchema#';
  */
 export const xsd = {
     $namespace: NAMESPACE_XSD,
+    dateTime: `${NAMESPACE_XSD}dateTime`,
     string: `${NAMESPACE_XSD}string`,
 } as const;

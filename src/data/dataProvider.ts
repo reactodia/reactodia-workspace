@@ -240,7 +240,7 @@ export interface DataProviderLookupItem {
      */
     readonly element: ElementModel;
     /**
-     * Link types for connections in the form: `refElementId` <-- `element`
+     * Link types for connections in the form: `refElementId` ← `element`
      * ({@link DataProviderLookupParams.refElementId refElementId}).
      *
      * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}
@@ -248,7 +248,7 @@ export interface DataProviderLookupItem {
      */
     readonly inLinks: ReadonlySet<LinkTypeIri>;
     /**
-     * Link types for connections in the form: `refElementId` --> `element`
+     * Link types for connections in the form: `refElementId` → `element`
      * ({@link DataProviderLookupParams.refElementId refElementId}).
      *
      * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}

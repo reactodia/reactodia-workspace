@@ -31,6 +31,9 @@ export default defineConfig(({ command, mode }) => {
                         [example, resolve(__dirname, `./examples/${example}.html`)] as const
                     ))
                 },
+                output: {
+                    chunkFileNames: 'common/common-[hash].js',
+                },
             },
         },
         resolve: {
@@ -106,6 +109,7 @@ export default defineConfig(({ command, mode }) => {
                 lib: {
                     entry: {
                         'workspace': resolve(__dirname, './src/workspace'),
+                        'forms': resolve(__dirname, './src/forms/index'),
                         'layout-sync': resolve(__dirname, './src/layout-sync'),
                         'legacy-styles': resolve(__dirname, './src/legacy-styles'),
                         'layout.worker': resolve(__dirname, './src/layout.worker'),

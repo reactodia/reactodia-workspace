@@ -46,7 +46,7 @@ export interface WorkspaceContext {
     /**
      * Provides a translation for UI text strings.
      *
-     * @deprecated Use {@link useTranslation()} hook to get the {@link Translation} instead.
+     * **Note**: it is recommended to use {@link useTranslation()} hook instead when possible.
      */
     readonly translation: Translation;
     /**

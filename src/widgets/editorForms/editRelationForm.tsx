@@ -1,27 +1,29 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { useTranslation } from '../coreUtils/i18n';
-import { useAsync } from '../coreUtils/hooks';
+import { useTranslation } from '../../coreUtils/i18n';
+import { useAsync } from '../../coreUtils/hooks';
 
-import { ElementModel, LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../data/model';
-import type { MetadataProvider, MetadataRelationShape } from '../data/metadataProvider';
+import { ElementModel, LinkModel, PropertyTypeIri, equalLinks, equalProperties } from '../../data/model';
+import type { MetadataProvider, MetadataRelationShape } from '../../data/metadataProvider';
 
-import { HtmlSpinner } from '../diagram/spinner';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import { EntityElement, RelationLink } from '../editor/dataElements';
+import { EntityElement, RelationLink } from '../../editor/dataElements';
 
-import { ProgressBar } from '../widgets/utility/progressBar';
+import { ProgressBar } from '../utility/progressBar';
 
-import { useWorkspace } from '../workspace/workspaceContext';
+import type { InputMultiUpdater, InputMultiProps } from '../../forms';
 
+import { useWorkspace } from '../../workspace/workspaceContext';
+
+import type { PropertyEditorOptionsRelation } from '../visualAuthoring/visualAuthoring';
+
+import { InputGroup } from './inputGroup';
 import {
     LinkTypeSelector, type ValidatedLink,
     dataFromExtendedLink, relationFromExtendedLink, validateLinkType,
 } from './linkTypeSelector';
-
-import { type FormInputMultiUpdater } from './input/inputCommon';
-import { FormInputGroup, type FormInputGroupProps } from './input/formInputGroup';
 
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-relation-form';
@@ -190,15 +192,15 @@ function RelationEditorInner(props: {
     );
 }
 
-export interface DefaultEditRelationFormProps extends RelationEditorProvidedProps {
-    closeDialog: () => void;
-    resolveInput: FormInputGroupProps['resolveInput'];
+export interface DefaultEditRelationFormProps extends PropertyEditorOptionsRelation {
+    resolveInput: (property: PropertyTypeIri, inputProps: InputMultiProps) =>
+        React.ReactElement | null;
 }
 
 export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
     const {
         status, linkData, linkSource, linkTarget,
-        updateData, applyChanges, closeDialog, resolveInput,
+        onSubmit, onUpdate, onCancel, resolveInput,
     } = props;
     const {editor} = useWorkspace();
     const t = useTranslation();
@@ -212,9 +214,9 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
 
     const onChangeProperty = (
         property: PropertyTypeIri,
-        updater: FormInputMultiUpdater
+        updater: InputMultiUpdater
     ): void => {
-        updateData(previous => {
+        onUpdate(previous => {
             const {properties} = previous;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
@@ -225,11 +227,6 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
             }
             return {...previous, properties: nextProperties};
         });
-    };
-
-    const onApply = () => {
-        applyChanges();
-        closeDialog();
     };
 
     return (
@@ -243,7 +240,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
                         />
                     </div>
                 ) : metadata.shape ? (
-                    <FormInputGroup className={`${CLASS_NAME}__properties`}
+                    <InputGroup className={`${CLASS_NAME}__properties`}
                         languages={languages}
                         extraPropertyShape={metadata.shape.extraProperty}
                         propertyShapes={metadata.shape.properties}
@@ -255,7 +252,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
             </div>
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                    onClick={onApply}
+                    onClick={() => onSubmit(linkData)}
                     disabled={status !== 'ok'}
                     title={
                         t.textOptional('visual_authoring.edit_relation.dialog.apply.title') ??
@@ -267,7 +264,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
                     )}
                 </button>
                 <button className='reactodia-btn reactodia-btn-secondary'
-                    onClick={closeDialog}
+                    onClick={onCancel}
                     title={t.text('visual_authoring.dialog.cancel.title')}>
                     {t.text('visual_authoring.dialog.cancel.label')}
                 </button>

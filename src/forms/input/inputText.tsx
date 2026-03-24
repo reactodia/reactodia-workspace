@@ -1,33 +1,25 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { useTranslation } from '../../coreUtils/i18n';
+import type * as Rdf from '../../data/rdf/rdfModel';
+import { rdf } from '../../data/rdf/vocabulary';
 
-import * as Rdf from '../../data/rdf/rdfModel';
-import { rdf, xsd } from '../../data/rdf/vocabulary';
-
-import { type FormInputSingleProps } from './inputCommon';
+import type { InputSingleProps } from './inputCommon';
 
 const CLASS_NAME = 'reactodia-property-input-text';
 
 /**
- * Props for {@link FormInputText} component.
+ * Props for {@link InputText} component.
  *
- * @see {@link FormInputText}
+ * @see {@link InputText}
  */
-export interface FormInputTextProps extends FormInputSingleProps {
+export interface InputTextProps extends InputSingleProps {
     /**
      * Whether to use multiline `textarea` to display and edit the text value.
      *
      * @default false
      */
     multiline?: boolean;
-    /**
-     * Placeholder text for the form input.
-     *
-     * @default "Property value"
-     */
-    placeholder?: string;
 }
 
 /**
@@ -38,14 +30,14 @@ export interface FormInputTextProps extends FormInputSingleProps {
  * will be displayed as well.
  *
  * **Unstable**: this component will likely change in the future.
+ *
+ * @category Components
  */
-export function FormInputText(props: FormInputTextProps) {
+export function InputText(props: InputTextProps) {
     const {
         shape: {valueShape}, languages, value: term, setValue, factory, readonly,
         multiline, placeholder,
     } = props;
-
-    const t = useTranslation();
 
     const Component = multiline ? 'textarea' : 'input';
     const hasLanguageSelector = valueShape.termType === 'Literal' && (
@@ -58,7 +50,7 @@ export function FormInputText(props: FormInputTextProps) {
         <>
             <Component name='reactodia-text-property-input'
                 className={cx('reactodia-form-control', CLASS_NAME)}
-                placeholder={placeholder ?? t.text('visual_authoring.property.text_value.placeholder')}
+                placeholder={placeholder}
                 value={term.value}
                 onChange={e => {
                     const changedValue = e.currentTarget.value;
