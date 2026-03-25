@@ -6,7 +6,7 @@ import {
 } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
 
-import type { ElementModel, LinkModel } from '../../data/model';
+import type { ElementModel } from '../../data/model';
 import { useCanvas } from '../../diagram/canvasApi';
 import { Link } from '../../diagram/elements';
 import { useLayerDebouncedStore } from '../../diagram/renderingState';
@@ -18,7 +18,6 @@ import { EntityElement, RelationLink } from '../../editor/dataElements';
 import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { RelationEditor } from '../editorForms/editRelationForm';
 import { FindOrCreateEntityForm } from '../editorForms/findOrCreateEntityForm';
 
 import { AuthoredEntityDecorator } from './authoredEntityDecorator';
@@ -68,20 +67,13 @@ export interface PropertyEditorOptionsEntity {
      */
     readonly type: 'entity';
     /**
-     * Target entity data to edit.
+     * Target entity element to edit.
      */
-    readonly elementData: ElementModel;
+    readonly target: EntityElement;
     /**
-     * Handler to submit changed entity data.
-     *
-     * Changed data may have a different entity IRI ({@link ElementModel.id})
-     * in case when the entity identity needs to be changed.
+     * Handler to close the editor after editing is finished or cancelled.
      */
-    readonly onSubmit: (newData: ElementModel) => void;
-    /**
-     * Handler to abort changing the entity, discarding the operation.
-     */
-    readonly onCancel: () => void;
+    readonly onClose: () => void;
 }
 
 /**
@@ -95,41 +87,17 @@ export interface PropertyEditorOptionsRelation {
      */
     readonly type: 'relation';
     /**
-     * Relation editor status:
-     *  - `ok`: relation is valid and ready to be submitted;
-     *  - `validating`: relation is checked whether it can be created or changed
-     *    to the selected type;
-     *  - `invalid`: relation cannot be created or changed to the selected type.
+     * Target relation link to edit.
      */
-    readonly status: 'ok' | 'validating' | 'invalid';
+    readonly target: RelationLink;
     /**
-     * Current relation data to edit.
+     * Handler to re-open the editor for the new link with changed endpoints.
      */
-    readonly linkData: LinkModel;
+    readonly onChangeTarget: (newLink: RelationLink) => void;
     /**
-     * Data for the current relation source.
+     * Handler to close the editor after editing is finished or cancelled.
      */
-    readonly linkSource: ElementModel;
-    /**
-     * Data for the current relation target.
-     */
-    readonly linkTarget: ElementModel;
-    /**
-     * Handler to update current relation data in the property editor.
-     *
-     * **Note**: only relation properties can be changed via `updater`.
-     */
-    readonly onUpdate: (updater: (previous: LinkModel) => LinkModel) => void;
-    /**
-     * Handler to submit final relation data to change it.
-     *
-     * **Note**: only relation properties can be changed from `newData`.
-     */
-    readonly onSubmit: (newData: LinkModel) => void;
-    /**
-     * Handler to abort changing the relation, discarding the operation.
-     */
-    readonly onCancel: () => void;
+    readonly onClose: () => void;
 }
 
 /**
@@ -222,24 +190,18 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
         const listener = new EventObserver();
 
         listener.listen(commands, 'editEntity', ({target}) => {
-            const targetData = target instanceof EntityElement ? target.data : target;
-            let dataWithNewIri = targetData;
-            const event = editor.authoringState.elements.get(targetData.id);
-            if (event && event.type == 'entityChange' && event.newIri) {
-                dataWithNewIri = {...dataWithNewIri, id: event.newIri};
+            let editorTarget: EntityElement;
+            if (target instanceof EntityElement) {
+                editorTarget = target;
+            } else {
+                // Use "virtual" target which is not on the canvas
+                editorTarget = new EntityElement({data: target});
             }
-
-            const onSubmit = (newData: ElementModel) => {
-                overlay.hideDialog();
-                editor.changeEntity(targetData, newData);
-            };
-            const onCancel = () => overlay.hideDialog();
 
             const content = propertyEditor({
                 type: 'entity',
-                elementData: dataWithNewIri,
-                onSubmit,
-                onCancel,
+                target: editorTarget,
+                onClose: () => overlay.hideDialog(),
             });
 
             overlay.showDialog({
@@ -289,33 +251,19 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             const caption = editor.temporaryState.links.has(link.data)
                 ? t.text('visual_authoring.edit_relation.dialog.caption_new')
                 : t.text('visual_authoring.edit_relation.dialog.caption');
-            const content = (
-                <RelationEditor relation={link}
-                    onChangeTarget={newTarget => {
-                        // Close current dialog before opening a new one to avoid
-                        // target temporary link removal
-                        overlay.hideDialog();
-                        commands.trigger('editRelation', {target: newTarget});
-                    }}>
-                    {providedProps => {
-                        const closeDialog = () => overlay.hideDialog();
-                        return propertyEditor({
-                            type: 'relation',
-                            status: providedProps.status,
-                            linkData: providedProps.linkData,
-                            linkSource: providedProps.linkSource,
-                            linkTarget: providedProps.linkTarget,
-                            onUpdate: providedProps.updateData,
-                            onSubmit: newData => {
-                                providedProps.updateData(() => newData);
-                                providedProps.applyChanges();
-                                closeDialog();
-                            },
-                            onCancel: closeDialog,
-                        });
-                    }}
-                </RelationEditor>
-            );
+
+            const content = propertyEditor({
+                type: 'relation',
+                target: link,
+                onChangeTarget: newTarget => {
+                    // Close current dialog before opening a new one to avoid
+                    // target temporary link removal
+                    overlay.hideDialog();
+                    commands.trigger('editRelation', {target: newTarget});
+                },
+                onClose: () => overlay.hideDialog(),
+            });
+
             overlay.showDialog({
                 target: link,
                 dialogType: BuiltinDialogType.editRelation,

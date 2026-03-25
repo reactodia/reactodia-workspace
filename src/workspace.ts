@@ -238,6 +238,12 @@ export {
 export {
     DefaultPropertyEditor, type DefaultPropertyEditorProps, type PropertyEditorResolveInput,
 } from './widgets/editorForms/defaultPropertyEditor';
+export {
+    EntityEditor, type EntityEditorProvidedProps,
+} from './widgets/editorForms/editEntityForm';
+export {
+    RelationEditor, type RelationEditorProvidedProps, RelationTypeSelector,
+} from './widgets/editorForms/editRelationForm';
 export { Halo, type HaloProps } from './widgets/halo';
 export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {

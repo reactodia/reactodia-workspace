@@ -10,6 +10,8 @@ import type {
 } from '../../data/metadataProvider';
 
 import { HtmlSpinner } from '../../diagram/spinner';
+import { AuthoredEntity } from '../../editor/authoringState';
+import { EntityElement } from '../../editor/dataElements';
 
 import type { InputMultiUpdater, InputMultiProps } from '../../forms';
 
@@ -22,20 +24,101 @@ import { InputGroup } from './inputGroup';
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-entity-form';
 
+/**
+ * State provided by {@link EntityEditor} to nested components.
+ */
+export interface EntityEditorProvidedProps {
+    /**
+     * Current (draft) entity data to edit.
+     */
+    data: ElementModel;
+    /**
+     * Handler to update current entity data in the property editor.
+     */
+    updateData: (update: (previous: ElementModel) => ElementModel) => void;
+    /**
+     * Handler to apply changes to the entity, including changes
+     * from calling {@link updateData}.
+     */
+    applyChanges: () => void;
+}
+
+/**
+ * Component which allows to build an entity editor by using provided state
+ * and callbacks to the nested components.
+ *
+ * `target` is an {@link EntityElement} on the canvas or one which
+ * was created but not placed on the canvas yet.
+ *
+ * @category Components
+ */
+export function EntityEditor(props: {
+    /**
+     * Target entity element to edit.
+     */
+    target: EntityElement;
+    /**
+     * Render function to make an editor UI using provided state.
+     */
+    children: (props: EntityEditorProvidedProps) => React.ReactNode;
+}) {
+    const {target, children} = props;
+    const {editor} = useWorkspace();
+    const initialEvent = editor.authoringState.elements.get(target.data.id);
+    const [data, setData] = React.useState(computeChangedEntityData(target.data, initialEvent));
+    React.useEffect(() => {
+        const latestEvent = editor.authoringState.elements.get(target.data.id);
+        setData(computeChangedEntityData(target.data, latestEvent));
+    }, [target]);
+    return children({
+        data,
+        updateData: setData,
+        applyChanges: () => {
+            editor.changeEntity(target.data, data);
+        },
+    });
+}
+
+function computeChangedEntityData(data: ElementModel, event: AuthoredEntity | undefined): ElementModel {
+    if (event && event.type == 'entityChange' && event.newIri) {
+        return {...data, id: event.newIri};
+    }
+    return data;
+}
+
 export interface DefaultEditEntityFormProps extends PropertyEditorOptionsEntity {
     resolveInput: (property: PropertyTypeIri, inputProps: InputMultiProps) =>
         React.ReactElement | null;
 }
 
 export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
-    const {elementData: entity, onSubmit, onCancel, resolveInput} = props;
+    const {target, resolveInput, onClose} = props;
+    return (
+        <EntityEditor target={target}>
+            {providedProps => (
+                <EditEntityProperties {...providedProps}
+                    originalData={target.data}
+                    resolveInput={resolveInput}
+                    onClose={onClose}
+                />
+            )}
+        </EntityEditor>
+    );
+}
+
+interface EditEntityPropertiesProps extends EntityEditorProvidedProps {
+    originalData: ElementModel;
+    resolveInput: (property: PropertyTypeIri, inputProps: InputMultiProps) =>
+        React.ReactElement | null;
+    onClose: () => void;
+}
+
+function EditEntityProperties(props: EditEntityPropertiesProps) {
+    const {
+        originalData: entity, data, updateData, applyChanges, onClose, resolveInput,
+    } = props;
     const {model, editor} = useWorkspace();
     const t = useTranslation();
-
-    const [data, setData] = React.useState(entity);
-    React.useEffect(() => {
-        setData(entity);
-    }, [entity]);
 
     const [metadata, metadataError] = useEntityMetadata(editor.metadataProvider, entity);
     const languages = React.useMemo(
@@ -44,7 +127,7 @@ export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
 
     const iriValues = React.useMemo(() => [model.factory.namedNode(data.id)], [data.id]);
     const onChangeIri = React.useCallback((updater: InputMultiUpdater) => {
-        setData(previous => {
+        updateData(previous => {
             const nextIriValues = updater([model.factory.namedNode(previous.id)]);
             if (nextIriValues.length === 0) {
                 return previous;
@@ -58,7 +141,7 @@ export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
         property: PropertyTypeIri,
         updater: InputMultiUpdater
     ): void => {
-        setData(previous => {
+        updateData(previous => {
             const properties = previous.properties;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
@@ -116,7 +199,10 @@ export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
                         t.textOptional('visual_authoring.edit_entity.dialog.apply.title') ??
                         t.text('visual_authoring.dialog.apply.title')
                     }
-                    onClick={() => onSubmit(data)}>
+                    onClick={() => {
+                        applyChanges();
+                        onClose();
+                    }}>
                     {(
                         t.textOptional('visual_authoring.edit_entity.dialog.apply.label') ??
                         t.text('visual_authoring.dialog.apply.label')
@@ -125,7 +211,7 @@ export function DefaultEditEntityForm(props: DefaultEditEntityFormProps) {
                 <button type='button'
                     className='reactodia-btn reactodia-btn-secondary'
                     title={t.text('visual_authoring.dialog.cancel.title')}
-                    onClick={onCancel}>
+                    onClick={onClose}>
                     {t.text('visual_authoring.dialog.cancel.label')}
                 </button>
             </div>
