@@ -1,5 +1,7 @@
-Reactodia Workspace -- library for visual interaction with graph data in a form of a diagram. 
-Copyright (C) 2025 Alexey Morozov (https://github.com/AlexeyMz)
+Reactodia Workspace -- library for visual interaction with graph data in a form of a diagram.
+
+Copyright (C) 2026 Alexey Morozov (https://github.com/AlexeyMz)
+
 Copyright (C) 2019 metaphacts GmbH.
 
 This library is free software; you can redistribute it and/or
