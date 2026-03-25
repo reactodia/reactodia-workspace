@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Allow to select multiple elements with `Selection` with touch when `CanvasApi.pointerMode` is `selection`;
   * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
   * Allow to move link source or target with `LinkActionMoveEndpoint` on touchscreen;
+  * Make `ZoomOptions.requireCtrl` default to `false` to zoom without holding `Ctrl` i.e. like on a map.
   * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
 - **[💥Breaking]** Extend and make optional built-in property editing form support:
   * Extract property editor inputs into separate entry point `@reactodia/workspace/forms` to be able to use external forms implementation without always bundling the built-in one;
