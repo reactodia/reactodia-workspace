@@ -413,10 +413,10 @@ export interface ZoomOptions {
      * with the mouse wheel.
      *
      * If `true`, the mouse wheel will be used to scroll viewport
-     * horizontally or vertically if `Shift` is held;
+     * horizontally (or vertically if `Shift` is held);
      * otherwise the wheel action will be inverted.
      *
-     * @default true
+     * @default false
      */
     requireCtrl?: boolean;
 }

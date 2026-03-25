@@ -471,6 +471,7 @@ class CanvasController implements CanvasApi {
         return this.isEventFromCellLayer(e) && target instanceof Node && (
             this.paper.root === target ||
             this.paper.pane === target ||
+            this.paper.pane?.firstChild === target ||
             (
                 !hasScrollableParent(target, this.linkLayer.current) &&
                 !hasScrollableParent(target, this.labelLayer.current) &&
@@ -512,6 +513,7 @@ class CanvasController implements CanvasApi {
         return target instanceof Node && Boolean(
             this.paper.root === target ||
             this.paper.pane === target ||
+            this.paper.pane?.firstChild === target ||
             this.linkLayer.current?.contains(target) ||
             this.labelLayer.current?.contains(target) ||
             this.elementLayer.current?.contains(target)
@@ -676,7 +678,7 @@ function zoomOptionsWithDefaults(zoomOptions: ZoomOptions = {}): Required<ZoomOp
         maxFit: zoomOptions.maxFit ?? 1,
         step: zoomOptions.step ?? 0.1,
         fitPadding: zoomOptions.fitPadding ?? 20,
-        requireCtrl: zoomOptions.requireCtrl ?? true,
+        requireCtrl: zoomOptions.requireCtrl ?? false,
     };
 }
 
