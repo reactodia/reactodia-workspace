@@ -1,21 +1,21 @@
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
-import { useObservedProperty, useAsync } from '../coreUtils/hooks';
-import { useTranslation, type Translation } from '../coreUtils/i18n';
-import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+import { mapAbortedToNull } from '../../coreUtils/async';
+import { useObservedProperty, useAsync } from '../../coreUtils/hooks';
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
+import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
-import type { MetadataProvider } from '../data/metadataProvider';
-import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../data/model';
-import { PlaceholderRelationType } from '../data/schema';
+import type { MetadataProvider } from '../../data/metadataProvider';
+import { ElementModel, LinkModel, LinkDirection, LinkTypeIri, equalLinks, LinkKey } from '../../data/model';
+import { PlaceholderRelationType } from '../../data/schema';
 
-import { HtmlSpinner } from '../diagram/spinner';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement, RelationLink, iterateRelationsOf } from '../editor/dataElements';
-import { subscribeLinkTypes } from '../editor/observedElement';
+import type { DataDiagramModel } from '../../editor/dataDiagramModel';
+import { EntityElement, RelationLink, iterateRelationsOf } from '../../editor/dataElements';
+import { subscribeLinkTypes } from '../../editor/observedElement';
 
-import { useWorkspace, WorkspaceContext } from '../workspace/workspaceContext';
+import { useWorkspace, WorkspaceContext } from '../../workspace/workspaceContext';
 
 export interface ExtendedLink {
     base: Omit<LinkModel, 'sourceId' | 'targetId'>;

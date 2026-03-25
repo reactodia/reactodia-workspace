@@ -1,29 +1,29 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { mapAbortedToNull } from '../coreUtils/async';
-import { EventObserver } from '../coreUtils/events';
-import { useObservedProperty } from '../coreUtils/hooks';
-import { useTranslation, type Translation } from '../coreUtils/i18n';
-import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
+import { mapAbortedToNull } from '../../coreUtils/async';
+import { EventObserver } from '../../coreUtils/events';
+import { useObservedProperty } from '../../coreUtils/hooks';
+import { useTranslation, type Translation } from '../../coreUtils/i18n';
+import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
-import { PlaceholderEntityType } from '../data/schema';
-import type { ElementModel, ElementTypeIri } from '../data/model';
-import type { DataProviderLookupItem } from '../data/dataProvider';
-import type { MetadataCreatedEntity } from '../data/metadataProvider';
+import { PlaceholderEntityType } from '../../data/schema';
+import type { ElementModel, ElementTypeIri } from '../../data/model';
+import type { DataProviderLookupItem } from '../../data/dataProvider';
+import type { MetadataCreatedEntity } from '../../data/metadataProvider';
 
-import { HtmlSpinner } from '../diagram/spinner';
+import { HtmlSpinner } from '../../diagram/spinner';
 
-import type { DataDiagramModel } from '../editor/dataDiagramModel';
-import { EntityElement } from '../editor/dataElements';
-import { subscribeElementTypes } from '../editor/observedElement';
+import type { DataDiagramModel } from '../../editor/dataDiagramModel';
+import { EntityElement } from '../../editor/dataElements';
+import { subscribeElementTypes } from '../../editor/observedElement';
 
-import { ListElementView } from '../widgets/utility/listElementView';
-import { NoSearchResults } from '../widgets/utility/noSearchResults';
-import { SearchInput, SearchInputStore, useSearchInputStore } from '../widgets/utility/searchInput';
-import { createRequest } from '../widgets/instancesSearch';
+import { ListElementView } from '../utility/listElementView';
+import { NoSearchResults } from '../utility/noSearchResults';
+import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
+import { createRequest } from '../instancesSearch';
 
-import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
+import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
 export interface ElementTypeSelectorProps {
     source: ElementModel;

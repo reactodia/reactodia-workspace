@@ -11,27 +11,25 @@ import type { MetadataPropertyShape } from '../../data/metadataProvider';
 import { subscribePropertyTypes } from '../../editor/observedElement';
 import { WithFetchStatus } from '../../editor/withFetchStatus';
 
-import { useWorkspace } from '../../workspace/workspaceContext';
+import type { InputMultiUpdater, InputMultiProps } from '../../forms';
 
-import {
-    type FormInputMultiUpdater, type FormInputMultiProps,
-} from './inputCommon';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 const FORM_CLASS = 'reactodia-form';
 
-export interface FormInputGroupProps {
+export interface InputGroupProps {
     className?: string;
     languages: ReadonlyArray<string>;
+    readonly?: boolean;
     propertyShapes: ReadonlyMap<PropertyTypeIri, MetadataPropertyShape>;
     extraPropertyShape?: MetadataPropertyShape;
     propertyValues: { readonly [id: string]: ReadonlyArray<Rdf.NamedNode | Rdf.Literal> };
-    onChangeData: (property: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
-    resolveInput: (property: PropertyTypeIri, props: FormInputMultiProps) =>
+    onChangeData: (property: PropertyTypeIri, updater: InputMultiUpdater) => void;
+    resolveInput: (property: PropertyTypeIri, props: InputMultiProps) =>
         React.ReactElement | null;
-    readonly?: boolean;
 }
 
-export function FormInputGroup(props: FormInputGroupProps) {
+export function InputGroup(props: InputGroupProps) {
     const {
         className, languages, propertyShapes, extraPropertyShape, propertyValues,
         onChangeData, resolveInput, readonly,
@@ -120,16 +118,18 @@ function Property(props: {
     shape: MetadataPropertyShape;
     languages: ReadonlyArray<string>;
     values: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-    onChange: (iri: PropertyTypeIri, updater: FormInputMultiUpdater) => void;
-    factory: Rdf.DataFactory;
-    resolveInput: FormInputGroupProps['resolveInput'];
+    onChange: (iri: PropertyTypeIri, updater: InputMultiUpdater) => void;
     readonly: boolean;
+    factory: Rdf.DataFactory;
+    resolveInput: Exclude<InputGroupProps['resolveInput'], undefined>;
 }) {
-    const {iri, label, shape, languages, values, onChange, factory, resolveInput} = props;
+    const {
+        iri, label, shape, languages, values, onChange, readonly, factory, resolveInput,
+    } = props;
     const {model} = useWorkspace();
     const t = useTranslation();
 
-    const updateValues = React.useCallback((updater: FormInputMultiUpdater) => {
+    const updateValues = React.useCallback((updater: InputMultiUpdater) => {
         onChange(iri, updater);
     }, [iri, onChange]);
 
@@ -139,6 +139,8 @@ function Property(props: {
         values,
         updateValues,
         factory,
+        readonly,
+        placeholder: t.text('visual_authoring.property.text_value.placeholder'),
     });
     if (!input) {
         return null;

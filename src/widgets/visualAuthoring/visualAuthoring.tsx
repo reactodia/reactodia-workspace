@@ -15,15 +15,11 @@ import { AuthoringState } from '../../editor/authoringState';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
 import { EntityElement, RelationLink } from '../../editor/dataElements';
 
-import { FormInputList } from '../../forms/input/formInputList';
-import { FormInputText } from '../../forms/input/formInputText';
-import type { FormInputOrDefaultResolver } from '../../forms/input/inputCommon';
-import { RelationEditor, DefaultEditRelationForm } from '../../forms/editRelationForm';
-import { EditEntityForm } from '../../forms/editEntityForm';
-import { FindOrCreateEntityForm } from '../../forms/findOrCreateEntityForm';
-
 import { VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
+
+import { RelationEditor } from '../editorForms/editRelationForm';
+import { FindOrCreateEntityForm } from '../editorForms/findOrCreateEntityForm';
 
 import { AuthoredEntityDecorator } from './authoredEntityDecorator';
 import { AuthoredRelationOverlay } from './authoredRelationOverlay';
@@ -36,15 +32,11 @@ import { DragEditLayer, DragEditOperation } from './dragEditLayer';
  */
 export interface VisualAuthoringProps {
     /**
-     * Overrides default property editor for elements and links in the graph authoring mode.
-     */
-    propertyEditor?: PropertyEditor;
-    /**
-     * Overrides default input for a specific entity or relation property.
+     * Provides property editor for elements and links in the graph authoring mode.
      *
-     * **Unstable**: this feature will likely change in the future.
+     * @see {@link DefaultPropertyEditor}
      */
-    inputResolver?: FormInputOrDefaultResolver;
+    propertyEditor: PropertyEditor;
     /**
      * Whether to display inline authoring actions (edit, delete) on entity elements.
      *
@@ -54,11 +46,11 @@ export interface VisualAuthoringProps {
 }
 
 /**
- * Provides custom editor for the entity or relation data:
- *  - for `undefined` return value the default editor will be used;
- *  - otherwise the inline dialog will display the provided editor.
+ * Provides editor for the entity or relation data.
+ *
+ * @see {@link VisualAuthoringProps.propertyEditor}
  */
-export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement | undefined;
+export type PropertyEditor = (options: PropertyEditorOptions) => React.ReactElement;
 
 /**
  * Parameters for {@link PropertyEditor}.
@@ -89,7 +81,7 @@ export interface PropertyEditorOptionsEntity {
     /**
      * Handler to abort changing the entity, discarding the operation.
      */
-    readonly onCancel?: () => void;
+    readonly onCancel: () => void;
 }
 
 /**
@@ -137,7 +129,7 @@ export interface PropertyEditorOptionsRelation {
     /**
      * Handler to abort changing the relation, discarding the operation.
      */
-    readonly onCancel?: () => void;
+    readonly onCancel: () => void;
 }
 
 /**
@@ -207,7 +199,7 @@ export interface VisualAuthoringCommands {
  * @category Components
  */
 export function VisualAuthoring(props: VisualAuthoringProps) {
-    const {propertyEditor, inputResolver, inlineEntityActions = true} = props;
+    const {propertyEditor, inlineEntityActions = true} = props;
     const {model, editor, overlay, getCommandBus} = useWorkspace();
     const t = useTranslation();
 
@@ -243,25 +235,12 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
             };
             const onCancel = () => overlay.hideDialog();
 
-            let content = propertyEditor?.({
+            const content = propertyEditor({
                 type: 'entity',
                 elementData: dataWithNewIri,
                 onSubmit,
                 onCancel,
             });
-            if (content === undefined) {
-                content = (
-                    <EditEntityForm
-                        entity={dataWithNewIri}
-                        onApply={onSubmit}
-                        onCancel={onCancel}
-                        resolveInput={(property, inputProps) => {
-                            const input = inputResolver?.(property, inputProps);
-                            return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
-                        }}
-                    />
-                );
-            }
 
             overlay.showDialog({
                 target: target instanceof EntityElement ? target : undefined,
@@ -320,7 +299,7 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                     }}>
                     {providedProps => {
                         const closeDialog = () => overlay.hideDialog();
-                        const editor = propertyEditor?.({
+                        return propertyEditor({
                             type: 'relation',
                             status: providedProps.status,
                             linkData: providedProps.linkData,
@@ -334,15 +313,6 @@ export function VisualAuthoring(props: VisualAuthoringProps) {
                             },
                             onCancel: closeDialog,
                         });
-                        return editor ?? (
-                            <DefaultEditRelationForm {...providedProps}
-                                closeDialog={closeDialog}
-                                resolveInput={(property, inputProps) => {
-                                    const input = inputResolver?.(property, inputProps);
-                                    return input ?? <FormInputList {...inputProps} valueInput={FormInputText} />;
-                                }}
-                            />
-                        );
                     }}
                 </RelationEditor>
             );

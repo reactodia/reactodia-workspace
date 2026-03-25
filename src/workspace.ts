@@ -169,15 +169,9 @@ export {
     type SerializedElement, type SerializableElementCell, type ElementFromJsonOptions,
     type SerializedLink, type SerializableLinkCell, type LinkFromJsonOptions,
 } from './editor/serializedDiagram';
+export { useProvidedEntities, type UseProvidedEntitiesResult } from './editor/useProvidedEntities';
 export { ValidationState, type ElementValidation, type LinkValidation } from './editor/validation';
 export { WithFetchStatus, type WithFetchStatusProps } from './editor/withFetchStatus';
-
-export type {
-    FormInputSingleProps, FormInputMultiProps, FormInputMultiUpdater,
-    FormInputOrDefaultResolver,
-} from './forms/input/inputCommon';
-export { FormInputList, type FormInputListProps } from './forms/input/formInputList';
-export { FormInputText, type FormInputTextProps } from './forms/input/formInputText';
 
 export { animateInterval } from './paper/animateInterval';
 export {
@@ -241,6 +235,9 @@ export {
     DropOnCanvas, type DropOnCanvasProps, type DropOnCanvasItem, type DropItemElement,
     defaultGetDroppedOnCanvasItems,
 } from './widgets/dropOnCanvas';
+export {
+    DefaultPropertyEditor, type DefaultPropertyEditorProps, type PropertyEditorResolveInput,
+} from './widgets/editorForms/defaultPropertyEditor';
 export { Halo, type HaloProps } from './widgets/halo';
 export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {

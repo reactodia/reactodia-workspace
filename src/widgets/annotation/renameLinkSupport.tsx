@@ -5,10 +5,11 @@ import { useTranslation } from '../../coreUtils/i18n';
 
 import { Size } from '../../diagram/geometry';
 import { BuiltinDialogType } from '../../editor/builtinDialogType';
-import { RenameLinkForm } from '../../forms/renameLinkForm';
 
 import { AnnotationTopic, VisualAuthoringTopic } from '../../workspace/commandBusTopic';
 import { useWorkspace } from '../../workspace/workspaceContext';
+
+import { RenameLinkForm } from '../editorForms/renameLinkForm';
 
 import type { AnnotationCommands } from './annotationSupport';
 

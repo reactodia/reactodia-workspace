@@ -1,0 +1,41 @@
+@use "../theme/theme";
+
+.reactodia-inline-diagnostic {
+  &__icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-right: 2px;
+  }
+
+  &[data-reactodia-severity="info"] {
+    color: theme.$color-info;
+  }
+
+  &[data-reactodia-severity="info"] &__icon {
+    background: theme.$color-info;
+    -webkit-mask-image: url("@codicons/info.svg");
+    mask-image: url("@codicons/info.svg");
+  }
+
+  &[data-reactodia-severity="warning"] {
+    color: theme.$color-warning;
+  }
+
+  &[data-reactodia-severity="warning"] &__icon {
+    background: theme.$color-warning;
+    -webkit-mask-image: url("@codicons/warning.svg");
+    mask-image: url("@codicons/warning.svg");
+  }
+
+  &[data-reactodia-severity="error"] {
+    color: theme.$color-danger;
+  }
+
+  &[data-reactodia-severity="error"] &__icon {
+    background: theme.$color-danger;
+    -webkit-mask-image: url("@codicons/warning.svg");
+    mask-image: url("@codicons/warning.svg");
+  }
+}

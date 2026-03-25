@@ -155,6 +155,17 @@
         "validate_entity_failed.message": { "$ref": "#/$defs/Value" }
       }
     },
+    "forms": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "input_file.drag_hint": { "$ref": "#/$defs/Value" },
+        "input_file.remove_value.title": { "$ref": "#/$defs/Value" },
+        "input_file.select_files.label": { "$ref": "#/$defs/Value" },
+        "input_list.add_value.title": { "$ref": "#/$defs/Value" },
+        "input_list.remove_value.title": { "$ref": "#/$defs/Value" }
+      }
+    },
     "group_paginator": {
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
@@ -388,6 +399,7 @@
         "edit_entity.dialog.apply.title": { "$ref": "#/$defs/Value" },
         "edit_entity.dialog.caption": { "$ref": "#/$defs/Value" },
         "edit_entity.iri.label": { "$ref": "#/$defs/Value" },
+        "edit_entity.iri.placeholder": { "$ref": "#/$defs/Value" },
         "edit_entity.label.label": { "$ref": "#/$defs/Value" },
         "edit_relation.dialog.apply.label": { "$ref": "#/$defs/Value" },
         "edit_relation.dialog.apply.title": { "$ref": "#/$defs/Value" },
