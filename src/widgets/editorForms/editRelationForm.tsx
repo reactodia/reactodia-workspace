@@ -28,14 +28,40 @@ import {
 const FORM_CLASS = 'reactodia-form';
 const CLASS_NAME = 'reactodia-edit-relation-form';
 
+/**
+ * State provided by {@link RelationEditor} to nested components.
+ */
 export interface RelationEditorProvidedProps {
+    /**
+     * Relation editor status:
+     *  - `ok`: relation is valid and ready to be submitted;
+     *  - `validating`: relation is checked whether it can be created or changed
+     *    to the selected type;
+     *  - `invalid`: relation cannot be created or changed to the selected type.
+     */
     status: 'ok' | 'validating' | 'invalid';
-
-    linkData: LinkModel;
+    /**
+     * Current (draft) relation data to edit.
+     */
+    data: LinkModel;
+    /**
+     * Data for the current relation source.
+     */
     linkSource: ElementModel;
+    /**
+     * Data for the current relation target.
+     */
     linkTarget: ElementModel;
-
+    /**
+     * Handler to update current relation data in the property editor.
+     *
+     * **Note**: only relation properties can be changed via `update` function.
+     */
     updateData: (update: (previous: LinkModel) => LinkModel) => void;
+    /**
+     * Handler to apply changes to the relation, including changes
+     * from calling {@link updateData} or from {@link RelationTypeSelector}.
+     */
     applyChanges: () => void;
 }
 
@@ -47,16 +73,39 @@ interface RelationEditorContext {
 
 const RelationEditorContext = React.createContext<RelationEditorContext | null>(null);
 
+/**
+ * Component which allows to build an relation editor by using provided state
+ * and callbacks to the nested components.
+ *
+ * `target` must be a {@link RelationLink} placed on the canvas.
+ *
+ * @category Components
+ */
 export function RelationEditor(props: {
+    /**
+     * Target relation link to edit.
+     */
     relation: RelationLink;
+    /**
+     * Handler to update the edited link when its endpoint (source or target element) changes.
+     *
+     * This is required to be handled because link endpoints cannot be changed directly
+     * without re-creating the link itself.
+     */
     onChangeTarget: (newLink: RelationLink) => void;
+    /**
+     * Render function to make an editor UI using provided state.
+     */
     children: (props: RelationEditorProvidedProps) => React.ReactNode;
 }) {
     const {relation, onChangeTarget, children} = props;
     const {model} = useWorkspace();
     const [version, setVersion] = React.useState(0);
-    const relationSource = model.getElement(relation.sourceId) as EntityElement;
-    const relationTarget = model.getElement(relation.targetId) as EntityElement;
+    const relationSource = model.getElement(relation.sourceId);
+    const relationTarget = model.getElement(relation.targetId);
+    if (!(relationSource instanceof EntityElement && relationTarget instanceof EntityElement)) {
+        throw new Error('Reactodia: cannot find relation source and target on the canvas');
+    }
     React.useLayoutEffect(() => {
         // Reset the form completely on source/target changes
         setVersion(previous => previous + 1);
@@ -151,7 +200,7 @@ function RelationEditorInner(props: {
                     value.error ? 'invalid' :
                     'ok'
                 ),
-                linkData: dataFromExtendedLink(value.link),
+                data: dataFromExtendedLink(value.link),
                 linkSource: value.link.source,
                 linkTarget: value.link.target,
                 updateData: update => {
@@ -198,9 +247,30 @@ export interface DefaultEditRelationFormProps extends PropertyEditorOptionsRelat
 }
 
 export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
+    const {target, onChangeTarget, onClose, resolveInput} = props;
+    return (
+        <RelationEditor relation={target}
+            onChangeTarget={onChangeTarget}>
+            {providedProps => (
+                <EditRelationProperties {...providedProps}
+                    resolveInput={resolveInput}
+                    onClose={onClose}
+                />
+            )}
+        </RelationEditor>
+    );
+}
+
+interface EditRelationPropertiesProps extends RelationEditorProvidedProps {
+    resolveInput: (property: PropertyTypeIri, inputProps: InputMultiProps) =>
+        React.ReactElement | null;
+    onClose: () => void;
+}
+
+function EditRelationProperties(props: EditRelationPropertiesProps) {
     const {
-        status, linkData, linkSource, linkTarget,
-        onSubmit, onUpdate, onCancel, resolveInput,
+        status, data: linkData, linkSource, linkTarget,
+        updateData, applyChanges, onClose, resolveInput,
     } = props;
     const {editor} = useWorkspace();
     const t = useTranslation();
@@ -216,7 +286,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
         property: PropertyTypeIri,
         updater: InputMultiUpdater
     ): void => {
-        onUpdate(previous => {
+        updateData(previous => {
             const {properties} = previous;
             const values = Object.prototype.hasOwnProperty.call(properties, property)
                 ? properties[property] : undefined;
@@ -252,7 +322,10 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
             </div>
             <div className={`${FORM_CLASS}__controls`}>
                 <button className={`reactodia-btn reactodia-btn-primary ${FORM_CLASS}__apply-button`}
-                    onClick={() => onSubmit(linkData)}
+                    onClick={() => {
+                        applyChanges();
+                        onClose();
+                    }}
                     disabled={status !== 'ok'}
                     title={
                         t.textOptional('visual_authoring.edit_relation.dialog.apply.title') ??
@@ -264,7 +337,7 @@ export function DefaultEditRelationForm(props: DefaultEditRelationFormProps) {
                     )}
                 </button>
                 <button className='reactodia-btn reactodia-btn-secondary'
-                    onClick={onCancel}
+                    onClick={onClose}
                     title={t.text('visual_authoring.dialog.cancel.title')}>
                     {t.text('visual_authoring.dialog.cancel.label')}
                 </button>
@@ -283,7 +356,7 @@ export function RelationTypeSelector() {
     const t = useTranslation();
     const context = React.useContext(RelationEditorContext);
     if (!context) {
-        throw new Error('Reactodia: Cannot use <RelationTypeSelector> outside relation editor');
+        throw new Error('Reactodia: cannot use <RelationTypeSelector> outside <RelationEditor>');
     }
     const {value, setValue, validating} = context;
     return (

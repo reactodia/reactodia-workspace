@@ -12,11 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Allow to establish new links with `SelectionActionEstablishLink` on touchscreen;
   * Allow to move link source or target with `LinkActionMoveEndpoint` on touchscreen;
   * Enable `showPointerModeToggle` on `ZoomControl` by default (can be disabled by passing `false`).
-- Extend and make optional built-in property editing form support:
+- **[💥Breaking]** Extend and make optional built-in property editing form support:
   * Extract property editor inputs into separate entry point `@reactodia/workspace/forms` to be able to use external forms implementation without always bundling the built-in one;
   * Provide `InputText`, `InputList` and `InputSelect` basic form inputs;
   * Provide `InputFile` form input with `MemoryFileUploader` implementation for `FileUploadProvider` interface;
-  * **[💥Breaking]** `VisualAuthoring` now requires `propertyEditor` prop: the built-in `DefaultPropertyEditor` in combination with imported inputs provides default (built-in) property editing experience.
+  * `VisualAuthoring` now requires `propertyEditor` prop with changed contract, which have to return an editor component in all cases.
+  * `DefaultPropertyEditor` in combination with imported inputs provides default (built-in) property editing experience, but custom editors can be implemented with `EntityEditor` and `RelationEditor` "provider" components.
 - Allow to customize how resource anchors and asset URLs (e.g. images or downloadable files) are resolved via `DataLocaleProvider.{prepareAnchor, resolveAssetUrl}`:
   * Resolve anchors and image thumbnail URLs in `StandardEntity`, `ClassicEntity` and `SelectionActionAnchor`;
   * Add `useResolvedAssetUrl()` helper hook to simplify resolving asset URLs from components;
