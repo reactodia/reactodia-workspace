@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🐛 Fixed
 - Fix stale/non-saved data when calling `applyChanges()` immediately after `updateData()` in `EntityEditor` and `RelationEditor`.
+- Fix `SelectionAction*` components not updating on selection change when provided as children to `Halo`.
 
 ## [0.34.0] - 2026-03-25
 #### 🚀 New Features

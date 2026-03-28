@@ -3,7 +3,6 @@ import { flushSync } from 'react-dom';
 import cx from 'clsx';
 
 import { AnyListener, EventObserver } from '../coreUtils/events';
-import { useObservedProperty } from '../coreUtils/hooks';
 import { TranslatedText } from '../coreUtils/i18n';
 
 import { TemplateProperties } from '../data/schema';
@@ -20,7 +19,7 @@ import { ResizableBox, type ResizableBoxOperation } from './utility/resizableBox
 import {
     SelectionActionRemove, SelectionActionExpand, SelectionActionAnchor,
     SelectionActionConnections, SelectionActionAddToFilter, SelectionActionGroup,
-    SelectionActionEstablishLink, SelectionActionAnnotate,
+    SelectionActionEstablishLink, SelectionActionAnnotate, useSingleSelectedElement,
 } from './selectionAction';
 
 /**
@@ -63,15 +62,7 @@ export interface HaloProps {
 export function Halo(props: HaloProps) {
     const {model, canvas} = useCanvas();
 
-    const singleTarget = useObservedProperty(
-        model.events,
-        'changeSelection',
-        () => {
-            const target = model.selection.length === 1 ? model.selection[0] : undefined;
-            return target instanceof Element ? target : undefined;
-        }
-    );
-
+    const singleTarget = useSingleSelectedElement(model);
     if (singleTarget) {
         return (
             <CanvasPlaceAt layer='overElements'>

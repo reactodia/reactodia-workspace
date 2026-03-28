@@ -158,6 +158,17 @@ function getDockStyle(
     return dockStyle;
 }
 
+export function useSingleSelectedElement(model: DiagramModel): Element | undefined {
+    return useObservedProperty(
+        model.events,
+        'changeSelection',
+        () => {
+            const target = model.selection.length === 1 ? model.selection[0] : undefined;
+            return target instanceof Element ? target : undefined;
+        }
+    );
+}
+
 /**
  * Props for {@link SelectionActionSpinner} component.
  *
@@ -206,7 +217,8 @@ export function SelectionActionRemove(props: SelectionActionRemoveProps) {
     const {canvas} = useCanvas();
     const {model, editor} = useWorkspace();
     const t = useTranslation();
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
     
     let newEntities = 0;
     let totalEntities = 0;
@@ -258,7 +270,8 @@ export function SelectionActionZoomToFit(props: SelectionActionZoomToFitProps) {
     const {className, title, ...otherProps} = props;
     const {model, canvas} = useCanvas();
     const t = useTranslation();
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
     if (elements.length <= 1) {
         return null;
     }
@@ -300,7 +313,8 @@ export function SelectionActionLayout(props: SelectionActionLayoutProps) {
     const {model, canvas} = useCanvas();
     const {performLayout} = useWorkspace();
     const t = useTranslation();
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
     if (elements.length <= 1) {
         return null;
     }
@@ -345,7 +359,8 @@ export function SelectionActionExpand(props: SelectionActionExpandProps) {
     const {model} = useWorkspace();
     const t = useTranslation();
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
     const elementExpandedStore = useElementExpandedStore(model, elements);
 
     const canExpand = (element: Element) => {
@@ -444,11 +459,7 @@ export function SelectionActionAnchor(props: SelectionActionAnchorProps) {
     const {dock, dockRow, dockColumn, className, title, anchorProps, onSelect} = props;
     const {model} = useWorkspace();
     const t = useTranslation();
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    if (elements.length !== 1) {
-        return null;
-    }
-    const [target] = elements;
+    const target = useSingleSelectedElement(model);
     if (!(target instanceof EntityElement)) {
         return null;
     }
@@ -502,7 +513,8 @@ export function SelectionActionConnections(props: SelectionActionConnectionsProp
         () => overlay.openedDialog?.knownType === BuiltinDialogType.connectionsMenu
     );
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
 
     let entityCount = 0;
     for (const element of elements) {
@@ -558,16 +570,12 @@ export function SelectionActionAddToFilter(props: SelectionActionAddToFilterProp
     const {model, getCommandBus} = useWorkspace();
     const t = useTranslation();
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const target = useSingleSelectedElement(model);
     const commands = getCommandBus(InstancesSearchTopic);
     const event: InstancesSearchCommands['findCapabilities'] = {capabilities: []};
     commands.trigger('findCapabilities', event);
 
-    if (!(event.capabilities.length > 0 && elements.length === 1)) {
-        return null;
-    }
-    const [target] = elements;
-    if (!(target instanceof EntityElement)) {
+    if (!(target instanceof EntityElement && event.capabilities.length > 0)) {
         return null;
     }
     return (
@@ -602,7 +610,7 @@ export interface SelectionActionGroupProps extends SelectionActionStyleProps {
  * are selected, the elements can be ungrouped if only {@link EntityGroup entity groups}
  * are selected.
  *
- * Grouping or ungrouping the elements adds a command to the command history.
+ * Grouping or un-grouping the elements adds a command to the command history.
  *
  * @category Components
  */
@@ -613,7 +621,8 @@ export function SelectionActionGroup(props: SelectionActionGroupProps) {
     const t = useTranslation();
     const {model} = workspace;
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
 
     const canGroup = elements.length > 0 && elements.every(element => element instanceof EntityElement);
     const canUngroup = elements.length > 0 && elements.every(element => element instanceof EntityGroup);
@@ -682,8 +691,7 @@ export interface SelectionActionEstablishLinkProps extends SelectionActionStyleP
 export function SelectionActionEstablishLink(props: SelectionActionEstablishLinkProps) {
     const {model} = useCanvas();
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
-    const target = elements.length === 1 ? elements[0] : undefined;
+    const target = useSingleSelectedElement(model);
 
     if (target instanceof EntityElement) {
         return <SelectionActionEstablishRelation {...props} target={target} />;
@@ -854,7 +862,8 @@ export function SelectionActionAnnotate(props: SelectionActionAnnotateProps) {
     const {model, getCommandBus} = useWorkspace();
     const t = useTranslation();
 
-    const elements = model.selection.filter((cell): cell is Element => cell instanceof Element);
+    const selection = useObservedProperty(model.events, 'changeSelection', () => model.selection);
+    const elements = selection.filter(item => item instanceof Element);
 
     const commands = getCommandBus(AnnotationTopic);
     const event: AnnotationCommands['findCapabilities'] = {capabilities: []};
