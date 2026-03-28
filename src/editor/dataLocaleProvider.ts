@@ -195,7 +195,9 @@ export class DefaultDataLocaleProvider implements DataLocaleProvider {
      * }
      * ```
      */
-    prepareAnchor(targetIri: string): Pick<React.ComponentProps<'a'>, 'href' | 'target' | 'rel' | 'onClick'> {
+    prepareAnchor(
+        targetIri: string
+    ): Pick<React.ComponentProps<'a'>, 'draggable' | 'href' | 'target' | 'rel' | 'onClick'> {
         return {
             href: targetIri,
             target: '_blank',

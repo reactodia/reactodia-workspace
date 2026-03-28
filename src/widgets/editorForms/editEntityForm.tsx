@@ -1,5 +1,6 @@
 import cx from 'clsx';
 import * as React from 'react';
+import { flushSync } from 'react-dom';
 
 import { useTranslation } from '../../coreUtils/i18n';
 import { useAsync } from '../../coreUtils/hooks';
@@ -60,7 +61,7 @@ export function EntityEditor(props: {
     /**
      * Render function to make an editor UI using provided state.
      */
-    children: (props: EntityEditorProvidedProps) => React.ReactNode;
+    children: (props: EntityEditorProvidedProps) => React.ReactElement;
 }) {
     const {target, children} = props;
     const {editor} = useWorkspace();
@@ -74,7 +75,14 @@ export function EntityEditor(props: {
         data,
         updateData: setData,
         applyChanges: () => {
-            editor.changeEntity(target.data, data);
+            let finalData: ElementModel = data;
+            flushSync(() => {
+                setData(previous => {
+                    finalData = previous;
+                    return previous;
+                });
+            });
+            editor.changeEntity(target.data, finalData);
         },
     });
 }
