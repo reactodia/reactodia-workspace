@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix stale/non-saved data when calling `applyChanges()` immediately after `updateData()` in `EntityEditor` and `RelationEditor`.
 
 ## [0.34.0] - 2026-03-25
 #### 🚀 New Features

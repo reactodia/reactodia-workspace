@@ -1,5 +1,6 @@
 import cx from 'clsx';
 import * as React from 'react';
+import { flushSync } from 'react-dom';
 
 import { useTranslation } from '../../coreUtils/i18n';
 import { useAsync } from '../../coreUtils/hooks';
@@ -96,7 +97,7 @@ export function RelationEditor(props: {
     /**
      * Render function to make an editor UI using provided state.
      */
-    children: (props: RelationEditorProvidedProps) => React.ReactNode;
+    children: (props: RelationEditorProvidedProps) => React.ReactElement;
 }) {
     const {relation, onChangeTarget, children} = props;
     const {model} = useWorkspace();
@@ -223,11 +224,18 @@ function RelationEditorInner(props: {
                     });
                 },
                 applyChanges: () => {
-                    const toApply = dataFromExtendedLink(value.link);
+                    let finalValue: ValidatedLink = value;
+                    flushSync(() => {
+                        setValue(previous => {
+                            finalValue = previous;
+                            return previous;
+                        });
+                    });
+                    const toApply = dataFromExtendedLink(finalValue.link);
 
                     if (editor.temporaryState.links.has(original.data)) {
                         editor.removeTemporaryCells([original]);
-                        const linkBase = relationFromExtendedLink(value.link, originalSource, originalTarget);
+                        const linkBase = relationFromExtendedLink(finalValue.link, originalSource, originalTarget);
                         editor.createRelation(linkBase);
                     } else if (!(
                         equalLinks(original.data, toApply) &&
