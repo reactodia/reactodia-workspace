@@ -435,6 +435,7 @@ export function LinkLabelLayer(props: {
         <HtmlPaperLayer paperTransform={paperTransform}
             className='reactodia-label-layer'
             layerRef={onMount}
+            role='figure'
         />
     );
 }

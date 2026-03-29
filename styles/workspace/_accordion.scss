@@ -15,7 +15,7 @@
     flex-direction: column;
   }
 
-  &--vertical:not(&--resizing) > .reactodia-accordion-item {
+  &--vertical:not(&--resizing):not(:has(.reactodia-accordion-item__handle:focus)) > .reactodia-accordion-item {
     transition: height theme.$accordion-transition-duration ease-in-out;
   }
 }
@@ -67,16 +67,18 @@
   }
 
   &__handle-btn {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    margin-top: -10px;
+    padding: 0;
+  
     background-color: theme.$button-default-background-color;
     border: 2px solid theme.$color-primary;
     box-shadow: 0 0 0 1px rgba(9, 30, 66, 0.08), 0 2px 4px 1px rgba(9, 30, 66, 0.08);
     border-radius: 10px;
     cursor: pointer;
-    height: 20px;
-    position: absolute;
-    top: 50%;
-    margin-top: -10px;
-    width: 20px;
     z-index: zIndex.$accordion-handle-button;
     transition: theme.$accordion-transition-duration;
 
@@ -145,7 +147,9 @@
   }
 
   &__header {
-    padding-left: 20px;
+    padding: 0 0 0 20px;
+    text-align: unset;
+    border: none;
     position: relative;
 
     flex-shrink: 0;

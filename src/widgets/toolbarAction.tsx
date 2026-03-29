@@ -76,6 +76,8 @@ export function ToolbarAction(props: ToolbarActionProps) {
     return insideDropdown ? (
         <DropdownMenuItem className={className}
             title={titleWithHotkey}
+            aria-label={title}
+            aria-keyshortcuts={actionKey?.text}
             disabled={disabled}
             onSelect={onSelect}>
             {children}
@@ -93,6 +95,8 @@ export function ToolbarAction(props: ToolbarActionProps) {
                 'reactodia-btn reactodia-btn-default'
             )}
             title={titleWithHotkey}
+            aria-label={title}
+            aria-keyshortcuts={actionKey?.text}
             disabled={disabled}
             onClick={onSelect}>
             {children}

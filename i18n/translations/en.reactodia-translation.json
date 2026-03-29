@@ -19,9 +19,10 @@
     "relation_delete.label": "Delete"
   },
   "classic_workspace": {
+    "canvas.label": "Canvas",
     "class_tree.heading": "Classes",
-    "instances.heading": "Instances",
-    "connections.heading": "Connections"
+    "connections.heading": "Connections",
+    "instances.heading": "Instances"
   },
   "commands": {
     "change_entity.title": "Change entity data",
@@ -322,6 +323,10 @@
     "perform_layout.task": "Computing graph layout",
     "perform_layout.command": "Graph layout",
     "ungroup_entities.command": "Ungroup entities"
+  },
+  "workspace_layout": {
+    "toggle_collapse.title": "Collapse panel",
+    "toggle_expand.title": "Expand panel"
   },
   "zoom_control": {
     "pointer_mode.title": "Toggle selection mode:\nDrag pointer to select, Shift + Pointer to pan the canvas",

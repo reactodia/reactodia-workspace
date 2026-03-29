@@ -98,7 +98,7 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                         </WorkspaceLayoutItem>
                     </WorkspaceLayoutColumn>
                 )}
-                <WorkspaceLayoutItem id='canvas'>
+                <WorkspaceLayoutItem id='canvas' aria-label={t.text('classic_workspace.canvas.label')}>
                     <Canvas {...canvas}>
                         {visualAuthoring ? <VisualAuthoring {...visualAuthoring} /> : null}
                         {annotations === null ? null : <AnnotationSupport {...annotations} />}

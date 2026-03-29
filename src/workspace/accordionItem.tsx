@@ -10,6 +10,7 @@ export enum DockSide {
 
 export interface AccordionItemProps extends ItemProvidedProps {
     id: string;
+    ariaLabel?: string;
     heading?: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
@@ -30,6 +31,8 @@ export interface ItemProvidedProps {
     size?: number | string;
     direction?: 'vertical' | 'horizontal';
     dockSide?: DockSide;
+    titleDockExpand?: string;
+    titleDockCollapse?: string;
     onChangeCollapsed?: (collapsed: boolean) => void;
     onBeginDragHandle?: (() => void) | undefined;
     onDragHandle?: (dx: number, dy: number) => void;
@@ -43,8 +46,10 @@ interface State {
 }
 
 export class AccordionItem extends React.Component<AccordionItemProps, State> {
+    private static readonly ARROW_SHIFT_STEP = 50;
+
     private _element = React.createRef<HTMLDivElement>();
-    private _header = React.createRef<HTMLDivElement>();
+    private _header = React.createRef<HTMLButtonElement>();
 
     constructor(props: AccordionItemProps) {
         super(props);
@@ -54,26 +59,17 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
     }
 
     get element(): HTMLDivElement | null { return this._element.current; }
-    get header():  HTMLDivElement | null { return this._header.current; }
+    get header():  HTMLButtonElement | null { return this._header.current; }
 
     private get isVertical() {
         return this.props.direction === 'vertical';
     }
 
-    private renderToggleButton() {
-        const {collapsed, dockSide, onChangeCollapsed} = this.props;
-        if (!dockSide) {
-            return null;
-        }
-        const side = dockSide === DockSide.Left ? 'left' : 'right';
-        return <div className={`${CLASS_NAME}__handle-btn ${CLASS_NAME}__handle-btn-${side}`}
-            onClick={() => onChangeCollapsed!(!collapsed)} />;
-    }
-
     render() {
         const {
-            heading, className, style, bodyClassName, children, bodyRef,
-            collapsed, size, direction, onBeginDragHandle, onDragHandle, onEndDragHandle, dockSide,
+            ariaLabel, heading, className, style, bodyClassName, children, bodyRef,
+            collapsed, size, direction, dockSide,
+            onBeginDragHandle, onDragHandle, onEndDragHandle,
         } = this.props;
         const {resizing} = this.state;
         const shouldRenderHandle = onBeginDragHandle && onDragHandle && onEndDragHandle;
@@ -82,7 +78,7 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
         // unmount child component when the accordion item is collapsed and has dockSide
         const isMounted = !(collapsed && dockSide);
         return (
-            <div ref={this._element}
+            <section ref={this._element}
                 className={cx(
                     CLASS_NAME,
                     collapsed ? `${CLASS_NAME}--collapsed`: `${CLASS_NAME}--expanded`,
@@ -90,11 +86,16 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
                     resizing ? `${CLASS_NAME}--resizing` : undefined,
                     className
                 )}
-                style={{...style, ...providedStyle}}>
+                style={{...style, ...providedStyle}}
+                aria-label={ariaLabel ?? (typeof heading === 'string' ? heading : undefined)}>
                 <div className={`${CLASS_NAME}__inner`}>
-                    {heading ? <div className={`${CLASS_NAME}__header`}
-                        ref={this._header}
-                        onClick={() => this.props.onChangeCollapsed!(!collapsed)}>{heading}</div> : null}
+                    {heading ? (
+                        <button className={`${CLASS_NAME}__header`}
+                            ref={this._header}
+                            onClick={() => this.props.onChangeCollapsed!(!collapsed)}>
+                            {heading}
+                        </button>
+                    ) : null}
                     <div className={`${CLASS_NAME}__body`}>
                         {children && isMounted
                             ? children
@@ -102,7 +103,10 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
                     </div>
                 </div>
                 {shouldRenderHandle ? (
-                    <DraggableHandle className={`${CLASS_NAME}__handle ${CLASS_NAME}__handle-${direction}`}
+                    <DraggableHandle role="separator"
+                        className={cx(`${CLASS_NAME}__handle`, `${CLASS_NAME}__handle-${direction}`)}
+                        tabIndex={0}
+                        aria-valuenow={typeof size === 'string' && size.endsWith('%') ? parseFloat(size) : 0}
                         onBeginDragHandle={e => {
                             this.setState({resizing: true});
                             onBeginDragHandle();
@@ -111,10 +115,55 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
                         onEndDragHandle={e => {
                             this.setState({resizing: false});
                             onEndDragHandle();
-                        }}/>
+                        }}
+                        onKeyDown={e => {
+                            const step = AccordionItem.ARROW_SHIFT_STEP;
+                            let shift = 0;
+
+                            if (this.isVertical) {
+                                if (e.key === 'ArrowUp') {
+                                    shift -= step;
+                                } else if (e.key === 'ArrowDown') {
+                                    shift += step;
+                                }
+                            } else {
+                                if (e.key === 'ArrowLeft') {
+                                    shift -= step;
+                                } else if (e.key === 'ArrowRight') {
+                                    shift += step;
+                                }
+                            }
+                            
+                            if (shift !== 0) {
+                                e.preventDefault();
+                                onBeginDragHandle();
+                                onDragHandle(shift, shift);
+                                onEndDragHandle();
+                            }
+                        }}
+                    />
                 ) : null}
                 {this.renderToggleButton()}
-            </div>
+            </section>
+        );
+    }
+
+    private renderToggleButton() {
+        const {
+            collapsed, dockSide, titleDockExpand, titleDockCollapse, onChangeCollapsed,
+        } = this.props;
+        if (!dockSide) {
+            return null;
+        }
+        const side = dockSide === DockSide.Left ? 'left' : 'right';
+        const label = collapsed ? titleDockExpand : titleDockCollapse;
+        return (
+            <button
+                className={cx(`${CLASS_NAME}__handle-btn`, `${CLASS_NAME}__handle-btn-${side}`)}
+                onClick={() => onChangeCollapsed!(!collapsed)}
+                aria-label={label}
+                title={label}
+            />
         );
     }
 }

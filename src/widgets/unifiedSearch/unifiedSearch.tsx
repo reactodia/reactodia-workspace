@@ -260,7 +260,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         return () => commands.off('focus', onFocus);
     }, [commands, onFocus]);
 
-    useCanvasHotkey(hotkeyFocus, () => onFocus({}));
+    const actionFocus = useCanvasHotkey(hotkeyFocus, () => onFocus({}));
 
     const hasSearchQuery = (
         searchTerm.length > 0 ||
@@ -277,6 +277,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         <Dropdown className={CLASS_NAME}
             direction={direction}
             expanded={expanded}
+            aria-keyshortcuts={actionFocus?.text}
             onClickOutside={onClickOutside}
             toggle={
                 <SearchToggle inputRef={toggleInputRef}
@@ -385,12 +386,14 @@ function SearchToggle(props: {
         <div className={cx(`${CLASS_NAME}__toggle`)}
             style={{
                 width: panelSize?.width,
-            }}>
+            }}
+            role='search'>
             <input
                 ref={
                     /* For compatibility with React 19 typings */
                     inputRef as React.RefObject<HTMLInputElement>
                 }
+                role='searchbox'
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
                 style={{minWidth}}
@@ -529,6 +532,9 @@ function SearchContent(props: {
         }
     };
 
+    const sectionPanelId = (section: SectionWithContext) =>
+        `reactodia-unified-search-panel-${section.key}`;
+
     return (
         <div ref={panelRef}
             className={`${CLASS_NAME}__panel`}
@@ -536,7 +542,7 @@ function SearchContent(props: {
                 width: size.width,
                 height: size.height,
             }}>
-            <div className={`${CLASS_NAME}__section-tabs`}>
+            <div className={`${CLASS_NAME}__section-tabs`} role='tablist'>
                 {sections.map(section => (
                     <button key={section.key}
                         className={cx(
@@ -545,6 +551,10 @@ function SearchContent(props: {
                             'reactodia-btn-default',
                             section.key === activeSectionKey ? 'active' : undefined,
                         )}
+                        role='tab'
+                        aria-selected={section.key === activeSectionKey}
+                        aria-controls={sectionPanelId(section)}
+                        aria-label={section.title}
                         title={section.title}
                         onClick={() => onActivateSection(section.key)}>
                         {section.label}
@@ -554,7 +564,8 @@ function SearchContent(props: {
             {sections.map(section => (
                 <UnifiedSearchSectionContext.Provider key={section.key}
                     value={section.context}>
-                    <div
+                    <div id={sectionPanelId(section)}
+                        role='tabpanel'
                         className={cx(
                             `${CLASS_NAME}__section`,
                             section.context.isSectionActive

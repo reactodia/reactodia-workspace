@@ -94,7 +94,8 @@ export class ElementLayer extends React.Component<ElementLayerProps, State> {
             <HtmlPaperLayer key={version}
                 layerRef={layerRef}
                 className='reactodia-element-layer'
-                paperTransform={paperTransform}>
+                paperTransform={paperTransform}
+                role='figure'>
                 {elementsToRender.map(state => {
                     let overlaidElement = memoizedElements.get(state);
                     if (!overlaidElement) {

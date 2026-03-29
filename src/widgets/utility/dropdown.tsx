@@ -6,7 +6,7 @@ import * as React from 'react';
  *
  * @see {@link Dropdown}
  */
-export interface DropdownProps {
+export interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
     /**
      * Additional CSS class for the component.
      */
@@ -45,8 +45,11 @@ const CLASS_NAME = 'reactodia-dropdown';
  * @category Components
  */
 export function Dropdown(props: DropdownProps) {
-    const {className, direction = 'down', expanded, toggle, onClickOutside, children} = props;
-    const menuRef = React.useRef<HTMLElement | null>(null);
+    const {
+        className, direction = 'down', expanded, toggle, onClickOutside, children,
+        ...otherProps
+    } = props;
+    const menuRef = React.useRef<HTMLDivElement | null>(null);
 
     React.useLayoutEffect(() => {
         if (onClickOutside && expanded) {
@@ -62,7 +65,8 @@ export function Dropdown(props: DropdownProps) {
     }, [onClickOutside, expanded]);
 
     return (
-        <nav ref={menuRef}
+        <div {...otherProps}
+            ref={menuRef}
             className={cx(
                 className,
                 CLASS_NAME,
@@ -70,11 +74,11 @@ export function Dropdown(props: DropdownProps) {
                 expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}>
             {direction === 'down' ? toggle : null}
-            <div className={`${CLASS_NAME}__content`}>
+            <div className={`${CLASS_NAME}__content`} aria-hidden={!expanded}>
                 {children}
             </div>
             {direction === 'up' ? toggle : null}
-        </nav>
+        </div>
     );
 }
 
@@ -83,7 +87,7 @@ export function Dropdown(props: DropdownProps) {
  *
  * @see {@link DropdownMenu}
  */
-export interface DropdownMenuProps {
+export interface DropdownMenuProps extends React.HTMLAttributes<HTMLElement> {
     /**
      * Additional CSS class for the component.
      */
@@ -112,7 +116,7 @@ const MENU_CLASS_NAME = 'reactodia-dropdown-menu';
  * @category Components
  */
 export function DropdownMenu(props: DropdownMenuProps) {
-    const {className, direction, title, children} = props;
+    const {className, direction, title, children, ...otherProps} = props;
     const [expanded, setExpanded] = React.useState(false);
     const providedContext = React.useMemo(
         (): DropdownMenuContext => ({expanded, setExpanded}),
@@ -121,7 +125,9 @@ export function DropdownMenu(props: DropdownMenuProps) {
     const onClickOutside = React.useCallback(() => setExpanded(false), [setExpanded]);
     return (
         <DropdownMenuContext.Provider value={providedContext}>
-            <Dropdown className={cx(className, MENU_CLASS_NAME)}
+            <Dropdown {...otherProps}
+                className={cx(className, MENU_CLASS_NAME)}
+                aria-haspopup='menu'
                 direction={direction}
                 expanded={expanded}
                 toggle={
@@ -175,7 +181,7 @@ function DropdownMenuToggleButton(props: { title?: string }) {
  *
  * @see {@link DropdownMenuItem}
  */
-export interface DropdownMenuItemProps {
+export interface DropdownMenuItemProps extends React.HTMLAttributes<HTMLElement> {
     /**
      * Additional CSS class for the component.
      */
@@ -208,7 +214,7 @@ const ITEM_CLASS_NAME = 'reactodia-dropdown-menu-item';
  * @category Components
  */
 export function DropdownMenuItem(props: DropdownMenuItemProps) {
-    const {className, title, disabled, onSelect, children} = props;
+    const {className, title, disabled, onSelect, children, ...otherProps} = props;
     const menuContext = useDropdownMenu();
 
     const wrappedOnClick = React.useCallback(() => {
@@ -217,7 +223,8 @@ export function DropdownMenuItem(props: DropdownMenuItemProps) {
     }, [onSelect, menuContext]);
 
     return (
-        <li role='menuitem'
+        <li {...otherProps}
+            role='menuitem'
             className={cx(
                 className,
                 ITEM_CLASS_NAME,

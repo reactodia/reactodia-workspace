@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix stale/non-saved data when calling `applyChanges()` immediately after `updateData()` in `EntityEditor` and `RelationEditor`.
 - Fix `SelectionAction*` components not updating on selection change when provided as children to `Halo`.
 
+#### 💅 Polish
+- Improve ARIA-attributes and other accessibility interaction:
+  * Allow to resize and toggle `WorkspaceLayout*` with a keyboard;
+  * Change `WorkspaceLayout*` to be `<section>` elements with `aria-label` (i.e. regions);
+  * Add `role` for `Canvas` layers, `Toolbar`, `ZoomControl`, `UnifiedSearch` (and other search inputs);
+  * Add `aria-label` and `aria-keyshortcuts` for `ToolbarAction`, `SelectionAction`, `LinkAction`.
+
 ## [0.34.0] - 2026-03-25
 #### 🚀 New Features
 - Support proper graph manipulation on touchscreen devices:

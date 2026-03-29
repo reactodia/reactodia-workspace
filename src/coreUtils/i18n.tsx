@@ -188,7 +188,7 @@ export const TranslationContext = React.createContext<Translation | null>(null);
 export function useTranslation(): Translation {
     const translation = React.useContext(TranslationContext);
     if (!translation) {
-        throw new Error('Missing Reactodia translation context');
+        throw new Error('Reactodia: missing translation context');
     }
     return translation;
 }
