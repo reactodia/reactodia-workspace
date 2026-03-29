@@ -124,6 +124,8 @@ export function SelectionAction(props: SelectionActionProps) {
             className={cx(CLASS_NAME, getDockClass(dock), className)}
             style={getDockStyle(dockRow, dockColumn)}
             title={titleWithHotkey}
+            aria-label={title}
+            aria-keyshortcuts={actionKey?.text}
             disabled={disabled}
             onClick={onSelect}
             onMouseDown={onMouseDown}

@@ -25,13 +25,14 @@ export function SearchInput(props: SearchInputProps) {
     const mode = useObservedProperty(store.events, 'changeMode', () => store.mode);
 
     return (
-        <div
+        <div role='search'
             className={cx(
                 CLASS_NAME,
                 mode === 'explicit' ? `${CLASS_NAME}--has-submit` : undefined,
                 className
             )}>
             <input {...inputProps}
+                role='searchbox'
                 type={inputProps.type ?? 'text'}
                 className={cx(
                     `${CLASS_NAME}__input`,

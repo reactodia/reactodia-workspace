@@ -135,7 +135,8 @@ export function CanvasArea(props: {
                         <SvgPaperLayer layerRef={linkLayerRef}
                             className={`${CLASS_NAME}__linkGeometry`}
                             style={{overflow: 'visible'}}
-                            paperTransform={paperTransform}>
+                            paperTransform={paperTransform}
+                            role='figure'>
                             <LinkMarkers model={model}
                                 renderingState={renderingState}
                             />

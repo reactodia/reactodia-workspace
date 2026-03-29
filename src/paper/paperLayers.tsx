@@ -100,6 +100,7 @@ export function SvgPaperLayer(props: SvgPaperLayerProps) {
             width={scaledWidth}
             height={scaledHeight}
             style={svgStyle}
+            role='none'
             {...otherProps}>
             <g transform={`scale(${scale},${scale})translate(${originX},${originY})`}>
                 {children}

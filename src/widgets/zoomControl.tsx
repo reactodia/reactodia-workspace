@@ -62,7 +62,7 @@ export function ZoomControl(props: ZoomControlProps) {
         <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
             dockOffsetY={dockOffsetY}>
-            <div className={CLASS_NAME}>
+            <div className={CLASS_NAME} role='toolbar'>
                 <button type='button'
                     className={cx(
                         `${CLASS_NAME}__zoom-in-button`,

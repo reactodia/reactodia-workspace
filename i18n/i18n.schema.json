@@ -34,9 +34,10 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
+        "canvas.label": { "$ref": "#/$defs/Value" },
         "class_tree.heading": { "$ref": "#/$defs/Value" },
-        "instances.heading": { "$ref": "#/$defs/Value" },
-        "connections.heading": { "$ref": "#/$defs/Value" }
+        "connections.heading": { "$ref": "#/$defs/Value" },
+        "instances.heading": { "$ref": "#/$defs/Value" }
       }
     },
     "commands": {
@@ -444,6 +445,14 @@
         "perform_layout.command": { "$ref": "#/$defs/Value" },
         "perform_layout.task": { "$ref": "#/$defs/Value" },
         "ungroup_entities.command": { "$ref": "#/$defs/Value" }
+      }
+    },
+    "workspace_layout": {
+      "$ref": "#/$defs/Group",
+      "additionalProperties": false,
+      "properties": {
+        "toggle_collapse.title": { "$ref": "#/$defs/Value" },
+        "toggle_expand.title": { "$ref": "#/$defs/Value" }
       }
     },
     "zoom_control": {

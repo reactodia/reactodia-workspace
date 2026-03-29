@@ -55,7 +55,8 @@ export function Toolbar(props: ToolbarProps) {
         <ViewportDock dock={dock}
             dockOffsetX={dockOffsetX}
             dockOffsetY={dockOffsetY}>
-            <div className={cx(CLASS_NAME, dropUp ? `${CLASS_NAME}--drop-up` : undefined)}>
+            <div className={cx(CLASS_NAME, dropUp ? `${CLASS_NAME}--drop-up` : undefined)}
+                role='toolbar'>
                 {menu ? (
                     <DropdownMenu className={`${CLASS_NAME}__menu`}
                         direction={dropUp ? 'up' : 'down'}

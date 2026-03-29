@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { TranslationContext } from '../coreUtils/i18n';
+
 import { Accordion } from './accordion';
 import { AccordionItem, DockSide } from './accordionItem';
 
@@ -97,7 +99,7 @@ type WorkspaceChild =
  * @see {@link WorkspaceLayoutItem}
  */
 export function WorkspaceLayoutRow(props: WorkspaceLayoutContainerProps) {
-    return renderContainer(props, 'row');
+    return <WorkspaceContainer {...props} type='row' />;
 }
 
 /**
@@ -110,7 +112,7 @@ export function WorkspaceLayoutRow(props: WorkspaceLayoutContainerProps) {
  * @see {@link WorkspaceLayoutItem}
  */
 export function WorkspaceLayoutColumn(props: WorkspaceLayoutContainerProps) {
-    return renderContainer(props, 'column');
+    return <WorkspaceContainer {...props} type='column' />;
 }
 
 /**
@@ -123,6 +125,12 @@ export interface WorkspaceLayoutItemProps extends CommonWorkspaceLayoutProps {
      * Unique layout component ID withing the layout component tree.
      */
     id: string;
+    /**
+     * ARIA-label to mark `<section>` layout item with.
+     *
+     * **Default** is `heading` value if it is a string otherwise `undefined`.
+     */
+    'aria-label'?: string;
     /**
      * Heading content for the layout item.
      */
@@ -167,9 +175,10 @@ export interface WorkspaceLayoutResizeContext {
  */
 export const WorkspaceLayoutResizeContext = React.createContext<WorkspaceLayoutResizeContext | null>(null);
 
-function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'column') {
-    const {className, style, animationDuration, children} = props;
+function WorkspaceContainer(props: WorkspaceLayoutContainerProps & { type: 'row' | 'column' }) {
+    const {type, className, style, animationDuration, children} = props;
     const resizeContext = React.useContext(WorkspaceLayoutResizeContext);
+    const t = React.useContext(TranslationContext);
     const childCount = React.Children.count(children);
     const items = React.Children.map(children, (child, index) => {
         if (child === null) {
@@ -198,12 +207,19 @@ function renderContainer(props: WorkspaceLayoutContainerProps, type: 'row' | 'co
                 style={
                     child.type === WorkspaceLayoutItem ? child.props.style : undefined
                 }
+                ariaLabel={
+                    child.type === WorkspaceLayoutItem
+                        ? (child.props as WorkspaceLayoutItemProps)['aria-label']
+                        : undefined
+                }
                 heading={
                     child.type === WorkspaceLayoutItem
                         ? (child.props as WorkspaceLayoutItemProps).heading
                         : undefined
                 }
                 dockSide={dockSide}
+                titleDockExpand={t?.textOptional('workspace_layout.toggle_expand.title')}
+                titleDockCollapse={t?.textOptional('workspace_layout.toggle_collapse.title')}
                 defaultSize={child.props.defaultSize}
                 defaultCollapsed={child.props.defaultCollapsed}
                 collapsedSize={collapsedSize}

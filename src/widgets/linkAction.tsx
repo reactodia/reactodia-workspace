@@ -152,6 +152,8 @@ export function LinkAction(props: LinkActionProps) {
             style={getPosition(dockSide, dockIndex)}
             disabled={disabled}
             title={titleWithHotkey}
+            aria-label={title}
+            aria-keyshortcuts={actionKey?.text}
             onClick={onSelect}
             onMouseDown={onMouseDown}
             onPointerDown={onPointerDown}>
