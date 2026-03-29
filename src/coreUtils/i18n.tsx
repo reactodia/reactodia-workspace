@@ -8,7 +8,7 @@ import type * as Rdf from '../data/rdf/rdfModel';
 
 import DefaultTranslationBundle from '../../i18n/translations/en.reactodia-translation.json';
 
-type DefaultBundleData = Omit<typeof DefaultTranslationBundle, '$schema'>;
+type DefaultBundleData = typeof DefaultTranslationBundle;
 
 /**
  * Translation strings bundle (content).
@@ -197,7 +197,7 @@ type TranslationPartial<T> = {
     [K in keyof T]?: Partial<T[K]>;
 };
 
-type TranslationKeyOf<T> = DeepPath<T>;
+type TranslationKeyOf<T> = DeepPath<Omit<T, '$schema'>>;
 
 type DeepPath<T> = T extends object ? (
     { 
