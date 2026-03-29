@@ -1,4 +1,6 @@
 declare module '*.reactodia-translation.json' {
-    const value: Record<string, Record<string, string>>;
+    const value: {
+        [group: string]: Record<string, string> | string;
+    };
     export default value;
 }
