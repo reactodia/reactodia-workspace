@@ -2,6 +2,9 @@ import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
 
+import type { CanvasDropEvent } from '../../diagram/canvasApi';
+import type { EntityElement } from '../../editor/dataElements';
+
 import { ClassTree } from '../classTree';
 import { InstancesSearch, SearchCriteria } from '../instancesSearch';
 import { LinkTypesToolbox } from '../linksToolbox';
@@ -37,8 +40,20 @@ export function SearchSectionElementTypes(props: {
      * @default true
      */
     draggableItems?: boolean;
+    /**
+     * Handler to place newly created entity from an element type tree.
+     */
+    placeCreatedEntity?: (
+        element: EntityElement,
+        dropEvent: CanvasDropEvent | undefined
+    ) => Promise<void>;
 }) {
-    const {searchTimeout = 200, minSearchTermLength = 2, draggableItems} = props;
+    const {
+        searchTimeout = 200,
+        minSearchTermLength = 2,
+        draggableItems,
+        placeCreatedEntity,
+    } = props;
     const {searchStore, shouldRender} = useUnifiedSearchSection({
         searchTimeout,
         allowSubmit: term => term.length >= minSearchTermLength,
@@ -48,6 +63,7 @@ export function SearchSectionElementTypes(props: {
         <ClassTree className={SECTION_ELEMENT_TYPES_CLASS}
             searchStore={searchStore}
             draggableItems={draggableItems}
+            placeCreatedEntity={placeCreatedEntity}
         />
     ) : null;
 }

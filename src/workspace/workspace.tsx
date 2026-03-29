@@ -389,8 +389,8 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
         const {
-            canvas: targetCanvas, layoutFunction, selectedElements, animate, signal,
-            zoomToFit = true,
+            canvas: targetCanvas, layoutFunction, selectedElements, fixedElements,
+            animate, signal, zoomToFit = true,
         } = params;
         const {model, view, overlay, disposeSignal} = this.workspaceContext;
         const t = this.translation;
@@ -412,6 +412,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
                 layoutFunction: layoutFunction ?? view.defaultLayout,
                 model,
                 selectedElements,
+                fixedElements,
                 sizeProvider: canvas.renderingState,
                 typeProvider: this.layoutTypeProvider,
                 signal: signal ?? disposeSignal,
