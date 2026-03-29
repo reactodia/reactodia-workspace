@@ -16,7 +16,8 @@ import { Element } from '../../diagram/elements';
 import { Vector, SizeProvider } from '../../diagram/geometry';
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import { DataDiagramModel } from '../../editor/dataDiagramModel';
+import type { DataDiagramModel } from '../../editor/dataDiagramModel';
+import type { EntityElement } from '../../editor/dataElements';
 
 import { NoSearchResults } from '../utility/noSearchResults';
 import { ProgressBar, ProgressState } from '../utility/progressBar';
@@ -65,6 +66,13 @@ export interface ClassTreeProps {
      * @default true
      */
     draggableItems?: boolean;
+    /**
+     * Handler to place newly created entity from a tree.
+     */
+    placeCreatedEntity?: (
+        element: EntityElement,
+        dropEvent: CanvasDropEvent | undefined
+    ) => Promise<void>;
 }
 
 /**
@@ -428,7 +436,11 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         elementType: ElementTypeIri,
         dropEvent?: CanvasDropEvent
     ): Promise<void> {
-        const {workspace: {model, view, editor, getCommandBus}, translation: t} = this.props;
+        const {
+            placeCreatedEntity,
+            workspace: {model, view, editor, getCommandBus},
+            translation: t,
+        } = this.props;
         const batch = model.history.startBatch();
 
         this.createElementCancellation.abort();
@@ -467,6 +479,10 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
             element.setPosition(targetPosition);
             canvas.renderingState.syncUpdate();
             moveElementCenterToPosition(element, targetPosition, canvas.renderingState);
+        }
+
+        if (placeCreatedEntity) {
+            await placeCreatedEntity(element, dropEvent);
         }
 
         batch.store();

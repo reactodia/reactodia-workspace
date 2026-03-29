@@ -136,6 +136,11 @@ export interface WorkspacePerformLayoutParams {
      */
     selectedElements?: ReadonlySet<Element>;
     /**
+     * Set of elements which should not be moved by layout algorithm
+     * (if supported).
+     */
+    fixedElements?: ReadonlySet<Element>;
+    /**
      * Whether moving elements to final layout positions should be animated.
      *
      * @default false

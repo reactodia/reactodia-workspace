@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix `SelectionAction*` components not updating on selection change when provided as children to `Halo`.
 
 #### 💅 Polish
+- Allow to control the placement of newly created entity elements from `ClassTree` and `SearchSectionElementTypes` via `placeCreatedEntity` prop.
+- Expose `fixedElements` option for `performLayout()` to be able to constrain elements not to move (if supported by the layout function).
 - Improve ARIA-attributes and other accessibility interaction:
   * Allow to resize and toggle `WorkspaceLayout*` with a keyboard;
   * Change `WorkspaceLayout*` to be `<section>` elements with `aria-label` (i.e. regions);

@@ -147,23 +147,23 @@ export interface DefaultWorkspaceProps extends BaseDefaultWorkspaceProps {
      * {
      *     sections: [
      *         {
-     *              key: 'elementTypes',
-     *              label: t.text('default_workspace.search_section_entity_types.label'),
-     *              title: t.text('default_workspace.search_section_entity_types.title'),
-     *              component: <SearchSectionElementTypes />,
-     *          },
-     *          {
-     *              key: 'entities',
-     *              label: t.text('default_workspace.search_section_entities.label'),
-     *              title: t.text('default_workspace.search_section_entities.title'),
-     *              component: <SearchSectionEntities />,
-     *          },
-     *          {
-     *              key: 'linkTypes',
-     *              label: t.text('default_workspace.search_section_link_types.label'),
-     *              title: t.text('default_workspace.search_section_link_types.title'),
-     *              component: <SearchSectionLinkTypes />,
-     *          }
+     *             key: 'elementTypes',
+     *             label: t.text('default_workspace.search_section_entity_types.label'),
+     *             title: t.text('default_workspace.search_section_entity_types.title'),
+     *             component: <SearchSectionElementTypes />,
+     *         },
+     *         {
+     *             key: 'entities',
+     *             label: t.text('default_workspace.search_section_entities.label'),
+     *             title: t.text('default_workspace.search_section_entities.title'),
+     *             component: <SearchSectionEntities />,
+     *         },
+     *         {
+     *             key: 'linkTypes',
+     *             label: t.text('default_workspace.search_section_link_types.label'),
+     *             title: t.text('default_workspace.search_section_link_types.title'),
+     *             component: <SearchSectionLinkTypes />,
+     *         },
      *     ]
      * }
      * ```
