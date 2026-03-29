@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [0.34.1] - 2026-03-30
 #### 🐛 Fixed
 - Fix stale/non-saved data when calling `applyChanges()` immediately after `updateData()` in `EntityEditor` and `RelationEditor`.
 - Fix `SelectionAction*` components not updating on selection change when provided as children to `Halo`.
@@ -680,7 +682,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.34.1...HEAD
+[0.34.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.31.2...v0.32.0
