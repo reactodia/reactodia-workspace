@@ -22,6 +22,12 @@ $no-results-color: theme.$color-emphasis-400;
     color: theme.$color-primary;
     cursor: pointer;
     text-decoration: none;
+    border: none;
+    background: none;
+    font-family: unset;
+    font-size: unset;
+    padding: 0;
+    font-weight: unset;
   
     &:hover {
       text-decoration: underline;
@@ -83,12 +89,21 @@ $no-results-color: theme.$color-emphasis-400;
     overflow-y: auto;
     border-top: 1px solid theme.$border-color-base;
     flex-grow: 1;
-    margin: 0;
   }
   
   &__links-list-empty {
     display: flex;
     align-items: center;
+  }
+
+  &__links-root {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__links-item {
+    display: contents;
   }
   
   &__links-no-results {
@@ -113,10 +128,8 @@ $no-results-color: theme.$color-emphasis-400;
   }
 
   &__link {
+    position: relative;
     display: flex;
-    overflow: hidden;
-    padding: 0 5px 0 0;
-    align-items: center;
     margin-bottom: 4px;
     background: theme.$color-emphasis-200;
     border-radius: theme.$border-radius-s;
@@ -124,6 +137,22 @@ $no-results-color: theme.$color-emphasis-400;
     &:hover {
       background-color: theme.$color-emphasis-400;
     }
+  }
+
+  &__link-button {
+    /* Unset <button> styles */
+    background: none;
+    border: unset;
+    font-family: unset;
+    font-size: unset;
+
+    display: flex;
+    height: 30px;
+    align-items: center;
+    overflow: hidden;
+    flex: auto;
+    text-align: start;
+    padding: 0 5px 0 0;
   }
 
   &__link-direction {
@@ -190,17 +219,39 @@ $no-results-color: theme.$color-emphasis-400;
     &:hover { opacity: 1; }
   }
 
-  &__link-filter-button {
+  &__link-filter-spacer {
     flex-shrink: 0;
-    -webkit-mask-image: url("@images/add-to-filter.svg");
-    mask-image: url("@images/add-to-filter.svg");
-    mask-size: 20px 20px;
     width: 20px;
     height: 20px;
-    opacity: 0.4;
     margin-left: 10px;
-    background-color: currentColor;
-    &:hover { opacity: 1; }
+  }
+
+  &__link-filter-button {
+    position: absolute;
+    right: 35px;
+    top: calc(50% - 10px);
+
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    padding: 0;
+
+    &::before {
+      display: block;
+      content: '';
+      -webkit-mask-image: url("@images/add-to-filter.svg");
+      mask-image: url("@images/add-to-filter.svg");
+      mask-size: 20px 20px;
+      width: 100%;
+      height: 100%;
+      background-color: currentColor;
+      opacity: 0.4;
+    }
+
+    &:hover::before {
+      opacity: 1;
+    }
   }
   
   &__move-to-filter {

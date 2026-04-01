@@ -284,8 +284,10 @@ $standard-new-entity-stripe: theme.$element-background-color;
     transition: opacity 200ms 0ms;
   }
 
+
   &:hover &__ungroup-one-button,
-  &:focus &__ungroup-one-button {
+  &:focus &__ungroup-one-button,
+  .reactodia-overlaid-element--only-selected &__ungroup-one-button {
     opacity: 1;
   }
 
