@@ -3,7 +3,9 @@ import * as React from 'react';
 
 import { mapAbortedToNull } from '../../coreUtils/async';
 import { EventObserver } from '../../coreUtils/events';
-import { useObservedProperty } from '../../coreUtils/hooks';
+import {
+    useEventStore, useFrameDebouncedStore, useObservedProperty, useSyncStore,
+} from '../../coreUtils/hooks';
 import { useTranslation, type Translation } from '../../coreUtils/i18n';
 import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
@@ -14,13 +16,14 @@ import type { MetadataCreatedEntity } from '../../data/metadataProvider';
 
 import { HtmlSpinner } from '../../diagram/spinner';
 
-import type { DataDiagramModel } from '../../editor/dataDiagramModel';
+import { type DataDiagramModel, getAllPresentEntities } from '../../editor/dataDiagramModel';
 import { EntityElement } from '../../editor/dataElements';
 import { subscribeElementTypes } from '../../editor/observedElement';
 
 import { ListElementView } from '../utility/listElementView';
 import { NoSearchResults } from '../utility/noSearchResults';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
+import { SearchResults } from '../utility/searchResults';
 import { createRequest } from '../instancesSearch';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
@@ -248,7 +251,7 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
     }
 
     private renderExistingElementsList() {
-        const {elementValue,  workspace: {model, editor}} = this.props;
+        const {searchStore, elementValue} = this.props;
         const {elementTypes, existingElements, existingElementsState} = this.state;
         if (existingElementsState !== 'none') {
             return (
@@ -259,25 +262,16 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                 </div>
             );
         }
-        if (existingElements.length > 0) {
-            return existingElements.map(element => {
-                const isAlreadyOnDiagram = !editor.temporaryState.elements.has(element.id) && Boolean(
-                    model.elements.find((el) => el instanceof EntityElement && el.iri === element.id)
-                );
-                const hasAppropriateType = Boolean(
-                    elementTypes && elementTypes.find(type => element.types.indexOf(type) >= 0)
-                );
-                return (
-                    <ListElementView key={element.id}
-                        element={element}
-                        disabled={isAlreadyOnDiagram || !hasAppropriateType}
-                        selected={element.id === elementValue.value.data.id}
-                        onClick={(e, model) => void this.onSelectExistingItem(model)}
-                    />
-                );
-            });
-        }
-        return <NoSearchResults hasQuery={true} />;
+
+        return (
+            <ExistingElementList
+                items={existingElements}
+                requiredElementTypes={elementTypes}
+                selected={elementValue.isNew ? undefined : elementValue.value.data}
+                onSelect={item => void this.onSelectExistingItem(item)}
+                highlightText={searchStore.value}
+            />
+        );
     }
 
     private async onSelectExistingItem(data: ElementModel) {
@@ -318,7 +312,8 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                     searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}
                             role='listbox'
-                            aria-label={t.text('visual_authoring.select_entity.results.aria_label')}>
+                            aria-label={t.text('visual_authoring.select_entity.results.aria_label')}
+                            tabIndex={-1}>
                             {this.renderExistingElementsList()}
                         </div>
                     ) : (
@@ -335,6 +330,72 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
             </div>
         );
     }
+}
+
+function ExistingElementList(props: {
+    items: readonly ElementModel[];
+    requiredElementTypes?: readonly ElementTypeIri[];
+    selected: ElementModel | undefined;
+    onSelect: (item: ElementModel) => void;
+    highlightText?: string;
+}) {
+    const {items, requiredElementTypes, selected, onSelect, highlightText} = props;
+    const {model, editor} = useWorkspace();
+
+    const selectedIri = selected?.id;
+    const selection = React.useMemo(
+        () => new Set(selectedIri === undefined ? undefined : [selectedIri]),
+        [selectedIri]
+    );
+
+    const cellsVersion = useSyncStore(
+        useFrameDebouncedStore(
+            useEventStore(model.events, 'changeCells')
+        ),
+        () => model.cellsVersion
+    );
+    const isEntityOnDiagram = React.useMemo(() => {
+        const presentEntities = getAllPresentEntities(model);
+        return (item: ElementModel) => presentEntities.has(item.id);
+    }, [cellsVersion]);
+
+    const temporaryState = useObservedProperty(
+        editor.events,
+        'changeTemporaryState',
+        () => editor.temporaryState
+    );
+
+    const isItemDisabled = React.useCallback((item: ElementModel) => {
+        const hasAppropriateType =
+            requiredElementTypes && requiredElementTypes.some(type => item.types.includes(type));
+        return (
+            (isEntityOnDiagram(item) && !temporaryState.elements.has(item.id)) ||
+            !hasAppropriateType
+        );
+    }, [isEntityOnDiagram, temporaryState, requiredElementTypes]);
+
+    return (
+        <SearchResults
+            items={items}
+            selection={selection}
+            onSelectionChanged={nextSelection => {
+                if (nextSelection.size === 1) {
+                    const [nextIri] = nextSelection;
+                    const nextItem = items.find(item => item.id === nextIri);
+                    if (nextItem) {
+                        onSelect(nextItem);
+                    }
+                }
+            }}
+            isItemDisabled={isItemDisabled}
+            highlightText={highlightText}
+            useDragAndDrop={false}
+            multiSelection={false}
+            footer={
+                items.length === 0 ? <NoSearchResults hasQuery={true} /> : undefined
+            }
+        />
+    );
 }
 
 function ElementTypeOptions(props: {

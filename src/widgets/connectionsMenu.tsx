@@ -30,6 +30,9 @@ import { ConnectionsMenuTopic, InstancesSearchTopic } from '../workspace/command
 
 import { highlightSubstring } from './utility/listElementView';
 import { SearchResults } from './utility/searchResults';
+import {
+    TreeList, type TreeListModel, type TreeListRenderItem, type TreeListFocusProps,
+} from './utility/treeList';
 
 /**
  * Props for {@link ConnectionsMenu} component.
@@ -607,8 +610,10 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             const localizedText = t.formatLabel(label, linkType.id, model.language);
 
             return <span className={`${CLASS_NAME}__breadcrumbs`}>
-                <a className={`${CLASS_NAME}__breadcrumbs-link`}
-                    onClick={this.onCollapseLink}>{t.text('connections_menu.breadcrumbs_root.label')}</a>
+                <button className={`${CLASS_NAME}__breadcrumbs-link`}
+                    onClick={this.onCollapseLink}>
+                    {t.text('connections_menu.breadcrumbs_root.label')}
+                </button>
                 {'\u00A0' + '/' + '\u00A0'}
                 {localizedText} {direction ? `(${direction})` : null}
             </span>;
@@ -679,7 +684,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
             return (
                 <ConnectionsList
-                    targetIris={targetIris}
                     data={connections}
                     suggestions={connectionSuggestions}
                     filterKey={connectionSearch.value}
@@ -692,8 +696,6 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                             : undefined
                     }
                     scrolledListRef={this.linksScrolledListRef}
-                    workspace={workspace}
-                    translation={t}
                 />
             );
         } else {
@@ -848,185 +850,238 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
     };
 }
 
-interface ConnectionsListProps {
-    targetIris: ReadonlyArray<ElementIri>;
+interface ConnectionSuggestions {
+    readonly filterKey: string | null;
+    readonly scores: ReadonlyMap<LinkTypeIri, PropertyScore>;
+}
+
+function ConnectionsList(props: {
     data: ConnectionsData;
     filterKey: string;
     sortMode: SortMode;
     suggestions: ConnectionSuggestions;
-    workspace: WorkspaceContext;
-    translation: Translation;
 
     allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
 
     scrolledListRef: React.RefObject<HTMLUListElement | null>;
-}
+}) {
+    const {
+        data, filterKey, sortMode, suggestions,
+        allRelatedLink, onExpandLink, onMoveToFilter, scrolledListRef,
+    } = props;
+    const {model} = useWorkspace();
+    const t = useTranslation();
 
-interface ConnectionSuggestions {
-    readonly filterKey: string | null;
-    readonly scores: ReadonlyMap<LinkTypeIri, PropertyScore>;
-}
+    const isSmartMode = sortMode === 'smart' && !filterKey;
 
-class ConnectionsList extends React.Component<ConnectionsListProps> {
-    private isSmartMode(): boolean {
-        return this.props.sortMode === 'smart' && !this.props.filterKey;
-    }
+    const textFilter = filterKey ? makeCaseInsensitiveFilter(filterKey) : undefined;
+    const links = isSmartMode ? [] : (data.links || [])
+        .map(link => model.getLinkType(link.id)?.data ?? link)
+        .filter(link => {
+            const text = t.formatLabel(link.label, link.id, model.language);
+            return !textFilter || textFilter(text);
+        })
+        .sort(makeLinkTypeComparer(t, model.language));
 
-    private compareLinks = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {workspace: {model}, translation: t} = this.props;
-        const aText = t.formatLabel(a.label, a.id, model.language);
-        const bText = t.formatLabel(b.label, b.id, model.language);
-        return aText.localeCompare(bText);
-    };
+    const probableLinks =  (data.links ?? [])
+        .map(link => model.getLinkType(link.id)?.data ?? link)
+        .filter(link => {
+            const score = suggestions.scores.get(link.id);
+            return !links.includes(link) && score !== undefined && (score.score > 0 || isSmartMode);
+        })
+        .sort(makeLinkTypeComparer(t, model.language, suggestions));
 
-    private compareLinksByWeight = (a: LinkTypeModel, b: LinkTypeModel) => {
-        const {workspace: {model}, translation: t, suggestions} = this.props;
-        const {scores} = suggestions;
-        const aText = t.formatLabel(a.label, a.id, model.language);
-        const bText = t.formatLabel(b.label, b.id, model.language);
+    const regularEntries = getConnectionLinks(links, {
+        counts: data.counts,
+        scores: suggestions.scores,
+    });
+    const probableEntries = getConnectionLinks(probableLinks, {
+        counts: data.counts,
+        scores: suggestions.scores,
+        probable: true,
+    });
 
-        const aWeight = scores.has(a.id) ? scores.get(a.id)!.score : 0;
-        const bWeight = scores.has(b.id) ? scores.get(b.id)!.score : 0;
-
-        return (
-            aWeight > bWeight ? -1 :
-            aWeight < bWeight ? 1 :
-            aText.localeCompare(bText)
-        );
-    };
-
-    private getLinks() {
-        const {workspace: {model}, translation: t, data, filterKey} = this.props;
-        const textFilter = filterKey ? makeCaseInsensitiveFilter(filterKey) : undefined;
-        return (data.links || [])
-            .map(link => model.getLinkType(link.id)?.data ?? link)
-            .filter(link => {
-                const text = t.formatLabel(link.label, link.id, model.language);
-                return !textFilter || textFilter(text);
-            })
-            .sort(this.compareLinks);
-    }
-
-    private getProbableLinks() {
-        const {workspace: {model}, data, suggestions} = this.props;
-        const {scores} = suggestions;
-        const isSmartMode = this.isSmartMode();
-        return (data.links ?? [])
-            .map(link => model.getLinkType(link.id)?.data ?? link)
-            .filter(link => {
-                return scores.has(link.id) && (scores.get(link.id)!.score > 0 || isSmartMode);
-            })
-            .sort(this.compareLinksByWeight);
-    }
-
-    private getViews = (links: LinkTypeModel[], notSure?: boolean) => {
-        const {workspace, data, suggestions} = this.props;
-        const {scores} = suggestions;
-
-        const views: React.ReactElement[] = [];
-        const addView = (link: LinkTypeModel, direction: 'in' | 'out') => {
-            const {inCount, outCount, inexact} = data.counts.get(link.id) ?? {
-                inCount: 0,
-                outCount: 0,
-                inexact: false,
-            };
-            const count = direction === 'in' ? inCount : outCount;
-            if (count === 0) {
-                return;
-            }
-
-            const postfix = notSure ? '-probable' : '';
-            views.push(
-                <LinkInPopupMenu
-                    key={`${direction}-${link.id}-${postfix}`}
-                    link={link}
-                    onExpandLink={this.props.onExpandLink}
-                    count={inexact && count > 0 ? 'some' : count}
-                    direction={direction}
-                    filterKey={notSure ? '' : this.props.filterKey}
-                    onMoveToFilter={this.props.onMoveToFilter}
-                    probability={
-                        scores.has(link.id) && notSure ? scores.get(link.id)!.score : 0
-                    }
-                />,
-            );
-        };
-
-        for (const link of links) {
-            addView(link, 'in');
-            addView(link, 'out');
+    const entries: ConnectionEntry[] = [];
+    if (regularEntries.length > 1 || (isSmartMode && probableEntries.length > 1)) {
+        const countMap = data.counts;
+        const {inCount, outCount, inexact} = countMap.get(allRelatedLink.id)!;
+        const totalCount = inCount + outCount;
+        entries.push({
+            type: 'link',
+            key: allRelatedLink.id,
+            linkType: allRelatedLink,
+            count: inexact && totalCount > 0 ? 'some' : totalCount,
+        });
+        entries.push({type: 'separator'});
+        for (const entry of regularEntries) {
+            entries.push(entry);
         }
+    }
 
-        return views;
-    };
+    if (probableEntries.length > 0) {
+        if (isSmartMode) {
+            entries.push({type: 'probable-hint'});
+            for (const entry of probableEntries) {
+                entries.push(entry);
+            }
+        }
+    }
 
-    render() {
-        const {workspace, translation: t, allRelatedLink, scrolledListRef} = this.props;
-        const isSmartMode = this.isSmartMode();
+    const renderItem = React.useCallback<TreeListRenderItem<ConnectionEntry, void>>(
+        ({item, focusProps}) => {
+            if (item.type === 'link') {
+                return (
+                    <LinkInPopupMenu
+                        link={item.linkType}
+                        direction={item.direction}
+                        count={item.count}
+                        filterKey={item.probable ? '' : filterKey}
+                        probability={item.probability}
+                        onExpandLink={onExpandLink}
+                        onMoveToFilter={onMoveToFilter}
+                        focusProps={focusProps}
+                    />
+                );
+            } else if (item.type === 'separator') {
+                return <hr className={`${CLASS_NAME}__links-list-hr`} />;
+            } else if (item.type === 'probable-hint') {
+                return (
+                    <li className={`${CLASS_NAME}__links-probably-label`}>
+                        {t.text('connections_menu.links.suggest_similar')}
+                    </li>
+                );
+            }
+            return null;
+        },
+        [t, filterKey, onExpandLink, onMoveToFilter]
+    );
 
-        const links = isSmartMode ? [] : this.getLinks();
-        const probableLinks = this.getProbableLinks().filter(link => links.indexOf(link) === -1);
-        const views = this.getViews(links);
-        const probableViews = this.getViews(probableLinks, true);
+    const rootProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({
+        /* For compatibility with React 19 typings */
+        ref: scrolledListRef as React.RefObject<HTMLUListElement>,
+        className: `${CLASS_NAME}__links-root`,
+        role: 'list',
+    }), []);
+    const forestProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({}), []);
+    const itemProps = React.useMemo((): React.HTMLProps<HTMLLIElement> => ({
+        className: `${CLASS_NAME}__links-item`,
+        role: 'listitem',
+    }), []);
 
-        let viewList: React.ReactElement<any> | React.ReactElement<any>[];
-        if (views.length === 0 && probableViews.length === 0) {
-            viewList = (
+    return (
+        <div
+            className={cx(
+                `${CLASS_NAME}__links-list`,
+                'reactodia-scrollable',
+                entries.length === 0 ? `${CLASS_NAME}__links-list-empty` : undefined
+            )}
+            tabIndex={-1}
+        >
+            <TreeList
+                model={ConnectionListModel}
+                items={entries}
+                renderItem={renderItem}
+                rootProps={rootProps}
+                forestProps={forestProps}
+                itemProps={itemProps}
+            />
+            {entries.length === 0 ? (
                 <label className={`${CLASS_NAME}__links-no-results`}>
                     {t.text('connections_menu.links.no_results')}
                 </label>
-            );
-        } else {
-            viewList = views;
-            if (views.length > 1 || (isSmartMode && probableViews.length > 1)) {
-                const countMap = this.props.data.counts;
-                const {inCount, outCount, inexact} = countMap.get(allRelatedLink.id)!;
-                const totalCount = inCount + outCount;
-                viewList = [
-                    <LinkInPopupMenu
-                        key={allRelatedLink.id}
-                        link={allRelatedLink}
-                        onExpandLink={this.props.onExpandLink}
-                        count={inexact && totalCount > 0 ? 'some' : totalCount}
-                        onMoveToFilter={this.props.onMoveToFilter}
-                    />,
-                    <hr key='reactodia-hr-line' className={`${CLASS_NAME}__links-list-hr`} />,
-                ].concat(viewList);
-            }
-        }
-        let probablePart = null;
-        if (probableViews.length !== 0) {
-            probablePart = [
-                isSmartMode ? null : (
-                    <li key='probable-links'
-                        className={`${CLASS_NAME}__links-probably-label`}>
-                        {t.text('connections_menu.links.suggest_similar')}
-                    </li>
-                ),
-                probableViews,
-            ];
-        }
-        return (
-            <ul
-                ref={
-                    /* For compatibility with React 19 typings */
-                    scrolledListRef as React.RefObject<HTMLUListElement>
-                }
-                className={cx(
-                    'reactodia-scrollable',
-                    `${CLASS_NAME}__links-list`,
-                    views.length === 0 && probableViews.length === 0
-                        ? `${CLASS_NAME}__links-list-empty` : undefined
-                )}>
-                {viewList}{probablePart}
-            </ul>
-        );
-    }
+            ) : null}
+        </div>
+    );
 }
 
-interface LinkInPopupMenuProps {
+const ConnectionListModel: TreeListModel<ConnectionEntry, void> = {
+    getKey: item => item.type === 'link' ? item.key : item.type,
+    getChildren: item => undefined,
+    getDefaultSelected: (item, selected) => undefined,
+    isActive: item => item.type === 'link',
+};
+
+type ConnectionEntry = ConnectionEntryLink | ConnectionEntrySeparator;
+
+interface ConnectionEntrySeparator {
+    readonly type: 'separator' | 'probable-hint';
+}
+
+interface ConnectionEntryLink {
+    readonly type: 'link';
+    readonly key: string;
+    readonly linkType: LinkTypeModel;
+    readonly direction?: 'in' | 'out';
+    readonly count: number | 'some';
+    readonly probable?: boolean;
+    readonly probability?: number;
+}
+
+function getConnectionLinks(links: LinkTypeModel[], options: {
+    counts: ConnectionsData['counts'];
+    scores: ConnectionSuggestions['scores'];
+    probable?: boolean;
+}): ConnectionEntryLink[] {
+    const {counts, scores, probable} = options;
+    const entries: ConnectionEntryLink[] = [];
+    const addView = (link: LinkTypeModel, direction: 'in' | 'out') => {
+        const {inCount, outCount, inexact} = counts.get(link.id) ?? {
+            inCount: 0,
+            outCount: 0,
+            inexact: false,
+        };
+        const count = direction === 'in' ? inCount : outCount;
+        if (count === 0) {
+            return;
+        }
+
+        const postfix = probable ? '-probable' : '';
+        const score = scores.get(link.id);
+        entries.push({
+            type: 'link',
+            key: `${direction}-${link.id}-${postfix}`,
+            linkType: link,
+            direction,
+            count: inexact && count > 0 ? 'some' : count,
+            probable,
+            probability: probable && score !== undefined ? score.score : 0,
+        });
+    };
+
+    for (const link of links) {
+        addView(link, 'in');
+        addView(link, 'out');
+    }
+
+    return entries;
+}
+
+function makeLinkTypeComparer(
+    t: Translation,
+    language: string,
+    suggestions?: ConnectionSuggestions
+): (a: LinkTypeModel, b: LinkTypeModel) => number {
+    return (a, b) => {
+        if (suggestions) {
+            const {scores} = suggestions;
+            const aWeight = scores.has(a.id) ? scores.get(a.id)!.score : 0;
+            const bWeight = scores.has(b.id) ? scores.get(b.id)!.score : 0;
+            if (aWeight > bWeight) {
+                return -1;
+            } else if (aWeight < bWeight) {
+                return 1;
+            }
+        }
+
+        const aText = t.formatLabel(a.label, a.id, language);
+        const bText = t.formatLabel(b.label, b.id, language);
+        return aText.localeCompare(bText);
+    };
+}
+
+function LinkInPopupMenu(props: {
     link: LinkTypeModel;
     count: number | 'some';
     direction?: 'in' | 'out';
@@ -1034,10 +1089,11 @@ interface LinkInPopupMenuProps {
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
     probability?: number;
-}
-
-function LinkInPopupMenu(props: LinkInPopupMenuProps) {
-    const {link, filterKey, direction, count, onExpandLink, onMoveToFilter, probability = 0} = props;
+    focusProps?: TreeListFocusProps;
+}) {
+    const {
+        link, filterKey, direction, count, onExpandLink, onMoveToFilter, probability = 0, focusProps,
+    } = props;
     const {model} = useWorkspace();
     const t = useTranslation();
 
@@ -1081,34 +1137,40 @@ function LinkInPopupMenu(props: LinkInPopupMenuProps) {
     };
 
     return (
-        <li data-linktypeid={link.id}
-            className={`${CLASS_NAME}__link`}
-            title={title}
-            onClick={onExpandLinkClick}>
-            {direction === 'in' || direction === 'out' ? (
-                <div className={`${CLASS_NAME}__link-direction`}>
-                    {direction === 'in' && <div className={`${CLASS_NAME}__link-direction-in`} />}
-                    {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
-                </div>
-            ) : null}
-            <WithFetchStatus type='linkType' target={link.id}>
-                <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
-            </WithFetchStatus>
-            {count === 'some' ? null : (
-                <span className={`reactodia-badge ${CLASS_NAME}__link-count`}>
-                    {count <= LINK_COUNT_PER_PAGE ? count : `${LINK_COUNT_PER_PAGE}+`}
-                </span>
-            )}
+        <div className={`${CLASS_NAME}__link`}
+            data-linktypeid={link.id}>
+            <button {...focusProps}
+                className={`${CLASS_NAME}__link-button`}
+                title={title}
+                onClick={onExpandLinkClick}
+            >
+                {direction === 'in' || direction === 'out' ? (
+                    <div className={`${CLASS_NAME}__link-direction`}>
+                        {direction === 'in' && <div className={`${CLASS_NAME}__link-direction-in`} />}
+                        {direction === 'out' && <div className={`${CLASS_NAME}__link-direction-out`} />}
+                    </div>
+                ) : null}
+                <WithFetchStatus type='linkType' target={link.id}>
+                    <div className={`${CLASS_NAME}__link-title`}>{textLine}</div>
+                </WithFetchStatus>
+                {count === 'some' ? null : (
+                    <span className={`reactodia-badge ${CLASS_NAME}__link-count`}>
+                        {count <= LINK_COUNT_PER_PAGE ? count : `${LINK_COUNT_PER_PAGE}+`}
+                    </span>
+                )}
+                {onMoveToFilter ? <div className={`${CLASS_NAME}__link-filter-spacer`} /> : null}
+                <div className={`${CLASS_NAME}__link-navigate-button`}
+                    title={navigateTitle}
+                />
+            </button>
             {onMoveToFilter ? (
-                <div className={`${CLASS_NAME}__link-filter-button`}
+                <button {...focusProps}
+                    className={`${CLASS_NAME}__link-filter-button`}
                     onClick={onMoveToFilterClick}
                     title={t.text('connections_menu.link.move_to_filter.title')}
                 />
             ) : null}
-            <div className={`${CLASS_NAME}__link-navigate-button`}
-                title={navigateTitle}
-            />
-        </li>
+        </div>
     );
 }
 
@@ -1249,7 +1311,7 @@ class ObjectsPanel extends React.Component<ObjectsPanelProps, ObjectsPanelState>
                     {t.text('connections_menu.entities.no_results')}
                 </div>
             ) : (
-                <div className={`${CLASS_NAME}__objects-list`}>
+                <div className={`${CLASS_NAME}__objects-list`} tabIndex={-1}>
                     <SearchResults
                         items={objects}
                         selection={this.state.selection}

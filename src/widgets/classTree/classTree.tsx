@@ -28,8 +28,7 @@ import {
 } from '../../workspace/commandBusTopic';
 import { WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
-import { TreeNode } from './treeModel';
-import { ClassTreeContext, Forest } from './leaf';
+import { ClassTreeResults, type ClassTreeSelection, TreeNode } from './classTreeResults';
 
 /**
  * Props for {@link ClassTree} component.
@@ -132,7 +131,7 @@ interface State {
     roots: ReadonlyArray<TreeNode>;
     filteredRoots: ReadonlyArray<TreeNode>;
     appliedSearchText?: string;
-    selectedNode?: TreeNode;
+    selection?: ClassTreeSelection;
     constructibleClasses: ReadonlyMap<ElementTypeIri, boolean>;
     showOnlyConstructible: boolean;
 }
@@ -177,7 +176,7 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
             draggableItems = true, workspace: {editor}, translation: t,
         } = this.props;
         const {
-            fetchedGraph, refreshingState, appliedSearchText, roots, filteredRoots, selectedNode,
+            fetchedGraph, refreshingState, appliedSearchText, roots, filteredRoots, selection,
             constructibleClasses, showOnlyConstructible
         } = this.state;
         // highlight search term only if actual tree is already filtered by current or previous term:
@@ -217,35 +216,30 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
                     title={t.text('search_element_types.refresh_progress.title')}
                 />
                 {fetchedGraph?.classTree ? (
-                    <ClassTreeContext.Provider
-                        value={{
-                            searchText,
-                            selectedNode,
-                            onSelect: this.onSelectNode,
-                            creatableClasses: editor.inAuthoringMode
-                                ? constructibleClasses : EMPTY_CREATABLE_TYPES,
-                            onClickCreate: this.onCreateInstance,
-                            onDragCreate: this.onDragCreate,
-                            draggableItems,
-                        }}>
-                        <Forest className={`${CLASS_NAME}__tree reactodia-scrollable`}
-                            nodes={filteredRoots}
-                            root={true}
-                            footer={
-                                filteredRoots.length === 0 ? (
-                                    <NoSearchResults className={`${CLASS_NAME}__no-results`}
-                                        hasQuery={filteredRoots !== roots}
-                                        minSearchTermLength={minSearchTermLength}
-                                        message={
-                                            roots.length === 0
-                                                ? t.text('search_element_types.no_results')
-                                                : undefined
-                                        }
-                                    />
-                                ) : null
+                    <div className={`${CLASS_NAME}__tree reactodia-scrollable`} tabIndex={-1}>
+                        <ClassTreeResults nodes={filteredRoots}
+                            searchText={searchText}
+                            selection={selection}
+                            onSelect={this.onSelectNode}
+                            creatableClasses={
+                                editor.inAuthoringMode ? constructibleClasses : EMPTY_CREATABLE_TYPES
                             }
+                            onClickCreate={this.onCreateInstance}
+                            onDragCreate={this.onDragCreate}
+                            draggableItems={draggableItems}
                         />
-                    </ClassTreeContext.Provider>
+                        {filteredRoots.length === 0 ? (
+                            <NoSearchResults className={`${CLASS_NAME}__no-results`}
+                                hasQuery={filteredRoots !== roots}
+                                minSearchTermLength={minSearchTermLength}
+                                message={
+                                    roots.length === 0
+                                        ? t.text('search_element_types.no_results')
+                                        : undefined
+                                }
+                            />
+                        ) : null}
+                    </div>
                 ) : (
                     <div className={`${CLASS_NAME}__spinner`}>
                         <HtmlSpinner width={30} height={30}
@@ -349,12 +343,12 @@ class ClassTreeInner extends React.Component<ClassTreeInnerProps, State> {
         ));
     };
 
-    private onSelectNode = (node: TreeNode) => {
+    private onSelectNode = (selection: ClassTreeSelection) => {
         const {workspace: {getCommandBus}} = this.props;
-        this.setState({selectedNode: node}, () => {
+        this.setState({selection}, () => {
             getCommandBus(InstancesSearchTopic)
                 .trigger('setCriteria', {
-                    criteria: {elementType: node.iri},
+                    criteria: {elementType: selection.node.iri},
                 });
         });
     };

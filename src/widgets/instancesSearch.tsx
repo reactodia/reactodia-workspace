@@ -346,7 +346,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             />
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div key={this.state.resultId}
-                className={`${CLASS_NAME}__rest reactodia-scrollable`}>
+                className={`${CLASS_NAME}__rest reactodia-scrollable`}
+                tabIndex={-1}>
                 <SearchResults
                     items={resultItems}
                     highlightText={this.state.criteria.text}

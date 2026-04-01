@@ -41,6 +41,7 @@
 }
 
 .reactodia-class-tree-item {
+  list-style: none;
   margin: 1px 0;
 
   &__row {
@@ -108,8 +109,14 @@
     margin-left: 5px;
   }
 
+  &__root {
+    margin: 0;
+    padding: 0;
+  }
+
   &__children {
-    margin-left: 20px;
+    margin: 0 0 0 20px;
+    padding: 0;
   }
 
   &__toggle,

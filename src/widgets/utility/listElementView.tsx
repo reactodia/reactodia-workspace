@@ -16,7 +16,7 @@ import { useWorkspace } from '../../workspace/workspaceContext';
  *
  * @see {@link ListElementView}
  */
-export interface ListElementViewProps {
+export interface ListElementViewProps extends Omit<React.HTMLProps<HTMLElement>, 'onClick'> {
     /**
      * Entity data to display.
      */
@@ -57,6 +57,7 @@ const CLASS_NAME = 'reactodia-list-element-view';
 export function ListElementView(props: ListElementViewProps) {
     const {
         element, className, highlightText, disabled, selected, onClick, onDragStart,
+        ref, ...otherProps
     } = props;
 
     const {model, getElementTypeStyle} = useWorkspace();
@@ -88,18 +89,20 @@ export function ListElementView(props: ListElementViewProps) {
     };
 
     return (
-        <li className={combinedClass}
-            role='option'
+        <div {...otherProps}
+            ref={ref as React.Ref<HTMLDivElement>}
+            className={combinedClass}
+            role={otherProps.role ?? 'option'}
             draggable={!disabled && Boolean(onDragStart)}
-            title={formatEntityTitle(element, model, t)}
-            style={providedStyle}
+            title={otherProps.title ?? formatEntityTitle(element, model, t)}
+            style={{...otherProps.style, ...providedStyle}}
             onClick={onItemClick}
             onDragStart={onDragStart}>
             <div className={`${CLASS_NAME}__label`}
                 style={{background: frontColor}}>
                 {highlightSubstring(localizedText, highlightText)}
             </div>
-        </li>
+        </div>
     );
 }
 

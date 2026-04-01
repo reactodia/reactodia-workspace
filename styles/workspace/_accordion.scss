@@ -156,6 +156,8 @@
     font-size: 16px;
     background-color: theme.$color-emphasis-200;
     cursor: default;
+    outline-offset: -2px;
+  
     /* unselectable */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
