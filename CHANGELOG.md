@@ -4,6 +4,19 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Make tree- and list-like components more accessible:
+  * Change `ClassTree`, `InstancesSearch`, `ConnectionsMenu` and `SearchResults` to be "focus group" components with support for keyboard interaction (arrow keys to move focus or toggle tree items, space to select);
+  * Add proper `aria-*` attributes for "focus group" containers and children e.g. `tree` and `treeitem` roles;
+
+#### 🐛 Fixed
+- Fix partially or fully hidden outlines for `WorkspaceLayoutItem` headers and `Navigator` toggle button.
+
+#### 💅 Polish
+- Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
+  * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
+- Extend `ListElementView` utility component to accept any other additional HTML props.
+- Always display ungroup buttons on `StandardGroup` when the element is single-selected.
 
 ## [0.34.1] - 2026-03-30
 #### 🐛 Fixed
