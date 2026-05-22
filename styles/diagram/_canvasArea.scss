@@ -3,7 +3,7 @@
 @use "../theme/theme";
 
 .reactodia-canvas-area {
-  --reactodia-paper-panning-overlay-z-index: zIndex.$panning-overlay;
+  --reactodia-paper-panning-overlay-z-index: #{zIndex.$panning-overlay};
 
   flex: auto;
   width: 0;
