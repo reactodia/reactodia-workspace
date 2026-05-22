@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Fix partially or fully hidden outlines for `WorkspaceLayoutItem` headers and `Navigator` toggle button.
 
+#### ⏱ Performance
+- Fix canvas panning optimization not being applied due to incorrect `z-index` value.
+
 #### 💅 Polish
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
