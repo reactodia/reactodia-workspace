@@ -1,6 +1,8 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useLatest } from '../../coreUtils/hooks';
+
 import type { DockDirection } from './viewportDock';
 
 /**
@@ -131,10 +133,4 @@ export function DraggableHandle(props: DraggableHandleProps) {
             {children}
         </div>
     );
-}
-
-function useLatest<T>(value: T): { readonly current: T } {
-    const ref = React.useRef<T>(value);
-    ref.current = value;
-    return ref;
 }

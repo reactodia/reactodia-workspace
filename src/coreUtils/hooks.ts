@@ -168,13 +168,10 @@ export function useAsync<const I extends React.DependencyList, T>(params: {
     load: (input: I, options: { signal: AbortSignal }) => Promise<T> | undefined;
 }): UseAsyncResult<T> {
     const {input, load} = params;
-    const latestLoad = React.useRef(load);
+    const latestLoad = useLatest(load);
     const [result, setResult] = React.useState<UseAsyncResult<T>>({
         data: undefined,
         status: 'loading',
-    });
-    React.useEffect(() => {
-        latestLoad.current = load;
     });
     React.useEffect(() => {
         const controller = new AbortController();
@@ -200,4 +197,12 @@ export function useAsync<const I extends React.DependencyList, T>(params: {
         return () => controller.abort();
     }, input);
     return result;
+}
+
+export function useLatest<T>(value: T): { readonly current: T } {
+    const ref = React.useRef<T>(value);
+    React.useEffect(() => {
+        ref.current = value;
+    });
+    return ref;
 }

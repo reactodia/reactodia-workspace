@@ -1,18 +1,17 @@
 import * as React from 'react';
 
 import {
-    neverSyncStore, useEventStore, useFrameDebouncedStore, useSyncStore,
+    neverSyncStore, useEventStore, useFrameDebouncedStore, useSyncStore, useLatest,
 } from '../../coreUtils/hooks';
 
 import { ElementModel, ElementIri } from '../../data/model';
 import { getAllPresentEntities } from '../../editor/dataDiagramModel';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { ListElementView, startDragElements } from './listElementView';
 import {
-    TreeList, TreeListState, type TreeListModel, type TreeListRenderItem, type TreeListFocusProps,
-    type TreeListUpPath,
-} from './treeList';
+    AccessibleList, type ListRenderItem, ListSelection, type ListFocusableProps,
+} from './accessibleList';
+import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'reactodia-search-results';
 
@@ -76,9 +75,9 @@ export function SearchResults(props: SearchResultsProps) {
         useDragAndDrop = true, multiSelection = true, footer,
     } = props;
 
-    const renderItem = React.useCallback<TreeListRenderItem<ElementItem, boolean>>(
-        ({item, path, focusProps, selected}) => (
-            <ResultItem item={item} path={path} focusProps={focusProps} selected={selected} />
+    const renderItem = React.useCallback<ListRenderItem<ElementItem, boolean>>(
+        ({item, focusProps, selected}) => (
+            <ResultItem item={item} focusProps={focusProps} selected={selected} />
         ),
         []
     );
@@ -87,7 +86,6 @@ export function SearchResults(props: SearchResultsProps) {
         role: 'list',
         'aria-multiselectable': true,
     }), []);
-    const forestProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({}), []);
     const itemProps = React.useMemo((): React.HTMLProps<HTMLLIElement> => ({
         className: `${CLASS_NAME}__item`,
         role: 'listitem',
@@ -99,10 +97,7 @@ export function SearchResults(props: SearchResultsProps) {
         active: !computeIsItemDisabled(data),
     })), [items, computeIsItemDisabled]);
 
-    const latestItems = React.useRef(items);
-    React.useEffect(() => {
-        latestItems.current = items;
-    });
+    const latestItems = useLatest(items);
     const lastSelected = React.useRef<ElementModel>();
 
     const searchResultsContext = React.useMemo(
@@ -150,13 +145,11 @@ export function SearchResults(props: SearchResultsProps) {
         ]
     );
 
-    const selected = React.useMemo((): TreeListState<boolean> | undefined => {
+    const selected = React.useMemo((): ListSelection<boolean> | undefined => {
         if (selection.size === 0) {
             return undefined;
         }
-        return new TreeListState<boolean>(
-            new Map(Array.from(selection, iri => [iri, {value: true}]))
-        );
+        return ListSelection.fromEntries(Array.from(selection, iri => [iri, true]));
     }, [selection]);
 
     React.useEffect(() => {
@@ -176,13 +169,13 @@ export function SearchResults(props: SearchResultsProps) {
     return (
         <SearchResultsContext.Provider value={searchResultsContext}>
             <div className={CLASS_NAME}>
-                <TreeList
-                    model={SearchResultsModel}
+                <AccessibleList
                     items={extendedItems}
+                    getItemKey={getElementItemKey}
+                    isItemActive={isElementItemActive}
                     renderItem={renderItem}
-                    selected={selected}
+                    selection={selected}
                     rootProps={rootProps}
-                    forestProps={forestProps}
                     itemProps={itemProps}
                 />
                 {footer}
@@ -216,12 +209,13 @@ interface ElementItem {
     readonly active: boolean;
 }
 
-const SearchResultsModel: TreeListModel<ElementItem, boolean> = {
-    getKey: item => item.data.id,
-    getChildren: item => undefined,
-    getDefaultSelected: (item, selected) => undefined,
-    isActive: item => item.active,
-};
+function getElementItemKey(item: ElementItem): string {
+    return item.data.id;
+}
+
+function isElementItemActive(item: ElementItem): boolean {
+    return item.active;
+}
 
 interface SearchResultsContext {
     readonly highlightText: string | undefined;
@@ -246,8 +240,7 @@ function useSearchResultsContext(): SearchResultsContext {
 
 function ResultItem(props: {
     item: ElementItem;
-    path: TreeListUpPath;
-    focusProps: TreeListFocusProps;
+    focusProps: ListFocusableProps;
     selected: boolean | undefined;
 }) {
     const {item, focusProps, selected} = props;
