@@ -6,11 +6,11 @@ import { useTranslation } from '../../coreUtils/i18n';
 import { ElementTypeIri, ElementTypeModel } from '../../data/model';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import { highlightSubstring } from '../utility/listElementView';
 import {
-    TreeList, type TreeListModel, type TreeListRenderItem, type TreeListFocusProps,
-    TreeListState, type TreeListUpPath, treeListPathToDown,
-} from '../utility/treeList';
+    AccessibleTree, type TreeModel, type TreeRenderItem, TreeState, type TreeUpPath,
+    TreeFocusableProps, treePathToDown,
+} from '../utility/accessibleTree';
+import { highlightSubstring } from '../utility/listElementView';
 
 export interface ClassTreeResultsProps extends ClassTreeProvidedContext {
     nodes: ReadonlyArray<TreeNode>;
@@ -28,12 +28,12 @@ export interface ClassTreeProvidedContext {
 
 export interface ClassTreeSelection {
     readonly node: TreeNode;
-    readonly selection: TreeListState<TreeNode>;
+    readonly selection: TreeState<TreeNode>;
 }
 
 interface ClassTreeContext extends ClassTreeProvidedContext {
-    readonly onExpand: (path: TreeListUpPath) => void;
-    readonly onSelect: (node: TreeNode, path: TreeListUpPath) => void;
+    readonly onExpand: (path: TreeUpPath) => void;
+    readonly onSelect: (node: TreeNode, path: TreeUpPath) => void;
 }
 
 const ClassTreeContext = React.createContext<ClassTreeContext | null>(null);
@@ -46,7 +46,7 @@ export function ClassTreeResults(props: ClassTreeResultsProps) {
         onClickCreate, onDragCreate, draggableItems,
     } = props;
 
-    const renderItem = React.useCallback<TreeListRenderItem<TreeNode, TreeNode>>(
+    const renderItem = React.useCallback<TreeRenderItem<TreeNode, TreeNode>>(
         ({item, path, focusProps, expanded, selected}) => (
             <Leaf node={item}
                 path={path}
@@ -71,11 +71,11 @@ export function ClassTreeResults(props: ClassTreeResultsProps) {
     }), []);
 
     const defaultExpanded = Boolean(searchText);
-    const [expanded, setExpanded] = React.useState<TreeListState<boolean>>();
-    const onExpand = React.useCallback((path: TreeListUpPath) => {
+    const [expanded, setExpanded] = React.useState<TreeState<boolean>>();
+    const onExpand = React.useCallback((path: TreeUpPath) => {
         setExpanded(previous =>
-            (previous ?? new TreeListState())
-                .setAt(treeListPathToDown(path), itemExpanded => !(itemExpanded ?? defaultExpanded))
+            (previous ?? new TreeState())
+                .setAt(treePathToDown(path), itemExpanded => !(itemExpanded ?? defaultExpanded))
         );
     }, [defaultExpanded]);
     React.useEffect(() => setExpanded(undefined), [searchText]);
@@ -90,8 +90,8 @@ export function ClassTreeResults(props: ClassTreeResultsProps) {
             onExpand,
             onSelect: (node, path) => onSelect({
                 node,
-                selection: new TreeListState<TreeNode>().setAt(
-                    treeListPathToDown(path),
+                selection: new TreeState<TreeNode>().setAt(
+                    treePathToDown(path),
                     () => node
                 ),
             }),
@@ -109,14 +109,14 @@ export function ClassTreeResults(props: ClassTreeResultsProps) {
 
     return (
         <ClassTreeContext.Provider value={classTreeContext}>
-            <TreeList
+            <AccessibleTree
                 model={ClassTreeModel}
                 items={nodes}
                 renderItem={renderItem}
                 expanded={expanded}
                 defaultExpanded={defaultExpanded}
                 onSetExpanded={(item, path, expand) => setExpanded(previous => (
-                    (previous ?? new TreeListState()).setAt(path, () => expand)
+                    (previous ?? new TreeState()).setAt(path, () => expand)
                 ))}
                 selected={selection?.selection}
                 rootProps={rootProps}
@@ -138,7 +138,7 @@ export const TreeNode = {
     setDerived: (node: TreeNode, derived: ReadonlyArray<TreeNode>): TreeNode => ({...node, derived}),
 };
 
-const ClassTreeModel: TreeListModel<TreeNode, TreeNode> = {
+const ClassTreeModel: TreeModel<TreeNode, TreeNode> = {
     getKey: item => item.iri,
     getChildren: item => item.derived,
     getDefaultSelected: (item, selected) => undefined,
@@ -147,8 +147,8 @@ const ClassTreeModel: TreeListModel<TreeNode, TreeNode> = {
 
 function Leaf(props: {
     node: TreeNode;
-    path: TreeListUpPath;
-    focusProps: TreeListFocusProps;
+    path: TreeUpPath;
+    focusProps: TreeFocusableProps;
     expanded: boolean;
     selected?: TreeNode;
 }) {

@@ -204,6 +204,9 @@ export {
 export {
     AnnotationSupport, type AnnotationSupportProps, type AnnotationCommands,
 } from './widgets/annotation';
+export {
+    AccessibleList, type ListFocusableProps, type ListRenderItem, ListSelection,
+} from './widgets/utility/accessibleList';
 export { DraggableHandle, type DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {
     DropdownMenu, type DropdownMenuProps, DropdownMenuItem, type DropdownMenuItemProps,

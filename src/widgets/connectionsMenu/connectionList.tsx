@@ -7,10 +7,10 @@ import type { LinkTypeModel } from '../../data/model';
 import { generate128BitID, makeCaseInsensitiveFilter } from '../../data/utils';
 import { WithFetchStatus } from '../../editor/withFetchStatus';
 
-import { highlightSubstring } from '../utility/listElementView';
 import {
-    TreeList, type TreeListModel, type TreeListRenderItem, type TreeListFocusProps,
-} from '../utility/treeList';
+    AccessibleList, type ListRenderItem, type ListFocusableProps,
+} from '../utility/accessibleList';
+import { highlightSubstring } from '../utility/listElementView';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
 
@@ -93,7 +93,7 @@ export function ConnectionsList(props: {
         }
     }
 
-    const renderItem = React.useCallback<TreeListRenderItem<ConnectionEntry, void>>(
+    const renderItem = React.useCallback<ListRenderItem<ConnectionEntry, void>>(
         ({item, focusProps}) => {
             if (item.type === 'link') {
                 return (
@@ -128,7 +128,6 @@ export function ConnectionsList(props: {
         className: `${CLASS_NAME}__links-root`,
         role: 'list',
     }), []);
-    const forestProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({}), []);
     const itemProps = React.useMemo((): React.HTMLProps<HTMLLIElement> => ({
         className: `${CLASS_NAME}__links-item`,
         role: 'listitem',
@@ -143,12 +142,12 @@ export function ConnectionsList(props: {
             )}
             tabIndex={-1}
         >
-            <TreeList
-                model={ConnectionListModel}
+            <AccessibleList
                 items={entries}
+                getItemKey={getEntryKey}
+                isItemActive={isEntryActive}
                 renderItem={renderItem}
                 rootProps={rootProps}
-                forestProps={forestProps}
                 itemProps={itemProps}
             />
             {entries.length === 0 ? (
@@ -159,13 +158,6 @@ export function ConnectionsList(props: {
         </div>
     );
 }
-
-const ConnectionListModel: TreeListModel<ConnectionEntry, void> = {
-    getKey: item => item.type === 'link' ? item.key : item.type,
-    getChildren: item => undefined,
-    getDefaultSelected: (item, selected) => undefined,
-    isActive: item => item.type === 'link',
-};
 
 type ConnectionEntry = ConnectionEntryLink | ConnectionEntrySeparator;
 
@@ -181,6 +173,14 @@ interface ConnectionEntryLink {
     readonly count: number | 'some';
     readonly probable?: boolean;
     readonly probability?: number;
+}
+
+function getEntryKey(entry: ConnectionEntry): string {
+    return entry.type === 'link' ? entry.key : entry.type;
+}
+
+function isEntryActive(entry: ConnectionEntry): boolean {
+    return entry.type === 'link';
 }
 
 function getConnectionLinks(links: LinkTypeModel[], options: {
@@ -201,11 +201,10 @@ function getConnectionLinks(links: LinkTypeModel[], options: {
             return;
         }
 
-        const postfix = probable ? '-probable' : '';
         const score = scores.get(link.id);
         entries.push({
             type: 'link',
-            key: `${direction}-${link.id}-${postfix}`,
+            key: `${direction}-${probable ? 'probable' : ''}-${link.id}`,
             linkType: link,
             direction,
             count: inexact && count > 0 ? 'some' : count,
@@ -253,7 +252,7 @@ function ConnectionLink(props: {
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
     probability?: number;
-    focusProps?: TreeListFocusProps;
+    focusProps?: ListFocusableProps;
 }) {
     const {
         link, filterKey, direction, count, onExpandLink, onMoveToFilter, probability = 0, focusProps,

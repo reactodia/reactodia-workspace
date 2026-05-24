@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
 - Extend `ListElementView` utility component to accept any other additional HTML props.
+- Export `AccessibleList` component as base for [accessible](https://www.w3.org/TR/wai-aria/) list-like container.
 - Always display ungroup buttons on `StandardGroup` when the element is single-selected.
 
 ## [0.34.1] - 2026-03-30

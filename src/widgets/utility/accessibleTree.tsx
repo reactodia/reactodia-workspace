@@ -2,17 +2,17 @@ import * as React from 'react';
 
 import { findNextWithin, findPreviousWithin } from '../../coreUtils/dom';
 
-export interface TreeListProps<T, S> {
-    model: TreeListModel<T, S>;
+export interface AccessibleTreeProps<T, S> {
+    model: TreeModel<T, S>;
     items: readonly T[];
-    renderItem: TreeListRenderItem<T, S>;
-    expanded?: TreeListState<boolean>;
+    renderItem: TreeRenderItem<T, S>;
+    expanded?: TreeState<boolean>;
     /**
      * @default false
      */
     defaultExpanded?: boolean;
-    onSetExpanded?: (item: T, path: TreeListDownPath, expand: boolean) => void;
-    selected?: TreeListState<S>;
+    onSetExpanded?: (item: T, path: TreeDownPath, expand: boolean) => void;
+    selected?: TreeState<S>;
     /**
      * @default undefined
      */
@@ -22,34 +22,33 @@ export interface TreeListProps<T, S> {
     itemProps: React.HTMLProps<HTMLLIElement>;
 }
 
-export interface TreeListModel<T, S> {
+export interface TreeModel<T, S> {
     readonly getKey: (item: T) => string;
     readonly getChildren: (item: T) => readonly T[] | undefined;
     readonly getDefaultSelected: (item: T, selected: S | undefined) => S | undefined;
     readonly isActive: (item: T) => boolean;
 }
 
-export type TreeListRenderItem<T, S> = (props: {
+export type TreeRenderItem<T, S> = (props: {
     item: T;
-    path: TreeListUpPath;
-    focusProps: TreeListFocusProps;
+    path: TreeUpPath;
+    focusProps: TreeFocusableProps;
     expanded: boolean;
     selected: S | undefined;
 }) => React.ReactElement | null;
 
-export interface TreeListFocusProps {
-    tabIndex: number;
-    'data-tree-focusable': true;
-};
+export interface TreeFocusableProps {
+    readonly tabIndex: number;
+}
 
-export function TreeList<T extends object, S>(props: TreeListProps<T, S>) {
+export function AccessibleTree<T extends object, S>(props: AccessibleTreeProps<T, S>) {
     const {
         model, items, renderItem, expanded, defaultExpanded, onSetExpanded,
         selected, defaultSelected, rootProps, forestProps, itemProps,
     } = props;
 
     const getTotalChildCount = React.useMemo(() => makeGetTotalChildCount(model), [model]);
-    const treeContext = React.useMemo((): TreeListContext<T, S> => ({
+    const treeContext = React.useMemo((): TreeContext<T, S> => ({
         model,
         getTotalChildCount,
         renderItem,
@@ -61,7 +60,7 @@ export function TreeList<T extends object, S>(props: TreeListProps<T, S>) {
     const [focusIndex, setFocusIndex] = React.useState(0);
     const tryFocusOnItemElement = (target: Element | undefined) => {
         if (target) {
-            const focusable = target.querySelector('[data-tree-focusable]');
+            const focusable = target.querySelector('[tabIndex]');
             if (focusable instanceof HTMLElement) {
                 focusable.focus();
             }
@@ -128,7 +127,10 @@ export function TreeList<T extends object, S>(props: TreeListProps<T, S>) {
                             }
                             const currentIndex = Number(current.getAttribute('data-tree-index'));
                             if (Number.isFinite(currentIndex)) {
-                                if (e.key === 'ArrowLeft' && current.getAttribute('aria-expanded') === 'false') {
+                                if (e.key === 'ArrowLeft' && (
+                                    !current.hasAttribute('aria-expanded') ||
+                                    current.getAttribute('aria-expanded') === 'false'
+                                )) {
                                     // Focus on parent item
                                     const parent = current.parentElement
                                         ? findTreeIndexedAt(current.parentElement, e.currentTarget)
@@ -147,6 +149,8 @@ export function TreeList<T extends object, S>(props: TreeListProps<T, S>) {
                                 }
                             }
                         }
+                    } else {
+                        rootProps?.onKeyDown?.(e);
                     }
                 },
             }}
@@ -154,23 +158,23 @@ export function TreeList<T extends object, S>(props: TreeListProps<T, S>) {
     );
 }
 
-interface TreeListContext<T, S> {
-    readonly model: TreeListModel<T, S>;
+interface TreeContext<T, S> {
+    readonly model: TreeModel<T, S>;
     readonly getTotalChildCount: (item: T) => number;
-    readonly renderItem: TreeListRenderItem<T, S>;
+    readonly renderItem: TreeRenderItem<T, S>;
     readonly forestProps: React.HTMLProps<HTMLUListElement>;
     readonly itemProps: React.HTMLProps<HTMLLIElement>;
 }
 
 function Forest<T, S>(props: {
-    treeContext: TreeListContext<T, S>;
+    treeContext: TreeContext<T, S>;
     items: readonly T[];
     index: number;
-    parentPath?: TreeListUpPath;
+    parentPath?: TreeUpPath;
     focusIndex: number;
-    expanded: TreeListState<boolean> | undefined;
+    expanded: TreeState<boolean> | undefined;
     defaultExpanded: boolean;
-    selected: TreeListState<S> | undefined;
+    selected: TreeState<S> | undefined;
     defaultSelected: S | undefined;
     rootProps?: React.HTMLProps<HTMLUListElement>;
 }) {
@@ -186,7 +190,7 @@ function Forest<T, S>(props: {
             {items.map(item => {
                 const itemIndex = nextIndex;
                 nextIndex += 1 + getTotalChildCount(item);
-                const path: TreeListUpPath = {
+                const path: TreeUpPath = {
                     parent: parentPath,
                     key: model.getKey(item),
                 };
@@ -209,14 +213,14 @@ function Forest<T, S>(props: {
 }
 
 function Item<T, S>(props: {
-    treeContext: TreeListContext<T, S>;
+    treeContext: TreeContext<T, S>;
     item: T;
     index: number;
-    path: TreeListUpPath;
+    path: TreeUpPath;
     focusIndex: number;
-    expanded: TreeListItemState<boolean> | undefined;
+    expanded: TreeItemState<boolean> | undefined;
     defaultExpanded: boolean;
-    selected: TreeListItemState<S> | undefined;
+    selected: TreeItemState<S> | undefined;
     defaultSelected: S | undefined;
 }) {
     const {
@@ -240,7 +244,6 @@ function Item<T, S>(props: {
                 path,
                 focusProps: {
                     tabIndex: index === focusIndex ? 0 : -1,
-                    'data-tree-focusable': true,
                 },
                 expanded: leafExpanded,
                 selected: leafSelected,
@@ -261,31 +264,35 @@ function Item<T, S>(props: {
     );
 }
 
-export interface TreeListUpPath {
-    readonly parent: TreeListUpPath | undefined;
+export interface TreeUpPath {
+    readonly parent: TreeUpPath | undefined;
     readonly key: string;
 }
 
-export interface TreeListDownPath {
-    readonly child: TreeListDownPath | undefined;
+export interface TreeDownPath {
+    readonly child: TreeDownPath | undefined;
     readonly key: string;
 }
 
-export class TreeListState<S> {
+export class TreeState<S> implements Iterable<readonly [string, TreeItemState<S>]> {
     constructor(
-        private readonly states = new Map<string, TreeListItemState<S>>()
+        private readonly states = new Map<string, TreeItemState<S>>()
     ) {}
 
-    get(key: string): TreeListItemState<S> | undefined {
+    [Symbol.iterator](): Iterator<readonly [string, TreeItemState<S>]> {
+        return this.states[Symbol.iterator]();
+    }
+
+    get(key: string): TreeItemState<S> | undefined {
         return this.states.get(key);
     }
 
     setAt(
-        path: TreeListDownPath,
+        path: TreeDownPath,
         updater: (previous: S | undefined) => S | undefined
-    ): TreeListState<S> {
+    ): TreeState<S> {
         const itemState = this.states.get(path.key);
-        const nextState = TreeListState.setAtItem(
+        const nextState = TreeState.setAtItem(
             itemState, path.child, updater
         );
         if (nextState === itemState) {
@@ -297,21 +304,21 @@ export class TreeListState<S> {
         } else {
             nextStates.delete(path.key);
         }
-        return new TreeListState(nextStates);
+        return new TreeState(nextStates);
     }
 
     private static setAtItem<S>(
-        itemState: TreeListItemState<S> | undefined,
-        path: TreeListDownPath | undefined,
+        itemState: TreeItemState<S> | undefined,
+        path: TreeDownPath | undefined,
         updater: (previous: S | undefined) => S | undefined
-    ): TreeListItemState<S> | undefined {
+    ): TreeItemState<S> | undefined {
         if (path) {
             if (itemState && itemState.level) {
                 const nextLevel = itemState.level.setAt(path, updater);
                 return nextLevel === itemState.level
                     ? itemState : {...itemState, level: nextLevel};
             } else {
-                const nextItem = TreeListState.setAtItem(
+                const nextItem = TreeState.setAtItem(
                     undefined, path.child, updater
                 );
                 if (!nextItem || nextItem === itemState) {
@@ -319,7 +326,7 @@ export class TreeListState<S> {
                 }
                 return {
                     value: itemState?.value,
-                    level: new TreeListState(new Map([[path.key, nextItem]])),
+                    level: new TreeState(new Map([[path.key, nextItem]])),
                 };
             }
         }
@@ -336,14 +343,14 @@ export class TreeListState<S> {
     }
 }
 
-export interface TreeListItemState<S> {
+export interface TreeItemState<S> {
     readonly value: S | undefined;
-    readonly level?: TreeListState<S> | undefined;
+    readonly level?: TreeState<S> | undefined;
 }
 
-export function treeListPathToDown(upPath: TreeListUpPath): TreeListDownPath {
+export function treePathToDown(upPath: TreeUpPath): TreeDownPath {
     let current = upPath.parent;
-    let downward: TreeListDownPath = {
+    let downward: TreeDownPath = {
         key: upPath.key,
         child: undefined,
     };
@@ -358,7 +365,7 @@ export function treeListPathToDown(upPath: TreeListUpPath): TreeListDownPath {
 }
 
 function makeGetTotalChildCount<T extends object, S>(
-    model: TreeListModel<T, S>
+    model: TreeModel<T, S>
 ): (item: T) => number {
     const totalChildCount = new WeakMap<T, number>();
     const getTotalChildCount = (item: T): number => {
@@ -380,7 +387,7 @@ function makeGetTotalChildCount<T extends object, S>(
 }
 
 function findItem<T, S>(
-    model: TreeListModel<T, S>,
+    model: TreeModel<T, S>,
     items: readonly T[],
     isMatch: (item: T) => boolean
 ): [T, number] | undefined {
@@ -411,12 +418,12 @@ function findItem<T, S>(
 }
 
 function findItemAtIndex<T, S>(
-    model: TreeListModel<T, S>,
+    model: TreeModel<T, S>,
     getTotalChildCount: (item: T) => number,
     items: readonly T[],
     firstIndex: number,
     targetIndex: number
-): [T, TreeListDownPath] | undefined {
+): [T, TreeDownPath] | undefined {
     let current = firstIndex;
     for (const item of items) {
         if (current === targetIndex) {
