@@ -15,7 +15,7 @@ export {
 export type { HotkeyString } from './coreUtils/hotkey';
 export {
     type LabelLanguageSelector, type TranslatedProperty, TranslatedText, type Translation,
-    useTranslation,
+    TranslationProvider, useTranslation,
 } from './coreUtils/i18n';
 export { KeyedObserver, type KeyedSyncStore, useKeyedSyncStore } from './coreUtils/keyedObserver';
 export { Debouncer } from './coreUtils/scheduler';
@@ -102,6 +102,7 @@ export {
     LinkVertices, type LinkVerticesProps,
 } from './diagram/linkLayer';
 export { DefaultLinkRouter, type DefaultLinkRouterOptions } from './diagram/linkRouter';
+export { DefaultTranslation } from './diagram/locale';
 export { type DiagramModel, type DiagramModelEvents, type GraphStructure } from './diagram/model';
 export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
 export {

@@ -45,11 +45,14 @@ const CLASS_NAME = 'reactodia-workspace';
 export function WorkspaceRoot(props: WorkspaceRootProps) {
     const {colorScheme = 'auto'} = props;
 
-    const preferredColorScheme = usePreferredColorScheme(colorScheme === 'auto');
-    
+    const outerApi = React.useContext(ColorSchemeApi);
+    const outerColorScheme = React.useContext(ColorSchemeContext);
+
+    const preferredColorScheme = usePreferredColorScheme(!outerColorScheme && colorScheme === 'auto');
+
     let effectiveColorScheme = colorScheme;
     if (effectiveColorScheme === 'auto') {
-        effectiveColorScheme = preferredColorScheme === 'dark' ? 'dark' : 'light';
+        effectiveColorScheme = outerColorScheme ?? (preferredColorScheme === 'dark' ? 'dark' : 'light');
     }
 
     const [actedColorScheme, setActedColorScheme] = React.useState<ColorScheme | undefined>();
@@ -57,13 +60,14 @@ export function WorkspaceRoot(props: WorkspaceRootProps) {
         effectiveColorScheme = actedColorScheme;
     }
 
-    const colorSchemeApi = React.useMemo<ColorSchemeApi>(() => ({
+    const colorSchemeApi = React.useMemo<ColorSchemeApi>(() => outerApi.defined ? outerApi : {
+        defined: true,
         actInColorScheme: (scheme, action) => {
             ReactDOM.flushSync(() => setActedColorScheme(scheme));
             action();
             ReactDOM.flushSync(() => setActedColorScheme(undefined));
         }
-    }), [setActedColorScheme]);
+    }, [outerApi, setActedColorScheme]);
 
     return (
         <ColorSchemeApi.Provider value={colorSchemeApi}>
