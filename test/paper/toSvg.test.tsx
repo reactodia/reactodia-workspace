@@ -292,5 +292,6 @@ describe('toSvg()', () => {
 });
 
 const DUMMY_COLOR_SCHEME_API: ColorSchemeApi = {
+    defined: true,
     actInColorScheme: (_scheme, action) => action(),
 };

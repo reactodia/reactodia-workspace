@@ -5,7 +5,8 @@ import { hcl } from 'd3-color';
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver, EventSource } from '../coreUtils/events';
 import {
-    LabelLanguageSelector, type Translation, TranslationBundle, TranslatedText,
+    LabelLanguageSelector, type Translation, type TranslationBundle, TranslatedText,
+    TranslationContext, TranslationProvider,
 } from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
@@ -20,9 +21,7 @@ import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
 } from '../diagram/layout';
-import {
-    DefaultTranslation, DefaultTranslationBundle, TranslationProvider,
-} from '../diagram/locale';
+import { DefaultTranslation } from '../diagram/locale';
 import { RenameLinkToLinkStateProvider, SharedCanvasState } from '../diagram/sharedCanvasState';
 
 import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
@@ -94,19 +93,12 @@ export interface WorkspaceProps {
      */
     renameLinkProvider?: RenameLinkProvider | null;
     /**
-     * Overrides how a single label gets selected from multiple of them based on target language.
-     */
-    selectLabelLanguage?: LabelLanguageSelector;
-    /**
-     * Initial language to display the graph data with.
-     */
-    defaultLanguage?: string;
-    /**
      * Additional translation bundles for UI text strings in the workspace
      * in order from higher to lower priority.
      *
      * @default []
      * @see {@link useDefaultTranslation}
+     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
      */
     translations?: ReadonlyArray<Partial<TranslationBundle>>;
     /**
@@ -114,8 +106,19 @@ export interface WorkspaceProps {
      *
      * @default true
      * @see {@link translations}
+     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
      */
     useDefaultTranslation?: boolean;
+    /**
+     * Overrides how a single label gets selected from multiple of them based on target language.
+     *
+     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
+     */
+    selectLabelLanguage?: LabelLanguageSelector;
+    /**
+     * Initial language to display the graph data with.
+     */
+    defaultLanguage?: string;
     /**
      * Default function to compute diagram layout.
      *
@@ -171,8 +174,13 @@ export class Workspace extends React.Component<WorkspaceProps> {
     private translation: Translation;
 
     /** @hidden */
-    constructor(props: WorkspaceProps) {
-        super(props);
+    static contextType = TranslationContext;
+    /** @hidden */
+    declare context: React.ContextType<typeof TranslationContext>;
+
+    /** @hidden */
+    constructor(props: WorkspaceProps, context: unknown) {
+        super(props, context);
 
         const {
             history = new InMemoryHistory(),
@@ -182,19 +190,18 @@ export class Workspace extends React.Component<WorkspaceProps> {
             renameLinkProvider,
             typeStyleResolver,
             selectLabelLanguage,
-            defaultLanguage = DEFAULT_LANGUAGE,
             translations = [],
             useDefaultTranslation = true,
+            defaultLanguage = DEFAULT_LANGUAGE,
             defaultLayout,
             onWorkspaceEvent = () => {},
         } = this.props;
 
-        const translationBundles: Partial<TranslationBundle>[] = [...translations];
-        if (useDefaultTranslation) {
-            translationBundles.push(DefaultTranslationBundle);
-        }
-
-        this.translation = new DefaultTranslation(translationBundles, selectLabelLanguage);
+        this.translation = this.context ?? new DefaultTranslation({
+            bundles: translations,
+            useDefaultBundle: useDefaultTranslation,
+            selectLabel: selectLabelLanguage,
+        });
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();

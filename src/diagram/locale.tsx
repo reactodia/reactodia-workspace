@@ -3,19 +3,55 @@ import * as React from 'react';
 import DefaultBundle from '../../i18n/translations/en.reactodia-translation.json';
 
 import {
-    LabelLanguageSelector, Translation, TranslationKey, TranslationBundle, TranslationContext,
+    LabelLanguageSelector, Translation, TranslationKey, TranslationBundle,
 } from '../coreUtils/i18n';
 
-import { isEncodedBlank } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
 
 export const DefaultTranslationBundle: TranslationBundle = DefaultBundle;
 
+/**
+ * Default built-in implementation for i18n strings interpolation and other
+ * methods from {@link Translation} interface.
+ */
 export class DefaultTranslation implements Translation {
-    constructor(
-        protected readonly bundles: ReadonlyArray<Partial<TranslationBundle>>,
-        protected readonly selectLabelLanguage: LabelLanguageSelector = defaultSelectLabel
-    ) {}
+    protected readonly bundles: ReadonlyArray<Partial<TranslationBundle>>;
+
+    private readonly _selectLabel: LabelLanguageSelector;
+
+    constructor(options: {
+        /**
+         * Additional translation bundles for UI text strings in the workspace
+         * in order from higher to lower priority.
+         *
+         * @default []
+         * @see {@link useDefaultTranslation}
+         */
+        bundles?: ReadonlyArray<Partial<TranslationBundle>>;
+        /**
+         * If set, disables translation fallback which (with default `en` language).
+         *
+         * @default true
+         * @see {@link translations}
+         */
+        useDefaultBundle?: boolean;
+        /**
+         * Overrides how a single label gets selected from multiple of them based on target language.
+         */
+        selectLabel?: LabelLanguageSelector;
+    }) {
+        const {
+            bundles = [],
+            useDefaultBundle = true,
+            selectLabel = defaultSelectLabel,
+        } = options;
+        const translationBundles: Partial<TranslationBundle>[] = [...bundles];
+        if (useDefaultBundle) {
+            translationBundles.push(DefaultTranslationBundle);
+        }
+        this.bundles = translationBundles;
+        this._selectLabel = selectLabel;
+    }
 
     private getString(key: TranslationKey): string | undefined {
         const dotIndex = key.indexOf('.');
@@ -57,8 +93,8 @@ export class DefaultTranslation implements Translation {
         labels: ReadonlyArray<Rdf.Literal>,
         language: string
     ): Rdf.Literal | undefined {
-        const {selectLabelLanguage} = this;
-        return selectLabelLanguage(labels, language);
+        const {_selectLabel} = this;
+        return _selectLabel(labels, language);
     }
 
     selectValues(
@@ -79,13 +115,6 @@ export class DefaultTranslation implements Translation {
     ): string {
         const label = labels ? this.selectLabel(labels, language) : undefined;
         return resolveLabel(label, fallbackIri);
-    }
-
-    formatIri(iri: string): string {
-        if (isEncodedBlank(iri)) {
-            return '(blank node)';
-        }
-        return `<${iri}>`;
     }
 }
 
@@ -184,16 +213,4 @@ function defaultSelectLabel(
 function resolveLabel(label: Rdf.Literal | undefined, fallbackIri: string): string {
     if (label) { return label.value; }
     return Rdf.getLocalName(fallbackIri) || fallbackIri;
-}
-
-export function TranslationProvider(props: {
-    translation: Translation;
-    children: React.ReactNode;
-}) {
-    const {translation, children} = props;
-    return (
-        <TranslationContext.Provider value={translation}>
-            {children}
-        </TranslationContext.Provider>
-    );
 }

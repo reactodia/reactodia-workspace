@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
 
 #### 💅 Polish
+- Allow to define `WorkspaceRoot` and `TranslationProvider` as parent to the `Workspace` component so they can be shared between multiple workspaces or used outside the workspace itself:
+  * Deprecate `translations`, `useDefaultTranslation` and `selectLabelLanguage` props on `Workspace` component in favor of wrapping the workspace in `TranslationProvider` with (newly) exported `DefaultTranslation`;
+  * Remove deprecated `Translation.formatIri()` method (use `DataLocaleProvider.formatIri()` instead).
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
 - Extend `ListElementView` utility component to accept any other additional HTML props.

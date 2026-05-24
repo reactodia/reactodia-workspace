@@ -136,15 +136,6 @@ export interface Translation<K extends string = TranslationKey> {
         fallbackIri: string,
         language: string
     ): string;
-
-    /**
-     * Formats IRI to display in the UI:
-     *   - usual IRIs are enclosed in `<IRI>`;
-     *   - anonymous element IRIs displayed as `(blank node)`.
-     *
-     * @deprecated Use {@link DataLocaleProvider.formatIri} instead.
-     */
-    formatIri(iri: string): string;
 }
 
 /**
@@ -181,6 +172,30 @@ export interface TranslatedProperty<Iri> {
 export const TranslationContext = React.createContext<Translation | null>(null);
 
 /**
+ * Provides i18n (translation) context for the UI elements.
+ *
+ * @category Components
+ * @see {@link useTranslation}
+ */
+export function TranslationProvider(props: {
+    /**
+     * Provided i18n implementation.
+     */
+    translation: Translation;
+    /**
+     * Component children to render with provided i18n context.
+     */
+    children: React.ReactNode;
+}) {
+    const {translation, children} = props;
+    return (
+        <TranslationContext.Provider value={translation}>
+            {children}
+        </TranslationContext.Provider>
+    );
+}
+
+/**
  * Gets current translation data for the UI elements.
  *
  * @category Hooks
@@ -188,7 +203,7 @@ export const TranslationContext = React.createContext<Translation | null>(null);
 export function useTranslation(): Translation {
     const translation = React.useContext(TranslationContext);
     if (!translation) {
-        throw new Error('Reactodia: missing translation context');
+        throw new Error('Reactodia: missing <TranslationProvider> context');
     }
     return translation;
 }
@@ -209,7 +224,7 @@ type DeepPath<T> = T extends object ? (
  * Represents a lazily-resolved simple or formatted translation string.
  *
  * @category Core
- * @see Translation
+ * @see {@link Translation}
  */
 export class TranslatedText {
     private constructor(
