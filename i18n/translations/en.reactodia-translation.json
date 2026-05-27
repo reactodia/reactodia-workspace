@@ -74,12 +74,16 @@
     "sort_smart.title": "Smart sort"
   },
   "data_diagram_model": {
+    "add_element.command": "Add element",
+    "add_link.command": "Add link",
     "create_links.command": "Create links",
     "group_entities.command": "Group entities",
     "import_layout.command": "Import layout",
     "regroup_relations.command": "Regroup relations",
     "request_entities.command": "Request entity data",
     "request_relations.command": "Request relations between entities",
+    "remove_element.command": "Remove element",
+    "remove_link.command": "Remove link",
     "ungroup_entities.command": "Ungroup entities"
   },
   "default_data_locale": {
@@ -137,7 +141,8 @@
     "edit_relation.title_disabled": "Cannot edit the relation",
     "rename_link.title": "Rename link",
     "move_relation.move_source_title": "Move link source",
-    "move_relation.move_target_title": "Move link target"
+    "move_relation.move_target_title": "Move link target",
+    "vertex.remove_title": "Remove vertex"
   },
   "navigator": {
     "toggle_collapse.title": "Collapse navigator",

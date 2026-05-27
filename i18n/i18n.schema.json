@@ -101,12 +101,16 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
+        "add_element.command": { "$ref": "#/$defs/Value" },
+        "add_link.command": { "$ref": "#/$defs/Value" },
         "create_links.command": { "$ref": "#/$defs/Value" },
         "group_entities.command": { "$ref": "#/$defs/Value" },
         "import_layout.command": { "$ref": "#/$defs/Value" },
         "regroup_relations.command": { "$ref": "#/$defs/Value" },
         "request_entities.command": { "$ref": "#/$defs/Value" },
         "request_relations.command": { "$ref": "#/$defs/Value" },
+        "remove_element.command": { "$ref": "#/$defs/Value" },
+        "remove_link.command": { "$ref": "#/$defs/Value" },
         "ungroup_entities.command": { "$ref": "#/$defs/Value" }
       }
     },
@@ -196,7 +200,8 @@
         "edit_relation.title_disabled": { "$ref": "#/$defs/Value" },
         "rename_link.title": { "$ref": "#/$defs/Value" },
         "move_relation.move_source_title": { "$ref": "#/$defs/Value" },
-        "move_relation.move_target_title": { "$ref": "#/$defs/Value" }
+        "move_relation.move_target_title": { "$ref": "#/$defs/Value" },
+        "vertex.remove_title": { "$ref": "#/$defs/Value" }
       }
     },
     "navigator": {

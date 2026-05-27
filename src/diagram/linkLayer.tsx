@@ -4,6 +4,7 @@ import { createPortal, flushSync } from 'react-dom';
 
 import { EventObserver } from '../coreUtils/events';
 import { useEventStore, useSyncStore } from '../coreUtils/hooks';
+import { useTranslation } from '../coreUtils/i18n';
 
 import { HtmlPaperLayer, type PaperTransform } from '../paper/paperLayers';
 
@@ -674,35 +675,34 @@ export function LinkVertices(props: LinkVerticesProps) {
     return <g className={LINK_VERTICES_CLASS}>{elements}</g>;
 }
 
-class VertexTools extends React.Component<{
+function VertexTools(props: {
     vertexIndex: number;
     vertexRadius: number;
     x: number;
     y: number;
     onRemove: (vertexIndex: number) => void;
-}> {
-    render() {
-        const {vertexRadius, x, y} = this.props;
-        const transform = `translate(${x + 2 * vertexRadius},${y - 2 * vertexRadius})scale(${vertexRadius})`;
-        return (
-            <g className={`${LINK_VERTICES_CLASS}__handle`}
-                data-reactodia-no-export='true'
-                transform={transform}
-                onPointerDown={this.onRemoveVertex}>
-                <title>Remove vertex</title>
-                <circle r={1} />
-                <path d='M-0.5,-0.5 L0.5,0.5 M0.5,-0.5 L-0.5,0.5' strokeWidth={2 / vertexRadius} />
-            </g>
-        );
-    }
-
-    private onRemoveVertex = (e: React.MouseEvent<SVGElement>) => {
-        if (e.button !== 0 /* left button */) { return; }
+}) {
+    const {vertexIndex, vertexRadius, x, y, onRemove} = props;
+    const t = useTranslation();
+    const transform = `translate(${x + 2 * vertexRadius},${y - 2 * vertexRadius})scale(${vertexRadius})`;
+    const onRemoveVertex = (e: React.MouseEvent<SVGElement>) => {
+        if (e.button !== 0 /* left button */) {
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
-        const {onRemove, vertexIndex} = this.props;
         onRemove(vertexIndex);
     };
+    return (
+        <g className={`${LINK_VERTICES_CLASS}__handle`}
+            data-reactodia-no-export='true'
+            transform={transform}
+            onPointerDown={onRemoveVertex}>
+            <title>{t.text('link_action.vertex.remove_title')}</title>
+            <circle r={1} />
+            <path d='M-0.5,-0.5 L0.5,0.5 M0.5,-0.5 L-0.5,0.5' strokeWidth={2 / vertexRadius} />
+        </g>
+    );
 }
 
 function LinkMarkersInner(props: {
