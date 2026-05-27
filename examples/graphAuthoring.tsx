@@ -20,6 +20,12 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function GraphAuthoringExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+        metadataProvider: new ExampleMetadataProvider(),
+        validationProvider: new ExampleValidationProvider(),
+        renameLinkProvider: new RenameSubclassOfProvider(),
+    }));
 
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model, editor, translation: t, performLayout} = context;
@@ -62,16 +68,9 @@ function GraphAuthoringExample() {
         }
     }, []);
 
-    const [metadataProvider] = React.useState(() => new ExampleMetadataProvider());
-    const [validationProvider] = React.useState(() => new ExampleValidationProvider());
-    const [renameLinkProvider] = React.useState(() => new RenameSubclassOfProvider());
-
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}
-            metadataProvider={metadataProvider}
-            validationProvider={validationProvider}
-            renameLinkProvider={renameLinkProvider}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
                 visualAuthoring={{
@@ -110,7 +109,7 @@ function GraphAuthoringExample() {
                     {code: 'ja', label: '日本語'},
                 ]}
             />
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 

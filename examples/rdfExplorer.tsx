@@ -14,6 +14,9 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function RdfExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+    }));
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
@@ -41,8 +44,8 @@ function RdfExample() {
     }, [turtleData]);
 
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 menu={
                     <>
@@ -63,7 +66,7 @@ function RdfExample() {
                     {code: 'zh', label: '汉语'},
                 ]}
             />
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 

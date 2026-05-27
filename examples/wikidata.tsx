@@ -12,6 +12,9 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function WikidataExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+    }));
 
     const {onMount, getContext} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model, getCommandBus} = context;
@@ -65,8 +68,8 @@ function WikidataExample() {
     }, []);
 
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 menu={
                     <>
@@ -92,7 +95,7 @@ function WikidataExample() {
                     {code: 'zh', label: '汉语'},
                 ]}
             />
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 

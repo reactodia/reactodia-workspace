@@ -312,13 +312,15 @@ export {
 } from './workspace/classicWorkspace';
 export { DefaultWorkspace, type DefaultWorkspaceProps } from './workspace/defaultWorkspace';
 export {
-    Workspace, type WorkspaceProps, DefaultRenameLinkProvider,
+    WorkspaceProvider, DefaultRenameLinkProvider,
+    type CreateWorkspaceParams, type TrackedWorkspaceContext, createWorkspace, 
     type LoadedWorkspace, type LoadedWorkspaceParams, useLoadedWorkspace,
-} from './workspace/workspace';
+} from './workspace/workspaceProvider';
 export {
     WorkspaceContext, WorkspaceEventKey, type WorkspacePerformLayoutParams,
     type ProcessedTypeStyle, useWorkspace,
 } from './workspace/workspaceContext';
+export { Workspace, type WorkspaceProps } from './workspace/workspaceWrapper';
 export {
     CommandBusTopic,
     AnnotationTopic, ConnectionsMenuTopic, InstancesSearchTopic, UnifiedSearchTopic,

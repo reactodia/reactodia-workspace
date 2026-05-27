@@ -11,6 +11,9 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function StressTestExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+    }));
 
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model, view} = context;
@@ -58,15 +61,15 @@ function StressTestExample() {
     }, []);
 
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
                 navigator={{
                     expanded: false,
                 }}
             />
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 

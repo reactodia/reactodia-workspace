@@ -19,7 +19,7 @@ export class DefaultTranslation implements Translation {
 
     private readonly _selectLabel: LabelLanguageSelector;
 
-    constructor(options: {
+    constructor(options?: {
         /**
          * Additional translation bundles for UI text strings in the workspace
          * in order from higher to lower priority.
@@ -44,7 +44,7 @@ export class DefaultTranslation implements Translation {
             bundles = [],
             useDefaultBundle = true,
             selectLabel = defaultSelectLabel,
-        } = options;
+        } = options ?? {};
         const translationBundles: Partial<TranslationBundle>[] = [...bundles];
         if (useDefaultBundle) {
             translationBundles.push(DefaultTranslationBundle);

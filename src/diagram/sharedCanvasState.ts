@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
+import { Events, EventSource, PropertyChange } from '../coreUtils/events';
 
 import { TemplateProperties } from '../data/schema';
 
@@ -68,14 +68,11 @@ export interface SharedCanvasStateOptions {
  * @category Core
  */
 export class SharedCanvasState {
-    private readonly listener = new EventObserver();
     private readonly source = new EventSource<SharedCanvasStateEvents>();
     /**
      * Event for the shared canvas state.
      */
     readonly events: Events<SharedCanvasStateEvents> = this.source;
-
-    private disposed = false;
 
     private dropOnPaperHandler: ((e: CanvasDropEvent) => void) | undefined;
     private _highlighter: CellHighlighter | undefined;
@@ -112,10 +109,7 @@ export class SharedCanvasState {
 
     /** @hidden */
     dispose(): void {
-        if (this.disposed) { return; }
         this.source.trigger('dispose', {source: this});
-        this.listener.stopListening();
-        this.disposed = true;
     }
 
     /**

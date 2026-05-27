@@ -14,33 +14,35 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function I18nExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
-
-    const translation = React.useMemo(() => new Reactodia.DefaultTranslation({
-        bundles: [
-            {
-                'default_workspace': {
-                    'search_section_entities.label': 'Nodes',
-                    'search_section_entities.title': 'Graph Nodes Lookup',
-                    'search_section_entity_types.label': 'Node Types',
-                    'search_section_entity_types.title': 'Graph Node Type Hierarchy',
-                    'search_section_link_types.label': 'Edge Types',
-                    'search_section_link_types.title': 'Graph Edge Types on the diagram'
-                },
-                'search_defaults': {
-                    'input_term_too_short': 'Minimum search term length is {{termLength}}',
-                },
-                'search_entities': {
-                    'criteria_connected_to_source':
-                        '{{sourceIcon}}\u00A0{{entity}} (source) via {{relationType}}',
-                    'criteria_connected_to_target':
-                        '{{targetIcon}}\u00A0{{entity}} (target) via {{relationType}}',
-                },
-                'toolbar_action': {
-                    'layout.label': 'Layout the graph',
-                },
-            }
-        ]
-    }), []);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        translation: new Reactodia.DefaultTranslation({
+            bundles: [
+                {
+                    'default_workspace': {
+                        'search_section_entities.label': 'Nodes',
+                        'search_section_entities.title': 'Graph Nodes Lookup',
+                        'search_section_entity_types.label': 'Node Types',
+                        'search_section_entity_types.title': 'Graph Node Type Hierarchy',
+                        'search_section_link_types.label': 'Edge Types',
+                        'search_section_link_types.title': 'Graph Edge Types on the diagram'
+                    },
+                    'search_defaults': {
+                        'input_term_too_short': 'Minimum search term length is {{termLength}}',
+                    },
+                    'search_entities': {
+                        'criteria_connected_to_source':
+                            '{{sourceIcon}}\u00A0{{entity}} (source) via {{relationType}}',
+                        'criteria_connected_to_target':
+                            '{{targetIcon}}\u00A0{{entity}} (target) via {{relationType}}',
+                    },
+                    'toolbar_action': {
+                        'layout.label': 'Layout the graph',
+                    },
+                }
+            ],
+        }),
+        defaultLayout,
+    }));
 
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model} = context;
@@ -58,14 +60,12 @@ function I18nExample() {
     }, []);
 
     return (
-        <Reactodia.TranslationProvider translation={translation}>
-            <Reactodia.Workspace ref={onMount}
-                defaultLayout={defaultLayout}>
-                <Reactodia.DefaultWorkspace
-                    menu={<ExampleToolbarMenu />}
-                />
-            </Reactodia.Workspace>
-        </Reactodia.TranslationProvider>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
+            <Reactodia.DefaultWorkspace
+                menu={<ExampleToolbarMenu />}
+            />
+        </Reactodia.WorkspaceProvider>
     );
 }
 

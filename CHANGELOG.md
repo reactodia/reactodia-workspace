@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Make tree- and list-like components more accessible:
   * Change `ClassTree`, `InstancesSearch`, `ConnectionsMenu` and `SearchResults` to be "focus group" components with support for keyboard interaction (arrow keys to move focus or toggle tree items, space to select);
   * Add proper `aria-*` attributes for "focus group" containers and children e.g. `tree` and `treeitem` roles;
+- Support creating standalone workspace state (context) separated from UI components:
+  * Workspace state can be created with `createWorkspace()` and provided to the UI components via `WorkspaceProvider`;
+  * Allow nested definitions of `WorkspaceRoot` to use built-in styling outside the workspace component.
 
 #### 🐛 Fixed
 - Fix partially or fully hidden outlines for `WorkspaceLayoutItem` headers and `Navigator` toggle button.
@@ -16,14 +19,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
 
 #### 💅 Polish
-- Allow to define `WorkspaceRoot` and `TranslationProvider` as parent to the `Workspace` component so they can be shared between multiple workspaces or used outside the workspace itself:
-  * Deprecate `translations`, `useDefaultTranslation` and `selectLabelLanguage` props on `Workspace` component in favor of wrapping the workspace in `TranslationProvider` with (newly) exported `DefaultTranslation`;
+- Export `TranslationProvider` and `DefaultTranslation` to be able to use `useTranslation()` outside the workspace component:
   * Remove deprecated `Translation.formatIri()` method (use `DataLocaleProvider.formatIri()` instead).
+- Always display ungroup buttons on `StandardGroup` when the element is single-selected.
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
 - Extend `ListElementView` utility component to accept any other additional HTML props.
-- Export `AccessibleList` component as base for [accessible](https://www.w3.org/TR/wai-aria/) list-like container.
-- Always display ungroup buttons on `StandardGroup` when the element is single-selected.
 
 ## [0.34.1] - 2026-03-30
 #### 🐛 Fixed

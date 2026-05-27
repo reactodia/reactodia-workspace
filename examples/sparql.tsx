@@ -19,6 +19,9 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function SparqlExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+    }));
 
     const [connectionSettings, setConnectionSettings] = React.useState(
         (): SparqlConnectionSettings | undefined => {
@@ -61,8 +64,8 @@ function SparqlExample() {
     }, [connectionSettings]);
 
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 menu={<ExampleToolbarMenu />}
                 languages={[
@@ -84,7 +87,7 @@ function SparqlExample() {
                     />
                 </Reactodia.Toolbar> 
             </Reactodia.DefaultWorkspace>
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 
