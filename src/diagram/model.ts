@@ -1,6 +1,6 @@
 import { moveComparator } from '../coreUtils/collections';
 import { EventSource, Events, EventObserver, AnyEvent, PropertyChange } from '../coreUtils/events';
-import { Translation } from '../coreUtils/i18n';
+import { TranslatedText, Translation } from '../coreUtils/i18n';
 
 import { LinkTypeIri } from '../data/model';
 import * as Rdf from '../data/rdf/rdfModel';
@@ -121,6 +121,8 @@ export interface DiagramModelOptions {
     translation: Translation;
 }
 
+const InternalGetGraph: unique symbol = Symbol('DiagramModel.getGraph');
+
 /**
  * Stores the diagram content: graph (elements, links);
  * maintains selection and the current language to display the data.
@@ -157,6 +159,11 @@ export class DiagramModel implements GraphStructure {
         this.history = history;
     }
 
+    /** @hidden */
+    [InternalGetGraph]() {
+        return this.graph;
+    }
+
     /**
      * Current language for the diagram content.
      *
@@ -174,7 +181,7 @@ export class DiagramModel implements GraphStructure {
      */
     setLanguage(value: string): void {
         if (!value) {
-            throw new Error('Cannot set empty language.');
+            throw new Error('Reactodia: cannot set empty language');
         }
         const previous = this._language;
         if (previous === value) { return; }
@@ -351,7 +358,7 @@ export class DiagramModel implements GraphStructure {
      */
     addElement(element: Element): void {
         this.history.execute(
-            new AddElementCommand(this.graph, element, [])
+            new AddElementCommand(this, element, [])
         );
     }
 
@@ -366,7 +373,7 @@ export class DiagramModel implements GraphStructure {
         const element = this.getElement(elementId);
         if (element) {
             this.history.execute(
-                new RemoveElementCommand(this.graph, element)
+                new RemoveElementCommand(this, element)
             );
         }
     }
@@ -380,7 +387,7 @@ export class DiagramModel implements GraphStructure {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      */
     addLink(link: Link): void {
-        this.history.execute(new AddLinkCommand(this.graph, link));
+        this.history.execute(new AddLinkCommand(this, link));
     }
 
     /**
@@ -391,24 +398,25 @@ export class DiagramModel implements GraphStructure {
     removeLink(linkId: string): void {
         const link = this.graph.getLink(linkId);
         if (link) {
-            this.history.execute(new RemoveLinkCommand(this.graph, link));
+            this.history.execute(new RemoveLinkCommand(this, link));
         }
     }
 }
 
 class AddElementCommand implements Command {
     constructor(
-        readonly graph: Graph,
+        readonly model: DiagramModel,
         readonly element: Element,
         readonly connectedLinks: ReadonlyArray<Link>
     ) {}
 
-    get title(): string {
-        return 'Add element';
+    get title(): TranslatedText {
+        return TranslatedText.text('data_diagram_model.add_element.command');
     }
 
     invoke(): Command {
-        const {graph, element, connectedLinks} = this;
+        const {model, element, connectedLinks} = this;
+        const graph = model[InternalGetGraph]();
         graph.addElement(element);
         for (const link of connectedLinks) {
             const existing = graph.getLink(link.id);
@@ -416,58 +424,61 @@ class AddElementCommand implements Command {
                 graph.addLink(link);
             }
         }
-        return new RemoveElementCommand(graph, element);
+        return new RemoveElementCommand(model, element);
     }
 }
 
 class RemoveElementCommand implements Command {
     constructor(
-        readonly graph: Graph,
+        readonly model: DiagramModel,
         readonly element: Element
     ) {}
 
-    get title(): string {
-        return 'Remove element';
+    get title(): TranslatedText {
+        return TranslatedText.text('data_diagram_model.remove_element.command');
     }
 
     invoke(): Command {
-        const {graph, element} = this;
+        const {model, element} = this;
+        const graph = model[InternalGetGraph]();
         const connectedLinks = [...graph.getElementLinks(element)];
         graph.removeElement(element.id);
-        return new AddElementCommand(graph, element, connectedLinks);
+        return new AddElementCommand(model, element, connectedLinks);
     }
 }
 
 class AddLinkCommand implements Command {
     constructor(
-        readonly graph: Graph,
+        readonly model: DiagramModel,
         readonly link: Link
     ) {}
 
-    get title(): string {
-        return 'Add link';
+    get title(): TranslatedText {
+        return TranslatedText.text('data_diagram_model.add_link.command');
     }
 
     invoke(): Command {
-        const {graph, link} = this;
+        const {model, link} = this;
+        const graph = model[InternalGetGraph]();
         graph.addLink(link);
-        return new RemoveLinkCommand(graph, link);
+        return new RemoveLinkCommand(model, link);
     }
 }
 
 class RemoveLinkCommand implements Command {
     constructor(
-        readonly graph: Graph,
+        readonly model: DiagramModel,
         readonly link: Link
     ) {}
 
-    get title(): string {
-        return 'Remove link';
+    get title(): TranslatedText {
+        return TranslatedText.text('data_diagram_model.remove_link.command');
     }
 
     invoke(): Command {
-        const {graph, link} = this;
+        const {model, link} = this;
+        const graph = model[InternalGetGraph]();
         graph.removeLink(link.id);
-        return new AddLinkCommand(graph, link);
+        return new AddLinkCommand(model, link);
     }
 }
