@@ -99,7 +99,6 @@ export interface DialogSettingsProvider {
  * @category Core
  */
 export class OverlayController {
-    private readonly listener = new EventObserver();
     private readonly source = new EventSource<OverlayControllerEvents>();
     readonly events: Events<OverlayControllerEvents> = this.source;
 
@@ -131,13 +130,14 @@ export class OverlayController {
             onCanvasKeydown: this.onAnyCanvasKeydown,
         };
 
-        this.listener.listen(this.model.events, 'changeSelection', () => {
+        const listener = new EventObserver();
+        listener.listen(this.model.events, 'changeSelection', () => {
             const target = this.model.selection.length === 1 ? this.model.selection[0] : undefined;
             if (this.openedDialog && this.openedDialog.target !== target) {
                 this.hideDialog();
             }
         });
-        this.listener.listen(this.model.events, 'discardGraph', () => {
+        listener.listen(this.model.events, 'discardGraph', () => {
             if (this.openedDialog && this.openedDialog.target) {
                 this.hideDialog();
             }
@@ -151,11 +151,6 @@ export class OverlayController {
      */
     get openedDialog(): OverlayDialog | undefined {
         return this._openedDialog;
-    }
-
-    /** @hidden */
-    dispose() {
-        this.listener.stopListening();
     }
 
     private onAnyCanvasPointerUp = (event: CanvasPointerUpEvent): void => {

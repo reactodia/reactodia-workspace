@@ -4,10 +4,7 @@ import { hcl } from 'd3-color';
 
 import { shallowArrayEqual } from '../coreUtils/collections';
 import { EventObserver, EventSource } from '../coreUtils/events';
-import {
-    LabelLanguageSelector, type Translation, type TranslationBundle, TranslatedText,
-    TranslationContext, TranslationProvider,
-} from '../coreUtils/i18n';
+import { type Translation, TranslatedText, TranslationProvider } from '../coreUtils/i18n';
 
 import { ElementTypeIri } from '../data/model';
 import { MetadataProvider } from '../data/metadataProvider';
@@ -44,12 +41,20 @@ import {
     WorkspaceContext, WorkspaceEventKey, ProcessedTypeStyle,
 } from './workspaceContext';
 
+const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
+const TYPE_STYLE_COLOR_SEED = 0x0BADBEEF;
+
 /**
- * Props for {@link Workspace} component.
- *
- * @see {@link Workspace}
+ * Params for {@link createWorkspace} function.
  */
-export interface WorkspaceProps {
+export interface CreateWorkspaceParams {
+    /**
+     * Overrides default i18n (translation) implementation.
+     *
+     * By default, {@link DefaultTranslation} instance is used.
+     */
+    translation?: Translation;
     /**
      * Overrides default command history implementation.
      *
@@ -93,29 +98,6 @@ export interface WorkspaceProps {
      */
     renameLinkProvider?: RenameLinkProvider | null;
     /**
-     * Additional translation bundles for UI text strings in the workspace
-     * in order from higher to lower priority.
-     *
-     * @default []
-     * @see {@link useDefaultTranslation}
-     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
-     */
-    translations?: ReadonlyArray<Partial<TranslationBundle>>;
-    /**
-     * If set, disables translation fallback which (with default `en` language).
-     *
-     * @default true
-     * @see {@link translations}
-     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
-     */
-    useDefaultTranslation?: boolean;
-    /**
-     * Overrides how a single label gets selected from multiple of them based on target language.
-     *
-     * @deprecated Use {@link TranslationProvider} with {@link DefaultTranslation} instead.
-     */
-    selectLabelLanguage?: LabelLanguageSelector;
-    /**
      * Initial language to display the graph data with.
      */
     defaultLanguage?: string;
@@ -133,26 +115,88 @@ export interface WorkspaceProps {
      * Handler for a well-known workspace event.
      */
     onWorkspaceEvent?: (key: WorkspaceEventKey) => void;
+}
+
+/**
+ * Represents a context for the whole workspace, its stores and services.
+ *
+ * The context tracks ongoing async operations while it's actively mounted
+ * with {@link mount()} once or many times at the same time,
+ * and cancels all operations with {@link WorkspaceContext.disposeSignal}
+ * when fully unmounted.
+ *
+ * @category Core
+ */
+export interface TrackedWorkspaceContext extends WorkspaceContext {
+    /**
+     * Mounts the workspace to allow tracking async operations within.
+     *
+     * @returns a function to unmount the workspace, cancelling all active
+     * async operations.
+     */
+    mount(): () => void;
+}
+
+/**
+ * Creates standalone workspace context which stores graph data and provides
+ * means to display and interact with the diagram.
+ *
+ * @see {@link WorkspaceProvider}
+ */
+export function createWorkspace(params: CreateWorkspaceParams): TrackedWorkspaceContext {
+    return new RefCountedWorkspaceContext(params);
+}
+
+/**
+ * Top-level component to mount and provide specified workspace context
+ * to the child UI components.
+ *
+ * @category Components
+ * @see {@link createWorkspace}
+ */
+export function WorkspaceProvider(props: {
+    /**
+     * Workspace context to provide to the child UI components.
+     */
+    workspace: TrackedWorkspaceContext;
+    /**
+     * Handler to run when the context is mounted and UI components are ready.
+     *
+     * @see {@link useLoadedWorkspace}
+     */
+    onMount?: (instance: { getContext(): WorkspaceContext } | null) => void;
     /**
      * Component children.
      */
     children: React.ReactNode;
+}) {
+    const {workspace, onMount, children} = props;
+
+    React.useEffect(() => {
+        const unmount = workspace.mount();
+        return unmount;
+    }, [workspace]);
+
+    React.useEffect(() => {
+        if (onMount) {
+            const instance = { getContext: () => workspace };
+            onMount(instance);
+            return () => onMount(null);
+        }
+    }, [onMount]);
+
+    return (
+        <TranslationProvider translation={workspace.translation}>
+            <WorkspaceContext.Provider value={workspace}>
+                {children}
+            </WorkspaceContext.Provider>
+        </TranslationProvider>
+    );
 }
 
-const DEFAULT_LANGUAGE = 'en';
-const DEFAULT_TYPE_STYLE_RESOLVER: TypeStyleResolver = types => undefined;
-const TYPE_STYLE_COLOR_SEED = 0x0BADBEEF;
-
-/**
- * Top-level component which establishes workspace context, which stores
- * graph data and provides means to display and interact with the diagram.
- *
- * @category Components
- */
-export class Workspace extends React.Component<WorkspaceProps> {
-    private readonly listener = new EventObserver();
-    private readonly cancellation = new AbortController();
-
+class RefCountedWorkspaceContext implements WorkspaceContext {
+    private refCount = 0;
+    private cancellation = new AbortController();
     private readonly extensionCommands = new WeakMap<CommandBusTopic<any>, EventSource<any>>();
 
     private readonly resolveTypeStyle: TypeStyleResolver;
@@ -170,47 +214,38 @@ export class Workspace extends React.Component<WorkspaceProps> {
 
     private readonly layoutTypeProvider: LayoutTypeProvider;
 
-    private readonly workspaceContext: WorkspaceContext;
-    private translation: Translation;
+    readonly model: DataDiagramModel;
+    readonly view: SharedCanvasState;
+    readonly editor: EditorController;
+    readonly overlay: OverlayController;
+    readonly translation: Translation;
 
-    /** @hidden */
-    static contextType = TranslationContext;
-    /** @hidden */
-    declare context: React.ContextType<typeof TranslationContext>;
+    readonly triggerWorkspaceEvent: (key: WorkspaceEventKey) => void;
 
-    /** @hidden */
-    constructor(props: WorkspaceProps, context: unknown) {
-        super(props, context);
-
+    constructor(params: CreateWorkspaceParams) {
         const {
+            translation = new DefaultTranslation(),
             history = new InMemoryHistory(),
             dialogSettingsProvider = new DefaultDialogSettingsProvider(),
             metadataProvider,
             validationProvider,
             renameLinkProvider,
             typeStyleResolver,
-            selectLabelLanguage,
-            translations = [],
-            useDefaultTranslation = true,
             defaultLanguage = DEFAULT_LANGUAGE,
             defaultLayout,
             onWorkspaceEvent = () => {},
-        } = this.props;
+        } = params;
 
-        this.translation = this.context ?? new DefaultTranslation({
-            bundles: translations,
-            useDefaultBundle: useDefaultTranslation,
-            selectLabel: selectLabelLanguage,
-        });
+        this.translation = translation;
 
         this.resolveTypeStyle = typeStyleResolver ?? DEFAULT_TYPE_STYLE_RESOLVER;
         this.cachedTypeStyles = new WeakMap();
         this.cachedGroupStyles = new WeakMap();
 
-        const model = new DataDiagramModel({history, translation: this.translation});
-        model.setLanguage(defaultLanguage);
+        this.model = new DataDiagramModel({history, translation: this.translation});
+        this.model.setLanguage(defaultLanguage);
 
-        const view = new SharedCanvasState({
+        this.view = new SharedCanvasState({
             defaultElementResolver: element => {
                 if (element instanceof AnnotationElement) {
                     return NoteTemplate;
@@ -229,19 +264,22 @@ export class Workspace extends React.Component<WorkspaceProps> {
             ),
         });
 
-        const editor = new EditorController({
-            model,
+        this.editor = new EditorController({
+            model: this.model,
             translation: this.translation,
+            getDisposeSignal: () => this.disposeSignal,
             metadataProvider,
             validationProvider,
         });
 
-        const overlay = new OverlayController({
-            model,
-            view,
+        this.overlay = new OverlayController({
+            model: this.model,
+            view: this.view,
             translation: this.translation,
             dialogSettingsProvider,
         });
+
+        this.triggerWorkspaceEvent = onWorkspaceEvent;
 
         this.layoutTypeProvider = {
             getElementTypes: element => {
@@ -252,75 +290,45 @@ export class Workspace extends React.Component<WorkspaceProps> {
             },
         };
 
-        this.workspaceContext = {
-            model,
-            view,
-            editor,
-            overlay,
-            translation: this.translation,
-            disposeSignal: this.cancellation.signal,
-            getCommandBus: this.getCommandBus,
-            getElementStyle: this.getElementStyle,
-            getElementTypeStyle: this.getElementTypeStyle,
-            performLayout: this.onPerformLayout,
-            group: this.onGroup,
-            ungroupAll: this.onUngroupAll,
-            ungroupSome: this.onUngroupSome,
-            triggerWorkspaceEvent: onWorkspaceEvent,
-        };
-    }
-
-    /**
-     * Returns top-level workspace context.
-     */
-    getContext(): WorkspaceContext {
-        return this.workspaceContext;
-    }
-
-    /** @hidden */
-    render() {
-        const {children} = this.props;
-        return (
-            <TranslationProvider translation={this.translation}>
-                <WorkspaceContext.Provider value={this.workspaceContext}>
-                    {children}
-                </WorkspaceContext.Provider>
-            </TranslationProvider>
-        );
-    }
-
-    /** @hidden */
-    componentDidMount() {
-        const {onWorkspaceEvent} = this.props;
-        const {model, view, overlay} = this.workspaceContext;
-
-        this.listener.listen(model.events, 'loadingSuccess', () => {
-            for (const canvas of view.findAllCanvases()) {
+        const listener = new EventObserver();
+        listener.listen(this.model.events, 'loadingSuccess', () => {
+            for (const canvas of this.view.findAllCanvases()) {
                 canvas.renderingState.syncUpdate();
                 void canvas.zoomToFit();
             }
         });
 
         if (onWorkspaceEvent) {
-            this.listener.listen(model.events, 'changeSelection', () =>
+            listener.listen(this.model.events, 'changeSelection', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorChangeSelection)
             );
-            this.listener.listen(overlay.events, 'changeOpenedDialog', () =>
+            listener.listen(this.overlay.events, 'changeOpenedDialog', () =>
                 onWorkspaceEvent(WorkspaceEventKey.editorToggleDialog)
             );
         }
     }
 
-    /** @hidden */
-    componentWillUnmount() {
-        this.listener.stopListening();
-        const {view, editor, overlay} = this.workspaceContext;
-        view.dispose();
-        editor.dispose();
-        overlay.dispose();
+    mount(): () => void {
+        this.refCount++;
+        let mounted = true;
+        return () => {
+            if (mounted) {
+                mounted = false;
+                this.refCount--;
+                if (this.refCount === 0) {
+                    this.view.dispose();
+                    this.cancellation.abort();
+                    this.cancellation = new AbortController();
+                }
+            }
+        };
     }
 
-    private getCommandBus: WorkspaceContext['getCommandBus'] = (extension) => {
+    get disposeSignal(): AbortSignal {
+        return this.cancellation.signal;
+    }
+
+    readonly getCommandBus: WorkspaceContext['getCommandBus'] = (extension) => {
         let commands = this.extensionCommands.get(extension);
         if (!commands) {
             commands = new EventSource();
@@ -329,7 +337,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         return commands;
     };
 
-    private getElementStyle: WorkspaceContext['getElementStyle'] = element => {
+    readonly getElementStyle: WorkspaceContext['getElementStyle'] = element => {
         if (element instanceof EntityElement) {
             return this.getElementTypeStyle(element.data.types);
         } else if (element instanceof EntityGroup) {
@@ -340,7 +348,7 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     };
 
-    private getElementTypeStyle: WorkspaceContext['getElementTypeStyle'] = types => {
+    readonly getElementTypeStyle: WorkspaceContext['getElementTypeStyle'] = types => {
         let processedStyle = this.cachedTypeStyles.get(types);
         if (!processedStyle) {
             const customStyle = this.resolveTypeStyle(types);
@@ -394,12 +402,12 @@ export class Workspace extends React.Component<WorkspaceProps> {
         return undefined;
     }
 
-    private onPerformLayout: WorkspaceContext['performLayout'] = async params => {
+    readonly performLayout: WorkspaceContext['performLayout'] = async params => {
         const {
             canvas: targetCanvas, layoutFunction, selectedElements, fixedElements,
             animate, signal, zoomToFit = true,
         } = params;
-        const {model, view, overlay, disposeSignal} = this.workspaceContext;
+        const {model, view, overlay, disposeSignal} = this;
         const t = this.translation;
 
         const canvas = targetCanvas ?? view.findAnyCanvas();
@@ -459,16 +467,16 @@ export class Workspace extends React.Component<WorkspaceProps> {
         }
     };
 
-    private onGroup: WorkspaceContext['group'] = params => {
-        return groupEntities(this.workspaceContext, params);
+    readonly group: WorkspaceContext['group'] = params => {
+        return groupEntities(this, params);
     };
 
-    private onUngroupAll: WorkspaceContext['ungroupAll'] = params => {
-        return ungroupAllEntities(this.workspaceContext, params);
+    readonly ungroupAll: WorkspaceContext['ungroupAll'] = params => {
+        return ungroupAllEntities(this, params);
     };
 
-    private onUngroupSome: WorkspaceContext['ungroupSome'] = params => {
-        return ungroupSomeEntities(this.workspaceContext, params);
+    readonly ungroupSome: WorkspaceContext['ungroupSome'] = params => {
+        return ungroupSomeEntities(this, params);
     };
 }
 
@@ -518,7 +526,7 @@ export interface LoadedWorkspace {
      * Callback to pass as `ref` to the top-level workspace component
      * to perform the initialization specified in the hook.
      */
-    readonly onMount: (workspace: Workspace | null) => void;
+    readonly onMount: (instance: { getContext(): WorkspaceContext } | null) => void;
 }
 
 /**
@@ -531,10 +539,14 @@ export interface LoadedWorkspace {
  *
  * **Example**:
  * ```ts
- * const {getContext, onMount} = useLoadedWorkspace();
- * 
+ * const workspace = React.useState(() => Reactodia.createWorkspace({...}));
+ * const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
+ *     // ...
+ * });
  * return (
- *     <Reactodia.Workspace ref={onMount}>
+ *     <Reactodia.WorkspaceProvider
+ *         workspace={workspace}
+ *         onMount={onMount}>
  *         ...
  *     </Reactodia.Workspace>
  * );
@@ -618,7 +630,7 @@ export function useLoadedWorkspace(
 /**
  * Default {@link RenameLinkProvider} implementation for the {@link Workspace workspace}.
  *
- * Unless overriden, it allows to rename {@link AnnotationLink} graph links
+ * Unless overridden, it allows to rename {@link AnnotationLink} graph links
  * and stores the changed label in the {@link Link.linkState link template state}.
  *
  * @see {@link WorkspaceProps.renameLinkProvider}

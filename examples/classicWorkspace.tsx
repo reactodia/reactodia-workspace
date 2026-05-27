@@ -17,6 +17,13 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function ClassicWorkspaceExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+        metadataProvider: new ExampleMetadataProvider(),
+        validationProvider: new ExampleValidationProvider(),
+        renameLinkProvider: new RenameSubclassOfProvider(),
+        typeStyleResolver: SemanticTypeStyles,
+    }));
 
     const [turtleData, setTurtleData] = React.useState(TURTLE_DATA);
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
@@ -39,17 +46,9 @@ function ClassicWorkspaceExample() {
         });
     }, [turtleData]);
 
-    const [metadataProvider] = React.useState(() => new ExampleMetadataProvider());
-    const [validationProvider] = React.useState(() => new ExampleValidationProvider());
-    const [renameLinkProvider] = React.useState(() => new RenameSubclassOfProvider());
-
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}
-            metadataProvider={metadataProvider}
-            validationProvider={validationProvider}
-            renameLinkProvider={renameLinkProvider}
-            typeStyleResolver={SemanticTypeStyles}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.ClassicWorkspace
                 canvas={{
                     elementTemplateResolver: types => {
@@ -74,7 +73,7 @@ function ClassicWorkspaceExample() {
                     ),
                 }}
             />
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 

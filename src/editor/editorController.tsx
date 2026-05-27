@@ -24,6 +24,7 @@ import { ValidationState, changedElementsToValidate, validateElements } from './
 export interface EditorProps {
     readonly model: DataDiagramModel;
     readonly translation: Translation;
+    readonly getDisposeSignal: () => AbortSignal;
     readonly metadataProvider?: MetadataProvider;
     readonly validationProvider?: ValidationProvider;
 }
@@ -59,7 +60,6 @@ export interface EditorEvents {
  * @category Core
  */
 export class EditorController {
-    private readonly listener = new EventObserver();
     private readonly source = new EventSource<EditorEvents>();
     /**
      * Events for the editor controller.
@@ -68,6 +68,7 @@ export class EditorController {
 
     private readonly model: DataDiagramModel;
     private readonly translation: Translation;
+    private readonly getDisposeSignal: () => AbortSignal;
 
     private _inAuthoringMode = false;
     private _metadataProvider: MetadataProvider | undefined;
@@ -76,17 +77,19 @@ export class EditorController {
     private _validationState = ValidationState.empty;
     private _temporaryState = TemporaryState.empty;
 
-    private readonly cancellation = new AbortController();
-
     /** @hidden */
     constructor(props: EditorProps) {
-        const {model, translation, metadataProvider, validationProvider} = props;
+        const {
+            model, translation, metadataProvider, validationProvider, getDisposeSignal,
+        } = props;
         this.model = model;
         this.translation = translation;
+        this.getDisposeSignal = getDisposeSignal;
         this._metadataProvider = metadataProvider;
         this._validationProvider = validationProvider;
 
-        this.listener.listen(this.events, 'changeValidationState', e => {
+        const listener = new EventObserver();
+        listener.listen(this.events, 'changeValidationState', e => {
             for (const element of this.model.elements) {
                 if (!(element instanceof EntityElement)) {
                     continue;
@@ -98,18 +101,12 @@ export class EditorController {
                 }
             }
         });
-        this.listener.listen(this.events, 'changeAuthoringState', e => {
+        listener.listen(this.events, 'changeAuthoringState', e => {
             this.validateChangedFrom(e.previous);
         });
-        this.listener.listen(model.events, 'changeCells', e => {
+        listener.listen(model.events, 'changeCells', e => {
             this.validateChangedCells(e);
         });
-    }
-
-    /** @hidden */
-    dispose(): void {
-        this.listener.stopListening();
-        this.cancellation.abort();
     }
 
     /**
@@ -272,7 +269,7 @@ export class EditorController {
             this,
             this.translation,
             this.model.language,
-            this.cancellation.signal
+            this.getDisposeSignal()
         );
     }
 

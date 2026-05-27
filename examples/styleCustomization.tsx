@@ -19,6 +19,22 @@ const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
 
 function StyleCustomizationExample() {
     const {defaultLayout} = Reactodia.useWorker(Layouts);
+    const [workspace] = React.useState(() => Reactodia.createWorkspace({
+        defaultLayout,
+        typeStyleResolver: types => {
+            if (types.includes('http://www.w3.org/2000/01/rdf-schema#Class')) {
+                return {icon: CERTIFICATE_ICON, iconMonochrome: true};
+            } else if (types.includes('http://www.w3.org/2002/07/owl#Class')) {
+                return {icon: CERTIFICATE_ICON, iconMonochrome: true};
+            } else if (types.includes('http://www.w3.org/2002/07/owl#ObjectProperty')) {
+                return {icon: COG_ICON, iconMonochrome: true};
+            } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
+                return {color: '#00b9f2'};
+            } else {
+                return undefined;
+            }
+        },
+    }));
 
     const {onMount} = Reactodia.useLoadedWorkspace(async ({context, signal}) => {
         const {model} = context;
@@ -36,21 +52,8 @@ function StyleCustomizationExample() {
     }, []);
 
     return (
-        <Reactodia.Workspace ref={onMount}
-            defaultLayout={defaultLayout}
-            typeStyleResolver={types => {
-                if (types.includes('http://www.w3.org/2000/01/rdf-schema#Class')) {
-                    return {icon: CERTIFICATE_ICON, iconMonochrome: true};
-                } else if (types.includes('http://www.w3.org/2002/07/owl#Class')) {
-                    return {icon: CERTIFICATE_ICON, iconMonochrome: true};
-                } else if (types.includes('http://www.w3.org/2002/07/owl#ObjectProperty')) {
-                    return {icon: COG_ICON, iconMonochrome: true};
-                } else if (types.includes('http://www.w3.org/2002/07/owl#DatatypeProperty')) {
-                    return {color: '#00b9f2'};
-                } else {
-                    return undefined;
-                }
-            }}>
+        <Reactodia.WorkspaceProvider workspace={workspace}
+            onMount={onMount}>
             <Reactodia.DefaultWorkspace
                 canvas={{
                     elementTemplateResolver: (types, element) => {
@@ -71,7 +74,7 @@ function StyleCustomizationExample() {
                 menu={<ExampleToolbarMenu />}>
                 <BookDecorations />
             </Reactodia.DefaultWorkspace>
-        </Reactodia.Workspace>
+        </Reactodia.WorkspaceProvider>
     );
 }
 
