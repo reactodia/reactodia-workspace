@@ -56,15 +56,13 @@ export class Accordion extends React.Component<AccordionProps, State> {
 
     private defaultProps!: ReadonlyMap<number, DefaultItemProps>;
 
-    private isScrollable = false;
-
     constructor(props: AccordionProps) {
         super(props);
         const childCount = React.Children.count(this.props.children);
         this.state = {
             sizes: [],
             collapsed: [],
-            resizing: false,
+            resizing: true,
             percents: React.Children.map(this.props.children, () => `${100 / childCount}%`) as string[],
         };
     }
@@ -111,10 +109,6 @@ export class Accordion extends React.Component<AccordionProps, State> {
             if (typeof child !== 'object') { return; }
             if (child) {
                 const {defaultSize, defaultCollapsed, collapsedSize, minSize} = child.props;
-                // enables the scrollbar in the accordion if at least one item has min size
-                if (minSize !== undefined) {
-                    this.isScrollable = true;
-                }
                 defaultProps.set(index, {defaultSize, defaultCollapsed, collapsedSize, minSize});
             } else {
                 defaultProps.set(index, {});
@@ -169,6 +163,8 @@ export class Accordion extends React.Component<AccordionProps, State> {
                 percents: newPercents,
                 collapsed: newCollapsed,
             };
+        }, () => {
+            this.setState({resizing: false});
         });
     }
 
@@ -181,7 +177,6 @@ export class Accordion extends React.Component<AccordionProps, State> {
                     CLASS_NAME,
                     `${CLASS_NAME}--${direction}`,
                     resizing ? `${CLASS_NAME}--resizing` : undefined,
-                    this.isScrollable ? `${CLASS_NAME}--scrollable` : undefined,
                     className
                 )}
                 style={style}>
@@ -239,8 +234,21 @@ export class Accordion extends React.Component<AccordionProps, State> {
     }
 
     private onEndDragHandle = () => {
-        this.setState({resizing: false});
+        this.setState(
+            {resizing: false},
+            () => this.tryCollapseTooSmallItem()
+        );
     };
+
+    private tryCollapseTooSmallItem() {
+        const collapsedIndex = this.state.sizes.findIndex((size, index) => {
+            const defaults = this.defaultProps.get(index);
+            return defaults && defaults.minSize && size < defaults.minSize;
+        });
+        if (collapsedIndex >= 0) {
+            this.onItemChangeCollapsed({itemIndex: collapsedIndex, itemCollapsed: true});
+        }
+    }
 
     private computeEffectiveItemSizes(): number[] {
         const sizes: Array<number> = [];
@@ -275,7 +283,7 @@ export class Accordion extends React.Component<AccordionProps, State> {
         const originTotalSize = this.dragOrigin!.totalSize;
 
         new SizeDistributor(
-            sizes, collapsed, originTotalSize, this.sizeWhenCollapsed,
+            sizes, collapsed, originTotalSize, this.sizeWhenCollapsed
         ).distribute(itemIndex + 1, this.isVertical ? dy : dx);
 
         const percents = sizes.map(size => `${100 * size / originTotalSize}%`);
@@ -298,7 +306,8 @@ export class Accordion extends React.Component<AccordionProps, State> {
 
         const collapsedSize = this.sizeWhenCollapsed(itemIndex);
         const distributor = new SizeDistributor(
-            sizes, collapsed, totalSize, this.sizeWhenCollapsed);
+            sizes, collapsed, totalSize, this.sizeWhenCollapsed
+        );
 
         if (itemCollapsed) {
             const splitShift = Math.max(effectiveSize - collapsedSize, 0);
@@ -396,9 +405,10 @@ class SizeDistributor {
     expand(shift: number, index: number) {
         if (shift <= 0) { return 0; }
         const oldSize = this.sizes[index];
+        const collapsedSize = this.sizeWhenCollapsed(index);
         const newSize = Math.round(oldSize + shift);
         this.sizes[index] = newSize;
-        this.collapsed[index] = newSize <= this.sizeWhenCollapsed(index);
+        this.collapsed[index] = newSize <= collapsedSize;
         return newSize - oldSize;
     }
 

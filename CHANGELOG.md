@@ -21,6 +21,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
 
 #### 💅 Polish
+- Improve `WorkspaceLayout*` item resize handing:
+  * Enable size transition on expand/collapse `WorkspaceLayoutRow` items;
+  * Set a default minimum non-wrapping size on item width via `--reactodia-accordion-item-min-width`;
+  * Auto-collapse items after resize if the final size is less than `minSize` for that item;
+  * Prevent toggle buttons on `WorkspaceLayoutRow` children from being partially hidden when corresponding item is collapsed.
 - Export `TranslationProvider` and `DefaultTranslation` to be able to use `useTranslation()` outside the workspace component:
   * Remove deprecated `Translation.formatIri()` method (use `DataLocaleProvider.formatIri()` instead).
 - Always display ungroup buttons on `StandardGroup` when the element is single-selected.
