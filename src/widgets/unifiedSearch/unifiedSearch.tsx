@@ -396,7 +396,6 @@ function SearchToggle(props: {
                 role='searchbox'
                 type='text'
                 className={`${CLASS_NAME}__search-input`}
-                style={{minWidth}}
                 placeholder={
                     t.textOptional('unified_search.input.placeholder') ??
                     t.text('search_defaults.input.placeholder')
