@@ -73,7 +73,12 @@ export class AccordionItem extends React.Component<AccordionItemProps, State> {
         } = this.props;
         const {resizing} = this.state;
         const shouldRenderHandle = onBeginDragHandle && onDragHandle && onEndDragHandle;
-        const providedStyle: React.CSSProperties = this.isVertical ? {height: size} : {width: size};
+        const providedStyle: React.CSSProperties = this.isVertical
+            ? {height: size}
+            : {
+                width: size,
+                '--reactodia-accordion-item-size': typeof size === 'number' ? `${size}px` : undefined,
+            } as React.CSSProperties;
 
         // unmount child component when the accordion item is collapsed and has dockSide
         const isMounted = !(collapsed && dockSide);

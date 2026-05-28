@@ -7,10 +7,6 @@
   height: 100%;
   width: 100%;
 
-  &--scrollable {
-    overflow: auto;
-  }
-
   &--vertical {
     flex-direction: column;
   }
@@ -18,9 +14,16 @@
   &--vertical:not(&--resizing):not(:has(.reactodia-accordion-item__handle:focus)) > .reactodia-accordion-item {
     transition: height theme.$accordion-transition-duration ease-in-out;
   }
+
+  &--horizontal:not(&--resizing):not(:has(.reactodia-accordion-item__handle:focus)) > .reactodia-accordion-item {
+    transition: width theme.$accordion-transition-duration ease-in-out;
+  }
 }
 
 .reactodia-accordion-item {
+  $buttonSize: 20px;
+  $buttonAreaMargin: 4px;
+
   display: flex;
   position: relative;
   flex: auto;
@@ -68,10 +71,10 @@
 
   &__handle-btn {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: $buttonSize;
+    height: $buttonSize;
     top: 50%;
-    margin-top: -10px;
+    margin-top: -0.5 * $buttonSize;
     padding: 0;
   
     background-color: theme.$button-default-background-color;
@@ -110,7 +113,7 @@
 
   &__handle-btn-left {
     left: 100%;
-    margin-left: -10px;
+    margin-left: -0.5 * $buttonSize;
 
     &::before {
       -webkit-mask-image: url("@codicons/chevron-left.svg");
@@ -118,14 +121,28 @@
     }
   }
 
+  &--collapsed &__handle-btn-left {
+    margin-left: calc(-1 * min(
+      0.5 * $buttonSize,
+      var(--reactodia-accordion-item-size, 0px) - $buttonAreaMargin
+    ));
+  }
+
   &__handle-btn-right {
     right: 100%;
-    margin-right: -10px;
+    margin-right: -0.5 * $buttonSize;
 
     &:before {
       -webkit-mask-image: url("@codicons/chevron-right.svg");
       mask-image: url("@codicons/chevron-right.svg");
     }
+  }
+
+  &--collapsed &__handle-btn-right {
+    margin-right: calc(-1 * min(
+      0.5 * $buttonSize,
+      var(--reactodia-accordion-item-size, 0px) - $buttonAreaMargin
+    ));
   }
 
   &--collapsed &__handle-btn:before {
@@ -144,6 +161,7 @@
     display: flex;
     flex-direction: column;
     background-color: theme.$background-color;
+    min-width: theme.$accordion-item-min-width;
   }
 
   &__header {
