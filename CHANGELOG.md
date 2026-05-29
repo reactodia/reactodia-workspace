@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix partially or fully hidden outlines for `WorkspaceLayoutItem` headers and `Navigator` toggle button.
 - Fix undo/redo not adding or removing graph elements or links after `DataDiagramModel.discardLayout()` call (e.g. by a reload from `useLoadedWorkspace()`).
 - Fix small input width overflow in `UnifiedSearch` when resized to the minimum size.
+- Fix `Navigator` to avoid animating expand/collapse transition on the initial mount.
 
 #### ⏱ Performance
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.

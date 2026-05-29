@@ -10,9 +10,11 @@
   border-radius: theme.$border-radius-s;
   box-shadow: theme.$canvas-box-shadow;
 
-  transition:
-    width theme.$transition-duration,
-    height theme.$transition-duration;
+  &--animated {
+    transition:
+      width theme.$transition-duration,
+      height theme.$transition-duration;
+  }
 
   &--collapsed {
     width: 24px;
