@@ -1,4 +1,5 @@
 import * as React from 'react';
+import cx from 'clsx';
 
 import { useColorScheme } from '../coreUtils/colorScheme';
 import { EventObserver } from '../coreUtils/events';
@@ -166,6 +167,7 @@ interface NavigatorInnerProps extends NavigatorProps {
 }
 
 interface State {
+    initialized: boolean;
     expanded: boolean;
     autoToggle: boolean;
     allowExpand: boolean;
@@ -208,6 +210,7 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
         super(props);
         const {expanded = DEFAULT_EXPANDED} = this.props;
         this.state = {
+            initialized: false,
             expanded: Boolean(expanded),
             autoToggle: expanded === 'auto',
             allowExpand: true,
@@ -471,11 +474,28 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             this.setState({
                 expanded: autoExpanded,
                 allowExpand: strictExpanded,
-            }, this.scheduleRedraw);
+            }, () => {
+                this.scheduleRedraw();
+                void this.setInitialized();
+            });
         } else if (strictExpanded !== allowExpand) {
-            this.setState({allowExpand: strictExpanded});
+            this.setState(
+                {allowExpand: strictExpanded},
+                () => {
+                    void this.setInitialized();
+                }
+            );
+        } else {
+            void this.setInitialized();
         }
     };
+
+    private async setInitialized(): Promise<void> {
+        // Perform state update in a microtask to allow expanded state to settle
+        // and avoid running any expand/collapse transitions on the initial mount
+        await Promise.resolve();
+        this.setState({initialized: true});
+    }
 
     render() {
         const {
@@ -484,13 +504,18 @@ class NavigatorInner extends React.Component<NavigatorInnerProps, State> {
             height = DEFAULT_HEIGHT,
             translation: t,
         } = this.props;
-        const {expanded, allowExpand} = this.state;
+        const {initialized, expanded, allowExpand} = this.state;
         const expandedWhenAllowed = expanded && allowExpand;
         return (
             <ViewportDock dock={dock}
                 dockOffsetX={dockOffsetX}
                 dockOffsetY={dockOffsetY}>
-                <div className={`${CLASS_NAME} ${CLASS_NAME}--${expandedWhenAllowed ? 'expanded' : 'collapsed'}`}
+                <div
+                    className={cx(
+                        CLASS_NAME,
+                        initialized ? `${CLASS_NAME}--animated` : undefined,
+                        `${CLASS_NAME}--${expandedWhenAllowed ? 'expanded' : 'collapsed'}`,
+                    )}
                     style={expandedWhenAllowed ? {width, height} : undefined}>
                     <canvas ref={this.onCanvasMount}
                         width={width}
