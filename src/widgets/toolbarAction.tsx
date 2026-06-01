@@ -143,6 +143,7 @@ export function ToolbarActionOpen(props: ToolbarActionOpenProps) {
                 {children}
             </ToolbarAction>
             <input ref={inputRef}
+                role='none'
                 type='file'
                 className={`${CLASS_NAME}__open-input`}
                 accept={fileAccept}

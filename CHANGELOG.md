@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🚀 New Features
 - Make tree- and list-like components more accessible:
-  * Change `ClassTree`, `InstancesSearch`, `ConnectionsMenu` and `SearchResults` to be "focus group" components with support for keyboard interaction (arrow keys to move focus or toggle tree items, space to select);
+  * Change `ClassTree`, `InstancesSearch`, `ConnectionsMenu`, `SearchResults` and `DropdownMenu` to be "focus group" components with support for keyboard interaction (arrow keys to move focus or toggle tree items, space to select);
   * Add proper `aria-*` attributes for "focus group" containers and children e.g. `tree` and `treeitem` roles;
 - Support creating standalone workspace state (context) separated from UI components:
   * Workspace state can be created with `createWorkspace()` and provided to the UI components via `WorkspaceProvider`;

@@ -1,10 +1,18 @@
 import * as React from 'react';
 
-import { findNextWithin, findPreviousWithin } from '../../coreUtils/dom';
+import { findParentWithin } from '../../coreUtils/dom';
+
+import { FocusGroup, FocusGroupController, useFocusGroupItem } from './focusGroup';
 
 export interface AccessibleTreeProps<T, S> {
     model: TreeModel<T, S>;
+    /**
+     * Item data to render in the tree.
+     */
     items: readonly T[];
+    /**
+     * Pure function to render an item.
+     */
     renderItem: TreeRenderItem<T, S>;
     expanded?: TreeState<boolean>;
     /**
@@ -12,155 +20,171 @@ export interface AccessibleTreeProps<T, S> {
      */
     defaultExpanded?: boolean;
     onSetExpanded?: (item: T, path: TreeDownPath, expand: boolean) => void;
+    /**
+     * Selection state for the tree.
+     */
     selected?: TreeState<S>;
     /**
      * @default undefined
      */
     defaultSelected?: S;
+    /**
+     * Props for the top-level container element.
+     *
+     * **Default**:
+     * ```
+     * {role: 'list'}
+     * ```
+     */
     rootProps: React.HTMLProps<HTMLUListElement>;
     forestProps: React.HTMLProps<HTMLUListElement>;
+    /**
+     * Props for each element wrapper around rendered item.
+     *
+     * **Default**:
+     * ```
+     * {role: 'listitem'}
+     * ```
+     */
     itemProps: React.HTMLProps<HTMLLIElement>;
 }
 
 export interface TreeModel<T, S> {
+    /**
+     * Pure function to get unique key for an item.
+     */
     readonly getKey: (item: T) => string;
     readonly getChildren: (item: T) => readonly T[] | undefined;
     readonly getDefaultSelected: (item: T, selected: S | undefined) => S | undefined;
+    /**
+     * Pure function to determine whether an item is active (`true`) or disabled (`false`).
+     *
+     * Disabled items cannot be focused on.
+     */
     readonly isActive: (item: T) => boolean;
 }
 
+/**
+ * Function to render content for each item in an {@link AccessibleTree}.
+ */
 export type TreeRenderItem<T, S> = (props: {
+    /**
+     * Item data.
+     */
     item: T;
     path: TreeUpPath;
+    /**
+     * Props to set on a sub-element to make it focusable.
+     *
+     * Can be applied to multiple sub-elements to move focus
+     * between them with `Tab` key.
+     */
     focusProps: TreeFocusableProps;
     expanded: boolean;
+    /**
+     * Selected state for the item.
+     *
+     * Item is considered selected when the value is different from `undefined`.
+     */
     selected: S | undefined;
 }) => React.ReactElement | null;
 
+/**
+ * Props for a focusable DOM-element.
+ */
 export interface TreeFocusableProps {
-    readonly tabIndex: number;
+    /**
+     * See [tabindex](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/tabindex).
+     */
+    readonly tabIndex: number | undefined;
 }
 
+/**
+ * Utility component as base for [accessible](https://www.w3.org/TR/wai-aria/)
+ * tree-like container with selection.
+ *
+ * @category Components
+ */
 export function AccessibleTree<T extends object, S>(props: AccessibleTreeProps<T, S>) {
     const {
         model, items, renderItem, expanded, defaultExpanded, onSetExpanded,
         selected, defaultSelected, rootProps, forestProps, itemProps,
     } = props;
 
-    const getTotalChildCount = React.useMemo(() => makeGetTotalChildCount(model), [model]);
     const treeContext = React.useMemo((): TreeContext<T, S> => ({
         model,
-        getTotalChildCount,
         renderItem,
         forestProps,
         itemProps,
-    }), [model, getTotalChildCount, renderItem, forestProps, itemProps]);
+    }), [model, renderItem, forestProps, itemProps]);
 
-    const rootRef = React.useRef<HTMLUListElement>(null);
-    const [focusIndex, setFocusIndex] = React.useState(0);
-    const tryFocusOnItemElement = (target: Element | undefined) => {
-        if (target) {
-            const focusable = target.querySelector('[tabIndex]');
-            if (focusable instanceof HTMLElement) {
-                focusable.focus();
+    const onKeyDown = (
+        e: React.KeyboardEvent<HTMLUListElement>,
+        controller: FocusGroupController
+    ) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            controller.defaultKeyDown(e);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            if (e.target instanceof HTMLElement && onSetExpanded) {
+                e.preventDefault();
+                const current = findParentWithin(
+                    e.target,
+                    e.currentTarget,
+                    item => item.hasAttribute('data-tree-index')
+                );
+                if (!current) {
+                    return;
+                }
+                const currentIndex = Number(current.getAttribute('data-tree-index'));
+                if (Number.isFinite(currentIndex)) {
+                    if (e.key === 'ArrowLeft' && (
+                        !current.hasAttribute('aria-expanded') ||
+                        current.getAttribute('aria-expanded') === 'false'
+                    )) {
+                        controller.focusParent({from: current});
+                    } else {
+                        // Expand or collapse current item
+                        const indexPath = reconstructTreeIndexPath(current, e.currentTarget);
+                        const found = indexPath
+                            ? lookupTreeItem(treeContext.model, items, indexPath)
+                            : undefined;
+                        if (found) {
+                            const [target, path] = found;
+                            const expand = e.key === 'ArrowRight';
+                            onSetExpanded(target, path, expand);
+                        }
+                    }
+                }
             }
-            const targetIndex = Number(target.getAttribute('data-tree-index'));
-            if (Number.isFinite(targetIndex)) {
-                setFocusIndex(targetIndex);
-            }
+        } else {
+            rootProps?.onKeyDown?.(e);
         }
     };
 
-    React.useEffect(() => {
-        setFocusIndex(previousIndex => {
-            const previousItem = findItemAtIndex(
-                model, getTotalChildCount, items, 0, previousIndex
-            );
-            if (!(previousItem && model.isActive(previousItem[0]))) {
-                const found = findItem(model, items, item => model.isActive(item));
-                if (found) {
-                    const [nextItem, nextIndex] = found;
-                    return nextIndex;
-                }
-            }
-            return previousIndex;
-        });
-    }, [model, getTotalChildCount, items]);
-
     return (
-        <Forest treeContext={treeContext}
-            items={items}
-            index={0}
-            focusIndex={focusIndex}
-            expanded={expanded}
-            defaultExpanded={defaultExpanded ?? false}
-            selected={selected}
-            defaultSelected={defaultSelected}
-            rootProps={{
-                ...rootProps,
-                ref: rootRef,
-                onClick: e => {
-                    const current = findTreeIndexedAt(e.target, e.currentTarget);
-                    if (current) {
-                        const currentIndex = Number(current.getAttribute('data-tree-index'));
-                        if (Number.isFinite(currentIndex)) {
-                            setFocusIndex(currentIndex);
-                        }
-                    }
-                },
-                onKeyDown: e => {
-                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        const current = findTreeIndexedAt(e.target, e.currentTarget);
-                        if (current) {
-                            const next = e.key === 'ArrowUp'
-                                ? findPreviousWithin(current, e.currentTarget, isActiveIndexedElement)
-                                : findNextWithin(current, e.currentTarget, isActiveIndexedElement);
-                            tryFocusOnItemElement(next);
-                        }
-                    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                        if (onSetExpanded) {
-                            e.preventDefault();
-                            const current = findTreeIndexedAt(e.target, e.currentTarget);
-                            if (!current) {
-                                return;
-                            }
-                            const currentIndex = Number(current.getAttribute('data-tree-index'));
-                            if (Number.isFinite(currentIndex)) {
-                                if (e.key === 'ArrowLeft' && (
-                                    !current.hasAttribute('aria-expanded') ||
-                                    current.getAttribute('aria-expanded') === 'false'
-                                )) {
-                                    // Focus on parent item
-                                    const parent = current.parentElement
-                                        ? findTreeIndexedAt(current.parentElement, e.currentTarget)
-                                        : undefined;
-                                    tryFocusOnItemElement(parent);
-                                } else {
-                                    // Expand or collapse current item
-                                    const found = findItemAtIndex(
-                                        model, getTotalChildCount, items, 0, currentIndex
-                                    );
-                                    if (found) {
-                                        const [target, path] = found;
-                                        const expand = e.key === 'ArrowRight';
-                                        onSetExpanded(target, path, expand);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        rootProps?.onKeyDown?.(e);
-                    }
-                },
-            }}
-        />
+        <FocusGroup>
+            {({ref, controller}) => (
+                <Forest
+                    treeContext={treeContext}
+                    items={items}
+                    expanded={expanded}
+                    defaultExpanded={defaultExpanded ?? false}
+                    selected={selected}
+                    defaultSelected={defaultSelected}
+                    rootProps={{
+                        ...rootProps,
+                        ref,
+                        onClick: controller.defaultClick,
+                        onKeyDown: e => onKeyDown(e, controller),
+                    }}
+                />
+            )}
+        </FocusGroup>
     );
 }
 
 interface TreeContext<T, S> {
     readonly model: TreeModel<T, S>;
-    readonly getTotalChildCount: (item: T) => number;
     readonly renderItem: TreeRenderItem<T, S>;
     readonly forestProps: React.HTMLProps<HTMLUListElement>;
     readonly itemProps: React.HTMLProps<HTMLLIElement>;
@@ -169,9 +193,7 @@ interface TreeContext<T, S> {
 function Forest<T, S>(props: {
     treeContext: TreeContext<T, S>;
     items: readonly T[];
-    index: number;
     parentPath?: TreeUpPath;
-    focusIndex: number;
     expanded: TreeState<boolean> | undefined;
     defaultExpanded: boolean;
     selected: TreeState<S> | undefined;
@@ -179,17 +201,14 @@ function Forest<T, S>(props: {
     rootProps?: React.HTMLProps<HTMLUListElement>;
 }) {
     const {
-        treeContext, items, index, parentPath, focusIndex, expanded, defaultExpanded,
+        treeContext, items, parentPath, expanded, defaultExpanded,
         selected, defaultSelected, rootProps,
     } = props;
-    const {model, getTotalChildCount, forestProps} = treeContext;
+    const {model, forestProps} = treeContext;
     const targetProps = rootProps ?? forestProps;
-    let nextIndex = index;
     return (
         <ul {...targetProps}>
-            {items.map(item => {
-                const itemIndex = nextIndex;
-                nextIndex += 1 + getTotalChildCount(item);
+            {items.map((item, index) => {
                 const path: TreeUpPath = {
                     parent: parentPath,
                     key: model.getKey(item),
@@ -198,9 +217,8 @@ function Forest<T, S>(props: {
                     <Item key={path.key}
                         treeContext={treeContext}
                         item={item}
-                        index={itemIndex}
+                        index={index}
                         path={path}
-                        focusIndex={focusIndex}
                         expanded={expanded?.get(path.key)}
                         defaultExpanded={defaultExpanded}
                         selected={selected?.get(path.key)}
@@ -217,43 +235,40 @@ function Item<T, S>(props: {
     item: T;
     index: number;
     path: TreeUpPath;
-    focusIndex: number;
     expanded: TreeItemState<boolean> | undefined;
     defaultExpanded: boolean;
     selected: TreeItemState<S> | undefined;
     defaultSelected: S | undefined;
 }) {
     const {
-        treeContext, item, index, path, focusIndex, expanded, defaultExpanded,
+        treeContext, item, index, path, expanded, defaultExpanded,
         selected, defaultSelected,
     } = props;
     const {model, renderItem, itemProps} = treeContext;
 
+    const isActive = model.isActive(item);
+    const {ref, tabIndex} = useFocusGroupItem({active: isActive});
     const leafExpanded = expanded?.value ?? defaultExpanded;
     const leafSelected = selected?.value ?? defaultSelected;
     const children = model.getChildren(item);
 
     return (
         <li {...itemProps}
+            ref={ref}
             data-tree-index={index}
-            data-tree-active={model.isActive(item) ? true : undefined}
             aria-expanded={!children || children.length === 0 ? undefined : leafExpanded}
             aria-selected={leafSelected !== undefined}>
             {renderItem({
                 item,
                 path,
-                focusProps: {
-                    tabIndex: index === focusIndex ? 0 : -1,
-                },
+                focusProps: {tabIndex},
                 expanded: leafExpanded,
                 selected: leafSelected,
             })}
             {leafExpanded && children && children.length > 0 ? (
                 <Forest treeContext={treeContext}
                     items={children}
-                    index={index + 1}
                     parentPath={path}
-                    focusIndex={focusIndex}
                     expanded={expanded?.level}
                     defaultExpanded={defaultExpanded}
                     selected={selected?.level}
@@ -364,104 +379,52 @@ export function treePathToDown(upPath: TreeUpPath): TreeDownPath {
     return downward;
 }
 
-function makeGetTotalChildCount<T extends object, S>(
-    model: TreeModel<T, S>
-): (item: T) => number {
-    const totalChildCount = new WeakMap<T, number>();
-    const getTotalChildCount = (item: T): number => {
-        const children = model.getChildren(item);
-        if (!children || children.length === 0) {
-            return 0;
-        }
-        let count = totalChildCount.get(item);
-        if (count === undefined) {
-            count = children.reduce(
-                (acc, child) => acc + 1 + getTotalChildCount(child),
-                0
-            );
-            totalChildCount.set(item, count);
-        }
-        return count;
-    };
-    return getTotalChildCount;
-}
-
-function findItem<T, S>(
-    model: TreeModel<T, S>,
-    items: readonly T[],
-    isMatch: (item: T) => boolean
-): [T, number] | undefined {
-    const stack: Array<[readonly T[], number]> = [[items, 0]];
-    let nextIndex = 0;
-    while (true) {
-        const frame = stack.pop();
-        if (!frame) {
-            break;
-        }
-        const [children, startAt] = frame;
-        for (let i = startAt; i < children.length; i++) {
-            const child = children[i];
-            if (isMatch(child)) {
-                return [child, nextIndex];
-            }
-            nextIndex++;
-            const nested = model.getChildren(child);
-            if (nested && nested.length > 0) {
-                frame[1] = i + 1;
-                stack.push(frame);
-                stack.push([nested, 0]);
-                break;
-            }
-        }
-    }
-    return undefined;
-}
-
-function findItemAtIndex<T, S>(
-    model: TreeModel<T, S>,
-    getTotalChildCount: (item: T) => number,
-    items: readonly T[],
-    firstIndex: number,
-    targetIndex: number
-): [T, TreeDownPath] | undefined {
-    let current = firstIndex;
-    for (const item of items) {
-        if (current === targetIndex) {
-            return [item, {key: model.getKey(item), child: undefined}];
-        }
-        current++;
-        const count = getTotalChildCount(item);
-        if (targetIndex < current + count) {
-            const children = model.getChildren(item);
-            if (!children) {
-                return undefined;
-            }
-            const found = findItemAtIndex(model, getTotalChildCount, children, current, targetIndex);
-            if (found) {
-                const [target, child] = found;
-                return [target, {key: model.getKey(item), child}];
-            }
-            return undefined;
-        }
-        current += count;
-    }
-    return undefined;
-}
-
-function findTreeIndexedAt(target: EventTarget, parent: HTMLElement): HTMLElement | undefined {
-    if (!(target instanceof HTMLElement)) {
-        return undefined;
-    }
-    let current: HTMLElement | null = target;
+function reconstructTreeIndexPath(item: Element, parent: Element): number[] | undefined {
+    const indexPath: number[] = [];
+    let current: Element | null = item;
     while (current && current !== parent) {
         if (current.hasAttribute('data-tree-index')) {
-            return current;
+            const index = Number(current.getAttribute('data-tree-index'));
+            if (Number.isFinite(index)) {
+                indexPath.push(index);
+            } else {
+                return undefined;
+            }
         }
         current = current.parentElement;
     }
-    return undefined;
+    indexPath.reverse();
+    return indexPath;
 }
 
-function isActiveIndexedElement(element: Element): boolean {
-    return element.hasAttribute('data-tree-index') && element.hasAttribute('data-tree-active');
+function lookupTreeItem<T, S>(
+    model: TreeModel<T, S>,
+    items: readonly T[],
+    indexPath: readonly number[]
+): [T, TreeDownPath] | undefined {
+    let level: readonly T[] | undefined = items;
+    let item: T | undefined;
+    let topPath: { child: TreeDownPath | undefined; key: string } | undefined;
+    let tailPath: { child: TreeDownPath | undefined; key: string } | undefined;
+    for (const index of indexPath) {
+        if (!level || index < 0 || index >= level.length) {
+            return undefined;
+        }
+        item = level[index];
+        if (tailPath) {
+            tailPath.child = {
+                child: undefined,
+                key: model.getKey(item),
+            };
+            tailPath = tailPath.child;
+        } else {
+            topPath = {
+                child: undefined,
+                key: model.getKey(item),
+            };
+            tailPath = topPath;
+        }
+        level = model.getChildren(item);
+    }
+    return item && topPath ? [item, topPath] : undefined;
 }

@@ -1,6 +1,10 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import {
+    FocusGroup, FocusGroupController, useFocusGroup, useFocusGroupItem,
+} from './focusGroup';
+
 /**
  * Props for {@link Dropdown} component.
  *
@@ -123,22 +127,36 @@ export function DropdownMenu(props: DropdownMenuProps) {
         [expanded, setExpanded]
     );
     const onClickOutside = React.useCallback(() => setExpanded(false), [setExpanded]);
+    const onKeyDown = (e: React.KeyboardEvent, controller: FocusGroupController) => {
+        if (e.key === 'Escape') {
+            setExpanded(false);
+        } else {
+            controller.defaultKeyDown(e);
+        }
+    };
     return (
         <DropdownMenuContext.Provider value={providedContext}>
-            <Dropdown {...otherProps}
-                className={cx(className, MENU_CLASS_NAME)}
-                aria-haspopup='menu'
-                direction={direction}
-                expanded={expanded}
-                toggle={
-                    <DropdownMenuToggleButton title={title} />
-                }
-                onClickOutside={onClickOutside}>
-                <ul role='menu'
-                    className={`${MENU_CLASS_NAME}__items`}>
-                    {children}
-                </ul>
-            </Dropdown>
+            <FocusGroup>
+                {({ref, controller}) => (
+                    <Dropdown {...otherProps}
+                        className={cx(className, MENU_CLASS_NAME)}
+                        aria-haspopup='menu'
+                        direction={direction}
+                        expanded={expanded}
+                        toggle={
+                            <DropdownMenuToggleButton title={title} />
+                        }
+                        onClickOutside={onClickOutside}>
+                        <div ref={ref}
+                            role='menu'
+                            className={`${MENU_CLASS_NAME}__items`}
+                            onClick={controller.defaultClick}
+                            onKeyDown={e => onKeyDown(e, controller)}>
+                            {children}
+                        </div>
+                    </Dropdown>
+                )}
+            </FocusGroup>
         </DropdownMenuContext.Provider>
     );
 }
@@ -161,7 +179,12 @@ export function useDropdownMenu(): DropdownMenuContext {
 function DropdownMenuToggleButton(props: { title?: string }) {
     const {title} = props;
     const {expanded, setExpanded} = useDropdownMenu();
-
+    const controller = useFocusGroup();
+    React.useLayoutEffect(() => {
+        if (!expanded) {
+            controller.ensureFocusable({reset: true});
+        }
+    }, [expanded]);
     return (
         <button type='button'
             className={cx(
@@ -215,26 +238,33 @@ const ITEM_CLASS_NAME = 'reactodia-dropdown-menu-item';
  */
 export function DropdownMenuItem(props: DropdownMenuItemProps) {
     const {className, title, disabled, onSelect, children, ...otherProps} = props;
-    const menuContext = useDropdownMenu();
+    const {expanded, setExpanded} = useDropdownMenu();
+
+    const isActive = expanded && !disabled;
+    const {ref, tabIndex} = useFocusGroupItem({active: isActive});
 
     const wrappedOnClick = React.useCallback(() => {
-        menuContext?.setExpanded(() => false);
+        setExpanded(() => false);
         onSelect?.();
-    }, [onSelect, menuContext]);
+    }, [onSelect, setExpanded]);
 
     return (
-        <li {...otherProps}
+        <button {...otherProps}
+            ref={ref}
+            type='button'
             role='menuitem'
+            tabIndex={tabIndex}
             className={cx(
                 className,
                 ITEM_CLASS_NAME,
                 disabled ? `${ITEM_CLASS_NAME}--disabled` : undefined,
                 'reactodia-btn reactodia-btn-default'
             )}
+            disabled={disabled}
             title={title}
             onClick={disabled ? undefined : wrappedOnClick}>
             {children}
-        </li>
+        </button>
     );
 }
 

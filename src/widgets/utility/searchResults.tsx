@@ -8,9 +8,7 @@ import { ElementModel, ElementIri } from '../../data/model';
 import { getAllPresentEntities } from '../../editor/dataDiagramModel';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
-import {
-    AccessibleList, type ListRenderItem, ListSelection, type ListFocusableProps,
-} from './accessibleList';
+import { FocusGroup, useFocusGroupItem } from './focusGroup';
 import { ListElementView, startDragElements } from './listElementView';
 
 const CLASS_NAME = 'reactodia-search-results';
@@ -75,22 +73,6 @@ export function SearchResults(props: SearchResultsProps) {
         useDragAndDrop = true, multiSelection = true, footer,
     } = props;
 
-    const renderItem = React.useCallback<ListRenderItem<ElementItem, boolean>>(
-        ({item, focusProps, selected}) => (
-            <ResultItem item={item} focusProps={focusProps} selected={selected} />
-        ),
-        []
-    );
-    const rootProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({
-        className: `${CLASS_NAME}__root`,
-        role: 'list',
-        'aria-multiselectable': true,
-    }), []);
-    const itemProps = React.useMemo((): React.HTMLProps<HTMLLIElement> => ({
-        className: `${CLASS_NAME}__item`,
-        role: 'listitem',
-    }), []);
-
     const computeIsItemDisabled = useIsItemDisabledWithDefault(isItemDisabled);
     const extendedItems = React.useMemo(() => items.map((data): ElementItem => ({
         data,
@@ -145,13 +127,6 @@ export function SearchResults(props: SearchResultsProps) {
         ]
     );
 
-    const selected = React.useMemo((): ListSelection<boolean> | undefined => {
-        if (selection.size === 0) {
-            return undefined;
-        }
-        return ListSelection.fromEntries(Array.from(selection, iri => [iri, true]));
-    }, [selection]);
-
     React.useEffect(() => {
         const leftovers = new Set(selection);
         for (const item of extendedItems) {
@@ -169,15 +144,23 @@ export function SearchResults(props: SearchResultsProps) {
     return (
         <SearchResultsContext.Provider value={searchResultsContext}>
             <div className={CLASS_NAME}>
-                <AccessibleList
-                    items={extendedItems}
-                    getItemKey={getElementItemKey}
-                    isItemActive={isElementItemActive}
-                    renderItem={renderItem}
-                    selection={selected}
-                    rootProps={rootProps}
-                    itemProps={itemProps}
-                />
+                <FocusGroup>
+                    {({ref, controller}) => (
+                        <ul ref={ref}
+                            className={`${CLASS_NAME}__root`}
+                            role='list'
+                            aria-multiselectable={true}
+                            onClick={controller.defaultClick}
+                            onKeyDown={controller.defaultKeyDown}>
+                            {extendedItems.map(item => (
+                                <ResultItem key={getElementItemKey(item)}
+                                    item={item}
+                                    selected={selection.has(item.data.id)}
+                                />
+                            ))}
+                        </ul>
+                    )}
+                </FocusGroup>
                 {footer}
             </div>
         </SearchResultsContext.Provider>
@@ -240,34 +223,42 @@ function useSearchResultsContext(): SearchResultsContext {
 
 function ResultItem(props: {
     item: ElementItem;
-    focusProps: ListFocusableProps;
-    selected: boolean | undefined;
+    selected: boolean;
 }) {
-    const {item, focusProps, selected} = props;
+    const {item, selected} = props;
     const {
         highlightText, useDragAndDrop, selection, onSetSelected,
     } = useSearchResultsContext();
+    const {ref, tabIndex} = useFocusGroupItem({
+        debugLabel: item.data.id,
+        active: item.active,
+    });
     return (
-        <ListElementView {...(item.active ? focusProps : undefined)}
-            element={item.data}
-            highlightText={highlightText}
-            disabled={!item.active}
-            selected={Boolean(selected)}
-            onClick={item.active ? e => onSetSelected(item, !selected, e) : undefined}
-            onKeyDown={e => {
-                if (item.active && e.key === ' ') {
-                    e.preventDefault();
-                    onSetSelected(item, !selected, e);
-                }
-            }}
-            onDragStart={useDragAndDrop ? e => {
-                const iris: ElementIri[] = [];
-                selection.forEach(iri => iris.push(iri));
-                if (!selection.has(item.data.id)) {
-                    iris.push(item.data.id);
-                }
-                return startDragElements(e, iris);
-            } : undefined}
-        />
+        <li ref={ref}
+            className={`${CLASS_NAME}__item`}
+            role='listitem'>
+            <ListElementView
+                tabIndex={tabIndex}
+                element={item.data}
+                highlightText={highlightText}
+                disabled={!item.active}
+                selected={Boolean(selected)}
+                onClick={item.active ? e => onSetSelected(item, !selected, e) : undefined}
+                onKeyDown={e => {
+                    if (item.active && e.key === ' ') {
+                        e.preventDefault();
+                        onSetSelected(item, !selected, e);
+                    }
+                }}
+                onDragStart={useDragAndDrop ? e => {
+                    const iris: ElementIri[] = [];
+                    selection.forEach(iri => iris.push(iri));
+                    if (!selection.has(item.data.id)) {
+                        iris.push(item.data.id);
+                    }
+                    return startDragElements(e, iris);
+                } : undefined}
+            />
+        </li>
     );
 }

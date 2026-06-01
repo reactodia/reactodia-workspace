@@ -205,13 +205,14 @@ export {
 export {
     AnnotationSupport, type AnnotationSupportProps, type AnnotationCommands,
 } from './widgets/annotation';
-export {
-    AccessibleList, type ListFocusableProps, type ListRenderItem, ListSelection,
-} from './widgets/utility/accessibleList';
 export { DraggableHandle, type DraggableHandleProps } from './widgets/utility/draggableHandle';
 export {
     DropdownMenu, type DropdownMenuProps, DropdownMenuItem, type DropdownMenuItemProps,
 } from './widgets/utility/dropdown';
+export {
+    FocusGroup, useFocusGroup, type FocusGroupController,
+    useFocusGroupItem, type UseFocusGroupItemResult,
+} from './widgets/utility/focusGroup';
 export {
     ListElementView, type ListElementViewProps, highlightSubstring, startDragElements,
 } from './widgets/utility/listElementView';

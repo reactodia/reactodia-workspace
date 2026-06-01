@@ -75,3 +75,18 @@ export function findPreviousWithin(
         }
     } while (current !== from);
 }
+
+export function findParentWithin(
+    from: Element,
+    parent: Element,
+    condition: (element: Element) => boolean
+): Element | undefined {
+    let current: Element | null = from;
+    while (current && current !== parent) {
+        if (condition(current)) {
+            return current;
+        }
+        current = current.parentElement;
+    }
+    return undefined;
+}
