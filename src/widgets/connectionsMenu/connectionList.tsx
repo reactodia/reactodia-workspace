@@ -7,9 +7,7 @@ import type { LinkTypeModel } from '../../data/model';
 import { generate128BitID, makeCaseInsensitiveFilter } from '../../data/utils';
 import { WithFetchStatus } from '../../editor/withFetchStatus';
 
-import {
-    AccessibleList, type ListRenderItem, type ListFocusableProps,
-} from '../utility/accessibleList';
+import { FocusGroup, useFocusGroupItem } from '../utility/focusGroup';
 import { highlightSubstring } from '../utility/listElementView';
 
 import { useWorkspace } from '../../workspace/workspaceContext';
@@ -93,46 +91,6 @@ export function ConnectionsList(props: {
         }
     }
 
-    const renderItem = React.useCallback<ListRenderItem<ConnectionEntry, void>>(
-        ({item, focusProps}) => {
-            if (item.type === 'link') {
-                return (
-                    <ConnectionLink
-                        link={item.linkType}
-                        direction={item.direction}
-                        count={item.count}
-                        filterKey={item.probable ? '' : filterKey}
-                        probability={item.probability}
-                        onExpandLink={onExpandLink}
-                        onMoveToFilter={onMoveToFilter}
-                        focusProps={focusProps}
-                    />
-                );
-            } else if (item.type === 'separator') {
-                return <hr className={`${CLASS_NAME}__links-list-hr`} />;
-            } else if (item.type === 'probable-hint') {
-                return (
-                    <li className={`${CLASS_NAME}__links-probably-label`}>
-                        {t.text('connections_menu.links.suggest_similar')}
-                    </li>
-                );
-            }
-            return null;
-        },
-        [t, filterKey, onExpandLink, onMoveToFilter]
-    );
-
-    const rootProps = React.useMemo((): React.HTMLProps<HTMLUListElement> => ({
-        /* For compatibility with React 19 typings */
-        ref: scrolledListRef as React.RefObject<HTMLUListElement>,
-        className: `${CLASS_NAME}__links-root`,
-        role: 'list',
-    }), []);
-    const itemProps = React.useMemo((): React.HTMLProps<HTMLLIElement> => ({
-        className: `${CLASS_NAME}__links-item`,
-        role: 'listitem',
-    }), []);
-
     return (
         <div
             className={cx(
@@ -142,14 +100,46 @@ export function ConnectionsList(props: {
             )}
             tabIndex={-1}
         >
-            <AccessibleList
-                items={entries}
-                getItemKey={getEntryKey}
-                isItemActive={isEntryActive}
-                renderItem={renderItem}
-                rootProps={rootProps}
-                itemProps={itemProps}
-            />
+            <FocusGroup>
+                {({ref, controller}) => (
+                    <ul ref={ref}
+                        className={`${CLASS_NAME}__links-root`}
+                        role='list'
+                        onClick={controller.defaultClick}
+                        onKeyDown={controller.defaultKeyDown}>
+                        {entries.map(item => {
+                            if (item.type === 'link') {
+                                return (
+                                    <ConnectionLink
+                                        key={getEntryKey(item)}
+                                        link={item.linkType}
+                                        direction={item.direction}
+                                        count={item.count}
+                                        filterKey={item.probable ? '' : filterKey}
+                                        probability={item.probability}
+                                        onExpandLink={onExpandLink}
+                                        onMoveToFilter={onMoveToFilter}
+                                    />
+                                );
+                            } else if (item.type === 'separator') {
+                                return (
+                                    <hr key={getEntryKey(item)}
+                                        className={`${CLASS_NAME}__links-list-hr`}
+                                    />
+                                );
+                            } else if (item.type === 'probable-hint') {
+                                return (
+                                    <li key={getEntryKey(item)}
+                                        className={`${CLASS_NAME}__links-probably-label`}>
+                                        {t.text('connections_menu.links.suggest_similar')}
+                                    </li>
+                                );
+                            }
+                            return null;
+                        })}
+                    </ul>
+                )}
+            </FocusGroup>
             {entries.length === 0 ? (
                 <label className={`${CLASS_NAME}__links-no-results`}>
                     {t.text('connections_menu.links.no_results')}
@@ -177,10 +167,6 @@ interface ConnectionEntryLink {
 
 function getEntryKey(entry: ConnectionEntry): string {
     return entry.type === 'link' ? entry.key : entry.type;
-}
-
-function isEntryActive(entry: ConnectionEntry): boolean {
-    return entry.type === 'link';
 }
 
 function getConnectionLinks(links: LinkTypeModel[], options: {
@@ -252,13 +238,14 @@ function ConnectionLink(props: {
     onExpandLink: (linkDataChunk: LinkDataChunk) => void;
     onMoveToFilter: ((linkDataChunk: LinkDataChunk) => void) | undefined;
     probability?: number;
-    focusProps?: ListFocusableProps;
 }) {
     const {
-        link, filterKey, direction, count, onExpandLink, onMoveToFilter, probability = 0, focusProps,
+        link, filterKey, direction, count, onExpandLink, onMoveToFilter, probability = 0,
     } = props;
     const {model} = useWorkspace();
     const t = useTranslation();
+
+    const {ref, tabIndex} = useFocusGroupItem();
 
     const relation = t.formatLabel(link.label, link.id, model.language);
     const relationIri = model.locale.formatIri(link.id);
@@ -300,12 +287,14 @@ function ConnectionLink(props: {
     };
 
     return (
-        <div className={`${CLASS_NAME}__link`}
+        <li ref={ref}
+            className={`${CLASS_NAME}__link`}
+            role='listitem'
             data-linktypeid={link.id}>
-            <button {...focusProps}
-                className={`${CLASS_NAME}__link-button`}
+            <button className={`${CLASS_NAME}__link-button`}
                 title={title}
                 onClick={onExpandLinkClick}
+                tabIndex={tabIndex}
             >
                 {direction === 'in' || direction === 'out' ? (
                     <div className={`${CLASS_NAME}__link-direction`}>
@@ -327,12 +316,12 @@ function ConnectionLink(props: {
                 />
             </button>
             {onMoveToFilter ? (
-                <button {...focusProps}
-                    className={`${CLASS_NAME}__link-filter-button`}
+                <button className={`${CLASS_NAME}__link-filter-button`}
                     onClick={onMoveToFilterClick}
                     title={t.text('connections_menu.link.move_to_filter.title')}
+                    tabIndex={tabIndex}
                 />
             ) : null}
-        </div>
+        </li>
     );
 }
