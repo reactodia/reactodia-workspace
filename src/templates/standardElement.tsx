@@ -13,14 +13,15 @@ import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { Element } from '../diagram/elements';
 import { HtmlSpinner } from '../diagram/spinner';
 
-import { AuthoringState } from '../editor/authoringState';
+import { AuthoredEntity } from '../editor/authoringState';
 import { EntityElement, EntityGroup } from '../editor/dataElements';
 import { useResolvedAssetUrl } from '../editor/dataLocaleProvider';
+import { useEntityChanges } from '../editor/editorController';
 import { ungroupSomeEntities } from '../editor/elementGrouping';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
-import { AuthoredEntityContext, useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
+import { useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
 import { type WorkspaceContext, useWorkspace } from '../workspace/workspaceContext';
 
 import { GroupPaginator } from './groupPaginator';
@@ -85,11 +86,13 @@ const CLASS_NAME = 'reactodia-standard-element';
 export function StandardEntity(props: StandardEntityProps) {
     const {showActions, element, isExpanded, elementState} = props;
     const {model, editor, getElementTypeStyle} = useWorkspace();
-    const t = useTranslation();    
+    const t = useTranslation();
 
-    const data = element instanceof EntityElement ? element.data : undefined;
+    const baseData = element instanceof EntityElement ? element.data : undefined;
+    const changes = useEntityChanges(baseData?.id);
+    const data = changes.data ?? baseData;
+
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
-    const entityContext = useAuthoredEntity(data, isExpanded);
 
     const {data: imageUrl} = useResolvedAssetUrl(
         model.locale,
@@ -132,12 +135,13 @@ export function StandardEntity(props: StandardEntityProps) {
     }
 
     function renderIri(data: ElementModel) {
-        const finalIri = entityContext.editedIri === undefined ? data.id : entityContext.editedIri;
+        const editedIri = changes.event?.type === 'entityChange' ? changes.event.newIri : undefined;
+        const finalIri = editedIri ?? data.id;
         return (
             <div>
                 <div className={`${CLASS_NAME}__iri`}>
                     <div className={`${CLASS_NAME}__iri-key`}>
-                        {entityContext.editedIri
+                        {editedIri
                             ? t.text('standard_element.iri.label_modified')
                             : t.text('standard_element.iri.label')}
                     </div>
@@ -196,7 +200,7 @@ export function StandardEntity(props: StandardEntityProps) {
             className={cx(
                 CLASS_NAME,
                 `${CLASS_NAME}--standalone`,
-                getEntityAuthoredStatusClass(data, editor.authoringState)
+                getEntityAuthoredStatusClass(changes.event)
             )}
             onDoubleClick={onDoubleClick}>
             <div className={`${CLASS_NAME}__main`}>
@@ -237,10 +241,7 @@ export function StandardEntity(props: StandardEntityProps) {
                             <hr className={`${CLASS_NAME}__hr`}
                                 data-reactodia-no-export='true'
                             />
-                            <Actions target={element}
-                                entityContext={entityContext}
-                                translation={t}
-                            />
+                            <Actions target={element} />
                         </> : null}
                     </div>
                 </div>
@@ -366,10 +367,12 @@ interface StandardEntityGroupItemProps extends TemplateProps {
 }
 
 function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
-    const {data, target, canvas, workspace} = props;
+    const {data: baseData, target, canvas, workspace} = props;
     const t = useTranslation();
-    const {model, editor, getElementTypeStyle} = workspace;
+    const {model, getElementTypeStyle} = workspace;
 
+    const changes = useEntityChanges(baseData.id);
+    const data = changes.data ?? baseData;
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     const label = model.locale.formatEntityLabel(data, model.language);
@@ -381,14 +384,13 @@ function StandardEntityGroupItem(props: StandardEntityGroupItemProps) {
         entityTypes: typesLabel,
     });
 
-    const authoringStatusClass = getEntityAuthoredStatusClass(data, editor.authoringState);
     const {color: baseColor} = getElementTypeStyle(data.types);
     const itemStyle = {
         '--reactodia-element-style-color': baseColor,
     } as React.CSSProperties;
 
     return (
-        <div className={cx(`${CLASS_NAME}__item`, authoringStatusClass)}
+        <div className={cx(`${CLASS_NAME}__item`, getEntityAuthoredStatusClass(changes.event))}
             style={itemStyle}
             role='listitem'>
             <div className={`${CLASS_NAME}__item-stripe`} aria-hidden='true' />
@@ -442,12 +444,8 @@ function formatEntityTypes(
         : model.locale.formatEntityTypeList(data, model.language);
 }
 
-function getEntityAuthoredStatusClass(data: ElementModel, state: AuthoringState): string | undefined {
-    const event = state.elements.get(data.id);
-    if (!event) {
-        return undefined;
-    }
-    switch (event.type) {
+function getEntityAuthoredStatusClass(event: AuthoredEntity | undefined): string | undefined {
+    switch (event?.type) {
         case 'entityAdd':
             return `${CLASS_NAME}--new`;
         case 'entityChange':
@@ -537,14 +535,11 @@ function PropertyList(props: {
  */
 function Actions(props: {
     target: Element;
-    entityContext: AuthoredEntityContext;
-    translation: Translation;
 }) {
-    const {
-        target,
-        entityContext: {canEdit, canDelete, onEdit, onDelete},
-        translation: t,
-    } = props;
+    const {target} = props;
+    const t = useTranslation();
+    const data = target instanceof EntityElement ? target.data : undefined;
+    const {canEdit, canDelete, onEdit, onDelete} = useAuthoredEntity(data, true);
     const SPINNER_WIDTH = 15;
     const SPINNER_HEIGHT = 12;
     return (

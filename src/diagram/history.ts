@@ -335,7 +335,9 @@ export class InMemoryHistory implements CommandHistory {
                     }
                     if (other._inverses.length > 0) {
                         const commands = [...other._inverses].reverse();
-                        this.registerToUndo(Command.compound(batch._title, commands));
+                        if (commands.length > 0) {
+                            this.registerToUndo(Command.compound(batch._title, commands));
+                        }
                     }
                     if (other === batch) {
                         break;

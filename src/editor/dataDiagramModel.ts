@@ -693,18 +693,40 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     }
 
     /**
-     * Creates or gets an existing links for the specified link model.
+     * Creates missing links or updates existing links for the specified relation data.
      *
-     * Multiple links may exists for the same link model because in some cases
+     * Multiple links may exists for the same relation data because in some cases
      * there could be multiple source or target elements with the same IRI.
      *
-     * Each existing link for the same link model will be updated with the specified data,
+     * Each existing link for the same relation will be updated with the specified data,
      * link state property `urn:reactodia:layoutOnly` ({@link TemplateProperties.LayoutOnly})
      * will be discarded if set.
      *
      * The operation puts a command to the {@link DiagramModel.history command history}.
+     *
+     * @returns An array of all created or updated links.
+     * @see {@link createMissingLinks}
      */
     createLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
+        return this._updateLinks(data, true);
+    }
+
+    /**
+     * Creates missing links for the specified relation data.
+     *
+     * If a link for the relation data already exists it will keep existing data
+     * without any changes.
+     *
+     * The operation puts a command to the {@link DiagramModel.history command history}.
+     *
+     * @returns An array of newly created links.
+     * @see {@link createMissingLinks}
+     */
+    createMissingLinks(data: LinkModel): Array<RelationLink | RelationGroup> {
+        return this._updateLinks(data, false);
+    }
+
+    private _updateLinks(data: LinkModel, updateIfExists: boolean): Array<RelationLink | RelationGroup> {
         const sources = this.graph.getElements().filter((el): el is EntityElement | EntityGroup =>
             el instanceof EntityElement && el.iri === data.sourceId ||
             el instanceof EntityGroup && el.itemIris.has(data.sourceId)
@@ -719,8 +741,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         const links: Array<RelationLink | RelationGroup> = [];
         for (const source of sources) {
             for (const target of targets) {
-                const link = this.createRelation(source, target, data);
-                links.push(link);
+                const link = this.createRelation(source, target, data, updateIfExists);
+                if (link) {
+                    links.push(link);
+                }
             }
         }
         batch.store();
@@ -730,17 +754,24 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
     private createRelation(
         source: EntityElement | EntityGroup,
         target: EntityElement | EntityGroup,
-        data: LinkModel
-    ): RelationLink | RelationGroup {
+        data: LinkModel,
+        updateIfExists: boolean
+    ): RelationLink | RelationGroup | undefined {
         const existingLinks = Array.from(
             this.graph.iterateLinks(source.id, target.id, data.linkTypeId)
         );
         for (const link of existingLinks) {
             if (link instanceof RelationLink && equalLinks(link.data, data)) {
+                if (!updateIfExists) {
+                    return undefined;
+                }
                 this.history.execute(setLinkState(link, markLayoutOnly(link.linkState, false)));
                 this.history.execute(setRelationLinkData(link, data));
                 return link;
             } else if (link instanceof RelationGroup && link.itemKeys.has(data)) {
+                if (!updateIfExists) {
+                    return undefined;
+                }
                 const items = link.items.map((item): RelationGroupItem =>
                     equalLinks(item.data, data)
                         ? {

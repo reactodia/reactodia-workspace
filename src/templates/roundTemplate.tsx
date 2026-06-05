@@ -7,6 +7,7 @@ import { useKeyedSyncStore } from '../coreUtils/keyedObserver';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 
 import { EntityElement } from '../editor/dataElements';
+import { useEntityChanges } from '../editor/editorController';
 import { subscribeElementTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -64,7 +65,9 @@ export function RoundEntity(props: RoundEntityProps) {
     const t = useTranslation();
     const {model, getElementTypeStyle} = workspace;
 
-    const data = element instanceof EntityElement ? element.data : undefined;
+    const baseData = element instanceof EntityElement ? element.data : undefined;
+    const data = useEntityChanges(baseData?.id).data ?? baseData;
+
     useKeyedSyncStore(subscribeElementTypes, data && showTypes ? data.types : [], model);
 
     if (!data) {

@@ -12,6 +12,7 @@ import { LinkLabel, type LinkLabelProps } from '../diagram/linkLayer';
 import { LinkPath, LinkVertices } from '../diagram/linkLayer';
 
 import { RelationGroup, RelationLink } from '../editor/dataElements';
+import { useRelationChanges } from '../editor/editorController';
 import { subscribeLinkTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 
@@ -243,7 +244,9 @@ function LinkProperties(props: StandardRelationProps) {
     } = props;
     const {model} = useWorkspace();
     const t = useTranslation();
-    const {data} = link as RelationLink;
+
+    const baseData = (link as RelationLink).data;
+    const data = useRelationChanges(baseData).data ?? baseData;
 
     const propertyIris: PropertyTypeIri[] = [];
     for (const iri in data.properties) {

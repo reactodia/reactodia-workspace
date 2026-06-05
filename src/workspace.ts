@@ -152,7 +152,11 @@ export {
     type DataLocaleProvider, DefaultDataLocaleProvider, type DefaultDataLocaleProviderOptions,
     useResolvedAssetUrl,
 } from './editor/dataLocaleProvider';
-export { type EditorEvents, EditorController } from './editor/editorController';
+export {
+    type EditorEvents, EditorController,
+    useEntityChanges, type EntityChanges,
+    useRelationChanges, type RelationChanges,
+} from './editor/editorController';
 export {
     groupEntities, type GroupEntitiesParams,
     ungroupAllEntities, type UngroupAllEntitiesParams,

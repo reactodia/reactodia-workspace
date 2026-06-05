@@ -10,6 +10,7 @@ import { setElementExpanded } from '../diagram/commands';
 import { ElementTemplate, TemplateProps } from '../diagram/customization';
 import { EntityElement } from '../editor/dataElements';
 import { useResolvedAssetUrl } from '../editor/dataLocaleProvider';
+import { useEntityChanges } from '../editor/editorController';
 import { subscribeElementTypes, subscribePropertyTypes } from '../editor/observedElement';
 import { WithFetchStatus } from '../editor/withFetchStatus';
 import { useWorkspace } from '../workspace/workspaceContext';
@@ -54,11 +55,13 @@ const CLASS_NAME = 'reactodia-classic-template';
  */
 export function ClassicEntity(props: ClassicEntityProps) {
     const {element, isExpanded} = props;
-    const data = element instanceof EntityElement ? element.data : undefined;
-
     const workspace = useWorkspace();
-    const t = useTranslation();
     const {model, getElementTypeStyle} = workspace;
+    const t = useTranslation();
+
+    const baseData = element instanceof EntityElement ? element.data : undefined;
+    const data = useEntityChanges(baseData?.id).data ?? baseData;
+    
     useKeyedSyncStore(subscribeElementTypes, data ? data.types : [], model);
 
     const {data: imageUrl} = useResolvedAssetUrl(

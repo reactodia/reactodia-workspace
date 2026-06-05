@@ -21,6 +21,7 @@ import { LinkLabel, type LinkLabelProps } from '../diagram/linkLayer';
 
 import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
 import { EntityElement } from '../editor/dataElements';
+import { useEntityChanges } from '../editor/editorController';
 
 import { ContentEditablePlaintext } from '../widgets/utility/contentEditablePlaintext';
 import { useAuthoredEntity } from '../widgets/visualAuthoring/authoredEntity';
@@ -134,8 +135,10 @@ export function NoteEntity(props: NoteEntityProps) {
     const {model, editor} = useWorkspace();
     const t = useTranslation();
 
-    const data = element instanceof EntityElement ? element.data : undefined;
-    const entityContext = useAuthoredEntity(data, true);
+    const baseData = element instanceof EntityElement ? element.data : undefined;
+    const data = useEntityChanges(baseData?.id).data ?? baseData;
+
+    const {canEdit} = useAuthoredEntity(baseData, true);
 
     const content = React.useMemo((): AnnotationContent | undefined => {
         const values = data?.properties[textProperty];
@@ -150,7 +153,7 @@ export function NoteEntity(props: NoteEntityProps) {
 
     return (
         <NoteAnnotationView {...props}
-            readOnly={entityContext.canEdit !== true}
+            readOnly={canEdit !== true}
             content={content}
             setContent={changedContent => {
                 if (data) {

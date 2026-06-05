@@ -98,13 +98,13 @@ function BookDecorations() {
 function BookDecoration(props: { target: Reactodia.EntityElement }) {
     const {target} = props;
 
-    const data = Reactodia.useObservedProperty(
+    const isClass = Reactodia.useObservedProperty(
         target.events,
         'changeData',
-        () => target.data.types.includes('http://www.w3.org/2002/07/owl#Class') ? target.data : null
+        () => target.data.types.includes('http://www.w3.org/2002/07/owl#Class')
     );
 
-    return data ? (
+    return isClass ? (
         <Reactodia.ElementDecoration target={target}>
             <div
                 style={{

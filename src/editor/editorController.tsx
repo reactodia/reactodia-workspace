@@ -1,17 +1,19 @@
 import { Events, EventSource, EventObserver, PropertyChange } from '../coreUtils/events';
+import { SyncStore, neverSyncStore, useSyncStore } from '../coreUtils/hooks';
 import { TranslatedText, type Translation } from '../coreUtils/i18n';
 
 import { MetadataProvider } from '../data/metadataProvider';
 import { ValidationProvider } from '../data/validationProvider';
-import { ElementModel, LinkModel, ElementIri, equalLinks } from '../data/model';
+import { ElementIri, ElementModel, LinkKey, LinkModel, equalLinks } from '../data/model';
 
 import { Element, Link } from '../diagram/elements';
 import type { CellsChangedEvent } from '../diagram/graph';
 import { Command } from '../diagram/history';
 import { GraphStructure } from '../diagram/model';
+import { useWorkspace } from '../workspace/workspaceContext';
 
 import {
-    AuthoringState, AuthoringEvent, TemporaryState,
+    AuthoringState, AuthoringEvent, AuthoredEntity, AuthoredRelation, TemporaryState,
 } from './authoringState';
 import { DataDiagramModel } from './dataDiagramModel';
 import {
@@ -52,6 +54,8 @@ export interface EditorEvents {
      */
     changeTemporaryState: PropertyChange<EditorController, TemporaryState>;
 }
+
+const ChangeAuthoringStore: unique symbol = Symbol('EditorController.ChangeAuthoringStore');
 
 /**
  * Stores, modifies and validates changes from the visual graph authoring
@@ -203,6 +207,12 @@ export class EditorController {
         this._temporaryState = value;
         this.source.trigger('changeTemporaryState', {source: this, previous});
     }
+
+    /** @hidden */
+    [ChangeAuthoringStore]: SyncStore = (subscribe) => {
+        this.events.on('changeAuthoringState', subscribe);
+        return () => this.events.off('changeAuthoringState', subscribe);
+    };
 
     private validateChangedFrom(previous: AuthoringState): void {
         if (!this.validationProvider) {
@@ -395,8 +405,17 @@ export class EditorController {
         const newState = AuthoringState.changeEntity(this._authoringState, oldData, newData);
         // get created authoring event by either old or new IRI (in case of new entities)
         const event = newState.elements.get(oldData.id) || newState.elements.get(newData.id);
-        model.history.execute(changeEntityData(model, oldData.id, event!.data));
+        if (event?.type === 'entityAdd') {
+            model.history.execute(changeEntityData(model, oldData.id, event.data));
+        }
         this.setAuthoringState(newState);
+
+        let temporaryState = this._temporaryState;
+        if (temporaryState.elements.has(oldData.id)) {
+            temporaryState = TemporaryState.removeEntity(temporaryState, oldData);
+            temporaryState = TemporaryState.addEntity(temporaryState, newData);
+            this.setTemporaryState(temporaryState);
+        }
 
         batch.store();
     }
@@ -437,6 +456,7 @@ export class EditorController {
             this.discardChange(event);
         }
         this.setAuthoringState(AuthoringState.deleteEntity(state, oldData));
+        this.setTemporaryState(TemporaryState.removeEntity(this._temporaryState, oldData));
         batch.store();
     }
 
@@ -462,7 +482,7 @@ export class EditorController {
 
         model.addLink(base);
         if (!options.temporary) {
-            this.model.createLinks(base.data);
+            this.model.createMissingLinks(base.data);
         }
 
         if (hasRelationOnDiagram(model, base.data)) {
@@ -496,7 +516,9 @@ export class EditorController {
             TranslatedText.text('editor_controller.relation_change.command')
         );
         if (equalLinks(oldData, newData)) {
-            model.history.execute(changeRelationData(model, oldData, newData));
+            if (AuthoringState.isAddedRelation(this._authoringState, oldData)) {
+                model.history.execute(changeRelationData(model, oldData, newData));
+            }
             this.setAuthoringState(
                 AuthoringState.changeRelation(this._authoringState, oldData, newData)
             );
@@ -511,7 +533,7 @@ export class EditorController {
                     relation => equalLinks(relation, oldData)
                 );
             }
-            model.createLinks(newData);
+            model.createMissingLinks(newData);
             this.setAuthoringState(newState);
         }
         batch.store();
@@ -589,6 +611,7 @@ export class EditorController {
             );
         }
         this.setAuthoringState(newState);
+        this.setTemporaryState(TemporaryState.removeRelation(this._temporaryState, data));
         batch.store();
     }
 
@@ -843,4 +866,32 @@ function hasRelationOnDiagram(graph: GraphStructure, target: LinkModel): boolean
         }
     }
     return false;
+}
+
+export interface EntityChanges {
+    readonly data: ElementModel | undefined;
+    readonly event?: AuthoredEntity | undefined;
+}
+
+export function useEntityChanges(id: ElementIri | undefined): EntityChanges {
+    const {editor} = useWorkspace();
+    const event = useSyncStore(
+        id ? editor[ChangeAuthoringStore] : neverSyncStore(),
+        () => id ? editor.authoringState.elements.get(id) : undefined
+    );
+    return {data: event?.data, event};
+}
+
+export interface RelationChanges {
+    readonly data: LinkModel | undefined;
+    readonly event?: AuthoredRelation | undefined;
+}
+
+export function useRelationChanges(key: LinkKey | undefined): RelationChanges {
+    const {editor} = useWorkspace();
+    const event = useSyncStore(
+        key ? editor[ChangeAuthoringStore] : neverSyncStore(),
+        () => key ? editor.authoringState.links.get(key) : undefined
+    );
+    return {data: event?.data, event};
 }
