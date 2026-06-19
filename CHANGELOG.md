@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### ⏱ Performance
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
 
+#### 🔧 Maintenance
+- Update dev-depencies: `vite` to v8, `typescript` to v6, other packages to lastest minor versions: `sass`, `vitest`, `playwright`, `@comunica/query-sparql-rdfjs-lite`, eslint-related.
+
 #### 💅 Polish
 - Improve `WorkspaceLayout*` item resize handing:
   * Enable size transition on expand/collapse `WorkspaceLayoutRow` items;

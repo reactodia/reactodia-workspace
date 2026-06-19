@@ -23,6 +23,8 @@ declare module '*.inline.svg' {
     export default imageUrl;
 }
 
+declare module '*.scss';
+
 declare module '*.module.css' {
     const classes: Record<string, string>;
     export default classes;

@@ -64,6 +64,7 @@ export default tseslint.config(
             '@typescript-eslint/unbound-method': ['warn', {
                 ignoreStatic: true,
             }],
+            '@typescript-eslint/no-unnecessary-type-assertion': 'off',
         },
     },
     {
