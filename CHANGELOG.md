@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix undo/redo not adding or removing graph elements or links after `DataDiagramModel.discardLayout()` call (e.g. by a reload from `useLoadedWorkspace()`).
 - Fix small input width overflow in `UnifiedSearch` when resized to the minimum size.
 - Fix `Navigator` to avoid animating expand/collapse transition on the initial mount.
+- Fix unintended scroll instead of canvas zoom on mouse wheel event over non-scrollable elements rendered with `CanvasPlaceAt` (when `zoomOptions.requireCtrl` is `false`):
+  * Allow to explicitly prevent zoom on mouse wheel over a non-scrollable element with `data-reactodia-prevent-zoom` attribute.
 
 #### ⏱ Performance
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.

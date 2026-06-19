@@ -48,6 +48,10 @@ export function CanvasPlaceLayer(props: CanvasPlaceLayerProps) {
     return <div {...otherProps} ref={outerRef} data-reactodia-place-layer={layer} />;
 }
 
+export function isCanvasPlaceLayer(element: Element): boolean {
+    return element.hasAttribute('data-reactodia-place-layer');
+}
+
 /**
  * Canvas layer to render widget components at, from the bottom to the top:
  *   - `underlay` - placed under any diagram content;
