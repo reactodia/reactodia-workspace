@@ -4,6 +4,7 @@ import cx from 'clsx';
 
 import { delay } from '../coreUtils/async';
 import { ColorSchemeApi } from '../coreUtils/colorScheme';
+import { findParentWithin } from '../coreUtils/dom';
 import { EventObserver, Events, EventSource } from '../coreUtils/events';
 
 import {
@@ -27,7 +28,7 @@ import type { CommandBatch } from './history';
 import { LinkLabelLayer, LinkLayer, LinkMarkers } from './linkLayer';
 import type { DiagramModel } from './model';
 import {
-    CanvasPlaceLayerContext, CanvasPlaceLayer, createPlaceLayerContext,
+    CanvasPlaceLayerContext, CanvasPlaceLayer, createPlaceLayerContext, isCanvasPlaceLayer,
 } from './placeLayer';
 import { MutableRenderingState, RenderingLayer } from './renderingState';
 
@@ -458,18 +459,39 @@ class CanvasController implements CanvasApi {
     };
 
     getWheelToScaleDelta = (e: WheelEvent): number | undefined => {
-        return this.shouldZoom(e) ? wheelToScaleDeltaDefault(e) : undefined;
+        switch (this.shouldZoom(e)) {
+            case 'zoom':
+                return wheelToScaleDeltaDefault(e);
+            case 'prevent':
+                return 0;
+            case 'default':
+            default: {
+                return undefined;
+            }
+        }
     };
 
-    private shouldZoom(e: WheelEvent): boolean {
+    private shouldZoom(e: WheelEvent): 'zoom' | 'prevent' | 'default' {
         const {requireCtrl} = this.zoomOptions;
         const target = e.target;
         if (requireCtrl) {
-            return e.ctrlKey;
+            return e.ctrlKey ? 'zoom' : 'default';
         } else if (e.ctrlKey) {
-            return true;
+            return 'zoom';
         }
-        return this.isEventFromCellLayer(e) && target instanceof Node && (
+
+        if (this.paper.root && target instanceof window.Element) {
+            const layer = findParentWithin(target, this.paper.root, isCanvasPlaceLayer);
+            if (layer) {
+                return (
+                    hasScrollableParent(target, layer) ? 'default' :
+                    findParentWithin(target, layer, doesPreventZoom) ? 'prevent' :
+                    'zoom'
+                );
+            }
+        }
+
+        const fromStaticCells = this.isEventFromCellLayer(e) && target instanceof Node && (
             this.paper.root === target ||
             this.paper.pane === target ||
             this.paper.pane?.firstChild === target ||
@@ -479,6 +501,7 @@ class CanvasController implements CanvasApi {
                 !hasScrollableParent(target, this.elementLayer.current)
             )
         );
+        return fromStaticCells ? 'zoom' : 'default';
     }
 
     get metrics(): CanvasMetrics {
@@ -724,4 +747,8 @@ function hasScrollableParent(target: Node, parent: Node | null): boolean {
         current = current.parentNode;
     }
     return false;
+}
+
+function doesPreventZoom(target: globalThis.Element): boolean {
+    return target.hasAttribute('data-reactodia-prevent-zoom');
 }

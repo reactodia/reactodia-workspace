@@ -314,7 +314,8 @@ export class Dialog extends React.Component<DialogProps, State> {
                 )}
                 role='dialog'
                 aria-labelledby={caption ? 'reactodia-dialog-caption' : undefined}
-                style={style}>
+                style={style}
+                data-reactodia-prevent-zoom={true}>
                 <div className={`${CLASS_NAME}__header`}>
                     <div id='reactodia-dialog-caption'
                         className={`${CLASS_NAME}__caption`}
