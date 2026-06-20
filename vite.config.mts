@@ -2,7 +2,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type UserConfig, defineConfig } from 'vite';
+import { type UserConfig, defineConfig, esmExternalRequirePlugin } from 'vite';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 import { playwright } from '@vitest/browser-playwright';
 
@@ -23,8 +23,13 @@ const EXAMPLES = [
 export default defineConfig(({ command, mode }) => {
     const common = {
         mode: 'development',
+        plugins: [
+            esmExternalRequirePlugin({
+                external: ['react'],
+            }),
+        ],
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: {
                     index: resolve(__dirname, './index.html'),
                     ...Object.fromEntries(EXAMPLES.map(example =>
@@ -61,7 +66,7 @@ export default defineConfig(({ command, mode }) => {
             ...common,
             build: {
                 ...common.build,
-                rollupOptions: undefined,
+                rolldownOptions: undefined,
                 assetsInlineLimit: (path, _content) => (
                     /.resource.svg$/.test(path) ? false :
                     /.inline.svg$/.test(path) ? true :
@@ -100,6 +105,7 @@ export default defineConfig(({ command, mode }) => {
         return {
             ...common,
             plugins: [
+                ...common.plugins,
                 cssInjectedByJsPlugin({
                     jsAssetsFilterFunction: outputChunk => outputChunk.fileName === 'workspace.js'
                 }),
@@ -116,10 +122,10 @@ export default defineConfig(({ command, mode }) => {
                     },
                     formats: ['es'],
                 },
-                rollupOptions: {
-                    ...common.build.rollupOptions,
+                rolldownOptions: {
+                    ...common.build.rolldownOptions,
                     input: command === 'serve'
-                        ? common.build.rollupOptions.input
+                        ? common.build.rolldownOptions.input
                         : undefined,
                     external: [
                         '@reactodia/hashmap',
@@ -129,7 +135,7 @@ export default defineConfig(({ command, mode }) => {
                         'd3-color',
                         'file-saver',
                         'n3',
-                        'react',
+                        /* 'react', -- already externalized by esmExternalRequirePlugin() */
                         'react/jsx-runtime',
                         'react-dom',
                     ],
