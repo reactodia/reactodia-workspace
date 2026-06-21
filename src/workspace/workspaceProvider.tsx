@@ -122,7 +122,7 @@ export interface CreateWorkspaceParams {
  * Represents a context for the whole workspace, its stores and services.
  *
  * The context tracks ongoing async operations while it's actively mounted
- * with {@link mount()} once or many times at the same time,
+ * with {@link mount mount()} once or many times at the same time,
  * and cancels all operations with {@link WorkspaceContext.disposeSignal}
  * when fully unmounted.
  *

@@ -190,7 +190,7 @@ export interface SparqlDataProviderSettings {
     linkTypesStatisticsQuery: string;
 
     /**
-     * SELECT query to lookup entities with {@link DataProvider.lookup()}.
+     * SELECT query to lookup entities with {@link DataProvider.lookup}.
      *
      * Parametrized variables:
      *   - `${outerProjection}`

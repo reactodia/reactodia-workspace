@@ -26,15 +26,14 @@ export class DefaultTranslation<K extends string = TranslationKey> implements Tr
 
     private readonly _selectLabel: LabelLanguageSelector;
 
-    constructor(options?: {
+    constructor(options: {
         /**
          * Translation bundles for UI text strings in the workspace
          * in order from higher to lower priority.
          *
-         * @default []
          * @see {@link DefaultTranslationBundle}
          */
-        bundles?: ReadonlyArray<Partial<TranslationBundle>>;
+        bundles: ReadonlyArray<Partial<TranslationBundle>>;
         /**
          * Overrides how a single label gets selected from multiple of them based on target language.
          */

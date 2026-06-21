@@ -224,7 +224,7 @@ export interface CanvasEvents {
      */
     changeScale: PropertyChange<CanvasApi, number>;
     /**
-     * Triggered on {@link CanvasApi.metrics.getTransform()} property change.
+     * Triggered on {@link CanvasApi.metrics.getTransform getTransform()} property change.
      */
     changeTransform: PropertyChange<CanvasApi, PaperTransform>;
 }

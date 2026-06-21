@@ -441,7 +441,7 @@ export interface SelectionActionAnchorProps extends SelectionActionStyleProps {
     /**
      * Additional props for the inner `<a>` element.
      *
-     * See {@link DataLocaleProvider.prepareAnchor()} for default anchor props.
+     * See {@link DataLocaleProvider.prepareAnchor} for default anchor props.
      */
     anchorProps?: React.HTMLProps<HTMLAnchorElement>;
     /**

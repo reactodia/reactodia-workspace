@@ -72,7 +72,7 @@ export interface ElementProps {
     /**
      * Unique and immutable {@link Element.id element ID}.
      *
-     * If not specified, {@link Element.generateId()} is used to create one.
+     * If not specified, {@link Element.generateId} is used to create one.
      */
     id?: string;
     /**
@@ -269,7 +269,7 @@ export interface LinkProps {
     /**
      * Unique and immutable {@link Link.id link ID}.
      *
-     * If not specified, {@link Link.generateId()} is used to create one.
+     * If not specified, {@link Link.generateId} is used to create one.
      */
     id?: string;
     /**
@@ -383,7 +383,7 @@ export abstract class Link {
      * does not equal to the previous one.
      *
      * @see {@link RestoreGeometry}
-     * @see {@link restoreCapturedLinkGeometry()}
+     * @see {@link restoreCapturedLinkGeometry}
      */
     setVertices(value: ReadonlyArray<Vector>): void {
         const previous = this._vertices;

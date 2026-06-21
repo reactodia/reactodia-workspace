@@ -46,7 +46,7 @@ export interface WorkspaceContext {
     /**
      * Provides a translation for UI text strings.
      *
-     * **Note**: it is recommended to use {@link useTranslation()} hook instead when possible.
+     * **Note**: it is recommended to use {@link useTranslation} hook instead when possible.
      */
     readonly translation: Translation;
     /**
@@ -84,7 +84,7 @@ export interface WorkspaceContext {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.group}
-     * @deprecated Use {@link groupEntities()} function instead.
+     * @deprecated Use {@link groupEntities} function instead.
      */
     readonly group: (params: GroupEntitiesParams) => Promise<EntityGroup>;
     /**
@@ -93,7 +93,7 @@ export interface WorkspaceContext {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.ungroupAll}
-     * @deprecated Use {@link ungroupAllEntities()} function instead.
+     * @deprecated Use {@link ungroupAllEntities} function instead.
      */
     readonly ungroupAll: (params: UngroupAllEntitiesParams) => Promise<EntityElement[]>;
     /**
@@ -102,7 +102,7 @@ export interface WorkspaceContext {
      * The operation puts a command to the {@link DiagramModel.history command history}.
      *
      * @see {@link DataDiagramModel.ungroupSome}
-     * @deprecated Use {@link ungroupSomeEntities()} function instead.
+     * @deprecated Use {@link ungroupSomeEntities} function instead.
      */
     readonly ungroupSome: (params: UngroupSomeEntitiesParams) => Promise<EntityElement[]>;
     /**

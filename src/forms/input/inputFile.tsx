@@ -45,7 +45,7 @@ export interface InputFileProps extends InputMultiProps {
      * This metadata is required to be able to display info about existing files,
      * i.e. files from the dataset.
      *
-     * For example, {@link useEntityData()} can be used to resolve metadata
+     * For example, {@link useEntityData useEntityData()} can be used to resolve metadata
      * from a {@link DataProvider} this way:
      * ```js
      * const {data: fileMetadata} = Reactodia.useEntityData(

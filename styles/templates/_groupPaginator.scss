@@ -3,10 +3,10 @@
 
 .reactodia-group-paginator {
   display: flex;
+  height: 22px;
 
   &__previous,
   &__next {
-    height: 22px;
     padding: 0 5px;
   }
 
@@ -29,6 +29,7 @@
     text-align: center;
     border-top: theme.$button-border-width solid theme.$button-default-border-color;
     border-bottom: theme.$button-border-width solid theme.$button-default-border-color;
+    line-height: 22px;
   }
 
   &__page-size {

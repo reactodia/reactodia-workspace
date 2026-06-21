@@ -272,8 +272,8 @@ export interface DefaultLayoutOptions {
  * freeze during the call for large diagrams.
  * 
  * The recommended way is to use web workers via
- * {@link defineLayoutWorker Reactodia.defineLayoutWorker()} to import the worker from
- * `@reactodia/workspace/layout.worker` and {@link useWorker Reactodia.useWorker()} to
+ * {@link defineLayoutWorker defineLayoutWorker()} to import the worker from
+ * `@reactodia/workspace/layout.worker` and {@link useWorker useWorker()} to
  * get a layout function from it.
  *
  * @category Geometry

@@ -168,7 +168,7 @@ export class RdfDataProvider implements DataProvider {
     }
 
     /**
-     * Decodes a previously encoded by {@link RdfDataProvider.encodeTerm()} resource-like term
+     * Decodes a previously encoded by {@link RdfDataProvider.encodeTerm} resource-like term
      * (named node or blank) back from a plain string.
      *
      * @see {@link RdfDataProvider.encodeTerm}

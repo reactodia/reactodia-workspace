@@ -1,3 +1,10 @@
+/*!
+ * Reactodia Workspace library https://reactodia.github.io/
+ *
+ * Copyright (C) 2026 Alexey Morozov (https://github.com/AlexeyMz)
+ * Copyright (C) 2019 metaphacts GmbH.
+ * License: LGPL-2.1 or later.
+ */
 import '../styles/main.scss';
 
 export { mapAbortedToNull, delay } from './coreUtils/async';
