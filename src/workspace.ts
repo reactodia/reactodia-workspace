@@ -102,7 +102,7 @@ export {
     LinkVertices, type LinkVerticesProps,
 } from './diagram/linkLayer';
 export { DefaultLinkRouter, type DefaultLinkRouterOptions } from './diagram/linkRouter';
-export { DefaultTranslation } from './diagram/locale';
+export { DefaultTranslation, DefaultTranslationBundle } from './diagram/locale';
 export { type DiagramModel, type DiagramModelEvents, type GraphStructure } from './diagram/model';
 export { CanvasPlaceAt, type CanvasPlaceAtLayer } from './diagram/placeLayer';
 export {

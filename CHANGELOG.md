@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Auto-collapse items after resize if the final size is less than `minSize` for that item;
   * Prevent toggle buttons on `WorkspaceLayoutRow` children from being partially hidden when corresponding item is collapsed.
 - Export `TranslationProvider` and `DefaultTranslation` to be able to use `useTranslation()` outside the workspace component:
+  * Export default (fallback) bundle for `en` language: `DefaultTranslationBundle`.
   * Remove deprecated `Translation.formatIri()` method (use `DataLocaleProvider.formatIri()` instead).
 - Extend `CommandBatch.discard()` to accept `revert` option to be able to revert the batch without storing it first.
 - Always display ungroup buttons on `StandardGroup` when the element is single-selected.

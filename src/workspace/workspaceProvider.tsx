@@ -18,7 +18,7 @@ import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import {
     CalculatedLayout, LayoutFunction, LayoutTypeProvider, calculateLayout, applyLayout,
 } from '../diagram/layout';
-import { DefaultTranslation } from '../diagram/locale';
+import { DefaultTranslation, DefaultTranslationBundle } from '../diagram/locale';
 import { RenameLinkToLinkStateProvider, SharedCanvasState } from '../diagram/sharedCanvasState';
 
 import { AnnotationElement, AnnotationLink } from '../editor/annotationCells';
@@ -52,7 +52,8 @@ export interface CreateWorkspaceParams {
     /**
      * Overrides default i18n (translation) implementation.
      *
-     * By default, {@link DefaultTranslation} instance is used.
+     * By default, {@link DefaultTranslation} instance with a single
+     * {@link DefaultTranslationBundle} is used.
      */
     translation?: Translation;
     /**
@@ -224,7 +225,9 @@ class RefCountedWorkspaceContext implements WorkspaceContext {
 
     constructor(params: CreateWorkspaceParams) {
         const {
-            translation = new DefaultTranslation(),
+            translation = new DefaultTranslation({
+                bundles: [DefaultTranslationBundle],
+            }),
             history = new InMemoryHistory(),
             dialogSettingsProvider = new DefaultDialogSettingsProvider(),
             metadataProvider,

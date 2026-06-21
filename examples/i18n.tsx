@@ -38,7 +38,8 @@ function I18nExample() {
                     'toolbar_action': {
                         'layout.label': 'Layout the graph',
                     },
-                }
+                },
+                Reactodia.DefaultTranslationBundle,
             ],
         }),
         defaultLayout,
