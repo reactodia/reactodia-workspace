@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix `Navigator` to avoid animating expand/collapse transition on the initial mount.
 - Fix unintended scroll instead of canvas zoom on mouse wheel event over non-scrollable elements rendered with `CanvasPlaceAt` (when `zoomOptions.requireCtrl` is `false`):
   * Allow to explicitly prevent zoom on mouse wheel over a non-scrollable element with `data-reactodia-prevent-zoom` attribute.
+- Fix accidentally moving elements or links with touch controls when panning which were also not recorded in the command history.
 
 #### ⏱ Performance
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
@@ -34,6 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Prevent toggle buttons on `WorkspaceLayoutRow` children from being partially hidden when corresponding item is collapsed.
 - Export `TranslationProvider` and `DefaultTranslation` to be able to use `useTranslation()` outside the workspace component:
   * Remove deprecated `Translation.formatIri()` method (use `DataLocaleProvider.formatIri()` instead).
+- Extend `CommandBatch.discard()` to accept `revert` option to be able to revert the batch without storing it first.
 - Always display ungroup buttons on `StandardGroup` when the element is single-selected.
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
