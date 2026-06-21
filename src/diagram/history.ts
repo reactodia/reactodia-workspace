@@ -236,12 +236,20 @@ export interface CommandBatch {
      */
     store(): void;
     /**
-     * Discards the batch, throwing away all nested commands, so they cannot be undone.
+     * Discards the batch, throwing away or reverting all nested commands.
      *
-     * This is useful when performing state changes on temporary items to
-     * avoid being able to revert it.
+     * Omitting `revert` or setting it to `false` is useful when performing transient state
+     * changes on temporary items to avoid being able to revert it.
      */
-    discard(): void;
+    discard(options?: {
+        /**
+         * When set to `true` reverts all nested commands in the batch instead of
+         * throwing them away.
+         *
+         * @default false
+         */
+        revert?: boolean;
+    }): void;
 }
 
 interface InMemoryBatch extends CommandBatch {
@@ -325,13 +333,16 @@ export class InMemoryHistory implements CommandHistory {
             history: this,
             store: () => {
                 if (!this.batches.includes(batch)) {
-                    console.warn('Failed to find batch to store (already stored or discarded?)', batch);
+                    console.warn(
+                        'Reactodia: failed to find batch to store (already stored or discarded?)',
+                        batch
+                    );
                     return;
                 }
                 while (this.batches.length > 0) {
                     const other = this.batches.pop()!;
                     if (other !== batch) {
-                        console.warn('Storing other unclosed batch on top', other);
+                        console.warn('Reactodia: storing other unclosed batch on top', other);
                     }
                     if (other._inverses.length > 0) {
                         const commands = [...other._inverses].reverse();
@@ -342,15 +353,23 @@ export class InMemoryHistory implements CommandHistory {
                     }
                 }
             },
-            discard: () => {
+            discard: (options) => {
                 if (!this.batches.includes(batch)) {
-                    console.warn('Failed to find batch to store (already stored or discarded?)');
+                    console.warn(
+                        'Reactodia: failed to find batch to discard (already stored or discarded?)',
+                        batch
+                    );
                     return;
                 }
                 while (this.batches.length > 0) {
-                    const other = this.batches.pop();
+                    const other = this.batches.pop()!;
                     if (other !== batch) {
-                        console.warn('Discarding other unclosed batch on top', other);
+                        console.warn('Reactodia: discarding other unclosed batch on top', other);
+                    }
+                    if (options?.revert && other._inverses.length > 0) {
+                        const commands = [...other._inverses].reverse();
+                        const compound = Command.compound(batch._title, commands);
+                        compound.invoke();
                     }
                     if (other === batch) {
                         break;

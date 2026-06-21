@@ -370,7 +370,11 @@ class CanvasController implements CanvasApi {
             onPointerMove: e => this.onPointerMove(e, state),
             onPointerUp: (e, options) => this.onPointerUp(e, options, state),
             onPointerCancel: () => {
-                state.batch.discard();
+                const restore = restoreGeometry.filterOutUnchanged();
+                if (restore.hasChanges()) {
+                    batch.history.registerToUndo(restore);
+                }
+                batch.discard({ revert: true });
             },
         };
     };
