@@ -8,33 +8,33 @@ import {
 
 import * as Rdf from '../data/rdf/rdfModel';
 
+/**
+ * Default (fallback) translation bundle `en` language.
+ *
+ * @category Constants
+ */
 export const DefaultTranslationBundle: TranslationBundle = DefaultBundle;
 
 /**
  * Default built-in implementation for i18n strings interpolation and other
  * methods from {@link Translation} interface.
+ *
+ * @category Core
  */
-export class DefaultTranslation implements Translation {
+export class DefaultTranslation<K extends string = TranslationKey> implements Translation<K> {
     protected readonly bundles: ReadonlyArray<Partial<TranslationBundle>>;
 
     private readonly _selectLabel: LabelLanguageSelector;
 
     constructor(options?: {
         /**
-         * Additional translation bundles for UI text strings in the workspace
+         * Translation bundles for UI text strings in the workspace
          * in order from higher to lower priority.
          *
          * @default []
-         * @see {@link useDefaultTranslation}
+         * @see {@link DefaultTranslationBundle}
          */
         bundles?: ReadonlyArray<Partial<TranslationBundle>>;
-        /**
-         * If set, disables translation fallback which (with default `en` language).
-         *
-         * @default true
-         * @see {@link translations}
-         */
-        useDefaultBundle?: boolean;
         /**
          * Overrides how a single label gets selected from multiple of them based on target language.
          */
@@ -42,18 +42,13 @@ export class DefaultTranslation implements Translation {
     }) {
         const {
             bundles = [],
-            useDefaultBundle = true,
             selectLabel = defaultSelectLabel,
         } = options ?? {};
-        const translationBundles: Partial<TranslationBundle>[] = [...bundles];
-        if (useDefaultBundle) {
-            translationBundles.push(DefaultTranslationBundle);
-        }
-        this.bundles = translationBundles;
+        this.bundles = bundles;
         this._selectLabel = selectLabel;
     }
 
-    private getString(key: TranslationKey): string | undefined {
+    private getString(key: K): string | undefined {
         const dotIndex = key.indexOf('.');
         if (!(dotIndex > 0 && dotIndex < key.length)) {
             throw new Error(`Reactodia: Invalid translation key: ${key}`);
@@ -69,12 +64,12 @@ export class DefaultTranslation implements Translation {
         return undefined;
     }
 
-    text(key: TranslationKey, placeholders?: Record<string, string | number | boolean>): string {
+    text(key: K, placeholders?: Record<string, string | number | boolean>): string {
         return this.textOptional(key, placeholders) ?? key;
     }
 
     textOptional(
-        key: TranslationKey,
+        key: K,
         placeholders?: Record<string, string | number | boolean>
     ): string | undefined {
         const template = this.getString(key);
@@ -84,7 +79,7 @@ export class DefaultTranslation implements Translation {
         return formatPlaceholders(template, placeholders);
     }
 
-    template(key: TranslationKey, parts: Record<string, React.ReactNode>): React.ReactNode {
+    template(key: K, parts: Record<string, React.ReactNode>): React.ReactNode {
         const template = this.getString(key) ?? key;
         return templatePlaceholders(template, parts);
     }

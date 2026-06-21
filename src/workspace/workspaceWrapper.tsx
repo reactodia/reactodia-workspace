@@ -12,7 +12,7 @@ import { TypeStyleResolver, RenameLinkProvider } from '../diagram/customization'
 import { Element } from '../diagram/elements';
 import { CommandHistory, InMemoryHistory } from '../diagram/history';
 import { LayoutFunction } from '../diagram/layout';
-import { DefaultTranslation } from '../diagram/locale';
+import { DefaultTranslation, DefaultTranslationBundle } from '../diagram/locale';
 
 import { EntityElement } from '../editor/dataElements';
 import {
@@ -151,10 +151,13 @@ export class Workspace extends React.Component<WorkspaceProps> {
             onWorkspaceEvent,
         } = this.props;
 
+        let bundles = translations;
+        if (useDefaultTranslation) {
+            bundles = [...translations, DefaultTranslationBundle];
+        }
         this._workspace = createWorkspace({
             translation: this.context ?? new DefaultTranslation({
-                bundles: translations,
-                useDefaultBundle: useDefaultTranslation,
+                bundles,
                 selectLabel: selectLabelLanguage,
             }),
             history,
