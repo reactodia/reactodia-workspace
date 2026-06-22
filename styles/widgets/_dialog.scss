@@ -45,18 +45,3 @@
     }
   }
 }
-
-.reactodia-viewport-dialog-overlay {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: zIndex.$viewport-dialog;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  background-color: theme.$canvas-overlay-color;
-}

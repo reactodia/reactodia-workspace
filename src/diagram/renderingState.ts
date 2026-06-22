@@ -45,6 +45,10 @@ export interface RenderingStateEvents {
         readonly layer: RenderingLayer;
     };
     /**
+     * Triggered on {@link RenderingState.interactionBlocked} property change.
+     */
+    changeInteractionBlocked: PropertyChange<RenderingState, boolean>;
+    /**
      * Triggered on {@link RenderingState.getLinkTemplates} property change.
      */
     changeLinkTemplates: {
@@ -134,6 +138,10 @@ export interface RenderingState extends SizeProvider {
      * Shared state for all canvases rendering the same model.
      */
     readonly shared: SharedCanvasState;
+    /**
+     * Whether any canvas interaction is blocked by a modal overlay.
+     */
+    get interactionBlocked(): boolean;
     /**
      * Request to synchronously render the canvas, performing any
      * previously deferred updates.
@@ -231,6 +239,8 @@ export class MutableRenderingState implements RenderingState {
         hashHotkeyAst, sameHotkeyAst
     );
 
+    private _interactionBlocks = 0;
+
     readonly shared: SharedCanvasState;
 
     /** @hidden */
@@ -279,6 +289,19 @@ export class MutableRenderingState implements RenderingState {
         this.listener.stopListening();
         this.layerUpdater.dispose();
         this.cancelOnLayerUpdate(RenderingLayer.LinkRoutes, this.updateRoutings);
+    }
+
+    get interactionBlocked(): boolean {
+        return this._interactionBlocks > 0;
+    }
+
+    changeInteractionBlocks(change: 1 | -1): void {
+        const previous = this._interactionBlocks !== 0;
+        this._interactionBlocks += change;
+        const interactionBlocked = this._interactionBlocks !== 0;
+        if (interactionBlocked !== previous) {
+            this.source.trigger('changeInteractionBlocked', {previous, source: this});
+        }
     }
 
     syncUpdate() {

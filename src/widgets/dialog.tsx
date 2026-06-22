@@ -104,6 +104,7 @@ export class Dialog extends React.Component<DialogProps, State> {
     private unsubscribeFromTarget: Unsubscribe | undefined = undefined;
     private readonly listener = new EventObserver();
 
+    private root = React.createRef<HTMLDivElement>();
     private updateAll = () => this.forceUpdate();
 
     private startSize: Vector | undefined;
@@ -306,7 +307,7 @@ export class Dialog extends React.Component<DialogProps, State> {
         };
 
         return (
-            <div
+            <div ref={this.root}
                 className={cx(
                     CLASS_NAME,
                     target ? 'reactodia-dialog--attached' : undefined,

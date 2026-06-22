@@ -1,4 +1,5 @@
 import * as React from 'react';
+import cx from 'clsx';
 
 import { delay } from '../coreUtils/async';
 import { Events, EventObserver, EventSource, PropertyChange } from '../coreUtils/events';
@@ -343,14 +344,12 @@ export class OverlayController {
             this.hideDialog();
         }
 
-        const previousDialog = this._openedDialog;
         const openedDialog: OverlayDialog = {
             target,
             knownType: dialogType,
             holdSelection,
             onClose,
         };
-        this._openedDialog = openedDialog;
 
         const canvas = this.view.findAnyCanvas();
         const breakpoint = readOverlayProperty(
@@ -378,6 +377,7 @@ export class OverlayController {
         const onHide = () => this.hideDialog();
         if (target && !isSmallViewport) {
             this.setDialog(
+                openedDialog,
                 <CanvasPlaceAt layer='overElements'>
                     <Dialog {...styleWithDefaults}
                         target={
@@ -393,6 +393,7 @@ export class OverlayController {
             );
         } else {
             this.setDialog(
+                openedDialog,
                 <ViewportDialog {...styleWithDefaults}
                     mode={isSmallViewport ? 'fillViewport' : 'centered'}
                     onResize={onResize}
@@ -401,11 +402,6 @@ export class OverlayController {
                 </ViewportDialog>
             );
         }
-        
-        this.source.trigger('changeOpenedDialog', {
-            source: this,
-            previous: previousDialog,
-        });
     }
 
     /**
@@ -416,18 +412,25 @@ export class OverlayController {
     hideDialog() {
         if (this._openedDialog) {
             const previous = this._openedDialog;
-            this._openedDialog = undefined;
             previous.onClose?.();
-            this.setDialog(null);
-            this.source.trigger('changeOpenedDialog', {source: this, previous});
+            this.setDialog(undefined, null);
         }
     }
 
-    private setDialog(dialog: React.ReactElement | null): void {
+    private setDialog(
+        openedDialog: OverlayDialog | undefined,
+        dialog: React.ReactElement | null
+    ): void {
         const internalApi = withInternalApi(this)[OverlayInternalApi];
+        const previousDialog = this._openedDialog;
         const previous = internalApi.dialog;
+        this._openedDialog = openedDialog;
         internalApi.dialog = dialog;
         this.internalSource.trigger('changeDialog', {previous, source: this});
+        this.source.trigger('changeOpenedDialog', {
+            source: this,
+            previous: previousDialog,
+        });
     }
 }
 
@@ -565,11 +568,11 @@ function LoadingWidget(props: { spinnerProps: SpinnerProps }) {
         y: size.height / 2,
     };
     return (
-        <div className='reactodia-loading-widget'>
+        <ViewportOverlay className='reactodia-loading-widget'>
             <svg width={size.width} height={size.height}>
                 <Spinner position={position} {...spinnerProps} />
             </svg>
-        </div>
+        </ViewportOverlay>
     );
 }
 
@@ -592,12 +595,32 @@ function ViewportDialog(props: DialogProps) {
         [viewportSize, margin]
     );
     return (
-        <div ref={overlayRef}
+        <ViewportOverlay innerRef={overlayRef}
             className='reactodia-viewport-dialog-overlay'>
             <Dialog {...props}
                 dock='e'
                 maxSize={maxSize}
             />
+        </ViewportOverlay>
+    );
+}
+
+function ViewportOverlay(props: {
+    innerRef?: React.RefObject<HTMLDivElement>;
+    className?: string;
+    children: React.ReactNode;
+}) {
+    const {innerRef, className, children} = props;
+    const {canvas} = useCanvas();
+    const renderingState = canvas.renderingState as MutableRenderingState;
+    React.useLayoutEffect(() => {
+        renderingState.changeInteractionBlocks(1);
+        return () => renderingState.changeInteractionBlocks(-1);
+    }, [renderingState]);
+    return (
+        <div ref={innerRef}
+            className={cx('reactodia-viewport-overlay', className)}>
+            {children}
         </div>
     );
 }
