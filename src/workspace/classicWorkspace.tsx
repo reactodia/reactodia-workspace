@@ -113,9 +113,9 @@ export function ClassicWorkspace(props: ClassicWorkspaceProps) {
                         {selection === null ? null : (
                             <Selection {...selection} />
                         )}
-                        {navigator === null ? null : <Navigator dock='se' {...navigator} />}
                         {toolbar === null ? null : <ClassicToolbar dock='nw' {...toolbar} />}
                         {zoomControl === null ? null : <ZoomControl dock='sw' {...zoomControl} />}
+                        {navigator === null ? null : <Navigator dock='se' {...navigator} />}
                         {canvasWidgets}
                         {children}
                     </Canvas>

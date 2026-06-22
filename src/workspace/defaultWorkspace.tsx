@@ -271,16 +271,6 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                 {halo === null ? null : <Halo {...halo} />}
                 {haloLink === null ? null : <HaloLink {...haloLink} />}
                 {selection === null ? null : <Selection {...selection} />}
-                {zoomControl === null ? null : (
-                    <ZoomControl dock='w'
-                        {...zoomControl}
-                    />
-                )}
-                {navigator === null ? null : (
-                    <Navigator dock='se'
-                        {...navigator}
-                    />
-                )}
                 <Toolbar {...mainToolbar}
                     dock={menuDock}
                     menu={menuContent}>
@@ -291,12 +281,22 @@ export function DefaultWorkspace(props: DefaultWorkspaceProps) {
                         />
                     )}
                 </Toolbar>
+                {zoomControl === null ? null : (
+                    <ZoomControl dock='w'
+                        {...zoomControl}
+                    />
+                )}
                 {actionsContent === null ? null : (
                     <Toolbar {...actionsToolbar}
                         dock={actionsToolbar?.dock ?? 'sw'}
                         menu={null}>
                         {actionsContent}
                     </Toolbar>
+                )}
+                {navigator === null ? null : (
+                    <Navigator dock='se'
+                        {...navigator}
+                    />
                 )}
                 {canvasWidgets}
                 {children}

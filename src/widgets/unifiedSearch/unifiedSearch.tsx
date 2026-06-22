@@ -310,7 +310,8 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
                     panelSize={effectiveSize}
                 />
             }>
-            <SearchContent sections={sectionsWithContext}
+            <SearchContent visible={expanded}
+                sections={sectionsWithContext}
                 activeSectionKey={activeSection.key}
                 onActivateSection={key => setActiveSection(previous => previous.switch(key))}
                 dropUp={direction === 'up'}
@@ -451,6 +452,7 @@ function SearchToggle(props: {
 }
 
 function SearchContent(props: {
+    visible: boolean;
     sections: ReadonlyArray<SectionWithContext>;
     activeSectionKey: string | undefined;
     onActivateSection: (sectionKey: string) => void;
@@ -462,7 +464,7 @@ function SearchContent(props: {
     setMaxSize: (size: Size) => void;
 }) {
     const {
-        sections, activeSectionKey, onActivateSection,
+        visible, sections, activeSectionKey, onActivateSection,
         dropUp, size, minSize, offsetForMaxSize, onResize, setMaxSize,
     } = props;
 
@@ -534,8 +536,13 @@ function SearchContent(props: {
     const sectionPanelId = (section: SectionWithContext) =>
         `reactodia-unified-search-panel-${section.key}`;
 
+    const otherProps = {
+        inert: visible ? undefined : '',
+    } as React.HTMLProps<HTMLDivElement>;
+
     return (
-        <div ref={panelRef}
+        <div {...otherProps}
+            ref={panelRef}
             className={`${CLASS_NAME}__panel`}
             style={{
                 width: size.width,

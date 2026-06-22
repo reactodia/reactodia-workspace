@@ -350,7 +350,7 @@ class OverlaidElement extends React.Component<OverlaidElementProps> {
                     style={style}
                     // set `element-id` to translate mouse events to paper
                     data-element-id={element.id}
-                    tabIndex={0}
+                    tabIndex={templateProps.onlySelected ? 0 : -1}
                     ref={
                         /* For compatibility with React 19 typings */
                         this.elementRef as React.RefObject<HTMLDivElement>
