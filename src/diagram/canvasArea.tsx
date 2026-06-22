@@ -6,6 +6,7 @@ import { delay } from '../coreUtils/async';
 import { ColorSchemeApi } from '../coreUtils/colorScheme';
 import { findParentWithin } from '../coreUtils/dom';
 import { EventObserver, Events, EventSource } from '../coreUtils/events';
+import { useObservedProperty } from '../coreUtils/hooks';
 
 import {
     Paper, PaperProps, type ScaleDefaults, type PaperPointerOperation, wheelToScaleDeltaDefault,
@@ -99,6 +100,12 @@ export function CanvasArea(props: {
         return () => controller.stopListening();
     }, []);
 
+    const interactionBlocked = useObservedProperty(
+        renderingState.events,
+        'changeInteractionBlocked',
+        () => renderingState.interactionBlocked
+    );
+
     const style = {
         '--reactodia-canvas-animation-duration': graphAnimations.duration === undefined
             ? undefined : `${graphAnimations.duration}ms`,
@@ -168,6 +175,9 @@ export function CanvasArea(props: {
                         />
                     </>
                 )}
+                paneProps={{
+                    inert: interactionBlocked ? '' : undefined,
+                } as React.HTMLProps<HTMLDivElement>}
                 watermark={
                     watermarkSvg ? (
                         <a href={watermarkUrl} target='_blank' rel='noreferrer'>

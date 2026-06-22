@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Exclude collapsed `DropdownMenu` and `UnifiedSearch` content from Tab-navigation.
 - Exclude canvas elements from Tab-navigation unless the element is only one selected.
+- Block canvas interacton (including Tab-navigation) when displaying a blocking modal overlay i.e. an overlay task or viewport-centered dialog.
 - Fix Tab-navigation order on `DefaultWorkspace` and `ClassicWorkspace` to generally follow top-to-bottom then left-to-right when moving focus.
 
 ## [0.35.0] - 2026-06-21

@@ -34,6 +34,7 @@ export interface PaperProps {
     pageSize: Size;
     contentBounds: Rect;
     renderLayers: (transform: PaperTransform) => React.ReactNode;
+    paneProps?: React.HTMLProps<HTMLDivElement>;
     watermark?: React.ReactNode;
     children?: React.ReactNode;
 }
@@ -149,7 +150,7 @@ export class Paper extends React.Component<PaperProps, State> {
     render() {
         const {
             className, style, showScrollbars, panOnTouch = true,
-            onContextMenu, onKeyDown, onKeyUp, renderLayers, watermark, children,
+            onContextMenu, onKeyDown, onKeyUp, renderLayers, paneProps, watermark, children,
         } = this.props;
         const {transform, mounted} = this.state;
         const {width, height, scale, paddingX, paddingY} = transform;
@@ -180,7 +181,8 @@ export class Paper extends React.Component<PaperProps, State> {
                 tabIndex={0}
                 onKeyDown={onKeyDown}
                 onKeyUp={onKeyUp}>
-                <div className={`${CLASS_NAME}__pane`}
+                <div {...paneProps}
+                    className={`${CLASS_NAME}__pane`}
                     ref={this.paneRef}
                     onPointerDown={this.onAreaPointerDown}>
                     <div className={`${CLASS_NAME}__layers`}

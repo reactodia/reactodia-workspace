@@ -1,6 +1,9 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useObservedProperty } from '../../coreUtils/hooks';
+import { useCanvas } from '../../diagram/canvasApi';
+
 /**
  * Compass-like direction for the dock side:
  *  - `nw`: north-west (top-left)
@@ -87,14 +90,23 @@ export interface ViewportDockProps {
  */
 export function ViewportDock(props: ViewportDockProps) {
     const {dock, dockOffsetX = 0, dockOffsetY = 0, children} = props;
+    const {canvas: {renderingState}} = useCanvas();
+    const interactionBlocked = useObservedProperty(
+        renderingState.events,
+        'changeInteractionBlocked',
+        () => renderingState.interactionBlocked
+    );
     const style = {
         '--reactodia-viewport-dock-offset-x': `${dockOffsetX}px`,
         '--reactodia-viewport-dock-offset-y': `${dockOffsetY}px`,
         '--reactodia-viewport-dock-align-x': DOCK_ALIGN_X[dock],
         '--reactodia-viewport-dock-align-y': DOCK_ALIGN_Y[dock],
     } as React.CSSProperties;
+    const otherProps = {
+        inert: interactionBlocked ? '' : undefined,
+    } as React.HTMLProps<HTMLDivElement>;
     return (
-        <div
+        <div {...otherProps}
             className={cx(
                 VIEWPORT_WIDGET_CLASS,
                 DOCK_CONTAINER_CLASS[dock] ?? `${VIEWPORT_WIDGET_CLASS}--corner`
