@@ -141,6 +141,7 @@ export function AuthoredEntityDecorator(props: {
                 ) : null}
                 {isTemporary ? null : (
                     <InlineActions target={target}
+                        onlySelected={onlyTargetSelected}
                         state={state}
                         allActions={Boolean(inlineActions)}
                     />
@@ -199,14 +200,16 @@ function getSeverityClass(severity: ValidationSeverity): string | undefined {
 
 function InlineActions(props: {
     target: EntityElement;
+    onlySelected: boolean;
     state: AuthoredEntity | undefined;
     allActions: boolean;
 }) {
-    const {target, state, allActions} = props;
+    const {target, onlySelected, state, allActions} = props;
     const {editor} = useWorkspace();
     const t = useTranslation();
 
     const authored = useAuthoredEntity(target.data, allActions);
+    const tabIndex = onlySelected ? 0 : -1;
 
     return (
         <div className={`${CLASS_NAME}__actions`}>
@@ -218,7 +221,8 @@ function InlineActions(props: {
                         authored.canEdit
                             ? t.text('authoring_state.entity_action_edit.title')
                             : t.text('authoring_state.entity_action_edit.title_disabled')
-                    }>
+                    }
+                    tabIndex={tabIndex}>
                     {t.text('authoring_state.entity_action_edit.label')}
                 </button>
             ) : null}
@@ -230,14 +234,16 @@ function InlineActions(props: {
                         authored.canEdit
                             ? t.text('authoring_state.entity_action_delete.title')
                             : t.text('authoring_state.entity_action_delete.title_disabled')
-                    }>
+                    }
+                    tabIndex={tabIndex}>
                     {t.text('authoring_state.entity_action_delete.label')}
                 </button>
             ) : null}
             {state && state.type !== 'entityAdd' ? (
                 <button className={`${CLASS_NAME}__action ${CLASS_NAME}__action-discard`}
                     onClick={() => editor.discardChange(state)}
-                    title={t.text('authoring_state.entity_action_discard.title')}>
+                    title={t.text('authoring_state.entity_action_discard.title')}
+                    tabIndex={tabIndex}>
                     {t.text('authoring_state.entity_action_discard.label')}
                 </button>
             ) : null}

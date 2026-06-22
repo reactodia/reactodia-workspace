@@ -253,7 +253,7 @@ export function DropdownMenuItem(props: DropdownMenuItemProps) {
             ref={ref}
             type='button'
             role='menuitem'
-            tabIndex={tabIndex}
+            tabIndex={tabIndex ?? -1}
             className={cx(
                 className,
                 ITEM_CLASS_NAME,
