@@ -509,6 +509,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
                     inputProps={{
                         name: 'reactodia-connection-menu-filter',
                         placeholder: t.textOptional('connections_menu.input.placeholder'),
+                        'data-reactodia-autofocus': true,
                     }}>
                     {this.renderSortSwitches()}
                 </SearchInput>

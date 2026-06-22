@@ -1,6 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { findAutoFocusable } from '../coreUtils/dom';
 import { EventObserver, Unsubscribe } from '../coreUtils/events';
 
 import { CanvasContext } from '../diagram/canvasApi';
@@ -16,6 +17,7 @@ export interface DialogProps extends DialogStyleProps {
     onResize?: (size: Size) => void;
     onHide: () => void;
     mode?: 'centered' | 'fillViewport';
+    closeTitle?: string;
     children: React.ReactNode;
 }
 
@@ -61,6 +63,17 @@ export interface DialogStyleProps {
      * @default true
      */
     closable?: boolean;
+    /**
+     * Whether the dialog should auto-focus on first focusable child.
+     *
+     * If exists, the auto-focus focuses on elements with `data-reactodia-autofocus`
+     * attribute, next with `autofocus` attibute otherwise on first
+     * [tab-indexable](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/tabindex)
+     * child.
+     *
+     * @default true
+     */
+    autoFocus?: boolean;
     /**
      * Dock direction for the dialog from the {@link DialogProps.target target}
      * point of view:
@@ -116,11 +129,16 @@ export class Dialog extends React.Component<DialogProps, State> {
 
     componentDidMount() {
         const {canvas, model} = this.context;
+        const {autoFocus = true} = this.props;
         this.listener.listen(model.events, 'changeLanguage', this.updateAll);
         this.listener.listen(canvas.events, 'changeTransform', this.updateAll);
         this.listenToTarget(this.props.target);
         if (this.props.target) {
             this.focusOn();
+        }
+        if (autoFocus && this.root.current) {
+            const autoFocusable = findAutoFocusable(this.root.current);
+            autoFocusable?.focus();
         }
     }
 
@@ -294,6 +312,7 @@ export class Dialog extends React.Component<DialogProps, State> {
             caption,
             resizableBy: baseResizableBy = 'all',
             closable = true,
+            closeTitle,
         } = this.props;
 
         const resizableBy = mode === 'fillViewport' ? 'none' : baseResizableBy;
@@ -324,7 +343,7 @@ export class Dialog extends React.Component<DialogProps, State> {
                         {caption}
                     </div>
                     {closable ? (
-                        <button title='Close'
+                        <button title={closeTitle}
                             className={cx(
                                 'reactodia-btn',
                                 `${CLASS_NAME}__close-button`

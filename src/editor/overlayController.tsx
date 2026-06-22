@@ -375,6 +375,7 @@ export class OverlayController {
             this.dialogSettingsProvider.persistDialogSize(openedDialog, size);
         };
         const onHide = () => this.hideDialog();
+        const closeTitle = this.translation.text('overlay_controller.dialog_close.title');
         if (target && !isSmallViewport) {
             this.setDialog(
                 openedDialog,
@@ -386,7 +387,8 @@ export class OverlayController {
                             target
                         }
                         onResize={onResize}
-                        onHide={onHide}>
+                        onHide={onHide}
+                        closeTitle={closeTitle}>
                         {content}
                     </Dialog>
                 </CanvasPlaceAt>
@@ -397,7 +399,8 @@ export class OverlayController {
                 <ViewportDialog {...styleWithDefaults}
                     mode={isSmallViewport ? 'fillViewport' : 'centered'}
                     onResize={onResize}
-                    onHide={onHide}>
+                    onHide={onHide}
+                    closeTitle={closeTitle}>
                     {content}
                 </ViewportDialog>
             );

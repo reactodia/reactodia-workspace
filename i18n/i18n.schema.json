@@ -231,6 +231,7 @@
       "$ref": "#/$defs/Group",
       "additionalProperties": false,
       "properties": {
+        "dialog_close.title": { "$ref": "#/$defs/Value" },
         "multiple_tasks_in_progress": { "$ref": "#/$defs/Value" },
         "unknown_error": { "$ref": "#/$defs/Value" }
       }

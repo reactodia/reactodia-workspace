@@ -8,10 +8,12 @@ import { Debouncer } from '../../coreUtils/scheduler';
 
 export interface SearchInputProps {
     className?: string;
-    inputProps?: React.HTMLProps<HTMLInputElement>;
+    inputProps?: React.HTMLProps<HTMLInputElement> & DataAttributes;
     store: SearchInputStore;
     children?: React.ReactNode;
 }
+
+type DataAttributes = Record<`data-${string}`, string | number | boolean | undefined | null>;
 
 const CLASS_NAME = 'reactodia-search-input';
 

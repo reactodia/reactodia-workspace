@@ -90,3 +90,23 @@ export function findParentWithin(
     }
     return undefined;
 }
+
+const FOCUSABLE_SELECTORS: readonly string[] = [
+    '[data-reactodia-autofocus]',
+    '[autofocus]',
+    'input:not(disabled), textarea:not(disabled), button:not(disabled), select:not(disabled), a[href], details > summary',
+];
+
+export function findAutoFocusable(parent: HTMLElement): HTMLElement | undefined {
+    const activeElement = document.activeElement;
+    if (parent.contains(activeElement)) {
+        return activeElement instanceof HTMLElement ? activeElement : undefined;
+    }
+    for (const selector of FOCUSABLE_SELECTORS) {
+        const target = parent.querySelector(selector);
+        if (target instanceof HTMLElement) {
+            return target;
+        }
+    }
+    return undefined;
+}

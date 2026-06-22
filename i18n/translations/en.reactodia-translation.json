@@ -160,6 +160,7 @@
     "style_underline.title": "Underline"
   },
   "overlay_controller": {
+    "dialog_close.title": "Close",
     "multiple_tasks_in_progress": "Multiple tasks are in progress",
     "unknown_error": "Unknown error occurred"
   },
