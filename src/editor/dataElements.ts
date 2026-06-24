@@ -870,22 +870,21 @@ export class LinkType {
  */
 export function changeEntityData(model: DiagramModel, target: ElementIri, data: ElementModel): Command {
     const command = Command.create(TranslatedText.text('commands.change_entity.title'), () => {
+        const captured = new CapturedDataGraphState();
         const previousIri = target;
         const newIri = data.id;
 
-        const previousEntities = new Map<EntityElement, ElementModel>();
-        const previousEntityGroups = new Map<EntityGroup, ReadonlyArray<EntityGroupItem>>();
-        const previousRelations = new Map<RelationLink, LinkModel>();
-        const previousRelationGroups = new Map<RelationGroup, ReadonlyArray<RelationGroupItem>>();
-        
         const updateLinksToReferByNewIri = (element: Element) => {
+            if (previousIri === newIri) {
+                return;
+            }
             for (const link of model.getElementLinks(element)) {
                 if (link instanceof RelationLink) {
-                    previousRelations.set(link, link.data);
+                    captured.captureRelation(link);
                     link.setData(mapRelationEndpoint(link.data, previousIri, newIri));
                 } else if (link instanceof RelationGroup) {
                     if (link.itemSources.has(previousIri) || link.itemTargets.has(previousIri)) {
-                        previousRelationGroups.set(link, link.items);
+                        captured.captureRelationGroup(link);
                         const items = link.items.map((item): RelationGroupItem => ({
                             ...item,
                             data: mapRelationEndpoint(item.data, previousIri, newIri),
@@ -895,17 +894,17 @@ export function changeEntityData(model: DiagramModel, target: ElementIri, data: 
                 }
             }
         };
-        
+
         for (const element of model.elements) {
             if (element instanceof EntityElement) {
                 if (element.iri === target) {
-                    previousEntities.set(element, element.data);
+                    captured.captureEntity(element);
                     element.setData(data);
                     updateLinksToReferByNewIri(element);
                 }
             } else if (element instanceof EntityGroup) {
                 if (element.itemIris.has(target)) {
-                    previousEntityGroups.set(element, element.items);
+                    captured.captureEntityGroup(element);
                     const nextItems = element.items.map((item): EntityGroupItem =>
                         item.data.id === target ? {...item, data} : item
                     );
@@ -915,18 +914,7 @@ export function changeEntityData(model: DiagramModel, target: ElementIri, data: 
             }
         }
         return Command.create(TranslatedText.text('commands.change_entity.title'), () => {
-            for (const [element, previousData] of previousEntities) {
-                element.setData(previousData);
-            }
-            for (const [element, previousItems] of previousEntityGroups) {
-                element.setItems(previousItems);
-            }
-            for (const [link, previousData] of previousRelations) {
-                link.setData(previousData);
-            }
-            for (const [link, previousItems] of previousRelationGroups) {
-                link.setItems(previousItems);
-            }
+            captured.restore();
             return command;
         });
     });
@@ -952,16 +940,72 @@ function mapRelationEndpoint(relation: LinkModel, oldIri: ElementIri, newIri: El
  *
  * @category Commands
  */
-export function changeRelationData(model: DiagramModel, oldData: LinkModel, newData: LinkModel): Command {
+export function changeRelationData(
+    model: DiagramModel,
+    oldData: LinkModel,
+    newData: LinkModel
+): Command {
     if (!equalLinks(oldData, newData)) {
         throw new Error('Cannot change typeId, sourceId or targetId when changing link data');
     }
-    return Command.create(TranslatedText.text('commands.change_relation.title'), () => {
+    const command = Command.create(TranslatedText.text('commands.change_relation.title'), () => {
+        const captured = new CapturedDataGraphState();
         for (const link of model.links) {
             if (link instanceof RelationLink && equalLinks(link.data, oldData)) {
+                captured.captureRelation(link);
                 link.setData(newData);
+            } else if (link instanceof RelationGroup && link.itemKeys.has(oldData)) {
+                captured.captureRelationGroup(link);
+                const items = link.items.map(
+                    (item): RelationGroupItem => ({...item, data: newData})
+                );
+                link.setItems(items);
             }
         }
-        return changeRelationData(model, newData, oldData);
+        return Command.create(TranslatedText.text('commands.change_entity.title'), () => {
+            captured.restore();
+            return command;
+        });
     });
+    return command;
+}
+
+type CapturedDataPair =
+    | [EntityElement, ElementModel]
+    | [EntityGroup, readonly EntityGroupItem[]]
+    | [RelationLink, LinkModel]
+    | [RelationGroup, readonly RelationGroupItem[]];
+
+class CapturedDataGraphState {
+    private data = new Map<CapturedDataPair[0], CapturedDataPair[1]>();
+
+    captureEntity(element: EntityElement): void {
+        this.data.set(element, element.data);
+    }
+
+    captureEntityGroup(element: EntityGroup): void {
+        this.data.set(element, element.items);
+    }
+
+    captureRelation(link: RelationLink): void {
+        this.data.set(link, link.data);
+    }
+
+    captureRelationGroup(link: RelationGroup) {
+        this.data.set(link, link.items);
+    }
+
+    restore(): void {
+        for (const [target, data] of this.data) {
+            if (target instanceof EntityElement) {
+                target.setData(data as ElementModel);
+            } else if (target instanceof EntityGroup) {
+                target.setItems(data as readonly EntityGroupItem[]);
+            } else if (target instanceof RelationLink) {
+                target.setData(data as LinkModel);
+            } else if (target instanceof RelationGroup) {
+                target.setItems(data as readonly RelationGroupItem[]);
+            }
+        }
+    }
 }
