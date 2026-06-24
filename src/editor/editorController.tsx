@@ -424,17 +424,14 @@ export class EditorController {
             TranslatedText.text('editor_controller.entity_delete.command')
         );
 
-        // Remove new connected links
-        for (const element of findEntities(model, oldData.id)) {
-            this.removeRelationsFromLinks(
-                model.getElementLinks(element),
-                relation => AuthoringState.isAddedRelation(state, relation)
-            );
-        }
-
         const event = state.elements.get(oldData.id);
         if (event) {
             this.discardChange(event);
+        }
+        for (const event of state.links.values()) {
+            if (event.data.sourceId === oldData.id || event.data.targetId === oldData.id) {
+                this.discardChange(event);
+            }
         }
         this.setAuthoringState(AuthoringState.deleteEntity(state, oldData));
         batch.store();
