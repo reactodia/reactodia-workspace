@@ -77,9 +77,10 @@ export function ConnectionsList(props: {
             count: inexact && totalCount > 0 ? 'some' : totalCount,
         });
         entries.push({type: 'separator'});
-        for (const entry of regularEntries) {
-            entries.push(entry);
-        }
+    }
+
+    for (const entry of regularEntries) {
+        entries.push(entry);
     }
 
     if (probableEntries.length > 0) {
