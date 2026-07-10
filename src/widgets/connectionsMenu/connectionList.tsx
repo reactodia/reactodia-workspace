@@ -17,7 +17,7 @@ import {
     CLASS_NAME, LINK_COUNT_PER_PAGE,
 } from './menuCommon';
 
-export function ConnectionsList(props: {
+export function ConnectionList(props: {
     data: ConnectionsData;
     filterKey: string;
     sortMode: SortMode;
@@ -27,7 +27,7 @@ export function ConnectionsList(props: {
     onExpandLink: (chunk: LinkDataChunk) => void;
     onMoveToFilter?: (chunk: LinkDataChunk) => void;
 
-    scrolledListRef?: React.RefObject<HTMLUListElement | null>;
+    scrolledListRef?: React.RefObject<HTMLDivElement | null>;
 }) {
     const {
         data, filterKey, sortMode, suggestions,
@@ -99,6 +99,10 @@ export function ConnectionsList(props: {
                 'reactodia-scrollable',
                 entries.length === 0 ? `${CLASS_NAME}__links-list-empty` : undefined
             )}
+            ref={
+                /* For compatibility with React 19 typings */
+                scrolledListRef as React.RefObject<HTMLDivElement>
+            }
             tabIndex={-1}
         >
             <FocusGroup>

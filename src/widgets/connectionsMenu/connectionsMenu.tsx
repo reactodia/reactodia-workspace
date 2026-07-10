@@ -31,7 +31,7 @@ import {
     ConnectionCount, ObjectsData, LinkDataChunk, ObjectPlacingMode,
     CLASS_NAME, LINK_COUNT_PER_PAGE, LoadingSpinner,
 } from './menuCommon';
-import { ConnectionsList } from './connectionList';
+import { ConnectionList } from './connectionList';
 import { EntityList } from './entityList';
 
 /**
@@ -258,7 +258,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
 
     private suggestionCancellation = new AbortController();
 
-    private linksScrolledListRef = React.createRef<HTMLUListElement>();
+    private linksScrolledListRef = React.createRef<HTMLDivElement>();
     private linksScrollPosition: number | undefined;
 
     constructor(props: ConnectionsMenuInnerProps) {
@@ -598,7 +598,7 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
             commands.trigger('findCapabilities', event);
 
             return (
-                <ConnectionsList
+                <ConnectionList
                     data={connections}
                     suggestions={connectionSuggestions}
                     filterKey={connectionSearch.value}
