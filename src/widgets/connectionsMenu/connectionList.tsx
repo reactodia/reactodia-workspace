@@ -25,9 +25,9 @@ export function ConnectionsList(props: {
 
     allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
-    onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
+    onMoveToFilter?: (chunk: LinkDataChunk) => void;
 
-    scrolledListRef: React.RefObject<HTMLUListElement | null>;
+    scrolledListRef?: React.RefObject<HTMLUListElement | null>;
 }) {
     const {
         data, filterKey, sortMode, suggestions,
