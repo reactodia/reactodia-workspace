@@ -4,6 +4,8 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
+## [0.35.1] - 2026-07-10
 #### 🐛 Fixed
 - Fix relation having changed `data` but missing from `AuthoringState` when the source or target entity becomes deleted then restored back.
 - Fix grouped relation (`RelationGroup` item) does not updating its `data` when changed by `EditorController`.
@@ -731,7 +733,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).
 
-[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/reactodia/reactodia-workspace/compare/v0.35.1...HEAD
+[0.35.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.34.1...v0.35.0
 [0.34.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.34.0...v0.34.1
 [0.34.0]: https://github.com/reactodia/reactodia-workspace/compare/v0.33.0...v0.34.0
