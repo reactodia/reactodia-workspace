@@ -25,9 +25,9 @@ export function ConnectionsList(props: {
 
     allRelatedLink: LinkTypeModel;
     onExpandLink: (chunk: LinkDataChunk) => void;
-    onMoveToFilter: ((chunk: LinkDataChunk) => void) | undefined;
+    onMoveToFilter?: (chunk: LinkDataChunk) => void;
 
-    scrolledListRef: React.RefObject<HTMLUListElement | null>;
+    scrolledListRef?: React.RefObject<HTMLUListElement | null>;
 }) {
     const {
         data, filterKey, sortMode, suggestions,
@@ -77,9 +77,10 @@ export function ConnectionsList(props: {
             count: inexact && totalCount > 0 ? 'some' : totalCount,
         });
         entries.push({type: 'separator'});
-        for (const entry of regularEntries) {
-            entries.push(entry);
-        }
+    }
+
+    for (const entry of regularEntries) {
+        entries.push(entry);
     }
 
     if (probableEntries.length > 0) {

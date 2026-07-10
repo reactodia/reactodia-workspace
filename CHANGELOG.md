@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### 🐛 Fixed
 - Fix relation having changed `data` but missing from `AuthoringState` when the source or target entity becomes deleted then restored back.
 - Fix grouped relation (`RelationGroup` item) does not updating its `data` when changed by `EditorController`.
+- Fix `ConnectionsMenu` displaying no links when there is only a single incoming/outgoing relation type. (by @cristianvasquez)
 - Exclude collapsed `DropdownMenu` and `UnifiedSearch` content from Tab-navigation.
 - Exclude canvas elements from Tab-navigation unless the element is only one selected.
 - Block canvas interacton (including Tab-navigation) when displaying a blocking modal overlay i.e. an overlay task or viewport-centered dialog.
