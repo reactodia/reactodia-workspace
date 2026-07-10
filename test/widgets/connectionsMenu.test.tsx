@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import type { LinkTypeModel } from '../../src/data/model';
-import { ConnectionsList } from '../../src/widgets/connectionsMenu/connectionList';
+import { ConnectionList } from '../../src/widgets/connectionsMenu/connectionList';
 import { WorkspaceProvider, createWorkspace } from '../../src/workspace/workspaceProvider';
 import { blockingDefaultLayout } from '../../src/layout-sync';
 
-describe('ConnectionsList', () => {
+describe('ConnectionList', () => {
     it('renders the only connection link', async () => {
         const link: LinkTypeModel = {id: 'urn:test:single-link', label: []};
         const workspace = createWorkspace({
@@ -16,7 +16,7 @@ describe('ConnectionsList', () => {
 
         await render(
             <WorkspaceProvider workspace={workspace}>
-                <ConnectionsList
+                <ConnectionList
                     data={{
                         links: [link],
                         counts: new Map([
