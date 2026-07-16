@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react';
 
 import type { ColorSchemeApi } from '../../src/coreUtils/colorScheme';
 import { HtmlPaperLayer, SvgPaperLayer, type PaperTransform } from '../../src/paper/paperLayers';
-import { toSVG } from '../../src/paper/toSvg';
+import { toSVG, toMatchableSelectors } from '../../src/paper/toSvg';
 
 import IconResource from './toSvg.resource.svg';
 import IconInline from './toSvg.inline.svg';
@@ -288,6 +288,68 @@ describe('toSvg()', () => {
         });
 
         await expect(exportedSvgString).toMatchFileSnapshot('toSvg.expected.withoutRemoved.svg');
+    });
+});
+
+describe('toMatchableSelectors()', () => {
+    it('returns plain selectors unchanged', () => {
+        expect(toMatchableSelectors('.card')).toEqual(['.card']);
+        expect(toMatchableSelectors('.a .b > .c')).toEqual(['.a .b > .c']);
+    });
+
+    it('splits a comma-separated list', () => {
+        expect(toMatchableSelectors('.a, .b')).toEqual(['.a', '.b']);
+        expect(toMatchableSelectors('.a,.b , .c')).toEqual(['.a', '.b', '.c']);
+    });
+
+    it('drops a trailing pseudo-element', () => {
+        expect(toMatchableSelectors('.card::before')).toEqual(['.card']);
+        expect(toMatchableSelectors('.a .b::after')).toEqual(['.a .b']);
+        expect(toMatchableSelectors('::before')).toEqual([]);
+    });
+
+    it('drops pseudo-elements per selector in a list', () => {
+        expect(toMatchableSelectors('.a::before, .b')).toEqual(['.a', '.b']);
+        expect(toMatchableSelectors('.a, .b::after')).toEqual(['.a', '.b']);
+    });
+
+    it('keeps the universal selector from a "*, ::before, ::after" reset', () => {
+        expect(toMatchableSelectors('*, ::before, ::after')).toEqual(['*']);
+        expect(toMatchableSelectors('*, ::after, ::before')).toEqual(['*']);
+    });
+
+    it('handles functional pseudo-elements', () => {
+        expect(toMatchableSelectors('.a::part(label)')).toEqual(['.a']);
+        expect(toMatchableSelectors('::slotted(.x)')).toEqual([]);
+    });
+
+    it('keeps pseudo-classes (single colon)', () => {
+        expect(toMatchableSelectors('.a:hover')).toEqual(['.a:hover']);
+        expect(toMatchableSelectors('.a:not(.b)')).toEqual(['.a:not(.b)']);
+    });
+
+    it('does not split commas inside :is()/:not()/:where()', () => {
+        expect(toMatchableSelectors(':is(.a, .b)')).toEqual([':is(.a, .b)']);
+        expect(toMatchableSelectors(':not(.a, .b)')).toEqual([':not(.a, .b)']);
+        expect(toMatchableSelectors(':where(.a, .b)')).toEqual([':where(.a, .b)']);
+        expect(toMatchableSelectors(':is(.a, :not(.b, .c))')).toEqual([':is(.a, :not(.b, .c))']);
+    });
+
+    it('does not split commas inside attribute values', () => {
+        expect(toMatchableSelectors('[data-x="a,b"], .c')).toEqual(['[data-x="a,b"]', '.c']);
+        expect(toMatchableSelectors("[data-x='a,b'], .c")).toEqual(["[data-x='a,b']", '.c']);
+        expect(toMatchableSelectors(':is([data-x="a,b"], .c)')).toEqual([':is([data-x="a,b"], .c)']);
+    });
+
+    it('splits only top-level commas in a mixed list', () => {
+        expect(toMatchableSelectors(':is(.a, .b), :not(.c, .d)')).toEqual([':is(.a, .b)', ':not(.c, .d)']);
+        expect(toMatchableSelectors(':is(.a, .b)::after, .c')).toEqual([':is(.a, .b)', '.c']);
+        expect(toMatchableSelectors('[href="a,b"]::before')).toEqual(['[href="a,b"]']);
+    });
+
+    it('returns an empty list for empty or pseudo-only input', () => {
+        expect(toMatchableSelectors('')).toEqual([]);
+        expect(toMatchableSelectors('::before, ::after')).toEqual([]);
     });
 });
 
