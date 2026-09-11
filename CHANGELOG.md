@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix error on a link statistics response with unbound counts, which some endpoints return when aggregating over an empty solution group: treat a missing count as 0 (with `COALESCE` in the default query as well).
 - Fix SPARQL syntax error in `SparqlDataProvider.lookup()` when a text search is combined with a type filter in `OwlRdfsSettings`/`OwlStatsSettings`/`DBPediaSettings` (and the `WikidataSettings` pattern): the `filterTypePattern` triples were not terminated with `.` before the text search pattern.
 - Fix text search in `OwlRdfsSettings`/`OwlStatsSettings` being rejected by Virtuoso ("SQ200: index of column in order by out of range"): `?score` is bound through an expression instead of a literal constant, which Virtuoso does not accept in `ORDER BY`.
+- Report the HTTP status and the endpoint's error text in `SparqlDataProvider` query errors, and show the message under the progress bar in the entity search panel instead of only in the browser console.
 
 ## [0.35.2] - 2026-08-08
 #### 🐛 Fixed

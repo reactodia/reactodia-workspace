@@ -1170,9 +1170,7 @@ async function executeSparqlQuery<Binding>(
         const sparqlResponse = await response.json() as SparqlResponse<Binding>;
         return mapSparqlResponseIntoRdfJs(sparqlResponse, factory);
     } else {
-        const error = new Error(response.statusText);
-        (error as { response?: Response }).response = response;
-        throw error;
+        throw await makeResponseError(response);
     }
 }
 
@@ -1211,10 +1209,28 @@ async function executeSparqlConstruct(
         const parser = new N3.Parser();
         return parser.parse(turtleText);
     } else {
-        const error = new Error(response.statusText);
-        (error as { response?: Response }).response = response;
-        throw error;
+        throw await makeResponseError(response);
     }
+}
+
+/**
+ * Makes an error for a non-OK response with the HTTP status and the beginning
+ * of the response body in the message, as an endpoint usually explains
+ * a rejected query there (e.g. a syntax or a query cost estimation error).
+ */
+async function makeResponseError(response: Response): Promise<Error> {
+    let details = '';
+    try {
+        const body = (await response.text()).trim();
+        const maxLength = 500;
+        details = body.length > maxLength ? body.substring(0, maxLength) + '…' : body;
+    } catch (e) {
+        /* ignore */
+    }
+    const status = `HTTP ${response.status} ${response.statusText}`.trim();
+    const error = new Error(details ? `${status}: ${details}` : status);
+    (error as { response?: Response }).response = response;
+    return error;
 }
 
 function appendQueryParams(endpoint: string, queryParams: { [key: string]: string } = {}) {

@@ -344,6 +344,11 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}
             />
+            {this.state.error ? (
+                <div className={`${CLASS_NAME}__error`}>
+                    {formatError(this.state.error)}
+                </div>
+            ) : null}
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div key={this.state.resultId}
                 className={`${CLASS_NAME}__rest reactodia-scrollable`}
@@ -670,6 +675,13 @@ function findEntityData(graph: DataGraphStructure, iri: ElementIri): ElementMode
         }
     }
     return undefined;
+}
+
+function formatError(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message || error.name;
+    }
+    return String(error);
 }
 
 export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
