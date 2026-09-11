@@ -60,6 +60,11 @@ export interface InstancesSearchProps {
      */
     minSearchTermLength?: number;
     /**
+     * Renders additional content (e.g. a button to set a custom criterion)
+     * next to the search criteria.
+     */
+    renderCriteriaActions?: (context: CriteriaActionsContext) => React.ReactNode;
+    /**
      * Handler for the search criteria changes.
      */
     onChangeCriteria?: (criteria: SearchCriteria) => void;
@@ -114,6 +119,11 @@ export interface SearchCriteria {
      */
     readonly elementType?: ElementTypeIri;
     /**
+     * Filter by a set of candidate elements: only elements from the set
+     * (which also match the other criteria) are shown.
+     */
+    readonly elementIris?: ReadonlyArray<ElementIri>;
+    /**
      * Filter by having a connected element with specified IRI.
      */
     readonly refElement?: ElementIri;
@@ -129,6 +139,20 @@ export interface SearchCriteria {
      * Only when {@link refElementLink} is set.
      */
     readonly linkDirection?: 'in' | 'out';
+}
+
+/**
+ * Context for {@link InstancesSearchProps.renderCriteriaActions}.
+ */
+export interface CriteriaActionsContext {
+    /**
+     * Current search criteria.
+     */
+    readonly criteria: SearchCriteria;
+    /**
+     * Sets the search criteria and initiates the search.
+     */
+    readonly setCriteria: (criteria: SearchCriteria) => void;
 }
 
 /**
@@ -483,6 +507,36 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             );
         }
 
+        if (criteria.elementIris) {
+            criterions.push(
+                <div key='amongElements' className={`${CLASS_NAME}__criterion`}>
+                    {this.renderRemoveCriterionButtons(() => this.setState(
+                        {
+                            criteria: {...criteria, elementIris: undefined},
+                        },
+                        () => this.props.onChangeCriteria?.(this.state.criteria)
+                    ))}
+                    {t.text('search_entities.criteria_among', {
+                        count: String(criteria.elementIris.length),
+                    })}
+                </div>
+            );
+        }
+
+        const {renderCriteriaActions} = this.props;
+        if (renderCriteriaActions) {
+            const {workspace} = this.props;
+            criterions.push(
+                <React.Fragment key='actions'>
+                    {renderCriteriaActions({
+                        criteria,
+                        setCriteria: nextCriteria => workspace.getCommandBus(InstancesSearchTopic)
+                            .trigger('setCriteria', {criteria: nextCriteria}),
+                    })}
+                </React.Fragment>
+            );
+        }
+
         return <div className={`${CLASS_NAME}__criterions`}>{criterions}</div>;
     }
 
@@ -532,7 +586,10 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             request = createRequest(this.state.criteria);
         }
 
-        if (!(request.text || request.elementTypeId || request.refElementId || request.refElementLinkId)) {
+        if (!(
+            request.text || request.elementTypeId || request.elementIris ||
+            request.refElementId || request.refElementLinkId
+        )) {
             this.setState({
                 querying: false,
                 error: undefined,
@@ -673,10 +730,11 @@ function findEntityData(graph: DataGraphStructure, iri: ElementIri): ElementMode
 }
 
 export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
-    const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
+    const {text, elementType, elementIris, refElement, refElementLink, linkDirection} = criteria;
     return {
         text,
         elementTypeId: elementType,
+        elementIris,
         refElementId: refElement,
         refElementLinkId: refElementLink,
         linkDirection,

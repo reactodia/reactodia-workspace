@@ -727,6 +727,10 @@ export class SparqlDataProvider implements DataProvider {
             limit: baseParams.limit === undefined ? 100 : baseParams.limit,
         };
 
+        if (params.elementIris && params.elementIris.length === 0) {
+            return [];
+        }
+
         // query types to match link configuration domains
         const types = this.querySingleElementTypes(
             params.refElementId && this.settings.linkConfigurations.length > 0
@@ -812,6 +816,13 @@ export class SparqlDataProvider implements DataProvider {
             }
         }
 
+        let filterAdditionalRestriction = this.settings.filterAdditionalRestriction;
+        if (params.elementIris) {
+            const candidates = params.elementIris.map(escapeIri).map(iri => ` ( ${iri} )`).join(' ');
+            filterAdditionalRestriction += `
+VALUES (?inst) {${candidates} }`;
+        }
+
         let limitPart = '';
         if (typeof params.limit === 'number') {
             limitPart = `LIMIT ${params.limit}`;
@@ -825,7 +836,7 @@ export class SparqlDataProvider implements DataProvider {
             filterByType,
             filterByRefElementLink,
             filterByText,
-            filterAdditionalRestriction: this.settings.filterAdditionalRestriction,
+            filterAdditionalRestriction,
             orderBy,
             limit: limitPart,
             queryTypes,

@@ -515,6 +515,22 @@ export class RdfDataProvider implements DataProvider {
                 }
             }
             requiredTextFilter = undefined;
+        } else if (params.elementIris) {
+            for (const iri of params.elementIris) {
+                const term = this.decodeTerm(iri);
+                if (isResourceTerm(term) && !items.has(term)) {
+                    items.set(term, {term});
+                }
+            }
+        }
+
+        if (params.elementIris) {
+            const candidates = new Set(params.elementIris);
+            for (const item of Array.from(items.values())) {
+                if (!candidates.has(this.encodeTerm(item.term))) {
+                    items.delete(item.term);
+                }
+            }
         }
 
         const linkedElements: DataProviderLookupItem[] = [];

@@ -228,6 +228,23 @@ describe('SparqlDataProvider', () => {
             ] satisfies DataProviderLookupItem[]
         );
     });
+
+    it('provides lookup() by type among candidate elements', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const items = await provider.lookup({
+            elementTypeId: owl.DatatypeProperty,
+            elementIris: [org.location, org.subOrganizationOf],
+        });
+        expect(items.map(item => item.element.id)).toEqual([org.location]);
+        const none = await provider.lookup({
+            elementTypeId: owl.DatatypeProperty,
+            elementIris: [],
+        });
+        expect(none).toEqual([]);
+    });
 });
 
 function readPropertyValues(

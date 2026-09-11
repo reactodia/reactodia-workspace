@@ -4,6 +4,10 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Add `elementIris` lookup parameter to `DataProvider.lookup()` and `SearchCriteria` to restrict the entity search to a given set of candidate elements (`VALUES` restriction in `SparqlDataProvider`, supported by `RdfDataProvider` as well), shown as a removable "Among N given entities" criterion.
+- Add `renderCriteriaActions` prop to `InstancesSearch` and `SearchSectionEntities` to render custom content next to the search criteria with access to the current criteria and a way to set them.
+- SPARQL example: "Filter by SPARQL query…" button in the entity search which runs a `SELECT` query on the connected endpoint and restricts the results to the entities bound by its first projected variable, in addition to the other criteria (e.g. the selected entity type).
 
 ## [0.35.2] - 2026-08-08
 #### 🐛 Fixed
