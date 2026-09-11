@@ -2,14 +2,13 @@ import * as React from 'react';
 import * as Reactodia from '../../src/workspace';
 
 import {
-    ExampleToolbarMenu,
-    mountOnLoad,
-    tryLoadLayoutFromLocalStorage,
+    ExampleToolbarMenu, mountOnLoad, tryLoadLayoutFromLocalStorage,
 } from '../resources/common';
 import {
     SparqlConnectionSettings, SparqlConnectionAction, showConnectionDialog,
     loadConnectionSettings, saveConnectionSettings, createConnectionOptions,
 } from './sparqlConnection';
+import { FilterBySparqlQueryCriterion } from './filterBySparqlQuery';
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
     new URL('../../src/layout.worker.ts', import.meta.url),
@@ -57,29 +56,78 @@ function SparqlExample() {
     return (
         <Reactodia.WorkspaceProvider workspace={workspace}
             onMount={onMount}>
-            <Reactodia.DefaultWorkspace
-                menu={<ExampleToolbarMenu />}
-                languages={[
-                    {code: 'de', label: 'Deutsch'},
-                    {code: 'en', label: 'English'},
-                    {code: 'es', label: 'Español'},
-                    {code: 'fr', label: 'Français'},
-                    {code: 'hi', label: 'हिन्दी'},
-                    {code: 'it', label: 'Italiano'},
-                    {code: 'ja', label: '日本語'},
-                    {code: 'pt', label: 'português'},
-                    {code: 'ru', label: 'Русский'},
-                    {code: 'zh', label: '汉语'},
-                ]}>
-                <Reactodia.Toolbar dock='sw'
-                    dockOffsetY={40}>
-                    <SparqlConnectionAction settings={connectionSettings}
-                        applySettings={applyConnectionSettings}
-                    />
-                </Reactodia.Toolbar> 
-            </Reactodia.DefaultWorkspace>
+            <SparqlWorkspace connectionSettings={connectionSettings}
+                applyConnectionSettings={applyConnectionSettings}
+            />
         </Reactodia.WorkspaceProvider>
     );
+}
+
+function SparqlWorkspace(props: {
+    connectionSettings: SparqlConnectionSettings | undefined;
+    applyConnectionSettings: (settings: SparqlConnectionSettings) => void;
+}) {
+    const {connectionSettings, applyConnectionSettings} = props;
+    const searchSections = useSearchSections();
+    return (
+        <Reactodia.DefaultWorkspace
+            menu={<ExampleToolbarMenu />}
+            search={{sections: searchSections}}
+            languages={[
+                {code: 'de', label: 'Deutsch'},
+                {code: 'en', label: 'English'},
+                {code: 'es', label: 'Español'},
+                {code: 'fr', label: 'Français'},
+                {code: 'hi', label: 'हिन्दी'},
+                {code: 'it', label: 'Italiano'},
+                {code: 'ja', label: '日本語'},
+                {code: 'pt', label: 'português'},
+                {code: 'ru', label: 'Русский'},
+                {code: 'zh', label: '汉语'},
+            ]}>
+            <Reactodia.Toolbar dock='sw'
+                dockOffsetY={40}>
+                <SparqlConnectionAction settings={connectionSettings}
+                    applySettings={applyConnectionSettings}
+                />
+            </Reactodia.Toolbar> 
+        </Reactodia.DefaultWorkspace>
+    );
+}
+
+/**
+ * Same as the default search sections, with a SPARQL query filter
+ * for the entity search.
+ */
+function useSearchSections(): ReadonlyArray<Reactodia.UnifiedSearchSection> {
+    const t = Reactodia.useTranslation();
+    const additionalCriteriaOptions = React.useMemo(() => [
+        FilterBySparqlQueryCriterion,
+    ], []);
+    return React.useMemo((): ReadonlyArray<Reactodia.UnifiedSearchSection> => [
+        {
+            key: 'elementTypes',
+            label: t.text('default_workspace.search_section_entity_types.label'),
+            title: t.text('default_workspace.search_section_entity_types.title'),
+            component: <Reactodia.SearchSectionElementTypes />,
+        },
+        {
+            key: 'entities',
+            label: t.text('default_workspace.search_section_entities.label'),
+            title: t.text('default_workspace.search_section_entities.title'),
+            component: (
+                <Reactodia.SearchSectionEntities
+                    criteriaOptions={additionalCriteriaOptions}
+                />
+            ),
+        },
+        {
+            key: 'linkTypes',
+            label: t.text('default_workspace.search_section_link_types.label'),
+            title: t.text('default_workspace.search_section_link_types.title'),
+            component: <Reactodia.SearchSectionLinkTypes />,
+        },
+    ], [t, additionalCriteriaOptions]);
 }
 
 mountOnLoad(<SparqlExample />);
