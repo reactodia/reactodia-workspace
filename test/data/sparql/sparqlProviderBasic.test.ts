@@ -243,6 +243,18 @@ describe('SparqlDataProvider', () => {
             ] satisfies DataProviderLookupItem[]
         );
     });
+
+    it('provides lookup() by type and text', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const items = await provider.lookup({
+            elementTypeId: owl.DatatypeProperty,
+            text: 'ident',
+        });
+        expect(items.map(item => item.element.id)).toEqual([org.identifier]);
+    });
 });
 
 function readPropertyValues(
