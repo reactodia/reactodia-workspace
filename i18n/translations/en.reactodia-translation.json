@@ -185,6 +185,7 @@
     "add_selected.label": "Add selected",
     "add_selected.title": "Place selected entities on the canvas",
     "criteria_has_type": "Has type {{entityType}}",
+    "criteria_among": "Among {{count}} given entities",
     "criteria_connected": "Connected to {{entity}}",
     "criteria_connected_via": "Connected to {{entity}} through {{relationType}}",
     "criteria_connected_to_source": "Connected to {{entity}} through {{relationType}} as {{sourceIcon}}\u00A0source",

@@ -194,6 +194,14 @@ export interface DataProviderLookupParams {
     text?: string;
 
     /**
+     * Filter by a set of candidate elements: only elements from the set
+     * (which also match the other criteria) are returned.
+     *
+     * An empty set matches nothing.
+     */
+    elementIris?: ReadonlyArray<ElementIri>;
+
+    /**
      * Filter by having a connected element with specified IRI.
      */
     refElementId?: ElementIri;

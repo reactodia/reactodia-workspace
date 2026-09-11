@@ -6,7 +6,7 @@ import type { CanvasDropEvent } from '../../diagram/canvasApi';
 import type { EntityElement } from '../../editor/dataElements';
 
 import { ClassTree } from '../classTree';
-import { InstancesSearch, SearchCriteria } from '../instancesSearch';
+import { InstancesSearch, type InstancesSearchProps, SearchCriteria } from '../instancesSearch';
 import { LinkTypesToolbox } from '../linksToolbox';
 
 import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
@@ -88,8 +88,14 @@ export function SearchSectionEntities(props: {
      * @default 3
      */
     minSearchTermLength?: number;
+    /**
+     * Renders additional content next to the search criteria.
+     *
+     * @see {@link InstancesSearchProps.renderCriteriaActions}
+     */
+    renderCriteriaActions?: InstancesSearchProps['renderCriteriaActions'];
 }) {
-    const {searchTimeout = 600, minSearchTermLength = 3} = props;
+    const {searchTimeout = 600, minSearchTermLength = 3, renderCriteriaActions} = props;
     const {getCommandBus} = useWorkspace();
     const {shouldRender, setSectionActive, searchStore} = useUnifiedSearchSection({
         searchTimeout,
@@ -108,6 +114,7 @@ export function SearchSectionEntities(props: {
     return (
         <InstancesSearch className={SECTION_ENTITIES_CLASS}
             searchStore={searchStore}
+            renderCriteriaActions={renderCriteriaActions}
             onChangeCriteria={criteria => {
                 if (shouldRender) {
                     setSectionActive(true, criteriaAsSearchExtra(criteria));
@@ -121,7 +128,7 @@ export function SearchSectionEntities(props: {
 }
 
 function criteriaAsSearchExtra(criteria: SearchCriteria): object | undefined {
-    if (criteria.text || criteria.elementType || criteria.refElement) {
+    if (criteria.text || criteria.elementType || criteria.elementIris || criteria.refElement) {
         return criteria;
     } else {
         return undefined;

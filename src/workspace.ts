@@ -260,6 +260,7 @@ export { Halo, type HaloProps } from './widgets/halo';
 export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {
     InstancesSearch, type InstancesSearchProps, type InstancesSearchCommands,
+    type SearchCriteria, type CriteriaActionsContext,
 } from './widgets/instancesSearch';
 export {
     type LinkActionContext, useLinkActionContext,
