@@ -12,7 +12,7 @@ import {
 } from './sparqlConnection';
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
+    new URL('../../src/layout.worker.ts', import.meta.url),
     {type: 'module'}
 ));
 
