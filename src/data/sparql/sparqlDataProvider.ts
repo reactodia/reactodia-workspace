@@ -665,9 +665,8 @@ export class SparqlDataProvider implements DataProvider {
         const navigateElementFilterOut = this.acceptBlankNodes
             ? 'FILTER (IsIri(?outObject) || IsBlank(?outObject))'
             : 'FILTER IsIri(?outObject)';
-        // ?inObject is in the subject position where only blank nodes are possible
-        // besides IRIs, and isIri() there causes some endpoints (e.g. Virtuoso)
-        // to choose a catastrophic query plan scanning the whole graph
+        // Specifically use isBlank() as opposed to isIri() for filtering to avoid 
+        // a full scan on some endpoints (e.g. Virtuoso)
         const navigateElementFilterIn = this.acceptBlankNodes
             ? ''
             : 'FILTER(!isBlank(?inObject))';
@@ -890,10 +889,8 @@ export class SparqlDataProvider implements DataProvider {
 
             const linkPattern = refLinkType || '?link';
             const bindType = refLinkType ? `BIND(${refLinkType} as ?link)` : '';
-            // Filters prevent blank nodes and literals appearing in results;
-            // in the subject position only blank nodes are possible, and isIri()
-            // there is avoided because it causes some endpoints (e.g. Virtuoso)
-            // to choose a catastrophic query plan scanning the whole graph
+            // Specifically use isBlank() as opposed to isIri() when possible for filtering
+            // to avoid a full scan on some endpoints (e.g. Virtuoso)
             const outFilter = this.acceptBlankNodes
                 ? 'FILTER(isIri(?inst) || isBlank(?inst))'
                 : 'FILTER(isIri(?inst))';
@@ -1170,7 +1167,7 @@ async function executeSparqlQuery<Binding>(
         const sparqlResponse = await response.json() as SparqlResponse<Binding>;
         return mapSparqlResponseIntoRdfJs(sparqlResponse, factory);
     } else {
-        throw await makeResponseError(response);
+        throw await SparqlResponseError.fromResponse(response);
     }
 }
 
@@ -1209,28 +1206,48 @@ async function executeSparqlConstruct(
         const parser = new N3.Parser();
         return parser.parse(turtleText);
     } else {
-        throw await makeResponseError(response);
+        throw await SparqlResponseError.fromResponse(response);
     }
 }
 
 /**
- * Makes an error for a non-OK response with the HTTP status and the beginning
- * of the response body in the message, as an endpoint usually explains
- * a rejected query there (e.g. a syntax or a query cost estimation error).
+ * SPARQL response error originated from an endpoint.
  */
-async function makeResponseError(response: Response): Promise<Error> {
-    let details = '';
-    try {
-        const body = (await response.text()).trim();
-        const maxLength = 500;
-        details = body.length > maxLength ? body.substring(0, maxLength) + '…' : body;
-    } catch (e) {
-        /* ignore */
+export class SparqlResponseError extends Error {
+    /**
+     * SPARQL endpoint response with an error result.
+     */
+    readonly response: Response;
+
+    constructor(
+        message: string,
+        response: Response,
+        options?: ErrorOptions
+    ) {
+        super(message, options);
+        this.response = response;
     }
-    const status = `HTTP ${response.status} ${response.statusText}`.trim();
-    const error = new Error(details ? `${status}: ${details}` : status);
-    (error as { response?: Response }).response = response;
-    return error;
+
+    /**
+     * Makes an error for a non-OK response with the HTTP status and the beginning
+     * of the response body in the message, as an endpoint usually explains
+     * a rejected query there (e.g. a syntax or a query cost estimation error).
+     */
+    static async fromResponse(response: Response): Promise<SparqlResponseError> {
+        let details = '';
+        try {
+            const body = (await response.text()).trim();
+            const maxLength = 500;
+            details = body.length > maxLength ? body.substring(0, maxLength) + '…' : body;
+        } catch (e) {
+            /* ignore */
+        }
+        const status = `HTTP ${response.status} ${response.statusText}`.trim();
+        return new SparqlResponseError(
+            details ? `${status}: ${details}` : status,
+            response
+        );
+    }
 }
 
 function appendQueryParams(endpoint: string, queryParams: { [key: string]: string } = {}) {
