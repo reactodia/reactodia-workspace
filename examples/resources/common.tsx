@@ -113,10 +113,14 @@ export function ExampleToolbarMenu() {
 }
 
 export function getHashQuery(): URLSearchParams | undefined {
-    const hash = window.location.hash;
-    if (hash.length > 1 && hash.includes('=')) {
+    // Parse the raw fragment from `href`: the `location.hash` getter returns it
+    // percent-decoded in Firefox, which corrupts values with encoded & or =
+    const href = window.location.href;
+    const hashIndex = href.indexOf('#');
+    const hash = hashIndex >= 0 ? href.substring(hashIndex + 1) : '';
+    if (hash.length > 0 && hash.includes('=')) {
         try {
-            const hashQuery = new URLSearchParams(hash.substring(1));
+            const hashQuery = new URLSearchParams(hash);
             return hashQuery;
         } catch (e) {
             /* ignore */
@@ -125,14 +129,20 @@ export function getHashQuery(): URLSearchParams | undefined {
     return undefined;
 }
 
-export function setHashQueryParam(paramName: string, paramValue: string | null): void {
+export function setHashQueryParams(params: { readonly [name: string]: string | null }): void {
     const hashQuery = getHashQuery() ?? new URLSearchParams();
-    if (paramValue) {
-        hashQuery.set(paramName, paramValue);
-    } else {
-        hashQuery.delete(paramName);
+    for (const [paramName, paramValue] of Object.entries(params)) {
+        if (paramValue) {
+            hashQuery.set(paramName, paramValue);
+        } else {
+            hashQuery.delete(paramName);
+        }
     }
     window.location.hash = hashQuery.toString();
+}
+
+export function setHashQueryParam(paramName: string, paramValue: string | null): void {
+    setHashQueryParams({[paramName]: paramValue});
 }
 
 export function tryLoadLayoutFromLocalStorage(): Reactodia.SerializedDiagram | undefined {
