@@ -33,11 +33,24 @@ const RECENT_CONNECTIONS_LIMIT = 8;
 /**
  * Connection settings without the password, as remembered in the recent
  * connections list ({@link localStorage}, shared between browser tabs).
+ *
+ * An entry with a user-assigned {@link label} is pinned: it is never evicted
+ * from the list, so named configurations accumulate without limit while
+ * unnamed ones rotate through the most recent few.
  */
 interface RecentConnection {
     readonly endpointUrl: string;
     readonly defaultGraphIris?: ReadonlyArray<string>;
     readonly username?: string;
+    readonly label?: string;
+}
+
+function connectionKey(connection: RecentConnection): string {
+    return JSON.stringify([
+        connection.endpointUrl,
+        connection.defaultGraphIris ?? [],
+        connection.username ?? '',
+    ]);
 }
 
 function loadRecentConnections(): RecentConnection[] {
@@ -64,15 +77,25 @@ function rememberRecentConnection(settings: SparqlConnectionSettings): void {
         defaultGraphIris: settings.defaultGraphIris,
         username: settings.username,
     };
-    const entryKey = JSON.stringify(entry);
+    const entryKey = connectionKey(entry);
+    const existing = loadRecentConnections();
+    const previous = existing.find(other => connectionKey(other) === entryKey);
+    // The limit applies to unnamed entries only; named ones are pinned
+    let unnamedCount = 0;
     const connections = [
-        entry,
-        ...loadRecentConnections().filter(other => JSON.stringify(other) !== entryKey),
-    ].slice(0, RECENT_CONNECTIONS_LIMIT);
+        {...entry, label: previous?.label},
+        ...existing.filter(other => connectionKey(other) !== entryKey),
+    ].filter(connection => connection.label
+        ? true
+        : ++unnamedCount <= RECENT_CONNECTIONS_LIMIT
+    );
     storeRecentConnections(connections);
 }
 
 function formatRecentConnection(recent: RecentConnection): string {
+    if (recent.label) {
+        return recent.label;
+    }
     const host = URL.canParse(recent.endpointUrl)
         ? new URL(recent.endpointUrl).host : recent.endpointUrl;
     const graphCount = recent.defaultGraphIris?.length ?? 0;
@@ -263,17 +286,37 @@ export function SparqlConnectionForm(props: {
         }
     }, [focusPasswordToken]);
     const applyRecentConnection = (recent: RecentConnection) => {
-        setDraft({
-            endpointUrl: recent.endpointUrl,
-            graphText: recent.defaultGraphIris?.join(' ') ?? '',
-            username: recent.username ?? '',
-            password: '',
-        });
-        // Passwords are deliberately not remembered, so point the user
-        // at the field that still needs a value
         if (recent.username) {
+            // Passwords are deliberately not remembered: fill the form and
+            // point the user at the field that still needs a value
+            setDraft({
+                endpointUrl: recent.endpointUrl,
+                graphText: recent.defaultGraphIris?.join(' ') ?? '',
+                username: recent.username,
+                password: '',
+            });
             setFocusPasswordToken(token => token + 1);
+        } else {
+            onSubmit({
+                endpointUrl: recent.endpointUrl,
+                defaultGraphIris: recent.defaultGraphIris,
+            });
         }
+    };
+    const nameRecentConnection = (index: number) => {
+        const connection = recentConnections[index];
+        const label = window.prompt(
+            'Name this connection (leave empty to unname it):',
+            connection.label ?? ''
+        );
+        if (label === null) {
+            return;
+        }
+        const renamed = recentConnections.map((other, i) => i === index
+            ? {...other, label: label.trim() || undefined}
+            : other);
+        setRecentConnections(renamed);
+        storeRecentConnections(renamed);
     };
     const forgetRecentConnection = (index: number) => {
         const remaining = recentConnections.filter((_, i) => i !== index);
@@ -371,7 +414,7 @@ export function SparqlConnectionForm(props: {
                 </div>
                 {recentConnections.length === 0 ? null : (
                     <div className='reactodia-form__control-row'>
-                        <label>Recent connections</label>
+                        <label>Saved and recent connections</label>
                         {recentConnections.map((recent, index) => (
                             <div key={index}
                                 style={{display: 'flex', gap: 4, marginBottom: 4}}>
@@ -384,11 +427,22 @@ export function SparqlConnectionForm(props: {
                                         whiteSpace: 'nowrap',
                                     }}
                                     title={[
+                                        recent.username
+                                            ? 'Fill the connection form (the password will need to be re-entered)'
+                                            : 'Connect',
                                         recent.endpointUrl,
                                         ...(recent.defaultGraphIris ?? []),
+                                        ...(recent.username ? [`user: ${recent.username}`] : []),
                                     ].join('\n')}
                                     onClick={() => applyRecentConnection(recent)}>
                                     {formatRecentConnection(recent)}
+                                </button>
+                                <button type='button'
+                                    className='reactodia-btn reactodia-btn-default'
+                                    title={'Name this connection to pin it permanently' +
+                                        (recent.label ? ` (currently: ${recent.label})` : '')}
+                                    onClick={() => nameRecentConnection(index)}>
+                                    ✎
                                 </button>
                                 <button type='button'
                                     className='reactodia-btn reactodia-btn-default'
@@ -410,6 +464,8 @@ export function SparqlConnectionForm(props: {
                 <div className='reactodia-form__control-row'>
                     If the schema is stored separately from the data, list both
                     graphs, otherwise there will be no link types to display.
+                    Naming a connection (✎) keeps it in the list permanently;
+                    unnamed ones rotate through the most recent few.
                 </div>
             </div>
             <div className='reactodia-form__controls'>
