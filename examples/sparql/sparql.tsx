@@ -1,15 +1,15 @@
 import * as React from 'react';
-import * as Reactodia from '../src/workspace';
+import * as Reactodia from '../../src/workspace';
 
 import {
     ExampleToolbarMenu,
     mountOnLoad,
     tryLoadLayoutFromLocalStorage,
-} from './resources/common';
+} from '../resources/common';
 import {
     SparqlConnectionSettings, SparqlConnectionAction, showConnectionDialog,
     loadConnectionSettings, saveConnectionSettings, createConnectionOptions,
-} from './resources/sparqlConnection';
+} from './sparqlConnection';
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
     new URL('../src/layout.worker.ts', import.meta.url),

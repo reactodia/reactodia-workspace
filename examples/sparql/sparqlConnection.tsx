@@ -1,9 +1,14 @@
 import * as React from 'react';
 import * as Reactodia from '../../src/workspace';
 
-import { getHashQuery, setHashQueryParams } from './common';
+import { getHashQuery, setHashQueryParams } from '../resources/common';
+
+import { RecentConnections, rememberRecentConnection } from './recentConnections';
 
 export interface SparqlConnectionSettings {
+    /**
+     * SPARQL endpoint URL.
+     */
     readonly endpointUrl: string;
     /**
      * Named graph IRIs to restrict all queries to, applied via the SPARQL 1.1 Protocol
@@ -27,84 +32,6 @@ export interface SparqlConnectionSettings {
 }
 
 const CREDENTIALS_SESSION_KEY = 'reactodia-sparql-credentials';
-const RECENT_CONNECTIONS_KEY = 'reactodia-sparql-recent-connections';
-const RECENT_CONNECTIONS_LIMIT = 8;
-
-/**
- * Connection settings without the password, as remembered in the recent
- * connections list ({@link localStorage}, shared between browser tabs).
- *
- * An entry with a user-assigned {@link label} is pinned: it is never evicted
- * from the list, so named configurations accumulate without limit while
- * unnamed ones rotate through the most recent few.
- */
-interface RecentConnection {
-    readonly endpointUrl: string;
-    readonly defaultGraphIris?: ReadonlyArray<string>;
-    readonly username?: string;
-    readonly label?: string;
-}
-
-function connectionKey(connection: RecentConnection): string {
-    return JSON.stringify([
-        connection.endpointUrl,
-        connection.defaultGraphIris ?? [],
-        connection.username ?? '',
-    ]);
-}
-
-function loadRecentConnections(): RecentConnection[] {
-    try {
-        const stored = localStorage.getItem(RECENT_CONNECTIONS_KEY);
-        const parsed = stored ? JSON.parse(stored) as RecentConnection[] : [];
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-function storeRecentConnections(connections: ReadonlyArray<RecentConnection>): void {
-    try {
-        localStorage.setItem(RECENT_CONNECTIONS_KEY, JSON.stringify(connections));
-    } catch (e) {
-        /* ignore */
-    }
-}
-
-function rememberRecentConnection(settings: SparqlConnectionSettings): void {
-    const entry: RecentConnection = {
-        endpointUrl: settings.endpointUrl,
-        defaultGraphIris: settings.defaultGraphIris,
-        username: settings.username,
-    };
-    const entryKey = connectionKey(entry);
-    const existing = loadRecentConnections();
-    const previous = existing.find(other => connectionKey(other) === entryKey);
-    // The limit applies to unnamed entries only; named ones are pinned
-    let unnamedCount = 0;
-    const connections = [
-        {...entry, label: previous?.label},
-        ...existing.filter(other => connectionKey(other) !== entryKey),
-    ].filter(connection => connection.label
-        ? true
-        : ++unnamedCount <= RECENT_CONNECTIONS_LIMIT
-    );
-    storeRecentConnections(connections);
-}
-
-function formatRecentConnection(recent: RecentConnection): string {
-    if (recent.label) {
-        return recent.label;
-    }
-    const host = URL.canParse(recent.endpointUrl)
-        ? new URL(recent.endpointUrl).host : recent.endpointUrl;
-    const graphCount = recent.defaultGraphIris?.length ?? 0;
-    return [
-        host,
-        graphCount > 0 ? `${graphCount} graph${graphCount === 1 ? '' : 's'}` : undefined,
-        recent.username,
-    ].filter(Boolean).join(' · ');
-}
 
 /**
  * Restores connection settings persisted by {@link saveConnectionSettings}:
@@ -139,11 +66,12 @@ export function loadConnectionSettings(): SparqlConnectionSettings | undefined {
     } catch (e) {
         /* ignore */
     }
-    const settings: SparqlConnectionSettings = {endpointUrl, defaultGraphIris, username, password};
-    // A connection activated from a bookmarked or restored URL should appear
-    // in the saved list the same as one submitted through the dialog
-    rememberRecentConnection(settings);
-    return settings;
+    return {
+        endpointUrl,
+        defaultGraphIris,
+        username,
+        password,
+    };
 }
 
 export function saveConnectionSettings(settings: SparqlConnectionSettings): void {
@@ -170,7 +98,7 @@ export function saveConnectionSettings(settings: SparqlConnectionSettings): void
     }
 }
 
-export function parseGraphIris(text: string): ReadonlyArray<string> | undefined {
+function parseGraphIris(text: string): ReadonlyArray<string> | undefined {
     // Whitespace only: comma is a legal IRI character (RFC 3987 sub-delims)
     const iris = text.split(/\s+/).filter(iri => iri.length > 0);
     return iris.length > 0 ? iris : undefined;
@@ -270,7 +198,7 @@ export function showConnectionDialog(
     });
 }
 
-export function SparqlConnectionForm(props: {
+function SparqlConnectionForm(props: {
     initialSettings: SparqlConnectionSettings | undefined;
     onSubmit: (settings: SparqlConnectionSettings) => void;
 }) {
@@ -281,7 +209,6 @@ export function SparqlConnectionForm(props: {
         username: initialSettings?.username ?? '',
         password: initialSettings?.password ?? '',
     }));
-    const [recentConnections, setRecentConnections] = React.useState(loadRecentConnections);
     const passwordInputRef = React.useRef<HTMLInputElement>(null);
     const [focusPasswordToken, setFocusPasswordToken] = React.useState(0);
     React.useEffect(() => {
@@ -289,44 +216,6 @@ export function SparqlConnectionForm(props: {
             passwordInputRef.current?.focus();
         }
     }, [focusPasswordToken]);
-    const applyRecentConnection = (recent: RecentConnection) => {
-        if (recent.username) {
-            // Passwords are deliberately not remembered: fill the form and
-            // point the user at the field that still needs a value
-            setDraft({
-                endpointUrl: recent.endpointUrl,
-                graphText: recent.defaultGraphIris?.join(' ') ?? '',
-                username: recent.username,
-                password: '',
-            });
-            setFocusPasswordToken(token => token + 1);
-        } else {
-            onSubmit({
-                endpointUrl: recent.endpointUrl,
-                defaultGraphIris: recent.defaultGraphIris,
-            });
-        }
-    };
-    const nameRecentConnection = (index: number) => {
-        const connection = recentConnections[index];
-        const label = window.prompt(
-            'Name this connection (leave empty to unname it):',
-            connection.label ?? ''
-        );
-        if (label === null) {
-            return;
-        }
-        const renamed = recentConnections.map((other, i) => i === index
-            ? {...other, label: label.trim() || undefined}
-            : other);
-        setRecentConnections(renamed);
-        storeRecentConnections(renamed);
-    };
-    const forgetRecentConnection = (index: number) => {
-        const remaining = recentConnections.filter((_, i) => i !== index);
-        setRecentConnections(remaining);
-        storeRecentConnections(remaining);
-    };
     const isValidEndpoint = draft.endpointUrl.length === 0 || URL.canParse(draft.endpointUrl);
     const invalidGraph = (parseGraphIris(draft.graphText) ?? [])
         .find(iri => !URL.canParse(iri));
@@ -344,8 +233,7 @@ export function SparqlConnectionForm(props: {
     };
     return (
         <div className='reactodia-form'>
-            <div className='reactodia-form__body'
-                style={{overflowY: 'auto'}}>
+            <div className='reactodia-form__body reactodia-scrollable'>
                 <div className='reactodia-form__control-row'>
                     <label htmlFor='sparqlEndpointUrl'>Endpoint URL</label>
                     <input id='sparqlEndpointUrl'
@@ -416,48 +304,27 @@ export function SparqlConnectionForm(props: {
                         onKeyDown={submitOnEnter}
                     />
                 </div>
-                {recentConnections.length === 0 ? null : (
-                    <div className='reactodia-form__control-row'>
-                        <label>Saved and recent connections</label>
-                        {recentConnections.map((recent, index) => (
-                            <div key={index}
-                                style={{display: 'flex', gap: 4, marginBottom: 4}}>
-                                <button type='button'
-                                    className='reactodia-btn reactodia-btn-default'
-                                    style={{
-                                        flex: 'auto',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                    title={[
-                                        recent.username
-                                            ? 'Fill the connection form (the password will need to be re-entered)'
-                                            : 'Connect',
-                                        recent.endpointUrl,
-                                        ...(recent.defaultGraphIris ?? []),
-                                        ...(recent.username ? [`user: ${recent.username}`] : []),
-                                    ].join('\n')}
-                                    onClick={() => applyRecentConnection(recent)}>
-                                    {formatRecentConnection(recent)}
-                                </button>
-                                <button type='button'
-                                    className='reactodia-btn reactodia-btn-default'
-                                    title={'Name this connection to pin it permanently' +
-                                        (recent.label ? ` (currently: ${recent.label})` : '')}
-                                    onClick={() => nameRecentConnection(index)}>
-                                    ✎
-                                </button>
-                                <button type='button'
-                                    className='reactodia-btn reactodia-btn-default'
-                                    title='Forget this connection'
-                                    onClick={() => forgetRecentConnection(index)}>
-                                    ×
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <RecentConnections
+                    current={initialSettings}
+                    onApply={recent => {
+                        if (recent.username) {
+                            // Passwords are deliberately not remembered: fill the form and
+                            // point the user at the field that still needs a value
+                            setDraft({
+                                endpointUrl: recent.endpointUrl,
+                                graphText: recent.defaultGraphIris?.join(' ') ?? '',
+                                username: recent.username,
+                                password: '',
+                            });
+                            setFocusPasswordToken(token => token + 1);
+                        } else {
+                            onSubmit({
+                                endpointUrl: recent.endpointUrl,
+                                defaultGraphIris: recent.defaultGraphIris,
+                            });
+                        }
+                    }}
+                />
                 <div className='reactodia-form__control-row'>
                     A public SPARQL endpoint will work only if it is configured
                     to allow cross-origin queries (CORS headers, including
