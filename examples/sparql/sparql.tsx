@@ -1,19 +1,18 @@
 import * as React from 'react';
-import * as Reactodia from '../src/workspace';
+import * as Reactodia from '../../src/workspace';
 
 import {
     ExampleToolbarMenu,
     mountOnLoad,
     tryLoadLayoutFromLocalStorage,
-    getHashQuery,
-    setHashQueryParam,
-} from './resources/common';
+} from '../resources/common';
 import {
     SparqlConnectionSettings, SparqlConnectionAction, showConnectionDialog,
-} from './resources/sparqlConnection';
+    loadConnectionSettings, saveConnectionSettings, createConnectionOptions,
+} from './sparqlConnection';
 
 const Layouts = Reactodia.defineLayoutWorker(() => new Worker(
-    new URL('../src/layout.worker.ts', import.meta.url),
+    new URL('../../src/layout.worker.ts', import.meta.url),
     {type: 'module'}
 ));
 
@@ -23,17 +22,9 @@ function SparqlExample() {
         defaultLayout,
     }));
 
-    const [connectionSettings, setConnectionSettings] = React.useState(
-        (): SparqlConnectionSettings | undefined => {
-            const params = getHashQuery();
-            const endpointUrl = params?.get('sparql-endpoint');
-            return endpointUrl ? {
-                endpointUrl,
-            } : undefined;
-        }
-    );
+    const [connectionSettings, setConnectionSettings] = React.useState(loadConnectionSettings);
     const applyConnectionSettings = (settings: SparqlConnectionSettings) => {
-        setHashQueryParam('sparql-endpoint', settings.endpointUrl);
+        saveConnectionSettings(settings);
         setConnectionSettings(settings);
     };
 
@@ -43,7 +34,7 @@ function SparqlExample() {
         if (connectionSettings) {
             const diagram = tryLoadLayoutFromLocalStorage();
             const dataProvider = new Reactodia.SparqlDataProvider({
-                endpointUrl: connectionSettings.endpointUrl,
+                ...createConnectionOptions(connectionSettings),
                 imagePropertyUris: ['http://xmlns.com/foaf/0.1/img'],
             }, Reactodia.OwlStatsSettings);
     

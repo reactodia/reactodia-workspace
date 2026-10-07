@@ -1,0 +1,12 @@
+.recentConnection {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.recentConnectionLabel {
+  flex: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
