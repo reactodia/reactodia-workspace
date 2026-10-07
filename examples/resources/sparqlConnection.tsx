@@ -139,7 +139,11 @@ export function loadConnectionSettings(): SparqlConnectionSettings | undefined {
     } catch (e) {
         /* ignore */
     }
-    return {endpointUrl, defaultGraphIris, username, password};
+    const settings: SparqlConnectionSettings = {endpointUrl, defaultGraphIris, username, password};
+    // A connection activated from a bookmarked or restored URL should appear
+    // in the saved list the same as one submitted through the dialog
+    rememberRecentConnection(settings);
+    return settings;
 }
 
 export function saveConnectionSettings(settings: SparqlConnectionSettings): void {
