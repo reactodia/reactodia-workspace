@@ -4,6 +4,18 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🐛 Fixed
+- Fix `SparqlDataProvider.connectedLinkStats()` error on a response with unbound counts (treat a missing count as 0).
+- Fix query syntax error in `SparqlDataProvider.lookup()` when a text search is combined with a type filter due to a missing ending `.` in the built-in `SparqlDataProviderSettings.filterTypePattern`.
+- Fix text search in `OwlRdfsSettings`/`OwlStatsSettings` being rejected by Virtuoso ("SQ200: index of column in order by out of range") due to `?score` being bound through an expression instead of a literal constant, which Virtuoso does not accept in `ORDER BY`.
+
+#### ⏱ Performance
+- Optimize `SparqlDataProvider` queries to avoid catastrophic query plans on some endpoints (e.g. Virtuoso):
+  * Use `FILTER(!isBlank(...))` instead of `FILTER(isIri(...))` for the lookup;
+  * Change link type statistics query for `OwlRdfsSettings`/`OwlStatsSettings` to count incoming and outgoing links via `UNION` with an outer `sum()` instead of joining two aggregate sub-queries to avoid being rejected by the Virtuoso cost estimator ("The estimated execution time ... exceeds the limit").
+
+#### 💅 Polish
+- Display a query error details (message) when possible below error status bar in the `InstancesSearch`.
 
 ## [0.35.2] - 2026-08-08
 #### 🐛 Fixed

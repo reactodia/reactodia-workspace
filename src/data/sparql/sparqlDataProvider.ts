@@ -665,9 +665,11 @@ export class SparqlDataProvider implements DataProvider {
         const navigateElementFilterOut = this.acceptBlankNodes
             ? 'FILTER (IsIri(?outObject) || IsBlank(?outObject))'
             : 'FILTER IsIri(?outObject)';
+        // Specifically use isBlank() as opposed to isIri() for filtering to avoid 
+        // a full scan on some endpoints (e.g. Virtuoso)
         const navigateElementFilterIn = this.acceptBlankNodes
-            ? 'FILTER (IsIri(?inObject) || IsBlank(?inObject))'
-            : 'FILTER IsIri(?inObject)';
+            ? ''
+            : 'FILTER(!isBlank(?inObject))';
 
         const foundLinkStats: DataProviderLinkCount[] = [];
         await Promise.all(connectedLinkTypes.map(async ({linkType, hasInLink, hasOutLink}) => {
@@ -887,16 +889,20 @@ export class SparqlDataProvider implements DataProvider {
 
             const linkPattern = refLinkType || '?link';
             const bindType = refLinkType ? `BIND(${refLinkType} as ?link)` : '';
-            // FILTER(IsIri()) is used to prevent blank nodes appearing in results
-            const blankFilter = this.acceptBlankNodes
+            // Specifically use isBlank() as opposed to isIri() when possible for filtering
+            // to avoid a full scan on some endpoints (e.g. Virtuoso)
+            const outFilter = this.acceptBlankNodes
                 ? 'FILTER(isIri(?inst) || isBlank(?inst))'
                 : 'FILTER(isIri(?inst))';
+            const inFilter = this.acceptBlankNodes
+                ? ''
+                : 'FILTER(!isBlank(?inst))';
 
             if (!direction || direction === 'out') {
-                unionParts.push(`{ ${refElementIRI} ${linkPattern} ?inst BIND("out" as ?direction) ${bindType} ${blankFilter} }`);
+                unionParts.push(`{ ${refElementIRI} ${linkPattern} ?inst BIND("out" as ?direction) ${bindType} ${outFilter} }`);
             }
             if (!direction || direction === 'in') {
-                unionParts.push(`{ ?inst ${linkPattern} ${refElementIRI} BIND("in" as ?direction) ${bindType} ${blankFilter} }`);
+                unionParts.push(`{ ?inst ${linkPattern} ${refElementIRI} BIND("in" as ?direction) ${bindType} ${inFilter} }`);
             }
         }
 
@@ -1161,9 +1167,7 @@ async function executeSparqlQuery<Binding>(
         const sparqlResponse = await response.json() as SparqlResponse<Binding>;
         return mapSparqlResponseIntoRdfJs(sparqlResponse, factory);
     } else {
-        const error = new Error(response.statusText);
-        (error as { response?: Response }).response = response;
-        throw error;
+        throw await SparqlResponseError.fromResponse(response);
     }
 }
 
@@ -1202,9 +1206,47 @@ async function executeSparqlConstruct(
         const parser = new N3.Parser();
         return parser.parse(turtleText);
     } else {
-        const error = new Error(response.statusText);
-        (error as { response?: Response }).response = response;
-        throw error;
+        throw await SparqlResponseError.fromResponse(response);
+    }
+}
+
+/**
+ * SPARQL response error originated from an endpoint.
+ */
+export class SparqlResponseError extends Error {
+    /**
+     * SPARQL endpoint response with an error result.
+     */
+    readonly response: Response;
+
+    constructor(
+        message: string,
+        response: Response,
+        options?: ErrorOptions
+    ) {
+        super(message, options);
+        this.response = response;
+    }
+
+    /**
+     * Makes an error for a non-OK response with the HTTP status and the beginning
+     * of the response body in the message, as an endpoint usually explains
+     * a rejected query there (e.g. a syntax or a query cost estimation error).
+     */
+    static async fromResponse(response: Response): Promise<SparqlResponseError> {
+        let details = '';
+        try {
+            const body = (await response.text()).trim();
+            const maxLength = 500;
+            details = body.length > maxLength ? body.substring(0, maxLength) + '…' : body;
+        } catch (e) {
+            /* ignore */
+        }
+        const status = `HTTP ${response.status} ${response.statusText}`.trim();
+        return new SparqlResponseError(
+            details ? `${status}: ${details}` : status,
+            response
+        );
     }
 }
 

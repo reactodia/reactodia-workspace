@@ -116,8 +116,10 @@ export interface LinkBinding {
 
 export interface LinkCountBinding {
     link: Rdf.NamedNode | Rdf.BlankNode;
-    inCount: Rdf.Literal;
-    outCount: Rdf.Literal;
+    /** May be unbound e.g. when an endpoint aggregates over an empty solution group. */
+    inCount?: Rdf.Literal;
+    /** May be unbound e.g. when an endpoint aggregates over an empty solution group. */
+    outCount?: Rdf.Literal;
 }
 
 export interface ConnectedLinkTypeBinding {

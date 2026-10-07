@@ -616,7 +616,12 @@ export function appendProperty(
     values.push(propValue);
 }
 
-function parseCount(countLiteral: Rdf.Literal): number {
+function parseCount(countLiteral: Rdf.Literal | undefined): number {
+    // Count binding may be missing e.g. when aggregating over an empty
+    // solution group (some endpoints return an unbound value instead of 0)
+    if (!countLiteral) {
+        return 0;
+    }
     const numericCount = +countLiteral.value;
     return Number.isFinite(numericCount) ? numericCount : 0;
 }

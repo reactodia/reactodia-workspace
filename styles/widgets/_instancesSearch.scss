@@ -96,6 +96,16 @@
     }
   }
 
+  &__error {
+    padding: 5px 10px;
+    color: theme.$color-danger;
+    font-size: smaller;
+    overflow-wrap: anywhere;
+    max-height: 8em;
+    overflow-y: auto;
+    user-select: text;
+  }
+
   &__rest {
     padding: 10px 10px 0 10px;
     border-top: 1px solid theme.$border-color-base;

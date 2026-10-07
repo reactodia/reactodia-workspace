@@ -4,7 +4,7 @@ import type {
     ElementIri, ElementModel, ElementTypeIri, ElementTypeModel, LinkTypeIri, LinkTypeModel,
     LinkModel, PropertyTypeIri, PropertyTypeModel,
 } from '../../../src/data/model';
-import type { DataProviderLookupItem } from '../../../src/data/dataProvider';
+import type { DataProviderLinkCount, DataProviderLookupItem } from '../../../src/data/dataProvider';
 import { type MemoryDataset } from '../../../src/data/rdf/memoryDataset';
 import * as Rdf from '../../../src/data/rdf/rdfModel';
 import { rdf, owl } from '../../../src/data/rdf/vocabulary';
@@ -91,6 +91,21 @@ describe('SparqlDataProvider', () => {
                 },
             ] satisfies LinkTypeModel[]
         );
+    });
+
+    it('provides connectedLinkStats() with exact counts', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const stats = await provider.connectedLinkStats({
+            elementId: org.Organization,
+        });
+        expect(stats.find(s => s.id === rdfs.subClassOf)).toEqual({
+            id: rdfs.subClassOf,
+            inCount: 3,
+            outCount: 1,
+        } satisfies DataProviderLinkCount);
     });
 
     it('provides propertyTypes()', async () => {
@@ -227,6 +242,18 @@ describe('SparqlDataProvider', () => {
                 },
             ] satisfies DataProviderLookupItem[]
         );
+    });
+
+    it('provides lookup() by type and text', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const items = await provider.lookup({
+            elementTypeId: owl.DatatypeProperty,
+            text: 'ident',
+        });
+        expect(items.map(item => item.element.id)).toEqual([org.identifier]);
     });
 });
 

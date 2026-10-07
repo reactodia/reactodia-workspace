@@ -322,6 +322,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         
         const resultItems = this.state.items ?? [];
         const actionsAreHidden = this.state.querying || this.state.selection.size === 0;
+        const queryError = this.state.error ? tryFormatQueryError(this.state.error) : undefined;
 
         return <div
             className={cx(
@@ -344,6 +345,11 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}
             />
+            {queryError ? (
+                <div className={`${CLASS_NAME}__error`}>
+                    {queryError}
+                </div>
+            ) : null}
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div key={this.state.resultId}
                 className={`${CLASS_NAME}__rest reactodia-scrollable`}
@@ -668,6 +674,13 @@ function findEntityData(graph: DataGraphStructure, iri: ElementIri): ElementMode
                 return entity;
             }
         }
+    }
+    return undefined;
+}
+
+function tryFormatQueryError(error: unknown): string | undefined {
+    if (error instanceof Error) {
+        return error.message || error.name;
     }
     return undefined;
 }
