@@ -66,9 +66,12 @@ export * as Rdf from './data/rdf/rdfModel';
 export * from './data/rdf/vocabulary';
 export {
     SparqlDataProvider, type SparqlDataProviderOptions, type SparqlProviderChunkOptions,
-    type SparqlQueryFunction, SparqlResponseError,
 } from './data/sparql/sparqlDataProvider';
 export * from './data/sparql/sparqlDataProviderSettings';
+export {
+    type SparqlQuerySource, HttpSparqlQuerySource, type HttpSparqlQuerySourceOptions,
+    type SparqlQueryFunction, SparqlResponseError,
+} from './data/sparql/sparqlQuerySource';
 
 export {
     type CanvasApi, type CanvasMetrics, type CanvasPaneMetrics, type CanvasEvents,

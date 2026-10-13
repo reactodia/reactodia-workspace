@@ -4,14 +4,14 @@ import { multimapAdd } from '../../coreUtils/collections';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkTypeModel, ElementTypeGraph, ElementModel, LinkModel,
+    LinkTypeModel, ElementModel, LinkModel, SubtypeEdge,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
-    hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
+    hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink,
 } from '../model';
 import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
 import {
-    SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
+    ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
     LinkTypeBinding, ConnectedLinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
     isRdfIri, isRdfBlank, isRdfLiteral,
 } from './sparqlModels';
@@ -28,11 +28,16 @@ export interface MutableClassModel {
     count?: number;
 }
 
-export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTypeGraph {
+interface MutableElementTypeGraph {
+    elementTypes: MutableClassModel[];
+    subtypeOf: SubtypeEdge[];
+}
+
+export function getClassTree(bindings: readonly ClassBinding[]): MutableElementTypeGraph {
     const nodes = new Map<ElementTypeIri, MutableClassModel>();
     const edges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
 
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!isRdfIri(binding.class)) { continue; }
         const classIri: ElementTypeIri = binding.class.value;
 
@@ -53,7 +58,7 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
     }
 
     // ensuring parent will always be there
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (binding.parent) {
             const parentIri: ElementTypeIri = binding.parent.value;
             if (!nodes.has(parentIri)) {
@@ -77,10 +82,10 @@ export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTyp
 }
 
 export function collectClassInfo(
-    response: SparqlResponse<ClassBinding>,
+    bindings: readonly ClassBinding[],
     result: Map<ElementTypeIri, MutableClassModel>
 ): void {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!binding.class) { continue; }
         const id: ElementTypeIri = binding.class.value;
         const model = result.get(id);
@@ -104,16 +109,16 @@ export function collectClassInfo(
     }
 }
 
-export interface MutablePropertyModel {
+export interface MutablePropertyType {
     readonly id: PropertyTypeIri;
     label: Rdf.Literal[];
 }
 
-export function collectPropertyInfo(
-    response: SparqlResponse<PropertyBinding>,
-    result: Map<PropertyTypeIri, MutablePropertyModel>
+export function collectPropertyTypes(
+    bindings: readonly PropertyBinding[],
+    result: Map<PropertyTypeIri, MutablePropertyType>
 ): void {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         const propertyTypeId: PropertyTypeIri = binding.property.value;
         const existing = result.get(propertyTypeId);
         if (existing) {
@@ -127,6 +132,14 @@ export function collectPropertyInfo(
     }
 }
 
+export function getPropertyTypes(
+    bindings: readonly PropertyBinding[]
+): Map<PropertyTypeIri, MutablePropertyType> {
+    const result = new Map<PropertyTypeIri, MutablePropertyType>();
+    collectPropertyTypes(bindings, result);
+    return result;
+}
+
 export interface MutableLinkType {
     readonly id: LinkTypeIri;
     label: Rdf.Literal[];
@@ -134,10 +147,10 @@ export interface MutableLinkType {
 }
 
 export function collectLinkTypes(
-    response: SparqlResponse<LinkTypeBinding>,
+    bindings: readonly LinkTypeBinding[],
     result: Map<LinkTypeIri, MutableLinkType>
 ): void {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         const linkTypeId: LinkTypeIri = binding.link.value;
         const existing = result.get(linkTypeId);
         if (existing) {
@@ -149,25 +162,18 @@ export function collectLinkTypes(
 }
 
 export function getLinkTypes(
-    response: SparqlResponse<LinkTypeBinding>
+    bindings: readonly LinkTypeBinding[]
 ): Map<LinkTypeIri, LinkTypeModel> {
     const result = new Map<LinkTypeIri, MutableLinkType>();
-    collectLinkTypes(response, result);
+    collectLinkTypes(bindings, result);
     return result;
 }
 
 export function triplesToElementBinding(
     triples: ReadonlyArray<Rdf.Quad>,
-): SparqlResponse<ElementBinding> {
+): ElementBinding[] {
     const elements = new Map<ElementIri, ElementBinding>();
-    const convertedResponse: SparqlResponse<ElementBinding> = {
-        head: {
-            vars: ['inst', 'class', 'label', 'blankType', 'propType', 'propValue'],
-        },
-        results: {
-            bindings: [],
-        },
-    };
+    const bindings: ElementBinding[] = [];
     for (const t of triples) {
         if (!isRdfIri(t.subject)) {
             continue;
@@ -206,11 +212,11 @@ export function triplesToElementBinding(
         const binding: ElementBinding = {
             inst: (quad.subject as Rdf.NamedNode),
         };
-        convertedResponse.results.bindings.push(binding);
+        bindings.push(binding);
         return binding;
     }
 
-    return convertedResponse;
+    return bindings;
 }
 
 interface MutableElementModel {
@@ -220,7 +226,7 @@ interface MutableElementModel {
 }
 
 export function getElementsInfo(
-    response: SparqlResponse<ElementBinding>,
+    bindings: readonly ElementBinding[],
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     types: ReadonlyMap<ElementIri, ReadonlySet<ElementTypeIri>> = EMPTY_MAP,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -230,7 +236,7 @@ export function getElementsInfo(
 ): Map<ElementIri, ElementModel> {
     const instances = new Map<ElementIri, MutableElementModel>();
 
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!isRdfIri(binding.inst)) { continue; }
         const iri: ElementIri = binding.inst.value;
         let model = instances.get(iri);
@@ -281,11 +287,11 @@ function mapPropertiesByConfig(
 }
 
 export function enrichElementsWithImages(
-    response: SparqlResponse<ElementImageBinding>,
+    bindings: readonly ElementImageBinding[],
     elements: Map<ElementIri, ElementModel>,
     imagePropertyIri: PropertyTypeIri
 ): void {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!isRdfIri(binding.inst)) {
             continue;
         }
@@ -301,10 +307,10 @@ export function enrichElementsWithImages(
 }
 
 export function collectElementTypes(
-    response: SparqlResponse<ElementTypeBinding>,
+    bindings: readonly ElementTypeBinding[],
     result: Map<ElementIri, Set<ElementTypeIri>>
 ): void {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (isRdfIri(binding.inst) && isRdfIri(binding.class)) {
             const element: ElementIri = binding.inst.value;
             const type: ElementTypeIri = binding.class.value;
@@ -372,7 +378,7 @@ export interface ConnectedLinkType {
 }
 
 export function getConnectedLinkTypes(
-    response: SparqlResponse<ConnectedLinkTypeBinding>,
+    bindings: readonly ConnectedLinkTypeBinding[],
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> = EMPTY_MAP,
     openWorldLinks: boolean = true
@@ -392,7 +398,7 @@ export function getConnectedLinkTypes(
             }
         }
     };
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!isRdfIri(binding.link)) {
             continue;
         }
@@ -411,9 +417,9 @@ export function getConnectedLinkTypes(
 }
 
 export function getLinkStatistics(
-    response: SparqlResponse<LinkCountBinding>
+    bindings: readonly LinkCountBinding[]
 ): DataProviderLinkCount | undefined {
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (isRdfIri(binding.link)) {
             return getLinkCount(binding);
         }
@@ -422,7 +428,7 @@ export function getLinkStatistics(
 }
 
 export function getFilteredData(
-    response: SparqlResponse<ElementBinding & FilterBinding>,
+    bindings: readonly (ElementBinding & FilterBinding)[],
     sourceTypes: ReadonlySet<ElementTypeIri> | undefined,
     linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> | undefined,
     labelPredicate: PropertyTypeIri,
@@ -435,7 +441,7 @@ export function getFilteredData(
     const outPredicates = new Map<ElementIri, Set<string>>();
     const inPredicates = new Map<ElementIri, Set<string>>();
 
-    for (const binding of response.results.bindings) {
+    for (const binding of bindings) {
         if (!isRdfIri(binding.inst) && !isRdfBlank(binding.inst)) {
             continue;
         }
