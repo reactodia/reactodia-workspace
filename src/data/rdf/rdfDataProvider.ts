@@ -7,9 +7,12 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderLookupByPatternParams, DataProviderPatternSupport, LookupPattern,
+    lookupPattern,
 } from '../dataProvider';
-import { makeCaseInsensitiveFilter } from '../utils';
 
+import { matchPattern, encodeTerm, decodeTerm, isResourceTerm } from './datasetLookup';
+import { RdfExpressionEvaluator, StandardFunctions } from './expressionEvaluator';
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 import { owl, rdf, rdfs, schema } from './vocabulary';
@@ -81,8 +84,6 @@ export interface RdfDataProviderOptions {
     readonly linkTypeBaseTypes?: ReadonlyArray<string>;
 }
 
-const BLANK_PREFIX = 'urn:reactodia:blank:rdf:';
-
 /**
  * Provides graph data from in-memory [RDF/JS-compatible](https://rdf.js.org/data-model-spec/)
  * graph dataset.
@@ -94,6 +95,8 @@ export class RdfDataProvider implements DataProvider {
 
     private readonly dataset: MemoryDataset;
     private readonly acceptBlankNodes: boolean;
+
+    private readonly evaluator: RdfExpressionEvaluator;
 
     private readonly typePredicate: Rdf.NamedNode;
     private readonly labelPredicate: Rdf.NamedNode | null;
@@ -114,6 +117,10 @@ export class RdfDataProvider implements DataProvider {
             IndexQuadBy.OP
         );
         this.acceptBlankNodes = options.acceptBlankNodes ?? true;
+        this.evaluator = new RdfExpressionEvaluator({
+            factory: this.factory,
+            functions: StandardFunctions,
+        });
         this.typePredicate = this.factory.namedNode(options.typePredicate ?? rdf.type);
         this.labelPredicate = options.labelPredicate === null
             ? null : this.factory.namedNode(options.labelPredicate ?? rdfs.label);
@@ -437,85 +444,28 @@ export class RdfDataProvider implements DataProvider {
         return Promise.resolve(counts);
     }
 
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
+        return {ok: true, errors: []};
+    }
+
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
-        interface ResultItem {
-            readonly term: Rdf.NamedNode | Rdf.BlankNode;
-            outLinks?: Set<LinkTypeIri>;
-            inLinks?: Set<LinkTypeIri>;
-        }
+        return this.lookupByPattern({
+            pattern: lookupPattern(params),
+            limit: params.limit,
+            signal: params.signal,
+        });
+    }
 
-        const items = new HashMap<Rdf.NamedNode | Rdf.BlankNode, ResultItem>(
-            Rdf.hashTerm, Rdf.equalTerms
-        );
-        let requiredTextFilter = params.text ? makeCaseInsensitiveFilter(params.text) : undefined;
+    lookupByPattern(params: DataProviderLookupByPatternParams): Promise<DataProviderLookupItem[]> {
+        const {pattern: rootPattern} = params;
 
-        if (params.refElementId) {
-            const refElementIri = this.decodeTerm(params.refElementId);
-            const refLinkIri = params.refElementLinkId
-                ? this.decodeTerm(params.refElementLinkId) : null;
-            if (!params.linkDirection || params.linkDirection === 'out') {
-                for (const t of this.dataset.iterateMatches(refElementIri, refLinkIri, null)) {
-                    if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.object)) {
-                        const term = t.object;
-                        let item = items.get(term);
-                        if (!item) {
-                            item = {term};
-                            items.set(term, item);
-                        }
-                        const predicate: LinkTypeIri = this.encodeTerm(t.predicate);
-                        if (!item.outLinks) {
-                            item.outLinks = new Set();
-                        }
-                        item.outLinks.add(predicate);
-                    }
-                }
-            }
-            if (!params.linkDirection || params.linkDirection === 'in') {
-                for (const t of this.dataset.iterateMatches(null, refLinkIri, refElementIri)) {
-                    if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.subject)) {
-                        const term = t.subject;
-                        let item = items.get(term);
-                        if (!item) {
-                            item = {term};
-                            items.set(term, item);
-                        }
-                        const predicate: LinkTypeIri = this.encodeTerm(t.predicate);
-                        if (!item.inLinks) {
-                            item.inLinks = new Set();
-                        }
-                        item.inLinks.add(predicate);
-                    }
-                }
-            }
-            // join with filtered by type
-            if (params.elementTypeId) {
-                const typeTerm = this.decodeTerm(params.elementTypeId);
-                for (const item of Array.from(items.values())) {
-                    if (!this.dataset.hasMatches(item.term, this.typePredicate, typeTerm)) {
-                        items.delete(item.term);
-                    }
-                }
-            }
-        } else if (params.elementTypeId) {
-            const typeTerm = this.decodeTerm(params.elementTypeId);
-            for (const t of this.dataset.iterateMatches(null, this.typePredicate, typeTerm)) {
-                if (isResourceTerm(t.subject) && !items.has(t.subject)) {
-                    items.set(t.subject, {term: t.subject});
-                }
-            }
-        } else if (requiredTextFilter && this.labelPredicate) {
-            for (const t of this.dataset.iterateMatches(null, this.labelPredicate, null)) {
-                if (
-                    isResourceTerm(t.subject) &&
-                    t.object.termType === 'Literal' &&
-                    requiredTextFilter(t.object.value) &&
-                    !items.has(t.subject)
-                ) {
-                    items.set(t.subject, {term: t.subject});
-                }
-            }
-            requiredTextFilter = undefined;
-        }
+        const items = matchPattern(rootPattern, {
+            factory: this.factory,
+            dataset: this.dataset,
+            evaluator: this.evaluator,
+            typePredicate: this.typePredicate,
+            labelPredicate: this.labelPredicate,
+        });
 
         const linkedElements: DataProviderLookupItem[] = [];
         const limit = typeof params.limit === 'number' ? params.limit : Number.POSITIVE_INFINITY;
@@ -528,18 +478,6 @@ export class RdfDataProvider implements DataProvider {
 
             if (this.labelPredicate) {
                 const labels = findLiterals(this.dataset, item.term, this.labelPredicate);
-                if (requiredTextFilter) {
-                    let foundMatch = false;
-                    for (const label of labels) {
-                        if (requiredTextFilter(label.value)) {
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    if (!foundMatch) {
-                        continue;
-                    }
-                }
                 properties = {
                     ...properties,
                     [this.labelPredicate.value]: labels,
@@ -555,7 +493,7 @@ export class RdfDataProvider implements DataProvider {
                     };
                 }
             }
-            
+
             const model: ElementModel = {
                 id: this.encodeTerm(item.term),
                 types: findTypes(this.dataset, item.term, this.typePredicate),
@@ -596,16 +534,6 @@ export class RdfDataProvider implements DataProvider {
             }
         }
         return linkStats;
-    }
-}
-
-function isResourceTerm(term: Rdf.Term): term is Rdf.NamedNode | Rdf.BlankNode {
-    switch (term.termType) {
-        case 'NamedNode':
-        case 'BlankNode':
-            return true;
-        default:
-            return false;
     }
 }
 
@@ -682,26 +610,3 @@ function findProperties(
     return properties;
 }
 
-function encodeTerm(term: Rdf.NamedNode | Rdf.BlankNode): string {
-    switch (term.termType) {
-        case 'NamedNode':
-            return term.value;
-        case 'BlankNode':
-            return BLANK_PREFIX + term.value;
-        default:
-            throw new Error(
-                `Unexpected term type to encode: ${(term as Rdf.Term).termType}`
-            );
-    }
-}
-
-function decodeTerm(
-    iri: ElementIri | ElementTypeIri | LinkTypeIri | PropertyTypeIri,
-    factory: Rdf.DataFactory
-): Rdf.NamedNode | Rdf.BlankNode {
-    if (iri.startsWith(BLANK_PREFIX)) {
-        return factory.blankNode(iri.substring(BLANK_PREFIX.length));
-    } else {
-        return factory.namedNode(iri);
-    }
-}

@@ -3,9 +3,11 @@ import {
     LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
 import {
-    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProvider, DataProviderLinkCount, DataProviderPatternSupport,
+    DataProviderLookupParams, DataProviderLookupItem,
 } from '../dataProvider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
+import { GraphPattern } from '../graphExpression';
 
 /**
  * Empty graph data provider, which always return nothing.
@@ -75,6 +77,10 @@ export class EmptyDataProvider implements DataProvider {
         signal?: AbortSignal | undefined;
     }): Promise<DataProviderLinkCount[]> {
         return Promise.resolve([]);
+    }
+
+    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+        return {ok: false, errors: []};
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

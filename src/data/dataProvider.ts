@@ -1,4 +1,5 @@
 import type * as Rdf from './rdf/rdfModel';
+import { RdfExpression } from './graphExpression';
 import {
     ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
@@ -138,6 +139,8 @@ export interface DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]>;
 
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport;
+
     /**
      * Looks up elements with different filters:
      *  - by an element type via `elementTypeId`;
@@ -147,6 +150,16 @@ export interface DataProvider {
      * Filters can be combined to produce an intersection of the results.
      */
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]>;
+
+    /**
+     * Looks up elements with different filters:
+     *  - by an element type via `elementTypeId`;
+     *  - by a connected element via `refElementId`, `refElementLinkId` and `linkDirection`;
+     *  - by a text lookup via `text`;
+     *
+     * Filters can be combined to produce an intersection of the results.
+     */
+    lookupByPattern(params: DataProviderLookupByPatternParams): Promise<DataProviderLookupItem[]>;
 }
 
 /**
@@ -174,6 +187,11 @@ export interface DataProviderLinkCount {
      * in case when the values are non-zero.
      */
     readonly inexact?: boolean;
+}
+
+export interface DataProviderPatternSupport {
+    readonly ok: boolean;
+    readonly errors: readonly string[];
 }
 
 /**
@@ -227,6 +245,75 @@ export interface DataProviderLookupParams {
     signal?: AbortSignal;
 }
 
+export interface DataProviderLookupByPatternParams {
+    /**
+     * Filter by a lookup pattern.
+     */
+    pattern: LookupPattern;
+
+    /**
+     * Limit number of elements returned.
+     *
+     * Pass `null` to explicitly disable the limit.
+     *
+     * Default depends on the provider implementation.
+     */
+    limit?: number | null;
+
+    /**
+     * Abort signal to cancel the async operation.
+     */
+    signal?: AbortSignal;
+}
+
+export type LookupPattern =
+    | AllOfLookupPattern
+    | AnyOfLookupPattern
+    | TextLookupPattern
+    | ConnectionLookupPattern
+    | TypeLookupPattern
+    | FromValuesLookupPattern
+    | PropertyLookupPattern;
+
+export interface AllOfLookupPattern {
+    readonly type: 'allOf';
+    readonly patterns: readonly LookupPattern[];
+}
+
+export interface AnyOfLookupPattern {
+    readonly type: 'anyOf';
+    readonly patterns: readonly LookupPattern[];
+}
+
+export interface TextLookupPattern {
+    readonly type: 'withText';
+    readonly text: string;
+}
+
+export interface ConnectionLookupPattern {
+    readonly type: 'connectedTo';
+    readonly linkType?: LinkTypeIri;
+    readonly linkDirection?: 'in' | 'out';
+    readonly values?: readonly ElementIri[];
+}
+
+export interface TypeLookupPattern {
+    readonly type: 'hasType';
+    readonly elementType: ElementTypeIri;
+}
+
+export interface FromValuesLookupPattern {
+    readonly type: 'fromValues';
+    readonly values: readonly ElementIri[];
+}
+
+export interface PropertyLookupPattern {
+    readonly type: 'hasProperty';
+    readonly propertyType: PropertyTypeIri;
+    readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+    readonly filter?: RdfExpression;
+}
+
 /**
  * Describes an element with information on which link types and directions
  * are used to connect it to other elements.
@@ -255,4 +342,40 @@ export interface DataProviderLookupItem {
      * is specified in {@link DataProvider.lookup}.
      */
     readonly outLinks: ReadonlySet<LinkTypeIri>;
+}
+
+export function lookupPattern(params: Omit<DataProviderLookupParams, 'limit' | 'signal'>): LookupPattern {
+    const {
+        elementTypeId, refElementId, refElementLinkId, linkDirection, text,
+    } = params;
+
+    const patterns: LookupPattern[] = [];
+
+    if (elementTypeId) {
+        patterns.push({
+            type: 'hasType',
+            elementType: elementTypeId,
+        });
+    }
+
+    if (refElementId) {
+        patterns.push({
+            type: 'connectedTo',
+            linkType: refElementLinkId,
+            linkDirection: linkDirection,
+            values: [refElementId],
+        });
+    }
+
+    if (text) {
+        patterns.push({
+            type: 'withText',
+            text,
+        });
+    }
+
+    return {
+        type: 'allOf',
+        patterns,
+    };
 }

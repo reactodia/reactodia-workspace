@@ -1,6 +1,7 @@
 import * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderPatternSupport,
 } from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
@@ -18,6 +19,7 @@ import {
     mergeConnectedLinkStats,
     mergeLookup,
 } from './mergeUtils';
+import { GraphPattern } from '../graphExpression';
 
 /**
  * Options for {@link CompositeDataProvider}.
@@ -163,6 +165,23 @@ export class CompositeDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]> {
         return this.requestWithMerge(p => p.connectedLinkStats(params), mergeConnectedLinkStats);
+    }
+
+    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+        if (this.providers.length === 0) {
+            return {ok: true, errors: []};
+        }
+        const errors: string[] = [];
+        for (const {provider} of this.providers) {
+            const result = provider.supportsPattern(pattern);
+            if (result.ok) {
+                return {ok: true, errors: []};
+            }
+            for (const error of result.errors) {
+                errors.push(error);
+            }
+        }
+        return {ok: false, errors};
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

@@ -60,6 +60,35 @@ const NAMESPACE_XSD = 'http://www.w3.org/2001/XMLSchema#';
  */
 export const xsd = {
     $namespace: NAMESPACE_XSD,
+    boolean: `${NAMESPACE_XSD}boolean`,
     dateTime: `${NAMESPACE_XSD}dateTime`,
+    integer: `${NAMESPACE_XSD}integer`,
     string: `${NAMESPACE_XSD}string`,
 } as const;
+
+type LazyVocabulary<Namespace extends string, Keys extends string> = {
+    readonly $namespace: Namespace;
+} & {
+    readonly [K in Keys]: `${Namespace}${K}`
+};
+
+type VocabularyFactory<N extends string> = <Keys extends string>() => LazyVocabulary<N, Keys>;
+
+export function vocabulary<const N extends string>(namespace: N): VocabularyFactory<N> {
+    return <Keys extends string>() => new Proxy(
+        {$namespace: namespace},
+        {
+            get(target: Record<string, string>, p, _receiver) {
+                if (typeof p !== 'string') {
+                    return undefined;
+                } else if (Object.hasOwn(target, p)) {
+                    return target[p];
+                } else {
+                    const iri = `${namespace}${p}`;
+                    target[p] = iri;
+                    return iri;
+                }
+            },
+        }
+    ) as LazyVocabulary<N, Keys>;
+}

@@ -3,11 +3,13 @@ import { delay } from '../../coreUtils/async';
 import type * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderPatternSupport,
 } from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri, PropertyTypeModel,
 } from '../model';
+import { GraphPattern } from '../graphExpression';
 
 /**
  * Options for {@link DecoratedDataProvider}.
@@ -136,6 +138,10 @@ export class DecoratedDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]> {
         return this.decorate('connectedLinkStats', [params]);
+    }
+
+    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+        return this.baseProvider.supportsPattern(pattern);
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

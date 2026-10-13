@@ -7,10 +7,12 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderPatternSupport,
 } from '../dataProvider';
 
 import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
 import { Sha256 } from './sha256';
+import { GraphPattern } from '../graphExpression';
 
 /**
  * Options for {@link IndexedDbCachedProvider}.
@@ -746,10 +748,15 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.stats;
     }
 
+    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+        return this.baseProvider.supportsPattern(pattern);
+    }
+
     async lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         if (!this.cacheTextLookups && params.text !== undefined) {
             return this.baseProvider.lookup(params);
         }
+        // TODO: serialize pattern
         const key: LookupKey = [
             params.elementTypeId ?? '',
             params.refElementId ?? '',
