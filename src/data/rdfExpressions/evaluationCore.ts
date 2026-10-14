@@ -1,6 +1,6 @@
-import { RdfExpression } from '../graphExpression';
-import * as Rdf from './rdfModel';
-import { rdf, xsd as xsdVocab, vocabulary } from './vocabulary';
+import { RdfExpression } from './expression';
+import * as Rdf from '../rdf/rdfModel';
+import { rdf, xsd as xsdVocab, vocabulary } from '../rdf/vocabulary';
 
 export interface EvaluateContext {
     evaluate: (expr: RdfExpression) => EvaluationResult;
@@ -11,7 +11,7 @@ export interface EvaluateContext {
     ) => EvaluationResult;
     factory: Rdf.DataFactory;
     boolean: (value: boolean) => Rdf.Literal;
-    error: (expr: RdfExpression) => EvaluationError;
+    error: (expr: RdfExpression, code?: EvaluationErrorCode) => EvaluationError;
 }
 
 export type EvaluationResult = Rdf.Term | EvaluationError;
@@ -19,11 +19,40 @@ export type EvaluationResult = Rdf.Term | EvaluationError;
 export interface EvaluationError {
     readonly termType: 'EvaluationError';
     readonly expression: RdfExpression;
+    readonly code: EvaluationErrorCode;
 }
 
-type SignatureParam = 'E' | 'E?' | 'E*';
+export type EvaluationErrorCode =
+    | 'NOT_IMPLEMENTED'
+    | 'INVALID_CALL_ARGS'
+    | 'INVALID_OPERATOR_ARGS'
+    | 'UNEXPECTED'
+    | 'UNKNOWN_FUNCTION';
 
-export interface DefinedFunction<E, Signature extends readonly SignatureParam[]> {
+type SignatureArg =
+    | { readonly type: 'any' }
+    | { readonly type: 'numeric' }
+    | { readonly type: 'namedNode' }
+    | { readonly type: 'literal'; readonly datatype?: string };
+
+type SignatureParam =
+    | SignatureArg
+    | readonly ['optional', SignatureArg]
+    | readonly ['zeroOrMore', SignatureArg];
+
+export const arg = {
+    any: {type: 'any'} as const satisfies SignatureArg,
+    numeric: {type: 'numeric'} as const satisfies SignatureArg,
+    namedNode: {type: 'namedNode'} as const satisfies SignatureArg,
+    literal: {type: 'literal'} as const satisfies SignatureArg,
+    of: (datatype: string) => ({type: 'literal', datatype} as const satisfies SignatureArg),
+    optional: <A extends SignatureArg>(arg: A) => ['optional', arg] as const,
+    zeroOrMore: <A extends SignatureArg>(arg: A) => ['zeroOrMore', arg] as const,
+} as const;
+
+type SignatureArgMap = { [K in SignatureArg['type']]: any };
+
+export interface DefinedFunction<E extends SignatureArgMap, Signature extends readonly SignatureParam[]> {
     readonly signature: Signature;
     readonly body: (
         context: EvaluateContext,
@@ -32,28 +61,41 @@ export interface DefinedFunction<E, Signature extends readonly SignatureParam[]>
     ) => EvaluationResult;
 }
 
-type FunctionArgs<E, Signature> =
-    Signature extends readonly ['E', ...infer Rest] ? readonly [E, ...FunctionArgs<E, Rest>] :
-    Signature extends readonly ['E?', ...infer Rest] ? readonly [E?, ...FunctionArgs<E, Rest>] :
-    Signature extends readonly ['E*'] ? readonly [...E[]] :
-    Signature extends readonly [] ? readonly [] :
-    never;
+type FunctionArgs<E extends SignatureArgMap, Signature> =
+    Signature extends readonly [{ type: infer A extends keyof E }, ...infer Rest]
+        ? readonly [E[A], ...FunctionArgs<E, Rest>] :
+    Signature extends readonly [readonly ['optional', { type: infer A extends keyof E }], ...infer Rest]
+        ? readonly [E[A]?, ...FunctionArgs<E, Rest>] :
+    Signature extends readonly [readonly ['zeroOrMore', { type: infer A extends keyof E }]]
+        ? readonly [...E[A][]] :
+    Signature extends readonly [] ? readonly [] : never;
+
+type RdfExpressionArgMap = {
+    any: RdfExpression;
+    numeric: RdfExpression;
+    namedNode: RdfExpression;
+    literal: RdfExpression;
+};
+
+type RdfTermArgMap = {
+    any: Rdf.Term;
+    numeric: Rdf.Literal;
+    namedNode: Rdf.NamedNode;
+    literal: Rdf.Literal;
+};
 
 export function defineLazy<const S extends readonly SignatureParam[]>(
-    func: DefinedFunction<RdfExpression, S>
-): DefinedFunction<RdfExpression, S> {
+    func: DefinedFunction<RdfExpressionArgMap, S>
+): DefinedFunction<RdfExpressionArgMap, S> {
     return func;
 }
 
 export function defineEager<const S extends readonly SignatureParam[]>(
-    func: DefinedFunction<Rdf.Term, S>
-): DefinedFunction<RdfExpression, S> {
+    func: DefinedFunction<RdfTermArgMap, S>
+): DefinedFunction<RdfExpressionArgMap, S> {
     return {
         ...func,
         body: (context, self, args) => {
-            if (!areValidArgs(func.signature, args)) {
-                return context.error(self);
-            }
             const untypedArgs = args as readonly (RdfExpression | undefined)[];
             const evaluatedArgs = untypedArgs.map(arg =>
                 arg === undefined ? undefined : context.evaluate(arg)
@@ -62,30 +104,64 @@ export function defineEager<const S extends readonly SignatureParam[]>(
             if (erroredArg) {
                 return erroredArg;
             }
-            return func.body(context, self, evaluatedArgs as unknown as FunctionArgs<Rdf.Term, S>);
+            if (!areValidArgs(func.signature, evaluatedArgs as readonly (Rdf.Term | undefined)[])) {
+                return context.error(self, 'INVALID_CALL_ARGS');
+            }
+            return func.body(context, self, evaluatedArgs as unknown as FunctionArgs<RdfTermArgMap, S>);
         }
     };
 }
 
-function areValidArgs<T>(
+function areValidArgs(
     signature: readonly SignatureParam[],
-    args: readonly (T | undefined)[]
+    args: readonly (Rdf.Term | undefined)[]
 ): boolean {
-    let hasMany = false;
     for (let i = 0; i < signature.length; i++) {
         const param = signature[i];
-        if (param === 'E') {
-            if (i >= args.length || args[i] === undefined) {
+        if (Array.isArray(param)) {
+            const [kind, type] = param as Exclude<SignatureParam, SignatureArg>;
+            if (kind === 'optional') {
+                if (!(i < args.length && areValidArg(type, args[i], false))) {
+                    return false;
+                }
+            } else if (kind === 'zeroOrMore') {
+                for (let j = i; j < args.length; j++) {
+                    if (!areValidArg(type, args[j], true)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        } else {
+            if (!(i < args.length && areValidArg(param as SignatureArg, args[i], true))) {
                 return false;
             }
-        } else if (param === 'E*') {
-            hasMany = true;
         }
     }
-    return args.length <= signature.length || hasMany;
+    return args.length <= signature.length;
 }
 
-export type RdfFunctionBundle = Record<string, DefinedFunction<RdfExpression, any>>;
+function areValidArg(param: SignatureArg, arg: Rdf.Term | undefined, required: boolean): boolean {
+    if (arg === undefined) {
+        return !required;
+    }
+    switch (param.type) {
+        case 'namedNode': {
+            return arg.termType === 'NamedNode';
+        }
+        case 'literal': {
+            return arg.termType === 'Literal';
+        }
+        case 'numeric': {
+            return arg.termType === 'Literal' && isNumericType(arg.datatype);
+        }
+        default: {
+            return true;
+        }
+    }
+}
+
+export type RdfFunctionBundle = Record<string, DefinedFunction<RdfExpressionArgMap, any>>;
 
 export const coreFn = vocabulary('http://ramp-shapes.github.io/core-functions#')<
     | 'coalesce'
@@ -133,7 +209,7 @@ export const xsd = vocabulary(xsdVocab.$namespace)<
 
 export const CoreFunctions = {
     [coreFn.coalesce]: defineLazy({
-        signature: ['E*'],
+        signature: [arg.zeroOrMore(arg.any)],
         body: ({evaluate, error}, self, expressions) => {
             for (const expr of expressions) {
                 const result = evaluate(expr);
@@ -145,14 +221,14 @@ export const CoreFunctions = {
         },
     }),
     [coreFn.if]: defineLazy({
-        signature: ['E', 'E', 'E'],
+        signature: [arg.any, arg.any, arg.any],
         body: ({evaluate}, _, [condition, thenExpr, elseExpr]) => {
             const value = evaluate(condition);
             return evaluate(effectiveBoolean(value) ? thenExpr : elseExpr);
         },
     }),
     [coreFn['logical-or']]: defineLazy({
-        signature: ['E', 'E'],
+        signature: [arg.any, arg.any],
         body: ({evaluate, boolean}, _, [a, b]) => {
             const aValue = evaluate(a);
             if (effectiveBoolean(aValue)) {
@@ -172,7 +248,7 @@ export const CoreFunctions = {
         },
     }),
     [coreFn['logical-and']]: defineLazy({
-        signature: ['E', 'E'],
+        signature: [arg.any, arg.any],
         body: ({evaluate, boolean}, _, [a, b]) => {
             const aValue = evaluate(a);
             if (!effectiveBoolean(aValue)) {
@@ -191,106 +267,81 @@ export const CoreFunctions = {
 
 export const RdfFunctions = {
     [rdfFn.equal]: defineEager({
-        signature: ['E', 'E'],
+        signature: [arg.any, arg.any],
         body: ({boolean}, _, [a, b]) => {
             return boolean(Rdf.equalTerms(a, b));
         },
     }),
     [rdfFn['is-named']]: defineEager({
-        signature: ['E'],
+        signature: [arg.any],
         body: ({boolean}, _, [value]) => {
             return boolean(value.termType === 'NamedNode');
         },
     }),
     [rdfFn['is-blank']]: defineEager({
-        signature: ['E'],
+        signature: [arg.any],
         body: ({boolean}, _, [value]) => {
             return boolean(value.termType === 'BlankNode');
         },
     }),
     [rdfFn['is-literal']]: defineEager({
-        signature: ['E'],
+        signature: [arg.any],
         body: ({boolean}, _, [value]) => {
             return boolean(value.termType === 'Literal');
         },
     }),
     [rdfFn['value-of']]: defineEager({
-        signature: ['E'],
+        signature: [arg.any],
         body: ({factory}, _, [value]) => {
             return factory.literal(value.value);
         },
     }),
     [rdfFn['datatype-of']]: defineEager({
-        signature: ['E'],
-        body: ({error}, self, [value]) => {
-            if (value.termType !== 'Literal') {
-                return error(self);
-            }
+        signature: [arg.literal],
+        body: (_, self, [value]) => {
             return value.datatype;
         },
     }),
     [rdfFn['language-of']]: defineEager({
-        signature: ['E'],
-        body: ({factory, error}, self, [value]) => {
-            if (value.termType !== 'Literal') {
-                return error(self);
-            }
+        signature: [arg.literal],
+        body: ({factory}, self, [value]) => {
             return factory.literal(value.language);
         },
     }),
     [rdfFn.named]: defineEager({
-        signature: ['E'],
+        signature: [arg.any],
         body: ({factory, error}, self, [value]) => {
             if (value.termType === 'NamedNode') {
                 return value;
             } else if (isPlainString(value)) {
                 return factory.namedNode(value.value);
             } else {
-                return error(self);
+                return error(self, 'INVALID_CALL_ARGS');
             }
         },
     }),
     [rdfFn.blank]: defineEager({
-        signature: ['E?'],
-        body: ({factory, error}, self, [value]) => {
-            if (!value) {
-                return factory.blankNode();
-            } else if (isPlainString(value)) {
-                return factory.blankNode(value.value);
-            } else {
-                return error(self);
-            }
+        signature: [arg.optional(arg.of(xsd.string))],
+        body: ({factory}, self, [value]) => {
+            return factory.blankNode(value?.value);
         },
     }),
     [rdfFn.literal]: defineEager({
-        signature: ['E', 'E?'],
-        body: ({factory, error}, self, [value, datatype]) => {
-            if (isPlainString(value)) {
-                if (!datatype) {
-                    return value;
-                } else if (datatype.termType === 'NamedNode') {
-                    return factory.literal(value.value, datatype);
-                }
-            }
-            return error(self);
+        signature: [arg.of(xsd.string), arg.optional(arg.namedNode)],
+        body: ({factory}, self, [value, datatype]) => {
+            return datatype ? factory.literal(value.value, datatype) : value;
         },
     }),
     [rdfFn['lang-literal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value, lang]) => {
-            if (isPlainString(value) && isPlainString(lang)) {
-                return factory.literal(value.value, lang.value);
-            }
-            return error(self);
+        signature: [arg.of(xsd.string), arg.of(xsd.string)],
+        body: ({factory}, self, [value, lang]) => {
+            return factory.literal(value.value, lang.value);
         },
     }),
     [rdfFn['lang-matches']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({boolean, error}, self, [langTag, langRange]) => {
-            if (isPlainString(langTag) && isPlainString(langRange)) {
-                return boolean(langMatchesExtendedFilter(langTag.value, langRange.value));
-            }
-            return error(self);
+        signature: [arg.of(xsd.string), arg.of(xsd.string)],
+        body: ({boolean}, self, [langTag, langRange]) => {
+            return boolean(langMatchesExtendedFilter(langTag.value, langRange.value));
         },
     }),
     [rdfFn.now]: defineEager({
@@ -300,11 +351,8 @@ export const RdfFunctions = {
         },
     }),
     [rdfFn.tz]: defineEager({
-        signature: ['E'],
+        signature: [arg.of(xsd.dateTime)],
         body: ({factory}, _, [dateTime]) => {
-            if (!(dateTime.termType === 'Literal' && dateTime.datatype.value === xsd.dateTime)) {
-                return dateTime;
-            }
             const match = dateTime.value.match(/(Z|[+-]\d{2}:?\d{2})$/);
             return factory.literal(match ? match[0] : '');
         },

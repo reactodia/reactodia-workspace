@@ -1,4 +1,4 @@
-import * as Rdf from './rdf/rdfModel';
+import * as Rdf from '../rdf/rdfModel';
 
 export type RdfExpression =
     | TermExpression

@@ -1,9 +1,9 @@
 import type * as Rdf from './rdf/rdfModel';
-import { RdfExpression } from './graphExpression';
 import {
     ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from './model';
+import type { RdfExpression } from './rdfExpressions';
 
 /**
  * Asynchronously provides data for the elements, links and other graph entities.
@@ -150,16 +150,6 @@ export interface DataProvider {
      * Filters can be combined to produce an intersection of the results.
      */
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]>;
-
-    /**
-     * Looks up elements with different filters:
-     *  - by an element type via `elementTypeId`;
-     *  - by a connected element via `refElementId`, `refElementLinkId` and `linkDirection`;
-     *  - by a text lookup via `text`;
-     *
-     * Filters can be combined to produce an intersection of the results.
-     */
-    lookupByPattern(params: DataProviderLookupByPatternParams): Promise<DataProviderLookupItem[]>;
 }
 
 /**
@@ -230,22 +220,6 @@ export interface DataProviderLookupParams {
      */
     linkDirection?: 'in' | 'out';
 
-    /**
-     * Limit number of elements returned.
-     *
-     * Pass `null` to explicitly disable the limit.
-     *
-     * Default depends on the provider implementation.
-     */
-    limit?: number | null;
-
-    /**
-     * Abort signal to cancel the async operation.
-     */
-    signal?: AbortSignal;
-}
-
-export interface DataProviderLookupByPatternParams {
     /**
      * Filter by a lookup pattern.
      */
@@ -344,9 +318,9 @@ export interface DataProviderLookupItem {
     readonly outLinks: ReadonlySet<LinkTypeIri>;
 }
 
-export function lookupPattern(params: Omit<DataProviderLookupParams, 'limit' | 'signal'>): LookupPattern {
+export function lookupPatternOf(params: Omit<DataProviderLookupParams, 'limit' | 'signal'>): LookupPattern {
     const {
-        elementTypeId, refElementId, refElementLinkId, linkDirection, text,
+        elementTypeId, refElementId, refElementLinkId, linkDirection, text, pattern,
     } = params;
 
     const patterns: LookupPattern[] = [];
@@ -374,7 +348,11 @@ export function lookupPattern(params: Omit<DataProviderLookupParams, 'limit' | '
         });
     }
 
-    return {
+    if (pattern) {
+        patterns.push(pattern);
+    }
+
+    return patterns.length === 1 ? patterns[0] : {
         type: 'allOf',
         patterns,
     };

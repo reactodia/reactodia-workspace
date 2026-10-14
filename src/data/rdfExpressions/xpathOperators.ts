@@ -2,11 +2,11 @@ import {
     HashMap, ReadonlyHashMap, hashString, hashTuple, dropHighestNonSignBit,
 } from '@reactodia/hashmap';
 
-import { BinaryExpression } from '../graphExpression';
-import { type RdfFunctionBundle, defineEager, isPlainString, effectiveBoolean, xsd } from './rdfEvaluationCore';
-import * as Rdf from './rdfModel';
+import { BinaryExpression } from './expression';
+import { type RdfFunctionBundle, defineEager, arg, xsd } from './evaluationCore';
+import * as Rdf from '../rdf/rdfModel';
 import { xpathFn } from './xpathFunctions';
-import { vocabulary } from './vocabulary';
+import { vocabulary } from '../rdf/vocabulary';
 
 export const xpathOp = vocabulary('http://ramp-shapes.github.io/xpath-operators#')<
     | 'numeric-unary-plus'
@@ -300,261 +300,261 @@ export const COMPARE_OPERATORS: Record<string, CompareImplementation> = {
 
 export const XPathOperators = {
     [xpathOp['numeric-unary-plus']]: defineEager({
-        signature: ['E'],
+        signature: [arg.numeric],
         body: ({factory, error}, self, [value]) => {
-
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-unary-minus']]: defineEager({
-        signature: ['E'],
+        signature: [arg.numeric],
         body: ({factory, error}, self, [value]) => {
-            
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-add']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-subtract']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-multiply']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-divide']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-integer-divide']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['numeric-mod']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.numeric, arg.numeric],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['boolean-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.boolean), arg.of(xsd.boolean)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['boolean-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.boolean), arg.of(xsd.boolean)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['date-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.date), arg.of(xsd.date)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['date-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.date), arg.of(xsd.date)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['time-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.time), arg.of(xsd.time)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['time-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.time), arg.of(xsd.time)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['dateTime-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dateTime), arg.of(xsd.dateTime)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['dateTime-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dateTime), arg.of(xsd.dateTime)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['duration-equal']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.duration), arg.of(xsd.duration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['duration-compare']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.duration), arg.of(xsd.duration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-dayTimeDuration-to-date']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.date)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-dayTimeDuration-to-time']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.time)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-dayTimeDuration-to-dateTime']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.dateTime)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-dayTimeDurations']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-yearMonthDuration-to-date']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.yearMonthDuration), arg.of(xsd.date)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-yearMonthDuration-to-dateTime']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.yearMonthDuration), arg.of(xsd.dateTime)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['add-yearMonthDurations']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.yearMonthDuration), arg.of(xsd.yearMonthDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dates']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.date), arg.of(xsd.date)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-times']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.time), arg.of(xsd.time)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dateTimes']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dateTime), arg.of(xsd.dateTime)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dayTimeDurations']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dayTimeDuration-from-date']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.date), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dayTimeDuration-from-time']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.time), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-dayTimeDuration-from-dateTime']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dateTime), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-yearMonthDurations']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.yearMonthDuration), arg.of(xsd.yearMonthDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-yearMonthDuration-from-date']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.date), arg.of(xsd.yearMonthDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['subtract-yearMonthDuration-from-dateTime']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dateTime), arg.of(xsd.yearMonthDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['multiply-dayTimeDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.any, arg.any],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['multiply-yearMonthDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.any, arg.any],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['divide-dayTimeDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.any, arg.any],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['divide-dayTimeDuration-by-dayTimeDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.dayTimeDuration), arg.of(xsd.dayTimeDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['divide-yearMonthDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.any, arg.any],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
     [xpathOp['divide-yearMonthDuration-by-yearMonthDuration']]: defineEager({
-        signature: ['E', 'E'],
-        body: ({factory, error}, self, [value]) => {
-            
+        signature: [arg.of(xsd.yearMonthDuration), arg.of(xsd.yearMonthDuration)],
+        body: ({factory, error}, self, [a, b]) => {
+            return error(self, 'NOT_IMPLEMENTED');
         },
     }),
 } as const satisfies RdfFunctionBundle;

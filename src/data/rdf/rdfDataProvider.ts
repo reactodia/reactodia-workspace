@@ -7,12 +7,11 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderLookupByPatternParams, DataProviderPatternSupport, LookupPattern,
-    lookupPattern,
+    DataProviderPatternSupport, LookupPattern, lookupPatternOf,
 } from '../dataProvider';
+import { RdfExpressionEvaluator, StandardFunctions } from '../rdfExpressions';
 
 import { matchPattern, encodeTerm, decodeTerm, isResourceTerm } from './datasetLookup';
-import { RdfExpressionEvaluator, StandardFunctions } from './expressionEvaluator';
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
 import * as Rdf from './rdfModel';
 import { owl, rdf, rdfs, schema } from './vocabulary';
@@ -449,17 +448,8 @@ export class RdfDataProvider implements DataProvider {
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
-        return this.lookupByPattern({
-            pattern: lookupPattern(params),
-            limit: params.limit,
-            signal: params.signal,
-        });
-    }
-
-    lookupByPattern(params: DataProviderLookupByPatternParams): Promise<DataProviderLookupItem[]> {
-        const {pattern: rootPattern} = params;
-
-        const items = matchPattern(rootPattern, {
+        const fullPattern = lookupPatternOf(params);
+        const items = matchPattern(fullPattern, {
             factory: this.factory,
             dataset: this.dataset,
             evaluator: this.evaluator,

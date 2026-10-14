@@ -1,20 +1,16 @@
-import {
-    HashMap, ReadonlyHashMap, hashString, hashTuple, dropHighestNonSignBit,
-} from '@reactodia/hashmap';
+import * as Rdf from '../rdf/rdfModel';
+import { xsd } from '../rdf/vocabulary';
 
-import { RdfExpression, UnaryExpression, BinaryExpression } from '../graphExpression';
-
-import * as Rdf from './rdfModel';
 import {
     EvaluateContext, EvaluationError, EvaluationResult, RdfFunctionBundle,
     CoreFunctions, RdfFunctions, isError, isNumericType, effectiveBoolean, rdfFn,
-} from './rdfEvaluationCore';
+} from './evaluationCore';
+import { RdfExpression, UnaryExpression, BinaryExpression } from './expression';
 import { xpathFn, XPathFunctions } from './xpathFunctions';
 import {
     UNARY_OPERATORS, COMPUTE_OPERATORS, EQUAL_OPERATORS, COMPARE_OPERATORS,
     XPathOperators,
 } from './xpathOperators';
-import { xsd } from './vocabulary';
 
 export const StandardFunctions = {
     ...CoreFunctions,
@@ -74,11 +70,15 @@ export class RdfExpressionEvaluator {
                     const func = this.functions[functionName];
                     return func.body(context, self, args);
                 }
-                return context.error(self);
+                return context.error(self, 'UNKNOWN_FUNCTION');
             },
             factory: this.factory,
             boolean: value => value ? this._true : this._false,
-            error: expr => ({termType: 'EvaluationError', expression: expr}),
+            error: (expr, code) => ({
+                termType: 'EvaluationError',
+                expression: expr,
+                code: code ?? 'UNEXPECTED',
+            }),
         };
         return context.evaluate(expression);
     }
@@ -92,7 +92,7 @@ function evaluateUnaryOperator(
     if (match) {
         return context.call(match, expr, expr.args);
     }
-    return context.error(expr);
+    return context.error(expr, 'INVALID_OPERATOR_ARGS');
 }
 
 function evaluateBinaryOperator(
@@ -145,7 +145,7 @@ function evaluateBinaryOperator(
                         return result;
                     }
                 }
-                return context.error(expr);
+                return context.error(expr, 'INVALID_OPERATOR_ARGS');
             }
             case '=':
             case '!=': {
@@ -164,7 +164,7 @@ function evaluateBinaryOperator(
                         break;
                     }
                 } else {
-                    return context.error(expr);
+                    return context.error(expr, 'INVALID_OPERATOR_ARGS');
                 }
             }
             case '<':
@@ -191,13 +191,13 @@ function evaluateBinaryOperator(
                                     false
                                 );
                             }
-                        } 
+                        }
                         return context.error(expr);
                     } else {
                         break;
                     }
                 } else {
-                    return context.error(expr);
+                    return context.error(expr, 'INVALID_OPERATOR_ARGS');
                 }
             }
         }
@@ -213,5 +213,5 @@ function evaluateBinaryOperator(
         return expr.operator === '!=' ? context.boolean(!effectiveBoolean(result)) : result;
     }
 
-    return context.error(expr);
+    return context.error(expr, 'INVALID_OPERATOR_ARGS');
 }

@@ -2,13 +2,11 @@ import { DatasetCore, Variable, Term } from '@rdfjs/types';
 import { HashMap, HashSet } from '@reactodia/hashmap';
 
 import { LookupPattern } from '../dataProvider';
-import { RdfExpression } from '../graphExpression';
 import { ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../model';
+import { RdfExpression, RdfExpressionEvaluator, effectiveBoolean } from '../rdfExpressions';
 import { makeCaseInsensitiveFilter } from '../utils';
 
-import { RdfExpressionEvaluator } from './expressionEvaluator';
 import { MemoryDataset } from './memoryDataset';
-import { effectiveBoolean } from './rdfEvaluationCore';
 import * as Rdf from './rdfModel';
 
 interface MatchItem {

@@ -1,18 +1,18 @@
 import { AsyncLock } from '../../coreUtils/async';
 import { multimapAdd } from '../../coreUtils/collections';
-import type * as Rdf from '../rdf/rdfModel';
+import * as Rdf from '../rdf/rdfModel';
 import {
     ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
     PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport,
+    DataProviderPatternSupport, LookupPattern, lookupPatternOf,
 } from '../dataProvider';
+import { RdfExpression } from '../rdfExpressions';
 
 import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
 import { Sha256 } from './sha256';
-import { GraphPattern } from '../graphExpression';
 
 /**
  * Options for {@link IndexedDbCachedProvider}.
@@ -121,22 +121,10 @@ interface ConnectedLinkStatsRecord {
     readonly stats: DataProviderLinkCount[];
 }
 
-type LookupLinkDirectionKey = 'in' | 'out' | '';
-type LookupKey = [ElementTypeIri, ElementIri, LinkTypeIri, LookupLinkDirectionKey, string, string];
-const LOOKUP_KEY_PROPERTIES: Array<keyof LookupRecord> = [
-    'elementType',
-    'element',
-    'link',
-    'direction',
-    'text',
-    'limit',
-];
+type LookupKey = [pattern: string, limit: string];
+const LOOKUP_KEY_PROPERTIES: Array<keyof LookupRecord> = ['pattern', 'limit'];
 interface LookupRecord {
-    readonly elementType: ElementTypeIri;
-    readonly element: ElementIri;
-    readonly link: LinkTypeIri;
-    readonly direction: LookupLinkDirectionKey;
-    readonly text: string;
+    readonly pattern: string;
     readonly limit: string;
     readonly result: DataProviderLookupItem[];
 }
@@ -148,7 +136,7 @@ interface LookupRecord {
  * @category Data
  */
 export class IndexedDbCachedProvider implements DataProvider {
-    static readonly DB_VERSION = 4;
+    static readonly DB_VERSION = 5;
 
     private readonly hasher = new Sha256();
 
@@ -748,21 +736,17 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.stats;
     }
 
-    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
         return this.baseProvider.supportsPattern(pattern);
     }
 
     async lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
-        if (!this.cacheTextLookups && params.text !== undefined) {
+        const fullPattern = lookupPatternOf(params);
+        if (!this.cacheTextLookups && hasTextPatternOrFilter(fullPattern)) {
             return this.baseProvider.lookup(params);
         }
-        // TODO: serialize pattern
         const key: LookupKey = [
-            params.elementTypeId ?? '',
-            params.refElementId ?? '',
-            params.refElementLinkId ?? '',
-            params.linkDirection ?? '',
-            params.text ?? '',
+            JSON.stringify(serializePattern(fullPattern)),
             (
                 params.limit === undefined ? '' :
                 params.limit === null ? 'null' :
@@ -774,19 +758,8 @@ export class IndexedDbCachedProvider implements DataProvider {
             db,
             ObjectStore.lookup,
             key,
-            async ([
-                elementType,
-                element,
-                link,
-                direction,
-                text,
-                limit,
-            ]): Promise<LookupRecord> => ({
-                elementType,
-                element,
-                link,
-                direction,
-                text,
+            async ([pattern, limit]): Promise<LookupRecord> => ({
+                pattern,
                 limit,
                 result: await this.baseProvider.lookup(params),
             })
@@ -1128,5 +1101,62 @@ function rehydrateTerm(
             );
         default:
             return term;
+    }
+}
+
+function hasTextPatternOrFilter(pattern: LookupPattern): boolean {
+    switch (pattern.type) {
+        case 'allOf':
+        case 'anyOf': {
+            return pattern.patterns.some(hasTextPatternOrFilter);
+        }
+        case 'withText': {
+            return true;
+        }
+        case 'hasProperty': {
+            return pattern.filter !== undefined;
+        }
+        default: {
+            return false;
+        }
+    }
+}
+
+type SExprLike = readonly (string | null | RdfExpression | SExprLike)[];
+
+function serializePattern(pattern: LookupPattern): SExprLike {
+    switch (pattern.type) {
+        case 'allOf':
+        case 'anyOf': {
+            return [pattern.type, pattern.patterns.map(serializePattern)];
+        }
+        case 'hasType': {
+            return [pattern.type, pattern.elementType];
+        }
+        case 'connectedTo': {
+            return [
+                pattern.type,
+                pattern.linkType ?? null,
+                pattern.linkDirection ?? null,
+                pattern.values ?? [],
+            ];
+        }
+        case 'withText': {
+            return [pattern.type, pattern.text];
+        }
+        case 'fromValues': {
+            return [pattern.type, pattern.values];
+        }
+        case 'hasProperty': {
+            return [
+                pattern.type,
+                pattern.propertyType,
+                (pattern.values ?? []).map(Rdf.termToString),
+                pattern.filter ?? null,
+            ];
+        }
+        default: {
+            return [];
+        }
     }
 }

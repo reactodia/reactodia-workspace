@@ -4,10 +4,9 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderPatternSupport,
-    DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
 } from '../dataProvider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
-import { GraphPattern } from '../graphExpression';
 
 /**
  * Empty graph data provider, which always return nothing.
@@ -79,7 +78,7 @@ export class EmptyDataProvider implements DataProvider {
         return Promise.resolve([]);
     }
 
-    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
         return {ok: false, errors: []};
     }
 
