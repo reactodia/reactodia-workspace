@@ -223,7 +223,7 @@ export interface DataProviderLookupParams {
     /**
      * Filter by a lookup pattern.
      */
-    pattern: LookupPattern;
+    pattern?: LookupPattern;
 
     /**
      * Limit number of elements returned.

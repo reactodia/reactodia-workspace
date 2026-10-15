@@ -1,5 +1,4 @@
-import { DatasetCore, Variable, Term } from '@rdfjs/types';
-import { HashMap, HashSet } from '@reactodia/hashmap';
+import { HashMap } from '@reactodia/hashmap';
 
 import { LookupPattern } from '../dataProvider';
 import { ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../model';
@@ -27,45 +26,44 @@ export function matchPattern(
     pattern: LookupPattern,
     context: MatchPatternContext
 ): HashMap<Rdf.NamedNode | Rdf.BlankNode, MatchItem> {
+    return joinWithPattern(undefined, pattern, context);
+}
+
+function joinWithPattern(
+    previous: HashMap<Rdf.NamedNode | Rdf.BlankNode, MatchItem> | undefined,
+    pattern: LookupPattern,
+    context: MatchPatternContext
+): HashMap<Rdf.NamedNode | Rdf.BlankNode, MatchItem> {
     switch (pattern.type) {
         case 'allOf': {
             if (pattern.patterns.length === 0) {
                 return makeItemMap();
             }
-            const items = matchPattern(pattern.patterns[0], context);
-            for (let i = 1; i < pattern.patterns.length; i++) {
-                const next = matchPattern(pattern.patterns[i], context);
-                for (const m of next.values()) {
-                    const item = items.get(m.term);
-                    if (item) {
-                        mergeItem(item, m);
-                    } else {
-                        items.delete(m.term);
-                    }
-                }
+            let items = previous;
+            for (const p of pattern.patterns) {
+                items = joinWithPattern(items, p, context);
             }
-            return items;
+            return items ?? makeItemMap();
         }
         case 'anyOf': {
             const items = makeItemMap();
             for (const p of pattern.patterns) {
-                const next = matchPattern(p, context);
+                const next = joinWithPattern(previous, p, context);
                 for (const m of next.values()) {
                     const item = items.get(m.term);
-                    if (item) {
-                        mergeItem(item, m);
-                    } else {
-                        items.set(m.term, m);
-                    }
+                    items.set(m.term, item ? mergeItem(item, m) : m);
                 }
             }
             return items;
         }
         case 'withText': {
-            const textFilter = makeCaseInsensitiveFilter(pattern.text);
             const items = makeItemMap();
             if (context.labelPredicate) {
-                for (const t of context.dataset.iterateMatches(null, context.labelPredicate, null)) {
+                const textFilter = makeCaseInsensitiveFilter(pattern.text);
+                const iterable = previous
+                    ? iterateWithAllSubjects(context.dataset, context.labelPredicate, previous.values())
+                    : context.dataset.iterateMatches(null, context.labelPredicate, null);
+                for (const t of iterable) {
                     if (
                         isResourceTerm(t.subject) &&
                         t.object.termType === 'Literal' &&
@@ -81,9 +79,17 @@ export function matchPattern(
         case 'hasType': {
             const typeTerm = decodeTerm(pattern.elementType, context.factory);
             const items = makeItemMap();
-            for (const t of context.dataset.iterateMatches(null, context.typePredicate, typeTerm)) {
-                if (isResourceTerm(t.subject) && !items.has(t.subject)) {
-                    items.set(t.subject, {term: t.subject});
+            if (previous) {
+                for (const item of previous.values()) {
+                    if (context.dataset.hasMatches(item.term, context.typePredicate, typeTerm)) {
+                        items.set(item.term, item);
+                    }
+                }
+            } else {
+                for (const t of context.dataset.iterateMatches(null, context.typePredicate, typeTerm)) {
+                    if (isResourceTerm(t.subject) && !items.has(t.subject)) {
+                        items.set(t.subject, {term: t.subject});
+                    }
                 }
             }
             return items;
@@ -96,7 +102,11 @@ export function matchPattern(
             if (!pattern.linkDirection || pattern.linkDirection === 'out') {
                 for (const valueTerm of valueTerms) {
                     for (const t of context.dataset.iterateMatches(valueTerm, linkTerm, null)) {
-                        if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.object)) {
+                        if (
+                            t.predicate.termType === 'NamedNode' &&
+                            isResourceTerm(t.object) &&
+                            (!previous || previous.has(t.object))
+                        ) {
                             const term = t.object;
                             let item = items.get(term);
                             if (!item) {
@@ -115,7 +125,11 @@ export function matchPattern(
             if (!pattern.linkDirection || pattern.linkDirection === 'in') {
                 for (const valueTerm of valueTerms) {
                     for (const t of context.dataset.iterateMatches(null, linkTerm, valueTerm)) {
-                        if (t.predicate.termType === 'NamedNode' && isResourceTerm(t.subject)) {
+                        if (
+                            t.predicate.termType === 'NamedNode' &&
+                            isResourceTerm(t.subject) &&
+                            (!previous || previous.has(t.subject))
+                        ) {
                             const term = t.subject;
                             let item = items.get(term);
                             if (!item) {
@@ -137,24 +151,31 @@ export function matchPattern(
             const items = makeItemMap();
             for (const value of pattern.values) {
                 const valueTerm = decodeTerm(value, context.factory);
-                items.set(valueTerm, {term: valueTerm});
+                if (!previous || previous.has(valueTerm)) {
+                    items.set(valueTerm, {term: valueTerm});
+                }
             }
             return items;
         }
         case 'hasProperty': {
             const providedTerms = pattern.values ?? [];
-            const valueTerms = providedTerms.length === 0 ? [null] : providedTerms;
-            const propertyTerm = pattern.propertyType
-                ? decodeTerm(pattern.propertyType, context.factory) : null;
+            const propertyTerm = decodeTerm(pattern.propertyType, context.factory);
             const items = makeItemMap();
-            for (const valueTerm of valueTerms) {
-                for (const t of context.dataset.iterateMatches(null, propertyTerm, valueTerm)) {
-                    if (
-                        isResourceTerm(t.subject) &&
-                        (!pattern.filter || matchesFilter(t.object, pattern.filter, context.evaluator))
-                    ) {
-                        items.set(t.subject, {term: t.subject});
-                    }
+            if (propertyTerm.termType === 'BlankNode') {
+                return items;
+            }
+            const iterable = (
+                previous ? iterateWithAllSubjects(context.dataset, propertyTerm, previous.values()) :
+                providedTerms.length === 0 ? context.dataset.iterateMatches(null, propertyTerm, null) :
+                iterateWithAllObjects(context.dataset, propertyTerm, providedTerms)
+            );
+            for (const t of iterable) {
+                if (
+                    isResourceTerm(t.subject) &&
+                    (!previous || providedTerms.find(value => Rdf.equalTerms(t.object, value))) &&
+                    (!pattern.filter || matchesFilter(t.object, pattern.filter, context.evaluator))
+                ) {
+                    items.set(t.subject, {term: t.subject});
                 }
             }
             return items;
@@ -167,8 +188,58 @@ function makeItemMap() {
         Rdf.hashTerm, Rdf.equalTerms
     );
 }
-function mergeItem(into: MatchItem, other: MatchItem): void {
-    // TODO
+function mergeItem(a: MatchItem, b: MatchItem): MatchItem {
+    if (!a.inLinks && !a.outLinks) {
+        return b;
+    } else if (!b.inLinks && !b.outLinks) {
+        return a;
+    } else {
+        let inLinks: Set<LinkTypeIri> | undefined;
+        if (a.inLinks && b.inLinks) {
+            inLinks = new Set(a.inLinks);
+            for (const link of b.inLinks) {
+                inLinks.add(link);
+            }
+        } else {
+            inLinks = a.inLinks ?? b.inLinks;
+        }
+
+        let outLinks: Set<LinkTypeIri> | undefined;
+        if (a.outLinks && b.outLinks) {
+            outLinks = new Set(a.outLinks);
+            for (const link of b.outLinks) {
+                outLinks.add(link);
+            }
+        } else {
+            outLinks = a.outLinks ?? b.outLinks;
+        }
+
+        return {
+            term: a.term,
+            inLinks,
+            outLinks,
+        };
+    }
+}
+
+function* iterateWithAllSubjects(
+    dataset: MemoryDataset,
+    predicate: Rdf.NamedNode,
+    items: Iterable<MatchItem>
+): IterableIterator<Rdf.Quad> {
+    for (const item of items) {
+        yield* dataset.iterateMatches(item.term, predicate, null);
+    }
+}
+
+function* iterateWithAllObjects(
+    dataset: MemoryDataset,
+    predicate: Rdf.NamedNode,
+    objects: readonly Rdf.Quad['object'][]
+): IterableIterator<Rdf.Quad> {
+    for (const object of objects) {
+        yield* dataset.iterateMatches(null, predicate, object);
+    }
 }
 
 function matchesFilter(

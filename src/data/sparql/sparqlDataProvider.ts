@@ -9,7 +9,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport,
+    DataProviderPatternSupport, LookupPattern,
 } from '../dataProvider';
 
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
@@ -42,7 +42,6 @@ import {
 import {
     SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
 } from './sparqlDataProviderSettings';
-import { GraphPattern } from '../graphExpression';
 
 /**
  * Options for {@link SparqlDataProvider}.
@@ -724,7 +723,7 @@ export class SparqlDataProvider implements DataProvider {
         return foundLinkStats;
     }
 
-    supportsPattern(pattern: GraphPattern): DataProviderPatternSupport {
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
         return {ok: false, errors: []};
     }
 
