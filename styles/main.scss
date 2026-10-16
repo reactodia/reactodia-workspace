@@ -25,9 +25,11 @@
 @forward "theme/themeDark";
 @forward "theme/themeLight";
 
+@forward "utility/autocomplete";
 @forward "utility/draggableHandle";
 @forward "utility/dragLinkMover";
 @forward "utility/dropdown";
+@forward "utility/errorMessage";
 @forward "utility/inlineEntity";
 @forward "utility/listElementView";
 @forward "utility/noSearchResults";
@@ -41,6 +43,7 @@
 @forward "widgets/classTree";
 @forward "widgets/connectionsMenu";
 @forward "widgets/dialog";
+@forward "widgets/entitySelect";
 @forward "widgets/halo";
 @forward "widgets/haloLink";
 @forward "widgets/instancesSearch";

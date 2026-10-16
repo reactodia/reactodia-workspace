@@ -9,18 +9,15 @@
 
   &__criteria {
     flex-shrink: 0;
-    margin: 10px 0 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px;
   }
 
   &--controlled &__criteria {
     margin-top: 0;
     margin-bottom: 0;
-  }
-
-  &__criterions {
-    padding-left: 15px;
-    margin-bottom: 10px;
-    &:empty { margin-bottom: 0; }
   }
 
   &__criterion {
@@ -76,9 +73,20 @@
     mask-image: url("@images/direction-out.svg");
   }
 
+  &__criterion-add-button {
+    @include codicon-button("add");
+    height: 20px;
+    font-size: 14px;
+
+    &::before {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
   &__criterion-remove {
     float: right;
-    margin: 0 10px 4px 4px;
+    margin: 0 0 4px 4px;
   }
   &__criterion-remove-button {
     &::before {
@@ -86,7 +94,13 @@
     }
   }
 
-  &__text-criteria { margin: 0 10px; }
+  &__criterion-apply {
+    @include codicon-button("check");
+  }
+
+  &__criterion-cancel {
+    @include codicon-button("close");
+  }
 
   &__search-button {
     height: 34px;

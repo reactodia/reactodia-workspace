@@ -10,6 +10,10 @@ export interface SearchInputProps {
     className?: string;
     inputProps?: React.HTMLProps<HTMLInputElement> & DataAttributes;
     store: SearchInputStore;
+    /** @default "m" */
+    size?: 'm' | 's';
+    slotInput?: React.ReactNode;
+    slotEnd?: React.ReactNode;
     children?: React.ReactNode;
 }
 
@@ -19,7 +23,7 @@ const CLASS_NAME = 'reactodia-search-input';
 
 export function SearchInput(props: SearchInputProps) {
     const {
-        className, inputProps = {}, store, children,
+        className, inputProps = {}, store, size = 'm', slotInput, slotEnd, children,
     } = props;
 
     const t = useTranslation();
@@ -30,36 +34,37 @@ export function SearchInput(props: SearchInputProps) {
         <div role='search'
             className={cx(
                 CLASS_NAME,
+                `${CLASS_NAME}--size-${size}`,
                 mode === 'explicit' ? `${CLASS_NAME}--has-submit` : undefined,
                 className
             )}>
-            <input {...inputProps}
-                role='searchbox'
-                type={inputProps.type ?? 'text'}
-                className={cx(
-                    `${CLASS_NAME}__input`,
-                    'reactodia-form-control',
-                    inputProps.className,
-                )}
-                placeholder={inputProps.placeholder ?? t.text('search_defaults.input.placeholder')}
-                value={term}
-                onChange={e => store.change({value: e.currentTarget.value, action: 'input'})}
-                onKeyUp={e => {
-                    if (e.key === 'Enter') {
-                        store.change({value: store.value, action: 'submit'});
-                    }
-                }}
-            />
-            {store.value ? (
-                <div className={`${CLASS_NAME}__clear-container`}>
+            <div className={`${CLASS_NAME}__input-group`}>
+                {slotInput}
+                <input {...inputProps}
+                    role='searchbox'
+                    type={inputProps.type ?? 'text'}
+                    className={cx(`${CLASS_NAME}__input`, inputProps.className)}
+                    placeholder={inputProps.placeholder ?? t.text('search_defaults.input.placeholder')}
+                    value={term}
+                    onChange={e => store.change({value: e.currentTarget.value, action: 'input'})}
+                    onKeyUp={e => {
+                        if (e.key === 'Enter') {
+                            store.change({value: store.value, action: 'submit'});
+                        }
+                        inputProps.onKeyUp?.(e);
+                    }}
+                />
+            </div>
+            <div className={`${CLASS_NAME}__slot-end`}>
+                {store.value ? (
                     <button type='button'
                         className={`${CLASS_NAME}__clear`}
                         title={t.text('search_defaults.input_clear.title')}
                         onClick={() => store.change({value: '', action: 'clear'})}>
                         <span aria-hidden='true'></span>
                     </button>
-                </div>
-            ) : null}
+                ) : slotEnd}
+            </div>
             {mode === 'explicit' ? (
                 <button type='button'
                     title={t.text('search_defaults.input_submit.title')}

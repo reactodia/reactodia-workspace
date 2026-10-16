@@ -29,9 +29,11 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     border-radius: theme.$input-border-radius;
   }
 
-  .reactodia-dropdown__content {
+  & > .reactodia-dropdown__content {
+    position: unset;
     border-bottom-left-radius: theme.$input-border-radius;
     border-bottom-right-radius: theme.$input-border-radius;
+    box-shadow: unset;
   }
 
   &__search-input {
@@ -118,11 +120,6 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
 
   &__clear-button::after {
     @include codicon("close");
-  }
-
-  & .reactodia-dropdown__content {
-    position: unset;
-    box-shadow: unset;
   }
 
   &__panel {

@@ -305,9 +305,9 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                         name: 'reactodia-element-type-selector-search',
                         placeholder: t.textOptional('visual_authoring.select_entity.input.placeholder'),
                         autoFocus: true,
-                    }}>
-                    <span className={`${CLASS_NAME}__search-icon`} />
-                </SearchInput>
+                    }}
+                    slotInput={<span className={`${CLASS_NAME}__search-icon`} />}
+                />
                 {
                     searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}

@@ -504,15 +504,17 @@ class ConnectionsMenuInner extends React.Component<ConnectionsMenuInnerProps, Me
         return (
             <div className={CLASS_NAME}>
                 {this.getBreadCrumbs()}
-                <SearchInput className={`${CLASS_NAME}__search`}
-                    store={panel === 'connections' ? connectionSearch : objectSearch}
-                    inputProps={{
-                        name: 'reactodia-connection-menu-filter',
-                        placeholder: t.textOptional('connections_menu.input.placeholder'),
-                        'data-reactodia-autofocus': true,
-                    }}>
+                <div className={`${CLASS_NAME}__search-group`}>
+                    <SearchInput className={`${CLASS_NAME}__search`}
+                        store={panel === 'connections' ? connectionSearch : objectSearch}
+                        inputProps={{
+                            name: 'reactodia-connection-menu-filter',
+                            placeholder: t.textOptional('connections_menu.input.placeholder'),
+                            'data-reactodia-autofocus': true,
+                        }}
+                    />
                     {this.renderSortSwitches()}
-                </SearchInput>
+                </div>
                 {this.getBody()}
             </div>
         );

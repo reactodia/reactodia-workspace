@@ -1,31 +1,33 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
-import { useTranslation, type Translation, TranslatedText } from '../coreUtils/i18n';
+import { EventObserver } from '../../coreUtils/events';
+import { Debouncer } from '../../coreUtils/scheduler';
+import { useTranslation, type Translation, TranslatedText } from '../../coreUtils/i18n';
 
-import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
-import { DataProviderLookupParams, DataProviderLookupItem } from '../data/dataProvider';
-
-import type { CanvasApi } from '../diagram/canvasApi';
-import { placeElementsAroundTarget } from '../diagram/commands';
-import { Element, VoidElement } from '../diagram/elements';
-import { Vector, boundsOf } from '../diagram/geometry';
-
+import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../../data/model';
 import {
-    DataGraphStructure, requestElementData, restoreLinksBetweenElements,
-} from '../editor/dataDiagramModel';
-import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
+    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
+} from '../../data/dataProvider';
 
-import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
-import { InstancesSearchTopic } from '../workspace/commandBusTopic';
+import type { CanvasApi } from '../../diagram/canvasApi';
+import { placeElementsAroundTarget } from '../../diagram/commands';
+import { Element, VoidElement } from '../../diagram/elements';
+import { Vector, boundsOf } from '../../diagram/geometry';
 
-import { InlineEntity } from './utility/inlineEntity';
-import { NoSearchResults } from './utility/noSearchResults';
-import { ProgressBar, ProgressState } from './utility/progressBar';
-import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
-import { SearchResults } from './utility/searchResults';
+import { requestElementData, restoreLinksBetweenElements } from '../../editor/dataDiagramModel';
+import { EntityElement, EntityGroup } from '../../editor/dataElements';
+
+import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../../workspace/workspaceContext';
+import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
+
+import { ErrorMessage } from '../utility/errorMessage';
+import { NoSearchResults } from '../utility/noSearchResults';
+import { ProgressBar, ProgressState } from '../utility/progressBar';
+import { SearchInputStore, useSearchInputStore } from '../utility/searchInput';
+import { SearchResults } from '../utility/searchResults';
+
+import { InstanceCriteria } from './instanceCriteria';
 
 /**
  * Props for {@link InstancesSearch} component.
@@ -129,6 +131,10 @@ export interface SearchCriteria {
      * Only when {@link refElementLink} is set.
      */
     readonly linkDirection?: 'in' | 'out';
+    /**
+     * Filter by a lookup pattern.
+     */
+    readonly pattern?: LookupPattern;
 }
 
 /**
@@ -174,7 +180,7 @@ interface State {
     readonly criteria: SearchCriteria;
     readonly querying?: boolean;
     readonly resultId: number;
-    readonly error?: any;
+    readonly error?: unknown;
     readonly items?: ReadonlyArray<ElementModel>;
     readonly selection: ReadonlySet<ElementIri>;
     readonly moreItemsAvailable?: boolean;
@@ -322,7 +328,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         
         const resultItems = this.state.items ?? [];
         const actionsAreHidden = this.state.querying || this.state.selection.size === 0;
-        const queryError = this.state.error ? tryFormatQueryError(this.state.error) : undefined;
 
         return <div
             className={cx(
@@ -330,26 +335,18 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 isControlled ? `${CLASS_NAME}--controlled` : undefined,
                 className
             )}>
-            <div className={`${CLASS_NAME}__criteria`}>
-                {this.renderCriteria()}
-                {isControlled ? null : (
-                    <SearchInput store={searchStore}
-                        className={`${CLASS_NAME}__text-criteria`}
-                        inputProps={{
-                            name: 'reactodia-instances-search-text',
-                            placeholder: t.textOptional('search_entities.input.placeholder'),
-                        }}
-                    />
+            <InstanceCriteria
+                criteria={this.state.criteria}
+                setCriteria={criteria => this.setState(
+                    {criteria},
+                    () => this.props.onChangeCriteria?.(this.state.criteria)
                 )}
-            </div>
+                searchStore={isControlled ? undefined : searchStore}
+            />
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}
             />
-            {queryError ? (
-                <div className={`${CLASS_NAME}__error`}>
-                    {queryError}
-                </div>
-            ) : null}
+            {this.state.error ? <ErrorMessage error={this.state.error} /> : null}
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div key={this.state.resultId}
                 className={`${CLASS_NAME}__rest reactodia-scrollable`}
@@ -406,104 +403,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         this.setState({selection: newSelection});
     };
 
-    private renderCriteria(): React.ReactElement<any> {
-        const {workspace: {model}, translation: t} = this.props;
-        const {criteria} = this.state;
-        const criterions: React.ReactElement<any>[] = [];
-
-        if (criteria.elementType) {
-            const elementTypeInfo = model.getElementType(criteria.elementType);
-            const elementTypeLabel = t.formatLabel(
-                elementTypeInfo?.data?.label,
-                criteria.elementType,
-                model.language
-            );
-            criterions.push(
-                <div key='hasType' className={`${CLASS_NAME}__criterion`}>
-                    {this.renderRemoveCriterionButtons(() => this.setState(
-                        {
-                            criteria: {...criteria, elementType: undefined},
-                        },
-                        () => this.props.onChangeCriteria?.(this.state.criteria)
-                    ))}
-                    {t.template('search_entities.criteria_has_type', {
-                        entityType: (
-                            <span className={`${CLASS_NAME}__criterion-class`}
-                                title={criteria.elementType}>
-                                {elementTypeLabel}
-                            </span>
-                        )
-                    })}
-                </div>
-            );
-        } else if (criteria.refElement) {
-            const refElementData = findEntityData(model, criteria.refElement)
-                ?? EntityElement.placeholderData(criteria.refElement);
-
-            let linkTypeLabel: string | undefined;
-            if (criteria.refElementLink) {
-                const linkTypeData = model.getLinkType(criteria.refElementLink);
-                linkTypeLabel = t.formatLabel(
-                    linkTypeData?.data?.label,
-                    criteria.refElementLink,
-                    model.language
-                );
-            }
-
-            const entity = <InlineEntity target={refElementData} />;
-            const relationType = criteria.refElementLink ? (
-                <span className={`${CLASS_NAME}__criterion-link-type`}
-                    title={criteria.refElementLink}>
-                    {linkTypeLabel}
-                </span>
-            ) : undefined;
-            const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
-            const targetIcon = <span className={`${CLASS_NAME}__link-direction-out`} />;
-
-            criterions.push(
-                <div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
-                    {this.renderRemoveCriterionButtons(() => this.setState(
-                        {
-                            criteria: {...criteria, refElement: undefined, refElementLink: undefined},
-                        },
-                        () => this.props.onChangeCriteria?.(this.state.criteria)
-                    ))}
-                    {!criteria.refElementLink ? (
-                        t.template('search_entities.criteria_connected', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : criteria.linkDirection === 'in' ? (
-                        t.template('search_entities.criteria_connected_to_source', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : criteria.linkDirection == 'out' ? (
-                        t.template('search_entities.criteria_connected_to_target', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : (
-                        t.template('search_entities.criteria_connected_via', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    )}
-                </div>
-            );
-        }
-
-        return <div className={`${CLASS_NAME}__criterions`}>{criterions}</div>;
-    }
-
-    private renderRemoveCriterionButtons(onClick: () => void) {
-        return <div className={`${CLASS_NAME}__criterion-remove reactodia-btn-group reactodia-btn-group-xs`}>
-            <button type='button' title='Remove criteria'
-                className={cx(
-                    `${CLASS_NAME}__criterion-remove-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                onClick={onClick}>
-            </button>
-        </div>;
-    }
-
     private submitCriteriaUpdate(term: string, options: { triggerChange: boolean }): void {
         const {onChangeCriteria} = this.props;
         this.setState(
@@ -538,7 +437,13 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             request = createRequest(this.state.criteria);
         }
 
-        if (!(request.text || request.elementTypeId || request.refElementId || request.refElementLinkId)) {
+        if (!(
+            request.text ||
+            request.elementTypeId ||
+            request.refElementId ||
+            request.refElementLinkId ||
+            request.pattern
+        )) {
             this.setState({
                 querying: false,
                 error: undefined,
@@ -665,24 +570,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
 
         onAddElements?.(elements);
     }
-}
-
-function findEntityData(graph: DataGraphStructure, iri: ElementIri): ElementModel | undefined {
-    for (const element of graph.elements) {
-        for (const entity of iterateEntitiesOf(element)) {
-            if (entity.id === iri) {
-                return entity;
-            }
-        }
-    }
-    return undefined;
-}
-
-function tryFormatQueryError(error: unknown): string | undefined {
-    if (error instanceof Error) {
-        return error.message || error.name;
-    }
-    return undefined;
 }
 
 export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {

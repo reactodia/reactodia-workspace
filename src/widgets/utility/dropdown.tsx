@@ -1,6 +1,8 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useCombinedRef } from '../../coreUtils/hooks';
+
 import {
     FocusGroup, FocusGroupController, useFocusGroup, useFocusGroupItem,
 } from './focusGroup';
@@ -15,6 +17,10 @@ export interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
      * Additional CSS class for the component.
      */
     className?: string;
+    /**
+     * `ref` for the inner DOM element.
+     */
+    innerRef?: React.Ref<HTMLDivElement>;
     /**
      * Dropdown expand direction.
      *
@@ -50,10 +56,11 @@ const CLASS_NAME = 'reactodia-dropdown';
  */
 export function Dropdown(props: DropdownProps) {
     const {
-        className, direction = 'down', expanded, toggle, onClickOutside, children,
-        ...otherProps
+        className, innerRef, direction = 'down', expanded, toggle, onClickOutside,
+        children, ...otherProps
     } = props;
     const menuRef = React.useRef<HTMLDivElement | null>(null);
+    const passedRef = useCombinedRef(menuRef, innerRef);
 
     React.useLayoutEffect(() => {
         if (onClickOutside && expanded) {
@@ -70,7 +77,7 @@ export function Dropdown(props: DropdownProps) {
 
     return (
         <div {...otherProps}
-            ref={menuRef}
+            ref={passedRef}
             className={cx(
                 className,
                 CLASS_NAME,
@@ -103,6 +110,10 @@ export interface DropdownMenuProps extends React.HTMLAttributes<HTMLElement> {
      */
     direction?: 'down' | 'up';
     /**
+     * Custom toggle menu button component.
+     */
+    toggle?: React.ReactElement;
+    /**
      * Title for the toggle menu button.
      */
     title?: string;
@@ -120,7 +131,7 @@ const MENU_CLASS_NAME = 'reactodia-dropdown-menu';
  * @category Components
  */
 export function DropdownMenu(props: DropdownMenuProps) {
-    const {className, direction, title, children, ...otherProps} = props;
+    const {className, direction, toggle, title, children, ...otherProps} = props;
     const [expanded, setExpanded] = React.useState(false);
     const providedContext = React.useMemo(
         (): DropdownMenuContext => ({expanded, setExpanded}),
@@ -144,7 +155,7 @@ export function DropdownMenu(props: DropdownMenuProps) {
                         direction={direction}
                         expanded={expanded}
                         toggle={
-                            <DropdownMenuToggleButton title={title} />
+                            <DropdownMenuToggleButton component={toggle} title={title} />
                         }
                         onClickOutside={onClickOutside}>
                         <div ref={ref}
@@ -176,8 +187,11 @@ export function useDropdownMenu(): DropdownMenuContext {
     return context;
 }
 
-function DropdownMenuToggleButton(props: { title?: string }) {
-    const {title} = props;
+function DropdownMenuToggleButton(props: {
+    component?: React.ReactElement;
+    title?: string;
+}) {
+    const {component, title} = props;
     const {expanded, setExpanded} = useDropdownMenu();
     const controller = useFocusGroup();
     React.useLayoutEffect(() => {
@@ -185,7 +199,7 @@ function DropdownMenuToggleButton(props: { title?: string }) {
             controller.ensureFocusable({reset: true});
         }
     }, [expanded]);
-    return (
+    return component ?? (
         <button type='button'
             className={cx(
                 `${MENU_CLASS_NAME}__toggle`,

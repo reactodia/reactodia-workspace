@@ -206,3 +206,26 @@ export function useLatest<T>(value: T): { readonly current: T } {
     });
     return ref;
 }
+
+export function useCombinedRef<T>(
+    refA: React.Ref<T> | undefined,
+    refB: React.Ref<T> | undefined
+): React.RefCallback<T> {
+    return React.useCallback((value: T) => {
+        if (refA) {
+            if (typeof refA === 'function') {
+                refA(value);
+            } else {
+                (refA as React.MutableRefObject<T>).current = value;
+            }
+        }
+
+        if (refB) {
+            if (typeof refB === 'function') {
+                refB(value);
+            } else {
+                (refB as React.MutableRefObject<T>).current = value;
+            }
+        }
+    }, [refA, refB]);
+}

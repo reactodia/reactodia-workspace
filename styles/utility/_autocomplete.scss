@@ -1,0 +1,62 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-autocomplete {
+  &__toggle > .reactodia-search-input__input-group {
+    flex-wrap: wrap;
+  }
+
+  &__toggle-input {
+    min-width: 30%;
+  }
+
+  &__toggle-button {
+    height: 100%;
+    padding: 8px;
+    align-self: center;
+  
+    color: theme.$button-default-color;
+    background: 0 0;
+    border: 0;
+    border-radius: theme.$input-border-radius;
+    transition: background-color theme.$transition-duration;
+
+    &:hover {
+      color: theme.$button-default-color-focus;
+      background-color: theme.$button-default-background-color-focus;
+    }
+  }
+
+  .reactodia-search-input--size-s &__toggle-button {
+    padding: 3px;
+  }
+
+  .reactodia-dropdown--down &__toggle-button::after {
+    @include codicon("chevron-up");
+  }
+
+  .reactodia-dropdown--up &__toggle-button::after {
+    @include codicon("chevron-down");
+  }
+
+  .reactodia-dropdown--collapsed &__toggle-button::after {
+    transform: rotateX(180deg);
+  }
+
+  .reactodia-dropdown__content {
+    width: 100%;
+    height: 200px;
+    background-color: theme.$background-color-surface;
+    border-radius: theme.$border-radius-base;
+    border: theme.$border-width-base solid theme.$border-color-base;
+    border-top: none;
+  }
+
+  &__items {
+    overflow: scroll;
+  }
+
+  &__no-results {
+    margin-top: 10px;
+  }
+}

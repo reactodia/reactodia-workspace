@@ -192,6 +192,7 @@
     "input.placeholder": null,
     "place_elements.command": "Add selected elements",
     "query_progress.title": "Querying for entities",
+    "remove_criteria.title": "Remove condition",
     "show_more_results.label": "Show more",
     "show_more_results.title": "Load more results"
   },

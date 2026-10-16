@@ -3,11 +3,57 @@
 
 .reactodia-search-input {
   display: flex;
+  border: theme.$input-border-width solid theme.$input-border-color;
+  border-radius: theme.$input-border-radius;
+  background-color: theme.$background-color-surface;
+  transition: border-color ease-in-out 0.15s;
+
+  &:focus-within {
+    border-color: theme.$input-border-color-focus;
+  }
+
+  &__input-group {
+    display: flex;
+    flex: auto;
+  }
 
   &__input {
+    flex: auto;
+
+    display: block;
+    width: 0;
+    margin: 0;
+    padding: 6px 12px;
+    font-family: theme.$font-family-base;
+    line-height: theme.$line-height-base;
+    font-size: 14px;
+    
+    color: theme.$input-color;
+    background-color: theme.$background-color-surface;
+    border-radius: theme.$input-border-radius;
+    border-width: 0;
+  
     &::placeholder {
       color: theme.$input-color-placeholder;
     }
+
+    &:focus {
+      outline: 0;
+    }
+
+    &:disabled {
+      background-color: theme.$input-background-color-disabled;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  &--size-m &__input {
+    height: 32px;
+  }
+
+  &--size-s &__input {
+    height: 24px;
   }
 
   &--has-submit &__input {
@@ -15,23 +61,27 @@
     border-bottom-right-radius: unset;
   }
 
-  &__clear-container {
-    width: 0;
-    overflow: visible;
+  &__slot-end {
     display: flex;
     align-items: center;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__slot-end > * {
+    border-top-right-radius: theme.$input-border-radius;
+    border-bottom-right-radius: theme.$input-border-radius;
   }
 
   &__clear {
-    position: relative;
-    left: -33px;
+    height: 100%;
     padding: 8px;
     cursor: pointer;
     color: theme.$button-default-color;
     background: transparent;
     border: 0;
-    border-top-right-radius: theme.$input-border-radius;
-    border-bottom-right-radius: theme.$input-border-radius;
     transition: background-color theme.$transition-duration;
 
     &:hover {
@@ -44,13 +94,19 @@
     }
   }
 
-  &--has-submit &__clear {
+  &--size-s &__clear {
+    padding: 3px;
+  }
+
+  &--has-submit &__slot-end > * {
     border-top-right-radius: unset;
     border-bottom-right-radius: unset;
   }
 
   &__submit  {
     margin-left: -1px;
+    border: none;
+    border-left: theme.$input-border-width solid theme.$input-border-color;
     border-top-left-radius: unset;
     border-bottom-left-radius: unset;
 
