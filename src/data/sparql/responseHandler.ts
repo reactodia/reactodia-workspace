@@ -4,9 +4,9 @@ import { multimapAdd } from '../../coreUtils/collections';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkTypeModel, ElementTypeGraph, ElementModel, LinkModel,
+    LinkTypeModel, ElementTypeGraph, ElementModel, LinkModel, SubtypeEdge,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
-    hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink
+    hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink,
 } from '../model';
 import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
@@ -28,7 +28,12 @@ export interface MutableClassModel {
     count?: number;
 }
 
-export function getClassTree(response: SparqlResponse<ClassBinding>): ElementTypeGraph {
+interface MutableElementTypeGraph {
+    elementTypes: MutableClassModel[];
+    subtypeOf: SubtypeEdge[];
+}
+
+export function getClassTree(response: SparqlResponse<ClassBinding>): MutableElementTypeGraph {
     const nodes = new Map<ElementTypeIri, MutableClassModel>();
     const edges = new HashSet(hashSubtypeEdge, equalSubtypeEdges);
 
@@ -104,14 +109,14 @@ export function collectClassInfo(
     }
 }
 
-export interface MutablePropertyModel {
+export interface MutablePropertyType {
     readonly id: PropertyTypeIri;
     label: Rdf.Literal[];
 }
 
-export function collectPropertyInfo(
+export function collectPropertyTypes(
     response: SparqlResponse<PropertyBinding>,
-    result: Map<PropertyTypeIri, MutablePropertyModel>
+    result: Map<PropertyTypeIri, MutablePropertyType>
 ): void {
     for (const binding of response.results.bindings) {
         const propertyTypeId: PropertyTypeIri = binding.property.value;
@@ -125,6 +130,14 @@ export function collectPropertyInfo(
             });
         }
     }
+}
+
+export function getPropertyTypes(
+    response: SparqlResponse<PropertyBinding>
+): Map<PropertyTypeIri, MutablePropertyType> {
+    const result = new Map<PropertyTypeIri, MutablePropertyType>();
+    collectPropertyTypes(response, result);
+    return result;
 }
 
 export interface MutableLinkType {

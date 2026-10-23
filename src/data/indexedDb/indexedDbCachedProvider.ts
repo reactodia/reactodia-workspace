@@ -63,7 +63,9 @@ export interface IndexedDbCachedProviderOptions {
 
 const enum ObjectStore {
     knownElementTypes = 'knownElementTypes',
-    knownLinkTypes = 'knownLinkTypes',
+    lookupElementTypes = 'lookupElementTypes',
+    lookupPropertyTypes = 'lookupPropertyTypes',
+    lookupLinkTypes = 'lookupLinkTypes',
     elementTypes = 'elementTypes',
     linkTypes = 'linkTypes',
     propertyTypes = 'propertyTypes',
@@ -90,6 +92,15 @@ const KNOWN_ELEMENT_TYPES_KEY = 'knownElementTypes';
 interface KnownElementTypesRecord {
     readonly id: typeof KNOWN_ELEMENT_TYPES_KEY;
     readonly value: ElementTypeGraph;
+}
+
+type LookupTypesKey = [pattern: string, limit: string];
+const LOOKUP_TYPES_KEY_PROPERTIES: Array<keyof LookupTypesRecord<string>> =
+    ['pattern', 'limit'];
+interface LookupTypesRecord<T> {
+    readonly pattern: string;
+    readonly limit: string;
+    readonly result: T[];
 }
 
 const KNOWN_LINK_TYPES_KEY = 'knownLinkTypes';
@@ -197,9 +208,19 @@ export class IndexedDbCachedProvider implements DataProvider {
                             keyPath: 'id',
                         });
                     }
-                    if (!db.objectStoreNames.contains(ObjectStore.knownLinkTypes)) {
-                        db.createObjectStore(ObjectStore.knownLinkTypes, {
-                            keyPath: 'id',
+                    if (!db.objectStoreNames.contains(ObjectStore.lookupElementTypes)) {
+                        db.createObjectStore(ObjectStore.lookupElementTypes, {
+                            keyPath: LOOKUP_TYPES_KEY_PROPERTIES,
+                        });
+                    }
+                    if (!db.objectStoreNames.contains(ObjectStore.lookupLinkTypes)) {
+                        db.createObjectStore(ObjectStore.lookupLinkTypes, {
+                            keyPath: LOOKUP_TYPES_KEY_PROPERTIES,
+                        });
+                    }
+                    if (!db.objectStoreNames.contains(ObjectStore.lookupPropertyTypes)) {
+                        db.createObjectStore(ObjectStore.lookupPropertyTypes, {
+                            keyPath: LOOKUP_TYPES_KEY_PROPERTIES,
                         });
                     }
                     if (!db.objectStoreNames.contains(ObjectStore.elementTypes)) {
@@ -291,19 +312,75 @@ export class IndexedDbCachedProvider implements DataProvider {
         return result.value;
     }
 
-    async knownLinkTypes(params: { signal?: AbortSignal | undefined; }): Promise<LinkTypeModel[]> {
+    async lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal | undefined;
+    }): Promise<ElementTypeModel[]> {
+        return this.lookupTypes(
+            params,
+            ObjectStore.lookupElementTypes,
+            () => this.baseProvider.lookupElementTypes(params)
+        );
+    }
+
+    async lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal | undefined;
+    }): Promise<PropertyTypeModel[]> {
+        return this.lookupTypes(
+            params,
+            ObjectStore.lookupPropertyTypes,
+            () => this.baseProvider.lookupPropertyTypes(params)
+        );
+    }
+
+    async lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal | undefined;
+    }): Promise<LinkTypeModel[]> {
+        return this.lookupTypes(
+            params,
+            ObjectStore.lookupLinkTypes,
+            () => this.baseProvider.lookupLinkTypes(params)
+        );
+    }
+
+    private async lookupTypes<T extends { readonly label: readonly Rdf.Literal[] }>(
+        params: {
+            text: string;
+            limit?: number;
+            signal?: AbortSignal | undefined;
+        },
+        store: ObjectStore,
+        lookupItems: () => Promise<T[]>
+    ): Promise<T[]> {
+        if (!this.cacheTextLookups) {
+            return lookupItems();
+        }
+        const key: LookupTypesKey = [
+            JSON.stringify(serializeTextLookup(params.text)),
+            (
+                params.limit === undefined ? '' :
+                params.limit === null ? 'null' :
+                String(params.limit)
+            )
+        ];
         const db = await this.openDb();
-        const result = await fetchSingleWithDbCache(
+        const record = await fetchSingleWithDbCache(
             db,
-            ObjectStore.knownLinkTypes,
-            KNOWN_LINK_TYPES_KEY,
-            async (key): Promise<KnownLinkTypesRecord> => ({
-                id: key,
-                value: await this.baseProvider.knownLinkTypes(params),
+            store,
+            key,
+            async ([pattern, limit]): Promise<LookupTypesRecord<T>> => ({
+                pattern,
+                limit,
+                result: await lookupItems(),
             })
         );
-        rehydrateLabels(result.value.values(), this.factory);
-        return result.value;
+        rehydrateLabels(record.result, this.factory);
+        return record.result;
     }
 
     async elementTypes(params: {
@@ -1114,7 +1191,8 @@ function hasTextPatternOrFilter(pattern: LookupPattern): boolean {
             return true;
         }
         case 'hasProperty': {
-            return pattern.filter !== undefined;
+            // return pattern.filter !== undefined;
+            return false;
         }
         default: {
             return false;
@@ -1123,6 +1201,10 @@ function hasTextPatternOrFilter(pattern: LookupPattern): boolean {
 }
 
 type SExprLike = readonly (string | null | RdfExpression | SExprLike)[];
+
+function serializeTextLookup(text: string): SExprLike {
+    return ['withText', text];
+}
 
 function serializePattern(pattern: LookupPattern): SExprLike {
     switch (pattern.type) {
@@ -1138,7 +1220,7 @@ function serializePattern(pattern: LookupPattern): SExprLike {
                 pattern.type,
                 pattern.linkType ?? null,
                 pattern.linkDirection ?? null,
-                pattern.values ?? [],
+                pattern.target ? serializePattern(pattern.target) : null,
             ];
         }
         case 'withText': {
@@ -1152,7 +1234,7 @@ function serializePattern(pattern: LookupPattern): SExprLike {
                 pattern.type,
                 pattern.propertyType,
                 (pattern.values ?? []).map(Rdf.termToString),
-                pattern.filter ?? null,
+                /* serializeFilter(pattern.filter) */ null
             ];
         }
         default: {

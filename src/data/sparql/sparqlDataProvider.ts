@@ -16,23 +16,24 @@ import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
 import {
     MutableClassModel,
     MutableLinkType,
-    MutablePropertyModel,
+    MutablePropertyType,
     appendProperty,
     collectClassInfo,
     collectElementTypes,
     collectLinkTypes,
-    collectPropertyInfo,
+    collectPropertyTypes,
     enrichElementsWithImages,
     getClassTree,
-    getElementsInfo,
-    getLinkTypes,
-    getLinksInfo,
     getConnectedLinkTypes,
+    getElementsInfo,
     getFilteredData,
+    getLinksInfo,
+    getLinkTypes,
     getLinkStatistics,
-    triplesToElementBinding,
+    getPropertyTypes,
     isDirectLink,
     isDirectProperty,
+    triplesToElementBinding,
 } from './responseHandler';
 import {
     ClassBinding, ElementBinding, ElementTypeBinding, LinkBinding, PropertyBinding, FilterBinding,
@@ -41,6 +42,7 @@ import {
 } from './sparqlModels';
 import {
     SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
+    FullTextSearchSettings,
 } from './sparqlDataProviderSettings';
 
 /**
@@ -292,6 +294,104 @@ export class SparqlDataProvider implements DataProvider {
         return classTree;
     }
 
+    async lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        const {classLookupQuery, classLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            classLookupQuery,
+            classLookupSettings,
+            '?class',
+            (response: SparqlResponse<ClassBinding>) => getClassTree(response).elementTypes,
+            params
+        );
+    }
+
+    async lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        const {propertyTypesLookupQuery, propertyTypesLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            propertyTypesLookupQuery,
+            propertyTypesLookupSettings,
+            '?property',
+            (response: SparqlResponse<PropertyBinding>) => Array.from(
+                getPropertyTypes(response).values()
+            ),
+            params
+        );
+    }
+
+    async lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        const {linkTypesLookupQuery, linkTypesLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            linkTypesLookupQuery,
+            linkTypesLookupSettings,
+            '?link',
+            (response: SparqlResponse<LinkTypeBinding>) => Array.from(
+                getLinkTypes(response).values()
+            ),
+            params
+        );
+    }
+
+    private async lookupSchemaItems<Binding, Item extends LabeledItem>(
+        lookupQuery: string | undefined,
+        lookupSettings: FullTextSearchSettings | undefined,
+        itemBinding: string,
+        itemsFromResponse: (response: SparqlResponse<Binding>) => Item[],
+        params: {
+            text: string;
+            limit?: number;
+            signal?: AbortSignal;
+        }
+    ): Promise<Item[]> {
+        const {text, limit, signal} = params;
+        const {
+            defaultPrefix, dataLabelProperty, schemaLabelProperty, filterOnlyLanguages,
+            schemaTextSearch,
+        } = this.settings;
+
+        const textSearchSettings = lookupSettings ?? schemaTextSearch;
+        if (!(lookupQuery && textSearchSettings)) {
+            return [];
+        }
+
+        let filterByText = '';
+        if (textSearchSettings.extractLabel) {
+            filterByText += sparqlExtractLabel(itemBinding, '?extractedLabel');
+        }
+        filterByText += resolveTemplate(textSearchSettings.queryPattern, {
+            text: text,
+            dataLabelProperty,
+            schemaLabelProperty,
+        });
+        const prefix = defaultPrefix + textSearchSettings.prefix;
+        const query = prefix + resolveTemplate(lookupQuery, {
+            schemaLabelProperty,
+            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+            filterByText: filterByText.replace(/[?$]inst\b/g, itemBinding),
+            limit: formatLimit(limit),
+        });
+
+        const result = await this.executeSparqlSelect<Binding>(query, {signal});
+        const items = Array.from(itemsFromResponse(result).values());
+
+        if (this.options.prepareLabels) {
+            await attachLabels(items, this.options.prepareLabels, signal);
+        }
+
+        return items;
+    }
+
     async propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
@@ -299,7 +399,7 @@ export class SparqlDataProvider implements DataProvider {
         const {propertyIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, propertyInfoQuery} = this.settings;
 
-        const properties = new Map<PropertyTypeIri, MutablePropertyModel>();
+        const properties = new Map<PropertyTypeIri, MutablePropertyType>();
         if (propertyInfoQuery) {
             await this.queryChunked(propertyIds, async batch => {
                 const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
@@ -309,7 +409,7 @@ export class SparqlDataProvider implements DataProvider {
                     labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
                 });
                 const response = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
-                collectPropertyInfo(response, properties);
+                collectPropertyTypes(response, properties);
             });
         } else {
             for (const id of propertyIds) {
@@ -386,32 +486,6 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         return linkTypes;
-    }
-
-    async knownLinkTypes(params: {
-        signal?: AbortSignal;
-    }): Promise<LinkTypeModel[]> {
-        const {signal} = params;
-        const {
-            defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesQuery, linkTypesPattern,
-        } = this.settings;
-        if (!linkTypesQuery) {
-            return [];
-        }
-
-        const query = defaultPrefix + resolveTemplate(linkTypesQuery, {
-            linkTypesPattern,
-            schemaLabelProperty,
-            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
-        });
-        const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-        const linkTypes = getLinkTypes(result);
-
-        if (this.options.prepareLabels) {
-            await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
-        }
-
-        return Array.from(linkTypes.values());
     }
 
     async elements(params: {
@@ -797,8 +871,8 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         const {
-            defaultPrefix, dataLabelProperty, lookupQuery, filterOnlyLanguages,
-            filterElementInfoPattern, fullTextSearch,
+            defaultPrefix, dataLabelProperty, schemaLabelProperty, lookupQuery,
+            filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
         } = this.settings;
 
         const queryElementInfo = resolveTemplate(filterElementInfoPattern, {
@@ -813,16 +887,18 @@ export class SparqlDataProvider implements DataProvider {
             if (this.settings.fullTextSearch.extractLabel) {
                 filterByText += sparqlExtractLabel('?inst', '?extractedLabel');
             }
-            filterByText = resolveTemplate(fullTextSearch.queryPattern, {text: params.text, dataLabelProperty});
+            filterByText += resolveTemplate(fullTextSearch.queryPattern, {
+                text: params.text,
+                dataLabelProperty,
+                schemaLabelProperty,
+            });
             if (filterByText) {
                 orderBy = 'ORDER BY DESC(?score)';
             }
         }
 
-        let limitPart = '';
-        if (typeof params.limit === 'number') {
-            limitPart = `LIMIT ${params.limit}`;
-        }
+        const limitPart = formatLimit(params.limit);
+        
 
         const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
         return completePrefix + resolveTemplate(lookupQuery, {
@@ -1311,6 +1387,10 @@ function sparqlExtractLabel(subject: string, label: string): string {
 
 function formatValueClauseContent(iris: Iterable<string>): string {
     return Array.from(iris, iri => `(${escapeIri(iri)})`).join(' ');
+}
+
+function formatLimit(limit: number | null | undefined): string {
+    return typeof limit === 'number' ? `LIMIT ${limit}` : '';
 }
 
 function escapeIri(iri: string) {

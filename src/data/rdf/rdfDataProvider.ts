@@ -1,4 +1,4 @@
-import { HashMap, HashSet } from '@reactodia/hashmap';
+import { HashSet } from '@reactodia/hashmap';
 
 import {
     ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
@@ -10,6 +10,7 @@ import {
     DataProviderPatternSupport, LookupPattern, lookupPatternOf,
 } from '../dataProvider';
 import { RdfExpressionEvaluator, StandardFunctions } from '../rdfExpressions';
+import { makeCaseInsensitiveFilter } from '../utils';
 
 import { matchPattern, encodeTerm, decodeTerm, isResourceTerm } from './datasetLookup';
 import { MemoryDataset, IndexQuadBy, indexedDataset } from './memoryDataset';
@@ -75,12 +76,35 @@ export interface RdfDataProviderOptions {
      * **Default**:
      * ```json
      * [
-     *   "http://www.w3.org/2002/07/owl#ObjectProperty",
      *   "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
      * ]
      * ```
      */
+    readonly propertyOrLinkBaseTypes?: ReadonlyArray<string>;
+    /**
+     * **Default**:
+     * ```json
+     * [
+     *   "http://www.w3.org/2002/07/owl#DatatypeProperty"
+     * ]
+     * ```
+     */
+    readonly propertyTypeBaseTypes?: ReadonlyArray<string>;
+    /**
+     * **Default**:
+     * ```json
+     * [
+     *   "http://www.w3.org/2002/07/owl#ObjectProperty"
+     * ]
+     * ```
+     */
     readonly linkTypeBaseTypes?: ReadonlyArray<string>;
+    /**
+     * Whether to compute {@link LinkTypeModel.count} value based on links in the dataset.
+     *
+     * @default false
+     */
+    readonly countLinks?: boolean;
 }
 
 /**
@@ -103,7 +127,10 @@ export class RdfDataProvider implements DataProvider {
     private readonly datatypePredicates: ReadonlySet<PropertyTypeIri>;
     private readonly elementTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
     private readonly elementSubtypePredicate: Rdf.NamedNode | null;
+    private readonly propertyOrLinkBaseTypes: ReadonlyArray<Rdf.NamedNode>;
+    private readonly propertyTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
     private readonly linkTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
+    private readonly countLinks: boolean;
 
     private readonly EMPTY_LINKS: ReadonlySet<LinkTypeIri> = new Set();
 
@@ -130,8 +157,13 @@ export class RdfDataProvider implements DataProvider {
             .map(iri => this.factory.namedNode(iri));
         this.elementSubtypePredicate = options.elementSubtypePredicate === null
             ? null : this.factory.namedNode(options.elementSubtypePredicate ?? rdfs.subClassOf);
-        this.linkTypeBaseTypes = (options.linkTypeBaseTypes ?? [owl.ObjectProperty, rdf.Property])
+        this.propertyOrLinkBaseTypes = (options.propertyOrLinkBaseTypes ?? [rdf.Property])
             .map(iri => this.factory.namedNode(iri));
+        this.propertyTypeBaseTypes = (options.propertyTypeBaseTypes ?? [owl.DatatypeProperty])
+            .map(iri => this.factory.namedNode(iri));
+        this.linkTypeBaseTypes = (options.linkTypeBaseTypes ?? [owl.ObjectProperty])
+            .map(iri => this.factory.namedNode(iri));
+        this.countLinks = options.countLinks ?? false;
     }
 
     /**
@@ -240,6 +272,108 @@ export class RdfDataProvider implements DataProvider {
         }
         const classTree: ElementTypeGraph = {elementTypes, subtypeOf};
         return Promise.resolve(classTree);
+    }
+
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        const {text, limit} = params;
+        return Promise.resolve(this.lookupSchemaItems({
+            includeTypes: this.elementTypeBaseTypes,
+            excludeTypes: [],
+            allowBlanks: true,
+            createItem: (id, label): ElementTypeModel => ({id: this.encodeTerm(id), label}),
+            text,
+            limit,
+        }));
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        const {text, limit} = params;
+        return Promise.resolve(this.lookupSchemaItems({
+            includeTypes: [
+                ...this.propertyOrLinkBaseTypes,
+                ...this.propertyTypeBaseTypes,
+            ],
+            excludeTypes: this.linkTypeBaseTypes,
+            createItem: (id, label): PropertyTypeModel => ({id: this.encodeTerm(id), label}),
+            text,
+            limit,
+        }));
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        const {text, limit} = params;
+        const linkCounts = this.computeLinkCounts();
+        return Promise.resolve(this.lookupSchemaItems({
+            includeTypes: [
+                ...this.propertyOrLinkBaseTypes,
+                ...this.linkTypeBaseTypes,
+            ],
+            excludeTypes: this.propertyTypeBaseTypes,
+            createItem: (idTerm, label): LinkTypeModel => {
+                const id = this.encodeTerm(idTerm);
+                const count = linkCounts.get(id);
+                return {id, label, count};
+            },
+            text,
+            limit,
+        }));
+    }
+
+    private lookupSchemaItems<T>(params: {
+        includeTypes: readonly Rdf.NamedNode[],
+        excludeTypes: readonly Rdf.NamedNode[],
+        allowBlanks?: boolean,
+        createItem: (id: Rdf.NamedNode | Rdf.BlankNode, label: Rdf.Literal[]) => T,
+        text: string;
+        limit?: number;
+    }): T[] {
+        const {includeTypes, excludeTypes, allowBlanks, createItem, text} = params;
+        const limit = typeof params.limit === 'number' ? params.limit : Number.POSITIVE_INFINITY;
+        const seenIds = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
+        const items: T[] = [];
+        const textFilter = makeCaseInsensitiveFilter(text);
+        lookup: for (const baseType of includeTypes) {
+            const includeMatches = this.dataset.iterateMatches(null, this.typePredicate, baseType);
+            nextId: for (const {subject: id} of includeMatches) {
+                if (items.length >= limit) {
+                    break lookup;
+                }
+                if (
+                    !(id.termType === 'NamedNode' || (allowBlanks && id.termType === 'BlankNode')) ||
+                    seenIds.has(id)
+                ) {
+                    continue nextId;
+                }
+
+                seenIds.add(id);
+
+                for (const excludedType of excludeTypes) {
+                    if (this.dataset.hasMatches(id, this.typePredicate, excludedType)) {
+                        continue nextId;
+                    }
+                }
+
+                const label = this.labelPredicate
+                    ? findLiterals(this.dataset, id, this.labelPredicate)
+                    : [];
+                if (label.some(v => textFilter(v.value))) {
+                    items.push(createItem(id, label));
+                }
+            }
+        }
+        return items;
     }
 
     knownLinkTypes(params: {
@@ -513,8 +647,11 @@ export class RdfDataProvider implements DataProvider {
     private computeLinkCounts(
         onlyLinkTypes?: ReadonlyArray<LinkTypeIri>
     ): Map<LinkTypeIri, number> {
-        const linkTypeSet = onlyLinkTypes ? new Set(onlyLinkTypes) : undefined;
         const linkStats = new Map<LinkTypeIri, number>();
+        if (!this.countLinks) {
+            return linkStats;
+        }
+        const linkTypeSet = onlyLinkTypes ? new Set(onlyLinkTypes) : undefined;
         for (const t of this.dataset) {
             if (t.predicate.termType === 'NamedNode') {
                 const linkTypeId: LinkTypeIri = this.encodeTerm(t.predicate);

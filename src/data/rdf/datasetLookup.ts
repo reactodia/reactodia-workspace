@@ -95,12 +95,13 @@ function joinWithPattern(
             return items;
         }
         case 'connectedTo': {
-            const providedTerms = (pattern.values ?? []).map(v => decodeTerm(v, context.factory));
-            const valueTerms = providedTerms.length === 0 ? [null] : providedTerms;
+            const targets = pattern.target
+                ? Array.from(joinWithPattern(undefined, pattern.target, context).keys())
+                : [null];
             const linkTerm = pattern.linkType ? decodeTerm(pattern.linkType, context.factory) : null;
             const items = makeItemMap();
             if (!pattern.linkDirection || pattern.linkDirection === 'out') {
-                for (const valueTerm of valueTerms) {
+                for (const valueTerm of targets) {
                     for (const t of context.dataset.iterateMatches(valueTerm, linkTerm, null)) {
                         if (
                             t.predicate.termType === 'NamedNode' &&
@@ -123,7 +124,7 @@ function joinWithPattern(
                 }
             }
             if (!pattern.linkDirection || pattern.linkDirection === 'in') {
-                for (const valueTerm of valueTerms) {
+                for (const valueTerm of targets) {
                     for (const t of context.dataset.iterateMatches(null, linkTerm, valueTerm)) {
                         if (
                             t.predicate.termType === 'NamedNode' &&
@@ -172,8 +173,8 @@ function joinWithPattern(
             for (const t of iterable) {
                 if (
                     isResourceTerm(t.subject) &&
-                    (!previous || providedTerms.find(value => Rdf.equalTerms(t.object, value))) &&
-                    (!pattern.filter || matchesFilter(t.object, pattern.filter, context.evaluator))
+                    (!previous || providedTerms.find(value => Rdf.equalTerms(t.object, value))) //&&
+                    // (!pattern.filter || matchesFilter(t.object, pattern.filter, context.evaluator))
                 ) {
                     items.set(t.subject, {term: t.subject});
                 }

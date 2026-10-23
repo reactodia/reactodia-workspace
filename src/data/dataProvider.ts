@@ -3,7 +3,6 @@ import {
     ElementTypeGraph, ElementTypeModel, LinkTypeModel, ElementModel, LinkModel, PropertyTypeModel,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
 } from './model';
-import type { RdfExpression } from './rdfExpressions';
 
 /**
  * Asynchronously provides data for the elements, links and other graph entities.
@@ -18,9 +17,21 @@ export interface DataProvider {
     readonly factory: Rdf.DataFactory;
 
     /**
-     * Gets the structure and data for all known element types.
+     * Gets the structure and data for all or filtered by a keyword known element types.
+     *
+     * If `text` is specified, the result type graph may only some or none of the edges.
      */
     knownElementTypes(params: {
+        /**
+         * Filter by a text lookup.
+         */
+        text?: string;
+        /**
+         * Limit number of element types returned.
+         *
+         * Default value depends on the provider implementation.
+         */
+        limit?: number;
         /**
          * Cancellation signal.
          */
@@ -28,9 +39,59 @@ export interface DataProvider {
     }): Promise<ElementTypeGraph>;
 
     /**
-     * Gets the data and statistics for all known link types.
+     * Gets known element types filtered by a keyword.
      */
-    knownLinkTypes(params: {
+    lookupElementTypes(params: {
+        /**
+         * Filter by a text lookup.
+         */
+        text: string;
+        /**
+         * Limit number of element types returned.
+         *
+         * Default value depends on the provider implementation.
+         */
+        limit?: number;
+        /**
+         * Cancellation signal.
+         */
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]>;
+
+    /**
+     * Gets known property types filtered by a keyword.
+     */
+    lookupPropertyTypes(params: {
+        /**
+         * Filter by a text lookup.
+         */
+        text: string;
+        /**
+         * Limit number of property types returned.
+         *
+         * Default value depends on the provider implementation.
+         */
+        limit?: number;
+        /**
+         * Cancellation signal.
+         */
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]>;
+
+    /**
+     * Gets known link types filtered by a keyword.
+     */
+    lookupLinkTypes(params: {
+        /**
+         * Filter by a text lookup.
+         */
+        text: string;
+        /**
+         * Limit number of link types returned.
+         *
+         * Default value depends on the provider implementation.
+         */
+        limit?: number;
         /**
          * Cancellation signal.
          */
@@ -230,7 +291,7 @@ export interface DataProviderLookupParams {
      *
      * Pass `null` to explicitly disable the limit.
      *
-     * Default depends on the provider implementation.
+     * Default value depends on the provider implementation.
      */
     limit?: number | null;
 
@@ -243,11 +304,11 @@ export interface DataProviderLookupParams {
 export type LookupPattern =
     | AllOfLookupPattern
     | AnyOfLookupPattern
-    | TextLookupPattern
-    | ConnectionLookupPattern
-    | TypeLookupPattern
+    | WithTextLookupPattern
+    | HasTypeLookupPattern
+    | ConnectedToLookupPattern
     | FromValuesLookupPattern
-    | PropertyLookupPattern;
+    | HasPropertyLookupPattern;
 
 export interface AllOfLookupPattern {
     readonly type: 'allOf';
@@ -259,21 +320,21 @@ export interface AnyOfLookupPattern {
     readonly patterns: readonly LookupPattern[];
 }
 
-export interface TextLookupPattern {
+export interface WithTextLookupPattern {
     readonly type: 'withText';
     readonly text: string;
 }
 
-export interface ConnectionLookupPattern {
+export interface HasTypeLookupPattern {
+    readonly type: 'hasType';
+    readonly elementType: ElementTypeIri;
+}
+
+export interface ConnectedToLookupPattern {
     readonly type: 'connectedTo';
     readonly linkType?: LinkTypeIri;
     readonly linkDirection?: 'in' | 'out';
-    readonly values?: readonly ElementIri[];
-}
-
-export interface TypeLookupPattern {
-    readonly type: 'hasType';
-    readonly elementType: ElementTypeIri;
+    readonly target?: LookupPattern;
 }
 
 export interface FromValuesLookupPattern {
@@ -281,11 +342,10 @@ export interface FromValuesLookupPattern {
     readonly values: readonly ElementIri[];
 }
 
-export interface PropertyLookupPattern {
+export interface HasPropertyLookupPattern {
     readonly type: 'hasProperty';
     readonly propertyType: PropertyTypeIri;
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
-    readonly filter?: RdfExpression;
 }
 
 /**
@@ -332,12 +392,15 @@ export function lookupPatternOf(params: Omit<DataProviderLookupParams, 'limit' |
         });
     }
 
-    if (refElementId) {
+    if (refElementId || refElementLinkId) {
         patterns.push({
             type: 'connectedTo',
             linkType: refElementLinkId,
             linkDirection: linkDirection,
-            values: [refElementId],
+            target: refElementId ? {
+                type: 'fromValues',
+                values: [refElementId],
+            } : undefined,
         });
     }
 

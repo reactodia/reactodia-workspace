@@ -357,8 +357,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
          */
         validateLinks?: boolean;
         /**
-         * Whether to fetch known link types on import and automatically hide
-         * all unused link types.
+         * Whether to hide all link types not present in the restored diagram state
+         * for the links requested on import.
+         *
+         * Applicable only when `validateLinks` is `true`.
          *
          * @default false
          */
@@ -400,7 +402,7 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             parentSignal?.addEventListener('abort', onParentSignalAbort);
             signal.throwIfAborted();
 
-            this.setLinkSettings(diagram.linkTypeOptions ?? []);
+            const knownLinkTypes = this.setLinkSettings(diagram.linkTypeOptions ?? []);
 
             this.createGraphElements({
                 diagram,
@@ -410,13 +412,6 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
                 preloadedLinks,
                 markLinksAsLayoutOnly: validateLinks,
             });
-
-            if (hideUnusedLinkTypes) {
-                const linkTypes = await this.dataProvider.knownLinkTypes({signal});
-                signal.throwIfAborted();
-                const knownLinkTypes = this.initLinkTypes(linkTypes);
-                this.hideUnusedLinkTypes(knownLinkTypes);
-            }
 
             this.subscribeGraph();
 
@@ -430,10 +425,18 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
             }
 
             const requestingModels = this.requestElementData(elementIrisToRequestData);
-            const requestingLinks = params.validateLinks
-                ? this.requestLinks() : Promise.resolve();
+
+            let requestingLinks = Promise.resolve();
+            let capturedUsedLinks: { hideAddedLinkTypes(): void } | undefined;
+            if (validateLinks) {
+                requestingLinks = this.requestLinks();
+                if (hideUnusedLinkTypes) {
+                    capturedUsedLinks = this.captureUsedLinkTypes(knownLinkTypes);
+                }
+            }
 
             await Promise.all([requestingModels, requestingLinks]);
+            capturedUsedLinks?.hideAddedLinkTypes();
 
             this.history.reset();
             this.extendedSource.trigger('loadingSuccess', {source: this});
@@ -496,17 +499,10 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         });
     }
 
-    private initLinkTypes(linkTypes: LinkTypeModel[]): LinkType[] {
-        const types: LinkType[] = [];
-        for (const data of linkTypes) {
-            const linkType = new LinkType({id: data.id, data});
-            this.dataGraph.addLinkType(linkType);
-            types.push(linkType);
-        }
-        return types;
-    }
-
-    private setLinkSettings(settings: ReadonlyArray<SerializedLinkOptions>) {
+    private setLinkSettings(
+        settings: ReadonlyArray<SerializedLinkOptions>
+    ): Set<LinkTypeIri> {
+        const knownLinkTypes = new Set<LinkTypeIri>();
         for (const setting of settings) {
             const {visible = true, showLabel = true} = setting;
             const linkTypeId: LinkTypeIri = setting.property;
@@ -516,7 +512,9 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
                 'hidden'
             );
             this.setLinkVisibility(linkTypeId, visibility);
+            knownLinkTypes.add(linkTypeId);
         }
+        return knownLinkTypes;
     }
 
     private createGraphElements(params: {
@@ -568,19 +566,31 @@ export class DataDiagramModel extends DiagramModel implements DataGraphStructure
         batch.store();
     }
 
-    private hideUnusedLinkTypes(knownLinkTypes: ReadonlyArray<LinkType>): void {
-        const usedTypes = new Set<LinkTypeIri>();
+    private captureUsedLinkTypes(knownLinkTypes: ReadonlySet<LinkTypeIri>) {
+        const usedTypes = new Set<LinkTypeIri>(knownLinkTypes);
         for (const link of this.graph.getLinks()) {
-            if (link instanceof RelationLink || link instanceof RelationGroup) {
+            if ((link instanceof RelationLink || link instanceof RelationGroup)) {
                 usedTypes.add(link.typeId);
             }
         }
 
-        for (const linkType of knownLinkTypes) {
-            if (!usedTypes.has(linkType.id)) {
-                this.setLinkVisibility(linkType.id, 'hidden');
+        return {
+            hideAddedLinkTypes: () => {
+                const addedTypes = new Set<LinkTypeIri>();
+                for (const link of this.graph.getLinks()) {
+                    if (
+                        (link instanceof RelationLink || link instanceof RelationGroup) &&
+                        !usedTypes.has(link.typeId)
+                    ) {
+                        addedTypes.add(link.typeId);
+                    }
+                }
+                
+                for (const linkType of addedTypes) {
+                    this.setLinkVisibility(linkType, 'hidden');
+                }
             }
-        }
+        };
     }
 
     /**

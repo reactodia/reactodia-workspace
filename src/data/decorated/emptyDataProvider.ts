@@ -27,8 +27,26 @@ export class EmptyDataProvider implements DataProvider {
         });
     }
 
-    knownLinkTypes(params: {
-        signal?: AbortSignal | undefined;
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
     }): Promise<LinkTypeModel[]> {
         return Promise.resolve([]);
     }
