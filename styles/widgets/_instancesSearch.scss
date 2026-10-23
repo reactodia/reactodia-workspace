@@ -13,15 +13,33 @@
     flex-direction: column;
     gap: 10px;
     margin: 10px;
+    max-height: 50%;
   }
 
   &--controlled &__criteria {
     margin-top: 0;
-    margin-bottom: 0;
+  }
+
+  &__criterions {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  &__criterions:empty {
+    display: none;
+  }
+
+  &__criterions-controls {
+    align-self: flex-end;
   }
 
   &__criterion {
-    display: block;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr;
     position: relative;
     width: 100%;
   }
@@ -75,8 +93,7 @@
 
   &__criterion-add-button {
     @include codicon-button("add");
-    height: 20px;
-    font-size: 14px;
+    padding: 2px 4px;
 
     &::before {
       width: 12px;
@@ -84,22 +101,54 @@
     }
   }
 
-  &__criterion-remove {
-    float: right;
+  &__criterion-controls {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
     margin: 0 0 4px 4px;
-  }
-  &__criterion-remove-button {
-    &::before {
-      @include codicon("close");
+    
+    .reactodia-btn {
+      padding: 4px 6px;
     }
   }
-
+  &__criterion-edit {
+    @include codicon-button("edit");
+  }
+  &__criterion-clear {
+    @include codicon-button("trash");
+  }
+  &__criterion-remove {
+    @include codicon-button("trash");
+  }
   &__criterion-apply {
     @include codicon-button("check");
   }
-
   &__criterion-cancel {
     @include codicon-button("close");
+  }
+
+  &__criteria-logical {
+    margin-left: 1em;
+    padding-left: 8px;
+    border-left: theme.$border-width-base solid theme.$border-color-base;
+    border-radius: theme.$border-radius-base;
+  }
+  &__criteria-logical-operator {
+    color: theme.$color-emphasis-600;
+  }
+
+  &__criterions > &__criteria-logical,
+  dd > &__criteria-logical {
+    margin-left: 0;
+  }
+
+  &__where-group {
+    grid-column: span 2;
+    margin-top: 5px;
+
+    > dd {
+      margin-left: 1em;
+    }
   }
 
   &__search-button {

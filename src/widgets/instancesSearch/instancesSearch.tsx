@@ -5,10 +5,8 @@ import { EventObserver } from '../../coreUtils/events';
 import { Debouncer } from '../../coreUtils/scheduler';
 import { useTranslation, type Translation, TranslatedText } from '../../coreUtils/i18n';
 
-import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../../data/model';
-import {
-    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
-} from '../../data/dataProvider';
+import { ElementModel, ElementIri } from '../../data/model';
+import { DataProviderLookupParams, DataProviderLookupItem } from '../../data/dataProvider';
 
 import type { CanvasApi } from '../../diagram/canvasApi';
 import { placeElementsAroundTarget } from '../../diagram/commands';
@@ -28,6 +26,7 @@ import { SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 import { SearchResults } from '../utility/searchResults';
 
 import { InstanceCriteria } from './instanceCriteria';
+import { SearchCriteria } from './searchPattern';
 
 /**
  * Props for {@link InstancesSearch} component.
@@ -99,42 +98,6 @@ export interface InstancesSearchCommands {
          */
         readonly criteria: SearchCriteria;
     };
-}
-
-/**
- * A filter criteria for the entity lookup from a {@link DataProvider}.
- *
- * @see {@link DataProviderLookupParams}
- */
-export interface SearchCriteria {
-    /**
-     * Filter by a text lookup.
-     */
-    readonly text?: string;
-    /**
-     * Filter by an element type.
-     */
-    readonly elementType?: ElementTypeIri;
-    /**
-     * Filter by having a connected element with specified IRI.
-     */
-    readonly refElement?: ElementIri;
-    /**
-     * Filter by connection link type.
-     *
-     * Only applicable when {@link refElement} is set.
-     */
-    readonly refElementLink?: LinkTypeIri;
-    /**
-     * Reference element link type direction ('in' | 'out').
-     * 
-     * Only when {@link refElementLink} is set.
-     */
-    readonly linkDirection?: 'in' | 'out';
-    /**
-     * Filter by a lookup pattern.
-     */
-    readonly pattern?: LookupPattern;
 }
 
 /**

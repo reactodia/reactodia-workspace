@@ -4,13 +4,13 @@
 
 .reactodia-dropdown {
   position: relative;
-  z-index: zIndex.$dropdown;
 
   &__content {
     position: absolute;
     opacity: 1;
     display: flex;
     flex-direction: column;
+    z-index: zIndex.$dropdown;
 
     transition: opacity 0.1s ease-in-out;
   }

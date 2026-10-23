@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { delay } from '../../coreUtils/async';
 
-import { ElementIri, ElementModel } from '../../data/model';
+import { ElementModel } from '../../data/model';
 import { DataProvider } from '../../data/dataProvider';
 
 import { HtmlSpinner } from '../../diagram/spinner';
