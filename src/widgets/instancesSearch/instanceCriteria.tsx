@@ -17,7 +17,7 @@ import { EntitySelect } from './entitySelect';
 import {
     SearchCriteria, SearchPattern, SearchPatternType, SearchPatternState, searchPatternFrom,
     SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo, SearchPatternFromValues,
-    SearchPatternHasProperty, SearchPatternHasType, SearchPatternWithText,
+    SearchPatternHasProperty, SearchPatternHasType,
 } from './searchPattern';
 
 const CLASS_NAME = 'reactodia-instances-search';
@@ -70,7 +70,6 @@ export function InstanceCriteria(props: {
             ConnectedToOption,
             FromValuesOption,
             HasPropertyOption,
-            WithTextOption,
         ],
     }), [editState, patternOptions]);
     const generate = makePatternGenerator(context.patternOptions);
@@ -309,7 +308,9 @@ function CriterionBlock(props: {
     const {controls, where, children} = props;
     return (
         <div className={`${CLASS_NAME}__criterion`}>
-            <div>{children}</div>
+            <div className={`${CLASS_NAME}__criterion-main`}>
+                {children}
+            </div>
             {controls}
             {where}
         </div>
@@ -411,15 +412,9 @@ function AnyAllOfCriterion(
         pattern.type === SearchPatternAnyOf ? 'or' :
         pattern.type
     );
-    const excludedTextPattern = parent === undefined
-        ? pattern.state.patterns.find(p => SearchPattern.hasType(p, SearchPatternWithText))
-        : undefined;
-    const filteredPatterns = excludedTextPattern
-        ? pattern.state.patterns.filter(p => p !== excludedTextPattern)
-        : pattern.state.patterns;
     return (
         <div className={`${CLASS_NAME}__criteria-logical`}>
-            {filteredPatterns.map((child, index) => (
+            {pattern.state.patterns.map((child, index) => (
                 <React.Fragment key={index}>
                     {index > 0 ? (
                         <div className={`${CLASS_NAME}__criteria-logical-operator`}>
@@ -749,51 +744,6 @@ function HasPropertyCriterion(
             </select>
         );
         main = <span>has {selector} values</span>;
-    }
-
-    return (
-        <CriterionBlock controls={controls}>
-            {main}
-        </CriterionBlock>
-    );
-}
-
-const WithTextOption: EntityCriterionOption<typeof SearchPatternWithText> = {
-    type: SearchPatternWithText,
-    label: 'with text',
-    createState: () => ({text: ''}),
-    renderCriterion: props => <WithTextCriterion {...props} />,
-    generatePattern: state => ({
-        type: 'withText',
-        text: state.text,
-    }),
-};
-
-function WithTextCriterion(
-    props: InstanceCriterionProps<typeof SearchPatternWithText>
-) {
-    const {pattern, setPattern, editing, controls} = props;
-
-    let main: React.ReactNode;
-
-    if (!editing) {
-        main = <span>with text <i>&quot;{pattern.state.text}&quot;</i></span>;
-    } else {
-        const input = (
-            <input type='text'
-                className='reactodia-form-control'
-                value={pattern.state.text}
-                onChange={e => {
-                    setPattern({
-                        ...pattern,
-                        state: {
-                            text: e.currentTarget.value,
-                        },
-                    });
-                }}
-            />
-        );
-        main = <span>with text {input}</span>;
     }
 
     return (

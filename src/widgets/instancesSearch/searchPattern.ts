@@ -87,9 +87,6 @@ export const SearchPatternAllOf = SearchPattern.type('urn:reactodia:allOf').of<{
 export const SearchPatternAnyOf = SearchPattern.type('urn:reactodia:anyOf').of<{
     readonly patterns: readonly SearchPattern[];
 }>();
-export const SearchPatternWithText = SearchPattern.type('urn:reactodia:withText').of<{
-    readonly text: string;
-}>();
 export const SearchPatternHasType = SearchPattern.type('urn:reactodia:hasType').of<{
     readonly elementType: ElementTypeIri;
 }>();

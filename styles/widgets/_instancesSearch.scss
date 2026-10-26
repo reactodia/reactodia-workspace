@@ -106,9 +106,10 @@
     display: flex;
     gap: 4px;
     margin: 0 0 4px 4px;
-    
-    .reactodia-btn {
-      padding: 4px 6px;
+
+    > .reactodia-btn,
+    .reactodia-dropdown-menu > .reactodia-btn {
+      padding: 2px 4px;
     }
   }
   &__criterion-edit {
