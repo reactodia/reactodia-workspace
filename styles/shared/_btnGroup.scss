@@ -17,10 +17,7 @@
     z-index: 2;
   }
 
-  .reactodia-btn + .reactodia-btn,
-  .reactodia-btn + .reactodia-btn-group,
-  .reactodia-btn-group + .reactodia-btn,
-  .reactodia-btn-group + .reactodia-btn-group {
+  :where(.reactodia-btn, .reactodia-btn-group) + :where(.reactodia-btn, .reactodia-btn-group) {
     margin-left: calc(-1 * theme.$button-border-width);
   }
 

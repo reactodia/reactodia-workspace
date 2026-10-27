@@ -15,10 +15,6 @@
     transition: opacity 0.1s ease-in-out;
   }
 
-  &--up &__content {
-    bottom: 100%;
-  }
-
   &--expanded &__content {
     box-shadow: theme.$canvas-box-shadow;
   }
@@ -32,6 +28,14 @@
 }
 
 .reactodia-dropdown-menu {
+  &.reactodia-dropdown--down .reactodia-dropdown__content {
+    margin-top: -1px;
+  }
+
+  &.reactodia-dropdown--up .reactodia-dropdown__content {
+    margin-bottom: -1px;
+  }
+
   .reactodia-dropdown--down.reactodia-dropdown--expanded &__toggle {
     border-bottom: none;
     border-bottom-left-radius: unset;
@@ -66,6 +70,7 @@
 
 .reactodia-dropdown-menu-item {
   display: flex;
+  margin-left: 0;
   border-radius: unset;
   outline-offset: -2px;
 

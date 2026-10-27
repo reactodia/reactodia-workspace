@@ -1,3 +1,4 @@
+import { autoUpdate, size, useFloating } from '@floating-ui/react-dom';
 import cx from 'clsx';
 import * as React from 'react';
 
@@ -45,6 +46,11 @@ export interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
      * Handler for clicks outside the dropdown DOM element.
      */
     onClickOutside?: () => void;
+    /**
+     * Handler for dropdown content panel position changes
+     * e.g. when the dropdown becomes expanded.
+     */
+    onContentPositioned?: () => void;
 }
 
 const CLASS_NAME = 'reactodia-dropdown';
@@ -57,16 +63,40 @@ const CLASS_NAME = 'reactodia-dropdown';
 export function Dropdown(props: DropdownProps) {
     const {
         className, innerRef, direction = 'down', expanded, toggle, onClickOutside,
-        children, ...otherProps
+        onContentPositioned, children, ...otherProps
     } = props;
-    const menuRef = React.useRef<HTMLDivElement | null>(null);
-    const passedRef = useCombinedRef(menuRef, innerRef);
+    
+    const {refs, floatingStyles, isPositioned} = useFloating<HTMLDivElement>({
+        open: expanded,
+        placement: direction === 'up' ? 'top-start' : 'bottom-start',
+        strategy: 'fixed',
+        whileElementsMounted: autoUpdate,
+        middleware: [
+            size({
+                apply({elements}) {
+                    const referenceBounds = elements.reference.getBoundingClientRect();
+                    elements.floating.style.setProperty(
+                        '--reactodia-dropdown-toggle-width',
+                        `${referenceBounds.width}px`,
+                    );
+                },
+            }),
+        ],
+    });
+
+    const passedRef = useCombinedRef(refs.setReference, innerRef);
+
+    React.useEffect(() => {
+        if (isPositioned) {
+            onContentPositioned?.();
+        }
+    }, [onContentPositioned, isPositioned]);
 
     React.useLayoutEffect(() => {
         if (onClickOutside && expanded) {
             const closeMenu = (e: PointerEvent) => {
                 // Auto-close menu on clicks from outside
-                if (e.target instanceof Node && !menuRef.current?.contains(e.target)) {
+                if (e.target instanceof Node && !refs.reference.current?.contains(e.target)) {
                     onClickOutside();
                 }
             };
@@ -85,7 +115,10 @@ export function Dropdown(props: DropdownProps) {
                 expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}>
             {direction === 'down' ? toggle : null}
-            <div className={`${CLASS_NAME}__content`} aria-hidden={!expanded}>
+            <div ref={refs.setFloating}
+                className={`${CLASS_NAME}__content`}
+                style={floatingStyles}
+                aria-hidden={!expanded}>
                 {children}
             </div>
             {direction === 'up' ? toggle : null}

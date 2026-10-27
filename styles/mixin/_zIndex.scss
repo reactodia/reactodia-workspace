@@ -1,5 +1,6 @@
 @use "../theme/theme";
 
+$toolbar: calc(theme.$z-index-base + 8);
 $accordion-handle: calc(theme.$z-index-base + 10);
 $accordion-handle-button: calc(theme.$z-index-base + 20);
 $loading-widget: calc(theme.$z-index-base + 30);

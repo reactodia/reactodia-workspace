@@ -19,6 +19,18 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     box-shadow: theme.$canvas-box-shadow;
   }
 
+  &.reactodia-dropdown--down.reactodia-dropdown--expanded {
+    border-bottom-width: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &.reactodia-dropdown--up.reactodia-dropdown--expanded {
+    border-top-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
   &__toggle {
     height: 28px;
     display: flex;
@@ -30,10 +42,23 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
   }
 
   & > .reactodia-dropdown__content {
-    position: unset;
+    border-style: inherit;
+    border-color: inherit;
+    border-width: theme.$input-border-width;
+    background-color: inherit;
+    box-shadow: unset;
+  }
+
+  &.reactodia-dropdown--down > .reactodia-dropdown__content {
+    border-top-width: 0;
     border-bottom-left-radius: theme.$input-border-radius;
     border-bottom-right-radius: theme.$input-border-radius;
-    box-shadow: unset;
+  }
+
+  &.reactodia-dropdown--up > .reactodia-dropdown__content {
+    border-bottom-width: 0;
+    border-top-left-radius: theme.$input-border-radius;
+    border-top-right-radius: theme.$input-border-radius;
   }
 
   &__search-input {
@@ -77,6 +102,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     right: 0;
     padding: 6px;
     align-self: center;
+    outline-offset: -1px;
   
     color: theme.$button-default-color;
     background: 0 0;

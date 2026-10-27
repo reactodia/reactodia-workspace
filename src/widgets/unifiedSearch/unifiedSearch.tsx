@@ -1,6 +1,7 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { Events, EventSource, EventObserver } from '../../coreUtils/events';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import type { HotkeyString } from '../../coreUtils/hotkey';
 import { useTranslation } from '../../coreUtils/i18n';
@@ -273,12 +274,18 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
         }
     }, [hasSearchQuery, setExpanded]);
 
+    const [innerSource] = React.useState(() => new EventSource<InnerEvents>());
+    const onContentPositioned = React.useCallback(() => {
+        innerSource.trigger('positioned', {});
+    }, [innerSource]);
+
     return (
         <Dropdown className={CLASS_NAME}
             direction={direction}
             expanded={expanded}
             aria-keyshortcuts={actionFocus?.text}
             onClickOutside={onClickOutside}
+            onContentPositioned={onContentPositioned}
             toggle={
                 <SearchToggle inputRef={toggleInputRef}
                     searchTerm={searchTerm}
@@ -320,6 +327,7 @@ export function UnifiedSearch(props: UnifiedSearchProps) {
                 offsetForMaxSize={{x: offsetWithMaxWidth, y: offsetWithMaxHeight}}
                 onResize={resizePanel}
                 setMaxSize={updateMaxSize}
+                innerEvents={innerSource}
             />
         </Dropdown>
     );
@@ -366,8 +374,12 @@ class ActiveSection {
     }
 }
 
+interface InnerEvents {
+    positioned: Record<string, never>;
+}
+
 function SearchToggle(props: {
-    inputRef: React.RefObject<HTMLInputElement | null>,
+    inputRef: React.RefObject<HTMLInputElement | null>;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
     onSubmit: () => void;
@@ -462,10 +474,11 @@ function SearchContent(props: {
     offsetForMaxSize: Vector;
     onResize: (size: Size) => void;
     setMaxSize: (size: Size) => void;
+    innerEvents: Events<InnerEvents>;
 }) {
     const {
         visible, sections, activeSectionKey, onActivateSection,
-        dropUp, size, minSize, offsetForMaxSize, onResize, setMaxSize,
+        dropUp, size, minSize, offsetForMaxSize, onResize, setMaxSize, innerEvents,
     } = props;
 
     const {canvas} = useCanvas();
@@ -476,52 +489,68 @@ function SearchContent(props: {
         readonly centerOffsetX: number;
     }>(undefined);
 
-    const updatePanelBounds = () => {
-        if (!panelRef.current) {
-            return;
-        }
-        const {x: rawX, y: rawY, width, height} = panelRef.current.getBoundingClientRect();
-        const x = rawX + window.scrollX;
-        const y = rawY + window.scrollY;
-        const [alignmentX] = getParentDockAlignment(panelRef.current);
-        const viewport = canvas.metrics.getViewportPageRect();
-        panelBounds.current = {
-            bounds: {x, y, width, height},
-            // A workaround to have correct resizing behavior when the element
-            // is aligned to the center without sacrificing performance to avoid
-            // reading target bounds on every resize (causing a costly reflow)
-            centeredByX: alignmentX === 'center',
-            centerOffsetX: Math.max(
-                x * 2 + width - viewport.x * 2 - viewport.width, 0
-            ),
-        };
-    };
-
-    useViewportResizeHandler(() => {
-        if (!panelBounds.current) {
-            updatePanelBounds();
-        }
-
-        if (panelBounds.current) {
-            const {bounds, centeredByX, centerOffsetX} = panelBounds.current;
+    const handlers = {
+        updatePanelBounds: () => {
+            if (!(visible && panelRef.current)) {
+                return;
+            }
+            const {x: rawX, y: rawY, width, height} = panelRef.current.getBoundingClientRect();
+            const x = rawX + window.scrollX;
+            const y = rawY + window.scrollY;
+            const [alignmentX] = getParentDockAlignment(panelRef.current);
             const viewport = canvas.metrics.getViewportPageRect();
-            const viewportRight = viewport.x + viewport.width;
-            const viewportBottom = viewport.y + viewport.height;
+            panelBounds.current = {
+                bounds: {x, y, width, height},
+                // A workaround to have correct resizing behavior when the element
+                // is aligned to the center without sacrificing performance to avoid
+                // reading target bounds on every resize (causing a costly reflow)
+                centeredByX: alignmentX === 'center',
+                centerOffsetX: Math.max(
+                    x * 2 + width - viewport.x * 2 - viewport.width, 0
+                ),
+            };
+        },
+        updateMaxSize: () => {
+            if (!panelBounds.current) {
+                handlers.updatePanelBounds();
+            }
 
-            const proposedWidth = centeredByX
-                ? viewport.width - centerOffsetX - offsetForMaxSize.x
-                : viewportRight - bounds.x - offsetForMaxSize.x;
+            if (panelBounds.current) {
+                const {bounds, centeredByX, centerOffsetX} = panelBounds.current;
+                const viewport = canvas.metrics.getViewportPageRect();
+                const viewportRight = viewport.x + viewport.width;
+                const viewportBottom = viewport.y + viewport.height;
 
-            const proposedHeight = dropUp
-                ? bounds.y - viewport.y - offsetForMaxSize.y
-                : viewportBottom - bounds.y - offsetForMaxSize.y;
+                const proposedWidth = centeredByX
+                    ? viewport.width - centerOffsetX - offsetForMaxSize.x
+                    : viewportRight - bounds.x - offsetForMaxSize.x;
 
-            const maxWidth = Math.max(proposedWidth, minSize.width);
-            const maxHeight = Math.max(proposedHeight, minSize.height);
+                const proposedHeight = dropUp
+                    ? bounds.y - viewport.y - offsetForMaxSize.y
+                    : viewportBottom - bounds.y - offsetForMaxSize.y;
 
-            setMaxSize({width: maxWidth, height: maxHeight});
+                const maxWidth = Math.max(proposedWidth, minSize.width);
+                const maxHeight = Math.max(proposedHeight, minSize.height);
+
+                setMaxSize({width: maxWidth, height: maxHeight});
+            }
         }
-    });
+    } as const;
+
+    useViewportResizeHandler(handlers.updateMaxSize);
+
+    const latestHandlers = React.useRef(handlers);
+    latestHandlers.current = handlers;
+
+    React.useLayoutEffect(() => {
+        const listener = new EventObserver();
+        listener.listen(innerEvents, 'positioned', () => {
+            const {updatePanelBounds, updateMaxSize} = latestHandlers.current;
+            updatePanelBounds();
+            updateMaxSize();
+        });
+        return () => listener.stopListening();
+    }, [latestHandlers, innerEvents]);
     
     const onDrag = (e: MouseEvent, dx: number, dy: number) => {
         if (panelBounds.current) {
@@ -583,19 +612,19 @@ function SearchContent(props: {
             ))}
             <DraggableHandle dock={dropUp ? 'n' : 's'}
                 axis='y'
-                onBeginDragHandle={updatePanelBounds}
+                onBeginDragHandle={handlers.updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
             <DraggableHandle dock='e'
                 axis='x'
                 className={`${CLASS_NAME}__right-handle`}
-                onBeginDragHandle={updatePanelBounds}
+                onBeginDragHandle={handlers.updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
             <DraggableHandle dock={dropUp ? 'ne' : 'se'}
                 axis='all'
                 className={`${CLASS_NAME}__corner-handle`}
-                onBeginDragHandle={updatePanelBounds}
+                onBeginDragHandle={handlers.updatePanelBounds}
                 onDragHandle={onDrag}>
             </DraggableHandle>
         </div>

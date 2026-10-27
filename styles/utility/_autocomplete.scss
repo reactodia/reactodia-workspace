@@ -45,6 +45,7 @@
 
   .reactodia-dropdown__content {
     width: 100%;
+    max-width: var(--reactodia-dropdown-toggle-width);
     height: 200px;
     background-color: theme.$background-color-surface;
     border-radius: theme.$border-radius-base;
