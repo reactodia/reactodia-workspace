@@ -10,6 +10,14 @@
     min-width: 30%;
   }
 
+  &--inline-content-only &__toggle-input {
+    display: none;
+  }
+
+  &__spinner {
+    margin: 5px;
+  }
+
   &__toggle-button {
     height: 100%;
     padding: 8px;
@@ -25,6 +33,10 @@
       color: theme.$button-default-color-focus;
       background-color: theme.$button-default-background-color-focus;
     }
+  }
+
+  .reactodia-search-input--size-s &__spinner {
+    margin: 3px;
   }
 
   .reactodia-search-input--size-s &__toggle-button {

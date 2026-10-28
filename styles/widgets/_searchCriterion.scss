@@ -1,0 +1,102 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-search-criterion {
+  &__block {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr;
+    position: relative;
+    width: 100%;
+  }
+
+  &__element-type {
+    border: theme.$color-primary 1px dashed;
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
+    padding: 0 .5em 0 .5em;
+    word-wrap: break-word;
+  }
+
+  &__link-type {
+    border: theme.$color-primary 1px dashed;
+    color: theme.$color-primary-contrast-foreground;
+    background-color: theme.$color-primary-contrast-background;
+    padding: 0 .5em 0 .5em;
+    word-wrap: break-word;
+  }
+
+  &__link-direction-in,
+  &__link-direction-out {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    opacity: 0.5;
+    vertical-align: middle;
+    mask-position: 0 0;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    background-color: currentColor;
+  }
+
+  &__link-direction-in {
+    -webkit-mask-image: url("@images/direction-in.svg");
+    mask-image: url("@images/direction-in.svg");
+  }
+
+  &__link-direction-out {
+    -webkit-mask-image: url("@images/direction-out.svg");
+    mask-image: url("@images/direction-out.svg");
+  }
+
+  &__add-button {
+    @include codicon-button("add");
+    padding: 2px 4px;
+
+    &::before {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  &__controls {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+    margin: 0 0 4px 4px;
+
+    > .reactodia-btn,
+    .reactodia-dropdown-menu > .reactodia-btn {
+      padding: 2px 4px;
+    }
+  }
+
+  &__remove {
+    @include codicon-button("trash");
+  }
+
+  &__logical-group,
+  &__logical-group-root {
+    padding-left: 8px;
+    border-left: 2px solid theme.$border-color-base;
+    border-radius: 6px;
+  }
+  &__logical-group {
+    margin-left: 1em;
+  }
+  dd > &__logical-group {
+    margin-left: 0;
+  }
+  &__logical-operator {
+    color: theme.$color-emphasis-600;
+  }
+
+  &__where-group {
+    grid-column: span 2;
+    margin-top: 5px;
+
+    > dd {
+      margin-left: 1em;
+    }
+  }
+}

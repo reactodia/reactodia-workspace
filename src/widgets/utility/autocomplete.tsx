@@ -4,6 +4,7 @@ import * as React from 'react';
 import { EventObserver } from '../../coreUtils/events';
 import { UseAsyncResult, useObservedProperty } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
+import { HtmlSpinner } from '../../diagram/spinner';
 
 import { Dropdown } from './dropdown';
 import { ErrorMessage } from './errorMessage';
@@ -17,9 +18,10 @@ import { SearchInput, SearchInputStore, useSearchInputStore } from './searchInpu
 const CLASS_NAME = 'reactodia-autocomplete';
 
 export function Autocomplete<T>(props: {
-    slotItems: React.ReactNode;
+    inlineContent: React.ReactNode | undefined;
+    inlineStatus?: 'loading' | 'error';
+    contentReplacesInput?: boolean;
     suggest: (text: string, options: { signal: AbortSignal }) => Promise<readonly T[]>;
-    onSelect: (item: T) => void;
     /**
      * Input dropdown expand direction.
      *
@@ -54,9 +56,10 @@ export function Autocomplete<T>(props: {
     }) => React.ReactNode;
 }) {
     const {
-        slotItems,
+        inlineContent,
+        inlineStatus,
+        contentReplacesInput = false,
         suggest,
-        onSelect,
         direction,
         searchTimeout = 200,
         minSearchTermLength = 2,
@@ -154,7 +157,11 @@ export function Autocomplete<T>(props: {
         <FocusGroup>
             {({ref}) => (
                 <Dropdown innerRef={dropdownRef}
-                    className={CLASS_NAME}
+                    className={cx(
+                        CLASS_NAME,
+                        contentReplacesInput && inlineContent
+                            ? `${CLASS_NAME}--inline-content-only` : null
+                    )}
                     role='combobox'
                     aria-expanded={expanded}
                     direction={direction}
@@ -164,9 +171,11 @@ export function Autocomplete<T>(props: {
                         <AutocompleteToggle inputRef={toggleInputRef}
                             searchStore={searchStore}
                             hasSearchText={hasSearchText}
-                            inlineItems={slotItems}
+                            inlineContent={inlineContent}
+                            inlineStatus={inlineStatus}
                             expanded={expanded}
                             setExpanded={setExpanded}
+                            placeholder={placeholder}
                             size={size}
                         />
                     }>
@@ -187,15 +196,16 @@ function AutocompleteToggle(props: {
     inputRef: React.RefObject<HTMLInputElement | null>,
     searchStore: SearchInputStore;
     hasSearchText: boolean;
-    inlineItems: React.ReactNode;
+    inlineContent: React.ReactNode;
+    inlineStatus: 'loading' | 'error' | undefined;
     expanded: boolean;
     setExpanded: (expanded: boolean) => void;
     placeholder?: string;
     size?: 'm' | 's';
 }) {
     const {
-        inputRef, searchStore, hasSearchText, inlineItems, placeholder, size,
-        expanded, setExpanded,
+        inputRef, searchStore, hasSearchText, inlineContent, inlineStatus,
+        placeholder, size, expanded, setExpanded,
     } = props;
     const t = useTranslation();
 
@@ -229,7 +239,18 @@ function AutocompleteToggle(props: {
                     }
                 }
             }}
-            slotInput={inlineItems}
+            slotInput={
+                <>
+                    {inlineContent}
+                    {inlineStatus ? (
+                        <HtmlSpinner className={`${CLASS_NAME}__spinner`}
+                            width={16}
+                            height={16}
+                            errorOccurred={inlineStatus === 'error'}
+                        />
+                    ) : null}
+                </>
+            }
             slotEnd={
                 hasSearchText ? undefined : (
                     <button type='button'

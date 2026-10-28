@@ -47,9 +47,9 @@ export interface SearchCriteria {
  */
 export type SearchPatternType<K extends string = string, S = unknown> = K & { __searchPattern: S };
 
-export interface SearchPattern<K extends string = string, S = unknown> {
-    readonly type: SearchPatternType<K, S>;
-    readonly state: S;
+export interface SearchPattern<P extends SearchPatternType = SearchPatternType> {
+    readonly type: P & string;
+    readonly state: SearchPatternState<P>;
 }
 
 export type SearchPatternState<P> = P extends SearchPatternType<string, infer S> ? S : never;
@@ -70,13 +70,13 @@ export const SearchPattern = {
             of: <V>() => key as SearchPatternType<K, V>,
         };
     },
-    hasType: <K extends string, S>(
+    hasType: <P extends SearchPatternType>(
         pattern: SearchPattern,
-        type: SearchPatternType<K, S>
-    ): pattern is SearchPattern<K, S> => {
+        type: P
+    ): pattern is SearchPattern<P> => {
         return pattern.type === type;
     },
-    create: <K extends string, S>(type: SearchPatternType<K, S>, state: S): SearchPattern<K, S> => {
+    create: <P extends SearchPatternType>(type: P, state: SearchPatternState<P>): SearchPattern<P> => {
         return {type, state};
     },
 } as const;

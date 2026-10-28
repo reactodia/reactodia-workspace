@@ -4,13 +4,12 @@ import * as React from 'react';
 import { useTranslation } from '../../coreUtils/i18n';
 
 import { ElementTypeIri, ElementTypeModel } from '../../data/model';
-import { useWorkspace } from '../../workspace/workspaceContext';
 
 import {
     AccessibleTree, type TreeModel, type TreeRenderItem, TreeState, type TreeUpPath,
     TreeFocusableProps, treePathToDown,
 } from '../utility/accessibleTree';
-import { highlightSubstring } from '../utility/listElementView';
+import { ElementTypeView } from '../utility/elementTypeView';
 
 export interface ClassTreeResultsProps extends ClassTreeProvidedContext {
     nodes: ReadonlyArray<TreeNode>;
@@ -129,7 +128,7 @@ export function ClassTreeResults(props: ClassTreeResultsProps) {
 
 export interface TreeNode {
     readonly iri: ElementTypeIri
-    readonly data: ElementTypeModel | undefined;
+    readonly data: ElementTypeModel;
     readonly label: string;
     readonly derived: ReadonlyArray<TreeNode>;
 }
@@ -157,27 +156,12 @@ function Leaf(props: {
         searchText, creatableClasses, onClickCreate, onDragCreate, draggableItems, onExpand, onSelect,
     } = useClassTreeContext();
 
-    const {getElementTypeStyle} = useWorkspace();
     const t = useTranslation();    
 
     const toggleClass = (
         node.derived.length === 0 ? `${CLASS_NAME}__toggle` :
         expanded ? `${CLASS_NAME}__toggle-expanded` :
         `${CLASS_NAME}__toggle-collapsed`
-    );
-
-    const typeStyle = getElementTypeStyle([node.iri]);
-    const providedStyle = {
-        '--reactodia-element-style-color': typeStyle.color,
-    } as React.CSSProperties;
-
-    const bodyClass = cx(
-        `${CLASS_NAME}__body`,
-        selected ? `${CLASS_NAME}__body--selected` : undefined
-    );
-
-    const label = highlightSubstring(
-        node.label, searchText, {className: `${CLASS_NAME}__highlighted-term`}
     );
 
     const onDragStart = (e: React.DragEvent<any>) => {
@@ -189,15 +173,15 @@ function Leaf(props: {
     };
 
     return (
-        <div className={`${CLASS_NAME}__row`}
-            style={providedStyle}>
+        <div className={`${CLASS_NAME}__row`}>
             <div className={toggleClass}
                 role='none'
                 onClick={() => onExpand(path)}
             />
-            <a {...focusProps}
-                className={bodyClass}
-                href={node.iri}
+            <ElementTypeView elementType={node.data}
+                label={node.label}
+                highlightText={searchText}
+                selected={Boolean(selected)}
                 onClick={e => {
                     e.preventDefault();
                     onSelect(node, path);
@@ -209,29 +193,12 @@ function Leaf(props: {
                     }
                 }}
                 draggable={draggableItems}>
-                <div className={`${CLASS_NAME}__icon-container`}>
-                    {typeStyle.icon ? (
-                        <img role='presentation'
-                            className={cx(
-                                `${CLASS_NAME}__icon`,
-                                typeStyle.iconMonochrome ? `${CLASS_NAME}__icon--monochrome` : undefined
-                            )}
-                            src={typeStyle.icon}
-                        />
-                    ) : (
-                        <div className={node.derived.length === 0
-                            ? `${CLASS_NAME}__default-icon-leaf`
-                            : `${CLASS_NAME}__default-icon-parent`
-                        } />
-                    )}
-                </div>
-                <span className={`${CLASS_NAME}__label`}>{label}</span>
                 {node.data?.count ? (
                     <span className={`${CLASS_NAME}__count reactodia-badge`}>
                         {node.data.count}
                     </span>
                 ) : null}
-            </a>
+            </ElementTypeView>
             {creatableClasses.get(node.iri) ? (
                 <button {...focusProps}
                     title={t.text('search_element_types.drag_create.title')}

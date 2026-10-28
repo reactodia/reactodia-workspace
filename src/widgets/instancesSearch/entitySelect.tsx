@@ -6,8 +6,6 @@ import { delay } from '../../coreUtils/async';
 import { ElementModel } from '../../data/model';
 import { DataProvider } from '../../data/dataProvider';
 
-import { HtmlSpinner } from '../../diagram/spinner';
-
 import { Autocomplete } from '../utility/autocomplete';
 import { useFocusGroupItem } from '../utility/focusGroup';
 import { InlineEntity } from '../utility/inlineEntity';
@@ -17,13 +15,13 @@ const CLASS_NAME = 'reactodia-entity-select';
 
 export function EntitySelect(props: {
     dataProvider: DataProvider;
-    isLoading: boolean;
+    selectedStatus?: 'loading' | 'error';
     selected: readonly ElementModel[];
     setSelected: (
         update: (previous: readonly ElementModel[]) => readonly ElementModel[]
     ) => void;
 }) {
-    const {dataProvider, isLoading, selected, setSelected} = props;
+    const {dataProvider, selectedStatus, selected, setSelected} = props;
     const suggest = React.useCallback(async (text: string) => {
         // await delay(2000);
         // if (Math.random() > 0.5) {
@@ -35,7 +33,7 @@ export function EntitySelect(props: {
     const selectedSet = React.useMemo(() => new Set(selected.map(v => v.id)), [selected]);
     return (
         <Autocomplete
-            slotItems={
+            inlineContent={
                 <>
                     {selected.map(item =>
                         <InlineEntity key={item.id}
@@ -53,13 +51,10 @@ export function EntitySelect(props: {
                             />
                         </InlineEntity>
                     )}
-                    {isLoading ? (
-                        <HtmlSpinner width={16} height={16} />
-                    ) : null}
                 </>
             }
+            inlineStatus={selectedStatus}
             suggest={suggest}
-            onSelect={() => {/**/}}
             size='s'>
             {({items: suggestions, highlightText}) => (
                 <ul className={`${CLASS_NAME}__items`}>

@@ -3,8 +3,12 @@
 
 .reactodia-entity-select {
   &__entity {
-    margin: 3px;
+    margin: 4px;
     max-width: 100px;
+  }
+
+  .reactodia-search-input--size-s &__entity {
+    margin: 2px;
   }
 
   &__entity-remove {

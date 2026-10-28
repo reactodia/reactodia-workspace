@@ -1,0 +1,53 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-element-type-view {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 15px;
+  padding: 1px;
+  border: 1px solid;
+  border-color: transparent;
+  border-radius: theme.$border-radius-s;
+
+  &:hover {
+    background: theme.$tree-background-color-focus;
+    border-color: theme.$tree-border-color-focus;
+    cursor: pointer;
+  }
+
+  &--selected {
+    background-color: theme.$tree-background-color-active;
+    border-color: theme.$tree-border-color-active;
+  }
+
+  &__icon-container {
+    height: 20px;
+  }
+
+  &__icon {
+    display: block;
+    height: 100%;
+  }
+
+  &__icon--monochrome {
+    filter: theme.$monochrome-icon-filter;
+  }
+
+  &__default-icon {
+    @include codicon("symbol-method");
+    width: 20px;
+    height: 20px;
+    color: var(--reactodia-element-style-color);
+  }
+
+  &__label {
+    margin-left: 5px;
+    color: theme.$font-color-base;
+  }
+
+  &__highlighted-term {
+    font-weight: bold;
+  }
+}

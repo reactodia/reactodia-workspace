@@ -36,120 +36,17 @@
     align-self: flex-end;
   }
 
-  &__criterion {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto 1fr;
-    position: relative;
-    width: 100%;
-  }
-
-  &__criterion-class {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
-  }
-
-  &__criterion-element {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
-  }
-
-  &__criterion-link-type {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
-  }
-
-  &__link-direction-in,
-  &__link-direction-out {
-    display: inline-block;
-    width: 1em;
-    height: 1em;
-    opacity: 0.5;
-    vertical-align: middle;
-    mask-position: 0 0;
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    background-color: currentColor;
-  }
-
-  &__link-direction-in {
-    -webkit-mask-image: url("@images/direction-in.svg");
-    mask-image: url("@images/direction-in.svg");
-  }
-
-  &__link-direction-out {
-    -webkit-mask-image: url("@images/direction-out.svg");
-    mask-image: url("@images/direction-out.svg");
-  }
-
-  &__criterion-add-button {
-    @include codicon-button("add");
-    padding: 2px 4px;
-
-    &::before {
-      width: 12px;
-      height: 12px;
-    }
-  }
-
-  &__criterion-controls {
-    align-self: flex-start;
-    display: flex;
-    gap: 4px;
-    margin: 0 0 4px 4px;
-
-    > .reactodia-btn,
-    .reactodia-dropdown-menu > .reactodia-btn {
-      padding: 2px 4px;
-    }
-  }
-  &__criterion-edit {
+  &__criterions-edit {
     @include codicon-button("edit");
   }
-  &__criterion-clear {
+  &__criterions-clear {
     @include codicon-button("trash");
   }
-  &__criterion-remove {
-    @include codicon-button("trash");
-  }
-  &__criterion-apply {
+  &__criterions-apply {
     @include codicon-button("check");
   }
-  &__criterion-cancel {
+  &__criterions-cancel {
     @include codicon-button("close");
-  }
-
-  &__criteria-logical {
-    margin-left: 1em;
-    padding-left: 8px;
-    border-left: theme.$border-width-base solid theme.$border-color-base;
-    border-radius: theme.$border-radius-base;
-  }
-  &__criteria-logical-operator {
-    color: theme.$color-emphasis-600;
-  }
-
-  &__criterions > &__criteria-logical,
-  dd > &__criteria-logical {
-    margin-left: 0;
-  }
-
-  &__where-group {
-    grid-column: span 2;
-    margin-top: 5px;
-
-    > dd {
-      margin-left: 1em;
-    }
   }
 
   &__search-button {

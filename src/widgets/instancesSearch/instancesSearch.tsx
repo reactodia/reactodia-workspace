@@ -26,6 +26,9 @@ import { SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 import { SearchResults } from '../utility/searchResults';
 
 import { InstanceCriteria } from './instanceCriteria';
+import {
+    type SearchCriterionOption, DefaultSearchCriterionOptions, makePatternGenerator,
+} from './searchCriterion';
 import { SearchCriteria } from './searchPattern';
 
 /**
@@ -60,6 +63,8 @@ export interface InstancesSearchProps {
      * @default 3
      */
     minSearchTermLength?: number;
+    
+    criterionOptions?: readonly SearchCriterionOption[];
     /**
      * Handler for the search criteria changes.
      */
@@ -279,6 +284,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     render() {
         const {
             className, isControlled, searchStore, minSearchTermLength,
+            criterionOptions = DefaultSearchCriterionOptions,
             translation: t,
         } = this.props;
 
@@ -305,6 +311,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                     () => this.props.onChangeCriteria?.(this.state.criteria)
                 )}
                 searchStore={isControlled ? undefined : searchStore}
+                criterionOptions={criterionOptions}
             />
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}
@@ -382,7 +389,10 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 
     private queryItems(loadMoreItems: boolean) {
-        const {workspace: {model, triggerWorkspaceEvent}} = this.props;
+        const {
+            criterionOptions = DefaultSearchCriterionOptions,
+            workspace: {model, triggerWorkspaceEvent},
+        } = this.props;
 
         this.requestCancellation.abort();
 
@@ -397,7 +407,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 limit: typeof limit === 'number' ? (limit + ITEMS_PER_PAGE) : limit,
             };
         } else {
-            request = createRequest(this.state.criteria);
+            request = createRequest(this.state.criteria, criterionOptions);
         }
 
         if (!(
@@ -535,8 +545,12 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 }
 
-export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
-    const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
+function createRequest(
+    criteria: SearchCriteria,
+    criteriaOptions: readonly SearchCriterionOption[]
+): DataProviderLookupParams {
+    const {text, elementType, refElement, refElementLink, linkDirection, pattern} = criteria;
+    const generatePattern = makePatternGenerator(criteriaOptions);
     return {
         text,
         elementTypeId: elementType,
@@ -544,6 +558,7 @@ export function createRequest(criteria: SearchCriteria): DataProviderLookupParam
         refElementLinkId: refElementLink,
         linkDirection,
         limit: ITEMS_PER_PAGE,
+        pattern: pattern ? generatePattern(pattern) : undefined,
     };
 }
 

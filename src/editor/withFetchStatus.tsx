@@ -28,12 +28,6 @@ export interface WithFetchStatusProps<T extends FetchOperationTargetType> {
     children: React.ReactElement<{ className?: string }>;
 }
 
-enum Status {
-    None = 0,
-    Loading = 1,
-    Error = 2,
-}
-
 const CLASS_NAME = 'reactodia-fetch-status';
 
 /**
@@ -52,31 +46,59 @@ const CLASS_NAME = 'reactodia-fetch-status';
 export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithFetchStatusProps<T>) {
     const {type, target, children} = props;
 
+    const status = useFetchStatus({type, target});
+
+    if (status === undefined) {
+        return children;
+    } else {
+        return React.cloneElement(children, {
+            className: cx(children.props.className, (
+                status === 'loading' ? `${CLASS_NAME}--loading` :
+                status === 'error' ? `${CLASS_NAME}--error` :
+                undefined
+            )),
+        });
+    }
+}
+
+export function useFetchStatus<T extends FetchOperationTargetType>(params: {
+    /**
+     * Fetch operation type.
+     */
+    type: T;
+    /**
+     * Fetch operation target.
+     */
+    target: FetchOperationTypeToTarget[T] | undefined;
+}): 'loading' | 'error' | undefined {
+    const {type, target} = params;
     const {model} = useWorkspace();
 
-    const [status, setStatus] = React.useState<Status>(
+    const [status, setStatus] = React.useState<'loading' | 'error' | undefined>(
         // Initialize with error status if needed to avoid layout jumps
-        model.getOperationFailReason(type, target) ? Status.Error : Status.None
+        target !== undefined && model.getOperationFailReason(type, target)
+            ? 'error' : undefined
     );
 
     React.useEffect(() => {
         const checkOperations = (fail?: FetchOperationFail) => {
             setStatus(() => {
-                if (fail && isOperationMatch(fail.operation, type, target)) {
-                    return Status.Error;
-                }
+                if (target) {
+                    if (fail && isOperationMatch(fail.operation, type, target)) {
+                        return 'error';
+                    }
 
-                for (const operation of model.operations) {
-                    if (isOperationMatch(operation, type, target)) {
-                        return Status.Loading;
+                    for (const operation of model.operations) {
+                        if (isOperationMatch(operation, type, target)) {
+                            return 'loading';
+                        }
+                    }
+
+                    if (model.getOperationFailReason(type, target)) {
+                        return 'error';
                     }
                 }
-
-                if (model.getOperationFailReason(type, target)) {
-                    return Status.Error;
-                }
-
-                return Status.None;
+                return undefined;
             });
         };
 
@@ -90,17 +112,7 @@ export function WithFetchStatus<T extends FetchOperationTargetType>(props: WithF
         return () => model.events.off('changeOperations', listener);
     }, [type, target]);
 
-    if (status === Status.None) {
-        return children;
-    } else {
-        return React.cloneElement(children, {
-            className: cx(children.props.className, (
-                status === Status.Loading ? `${CLASS_NAME}--loading` :
-                status === Status.Error ? `${CLASS_NAME}--error` :
-                undefined
-            )),
-        });
-    }
+    return status;
 }
 
 function isOperationMatch(
