@@ -1,14 +1,16 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { useObservedProperty } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
 import { LookupPattern } from '../../data/dataProvider';
-import { ElementIri } from '../../data/model';
+import { ElementIri, ElementTypeIri, ElementTypeModel } from '../../data/model';
 import { EntityElement } from '../../editor/dataElements';
 import { useProvidedEntities } from '../../editor/useProvidedEntities';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { DropdownMenu, DropdownMenuItem, useDropdownMenu } from '../utility/dropdown';
+import { ElementTypeView } from '../utility/elementTypeView';
 import { InlineEntity } from '../utility/inlineEntity';
 
 import { ElementTypeSelect } from './elementTypeSelect';
@@ -183,18 +185,22 @@ function AddCriterionButton(props: { children: React.ReactNode }) {
 }
 
 function CriterionBlock(props: {
+    header: React.ReactNode;
     controls: React.ReactNode;
-    where?: React.ReactNode;
-    children: React.ReactNode;
+    children?: React.ReactNode;
 }) {
-    const {controls, where, children} = props;
+    const {header, controls, children} = props;
     return (
         <div className={`${CLASS_NAME}__block`}>
-            <div className={`${CLASS_NAME}__block-main`}>
+            <div className={`${CLASS_NAME}__block-header`}>
+                {header}
+            </div>
+            <div className={`${CLASS_NAME}__block-controls`}>
+                {controls}
+            </div>
+            <div className={`${CLASS_NAME}__block-body`}>
                 {children}
             </div>
-            {controls}
-            {where}
         </div>
     );
 }
@@ -374,42 +380,53 @@ function HasTypeCriterion(
     const t = useTranslation();
     const {model} = useWorkspace();
 
-    let main: React.ReactNode;
+    let header: React.ReactNode;
+    let where: React.ReactNode | null = null;
     if (!editing) {
-        // TODO: subscribe to element type
-        const elementTypeInfo = model.getElementType(pattern.state.elementType);
-        const elementTypeLabel = t.formatLabel(
-            elementTypeInfo?.data?.label,
-            pattern.state.elementType,
-            model.language
+        header = (
+            <>
+                {t.template('search_entities.criteria_has_type', {
+                    entityType: pattern.state.elementType
+                        ? <TrackedElementType target={pattern.state.elementType} />
+                        : <div><b>any</b></div>,
+                })}
+            </>
         );
-        main = t.template('search_entities.criteria_has_type', {
-            entityType: (
-                <span className={`${CLASS_NAME}__element-type`}
-                    title={pattern.state.elementType}>
-                    {elementTypeLabel}
-                </span>
-            )
-        });
     } else {
-        main = t.template('search_entities.criteria_has_type', {
-            entityType: (
-                <ElementTypeSelect
-                    selected={pattern.state.elementType}
-                    setSelected={type => updatePattern({
-                        ...pattern,
-                        state: {...pattern.state, elementType: type.id},
-                    })}
-                />
-            )
-        });
+        header = <div>Has type</div>;
+        where = (
+            <ElementTypeSelect
+                selected={pattern.state.elementType}
+                setSelected={type => updatePattern({
+                    ...pattern,
+                    state: {...pattern.state, elementType: type ? type.id : ''},
+                })}
+            />
+        );
     }
 
     return (
-        <CriterionBlock controls={controls}>
-            {main}
+        <CriterionBlock header={header}
+            controls={controls}>
+            {where}
         </CriterionBlock>
     );
+}
+
+function TrackedElementType(props: { target: ElementTypeIri }) {
+    const {target} = props;
+    const {model} = useWorkspace();
+    const elementType = model.createElementType(target);
+    const data = useObservedProperty(
+        elementType.events,
+        'changeData',
+        () => elementType.data
+    );
+    const dataWithDefault = React.useMemo(
+        (): ElementTypeModel => data ?? {id: target, label: []},
+        [data]
+    );
+    return <ElementTypeView elementType={dataWithDefault} selected />;
 }
 
 export const SearchCriterionConnectedTo: SearchCriterionOption<typeof SearchPatternConnectedTo> = {
@@ -433,7 +450,8 @@ function ConnectedToCriterion(
     const {model} = useWorkspace();
 
     let inlineEntity = false;
-    let main: React.ReactNode;
+    let header: React.ReactNode;
+    let where: React.ReactNode = null;
 
     if (!editing) {
         const {target, linkType, linkDirection} = pattern.state;
@@ -465,62 +483,61 @@ function ConnectedToCriterion(
         const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
         const targetIcon = <span className={`${CLASS_NAME}__link-direction-out`} />;
 
-        main = !linkType ? (
-            t.template('search_entities.criteria_connected', {
-                entity, relationType, sourceIcon, targetIcon,
-            })
-        ) : linkDirection === 'in' ? (
-            t.template('search_entities.criteria_connected_to_source', {
-                entity, relationType, sourceIcon, targetIcon,
-            })
-        ) : linkDirection == 'out' ? (
-            t.template('search_entities.criteria_connected_to_target', {
-                entity, relationType, sourceIcon, targetIcon,
-            })
-        ) : (
-            t.template('search_entities.criteria_connected_via', {
-                entity, relationType, sourceIcon, targetIcon,
-            })
+        header = (
+            <div>
+                {!linkType ? (
+                    t.template('search_entities.criteria_connected', {
+                        entity, relationType, sourceIcon, targetIcon,
+                    })
+                ) : linkDirection === 'in' ? (
+                    t.template('search_entities.criteria_connected_to_source', {
+                        entity, relationType, sourceIcon, targetIcon,
+                    })
+                ) : linkDirection == 'out' ? (
+                    t.template('search_entities.criteria_connected_to_target', {
+                        entity, relationType, sourceIcon, targetIcon,
+                    })
+                ) : (
+                    t.template('search_entities.criteria_connected_via', {
+                        entity, relationType, sourceIcon, targetIcon,
+                    })
+                )}
+            </div>
         );
     } else {
-        main = t.template('search_entities.criteria_connected_via', {
-            entity: <span><b>target</b></span>,
-            relationType: (
-                <>
-                    <select>
-                        <option>relation a</option>
-                        <option>relation b</option>
-                        <option>relation c</option>
-                    </select>
-                    <select>
-                        <option>in</option>
-                        <option>out</option>
-                        <option>in or out</option>
-                    </select>
-                </>
-            ),
-            sourceIcon: null,
-            targetIcon: null,
-        });
+        header = <div>Connected to <b>target</b></div>;
+        where = (
+            <div>
+                <select>
+                    <option>relation a</option>
+                    <option>relation b</option>
+                    <option>relation c</option>
+                </select>
+                <select>
+                    <option>in</option>
+                    <option>out</option>
+                    <option>in or out</option>
+                </select>
+            </div>
+        );
     }
 
     return (
-        <CriterionBlock controls={controls}
-            where={
-                inlineEntity ? null : (
-                    <WhereCriterions>
-                        <WhereCriterion part='target'
-                            pattern={pattern.state.target}
-                            setPattern={target => updatePattern({
-                                ...pattern,
-                                state: {target},
-                            })}
-                            parent={pattern}
-                        />
-                    </WhereCriterions>
-                )
-            }>
-            {main}
+        <CriterionBlock header={header}
+            controls={controls}>
+            {where}
+            {inlineEntity ? null : (
+                <WhereCriterions>
+                    <WhereCriterion part='target'
+                        pattern={pattern.state.target}
+                        setPattern={target => updatePattern({
+                            ...pattern,
+                            state: {target},
+                        })}
+                        parent={pattern}
+                    />
+                </WhereCriterions>
+            )}
         </CriterionBlock>
     );
 }
@@ -541,16 +558,24 @@ function FromValuesCriterion(
 ) {
     const {pattern, updatePattern, editing, controls} = props;
 
-    let main: React.ReactNode;
+    let header: React.ReactNode;
+    let where: React.ReactNode = null;
     if (!editing) {
-        main = <FromValuesList values={pattern.state.values} />;
+        header = (
+            <div>
+                {'One of '}
+                <FromValuesList values={pattern.state.values} />
+            </div>
+        );
     } else {
-        main = <FromValuesSelector pattern={pattern} updatePattern={updatePattern} />;
+        header = <div>One of entities</div>;
+        where = <FromValuesSelector pattern={pattern} updatePattern={updatePattern} />;
     }
 
     return (
-        <CriterionBlock controls={controls}>
-            {main}
+        <CriterionBlock header={header}
+            controls={controls}>
+            {where}
         </CriterionBlock>
     );
 }
@@ -563,11 +588,21 @@ function FromValuesList(props: {
     const providedEntities = useProvidedEntities(model.dataProvider, values);
     if (values.length === 0) {
         return <span>any entity</span>;
-    } else if (values.length === 1) {
-        const refElementId = values[0];
-        const refElementData = providedEntities.data.get(refElementId)
-            ?? EntityElement.placeholderData(refElementId);
-        return <InlineEntity target={refElementData} />;
+    } else if (values.length <= 10) {
+        return (
+            <span>
+                {values.map((iri, index) => {
+                    const data = providedEntities.data.get(iri)
+                        ?? EntityElement.placeholderData(iri);
+                    return (
+                        <>
+                            {index === 0 ? null : <span>&nbsp;or&nbsp;</span>}
+                            <InlineEntity target={data} />
+                        </>
+                    );
+                })}
+            </span>
+        );
     } else {
         return <span>one of {values.length} entities</span>;
     }
@@ -624,7 +659,8 @@ function HasPropertyCriterion(
     const t = useTranslation();
     const {model} = useWorkspace();
 
-    let main: React.ReactNode;
+    let header: React.ReactNode;
+    let where: React.ReactNode = null;
 
     if (!editing) {
         const {property} = pattern.state;
@@ -639,21 +675,22 @@ function HasPropertyCriterion(
             );
         }
 
-        main = <span>has <b>{propertyTypeLabel}</b> values</span>;
+        header = <span>has <b>{propertyTypeLabel}</b> values</span>;
     } else {
-        const selector = (
+        header = 'Has property';
+        where = (
             <select>
                 <option>property a</option>
                 <option>property b</option>
                 <option>property c</option>
             </select>
         );
-        main = <span>has {selector} values</span>;
     }
 
     return (
-        <CriterionBlock controls={controls}>
-            {main}
+        <CriterionBlock header={header}
+            controls={controls}>
+            {where}
         </CriterionBlock>
     );
 }

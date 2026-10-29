@@ -13,12 +13,13 @@ export interface ElementTypeViewProps extends React.HTMLProps<HTMLAnchorElement>
     label?: string;
     highlightText?: string;
     selected?: boolean;
+    sizeVariant?: 'm' | 's';
 }
 
 const CLASS_NAME = 'reactodia-element-type-view';
 
 export function ElementTypeView(props: ElementTypeViewProps) {
-    const {elementType, label, highlightText, selected, ...restProps} = props;
+    const {elementType, label, highlightText, selected, sizeVariant = 'm', ...restProps} = props;
     const t = useTranslation();
     const {model, getElementTypeStyle} = useWorkspace();
 
@@ -40,9 +41,11 @@ export function ElementTypeView(props: ElementTypeViewProps) {
         <a {...restProps}
             className={cx(
                 CLASS_NAME,
+                `${CLASS_NAME}--size-${sizeVariant}`,
                 selected ? `${CLASS_NAME}--selected` : undefined,
                 restProps.className
             )}
+            onClick={restProps.onClick ?? (e => e.preventDefault())}
             style={{...providedStyle, ...restProps.style}}
             href={elementType.id}>
             <div className={`${CLASS_NAME}__icon-container`}>
@@ -58,9 +61,10 @@ export function ElementTypeView(props: ElementTypeViewProps) {
                     <div className={`${CLASS_NAME}__default-icon`} role='none' />
                 )}
             </div>
-            <span className={`${CLASS_NAME}__label`}>
+            <div className={`${CLASS_NAME}__label`}>
                 {highlightedLabel}
-            </span>
+            </div>
+            
             {restProps.children}
         </a>
     );

@@ -37,12 +37,12 @@ export function EntitySelect(props: {
                 <>
                     {selected.map(item =>
                         <InlineEntity key={item.id}
-                            className={`${CLASS_NAME}__entity`}
+                            className={`${CLASS_NAME}__selected`}
                             target={item}
                             block>
                             <button
                                 className={cx(
-                                    `${CLASS_NAME}__entity-remove`,
+                                    `${CLASS_NAME}__selected-remove`,
                                     'reactodia-btn reactodia-btn-default'
                                 )}
                                 onClick={() => {
@@ -55,7 +55,7 @@ export function EntitySelect(props: {
             }
             inlineStatus={selectedStatus}
             suggest={suggest}
-            size='s'>
+            sizeVariant='s'>
             {({items: suggestions, highlightText}) => (
                 <ul className={`${CLASS_NAME}__items`}>
                     {suggestions.map(item => (

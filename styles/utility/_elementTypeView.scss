@@ -5,7 +5,6 @@
   display: flex;
   align-items: center;
   text-decoration: none;
-  font-size: 15px;
   padding: 1px;
   border: 1px solid;
   border-color: transparent;
@@ -45,9 +44,29 @@
   &__label {
     margin-left: 5px;
     color: theme.$font-color-base;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__highlighted-term {
     font-weight: bold;
+  }
+
+  &--size-s {
+    padding: 0;
+  }
+
+  &--size-s &__icon-container {
+    height: 16px;
+  }
+
+  &--size-s &__default-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--size-s &__label {
+    font-size: 13px;
   }
 }

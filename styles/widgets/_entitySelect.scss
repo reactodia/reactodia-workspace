@@ -2,18 +2,18 @@
 @use "../theme/theme";
 
 .reactodia-entity-select {
-  &__entity {
+  &__selected {
     margin: 4px;
     max-width: 100px;
   }
 
-  .reactodia-search-input--size-s &__entity {
+  .reactodia-search-input--size-s &__selected {
     margin: 2px;
   }
 
-  &__entity-remove {
+  &__selected-remove {
     @include codicon-button("close");
-  
+
     padding: 0 4px;
     border: none;
     border-radius: 0;

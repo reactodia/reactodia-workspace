@@ -11,7 +11,7 @@ export interface SearchInputProps {
     inputProps?: React.HTMLProps<HTMLInputElement> & DataAttributes;
     store: SearchInputStore;
     /** @default "m" */
-    size?: 'm' | 's';
+    sizeVariant?: 'm' | 's';
     slotInput?: React.ReactNode;
     slotEnd?: React.ReactNode;
     children?: React.ReactNode;
@@ -23,7 +23,7 @@ const CLASS_NAME = 'reactodia-search-input';
 
 export function SearchInput(props: SearchInputProps) {
     const {
-        className, inputProps = {}, store, size = 'm', slotInput, slotEnd, children,
+        className, inputProps = {}, store, sizeVariant = 'm', slotInput, slotEnd, children,
     } = props;
 
     const t = useTranslation();
@@ -34,7 +34,7 @@ export function SearchInput(props: SearchInputProps) {
         <div role='search'
             className={cx(
                 CLASS_NAME,
-                `${CLASS_NAME}--size-${size}`,
+                `${CLASS_NAME}--size-${sizeVariant}`,
                 mode === 'explicit' ? `${CLASS_NAME}--has-submit` : undefined,
                 className
             )}>

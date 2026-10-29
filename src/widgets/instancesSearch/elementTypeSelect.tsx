@@ -17,7 +17,7 @@ const CLASS_NAME = 'reactodia-element-type-select';
 
 export function ElementTypeSelect(props: {
     selected: ElementTypeIri | undefined;
-    setSelected: (item: ElementTypeModel) => void;
+    setSelected: (item: ElementTypeModel | undefined) => void;
 }) {
     const {selected, setSelected} = props;
     const t = useTranslation();
@@ -41,11 +41,24 @@ export function ElementTypeSelect(props: {
     }, [dataProvider]);
     return (
         <Autocomplete
-            inlineContent={typeData ? <ElementTypeView elementType={typeData} /> : undefined}
+            inlineContent={
+                typeData ? (
+                    <ElementTypeView elementType={typeData}
+                        className={`${CLASS_NAME}__selected`}
+                        sizeVariant='s'>
+                        <button
+                            className={cx(
+                                `${CLASS_NAME}__selected-remove`,
+                                'reactodia-btn reactodia-btn-default'
+                            )}
+                            onClick={() => setSelected(undefined)}
+                        />
+                    </ElementTypeView>
+                ) : undefined
+            }
             inlineStatus={typeStatus}
-            contentReplacesInput
             suggest={suggest}
-            size='s'>
+            sizeVariant='s'>
             {({items: suggestions, highlightText}) => (
                 <ul className={`${CLASS_NAME}__items`}>
                     {suggestions.map(item => (

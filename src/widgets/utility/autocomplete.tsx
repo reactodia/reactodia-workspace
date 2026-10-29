@@ -20,7 +20,6 @@ const CLASS_NAME = 'reactodia-autocomplete';
 export function Autocomplete<T>(props: {
     inlineContent: React.ReactNode | undefined;
     inlineStatus?: 'loading' | 'error';
-    contentReplacesInput?: boolean;
     suggest: (text: string, options: { signal: AbortSignal }) => Promise<readonly T[]>;
     /**
      * Input dropdown expand direction.
@@ -49,7 +48,7 @@ export function Autocomplete<T>(props: {
     /**
      * @default "m"
      */
-    size?: 'm' | 's';
+    sizeVariant?: 'm' | 's';
     children: (params: {
         items: readonly T[];
         highlightText: string;
@@ -58,13 +57,12 @@ export function Autocomplete<T>(props: {
     const {
         inlineContent,
         inlineStatus,
-        contentReplacesInput = false,
         suggest,
         direction,
         searchTimeout = 200,
         minSearchTermLength = 2,
         placeholder,
-        size,
+        sizeVariant = 'm',
         children,
     } = props;
 
@@ -157,11 +155,7 @@ export function Autocomplete<T>(props: {
         <FocusGroup>
             {({ref}) => (
                 <Dropdown innerRef={dropdownRef}
-                    className={cx(
-                        CLASS_NAME,
-                        contentReplacesInput && inlineContent
-                            ? `${CLASS_NAME}--inline-content-only` : null
-                    )}
+                    className={CLASS_NAME}
                     role='combobox'
                     aria-expanded={expanded}
                     direction={direction}
@@ -176,9 +170,10 @@ export function Autocomplete<T>(props: {
                             expanded={expanded}
                             setExpanded={setExpanded}
                             placeholder={placeholder}
-                            size={size}
+                            sizeVariant={sizeVariant}
                         />
-                    }>
+                    }
+                    onClick={() => toggleInputRef.current?.focus()}>
                     <AutocompleteItems innerRef={ref}
                         visible={expanded}
                         dropUp={direction === 'up'}
@@ -201,18 +196,18 @@ function AutocompleteToggle(props: {
     expanded: boolean;
     setExpanded: (expanded: boolean) => void;
     placeholder?: string;
-    size?: 'm' | 's';
+    sizeVariant: 'm' | 's';
 }) {
     const {
         inputRef, searchStore, hasSearchText, inlineContent, inlineStatus,
-        placeholder, size, expanded, setExpanded,
+        placeholder, sizeVariant, expanded, setExpanded,
     } = props;
     const t = useTranslation();
 
     return (
         <SearchInput className={`${CLASS_NAME}__toggle`}
             store={searchStore}
-            size={size}
+            sizeVariant={sizeVariant}
             inputProps={{
                 /* For compatibility with React 19 typings */
                 ref: inputRef as React.RefObject<HTMLInputElement>,

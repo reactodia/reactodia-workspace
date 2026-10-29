@@ -1,0 +1,38 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-element-type-select {
+  &__selected {
+    background: theme.$tree-background-color-focus;
+    border-color: theme.$tree-border-color-focus;
+    margin: 2px;
+    max-width: 180px;
+
+    &[class]:hover {
+      cursor: unset;
+    }
+  }
+
+  &__selected-remove {
+    @include codicon-button("close");
+  
+    height: 100%;
+    margin-left: 2px;
+    padding: 0 4px;
+    border: none;
+    border-left: 1px solid theme.$tree-border-color-focus;
+    border-radius: 0;
+    background: none;
+
+    &::before {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  &__items {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+}

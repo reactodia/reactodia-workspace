@@ -180,6 +180,7 @@ $searchButtonTotal: $searchButtonWidth + $searchButtonPadding * 2;
     flex: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   &__section:not(&__section--active) {

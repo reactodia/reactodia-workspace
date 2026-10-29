@@ -76,58 +76,59 @@ export function InstanceCriteria(props: {
                         />
                     )}
                 </div>
-                <div
-                    className={cx(
-                        `${CLASS_NAME}__criterions-controls`,
-                        'reactodia-btn-group reactodia-btn-group-xs'
-                    )}>
-                    {editState ? (
-                        <>
-                            <button type='button'
-                                className={cx(
-                                    `${CLASS_NAME}__criterions-apply`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                onClick={() => {
-                                    applyPattern(pattern);
-                                    setEditState(undefined);
-                                }}>
-                                apply
-                            </button>
-                            <button type='button'
-                                className={cx(
-                                    `${CLASS_NAME}__criterions-cancel`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                onClick={() => {
-                                    setPattern(editState.original);
-                                    setEditState(undefined);
-                                }}>
-                                cancel
-                            </button>
-                        </>
-                    ) : null}
-                    {!editState && pattern ? (
-                        <>
-                            <button type='button'
-                                className={cx(
-                                    `${CLASS_NAME}__criterions-edit`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                onClick={() => setEditState({original: pattern})}>
-                                edit
-                            </button>
-                            <button type='button'
-                                className={cx(
-                                    `${CLASS_NAME}__criterions-clear`,
-                                    'reactodia-btn reactodia-btn-default'
-                                )}
-                                onClick={() => setCriteria({})}>
-                                clear
-                            </button>
-                        </>
-                    ) : null}
-                </div>
+                {editState || pattern ? (
+                    <div
+                        className={cx(
+                            `${CLASS_NAME}__criterions-controls`,
+                            'reactodia-btn-group reactodia-btn-group-xs'
+                        )}>
+                        {editState ? (
+                            <>
+                                <button type='button'
+                                    className={cx(
+                                        `${CLASS_NAME}__criterions-apply`,
+                                        'reactodia-btn reactodia-btn-default'
+                                    )}
+                                    onClick={() => {
+                                        applyPattern(pattern);
+                                        setEditState(undefined);
+                                    }}>
+                                    apply
+                                </button>
+                                <button type='button'
+                                    className={cx(
+                                        `${CLASS_NAME}__criterions-cancel`,
+                                        'reactodia-btn reactodia-btn-default'
+                                    )}
+                                    onClick={() => {
+                                        setPattern(editState.original);
+                                        setEditState(undefined);
+                                    }}>
+                                    cancel
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button type='button'
+                                    className={cx(
+                                        `${CLASS_NAME}__criterions-edit`,
+                                        'reactodia-btn reactodia-btn-default'
+                                    )}
+                                    onClick={() => setEditState({original: pattern})}>
+                                    edit
+                                </button>
+                                <button type='button'
+                                    className={cx(
+                                        `${CLASS_NAME}__criterions-clear`,
+                                        'reactodia-btn reactodia-btn-default'
+                                    )}
+                                    onClick={() => setCriteria({})}>
+                                    clear
+                                </button>
+                            </>
+                        )}
+                    </div>
+                ) : null}
             </SearchCriterionContext.Provider>
         </div>
     );

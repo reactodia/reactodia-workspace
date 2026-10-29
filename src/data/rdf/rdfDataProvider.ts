@@ -99,12 +99,6 @@ export interface RdfDataProviderOptions {
      * ```
      */
     readonly linkTypeBaseTypes?: ReadonlyArray<string>;
-    /**
-     * Whether to compute {@link LinkTypeModel.count} value based on links in the dataset.
-     *
-     * @default false
-     */
-    readonly countLinks?: boolean;
 }
 
 /**
@@ -130,9 +124,12 @@ export class RdfDataProvider implements DataProvider {
     private readonly propertyOrLinkBaseTypes: ReadonlyArray<Rdf.NamedNode>;
     private readonly propertyTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
     private readonly linkTypeBaseTypes: ReadonlyArray<Rdf.NamedNode>;
-    private readonly countLinks: boolean;
 
     private readonly EMPTY_LINKS: ReadonlySet<LinkTypeIri> = new Set();
+
+    private readonly elementCount = new Map<ElementTypeIri, number>();
+    private readonly linkCount = new Map<LinkTypeIri, number>();
+    private readonly propertyCount = new Map<PropertyTypeIri, number>();
 
     constructor(options: RdfDataProviderOptions = {}) {
         this.factory = options.factory ?? Rdf.DefaultDataFactory;
@@ -163,7 +160,6 @@ export class RdfDataProvider implements DataProvider {
             .map(iri => this.factory.namedNode(iri));
         this.linkTypeBaseTypes = (options.linkTypeBaseTypes ?? [owl.ObjectProperty])
             .map(iri => this.factory.namedNode(iri));
-        this.countLinks = options.countLinks ?? false;
     }
 
     /**
@@ -171,16 +167,40 @@ export class RdfDataProvider implements DataProvider {
      * to be able to query it via this provider's methods.
      */
     addGraph(quads: Iterable<Rdf.Quad>): void {
-        if (this.acceptBlankNodes) {
-            this.dataset.addAll(quads);
-        } else {
-            for (const q of quads) {
-                if (!(
-                    q.subject.termType === 'BlankNode' ||
-                    q.object.termType === 'BlankNode' ||
-                    q.graph.termType === 'BlankNode'
-                )) {
-                    this.dataset.add(q);
+        for (const q of quads) {
+            if (this.dataset.has(q)) {
+                continue;
+            } else if (this.acceptBlankNodes || !(
+                q.subject.termType === 'BlankNode' ||
+                q.object.termType === 'BlankNode' ||
+                q.graph.termType === 'BlankNode'
+            )) {
+                this.dataset.add(q);
+
+                if (q.predicate.termType === 'NamedNode') {
+                    if (
+                        q.predicate.value === this.typePredicate.value &&
+                        q.object.termType === 'NamedNode'
+                    ) {
+                        const count = this.elementCount.get(q.object.value) ?? 0;
+                        this.elementCount.set(q.object.value, count + 1);
+                    } else {
+                        if (
+                            q.object.value === 'NamedNode' &&
+                            !this.datatypePredicates.has(q.predicate.value)
+                        ) {
+                            const count = this.linkCount.get(q.predicate.value) ?? 0;
+                            this.linkCount.set(q.predicate.value, count + 1);
+                        } else if (
+                            q.object.termType === 'Literal' || (
+                                this.datatypePredicates.has(q.predicate.value) &&
+                                q.object.termType === 'NamedNode'
+                            )
+                        ) {
+                            const count = this.propertyCount.get(q.predicate.value) ?? 0;
+                            this.propertyCount.set(q.predicate.value, count + 1);
+                        }
+                    }
                 }
             }
         }
@@ -191,6 +211,9 @@ export class RdfDataProvider implements DataProvider {
      */
     clear(): void {
         this.dataset.clear();
+        this.elementCount.clear();
+        this.linkCount.clear();
+        this.propertyCount.clear();
     }
 
     /**
@@ -220,7 +243,7 @@ export class RdfDataProvider implements DataProvider {
     knownElementTypes(params: {
         signal?: AbortSignal;
     }): Promise<ElementTypeGraph> {
-        const typeCounts = this.computeTypeCounts();
+        const typeCounts = new Map(this.elementCount);
         for (const baseType of this.elementTypeBaseTypes) {
             for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
                 if (isResourceTerm(t.subject)) {
@@ -281,10 +304,15 @@ export class RdfDataProvider implements DataProvider {
     }): Promise<ElementTypeModel[]> {
         const {text, limit} = params;
         return Promise.resolve(this.lookupSchemaItems({
+            implicitValues: this.elementCount.keys(),
             includeTypes: this.elementTypeBaseTypes,
             excludeTypes: [],
             allowBlanks: true,
-            createItem: (id, label): ElementTypeModel => ({id: this.encodeTerm(id), label}),
+            createItem: (idTerm, label): ElementTypeModel => {
+                const id = this.encodeTerm(idTerm);
+                const count = this.elementCount.get(id);
+                return {id, label, count};
+            },
             text,
             limit,
         }));
@@ -297,12 +325,16 @@ export class RdfDataProvider implements DataProvider {
     }): Promise<PropertyTypeModel[]> {
         const {text, limit} = params;
         return Promise.resolve(this.lookupSchemaItems({
+            implicitValues: this.propertyCount.keys(),
             includeTypes: [
                 ...this.propertyOrLinkBaseTypes,
                 ...this.propertyTypeBaseTypes,
             ],
             excludeTypes: this.linkTypeBaseTypes,
-            createItem: (id, label): PropertyTypeModel => ({id: this.encodeTerm(id), label}),
+            createItem: (id, label): PropertyTypeModel => ({
+                id: this.encodeTerm(id),
+                label,
+            }),
             text,
             limit,
         }));
@@ -314,8 +346,8 @@ export class RdfDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<LinkTypeModel[]> {
         const {text, limit} = params;
-        const linkCounts = this.computeLinkCounts();
         return Promise.resolve(this.lookupSchemaItems({
+            implicitValues: this.linkCount.keys(),
             includeTypes: [
                 ...this.propertyOrLinkBaseTypes,
                 ...this.linkTypeBaseTypes,
@@ -323,7 +355,7 @@ export class RdfDataProvider implements DataProvider {
             excludeTypes: this.propertyTypeBaseTypes,
             createItem: (idTerm, label): LinkTypeModel => {
                 const id = this.encodeTerm(idTerm);
-                const count = linkCounts.get(id);
+                const count = this.linkCount.get(id);
                 return {id, label, count};
             },
             text,
@@ -331,7 +363,8 @@ export class RdfDataProvider implements DataProvider {
         }));
     }
 
-    private lookupSchemaItems<T>(params: {
+    private lookupSchemaItems<T extends { readonly id: string }>(params: {
+        implicitValues: Iterable<T['id']>;
         includeTypes: readonly Rdf.NamedNode[],
         excludeTypes: readonly Rdf.NamedNode[],
         allowBlanks?: boolean,
@@ -339,11 +372,44 @@ export class RdfDataProvider implements DataProvider {
         text: string;
         limit?: number;
     }): T[] {
-        const {includeTypes, excludeTypes, allowBlanks, createItem, text} = params;
+        const {implicitValues, includeTypes, excludeTypes, allowBlanks, createItem, text} = params;
         const limit = typeof params.limit === 'number' ? params.limit : Number.POSITIVE_INFINITY;
         const seenIds = new HashSet<Rdf.NamedNode | Rdf.BlankNode>(Rdf.hashTerm, Rdf.equalTerms);
         const items: T[] = [];
         const textFilter = makeCaseInsensitiveFilter(text);
+
+        const tryAdd = (id: Rdf.NamedNode | Rdf.BlankNode) => {
+            let matches = false;
+            if (id.termType === 'NamedNode') {
+                const localName = Rdf.getLocalName(id.value);
+                if (localName !== undefined && textFilter(localName)) {
+                    matches = true;
+                }
+            }
+            
+            const label = this.labelPredicate
+                ? findLiterals(this.dataset, id, this.labelPredicate)
+                : [];
+            if (label.some(v => textFilter(v.value))) {
+                matches = true;
+            }
+
+            if (matches) {
+                items.push(createItem(id, label));
+            }
+        };
+
+        for (const implicitValue of implicitValues) {
+            if (items.length >= limit) {
+                break;
+            }
+
+            const id = this.decodeTerm(implicitValue);
+            if (!seenIds.has(id)) {
+                tryAdd(id);
+            }
+        }
+
         lookup: for (const baseType of includeTypes) {
             const includeMatches = this.dataset.iterateMatches(null, this.typePredicate, baseType);
             nextId: for (const {subject: id} of includeMatches) {
@@ -365,43 +431,10 @@ export class RdfDataProvider implements DataProvider {
                     }
                 }
 
-                const label = this.labelPredicate
-                    ? findLiterals(this.dataset, id, this.labelPredicate)
-                    : [];
-                if (label.some(v => textFilter(v.value))) {
-                    items.push(createItem(id, label));
-                }
+                tryAdd(id);                
             }
         }
         return items;
-    }
-
-    knownLinkTypes(params: {
-        signal?: AbortSignal;
-    }): Promise<LinkTypeModel[]> {
-        const linkCounts = this.computeLinkCounts();
-        for (const baseType of this.linkTypeBaseTypes) {
-            for (const t of this.dataset.iterateMatches(null, this.typePredicate, baseType)) {
-                if (isResourceTerm(t.subject)) {
-                    const linkTypeId: LinkTypeIri = this.encodeTerm(t.subject);
-                    if (!linkCounts.has(linkTypeId)) {
-                        linkCounts.set(linkTypeId, 0);
-                    }
-                }
-            }
-        }
-        const models = new Map<LinkTypeIri, LinkTypeModel>();
-        for (const [linkTypeId, count] of linkCounts) {
-            const linkTypeIri = this.decodeTerm(linkTypeId);
-            const label = this.labelPredicate
-                ? findLiterals(this.dataset, linkTypeIri, this.labelPredicate)
-                : [];
-            if (linkTypeIri.termType === 'BlankNode' && label.length === 0) {
-                continue;
-            }
-            models.set(linkTypeId, {id: linkTypeId, label, count});
-        }
-        return Promise.resolve(Array.from(models.values()));
     }
 
     elementTypes(params: {
@@ -452,7 +485,6 @@ export class RdfDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds} = params;        
-        const linkCounts = this.computeLinkCounts(linkTypeIds);
         const models = new Map<LinkTypeIri, LinkTypeModel>();
         for (const linkTypeId of linkTypeIds) {
             const linkTypeIri = this.decodeTerm(linkTypeId);
@@ -461,7 +493,7 @@ export class RdfDataProvider implements DataProvider {
                 label: this.labelPredicate
                     ? findLiterals(this.dataset, linkTypeIri, this.labelPredicate)
                     : [],
-                count: linkCounts.get(linkTypeId) ?? 0,
+                count: this.linkCount.get(linkTypeId) ?? 0,
             };
             models.set(linkTypeId, model);
         }
@@ -631,36 +663,6 @@ export class RdfDataProvider implements DataProvider {
         }
 
         return Promise.resolve(linkedElements);
-    }
-
-    private computeTypeCounts(): Map<ElementTypeIri, number> {
-        const instanceCounts = new Map<ElementTypeIri, number>();
-        for (const t of this.dataset.iterateMatches(null, this.typePredicate, null)) {
-            if (isResourceTerm(t.object)) {
-                const elementTypeId: ElementTypeIri = this.encodeTerm(t.object);
-                instanceCounts.set(elementTypeId, (instanceCounts.get(elementTypeId) ?? 0) + 1);
-            }
-        }
-        return instanceCounts;
-    }
-
-    private computeLinkCounts(
-        onlyLinkTypes?: ReadonlyArray<LinkTypeIri>
-    ): Map<LinkTypeIri, number> {
-        const linkStats = new Map<LinkTypeIri, number>();
-        if (!this.countLinks) {
-            return linkStats;
-        }
-        const linkTypeSet = onlyLinkTypes ? new Set(onlyLinkTypes) : undefined;
-        for (const t of this.dataset) {
-            if (t.predicate.termType === 'NamedNode') {
-                const linkTypeId: LinkTypeIri = this.encodeTerm(t.predicate);
-                if (!linkTypeSet || linkTypeSet.has(linkTypeId)) {
-                    linkStats.set(linkTypeId, (linkStats.get(linkTypeId) ?? 0) + 1);
-                }
-            }
-        }
-        return linkStats;
     }
 }
 
