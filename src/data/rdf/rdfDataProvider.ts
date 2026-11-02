@@ -186,7 +186,7 @@ export class RdfDataProvider implements DataProvider {
                         this.elementCount.set(q.object.value, count + 1);
                     } else {
                         if (
-                            q.object.value === 'NamedNode' &&
+                            q.object.termType === 'NamedNode' &&
                             !this.datatypePredicates.has(q.predicate.value)
                         ) {
                             const count = this.linkCount.get(q.predicate.value) ?? 0;

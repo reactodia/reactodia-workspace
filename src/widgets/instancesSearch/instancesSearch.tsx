@@ -550,7 +550,11 @@ function createRequest(
     criteriaOptions: readonly SearchCriterionOption[]
 ): DataProviderLookupParams {
     const {text, elementType, refElement, refElementLink, linkDirection, pattern} = criteria;
-    const generatePattern = makePatternGenerator(criteriaOptions);
+    const generateContext = makePatternGenerator(criteriaOptions);
+    const generatedPattern = pattern ? generateContext.generate(pattern) : undefined;
+    if (generatedPattern?.type === 'error') {
+        throw new Error('Invalid generated search pattern');
+    }
     return {
         text,
         elementTypeId: elementType,
@@ -558,7 +562,7 @@ function createRequest(
         refElementLinkId: refElementLink,
         linkDirection,
         limit: ITEMS_PER_PAGE,
-        pattern: pattern ? generatePattern(pattern) : undefined,
+        pattern: generatedPattern,
     };
 }
 

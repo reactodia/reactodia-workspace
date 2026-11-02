@@ -1,20 +1,23 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { useObservedProperty } from '../../coreUtils/hooks';
-import { useTranslation } from '../../coreUtils/i18n';
+import { TranslatedText, useTranslation } from '../../coreUtils/i18n';
+import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 import { LookupPattern } from '../../data/dataProvider';
-import { ElementIri, ElementTypeIri, ElementTypeModel } from '../../data/model';
+import { ElementIri } from '../../data/model';
 import { EntityElement } from '../../editor/dataElements';
+import {
+    subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
+} from '../../editor/observedElement';
 import { useProvidedEntities } from '../../editor/useProvidedEntities';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { DropdownMenu, DropdownMenuItem, useDropdownMenu } from '../utility/dropdown';
-import { ElementTypeView } from '../utility/elementTypeView';
 import { InlineEntity } from '../utility/inlineEntity';
+import { SchemaTypeView } from '../utility/schemaTypeView';
 
-import { ElementTypeSelect } from './elementTypeSelect';
 import { EntitySelect } from './entitySelect';
+import { SchemaTypeSelect, LinkDirectionSelect } from './schemaTypeSelect';
 import {
     SearchPattern, SearchPatternType, SearchPatternState,
     SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo, SearchPatternFromValues,
@@ -30,8 +33,9 @@ export interface SearchCriterionOption<out P extends SearchPatternType = SearchP
     ) => React.ReactNode;
     readonly generatePattern: (
         state: SearchPatternState<P>,
-        options: SearchCriterionGenerateOptions
-    ) => LookupPattern;
+        target: SearchPattern,
+        context: SearchCriterionGenerateContext
+    ) => LookupPattern | SearchCriterionErrorPattern;
 }
 
 export interface SearchCriterionProps<in P extends SearchPatternType> {
@@ -43,32 +47,74 @@ export interface SearchCriterionProps<in P extends SearchPatternType> {
     controls?: React.ReactNode;
 }
 
-export interface SearchCriterionGenerateOptions {
-    readonly generate: (pattern: SearchPattern) => LookupPattern;
+export interface SearchCriterionGenerateContext {
+    readonly generate: (
+        pattern: SearchPattern
+    ) => LookupPattern | SearchCriterionErrorPattern;
+    readonly generateMany: (
+        patterns: readonly SearchPattern[]
+    ) => LookupPattern[] | SearchCriterionErrorPattern;
+}
+
+export interface SearchCriterionErrorPattern {
+    readonly type: 'error';
+    readonly errors: readonly SearchCriterionError[];
+}
+
+export interface SearchCriterionError {
+    readonly target: SearchPattern;
+    readonly message: string | TranslatedText;
 }
 
 export interface SearchCriterionContext {
     readonly editing: boolean;
+    readonly errors: ReadonlyMap<SearchPattern, readonly SearchCriterionError[]>;
     readonly patternOptions: readonly SearchCriterionOption[];
 }
 export const SearchCriterionContext = React.createContext<SearchCriterionContext>({
     editing: false,
+    errors: new Map(),
     patternOptions: [],
 });
 
 export function makePatternGenerator(
     patternOptions: readonly SearchCriterionOption[]
-): (pattern: SearchPattern) => LookupPattern {
-    const generate = (pattern: SearchPattern): LookupPattern => {
+): SearchCriterionGenerateContext {
+    const generateSingle = (
+        pattern: SearchPattern
+    ): LookupPattern | SearchCriterionErrorPattern => {
         const option = patternOptions.find(option => option.type === pattern.type);
         if (!option) {
             throw new Error(
                 `Found no option to generate lookup pattern for type: '${pattern.type}'`
             );
         }
-        return option.generatePattern(pattern.state, {generate});
+        return option.generatePattern(pattern.state, pattern, context);
     };
-    return generate;
+    const generateMany = (
+        patterns: readonly SearchPattern[]
+    ): LookupPattern[] | SearchCriterionErrorPattern => {
+        const results: LookupPattern[] = [];
+        const errors: SearchCriterionError[] = [];
+        let hasError = false;
+        for (const pattern of patterns) {
+            const result = generateSingle(pattern);
+            if (result.type === 'error') {
+                hasError = true;
+                for (const error of result.errors) {
+                    errors.push(error);
+                }
+            } else {
+                results.push(result);
+            }
+        }
+        return hasError ? {type: 'error', errors} : results;
+    };
+    const context: SearchCriterionGenerateContext = {
+        generate: generateSingle,
+        generateMany,
+    };
+    return context;
 }
 
 const CLASS_NAME = 'reactodia-search-criterion';
@@ -185,11 +231,15 @@ function AddCriterionButton(props: { children: React.ReactNode }) {
 }
 
 function CriterionBlock(props: {
+    target: SearchPattern;
     header: React.ReactNode;
     controls: React.ReactNode;
     children?: React.ReactNode;
 }) {
-    const {header, controls, children} = props;
+    const {target, header, controls, children} = props;
+    const t = useTranslation();
+    const {errors} = React.useContext(SearchCriterionContext);
+    const targetErrors = errors.get(target);
     return (
         <div className={`${CLASS_NAME}__block`}>
             <div className={`${CLASS_NAME}__block-header`}>
@@ -201,6 +251,18 @@ function CriterionBlock(props: {
             <div className={`${CLASS_NAME}__block-body`}>
                 {children}
             </div>
+            {targetErrors ? (
+                <ul className={`${CLASS_NAME}__block-errors`}>
+                    {targetErrors.map((error, index) => (
+                        <li key={index}
+                            className={`${CLASS_NAME}__block-error`}>
+                            {typeof error.message === 'string'
+                                ? error.message
+                                : error.message.resolve(t)}
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
         </div>
     );
 }
@@ -277,20 +339,32 @@ export const SearchCriterionAllOf: SearchCriterionOption<typeof SearchPatternAll
     type: SearchPatternAllOf,
     createState: () => ({patterns: []}),
     renderCriterion: props => <AnyAllOfCriterion {...props} />,
-    generatePattern: (state, {generate}) => ({
-        type: 'allOf',
-        patterns: state.patterns.map(generate),
-    }),
+    generatePattern: (state, target, context) => {
+        if (state.patterns.length === 0) {
+            return {
+                type: 'error',
+                errors: [{target, message: 'Should have at least one sub-pattern'}],
+            };
+        }
+        const inner = context.generateMany(state.patterns);
+        return Array.isArray(inner) ? {type: 'allOf', patterns: inner} : inner;
+    },
 };
 
 export const SearchCriterionAnyOf: SearchCriterionOption<typeof SearchPatternAnyOf> = {
     type: SearchPatternAnyOf,
     createState: () => ({patterns: []}),
     renderCriterion: props => <AnyAllOfCriterion {...props} />,
-    generatePattern: (state, {generate}) => ({
-        type: 'anyOf',
-        patterns: state.patterns.map(generate),
-    }),
+    generatePattern: (state, target, context) => {
+        if (state.patterns.length === 0) {
+            return {
+                type: 'error',
+                errors: [{target, message: 'Should have at least one sub-pattern'}],
+            };
+        }
+        const inner = context.generateMany(state.patterns);
+        return Array.isArray(inner) ? {type: 'anyOf', patterns: inner} : inner;
+    },
 };
 
 function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPatternAllOf>(
@@ -367,10 +441,18 @@ export const SearchCriterionHasType: SearchCriterionOption<typeof SearchPatternH
     label: 'has type',
     createState: () => ({elementType: ''}),
     renderCriterion: props => <HasTypeCriterion {...props} />,
-    generatePattern: state => ({
-        type: 'hasType',
-        elementType: state.elementType,
-    }),
+    generatePattern: (state, target) => {
+        if (!state.elementType) {
+            return {
+                type: 'error',
+                errors: [{target, message: 'Element type is required'}],
+            };
+        }
+        return {
+            type: 'hasType',
+            elementType: state.elementType,
+        };
+    },
 };
 
 function HasTypeCriterion(
@@ -380,14 +462,19 @@ function HasTypeCriterion(
     const t = useTranslation();
     const {model} = useWorkspace();
 
+    const elementType = pattern.state.elementType
+        ? model.createElementType(pattern.state.elementType).data
+        : undefined;
+    useKeyedSyncStore(subscribeElementTypes, elementType ? [elementType.id] : [], model);
+
     let header: React.ReactNode;
     let where: React.ReactNode | null = null;
     if (!editing) {
         header = (
             <>
                 {t.template('search_entities.criteria_has_type', {
-                    entityType: pattern.state.elementType
-                        ? <TrackedElementType target={pattern.state.elementType} />
+                    entityType: elementType
+                        ? <SchemaTypeView schemaType={elementType} selected />
                         : <div><b>any</b></div>,
                 })}
             </>
@@ -395,8 +482,8 @@ function HasTypeCriterion(
     } else {
         header = <div>Has type</div>;
         where = (
-            <ElementTypeSelect
-                selected={pattern.state.elementType}
+            <SchemaTypeSelect typeKind='elementType'
+                selected={elementType}
                 setSelected={type => updatePattern({
                     ...pattern,
                     state: {...pattern.state, elementType: type ? type.id : ''},
@@ -406,27 +493,12 @@ function HasTypeCriterion(
     }
 
     return (
-        <CriterionBlock header={header}
+        <CriterionBlock target={pattern}
+            header={header}
             controls={controls}>
             {where}
         </CriterionBlock>
     );
-}
-
-function TrackedElementType(props: { target: ElementTypeIri }) {
-    const {target} = props;
-    const {model} = useWorkspace();
-    const elementType = model.createElementType(target);
-    const data = useObservedProperty(
-        elementType.events,
-        'changeData',
-        () => elementType.data
-    );
-    const dataWithDefault = React.useMemo(
-        (): ElementTypeModel => data ?? {id: target, label: []},
-        [data]
-    );
-    return <ElementTypeView elementType={dataWithDefault} selected />;
 }
 
 export const SearchCriterionConnectedTo: SearchCriterionOption<typeof SearchPatternConnectedTo> = {
@@ -434,12 +506,18 @@ export const SearchCriterionConnectedTo: SearchCriterionOption<typeof SearchPatt
     label: 'connected to',
     createState: () => ({}),
     renderCriterion: props => <ConnectedToCriterion {...props} />,
-    generatePattern: (state, {generate}) => ({
-        type: 'connectedTo',
-        linkType: state.linkType,
-        linkDirection: state.linkDirection,
-        target: state.target ? generate(state.target) : undefined,
-    }),
+    generatePattern: (state, _target, context) => {
+        const target = state.target ? context.generate(state.target) : undefined;
+        if (target?.type === 'error') {
+            return target;
+        }
+        return {
+            type: 'connectedTo',
+            linkType: state.linkType,
+            linkDirection: state.linkDirection,
+            target,
+        };
+    },
 };
 
 function ConnectedToCriterion(
@@ -449,13 +527,18 @@ function ConnectedToCriterion(
     const t = useTranslation();
     const {model} = useWorkspace();
 
+    const {target, linkDirection} = pattern.state;
+
+    const linkType = pattern.state.linkType
+        ? model.createLinkType(pattern.state.linkType).data
+        : undefined;
+    useKeyedSyncStore(subscribeLinkTypes, linkType ? [linkType.id] : [], model);
+
     let inlineEntity = false;
     let header: React.ReactNode;
     let where: React.ReactNode = null;
 
     if (!editing) {
-        const {target, linkType, linkDirection} = pattern.state;
-
         let entity: React.ReactElement;
         if (!target || SearchPattern.hasType(target, SearchPatternFromValues)) {
             inlineEntity = true;
@@ -466,18 +549,19 @@ function ConnectedToCriterion(
 
         let relationType: React.ReactElement | undefined;
         if (linkType) {
-            const linkTypeData = model.getLinkType(linkType);
             const linkTypeLabel = t.formatLabel(
-                linkTypeData?.data?.label,
-                linkType,
+                linkType.label,
+                linkType.id,
                 model.language
             );
             relationType = (
                 <span className={`${CLASS_NAME}__link-type`}
-                    title={linkType}>
+                    title={model.locale.formatIri(linkType.id)}>
                     {linkTypeLabel}
                 </span>
             );
+        } else {
+            relationType = <i>any link</i>;
         }
 
         const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
@@ -485,7 +569,7 @@ function ConnectedToCriterion(
 
         header = (
             <div>
-                {!linkType ? (
+                {!linkType && !linkDirection ? (
                     t.template('search_entities.criteria_connected', {
                         entity, relationType, sourceIcon, targetIcon,
                     })
@@ -505,25 +589,35 @@ function ConnectedToCriterion(
             </div>
         );
     } else {
-        header = <div>Connected to <b>target</b></div>;
+        header = <div>Connected to <b>target</b> via</div>;
         where = (
-            <div>
-                <select>
-                    <option>relation a</option>
-                    <option>relation b</option>
-                    <option>relation c</option>
-                </select>
-                <select>
-                    <option>in</option>
-                    <option>out</option>
-                    <option>in or out</option>
-                </select>
+            <div className={`${CLASS_NAME}__directed-link-selector`}>
+                <SchemaTypeSelect typeKind='linkType'
+                    selected={linkType}
+                    setSelected={next => updatePattern({
+                        ...pattern,
+                        state: {
+                            ...pattern.state,
+                            linkType: next?.id,
+                        },
+                    })}
+                />
+                <LinkDirectionSelect selected={linkDirection}
+                    setSelected={next => updatePattern({
+                        ...pattern,
+                        state: {
+                            ...pattern.state,
+                            linkDirection: next,
+                        },
+                    })}
+                />
             </div>
         );
     }
 
     return (
-        <CriterionBlock header={header}
+        <CriterionBlock target={pattern}
+            header={header}
             controls={controls}>
             {where}
             {inlineEntity ? null : (
@@ -532,7 +626,7 @@ function ConnectedToCriterion(
                         pattern={pattern.state.target}
                         setPattern={target => updatePattern({
                             ...pattern,
-                            state: {target},
+                            state: {...pattern.state, target},
                         })}
                         parent={pattern}
                     />
@@ -573,7 +667,8 @@ function FromValuesCriterion(
     }
 
     return (
-        <CriterionBlock header={header}
+        <CriterionBlock target={pattern}
+            header={header}
             controls={controls}>
             {where}
         </CriterionBlock>
@@ -643,13 +738,21 @@ function FromValuesSelector(props: Pick<
 export const SearchCriterionHasProperty: SearchCriterionOption<typeof SearchPatternHasProperty> = {
     type: SearchPatternHasProperty,
     label: 'has property',
-    createState: () => ({property: ''}),
+    createState: () => ({propertyType: ''}),
     renderCriterion: props => <HasPropertyCriterion {...props} />,
-    generatePattern: state => ({
-        type: 'hasProperty',
-        propertyType: state.property,
-        values: state.values,
-    }),
+    generatePattern: (state, target) => {
+        if (!state.propertyType) {
+            return {
+                type: 'error',
+                errors: [{target, message: 'Property type is required'}],
+            };
+        }
+        return {
+            type: 'hasProperty',
+            propertyType: state.propertyType,
+            values: state.values,
+        };
+    },
 };
 
 function HasPropertyCriterion(
@@ -659,18 +762,20 @@ function HasPropertyCriterion(
     const t = useTranslation();
     const {model} = useWorkspace();
 
+    const propertyType = pattern.state.propertyType
+        ? model.createPropertyType(pattern.state.propertyType).data
+        : undefined;
+    useKeyedSyncStore(subscribePropertyTypes, propertyType ? [propertyType.id] : [], model);
+
     let header: React.ReactNode;
     let where: React.ReactNode = null;
 
     if (!editing) {
-        const {property} = pattern.state;
-
         let propertyTypeLabel: string | undefined;
-        if (pattern.state.property) {
-            const propertyType = model.getPropertyType(property);
+        if (propertyType) {
             propertyTypeLabel = t.formatLabel(
-                propertyType?.data?.label,
-                property,
+                propertyType.label,
+                propertyType.id,
                 model.language
             );
         }
@@ -679,16 +784,21 @@ function HasPropertyCriterion(
     } else {
         header = 'Has property';
         where = (
-            <select>
-                <option>property a</option>
-                <option>property b</option>
-                <option>property c</option>
-            </select>
+            <SchemaTypeSelect typeKind='propertyType'
+                selected={propertyType}
+                setSelected={next => {
+                    updatePattern({
+                        ...pattern,
+                        state: {...pattern.state, propertyType: next?.id ?? ''},
+                    });
+                }}
+            />
         );
     }
 
     return (
-        <CriterionBlock header={header}
+        <CriterionBlock target={pattern}
+            header={header}
             controls={controls}>
             {where}
         </CriterionBlock>

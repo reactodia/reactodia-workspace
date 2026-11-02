@@ -9,7 +9,7 @@ import {
     AccessibleTree, type TreeModel, type TreeRenderItem, TreeState, type TreeUpPath,
     TreeFocusableProps, treePathToDown,
 } from '../utility/accessibleTree';
-import { ElementTypeView } from '../utility/elementTypeView';
+import { SchemaTypeView } from '../utility/schemaTypeView';
 
 export interface ClassTreeResultsProps extends ClassTreeProvidedContext {
     nodes: ReadonlyArray<TreeNode>;
@@ -178,7 +178,7 @@ function Leaf(props: {
                 role='none'
                 onClick={() => onExpand(path)}
             />
-            <ElementTypeView elementType={node.data}
+            <SchemaTypeView schemaType={node.data}
                 label={node.label}
                 highlightText={searchText}
                 selected={Boolean(selected)}
@@ -198,7 +198,7 @@ function Leaf(props: {
                         {node.data.count}
                     </span>
                 ) : null}
-            </ElementTypeView>
+            </SchemaTypeView>
             {creatableClasses.get(node.iri) ? (
                 <button {...focusProps}
                     title={t.text('search_element_types.drag_create.title')}

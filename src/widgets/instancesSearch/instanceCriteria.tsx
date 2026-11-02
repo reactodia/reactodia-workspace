@@ -1,16 +1,16 @@
 import cx from 'clsx';
 import * as React from 'react';
 
+import { multimapArrayAdd } from '../../coreUtils/collections';
 import { useTranslation } from '../../coreUtils/i18n';
 
 import { SearchInput, SearchInputStore } from '../utility/searchInput';
 
 import {
     SearchCriterion, SearchCriterionContext, SearchCriterionOption, AddCriterion,
+    SearchCriterionError, makePatternGenerator,
 } from './searchCriterion';
-import {
-    SearchCriteria, SearchPattern, SearchPatternAllOf, searchPatternFrom,
-} from './searchPattern';
+import { SearchCriteria, SearchPattern, searchPatternFrom } from './searchPattern';
 
 const CLASS_NAME = 'reactodia-instances-search';
 
@@ -25,12 +25,16 @@ export function InstanceCriteria(props: {
 
     const [outerCriteria, setOuterCriteria] = React.useState(criteria);
     const [pattern, setPattern] = React.useState(() => searchPatternFrom(criteria));
-    const [editState, setEditState] =
-        React.useState<{ original: SearchPattern | undefined }>();
+    const [editState, setEditState] = React.useState<{
+        readonly original: SearchPattern | undefined;
+        readonly errors?: ReadonlyMap<SearchPattern, readonly SearchCriterionError[]>;
+        readonly allowApply: boolean;
+    }>();
 
     const context = React.useMemo((): SearchCriterionContext => ({
         editing: editState !== undefined,
         patternOptions: criterionOptions,
+        errors: editState?.errors ?? new Map(),
     }), [editState, criterionOptions]);
 
     if (outerCriteria !== criteria) {
@@ -39,13 +43,28 @@ export function InstanceCriteria(props: {
         setEditState(undefined);
     }
 
-    const applyPattern = (pattern: SearchPattern | undefined) => {
+    const applyPattern = (pattern: SearchPattern | undefined): boolean => {
         if (pattern) {
             setPattern(pattern);
+
+            const generateContext = makePatternGenerator(criterionOptions);
+            const result = generateContext.generate(pattern);
+            if (result.type === 'error') {
+                const errors = new Map<SearchPattern, SearchCriterionError[]>();
+                for (const error of result.errors) {
+                    multimapArrayAdd(errors, error.target, error);
+                }
+                setEditState({original: editState?.original, errors, allowApply: false});
+                return false;
+            }
+
             setCriteria({pattern});
         } else {
             setCriteria({});
         }
+
+        setEditState(undefined);
+        return true;
     };
 
     return (
@@ -64,14 +83,19 @@ export function InstanceCriteria(props: {
                     {!editState && !pattern ? (
                         <AddCriterion
                             onAdd={added => {
-                                setEditState({original: undefined});
+                                setEditState({original: undefined, allowApply: true});
                                 setPattern(added);
                             }}>
                             search by
                         </AddCriterion>
                     ) : (
                         <SearchCriterion pattern={pattern}
-                            setPattern={setPattern}
+                            setPattern={changed => {
+                                setPattern(changed);
+                                if (editState) {
+                                    setEditState({...editState, allowApply: true});
+                                }
+                            }}
                             parent={undefined}
                         />
                     )}
@@ -89,10 +113,8 @@ export function InstanceCriteria(props: {
                                         `${CLASS_NAME}__criterions-apply`,
                                         'reactodia-btn reactodia-btn-default'
                                     )}
-                                    onClick={() => {
-                                        applyPattern(pattern);
-                                        setEditState(undefined);
-                                    }}>
+                                    disabled={!editState.allowApply}
+                                    onClick={() => applyPattern(pattern)}>
                                     apply
                                 </button>
                                 <button type='button'
@@ -114,7 +136,10 @@ export function InstanceCriteria(props: {
                                         `${CLASS_NAME}__criterions-edit`,
                                         'reactodia-btn reactodia-btn-default'
                                     )}
-                                    onClick={() => setEditState({original: pattern})}>
+                                    onClick={() => setEditState({
+                                        original: pattern,
+                                        allowApply: true,
+                                    })}>
                                     edit
                                 </button>
                                 <button type='button'

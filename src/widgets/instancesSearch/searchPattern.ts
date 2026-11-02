@@ -1,7 +1,5 @@
-import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../../data/model';
-import {
-    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
-} from '../../data/dataProvider';
+import { ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri } from '../../data/model';
+import { DataProviderLookupParams } from '../../data/dataProvider';
 import type * as Rdf from '../../data/rdf/rdfModel';
 
 /**
@@ -88,7 +86,7 @@ export const SearchPatternAnyOf = SearchPattern.type('urn:reactodia:anyOf').of<{
     readonly patterns: readonly SearchPattern[];
 }>();
 export const SearchPatternHasType = SearchPattern.type('urn:reactodia:hasType').of<{
-    readonly elementType: ElementTypeIri;
+    readonly elementType?: ElementTypeIri;
 }>();
 export const SearchPatternConnectedTo = SearchPattern.type('urn:reactodia:connectedTo').of<{
     readonly linkType?: LinkTypeIri;
@@ -99,13 +97,13 @@ export const SearchPatternFromValues = SearchPattern.type('urn:reactodia:fromVal
     readonly values: readonly ElementIri[];
 }>();
 export const SearchPatternHasProperty = SearchPattern.type('urn:reactodia:hasProperty').of<{
-    readonly property: PropertyTypeIri;
+    readonly propertyType?: PropertyTypeIri;
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
 }>();
 
 export function searchPatternFrom(criteria: SearchCriteria): SearchPattern | undefined {
     const {
-        elementType, refElement, refElementLink, linkDirection, text, pattern,
+        elementType, refElement, refElementLink, linkDirection, pattern,
     } = criteria;
 
     const patterns: SearchPattern[] = [];

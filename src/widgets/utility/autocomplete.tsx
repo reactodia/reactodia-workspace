@@ -18,6 +18,10 @@ import { SearchInput, SearchInputStore, useSearchInputStore } from './searchInpu
 const CLASS_NAME = 'reactodia-autocomplete';
 
 export function Autocomplete<T>(props: {
+    /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
     inlineContent: React.ReactNode | undefined;
     inlineStatus?: 'loading' | 'error';
     suggest: (text: string, options: { signal: AbortSignal }) => Promise<readonly T[]>;
@@ -55,6 +59,7 @@ export function Autocomplete<T>(props: {
     }) => React.ReactNode;
 }) {
     const {
+        className,
         inlineContent,
         inlineStatus,
         suggest,
@@ -155,7 +160,7 @@ export function Autocomplete<T>(props: {
         <FocusGroup>
             {({ref}) => (
                 <Dropdown innerRef={dropdownRef}
-                    className={CLASS_NAME}
+                    className={cx(CLASS_NAME, className)}
                     role='combobox'
                     aria-expanded={expanded}
                     direction={direction}

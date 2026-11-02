@@ -1,7 +1,7 @@
 @use "../mixin/icons" as *;
 @use "../theme/theme";
 
-.reactodia-element-type-select {
+.reactodia-schema-type-select {
   &__selected {
     background: theme.$tree-background-color-focus;
     border-color: theme.$tree-border-color-focus;
