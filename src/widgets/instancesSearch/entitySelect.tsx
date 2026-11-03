@@ -22,14 +22,21 @@ export function EntitySelect(props: {
     ) => void;
 }) {
     const {dataProvider, selectedStatus, selected, setSelected} = props;
-    const suggest = React.useCallback(async (text: string) => {
+
+    const suggest = React.useCallback(async (text: string, options: { signal: AbortSignal }) => {
+        const {signal} = options;
         // await delay(2000);
         // if (Math.random() > 0.5) {
         //     throw new Error('Random error');
         // }
-        const items = await dataProvider.lookup({text});
+        const items = await dataProvider.lookup({text, signal});
         return items.map(item => item.element);
     }, [dataProvider]);
+
+    // const suggestDefault = React.useCallback(async (options: { signal: AbortSignal }) => {
+    //     const {signal} = options;
+    // });
+
     const selectedSet = React.useMemo(() => new Set(selected.map(v => v.id)), [selected]);
     return (
         <Autocomplete

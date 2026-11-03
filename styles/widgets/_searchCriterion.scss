@@ -34,20 +34,12 @@
     color: theme.$color-danger;
   }
 
-  &__element-type {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
-  }
-
-  &__link-type {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
+  &__condition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    white-space: nowrap;
+    gap: 4px;
   }
 
   &__link-direction-in,

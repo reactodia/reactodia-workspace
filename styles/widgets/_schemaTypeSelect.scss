@@ -35,4 +35,8 @@
     margin: 0;
     padding: 0;
   }
+
+  &__item {
+    outline-offset: -2px;
+  }
 }

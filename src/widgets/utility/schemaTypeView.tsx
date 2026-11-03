@@ -3,17 +3,24 @@ import * as React from 'react';
 
 import { useEventStore, useSyncStore } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
-import { ElementTypeModel } from '../../data/model';
-import * as Rdf from '../../data/rdf/rdfModel';
-import { ProcessedTypeStyle, useWorkspace } from '../../workspace/workspaceContext';
+import {
+    ElementTypeIri, ElementTypeModel, PropertyTypeModel, LinkTypeModel,
+} from '../../data/model';
+import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { highlightSubstring } from './listElementView';
 
-export interface SchemaTypeViewProps extends React.HTMLProps<HTMLAnchorElement> {
-    schemaType: {
-        readonly id: string;
-        readonly label: readonly Rdf.Literal[];
-    };
+export type SchemaType = {
+    elementType: ElementTypeModel;
+    propertyType: PropertyTypeModel;
+    linkType: LinkTypeModel;
+};
+
+export interface SchemaTypeViewProps<Kind extends keyof SchemaType>
+    extends React.HTMLProps<HTMLAnchorElement>
+{
+    typeKind: Kind;
+    typeData: SchemaType[Kind];
     label?: string;
     highlightText?: string;
     selected?: boolean;
@@ -22,9 +29,11 @@ export interface SchemaTypeViewProps extends React.HTMLProps<HTMLAnchorElement> 
 
 const CLASS_NAME = 'reactodia-schema-type-view';
 
-export function SchemaTypeView(props: SchemaTypeViewProps) {
+export function SchemaTypeView<Kind extends keyof SchemaType>(
+    props: SchemaTypeViewProps<Kind>
+) {
     const {
-        schemaType, label, highlightText, selected, sizeVariant = 'm',
+        typeKind, typeData, label, highlightText, selected, sizeVariant = 'm',
         ...restProps
     } = props;
     const t = useTranslation();
@@ -34,27 +43,35 @@ export function SchemaTypeView(props: SchemaTypeViewProps) {
         useEventStore(label === undefined ? undefined : model.events, 'changeLanguage'),
         () => model.language
     );
-    const typeLabel = label ?? t.formatLabel(schemaType.label, schemaType.id, language);
+    const typeLabel = label ?? t.formatLabel(typeData.label, typeData.id, language);
     const highlightedLabel = highlightSubstring(
         typeLabel, highlightText, {className: `${CLASS_NAME}__highlighted-term`}
     );
 
-    const typeStyle = getElementTypeStyle([schemaType.id]);
+    const typeStyle = getElementTypeStyle([typeData.id as ElementTypeIri]);
     const providedStyle = {
         '--reactodia-element-style-color': typeStyle.color,
     } as React.CSSProperties;
+
+    const typeKindClass = (
+        typeKind === 'elementType' ? `${CLASS_NAME}--element-type` :
+        typeKind === 'propertyType' ? `${CLASS_NAME}--property-type` :
+        typeKind === 'linkType' ? `${CLASS_NAME}--link-type` :
+        undefined
+    );
 
     return (
         <a {...restProps}
             className={cx(
                 CLASS_NAME,
+                typeKindClass,
                 `${CLASS_NAME}--size-${sizeVariant}`,
                 selected ? `${CLASS_NAME}--selected` : undefined,
                 restProps.className
             )}
             onClick={restProps.onClick ?? (e => e.preventDefault())}
             style={{...providedStyle, ...restProps.style}}
-            href={schemaType.id}>
+            href={typeData.id}>
             <div className={`${CLASS_NAME}__icon-container`}>
                 {typeStyle.icon ? (
                     <img role='presentation'

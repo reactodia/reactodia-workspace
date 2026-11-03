@@ -2,13 +2,9 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { TranslatedText, useTranslation } from '../../coreUtils/i18n';
-import { useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 import { LookupPattern } from '../../data/dataProvider';
 import { ElementIri } from '../../data/model';
 import { EntityElement } from '../../editor/dataElements';
-import {
-    subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
-} from '../../editor/observedElement';
 import { useProvidedEntities } from '../../editor/useProvidedEntities';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
@@ -17,7 +13,7 @@ import { InlineEntity } from '../utility/inlineEntity';
 import { SchemaTypeView } from '../utility/schemaTypeView';
 
 import { EntitySelect } from './entitySelect';
-import { SchemaTypeSelect, LinkDirectionSelect } from './schemaTypeSelect';
+import { SchemaTypeSelect, LinkDirectionSelect, useSchemaType } from './schemaTypeSelect';
 import {
     SearchPattern, SearchPatternType, SearchPatternState,
     SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo, SearchPatternFromValues,
@@ -460,24 +456,21 @@ function HasTypeCriterion(
 ) {
     const {pattern, updatePattern, editing, controls} = props;
     const t = useTranslation();
-    const {model} = useWorkspace();
 
-    const elementType = pattern.state.elementType
-        ? model.createElementType(pattern.state.elementType).data
-        : undefined;
-    useKeyedSyncStore(subscribeElementTypes, elementType ? [elementType.id] : [], model);
+    const elementType = useSchemaType('elementType', pattern.state.elementType);
 
     let header: React.ReactNode;
     let where: React.ReactNode | null = null;
     if (!editing) {
+        const typeView = elementType
+            ? <SchemaTypeView typeKind='elementType' typeData={elementType} selected />
+            : <div><b>any</b></div>;
         header = (
-            <>
+            <div className={`${CLASS_NAME}__condition`}>
                 {t.template('search_entities.criteria_has_type', {
-                    entityType: elementType
-                        ? <SchemaTypeView schemaType={elementType} selected />
-                        : <div><b>any</b></div>,
+                    entityType: typeView,
                 })}
-            </>
+            </div>
         );
     } else {
         header = <div>Has type</div>;
@@ -525,14 +518,10 @@ function ConnectedToCriterion(
 ) {
     const {pattern, updatePattern, editing, controls} = props;
     const t = useTranslation();
-    const {model} = useWorkspace();
 
     const {target, linkDirection} = pattern.state;
 
-    const linkType = pattern.state.linkType
-        ? model.createLinkType(pattern.state.linkType).data
-        : undefined;
-    useKeyedSyncStore(subscribeLinkTypes, linkType ? [linkType.id] : [], model);
+    const linkType = useSchemaType('linkType', pattern.state.linkType);
 
     let inlineEntity = false;
     let header: React.ReactNode;
@@ -547,28 +536,15 @@ function ConnectedToCriterion(
             entity = <span><b>target</b></span>;
         }
 
-        let relationType: React.ReactElement | undefined;
-        if (linkType) {
-            const linkTypeLabel = t.formatLabel(
-                linkType.label,
-                linkType.id,
-                model.language
-            );
-            relationType = (
-                <span className={`${CLASS_NAME}__link-type`}
-                    title={model.locale.formatIri(linkType.id)}>
-                    {linkTypeLabel}
-                </span>
-            );
-        } else {
-            relationType = <i>any link</i>;
-        }
+        const relationType = linkType
+            ? <SchemaTypeView typeKind='linkType' typeData={linkType} selected />
+            : <i>any link</i>;
 
         const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
         const targetIcon = <span className={`${CLASS_NAME}__link-direction-out`} />;
 
         header = (
-            <div>
+            <div className={`${CLASS_NAME}__condition`}>
                 {!linkType && !linkDirection ? (
                     t.template('search_entities.criteria_connected', {
                         entity, relationType, sourceIcon, targetIcon,
@@ -656,8 +632,8 @@ function FromValuesCriterion(
     let where: React.ReactNode = null;
     if (!editing) {
         header = (
-            <div>
-                {'One of '}
+            <div className={`${CLASS_NAME}__condition`}>
+                <span>One of</span>
                 <FromValuesList values={pattern.state.values} />
             </div>
         );
@@ -760,27 +736,21 @@ function HasPropertyCriterion(
 ) {
     const {pattern, updatePattern, editing, controls} = props;
     const t = useTranslation();
-    const {model} = useWorkspace();
 
-    const propertyType = pattern.state.propertyType
-        ? model.createPropertyType(pattern.state.propertyType).data
-        : undefined;
-    useKeyedSyncStore(subscribePropertyTypes, propertyType ? [propertyType.id] : [], model);
+    const propertyType = useSchemaType('propertyType', pattern.state.propertyType);
 
     let header: React.ReactNode;
     let where: React.ReactNode = null;
 
     if (!editing) {
-        let propertyTypeLabel: string | undefined;
-        if (propertyType) {
-            propertyTypeLabel = t.formatLabel(
-                propertyType.label,
-                propertyType.id,
-                model.language
-            );
-        }
-
-        header = <span>has <b>{propertyTypeLabel}</b> values</span>;
+        const propertyView = propertyType
+            ? <SchemaTypeView typeKind='propertyType' typeData={propertyType} selected />
+            : <i>any</i>;
+        header = (
+            <div className={`${CLASS_NAME}__condition`}>
+                Has {propertyView} property values
+            </div>
+        );
     } else {
         header = 'Has property';
         where = (

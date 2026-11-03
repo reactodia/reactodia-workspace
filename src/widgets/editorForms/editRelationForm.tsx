@@ -402,7 +402,7 @@ function useRelationMetadata(
 ): readonly [shape: RelationMetadata | undefined, error?: unknown] {
     const {data, status, error} = useAsync({
         input: [metadataProvider, link.linkTypeId, linkSource, linkTarget],
-        load: ([provider, _typeId, source, target], {signal}) => {
+        load: async ([provider, _typeId, source, target], {signal}) => {
             if (provider) {
                 return Promise.all([
                     provider.canModifyRelation(link, source, target, {signal}),

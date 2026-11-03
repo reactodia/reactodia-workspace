@@ -41,6 +41,14 @@
     color: var(--reactodia-element-style-color);
   }
 
+  &--property-type &__default-icon {
+    @include codicon("symbol-string");
+  }
+
+  &--link-type &__default-icon {
+    @include codicon("symbol-interface");
+  }
+
   &__label {
     margin-left: 5px;
     color: theme.$font-color-base;

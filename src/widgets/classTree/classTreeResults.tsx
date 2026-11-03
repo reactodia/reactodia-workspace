@@ -178,7 +178,8 @@ function Leaf(props: {
                 role='none'
                 onClick={() => onExpand(path)}
             />
-            <SchemaTypeView schemaType={node.data}
+            <SchemaTypeView typeKind='elementType'
+                typeData={node.data}
                 label={node.label}
                 highlightText={searchText}
                 selected={Boolean(selected)}

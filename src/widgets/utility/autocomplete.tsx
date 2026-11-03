@@ -2,7 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { EventObserver } from '../../coreUtils/events';
-import { UseAsyncResult, useObservedProperty } from '../../coreUtils/hooks';
+import { useAsync, UseAsyncResult, useObservedProperty } from '../../coreUtils/hooks';
 import { useTranslation } from '../../coreUtils/i18n';
 import { HtmlSpinner } from '../../diagram/spinner';
 
@@ -25,6 +25,8 @@ export function Autocomplete<T>(props: {
     inlineContent: React.ReactNode | undefined;
     inlineStatus?: 'loading' | 'error';
     suggest: (text: string, options: { signal: AbortSignal }) => Promise<readonly T[]>;
+    suggestDefault?: (options: { signal: AbortSignal }) => Promise<readonly T[]>;
+    suggestDefaultComparator?: (a: T, b: T) => number;
     /**
      * Input dropdown expand direction.
      *
@@ -63,6 +65,8 @@ export function Autocomplete<T>(props: {
         inlineContent,
         inlineStatus,
         suggest,
+        suggestDefault,
+        suggestDefaultComparator,
         direction,
         searchTimeout = 200,
         minSearchTermLength = 2,
@@ -119,6 +123,13 @@ export function Autocomplete<T>(props: {
 
     const hasSearchText = searchTerm.length > 0;
 
+    const showDefaultSuggestions = suggestDefault && expanded && !hasSearchText;
+    const defaultSuggestions = useAsync({
+        input: [suggestDefault, showDefaultSuggestions],
+        load: ([loadDefault, shouldLoad], {signal}) =>
+            shouldLoad ? loadDefault?.({signal}) : undefined,
+    });
+
     const onClickOutside = React.useCallback(() => {
         if (!hasSearchText) {
             setExpanded(false);
@@ -141,17 +152,30 @@ export function Autocomplete<T>(props: {
         }
     }, [dropdownRef]);
 
+    const displayedResult = React.useMemo(() => {
+        if (showDefaultSuggestions) {
+            return {
+                ...defaultSuggestions,
+                data: defaultSuggestions.data
+                    ? [...defaultSuggestions.data].sort(suggestDefaultComparator)
+                    : undefined,
+            };
+        } else {
+            return suggestions;
+        }
+    }, [showDefaultSuggestions, defaultSuggestions, suggestDefaultComparator, suggestions]);
+
     let content: React.ReactNode;
-    if (suggestions.status === 'error') {
-        content = <ErrorMessage error={suggestions.error} />;
-    } else if (suggestions.data && suggestions.data.length > 0) {
-        content = children({ items: suggestions.data, highlightText: searchTerm });
+    if (displayedResult.status === 'error') {
+        content = <ErrorMessage error={displayedResult.error} />;
+    } else if (displayedResult.data && displayedResult.data.length > 0) {
+        content = children({ items: displayedResult.data, highlightText: searchTerm });
     } else {
         content = (
             <NoSearchResults className={`${CLASS_NAME}__no-results`}
-                hasQuery={hasSearchText}
+                hasQuery={suggestions.data !== undefined}
                 minSearchTermLength={minSearchTermLength}
-                message={suggestions.status === 'loading' ? 'Loading...' : undefined}
+                message={displayedResult.status === 'loading' ? 'Loading...' : undefined}
             />
         );
     }
@@ -183,7 +207,7 @@ export function Autocomplete<T>(props: {
                         visible={expanded}
                         dropUp={direction === 'up'}
                         setExpanded={setExpanded}>
-                        <ProgressBar state={suggestions.status} title='Loading...' />
+                        <ProgressBar state={displayedResult.status} title='Loading...' />
                         {content}
                     </AutocompleteItems>
                 </Dropdown>
