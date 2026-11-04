@@ -10,10 +10,9 @@ import {
 import { compareLinks } from '../utilities/dataCompare';
 
 describe('IndexedDbCachedProvider', () => {
-    it('caches data once for known element/link types', async () => {
+    it('caches data once for known element types', async () => {
         const baseProvider = new MockDataProvider();
         const knownElementTypesSpy = vi.spyOn(baseProvider, 'knownElementTypes');
-        const knownLinkTypesSpy = vi.spyOn(baseProvider, 'knownLinkTypes');
 
         const controller = new AbortController();
         try {
@@ -26,16 +25,86 @@ describe('IndexedDbCachedProvider', () => {
             await provider.clearCache();
 
             await provider.knownElementTypes({});
-            await provider.knownLinkTypes({});
 
             expect(knownElementTypesSpy.mock.calls.length).toEqual(1);
-            expect(knownLinkTypesSpy.mock.calls.length).toEqual(1);
 
             await provider.knownElementTypes({});
-            await provider.knownLinkTypes({});
 
             expect(knownElementTypesSpy.mock.calls.length).toEqual(1);
-            expect(knownLinkTypesSpy.mock.calls.length).toEqual(1);
+        } finally {
+            controller.abort();
+        }
+    });
+
+    it('caches lookup for types if enabled', async () => {
+        const baseProvider = new MockDataProvider();
+        const lookupElementTypesSpy = vi.spyOn(baseProvider, 'lookupElementTypes');
+        const lookupPropertyTypesSpy = vi.spyOn(baseProvider, 'lookupPropertyTypes');
+        const lookupLinkTypesSpy = vi.spyOn(baseProvider, 'lookupLinkTypes');
+
+        const controller = new AbortController();
+        try {
+            const provider = new IndexedDbCachedProvider({
+                baseProvider,
+                dbName: 'test',
+                cacheTextLookups: true,
+                closeSignal: controller.signal,
+            });
+
+            await provider.clearCache();
+
+            await provider.lookupElementTypes({text: '1', limit: 10});
+            await provider.lookupPropertyTypes({text: '2', limit: 10});
+            await provider.lookupLinkTypes({text: '3', limit: 10});
+
+            expect(lookupElementTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupLinkTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupPropertyTypesSpy.mock.calls.length).toEqual(1);
+
+            await provider.lookupElementTypes({text: '1', limit: 10});
+            await provider.lookupPropertyTypes({text: '2', limit: 10});
+            await provider.lookupLinkTypes({text: '3', limit: 10});
+
+            expect(lookupElementTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupLinkTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupPropertyTypesSpy.mock.calls.length).toEqual(1);
+        } finally {
+            controller.abort();
+        }
+    });
+
+    it('skip lookup cache for types if disabled', async () => {
+        const baseProvider = new MockDataProvider();
+        const lookupElementTypesSpy = vi.spyOn(baseProvider, 'lookupElementTypes');
+        const lookupPropertyTypesSpy = vi.spyOn(baseProvider, 'lookupPropertyTypes');
+        const lookupLinkTypesSpy = vi.spyOn(baseProvider, 'lookupLinkTypes');
+
+        const controller = new AbortController();
+        try {
+            const provider = new IndexedDbCachedProvider({
+                baseProvider,
+                dbName: 'test',
+                cacheTextLookups: false,
+                closeSignal: controller.signal,
+            });
+
+            await provider.clearCache();
+
+            await provider.lookupElementTypes({text: '1', limit: 10});
+            await provider.lookupPropertyTypes({text: '2', limit: 10});
+            await provider.lookupLinkTypes({text: '3', limit: 10});
+
+            expect(lookupElementTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupLinkTypesSpy.mock.calls.length).toEqual(1);
+            expect(lookupPropertyTypesSpy.mock.calls.length).toEqual(1);
+
+            await provider.lookupElementTypes({text: '1', limit: 10});
+            await provider.lookupPropertyTypes({text: '2', limit: 10});
+            await provider.lookupLinkTypes({text: '3', limit: 10});
+
+            expect(lookupElementTypesSpy.mock.calls.length).toEqual(2);
+            expect(lookupLinkTypesSpy.mock.calls.length).toEqual(2);
+            expect(lookupPropertyTypesSpy.mock.calls.length).toEqual(2);
         } finally {
             controller.abort();
         }

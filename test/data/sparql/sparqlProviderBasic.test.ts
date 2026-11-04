@@ -32,16 +32,41 @@ describe('SparqlDataProvider', () => {
         ).toBeTruthy();
     });
 
-    it('provides knownLinkTypes()', async () => {
+    it('provides lookupElementTypes()', async () => {
         const provider = await makeSparqlDataProvider(
             {},
             {...OwlStatsSettings, filterOnlyLanguages: ['en']},
         );
-        const linkTypes = await provider.knownLinkTypes({});
+        const linkTypes = await provider.lookupElementTypes({text: 'org'});
+        expect(linkTypes.find(t => t.id === org.Organization)).toEqual({
+            id: org.Organization,
+            label: [provider.factory.literal('Organization', 'en')],
+            count: undefined,
+        } satisfies ElementTypeModel);
+    });
+
+    it('provides lookupPropertyTypes()', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const linkTypes = await provider.lookupPropertyTypes({text: 'loc'});
+        expect(linkTypes.find(t => t.id === org.location)).toEqual({
+            id: org.location,
+            label: [provider.factory.literal('location', 'en')],
+        } satisfies PropertyTypeModel);
+    });
+
+    it('provides lookupLinkTypes()', async () => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const linkTypes = await provider.lookupLinkTypes({text: 'sub'});
         expect(linkTypes.find(t => t.id === org.subOrganizationOf)).toEqual({
             id: org.subOrganizationOf,
             label: [provider.factory.literal('subOrganization of', 'en')],
-            count: 0,
+            count: undefined,
         } satisfies LinkTypeModel);
     });
 

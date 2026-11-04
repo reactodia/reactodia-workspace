@@ -799,17 +799,17 @@ const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     `,
     propertyTypesLookupQuery: `
         SELECT ?property ?label WHERE {
-            { ?link a rdf:Property }
+            { ?property a rdf:Property }
             UNION
-            { ?link a owl:DatatypeProperty }
-            FILTER NOT EXISTS { ?link a owl:ObjectProperty }
+            { ?property a owl:DatatypeProperty }
+            FILTER NOT EXISTS { ?property a owl:ObjectProperty }
             \${filterByText}
             ?property \${schemaLabelProperty} ?label.
             \${labelLanguageFilter}
         } ORDER BY ?score \${limit}
     `,
     linkTypesLookupQuery: `
-        SELECT ?property ?label WHERE {
+        SELECT ?link ?label WHERE {
             { ?link a rdf:Property }
             UNION
             { ?link a owl:ObjectProperty }

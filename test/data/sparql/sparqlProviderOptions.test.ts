@@ -33,19 +33,6 @@ describe('SparqlDataProvider', () => {
         ).toBeTruthy();
     });
 
-    it('provides knownLinkTypes() with options', async () => {
-        const provider = await makeSparqlDataProvider(
-            makeSparqlProviderOptions(),
-            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
-        );
-        const linkTypes = await provider.knownLinkTypes({});
-        expect(linkTypes.find(t => t.id === org.subOrganizationOf)).toEqual({
-            id: org.subOrganizationOf,
-            label: [provider.factory.literal('subOrganizationOf', 'test')],
-            count: 0,
-        } satisfies LinkTypeModel);
-    });
-
     it('provides elementTypes() with options', async () => {
         const provider = await makeSparqlDataProvider(
             makeSparqlProviderOptions(),
