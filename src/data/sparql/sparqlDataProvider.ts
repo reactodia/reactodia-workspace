@@ -9,7 +9,8 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport, LookupPattern,
+    DataProviderPatternSupport, LookupPattern, HasTypeLookupPattern, ConnectedToLookupPattern,
+    HasPropertyLookupPattern, WithTextLookupPattern, lookupPatternOf,
 } from '../dataProvider';
 
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
@@ -504,7 +505,12 @@ export class SparqlDataProvider implements DataProvider {
                     dataLabelProperty,
                     labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
                     valueLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
-                    propertyConfigurations: this.formatPropertyInfo(),
+                    propertyConfigurations: this.formatPropertyUnion({
+                        entityTerm: this.factory.variable!('inst'),
+                        valueTerm: this.factory.variable!('propValue'),
+                        predicateTerm: this.factory.variable!('propType'),
+                        withProjection: true,
+                    }),
                 });
                 const response = await this.executeSparqlConstruct(query);
                 for (const triple of response) {
@@ -711,21 +717,28 @@ export class SparqlDataProvider implements DataProvider {
 
         const bindDirection = /\?direction\b/.test(linkTypesOfQuery);
 
-        const elementIri = escapeIri(elementId);
-        const forAll = this.formatLinkUnion(
-            elementId, undefined, undefined, '?outObject', '?inObject', bindDirection
-        );
+        const elementTerm = this.factory.namedNode(elementId);
+        const targetOut = this.factory.variable!('outObject');
+        const targetIn = this.factory.variable!('inObject');
+        const forAll = this.formatLinkUnion({
+            sourceTerm: elementTerm,
+            targetIn: targetOut,
+            targetOut: targetIn,
+            withProjection: true,
+        });
         if (forAll.usePredicatePart) {
+            const bindOut = bindDirection ? 'BIND("out" AS ?direction)' : '';
+            const bindIn = bindDirection ? 'BIND("in" AS ?direction)' : '';
             forAll.unionParts.push(
-                `{ ${elementIri} ?link ?outObject ${bindDirection ? 'BIND("out" AS ?direction)' : ''} }`
+                `{ ${escapeTerm(elementTerm)} ?link ${escapeTerm(targetOut)} ${bindOut} }`
             );
             forAll.unionParts.push(
-                `{ ?inObject ?link ${elementIri} ${bindDirection ? 'BIND("in" AS ?direction)' : ''} }`
+                `{ ${escapeTerm(targetIn)} ?link ${escapeTerm(elementTerm)} ${bindIn} }`
             );
         }
 
         const query = defaultPrefix + resolveTemplate(linkTypesOfQuery, {
-            elementIri,
+            elementIri: escapeTerm(elementTerm),
             linkConfigurations: forAll.unionParts.join('\nUNION\n'),
         });
 
@@ -756,17 +769,17 @@ export class SparqlDataProvider implements DataProvider {
                 const predicate = escapeIri(
                     linkConfig && isDirectLink(linkConfig) ? linkConfig.path : linkType
                 );
-                linkConfigurationOut = `${elementIri} ${predicate} ?outObject`;
-                linkConfigurationIn = `?inObject ${predicate} ${elementIri}`;
+                linkConfigurationOut = `${escapeTerm(elementTerm)} ${predicate} ${escapeTerm(targetOut)}`;
+                linkConfigurationIn = `${escapeTerm(targetIn)} ${predicate} ${escapeTerm(elementTerm)}`;
             } else {
-                linkConfigurationOut = this.formatLinkPath(linkConfig.path, elementIri, '?outObject');
-                linkConfigurationIn = this.formatLinkPath(linkConfig.path, '?inObject', elementIri);
+                linkConfigurationOut = this.formatLinkPath(linkConfig.path, elementTerm, targetOut);
+                linkConfigurationIn = this.formatLinkPath(linkConfig.path, targetIn, elementTerm);
             }
 
             if (linkConfig && linkConfig.domain && linkConfig.domain.length > 0) {
                 const commaSeparatedDomains = linkConfig.domain.map(escapeIri).join(', ');
-                const restrictionOut = filterTypePattern.replace(/[?$]inst\b/g, elementIri);
-                const restrictionIn = filterTypePattern.replace(/[?$]inst\b/g, '?inObject');
+                const restrictionOut = filterTypePattern.replace(/[?$]inst\b/g, escapeTerm(elementTerm));
+                const restrictionIn = filterTypePattern.replace(/[?$]inst\b/g, escapeTerm(targetIn));
                 linkConfigurationOut += ` { ${restrictionOut} FILTER(?class IN (${commaSeparatedDomains})) }`;
                 linkConfigurationIn += ` { ${restrictionIn} FILTER(?class IN (${commaSeparatedDomains})) }`;
             }
@@ -781,7 +794,7 @@ export class SparqlDataProvider implements DataProvider {
             } else {
                 const statsQuery = defaultPrefix + resolveTemplate(linkTypesStatisticsQuery, {
                     linkId: escapeIri(linkType),
-                    elementIri,
+                    elementIri: escapeTerm(elementTerm),
                     linkConfigurationOut,
                     linkConfigurationIn,
                     navigateElementFilterOut,
@@ -840,74 +853,99 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     private createFilterQuery(params: DataProviderLookupParams): string {
-        if (!params.refElementId && params.refElementLinkId) {
-            throw new Error('Cannot execute refElementLink filter without refElement');
-        }
+        const {
+            defaultPrefix, dataLabelProperty, lookupQuery,
+            filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
+        } = this.settings;
 
         let outerProjection = '?inst ?class ?label';
         let innerProjection = '?inst';
 
-        let filterByRefElementLink = '';
-        let queryTypes = '';
-        if (params.refElementId) {
-            outerProjection += ' ?link ?direction';
-            innerProjection += ' ?link ?direction';
-            filterByRefElementLink = this.createRefQueryPart({
-                elementId: params.refElementId,
-                linkId: params.refElementLinkId,
-                direction: params.linkDirection,
-            });
+        const entityTerm = this.factory.variable!('inst');
+        const pattern = lookupPatternOf(params);
 
+        const valueSets = new Map<string, Set<ElementIri>>();
+        const projections = new Set<'link' | 'direction' | 'score'>();
+
+        let filterByType = '';
+        let filterByRefElementLink = '';
+        let filterByText = '';
+        let filterByPattern = '';
+
+        const generateParams = {
+            entityTerm,
+            path: [],
+            valueSets,
+            projections,
+            withProjection: true,
+        } as const;
+
+        const supportFilterByPattern = /\?filterByPattern\b/.test(lookupQuery);
+        if (supportFilterByPattern) {
+            filterByPattern = this.generatePattern(pattern, generateParams);
+        } else {
+            const hasType = findPattern<HasTypeLookupPattern>(pattern, p => p.type === 'hasType');
+            if (hasType) {
+                filterByType = this.generatePattern(hasType, generateParams);
+            }
+
+            const connectedTo = findPattern<ConnectedToLookupPattern>(
+                pattern,
+                p => p.type === 'connectedTo'
+            );
+            if (connectedTo) {
+                filterByRefElementLink = this.generatePattern(connectedTo, generateParams);
+            }
+
+            const withText = findPattern<WithTextLookupPattern>(pattern, p => p.type === 'withText');
+            if (withText) {
+                filterByText = this.generatePattern(withText, generateParams);
+            }
+        }
+
+        let filterInnerPrelude = this.settings.filterInnerPrelude ?? '';
+        for (const [variableName, setItems] of valueSets) {
+            const entries = Array.from(setItems, iri => `(${escapeIri(iri)})`).join(' ');
+            filterInnerPrelude += `\nVALUES(?${variableName}) { ${entries} }`;
+        }
+
+        let queryTypes = '';
+        if (projections.has('link')) {
+            outerProjection += ' ?link';
+            innerProjection += ' ?link';
             if (this.settings.linkConfigurations.length > 0) {
                 outerProjection += ' ?classAll';
                 queryTypes = this.settings.filterTypePattern.replace(/[?$]class\b/g, '?classAll');
             }
         }
 
-        let filterByType = '';
-        if (params.elementTypeId) {
-            const elementTypeIri = escapeIri(params.elementTypeId);
-            filterByType = this.settings.filterTypePattern.replace(/[?$]class\b/g, elementTypeIri);
+        if (projections.has('direction')) {
+            outerProjection += ' ?direction';
+            innerProjection += ' ?direction';
         }
 
-        const {
-            defaultPrefix, dataLabelProperty, schemaLabelProperty, lookupQuery,
-            filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
-        } = this.settings;
+        let orderBy = '';
+        if (projections.has('score')) {
+            innerProjection += ' ?score';
+            orderBy = 'ORDER BY DESC(?score)';
+        }
 
         const queryElementInfo = resolveTemplate(filterElementInfoPattern, {
             dataLabelProperty,
             labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
 
-        let filterByText = '';
-        let orderBy = '';
-        if (params.text) {
-            innerProjection += ' ?score';
-            if (this.settings.fullTextSearch.extractLabel) {
-                filterByText += sparqlExtractLabel('?inst', '?extractedLabel');
-            }
-            filterByText += resolveTemplate(fullTextSearch.queryPattern, {
-                text: params.text,
-                dataLabelProperty,
-                schemaLabelProperty,
-            });
-            if (filterByText) {
-                orderBy = 'ORDER BY DESC(?score)';
-            }
-        }
-
         const limitPart = formatLimit(params.limit);
-        
 
         const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
         return completePrefix + resolveTemplate(lookupQuery, {
             innerProjection,
             outerProjection,
-            filterInnerPrelude: this.settings.filterInnerPrelude,
+            filterInnerPrelude: filterInnerPrelude,
             filterByType,
             filterByRefElementLink,
             filterByText,
+            filterByPattern,
             filterAdditionalRestriction: this.settings.filterAdditionalRestriction,
             orderBy,
             limit: limitPart,
@@ -953,43 +991,195 @@ export class SparqlDataProvider implements DataProvider {
         );
     }
 
-    protected createRefQueryPart(params: { elementId: ElementIri; linkId?: LinkTypeIri; direction?: 'in' | 'out' }) {
-        const {elementId, linkId, direction} = params;
+    private generatePattern(
+        pattern: LookupPattern,
+        params: {
+            path: readonly number[];
+            entityTerm: Rdf.Variable;
+            valueSets: Map<string, Set<ElementIri>>;
+            projections: Set<'link' | 'direction' | 'score'>;
+            withProjection?: boolean;
+        }
+    ): string {
+        const {path, entityTerm, valueSets, projections, withProjection} = params;
+        switch (pattern.type) {
+            case 'allOf':
+            case 'anyOf': {
+                if (pattern.patterns.length === 0) {
+                    return pattern.type === 'allOf' ? 'FILTER(false)' : '';
+                }
+                const allValues = new Map<string, Set<ElementIri>>();
+                const parts = pattern.patterns.map((branch, index) => {
+                    const branchValues = new Map<string, Set<ElementIri>>();
+                    const generatedBranch = this.generatePattern(branch, {
+                        path: [...path, index],
+                        entityTerm,
+                        valueSets: branchValues,
+                        projections,
+                        withProjection,
+                    });
+                    for (const [setName, setValues] of branchValues) {
+                        const existing = allValues.get(setName);
+                        if (existing) {
+                            if (pattern.type === 'allOf') {
+                                // Intersect with existing
+                                allValues.set(
+                                    setName,
+                                    new Set(Array.from(existing).filter(item => setValues.has(item)))
+                                );
+                            } else {
+                                // Union with existing
+                                for (const item of setValues) {
+                                    existing.add(item);
+                                }
+                            }
+                        } else {
+                            allValues.set(setName, setValues);
+                        }
+                    }
+                    return generatedBranch;
+                });
 
-        const {unionParts, usePredicatePart} = this.formatLinkUnion(
-            elementId, linkId, direction, '?inst', '?inst', true
-        );
+                for (const [setName, setValues] of allValues) {
+                    if (valueSets.has(setName)) {
+                        throw new Error('Reactodia: nested patterns cannot shadow value sets');
+                    }
+                    valueSets.set(setName, setValues);
+                }
+
+                return parts.join(pattern.type === 'allOf' ? '\n' : '\nUNION\n');
+            }
+            case 'hasType': {
+                const part = this.settings.filterTypePattern
+                    .replace(/[?$]inst\b/g, escapeTerm(entityTerm))
+                    .replace(/[?$]class\b/g, escapeIri(pattern.elementType));
+                return part;
+            }
+            case 'connectedTo': {
+                const parts: string[] = [];
+                const targetTerm =
+                    pattern.target?.type === 'fromValues' && pattern.target.values.length === 1
+                        ? this.factory.namedNode(pattern.target.values[0])
+                        : this.factory.variable!(`connectedTo_target_${path.join('_')}`);
+                parts.push(
+                    this.generateConnectedToPattern(pattern, {
+                        sourceTerm: entityTerm,
+                        targetTerm,
+                        predicateTerm: withProjection
+                            ? this.factory.variable!('link')
+                            : this.factory.variable!(`connectedTo_link_${path.join('_')}`),
+                        withProjection,
+                    })
+                );
+                if (withProjection) {
+                    projections.add('link');
+                    projections.add('direction');
+                }
+                if (pattern.target && targetTerm.termType === 'Variable') {
+                    parts.push(
+                        this.generatePattern(pattern.target, {
+                            path: [...path, 0],
+                            entityTerm: targetTerm,
+                            valueSets,
+                            projections,
+                        })
+                    );
+                }
+                return parts.join('\n');
+            }
+            case 'fromValues': {
+                valueSets.set(entityTerm.value, new Set(pattern.values));
+                return '';
+            }
+            case 'hasProperty': {
+                const parts: string[] = [];
+                const valueTerm = this.factory.variable!(`hasProperty_value_${path.join('_')}`);
+                parts.push(
+                    this.generateHasPropertyPattern(pattern, {
+                        entityTerm,
+                        valueTerm,
+                        predicateTerm: this.factory.variable!(`connectedTo_propType_${path.join('_')}`),
+                    })
+                );
+                return parts.join('\n');
+            }
+            case 'withText': {
+                const scoreTerm = withProjection
+                    ? this.factory.variable!('score')
+                    : this.factory.variable!(`withText_score_${path.join('_')}`);
+                if (withProjection) {
+                    projections.add('score');
+                }
+                return this.generateWithTextPattern(pattern, {
+                    entityTerm,
+                    labelTerm: this.factory.variable!(`withText_label_${path.join('_')}`),
+                    scoreTerm,
+                });
+            }
+            default: {
+                throw new Error(
+                    `Reactodia: unknown lookup pattern type "${(pattern as LookupPattern).type}"`
+                );
+            }
+        }
+    }
+
+    private generateConnectedToPattern(
+        pattern: ConnectedToLookupPattern,
+        params: {
+            sourceTerm: Rdf.Variable;
+            targetTerm: Rdf.Variable | Rdf.NamedNode;
+            predicateTerm: Rdf.Variable;
+            withProjection?: boolean;
+        }
+    ): string {
+        const {sourceTerm, targetTerm, predicateTerm, withProjection} = params;
+
+        const {linkType, linkDirection} = pattern;
+        const {unionParts, usePredicatePart} = this.formatLinkUnion({
+            sourceTerm: targetTerm,
+            targetIn: sourceTerm,
+            targetOut: sourceTerm,
+            linkType,
+            linkDirection,
+            withProjection
+        });
 
         if (usePredicatePart) {
-            const refElementIRI = escapeIri(params.elementId);
+            const source = escapeTerm(sourceTerm);
+            const target = escapeTerm(targetTerm);
             let refLinkType: string | undefined;
-            if (linkId) {
-                const link = this.linkById.get(linkId);
-                refLinkType = link && isDirectLink(link) ? escapeIri(link.path) : escapeIri(linkId);
+            if (linkType) {
+                const link = this.linkById.get(linkType);
+                refLinkType = link && isDirectLink(link)
+                    ? escapeIri(link.path)
+                    : escapeIri(linkType);
             }
 
-            const linkPattern = refLinkType || '?link';
-            const bindType = refLinkType ? `BIND(${refLinkType} as ?link)` : '';
+            const linkPattern = refLinkType || escapeTerm(predicateTerm);
+            const bindType = refLinkType ? `BIND(${refLinkType} as ${escapeTerm(predicateTerm)})` : '';
             // Specifically use isBlank() as opposed to isIri() when possible for filtering
             // to avoid a full scan on some endpoints (e.g. Virtuoso)
             const outFilter = this.acceptBlankNodes
-                ? 'FILTER(isIri(?inst) || isBlank(?inst))'
-                : 'FILTER(isIri(?inst))';
+                ? `FILTER(isIri(${source}) || isBlank(${source}))`
+                : `FILTER(isIri(${source}))`;
             const inFilter = this.acceptBlankNodes
                 ? ''
-                : 'FILTER(!isBlank(?inst))';
+                : `FILTER(!isBlank(${source}))`;
 
-            if (!direction || direction === 'out') {
-                unionParts.push(`{ ${refElementIRI} ${linkPattern} ?inst BIND("out" as ?direction) ${bindType} ${outFilter} }`);
+            if (!linkDirection || linkDirection === 'out') {
+                const binds = withProjection ? `BIND("out" as ?direction) ${bindType}` : '';
+                unionParts.push(`{ ${target} ${linkPattern} ${source} ${binds} ${outFilter} }`);
             }
-            if (!direction || direction === 'in') {
-                unionParts.push(`{ ?inst ${linkPattern} ${refElementIRI} BIND("in" as ?direction) ${bindType} ${inFilter} }`);
+            if (!linkDirection || linkDirection === 'in') {
+                const binds = withProjection ? `BIND("in" as ?direction) ${bindType}` : '';
+                unionParts.push(`{ ${source} ${linkPattern} ${target} ${binds} ${inFilter} }`);
             }
         }
 
         let resultPattern = unionParts.length === 0 ? 'FILTER(false)' : unionParts.join('\nUNION\n');
 
-        const useAllLinksPattern = !linkId && this.settings.filterRefElementLinkPattern.length > 0;
+        const useAllLinksPattern = !linkType && this.settings.filterRefElementLinkPattern.length > 0;
         if (useAllLinksPattern) {
             resultPattern += `\n${this.settings.filterRefElementLinkPattern}`;
         }
@@ -997,39 +1187,40 @@ export class SparqlDataProvider implements DataProvider {
         return resultPattern;
     }
 
-    private formatLinkUnion(
-        refElementIri: ElementIri,
-        linkIri: LinkTypeIri | undefined,
-        direction: 'in' | 'out' | undefined,
-        outElementVar: string,
-        inElementVar: string,
-        bindDirection: boolean
-    ) {
+    private formatLinkUnion(params: {
+        sourceTerm: Rdf.Variable | Rdf.NamedNode;
+        targetIn: Rdf.Variable;
+        targetOut: Rdf.Variable;
+        linkType?: LinkTypeIri;
+        linkDirection?: 'in' | 'out';
+        withProjection?: boolean;
+    }) {
+        const {sourceTerm, targetIn, targetOut, linkType, linkDirection, withProjection} = params;
         const {linkConfigurations} = this.settings;
-        const fixedIri = escapeIri(refElementIri);
 
         const unionParts: string[] = [];
         let hasDirectLink = false;
 
         for (const link of linkConfigurations) {
-            if (linkIri && link.id !== linkIri) { continue; }
+            if (linkType && link.id !== linkType) {
+                continue;
+            }
+
             if (isDirectLink(link)) {
                 hasDirectLink = true;
             } else {
                 const linkType = escapeIri(link.id);
-                if (!direction || direction === 'out') {
-                    const path = this.formatLinkPath(link.path, fixedIri, outElementVar);
-                    const boundedDirection = bindDirection ? 'BIND("out" as ?direction) ' : '';
-                    unionParts.push(
-                        `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
-                    );
+                if (!linkDirection || linkDirection === 'out') {
+                    const path = this.formatLinkPath(link.path, sourceTerm, targetOut);
+                    const binds = withProjection
+                        ? 'BIND(${linkType} as ?link) BIND("out" as ?direction)' : '';
+                    unionParts.push(`{ ${path} ${binds} }`);
                 }
-                if (!direction || direction === 'in') {
-                    const path = this.formatLinkPath(link.path, inElementVar, fixedIri);
-                    const boundedDirection = bindDirection ? 'BIND("in" as ?direction) ' : '';
-                    unionParts.push(
-                        `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
-                    );
+                if (!linkDirection || linkDirection === 'in') {
+                    const path = this.formatLinkPath(link.path, targetIn, sourceTerm);
+                    const binds = withProjection
+                        ? `BIND(${linkType} as ?link) BIND("in" as ?direction})` : '';
+                    unionParts.push(`{ ${path} ${binds} }`);
                 }
             }
         }
@@ -1039,6 +1230,9 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     private formatLinkLinks(): string {
+        const sourceTerm = this.factory.variable!('source');
+        const targetTerm = this.factory.variable!('target');
+
         const unionParts: string[] = [];
         let hasDirectLink = false;
         for (const link of this.settings.linkConfigurations) {
@@ -1047,14 +1241,14 @@ export class SparqlDataProvider implements DataProvider {
             } else {
                 const linkType = escapeIri(link.id);
                 unionParts.push(
-                    `${this.formatLinkPath(link.path, '?source', '?target')} BIND(${linkType} as ?type)`
+                    `${this.formatLinkPath(link.path, sourceTerm, targetTerm)} BIND(${linkType} as ?type)`
                 );
             }
         }
 
         const usePredicatePart = this.openWorldLinks || hasDirectLink;
         if (usePredicatePart) {
-            unionParts.push('?source ?type ?target');
+            unionParts.push(`${escapeTerm(sourceTerm)} ?type ${escapeTerm(targetTerm)}`);
         }
 
         return (
@@ -1064,28 +1258,90 @@ export class SparqlDataProvider implements DataProvider {
         );
     }
 
-    private formatLinkPath(path: string, source: string, target: string): string {
-        return path.replace(/[?$]source\b/g, source).replace(/[?$]target\b/g, target);
+    private formatLinkPath(
+        path: string,
+        source: Rdf.Variable | Rdf.NamedNode,
+        target: Rdf.Variable | Rdf.NamedNode
+    ): string {
+        return path.replace(/[?$]source\b/g, escapeTerm(source))
+            .replace(/[?$]target\b/g, escapeTerm(target));
     }
 
-    private formatPropertyInfo(): string {
+    private generateHasPropertyPattern(
+        pattern: HasPropertyLookupPattern,
+        params: {
+            entityTerm: Rdf.Variable;
+            valueTerm: Rdf.Variable;
+            predicateTerm: Rdf.Variable;
+            withProjection?: boolean;
+        }
+    ): string {
+        const {entityTerm, valueTerm, predicateTerm, withProjection} = params;
+        return this.formatPropertyUnion({
+            entityTerm,
+            valueTerm,
+            predicateTerm,
+            filterByValueType: true,
+            withProjection,
+        });
+    }
+
+    private formatPropertyUnion(params: {
+        entityTerm: Rdf.Variable;
+        valueTerm: Rdf.Variable;
+        predicateTerm: Rdf.Variable;
+        propertyType?: PropertyTypeIri;
+        filterByValueType?: boolean;
+        withProjection?: boolean;
+    }): string {
+        const {
+            entityTerm, valueTerm, predicateTerm, propertyType, filterByValueType, withProjection,
+        } = params;
+
         const unionParts: string[] = [];
         let hasDirectProperty = false;
         for (const property of this.settings.propertyConfigurations) {
+            if (propertyType && property.id !== propertyType) {
+                continue;
+            }
+
             if (isDirectProperty(property)) {
                 hasDirectProperty = true;
             } else {
                 const propType = escapeIri(property.id);
-                const formatted = this.formatPropertyPath(property.path, '?inst', '?propValue');
-                unionParts.push(
-                    `{ ${formatted} BIND(${propType} as ?propType) }`
+                const formatted = this.formatPropertyPath(
+                    property.path,
+                    escapeTerm(entityTerm),
+                    escapeTerm(valueTerm)
                 );
+                const binds = withProjection
+                    ? `BIND(${propType} as ${escapeTerm(predicateTerm)})`
+                    : '';
+                unionParts.push(`{ ${formatted} ${binds} }`);
             }
         }
 
         const usePredicatePart = this.openWorldProperties || hasDirectProperty;
         if (usePredicatePart) {
-            unionParts.push('{ ?inst ?propType ?propValue }');
+            const entity = escapeTerm(entityTerm);
+            const predicate = escapeTerm(predicateTerm);
+            const value = escapeTerm(valueTerm);
+
+            let filter = '';
+            if (filterByValueType) {
+                const directPredicates = new Set<PropertyTypeIri>();
+                for (const property of this.settings.propertyConfigurations) {
+                    if (isDirectProperty(property)) {
+                        directPredicates.add(property.path);
+                    }
+                }
+                const commaSeparatedPredicates = Array.from(directPredicates, escapeIri).join(', ');
+                filter = commaSeparatedPredicates
+                    ? `FILTER(isLiteral(${value}) || ${predicate} IN (${commaSeparatedPredicates}))`
+                    : `FILTER(isLiteral(${value}))`;
+            }
+
+            unionParts.push(`{ ${entity} ${predicate} ${value} ${filter} }`);
         }
 
         return unionParts.join('\nUNION\n');
@@ -1093,6 +1349,32 @@ export class SparqlDataProvider implements DataProvider {
 
     private formatPropertyPath(path: string, subject: string, value: string): string {
         return path.replace(/[?$]inst\b/g, subject).replace(/[?$]value\b/g, value);
+    }
+
+    private generateWithTextPattern(
+        pattern: WithTextLookupPattern,
+        params: {
+            entityTerm: Rdf.Variable;
+            labelTerm: Rdf.Variable;
+            scoreTerm: Rdf.Variable;
+        }
+    ) {
+        const {entityTerm, labelTerm, scoreTerm} = params;
+        const parts: string[] = [];
+        if (this.settings.fullTextSearch.extractLabel) {
+            parts.push(sparqlExtractLabel(escapeTerm(entityTerm), escapeTerm(labelTerm)));
+        }
+        const template = this.settings.fullTextSearch.queryPattern
+            .replace(/[?$]extractedLabel\b/g, escapeTerm(labelTerm))
+            .replace(/[?$]score\b/g, escapeTerm(scoreTerm));
+        parts.push(
+            resolveTemplate(template, {
+                text: pattern.text,
+                dataLabelProperty: this.settings.dataLabelProperty,
+                schemaLabelProperty: this.settings.schemaLabelProperty,
+            })
+        );
+        return parts.join('\n');
     }
 
     private async querySingleElementTypes(
@@ -1393,9 +1675,30 @@ function formatLimit(limit: number | null | undefined): string {
     return typeof limit === 'number' ? `LIMIT ${limit}` : '';
 }
 
+function escapeTerm(term: Rdf.Variable | Rdf.NamedNode) {
+    return Rdf.termToString(term);
+}
+
 function escapeIri(iri: string) {
     if (typeof iri !== 'string') {
         throw new Error(`Cannot escape IRI of type "${typeof iri}"`);
     }
-    return `<${iri}>`;
+    return escapeTerm(Rdf.DefaultDataFactory.namedNode(iri));
+}
+
+function findPattern<T extends LookupPattern>(
+    root: LookupPattern,
+    matches: (p: LookupPattern) => p is T
+): T | undefined {
+    if (matches(root)) {
+        return root;
+    } else if (root.type === 'allOf') {
+        for (const pattern of root.patterns) {
+            const found = findPattern(pattern, matches);
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return undefined;
 }

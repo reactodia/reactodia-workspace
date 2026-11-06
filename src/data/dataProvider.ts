@@ -320,11 +320,6 @@ export interface AnyOfLookupPattern {
     readonly patterns: readonly LookupPattern[];
 }
 
-export interface WithTextLookupPattern {
-    readonly type: 'withText';
-    readonly text: string;
-}
-
 export interface HasTypeLookupPattern {
     readonly type: 'hasType';
     readonly elementType: ElementTypeIri;
@@ -346,6 +341,11 @@ export interface HasPropertyLookupPattern {
     readonly type: 'hasProperty';
     readonly propertyType: PropertyTypeIri;
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
+}
+
+export interface WithTextLookupPattern {
+    readonly type: 'withText';
+    readonly text: string;
 }
 
 /**
@@ -392,7 +392,7 @@ export function lookupPatternOf(params: Omit<DataProviderLookupParams, 'limit' |
         });
     }
 
-    if (refElementId || refElementLinkId) {
+    if (refElementId || refElementLinkId || linkDirection) {
         patterns.push({
             type: 'connectedTo',
             linkType: refElementLinkId,

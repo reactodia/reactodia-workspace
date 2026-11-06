@@ -243,12 +243,7 @@ export interface SparqlDataProviderSettings {
      *   - `${outerProjection}`
      *   - `${innerProjection}`
      *   - `${filterInnerPrelude}` from {@link filterInnerPrelude}
-     *   - `${filterByType}` from {@link filterTypePattern}
-     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
-     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
-     *   - `${filterByText}` from {@link fullTextSearch}
-     *     (when {@link DataProviderLookupParams.text} is provided)
+     *   - `${filterByPattern}`
      *   - `${filterAdditionalRestriction}` from {@link filterAdditionalRestriction}
      *   - `${orderBy}` (when {@link DataProviderLookupParams.text} is provided)
      *   - `${limit}` (when {@link DataProviderLookupParams.limit} is provided)
@@ -257,16 +252,25 @@ export interface SparqlDataProviderSettings {
      *     {@link linkConfigurations} is non-empty)
      *   - `${queryElementInfo}` from {@link filterElementInfoPattern}
      *
+     * For compatibility, the following deprecated variables are parametrized
+     * in case `${filterByPattern}` is not found in the query:
+     *   - `${filterByType}` from {@link filterTypePattern}
+     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
+     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
+     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *   - `${filterByText}` from {@link fullTextSearch}
+     *     (when {@link DataProviderLookupParams.text} is provided)
+     *
      * Expected bindings:
      *   - `?inst` element IRI
      *   - `?class` element type
      *   - `?label` element label
      *   - `?link` connected via link type
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *     (when {@link ConnectedToLookupPattern} is provided at top level)
      *   - `?direction` connected via link direction (`"in"` or `"out"`)
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *     (when {@link ConnectedToLookupPattern} is provided at top level)
      *   - `?score` element lookup score (higher ordered first)
-     *     (for order only; when {@link DataProviderLookupParams.text} is provided)
+     *     (for order only; when {@link WithTextLookupPattern} is provided at top level)
      */
     lookupQuery: string;
 

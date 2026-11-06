@@ -66,10 +66,10 @@ export function SchemaTypeSelect<Kind extends keyof SchemaType>(
             options: { signal: AbortSignal }
         ): Promise<readonly SchemaType[keyof SchemaType][]> => {
             const {signal} = options;
-            await delay(2000);
-            if (Math.random() > 0.5) {
-                throw new Error('Random error');
-            }
+            // await delay(2000);
+            // if (Math.random() > 0.5) {
+            //     throw new Error('Random error');
+            // }
             switch (typeKind) {
                 case 'elementType': {
                     const {elementTypes} = await dataProvider.knownElementTypes({signal});
