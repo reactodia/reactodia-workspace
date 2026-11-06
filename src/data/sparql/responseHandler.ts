@@ -4,12 +4,13 @@ import { multimapAdd } from '../../coreUtils/collections';
 
 import * as Rdf from '../rdf/rdfModel';
 import {
-    LinkTypeModel, ElementTypeGraph, ElementModel, LinkModel, SubtypeEdge,
+    LinkTypeModel, ElementModel, LinkModel, SubtypeEdge,
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink,
 } from '../model';
 import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
+import { isDirectLink } from './sparqlGenerator';
 import {
     SparqlResponse, ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
     LinkTypeBinding, ConnectedLinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
@@ -547,18 +548,6 @@ function* translateLinkPredicates(
             yield predicate;
         }
     }
-}
-
-export function isDirectLink(link: LinkConfiguration) {
-    // link configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(link.path);
-    return !pathBased;
-}
-
-export function isDirectProperty(property: PropertyConfiguration) {
-    // property configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(property.path);
-    return !pathBased;
 }
 
 function typeMatchesDomain(

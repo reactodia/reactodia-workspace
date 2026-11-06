@@ -270,7 +270,7 @@ export function useSchemaType<Kind extends keyof SchemaType>(
         }
     }
 
-    useKeyedSyncStore(subscribeTypes, typeId === undefined ? [] : [typeId], model);
+    useKeyedSyncStore(subscribeTypes, typeId ? [typeId] : [], model);
     return typeData as SchemaType[Kind] | undefined;
 }
 

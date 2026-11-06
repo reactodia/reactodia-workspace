@@ -666,10 +666,10 @@ function FromValuesList(props: {
                     const data = providedEntities.data.get(iri)
                         ?? EntityElement.placeholderData(iri);
                     return (
-                        <>
+                        <React.Fragment key={index}>
                             {index === 0 ? null : <span>&nbsp;or&nbsp;</span>}
                             <InlineEntity target={data} />
-                        </>
+                        </React.Fragment>
                     );
                 })}
             </span>

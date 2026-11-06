@@ -547,6 +547,7 @@ export const RdfSettings: SparqlDataProviderSettings = {
             \${filterByType}
             \${filterByRefElementLink}
             \${filterByText}
+            \${filterByPattern}
             \${filterAdditionalRestriction}
         } \${orderBy} \${limit}
     }
