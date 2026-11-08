@@ -10,7 +10,9 @@ import {
 import {
     type SparqlDataProviderSettings,
 } from '../../src/data/sparql/sparqlDataProviderSettings';
-import { SparqlResponse } from '../../src/data/sparql/sparqlModels';
+import {
+    SparqlQuerySource,
+} from '../../src/data/sparql/sparqlQuerySource';
 
 import TURTLE_DATA from '../../examples/resources/orgOntology.ttl?raw';
 
@@ -42,44 +44,41 @@ export const test = {
     image: `${NAMESPACE_TEST}image`,
 } as const;
 
-class InMemorySparqlProvider extends SparqlDataProvider {
+class CommunicaQuerySource implements SparqlQuerySource {
     constructor(
-        options: SparqlDataProviderOptions,
-        settings: SparqlDataProviderSettings | undefined,
         private readonly store: N3.Store,
         private readonly engine: QueryEngine,
-    ) {
-        super(options, settings);
-    }
+    ) {}
 
-    async executeSparqlSelect<Binding>(
-        query: string,
-        options?: { signal?: AbortSignal; }
-    ): Promise<SparqlResponse<Binding>> {
+    async sparqlSelect(params: {
+        query: string;
+        factory: Rdf.DataFactory;
+        signal?: AbortSignal;
+    }): Promise<Record<string, Rdf.Term>[]> {
+        const {query, signal} = params;
         const stream = await this.engine.queryBindings(query, { sources: [this.store] });
-        const bindings: Binding[] = [];
+        const bindings: Record<string, Rdf.Term>[] = [];
         for await (const item of stream) {
-            options?.signal?.throwIfAborted();
+            signal?.throwIfAborted();
             const binding = Object.create(null) as Record<string, Rdf.Term>;
             for (const [variable, term] of item) {
                 binding[variable.value] = term;
             }
-            bindings.push(binding as Binding);
+            bindings.push(binding);
         }
-        return {
-            head: { vars: [], },
-            results: { bindings },
-        };
+        return bindings;
     }
 
-    async executeSparqlConstruct(
-        query: string,
-        options?: { signal?: AbortSignal; }
-    ): Promise<Rdf.Quad[]> {
+    async sparqlConstruct(params: {
+        query: string;
+        factory: Rdf.DataFactory;
+        signal?: AbortSignal;
+    }): Promise<Rdf.Quad[]> {
+        const {query, signal} = params;
         const stream = await this.engine.queryQuads(query, { sources: [this.store] });
         const quads: Rdf.Quad[] = [];
         for await (const item of stream) {
-            options?.signal?.throwIfAborted();
+            signal?.throwIfAborted();
             quads.push(item);
         }
         return quads;
@@ -87,24 +86,19 @@ class InMemorySparqlProvider extends SparqlDataProvider {
 }
 
 export async function makeSparqlDataProvider(
-    options: Omit<SparqlDataProviderOptions, 'endpointUrl'>,
+    options: Omit<SparqlDataProviderOptions, 'source'>,
     settings?: SparqlDataProviderSettings
 ): Promise<SparqlDataProvider> {
     const store = new N3.Store(
         new N3.Parser().parse(TURTLE_DATA)
     );
     const engine = new QueryEngine();
-    return new InMemorySparqlProvider(
+    return new SparqlDataProvider(
         {
             ...options,
-            endpointUrl: '',
-            queryFunction: () => {
-                throw new Error('Cannot query external SPARQL endpoint');
-            },
+            source: new CommunicaQuerySource(store, engine),
         },
-        settings,
-        store,
-        engine
+        settings
     );
 }
 

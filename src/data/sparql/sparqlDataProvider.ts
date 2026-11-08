@@ -1,5 +1,3 @@
-import * as N3 from 'n3';
-
 import { multimapArrayAdd } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
 import { rdfs, schema } from '../rdf/vocabulary';
@@ -15,32 +13,35 @@ import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
 import {
     MutableClassModel,
     MutableLinkType,
-    MutablePropertyModel,
+    MutablePropertyType,
     appendProperty,
     collectClassInfo,
     collectElementTypes,
     collectLinkTypes,
-    collectPropertyInfo,
+    collectPropertyTypes,
     enrichElementsWithImages,
     getClassTree,
-    getElementsInfo,
-    getLinkTypes,
-    getLinksInfo,
     getConnectedLinkTypes,
+    getElementsInfo,
     getFilteredData,
+    getLinksInfo,
+    getLinkTypes,
     getLinkStatistics,
+    getPropertyTypes,
     triplesToElementBinding,
     isDirectLink,
     isDirectProperty,
 } from './responseHandler';
 import {
     ClassBinding, ElementBinding, ElementTypeBinding, LinkBinding, PropertyBinding, FilterBinding,
-    LinkCountBinding, LinkTypeBinding, ConnectedLinkTypeBinding, ElementImageBinding, SparqlResponse,
-    mapSparqlResponseIntoRdfJs,
+    LinkCountBinding, LinkTypeBinding, ConnectedLinkTypeBinding, ElementImageBinding,
 } from './sparqlModels';
 import {
     SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
 } from './sparqlDataProviderSettings';
+import {
+    SparqlQuerySource, HttpSparqlQuerySource, HttpSparqlQuerySourceOptions,
+} from './sparqlQuerySource';
 
 /**
  * Options for {@link SparqlDataProvider}.
@@ -55,9 +56,16 @@ export interface SparqlDataProviderOptions {
     factory?: Rdf.DataFactory;
 
     /**
-     * SPARQL endpoint URL to send queries to.
+     * Source to get data from by a SPARQL query.
      */
-    endpointUrl: string;
+    source?: SparqlQuerySource;
+
+    /**
+     * SPARQL endpoint URL to send queries to.
+     *
+     * @deprecated Pass {@link HttpSparqlQuerySource} to {@link source} instead.
+     */
+    endpointUrl?: HttpSparqlQuerySourceOptions['endpointUrl'];
 
     /**
      * Query method for SPARQL queries to use:
@@ -65,8 +73,9 @@ export interface SparqlDataProviderOptions {
      *  - `POST` - less compatible, better on large data sets.
      *
      * @default "GET"
+     * @deprecated Pass {@link HttpSparqlQuerySource} to {@link source} instead.
      */
-    queryMethod?: 'GET' | 'POST';
+    queryMethod?: HttpSparqlQuerySourceOptions['queryMethod'];
 
     /**
      * Custom function to send SPARQL requests.
@@ -81,8 +90,10 @@ export interface SparqlDataProviderOptions {
      *     cache: 'default',
      * }
      * ```
+     *
+     * @deprecated Pass {@link HttpSparqlQuerySource} to {@link source} instead.
      */
-    queryFunction?: SparqlQueryFunction;
+    queryFunction?: HttpSparqlQuerySourceOptions['queryFunction'];
 
     /**
      * Chunk size to split each SPARQL request with multiple input IRIs into.
@@ -136,17 +147,6 @@ export interface SparqlDataProviderOptions {
 }
 
 /**
- * Custom function to send SPARQL HTTP requests.
- */
-export type SparqlQueryFunction = (params: {
-    url: string;
-    body?: string;
-    headers: { [header: string]: string };
-    method: string;
-    signal?: AbortSignal;
-}) => Promise<Response>;
-
-/**
  * Options for request chunking in {@link SparqlDataProvider}.
  *
  * @see {@link SparqlDataProviderOptions.chunk}
@@ -170,15 +170,16 @@ export interface SparqlProviderChunkOptions {
 }
 
 /**
- * Provides graph data by requesting it from a SPARQL endpoint.
+ * Provides graph data by requesting it using SPARQL queries from a source
+ * (e.g. a SPARQL HTTP endpoint).
  *
  * @category Data
  */
 export class SparqlDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
+    private readonly source: SparqlQuerySource;
     private readonly options: SparqlDataProviderOptions;
     private readonly settings: SparqlDataProviderSettings;
-    private readonly queryFunction: SparqlQueryFunction;
     private readonly acceptBlankNodes = false;
     private readonly chunkMeasure: ChunkMeasure;
 
@@ -198,19 +199,27 @@ export class SparqlDataProvider implements DataProvider {
     ) {
         const {
             factory = Rdf.DefaultDataFactory,
-            queryFunction = queryInternal,
-        } = options;
-        this.factory = factory;
-        this.options = options;
-        this.settings = settings;
-        this.queryFunction = queryFunction;
-
-        const {
+            source,
+            endpointUrl,
+            queryMethod,
+            queryFunction,
             chunk,
-            queryMethod = 'GET',
             prepareLabelPredicate,
             prepareImagePredicate,
-        } = this.options;
+        } = options;
+
+        if (!(source || endpointUrl)) {
+            throw new Error('Either "source" or "endpointUrl" is required');
+        }
+
+        this.factory = factory;
+        this.source = source ?? new HttpSparqlQuerySource({
+            endpointUrl: endpointUrl ?? '',
+            queryMethod,
+            queryFunction,
+        });
+        this.options = options;
+        this.settings = settings;
 
         if (chunk) {
             if (!Number.isSafeInteger(chunk.maxSize)) {
@@ -281,8 +290,8 @@ export class SparqlDataProvider implements DataProvider {
             schemaLabelProperty,
             labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
-        const result = await this.executeSparqlSelect<ClassBinding>(query, {signal});
-        const classTree = getClassTree(result);
+        const response = await this.executeSparqlSelect<ClassBinding>(query, {signal});
+        const classTree = getClassTree(response.results.bindings);
 
         if (this.options.prepareLabels) {
             await attachLabels(classTree.elementTypes, this.options.prepareLabels, signal);
@@ -298,7 +307,7 @@ export class SparqlDataProvider implements DataProvider {
         const {propertyIds, signal} = params;
         const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, propertyInfoQuery} = this.settings;
 
-        const properties = new Map<PropertyTypeIri, MutablePropertyModel>();
+        const properties = new Map<PropertyTypeIri, MutablePropertyType>();
         if (propertyInfoQuery) {
             await this.queryChunked(propertyIds, async batch => {
                 const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
@@ -308,7 +317,7 @@ export class SparqlDataProvider implements DataProvider {
                     labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
                 });
                 const response = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
-                collectPropertyInfo(response, properties);
+                collectPropertyTypes(response.results.bindings, properties);
             });
         } else {
             for (const id of propertyIds) {
@@ -340,7 +349,7 @@ export class SparqlDataProvider implements DataProvider {
                     labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
                 });
                 const response = await this.executeSparqlSelect<ClassBinding>(query, {signal});
-                collectClassInfo(response, classes);
+                collectClassInfo(response.results.bindings, classes);
             });
         } else {
             for (const classId of classIds) {
@@ -372,7 +381,7 @@ export class SparqlDataProvider implements DataProvider {
                     labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
                 });
                 const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-                collectLinkTypes(response, linkTypes);
+                collectLinkTypes(response.results.bindings, linkTypes);
             });
         } else {
             for (const typeId of linkTypeIds) {
@@ -403,8 +412,8 @@ export class SparqlDataProvider implements DataProvider {
             schemaLabelProperty,
             labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
-        const result = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-        const linkTypes = getLinkTypes(result);
+        const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
+        const linkTypes = getLinkTypes(response.results.bindings);
 
         if (this.options.prepareLabels) {
             await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
@@ -494,8 +503,8 @@ export class SparqlDataProvider implements DataProvider {
                 }
             `;
             try {
-                const bindings = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
-                enrichElementsWithImages(bindings, elements, this.imagePredicate);
+                const response = await this.executeSparqlSelect<ElementImageBinding>(query, {signal});
+                enrichElementsWithImages(response.results.bindings, elements, this.imagePredicate);
             } catch (err) {
                 console.warn('Failed to load entity image URLs', err);
             }
@@ -654,10 +663,9 @@ export class SparqlDataProvider implements DataProvider {
             linkConfigurations: forAll.unionParts.join('\nUNION\n'),
         });
 
-        const linkTypeBindings = await this.executeSparqlSelect<ConnectedLinkTypeBinding>(query, {signal});
-        const hasConnectedDirection = linkTypeBindings.head.vars.includes('direction');
+        const linkTypeResponse = await this.executeSparqlSelect<ConnectedLinkTypeBinding>(query, {signal});
         const connectedLinkTypes = getConnectedLinkTypes(
-            linkTypeBindings,
+            linkTypeResponse.results.bindings,
             this.linkByPredicate,
             this.openWorldLinks
         );
@@ -696,7 +704,7 @@ export class SparqlDataProvider implements DataProvider {
                 linkConfigurationIn += ` { ${restrictionIn} FILTER(?class IN (${commaSeparatedDomains})) }`;
             }
 
-            if (!linkTypesStatisticsQuery || (inexactCount && hasConnectedDirection)) {
+            if (!linkTypesStatisticsQuery || (inexactCount && bindDirection)) {
                 foundLinkStats.push({
                     id: linkType,
                     inCount: hasInLink ? 1 : 0,
@@ -712,8 +720,8 @@ export class SparqlDataProvider implements DataProvider {
                     navigateElementFilterOut,
                     navigateElementFilterIn,
                 });
-                const bindings = await this.executeSparqlSelect<LinkCountBinding>(statsQuery, {signal});
-                const linkStats = getLinkStatistics(bindings);
+                const statsResponse = await this.executeSparqlSelect<LinkCountBinding>(statsQuery, {signal});
+                const linkStats = getLinkStatistics(statsResponse.results.bindings);
                 if (linkStats) {
                     foundLinkStats.push(linkStats);
                 }
@@ -737,10 +745,10 @@ export class SparqlDataProvider implements DataProvider {
         );
 
         const filterQuery = this.createFilterQuery(params);
-        const bindings = await this.executeSparqlSelect<ElementBinding & FilterBinding>(filterQuery, {signal});
+        const response = await this.executeSparqlSelect<ElementBinding & FilterBinding>(filterQuery, {signal});
 
         const linkedElements = getFilteredData(
-            bindings,
+            response.results.bindings,
             await types,
             this.linkByPredicate,
             this.labelPredicate,
@@ -838,20 +846,20 @@ export class SparqlDataProvider implements DataProvider {
     /**
      * Executes arbitrary SPARQL SELECT query and returns the result tuples.
      */
-    executeSparqlSelect<Binding>(
+    async executeSparqlSelect<Binding>(
         query: string,
         options?: { signal?: AbortSignal }
-    ): Promise<SparqlResponse<Binding>> {
-        const method = this.options.queryMethod ?? 'GET';
-        const {signal} = options ?? {};
-        return executeSparqlQuery<Binding>(
-            this.options.endpointUrl,
+    ): Promise<{ results: { bindings: Binding[] } }> {
+        const bindings = await this.source.sparqlSelect({
             query,
-            method,
-            this.queryFunction,
-            this.factory,
-            signal
-        );
+            factory: this.factory,
+            signal: options?.signal,
+        });
+        return {
+            results: {
+                bindings: bindings as Binding[],
+            },
+        };
     }
 
     /**
@@ -861,15 +869,11 @@ export class SparqlDataProvider implements DataProvider {
         query: string,
         options?: { signal?: AbortSignal }
     ): Promise<Rdf.Quad[]> {
-        const method = this.options.queryMethod ?? 'GET';
-        const {signal} = options ?? {};
-        return executeSparqlConstruct(
-            this.options.endpointUrl,
+        return this.source.sparqlConstruct({
             query,
-            method,
-            this.queryFunction,
-            signal,
-        );
+            factory: this.factory,
+            signal: options?.signal,
+        });
     }
 
     protected createRefQueryPart(params: { elementId: ElementIri; linkId?: LinkTypeIri; direction?: 'in' | 'out' }) {
@@ -1039,7 +1043,7 @@ export class SparqlDataProvider implements DataProvider {
             const queryTemplate = 'SELECT ?inst ?class { VALUES(?inst) { ${ids} } ${filterTypePattern} }';
             const query = resolveTemplate(queryTemplate, {ids, filterTypePattern});
             const response = await this.executeSparqlSelect<ElementTypeBinding>(query, {signal});
-            collectElementTypes(response, elementTypes);
+            collectElementTypes(response.results.bindings, elementTypes);
         });
         return elementTypes;
     }
@@ -1130,150 +1134,6 @@ function resolveTemplate(template: string, values: { [key: string]: string | und
         result = result.replace(new RegExp('\\${' + replaceKey + '}', 'g'), replaceValue);
     }
     return result;
-}
-
-async function executeSparqlQuery<Binding>(
-    endpoint: string,
-    query: string,
-    method: 'GET' | 'POST',
-    queryFunction: SparqlQueryFunction,
-    factory: Rdf.DataFactory,
-    signal: AbortSignal | undefined
-): Promise<SparqlResponse<Binding>> {
-    let internalQuery: Promise<Response>;
-    if (method === 'GET') {
-        internalQuery = queryFunction({
-            url: appendQueryParams(endpoint, {query}),
-            headers: {
-                'Accept': 'application/sparql-results+json',
-            },
-            method: 'GET',
-            signal,
-        });
-    } else {
-        internalQuery = queryFunction({
-            url: endpoint,
-            body: query,
-            headers: {
-                'Accept': 'application/sparql-results+json',
-                'Content-Type': 'application/sparql-query; charset=UTF-8',
-            },
-            method: 'POST',
-            signal,
-        });
-    }
-    const response = await internalQuery;
-    if (response.ok) {
-        const sparqlResponse = await response.json() as SparqlResponse<Binding>;
-        return mapSparqlResponseIntoRdfJs(sparqlResponse, factory);
-    } else {
-        throw await SparqlResponseError.fromResponse(response);
-    }
-}
-
-async function executeSparqlConstruct(
-    endpoint: string,
-    query: string,
-    method: 'GET' | 'POST',
-    queryFunction: SparqlQueryFunction,
-    signal: AbortSignal | undefined
-): Promise<Rdf.Quad[]> {
-    let internalQuery: Promise<Response>;
-    if (method === 'GET') {
-        internalQuery = queryFunction({
-            url: appendQueryParams(endpoint, {query}),
-            headers: {
-                'Accept': 'text/turtle',
-            },
-            method: 'GET',
-            signal,
-        });
-    } else {
-        internalQuery = queryFunction({
-            url: endpoint,
-            body: query,
-            headers: {
-                'Accept': 'text/turtle',
-                'Content-Type': 'application/sparql-query; charset=UTF-8',
-            },
-            method: 'POST',
-            signal,
-        });
-    }
-    const response = await internalQuery;
-    if (response.ok) {
-        const turtleText = await response.text();
-        const parser = new N3.Parser();
-        return parser.parse(turtleText);
-    } else {
-        throw await SparqlResponseError.fromResponse(response);
-    }
-}
-
-/**
- * SPARQL response error originated from an endpoint.
- */
-export class SparqlResponseError extends Error {
-    /**
-     * SPARQL endpoint response with an error result.
-     */
-    readonly response: Response;
-
-    constructor(
-        message: string,
-        response: Response,
-        options?: ErrorOptions
-    ) {
-        super(message, options);
-        this.response = response;
-    }
-
-    /**
-     * Makes an error for a non-OK response with the HTTP status and the beginning
-     * of the response body in the message, as an endpoint usually explains
-     * a rejected query there (e.g. a syntax or a query cost estimation error).
-     */
-    static async fromResponse(response: Response): Promise<SparqlResponseError> {
-        let details = '';
-        try {
-            const body = (await response.text()).trim();
-            const maxLength = 500;
-            details = body.length > maxLength ? body.substring(0, maxLength) + '…' : body;
-        } catch (e) {
-            /* ignore */
-        }
-        const status = `HTTP ${response.status} ${response.statusText}`.trim();
-        return new SparqlResponseError(
-            details ? `${status}: ${details}` : status,
-            response
-        );
-    }
-}
-
-function appendQueryParams(endpoint: string, queryParams: { [key: string]: string } = {}) {
-    const initialSeparator = endpoint.indexOf('?') < 0 ? '?' : '&';
-    const additionalParams = initialSeparator + Object.keys(queryParams)
-        .map(key => `${key}=${encodeURIComponent(queryParams[key])}`)
-        .join('&');
-    return endpoint + additionalParams;
-}
-
-function queryInternal(params: {
-    url: string;
-    body?: string;
-    headers: { [header: string]: string };
-    method: string;
-    signal?: AbortSignal;
-}) {
-    return fetch(params.url, {
-        method: params.method,
-        body: params.body,
-        credentials: 'same-origin',
-        mode: 'cors',
-        cache: 'default',
-        headers: params.headers,
-        signal: params.signal,
-    });
 }
 
 function formatLanguageFilter(
