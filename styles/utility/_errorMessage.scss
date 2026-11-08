@@ -1,0 +1,11 @@
+@use "../theme/theme";
+
+.reactodia-error {
+  padding: 5px 10px;
+  color: theme.$color-danger;
+  font-size: smaller;
+  overflow-wrap: anywhere;
+  max-height: 8em;
+  overflow-y: auto;
+  user-select: text;
+}

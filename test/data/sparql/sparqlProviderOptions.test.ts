@@ -13,7 +13,8 @@ import {
     OwlStatsSettings,
 } from '../../../src/data/sparql/sparqlDataProviderSettings';
 
-import { makeSparqlDataProvider, makeSparqlDataset, org, rdfs, test } from '../../mock/sparqlMocks';
+import { org, rdfs } from '../orgOntologyCases';
+import { makeSparqlDataProvider, makeSparqlDataset, test } from '../../mock/sparqlMocks';
 import { compareLinks } from '../../utilities/dataCompare';
 
 describe('SparqlDataProvider', () => {
@@ -174,9 +175,6 @@ describe('SparqlDataProvider', () => {
             makeSparqlProviderOptions(),
             {...OwlStatsSettings, filterOnlyLanguages: ['en']},
         );
-        const elementIds: readonly ElementIri[] = [
-            org.FormalOrganization, org.memberOf, org.location
-        ];
         const links = await provider.links({
             primary: [org.Organization, org.OrganizationalUnit, org.hasUnit],
             secondary: [org.FormalOrganization],

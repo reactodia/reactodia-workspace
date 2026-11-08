@@ -266,6 +266,23 @@ export { Halo, type HaloProps } from './widgets/halo';
 export { HaloLink, type HaloLinkProps } from './widgets/haloLink';
 export {
     InstancesSearch, type InstancesSearchProps, type InstancesSearchCommands,
+    type SearchCriteria, SearchPattern, type SearchPatternType, type RawSearchPattern,
+    type SearchPatternError, type SearchPatternErrorItem, type SearchPatternGenerateContext,
+    type SearchPatternFromJsonContext, type SearchPatternToJsonContext,
+    SearchPatternAnd,
+    SearchPatternOr,
+    SearchPatternHasType,
+    SearchPatternConnectedTo,
+    SearchPatternFromValues,
+    SearchPatternHasProperty,
+    type SearchCriteriaOption, type SearchCriteriaRenderProps,
+    SearchCriterion, SearchCriterionBlock, SearchCriterionWhereGroup, SearchCriterionWhere,
+    SearchCriterionAnd,
+    SearchCriterionOr,
+    SearchCriterionHasType,
+    SearchCriterionConnectedTo,
+    SearchCriterionFromValues,
+    SearchCriterionHasProperty,
 } from './widgets/instancesSearch';
 export {
     type LinkActionContext, useLinkActionContext,

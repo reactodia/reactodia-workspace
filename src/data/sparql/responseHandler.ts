@@ -8,8 +8,11 @@ import {
     ElementIri, ElementTypeIri, LinkTypeIri, PropertyTypeIri,
     hashSubtypeEdge, equalSubtypeEdges, equalLinks, hashLink,
 } from '../model';
-import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
+import type {
+    DataProviderLinkCount, DataProviderLookupItem, LookupPattern,
+} from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
+import { isDirectLink } from './sparqlGenerator';
 import {
     ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
     LinkTypeBinding, ConnectedLinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
@@ -427,19 +430,30 @@ export function getLinkStatistics(
     return undefined;
 }
 
-export function getFilteredData(
-    bindings: readonly (ElementBinding & FilterBinding)[],
-    sourceTypes: ReadonlySet<ElementTypeIri> | undefined,
-    linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]> | undefined,
-    labelPredicate: PropertyTypeIri,
-    openWorldLinks: boolean
-): DataProviderLookupItem[] {
-    const predicateToConfig: typeof linkByPredicateType = linkByPredicateType ?? EMPTY_MAP;
+export function getFilteredIris(
+    bindings: readonly FilterBinding[],
+): Set<ElementIri> {
+    const iris = new Set<ElementIri>();
 
+    for (const binding of bindings) {
+        if (!isRdfIri(binding.inst) && !isRdfBlank(binding.inst)) {
+            continue;
+        }
+
+        iris.add(binding.inst.value);
+    }
+
+    return iris;
+}
+
+export function getFilteredData(
+    bindings: readonly FilterBinding[],
+    matcher: ConnectedToMatcher | undefined,
+    links: readonly LinkModel[],
+    checkLinks: boolean,
+    labelPredicate: PropertyTypeIri
+): DataProviderLookupItem[] {
     const instances = new Map<ElementIri, MutableElementModel>();
-    const resultTypes = new Map<ElementIri, Set<ElementTypeIri>>();
-    const outPredicates = new Map<ElementIri, Set<string>>();
-    const inPredicates = new Map<ElementIri, Set<string>>();
 
     for (const binding of bindings) {
         if (!isRdfIri(binding.inst) && !isRdfBlank(binding.inst)) {
@@ -453,105 +467,145 @@ export function getFilteredData(
             instances.set(iri, model);
         }
         enrichElement(model, binding, labelPredicate);
+    }
 
-        if (isRdfIri(binding.classAll)) {
-            multimapAdd(resultTypes, iri, binding.classAll.value);
+    const linksByInstance = new Map<ElementIri, Set<LinkModel>>();
+    for (const link of links) {
+        if (instances.has(link.sourceId)) {
+            multimapAdd(linksByInstance, link.sourceId, link);
         }
-
-        if (!openWorldLinks && binding.link && binding.direction) {
-            const predicates = (
-                binding.direction.value === 'in' ? inPredicates :
-                binding.direction.value === 'out' ? outPredicates :
-                undefined
-            );
-            if (predicates) {
-                multimapAdd(predicates, model.id, binding.link.value);
-            }
+        if (instances.has(link.targetId)) {
+            multimapAdd(linksByInstance, link.targetId, link);
         }
     }
 
-    const linkedElements: DataProviderLookupItem[] = [];
-    for (const model of instances.values()) {
-        const targetTypes = resultTypes.get(model.id);
-        const doesMatchesDomain = openWorldLinks || (
-            matchesDomainForLink(sourceTypes, outPredicates.get(model.id), predicateToConfig) &&
-            matchesDomainForLink(targetTypes, inPredicates.get(model.id), predicateToConfig)
-        );
-        if (doesMatchesDomain) {
-            model.types.sort();
-            const outLinks = new Set(translateLinkPredicates(
-                sourceTypes,
-                outPredicates.get(model.id) ?? (EMPTY_SET as ReadonlySet<string>),
-                predicateToConfig,
-                openWorldLinks
-            ));
-            const inLinks = new Set(translateLinkPredicates(
-                targetTypes,
-                inPredicates.get(model.id) ?? (EMPTY_SET as ReadonlySet<string>),
-                predicateToConfig,
-                openWorldLinks
-            ));
-            linkedElements.push({
-                element: model,
-                outLinks,
-                inLinks,
+    const resultItems: DataProviderLookupItem[] = [];
+    for (const instance of instances.values()) {
+        instance.types.sort();
+
+        if (matcher) {
+            const inLinks = new Set<LinkTypeIri>();
+            const outLinks = new Set<LinkTypeIri>();
+
+            const foundLinks = linksByInstance.get(instance.id);
+            const doesMatch = foundLinks && matcher.match(
+                (other, linkType) => {
+                    let hasInLink = false;
+                    for (const link of foundLinks) {
+                        if (
+                            link.sourceId === instance.id &&
+                            link.targetId === other &&
+                            (!linkType || link.linkTypeId === linkType)
+                        ) {
+                            inLinks.add(link.linkTypeId);
+                            hasInLink = true;
+                        }
+                    }
+                    return hasInLink;
+                },
+                (other, linkType) => {
+                    let hasOutLink = false;
+                    for (const link of foundLinks) {
+                        if (
+                            link.sourceId === other &&
+                            link.targetId === instance.id &&
+                            (!linkType || link.linkTypeId === linkType)
+                        ) {
+                            outLinks.add(link.linkTypeId);
+                            hasOutLink = true;
+                        }
+                    }
+                    return hasOutLink;
+                }
+            );
+
+            if (!checkLinks || doesMatch) {
+                resultItems.push({
+                    element: instance,
+                    outLinks,
+                    inLinks,
+                });
+            }
+        } else {
+            resultItems.push({
+                element: instance,
+                outLinks: EMPTY_SET as ReadonlySet<LinkTypeIri>,
+                inLinks: EMPTY_SET as ReadonlySet<LinkTypeIri>,
             });
         }
     }
 
-    return linkedElements;
+    return resultItems;
 }
 
-function matchesDomainForLink(
-    types: ReadonlySet<ElementTypeIri> | undefined,
-    predicates: ReadonlySet<string> | undefined,
-    linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]>
-): boolean {
-    if (!predicates) {
-        return true;
-    }
-    const translatedPredicates = translateLinkPredicates(
-        types,
-        predicates,
-        linkByPredicateType,
-        /* openWorldLinks */ false
-    );
-    for (const linkTypeId of translatedPredicates) {
-        return true;
-    }
-    return false;
-}
-
-function* translateLinkPredicates(
-    types: ReadonlySet<ElementTypeIri> | undefined,
-    predicates: ReadonlySet<string>,
-    linkByPredicateType: ReadonlyMap<string, readonly LinkConfiguration[]>,
-    openWorldLinks: boolean
-): IterableIterator<LinkTypeIri> {
-    for (const predicate of predicates) {
-        const matched = linkByPredicateType.get(predicate);
-        if (matched) {
-            for (const link of matched) {
-                if (typeMatchesDomain(link, types)) {
-                    yield link.id;
+export function createConnectedToLinkMatcher(
+    rootPattern: LookupPattern
+): ConnectedToMatcher | undefined {
+    const otherIris = new Set<ElementIri>();
+    const visit = (pattern: LookupPattern): ConnectedToMatcher['match'] | undefined => {
+        switch (pattern.type) {
+            case 'and':
+            case 'or': {
+                const matchers: ConnectedToMatcher['match'][] = [];
+                for (const p of pattern.patterns) {
+                    const matcher = visit(p);
+                    if (matcher) {
+                        matchers.push(matcher);
+                    }
                 }
+                if (matchers.length === 0) {
+                    return undefined;
+                }
+                return (...params) => {
+                    let anyMatch = false;
+                    let allMatch = true;
+                    for (const matcher of matchers) {
+                        const doesMatch = matcher(...params);
+                        anyMatch ||= doesMatch;
+                        allMatch &&= doesMatch;
+                    }
+                    return pattern.type === 'and' ? allMatch : anyMatch;
+                };
             }
-        } else if (openWorldLinks) {
-            yield predicate;
+            case 'connectedTo': {
+                if (pattern.other?.type === 'fromValues') {
+                    const {linkType, linkDirection} = pattern;
+                    const otherValues = pattern.other.values;
+
+                    for (const otherIri of otherValues) {
+                        otherIris.add(otherIri);
+                    }
+
+                    return (addInLink, addOutLink) => {
+                        let foundLink = false;
+                        for (const otherIri of otherValues) {
+                            if (!linkDirection || linkDirection === 'in') {
+                                foundLink ||= addInLink(otherIri, linkType);
+                            }
+
+                            if (!linkDirection || linkDirection === 'out') {
+                                foundLink ||= addOutLink(otherIri, linkType);
+                            }
+                        }
+                        return foundLink;
+                    };
+                }
+                break;
+            }
         }
-    }
+        return undefined;
+    };
+
+    const match = visit(rootPattern);
+    return match ? {otherIris, match} : undefined;
 }
 
-export function isDirectLink(link: LinkConfiguration) {
-    // link configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(link.path);
-    return !pathBased;
-}
-
-export function isDirectProperty(property: PropertyConfiguration) {
-    // property configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(property.path);
-    return !pathBased;
+export interface ConnectedToMatcher {
+    otherIris: ReadonlySet<ElementIri>;
+    match: (
+        addInLink: (other: ElementIri, linkType: LinkTypeIri | undefined) => boolean,
+        addOutLink: (other: ElementIri, linkType: LinkTypeIri | undefined) => boolean
+    ) => boolean;
 }
 
 function typeMatchesDomain(

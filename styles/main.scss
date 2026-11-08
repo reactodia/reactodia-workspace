@@ -25,14 +25,17 @@
 @forward "theme/themeDark";
 @forward "theme/themeLight";
 
+@forward "utility/autocomplete";
 @forward "utility/draggableHandle";
 @forward "utility/dragLinkMover";
 @forward "utility/dropdown";
+@forward "utility/errorMessage";
 @forward "utility/inlineEntity";
 @forward "utility/listElementView";
 @forward "utility/noSearchResults";
 @forward "utility/progressBar";
 @forward "utility/resizableBox";
+@forward "utility/schemaTypeView";
 @forward "utility/searchInput";
 @forward "utility/searchResults";
 @forward "utility/viewportDock";
@@ -41,12 +44,15 @@
 @forward "widgets/classTree";
 @forward "widgets/connectionsMenu";
 @forward "widgets/dialog";
+@forward "widgets/entitySelect";
 @forward "widgets/halo";
 @forward "widgets/haloLink";
 @forward "widgets/instancesSearch";
 @forward "widgets/linkAction";
 @forward "widgets/linksToolbox";
 @forward "widgets/navigator";
+@forward "widgets/schemaTypeSelect";
+@forward "widgets/searchCriterion";
 @forward "widgets/selection";
 @forward "widgets/selectionAction";
 @forward "widgets/toolbar";

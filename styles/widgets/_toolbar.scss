@@ -5,6 +5,7 @@
   display: flex;
   /* Prevent buttons to wrap after menu button if width is too small */
   white-space: nowrap;
+  z-index: zIndex.$toolbar;
 
   /* Make transparent toolbar parts "click-through" while keeping buttons clickable */
   pointer-events: none;

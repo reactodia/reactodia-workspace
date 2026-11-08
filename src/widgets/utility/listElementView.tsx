@@ -93,7 +93,7 @@ export function ListElementView(props: ListElementViewProps) {
             ref={ref as React.Ref<HTMLDivElement>}
             className={combinedClass}
             role={otherProps.role ?? 'option'}
-            draggable={!disabled && Boolean(onDragStart)}
+            draggable={!disabled && Boolean(onDragStart) ? true : undefined}
             title={otherProps.title ?? formatEntityTitle(element, model, t)}
             style={{...otherProps.style, ...providedStyle}}
             onClick={onItemClick}
