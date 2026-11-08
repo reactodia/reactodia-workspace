@@ -17,14 +17,11 @@ import type { MetadataCreatedEntity } from '../../data/metadataProvider';
 import { HtmlSpinner } from '../../diagram/spinner';
 
 import { type DataDiagramModel, getAllPresentEntities } from '../../editor/dataDiagramModel';
-import { EntityElement } from '../../editor/dataElements';
 import { subscribeElementTypes } from '../../editor/observedElement';
 
-import { ListElementView } from '../utility/listElementView';
 import { NoSearchResults } from '../utility/noSearchResults';
 import { SearchInput, SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 import { SearchResults } from '../utility/searchResults';
-import { createRequest } from '../instancesSearch';
 
 import { type WorkspaceContext, useWorkspace } from '../../workspace/workspaceContext';
 
@@ -159,11 +156,10 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
             this.filterCancellation = new AbortController();
             const signal = this.filterCancellation.signal;
 
-            const request = createRequest({text: searchString});
             let lookupItems: DataProviderLookupItem[] | null;
             try {
                 lookupItems = await mapAbortedToNull(
-                    model.dataProvider.lookup(request),
+                    model.dataProvider.lookup({text: searchString}),
                     signal
                 );
                 if (lookupItems === null) {
@@ -305,9 +301,9 @@ export class ElementTypeSelectorInner extends React.Component<ElementTypeSelecto
                         name: 'reactodia-element-type-selector-search',
                         placeholder: t.textOptional('visual_authoring.select_entity.input.placeholder'),
                         autoFocus: true,
-                    }}>
-                    <span className={`${CLASS_NAME}__search-icon`} />
-                </SearchInput>
+                    }}
+                    slotInput={<span className={`${CLASS_NAME}__search-icon`} />}
+                />
                 {
                     searchStore.value.length > 0 ? (
                         <div className={`${CLASS_NAME}__existing-elements-list`}

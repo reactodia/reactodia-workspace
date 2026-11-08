@@ -3,7 +3,8 @@ import {
     LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
 import {
-    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProvider, DataProviderLinkCount, DataProviderPatternSupport,
+    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
 } from '../dataProvider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
@@ -28,6 +29,30 @@ export class EmptyDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal | undefined;
+    }): Promise<LinkTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
     }): Promise<LinkTypeModel[]> {
         return Promise.resolve([]);
     }
@@ -75,6 +100,10 @@ export class EmptyDataProvider implements DataProvider {
         signal?: AbortSignal | undefined;
     }): Promise<DataProviderLinkCount[]> {
         return Promise.resolve([]);
+    }
+
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
+        return {ok: false, errors: []};
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

@@ -1,5 +1,8 @@
+import { autoUpdate, size, useFloating } from '@floating-ui/react-dom';
 import cx from 'clsx';
 import * as React from 'react';
+
+import { useCombinedRef } from '../../coreUtils/hooks';
 
 import {
     FocusGroup, FocusGroupController, useFocusGroup, useFocusGroupItem,
@@ -15,6 +18,10 @@ export interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
      * Additional CSS class for the component.
      */
     className?: string;
+    /**
+     * `ref` for the inner DOM element.
+     */
+    innerRef?: React.Ref<HTMLDivElement>;
     /**
      * Dropdown expand direction.
      *
@@ -39,6 +46,11 @@ export interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
      * Handler for clicks outside the dropdown DOM element.
      */
     onClickOutside?: () => void;
+    /**
+     * Handler for dropdown content panel position changes
+     * e.g. when the dropdown becomes expanded.
+     */
+    onContentPositioned?: () => void;
 }
 
 const CLASS_NAME = 'reactodia-dropdown';
@@ -50,16 +62,41 @@ const CLASS_NAME = 'reactodia-dropdown';
  */
 export function Dropdown(props: DropdownProps) {
     const {
-        className, direction = 'down', expanded, toggle, onClickOutside, children,
-        ...otherProps
+        className, innerRef, direction = 'down', expanded, toggle, onClickOutside,
+        onContentPositioned, children, ...otherProps
     } = props;
-    const menuRef = React.useRef<HTMLDivElement | null>(null);
+    
+    const {refs, floatingStyles, isPositioned} = useFloating<HTMLDivElement>({
+        open: expanded,
+        placement: direction === 'up' ? 'top-start' : 'bottom-start',
+        strategy: 'fixed',
+        whileElementsMounted: autoUpdate,
+        middleware: [
+            size({
+                apply({elements}) {
+                    const referenceBounds = elements.reference.getBoundingClientRect();
+                    elements.floating.style.setProperty(
+                        '--reactodia-dropdown-toggle-width',
+                        `${referenceBounds.width}px`,
+                    );
+                },
+            }),
+        ],
+    });
+
+    const passedRef = useCombinedRef(refs.setReference, innerRef);
+
+    React.useEffect(() => {
+        if (isPositioned) {
+            onContentPositioned?.();
+        }
+    }, [onContentPositioned, isPositioned]);
 
     React.useLayoutEffect(() => {
         if (onClickOutside && expanded) {
             const closeMenu = (e: PointerEvent) => {
                 // Auto-close menu on clicks from outside
-                if (e.target instanceof Node && !menuRef.current?.contains(e.target)) {
+                if (e.target instanceof Node && !refs.reference.current?.contains(e.target)) {
                     onClickOutside();
                 }
             };
@@ -70,7 +107,7 @@ export function Dropdown(props: DropdownProps) {
 
     return (
         <div {...otherProps}
-            ref={menuRef}
+            ref={passedRef}
             className={cx(
                 className,
                 CLASS_NAME,
@@ -78,7 +115,10 @@ export function Dropdown(props: DropdownProps) {
                 expanded ? `${CLASS_NAME}--expanded` : `${CLASS_NAME}--collapsed`
             )}>
             {direction === 'down' ? toggle : null}
-            <div className={`${CLASS_NAME}__content`} aria-hidden={!expanded}>
+            <div ref={refs.setFloating}
+                className={`${CLASS_NAME}__content`}
+                style={floatingStyles}
+                aria-hidden={!expanded}>
                 {children}
             </div>
             {direction === 'up' ? toggle : null}
@@ -103,6 +143,10 @@ export interface DropdownMenuProps extends React.HTMLAttributes<HTMLElement> {
      */
     direction?: 'down' | 'up';
     /**
+     * Custom toggle menu button component.
+     */
+    toggle?: React.ReactElement;
+    /**
      * Title for the toggle menu button.
      */
     title?: string;
@@ -120,7 +164,7 @@ const MENU_CLASS_NAME = 'reactodia-dropdown-menu';
  * @category Components
  */
 export function DropdownMenu(props: DropdownMenuProps) {
-    const {className, direction, title, children, ...otherProps} = props;
+    const {className, direction, toggle, title, children, ...otherProps} = props;
     const [expanded, setExpanded] = React.useState(false);
     const providedContext = React.useMemo(
         (): DropdownMenuContext => ({expanded, setExpanded}),
@@ -144,7 +188,7 @@ export function DropdownMenu(props: DropdownMenuProps) {
                         direction={direction}
                         expanded={expanded}
                         toggle={
-                            <DropdownMenuToggleButton title={title} />
+                            <DropdownMenuToggleButton component={toggle} title={title} />
                         }
                         onClickOutside={onClickOutside}>
                         <div ref={ref}
@@ -176,8 +220,11 @@ export function useDropdownMenu(): DropdownMenuContext {
     return context;
 }
 
-function DropdownMenuToggleButton(props: { title?: string }) {
-    const {title} = props;
+function DropdownMenuToggleButton(props: {
+    component?: React.ReactElement;
+    title?: string;
+}) {
+    const {component, title} = props;
     const {expanded, setExpanded} = useDropdownMenu();
     const controller = useFocusGroup();
     React.useLayoutEffect(() => {
@@ -185,7 +232,7 @@ function DropdownMenuToggleButton(props: { title?: string }) {
             controller.ensureFocusable({reset: true});
         }
     }, [expanded]);
-    return (
+    return component ?? (
         <button type='button'
             className={cx(
                 `${MENU_CLASS_NAME}__toggle`,

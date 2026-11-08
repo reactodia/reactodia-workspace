@@ -10,6 +10,7 @@ import {
 } from '../model';
 import type { DataProviderLinkCount, DataProviderLookupItem } from '../dataProvider';
 import { LinkConfiguration, PropertyConfiguration } from './sparqlDataProviderSettings';
+import { isDirectLink } from './sparqlGenerator';
 import {
     ClassBinding, ElementBinding, LinkBinding, ElementImageBinding, LinkCountBinding,
     LinkTypeBinding, ConnectedLinkTypeBinding, PropertyBinding, ElementTypeBinding, FilterBinding,
@@ -540,18 +541,6 @@ function* translateLinkPredicates(
             yield predicate;
         }
     }
-}
-
-export function isDirectLink(link: LinkConfiguration) {
-    // link configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(link.path);
-    return !pathBased;
-}
-
-export function isDirectProperty(property: PropertyConfiguration) {
-    // property configuration is path-based if includes any variables
-    const pathBased = /[?$][a-zA-Z]+\b/.test(property.path);
-    return !pathBased;
 }
 
 function typeMatchesDomain(

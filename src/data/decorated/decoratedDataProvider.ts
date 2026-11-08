@@ -3,6 +3,7 @@ import { delay } from '../../coreUtils/async';
 import type * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    DataProviderPatternSupport, LookupPattern,
 } from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
@@ -33,6 +34,9 @@ export interface DecoratedDataProviderOptions {
 export type DecoratedMethodName =
     | 'knownElementTypes'
     | 'knownLinkTypes'
+    | 'lookupElementTypes'
+    | 'lookupPropertyTypes'
+    | 'lookupLinkTypes'
     | 'elementTypes'
     | 'propertyTypes'
     | 'linkTypes'
@@ -93,6 +97,30 @@ export class DecoratedDataProvider implements DataProvider {
         return this.decorate('knownLinkTypes', [params]);
     }
 
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        return this.decorate('lookupElementTypes', [params]);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        return this.decorate('lookupPropertyTypes', [params]);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        return this.decorate('lookupLinkTypes', [params]);    
+    }
+
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
@@ -136,6 +164,10 @@ export class DecoratedDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]> {
         return this.decorate('connectedLinkStats', [params]);
+    }
+
+    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
+        return this.baseProvider.supportsPattern(pattern);
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

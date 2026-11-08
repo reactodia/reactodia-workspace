@@ -34,10 +34,15 @@ $no-results-color: theme.$color-emphasis-400;
     }
   }
 
-  &__search {
-    padding: 10px;
-    align-items: center;
+  &__search-group {
     flex: 0 0 auto;
+    display: flex;
+    margin: 10px;
+  }
+
+  &__search {
+    flex: auto;
+    align-items: center;
   }
 
   &__sort-switches {

@@ -25,10 +25,11 @@ export interface SparqlDataProviderSettings {
     filterOnlyLanguages?: ReadonlyArray<string>;
 
     /**
-     * SELECT query to retrieve class tree.
+     * SELECT query to get full element type (class) tree.
      *
      * Parametrized variables:
-     *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${schemaLabelProperty}` {@link schemaLabelProperty} property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
      *
      * Expected output bindings:
      *   - `?class`
@@ -37,6 +38,30 @@ export interface SparqlDataProviderSettings {
      *   - `?instcount` (optional)
      */
     classTreeQuery?: string;
+
+    /**
+     * SELECT query to lookup element types (classes) filtered by a keyword.
+     *
+     * Parametrized variables:
+     *   - `${schemaLabelProperty}` {@link schemaLabelProperty} property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
+     *   - `${filterByText}` from {@link classTreeLookupSettings}
+     *   - `${limit}` (when `limit` is provided)
+     *
+     * Expected output bindings:
+     *   - `?class`
+     *   - `?label` (optional)
+     *   - `?score` element lookup score (higher ordered first)
+     *     (for order only; when `text` is provided)
+     */
+    classLookupQuery?: string;
+
+    /**
+     * Settings for element types lookup by a text keyword.
+     *
+     * If not specified, {@link schemaLookupSettings} is used by default.
+     */
+    classLookupSettings?: FullTextSearchSettings;
 
     /**
      * SELECT query to retrieve data for each class in a set.
@@ -52,6 +77,42 @@ export interface SparqlDataProviderSettings {
      *   - `?instcount` (optional)
      */
     classInfoQuery?: string;
+
+    /**
+     * SELECT query to lookup property types filtered by a keyword.
+     *
+     * Parametrized variables:
+     *   - `${schemaLabelProperty}` {@link schemaLabelProperty} property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
+     *   - `${filterByText}` from {@link propertyTypesLookupSettings}
+     *   - `${limit}` (when `limit` is provided)
+     *
+     * Expected output bindings:
+     *   - `?property`
+     *   - `?label` (optional)
+     */
+    propertyTypesLookupQuery?: string;
+
+    /**
+     * Settings for property types lookup by a text keyword.
+     *
+     * If not specified, {@link schemaLookupSettings} is used by default.
+     */
+    propertyTypesLookupSettings?: FullTextSearchSettings;
+
+    /**
+     * SELECT query to retrieve data for each datatype property in a set.
+     *
+     * Parametrized variables:
+     *   - `${ids}` VALUES clause content with datatype property IRIs
+     *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
+     *
+     * Expected output bindings:
+     *   - `?property`
+     *   - `?label` (optional)
+     */
+    propertyInfoQuery?: string;
 
     /**
      * SELECT query to retrieve initial link types.
@@ -76,6 +137,28 @@ export interface SparqlDataProviderSettings {
     linkTypesPattern?: string;
 
     /**
+     * SELECT query to lookup link types filtered by a keyword.
+     *
+     * Parametrized variables:
+     *   - `${schemaLabelProperty}` {@link schemaLabelProperty} property from the settings
+     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
+     *   - `${filterByText}` from {@link linkTypesLookupSettings}
+     *   - `${limit}` (when `limit` is provided)
+     *
+     * Expected output bindings:
+     *   - `?link`
+     *   - `?label` (optional)
+     */
+    linkTypesLookupQuery?: string;
+
+    /**
+     * Settings for link types lookup by a text keyword.
+     *
+     * If not specified, {@link schemaLookupSettings} is used by default.
+     */
+    linkTypesLookupSettings?: FullTextSearchSettings;
+
+    /**
      * SELECT query to retrieve data for each link type in a set.
      *
      * Parametrized variables:
@@ -89,20 +172,6 @@ export interface SparqlDataProviderSettings {
      *   - `?instcount` (optional)
      */
     linkTypesInfoQuery?: string;
-
-    /**
-     * SELECT query to retrieve data for each datatype property in a set.
-     *
-     * Parametrized variables:
-     *   - `${ids}` VALUES clause content with datatype property IRIs
-     *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
-     *   - `${labelLanguageFilter}` label filter based on `filterOnlyLanguages`
-     *
-     * Expected output bindings:
-     *   - `?property`
-     *   - `?label` (optional)
-     */
-    propertyInfoQuery?: string;
 
     /**
      * CONSTRUCT query to retrieve data for each element (types, labels, properties).
@@ -196,12 +265,7 @@ export interface SparqlDataProviderSettings {
      *   - `${outerProjection}`
      *   - `${innerProjection}`
      *   - `${filterInnerPrelude}` from {@link filterInnerPrelude}
-     *   - `${filterByType}` from {@link filterTypePattern}
-     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
-     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
-     *   - `${filterByText}` from {@link fullTextSearch}
-     *     (when {@link DataProviderLookupParams.text} is provided)
+     *   - `${filterByPattern}`
      *   - `${filterAdditionalRestriction}` from {@link filterAdditionalRestriction}
      *   - `${orderBy}` (when {@link DataProviderLookupParams.text} is provided)
      *   - `${limit}` (when {@link DataProviderLookupParams.limit} is provided)
@@ -210,16 +274,25 @@ export interface SparqlDataProviderSettings {
      *     {@link linkConfigurations} is non-empty)
      *   - `${queryElementInfo}` from {@link filterElementInfoPattern}
      *
+     * For compatibility, the following deprecated variables are parametrized
+     * in case `${filterByPattern}` is not found in the query:
+     *   - `${filterByType}` from {@link filterTypePattern}
+     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
+     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
+     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *   - `${filterByText}` from {@link fullTextSearch}
+     *     (when {@link DataProviderLookupParams.text} is provided)
+     *
      * Expected bindings:
      *   - `?inst` element IRI
      *   - `?class` element type
      *   - `?label` element label
      *   - `?link` connected via link type
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *     (when {@link ConnectedToLookupPattern} is provided at top level)
      *   - `?direction` connected via link direction (`"in"` or `"out"`)
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
+     *     (when {@link ConnectedToLookupPattern} is provided at top level)
      *   - `?score` element lookup score (higher ordered first)
-     *     (for order only; when {@link DataProviderLookupParams.text} is provided)
+     *     (for order only; when {@link WithTextLookupPattern} is provided at top level)
      */
     lookupQuery: string;
 
@@ -269,9 +342,14 @@ export interface SparqlDataProviderSettings {
     filterAdditionalRestriction: string;
 
     /**
-     * Lookup by text settings.
+     * Lookup entities by text settings.
      */
     fullTextSearch: FullTextSearchSettings;
+
+    /**
+     * Default settings for schema items (element/property/link types) lookup by text.
+     */
+    schemaTextSearch?: FullTextSearchSettings;
 
     /**
      * "Virtual" links configurations to translate a SPARQL pattern as a link.
@@ -317,9 +395,10 @@ export interface FullTextSearchSettings {
      * Parametrized variables:
      *   - `${text}` text token
      *   - `${dataLabelProperty}` `dataLabelProperty` property from the settings
+     *   - `${schemaLabelProperty}` `schemaLabelProperty` property from the settings
      *
      * Expected bindings:
-     *   - `?inst` link type
+     *   - `?inst` found item IRI
      *   - `?score` numerical score for ordering search results by relevance
      *   - `?extractedLabel` (optional; if `extractLabel` is enabled)
      */
@@ -442,6 +521,8 @@ export const RdfSettings: SparqlDataProviderSettings = {
 
     classTreeQuery: '',
 
+    classLookupQuery: '',
+
     classInfoQuery:
 `SELECT ?class ?label ?instcount WHERE {
     VALUES(?class) {\${ids}}
@@ -450,6 +531,17 @@ export const RdfSettings: SparqlDataProviderSettings = {
         \${labelLanguageFilter}
     }
     BIND("" as ?instcount)
+}`,
+
+    propertyTypesLookupQuery: '',
+
+    propertyInfoQuery:
+`SELECT ?property ?label WHERE {
+    VALUES(?property) {\${ids}}
+    OPTIONAL {
+        ?property \${schemaLabelProperty} ?label
+        \${labelLanguageFilter}
+    }
 }`,
 
     linkTypesQuery:
@@ -463,20 +555,13 @@ export const RdfSettings: SparqlDataProviderSettings = {
 
     linkTypesPattern: '',
 
+    linkTypesLookupQuery: '',
+
     linkTypesInfoQuery:
 `SELECT ?link ?label WHERE {
     VALUES(?link) {\${ids}}
     OPTIONAL {
         ?link \${schemaLabelProperty} ?label
-        \${labelLanguageFilter}
-    }
-}`,
-
-    propertyInfoQuery:
-`SELECT ?property ?label WHERE {
-    VALUES(?property) {\${ids}}
-    OPTIONAL {
-        ?property \${schemaLabelProperty} ?label
         \${labelLanguageFilter}
     }
 }`,
@@ -495,6 +580,7 @@ export const RdfSettings: SparqlDataProviderSettings = {
             \${filterByType}
             \${filterByRefElementLink}
             \${filterByText}
+            \${filterByPattern}
             \${filterAdditionalRestriction}
         } \${orderBy} \${limit}
     }
@@ -506,6 +592,45 @@ export const RdfSettings: SparqlDataProviderSettings = {
     filterTypePattern: '',
     filterAdditionalRestriction: '',
     filterElementInfoPattern: '',
+};
+
+// Wikidata does not distinguish property/link types
+const WikidataPropertyLookup: FullTextSearchSettings = {
+    prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>\n',
+    queryPattern: `
+        SERVICE wikibase:mwapi {
+            bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                wikibase:api "EntitySearch";
+                mwapi:search "\${text}";
+                mwapi:language "en";
+                mwapi:type "property".
+            ?inst wikibase:apiOutputItem mwapi:item.
+            ?num wikibase:apiOrdinal true.
+        }
+        BIND(IF(
+            STRLEN(STR(?inst)) > 33,
+            0-<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(STR(?inst), 33)),
+            -10000
+        ) as ?score)
+    `,
+};
+const WikidataEntityLookup: FullTextSearchSettings = {
+    prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>\n',
+    queryPattern: `
+        SERVICE wikibase:mwapi {
+            bd:serviceParam wikibase:endpoint "www.wikidata.org";
+                wikibase:api "EntitySearch";
+                mwapi:search "\${text}";
+                mwapi:language "en".
+            ?inst wikibase:apiOutputItem mwapi:item.
+            ?num wikibase:apiOrdinal true.
+        }
+        BIND(IF(
+            STRLEN(STR(?inst)) > 33,
+            0-<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(STR(?inst), 33)),
+            -10000
+        ) as ?score)
+    `,
 };
 
 const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
@@ -534,11 +659,39 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
         }
     `,
 
+    classLookupQuery: `
+        SELECT ?class ?label WHERE {
+            \${filterByText}
+            ?class (wdt:P31 / wdt:P31) wd:Q137429456 .
+            ?class \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
+    `,
+    classLookupSettings: WikidataEntityLookup,
+
+    propertyTypesLookupQuery: `
+        SELECT ?property ?label WHERE {
+            \${filterByText}
+            ?property \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
+    `,
+    propertyTypesLookupSettings: WikidataPropertyLookup,
+
     linkTypesQuery: '',
     linkTypesPattern: `
         ?link wdt:P279* wd:Q18616576.
         BIND(0 as ?instcount)
     `,
+    
+    linkTypesLookupQuery: `
+        SELECT ?link ?label WHERE {
+            \${filterByText}
+            ?link \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
+    `,
+    linkTypesLookupSettings: WikidataPropertyLookup,
 
     linkTypesInfoQuery:
 `SELECT ?link ?label WHERE {
@@ -629,24 +782,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
             \${labelLanguageFilter}
         }
     `,
-    fullTextSearch: {
-        prefix: 'PREFIX bds: <http://www.bigdata.com/rdf/search#>\n',
-        queryPattern: `
-            SERVICE wikibase:mwapi {
-                bd:serviceParam wikibase:endpoint "www.wikidata.org";
-                    wikibase:api "EntitySearch";
-                    mwapi:search "\${text}";
-                    mwapi:language "en".
-                ?inst wikibase:apiOutputItem mwapi:item.
-                ?num wikibase:apiOrdinal true.
-            }
-            BIND(IF(
-                STRLEN(STR(?inst)) > 33,
-                0-<http://www.w3.org/2001/XMLSchema#integer>(SUBSTR(STR(?inst), 33)),
-                -10000
-            ) as ?score)
-        `,
-    },
+    fullTextSearch: WikidataEntityLookup,
 };
 
 /**
@@ -671,17 +807,21 @@ const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
         `?inst \${dataLabelProperty} ?search1
         FILTER regex(COALESCE(str(?search1)), "\${text}", "i")
         BIND(if(bound(?search1), 0, 1) as ?score)
-`,
-        extractLabel: true,
+    `,
+    },
+    schemaTextSearch: {
+        prefix: '',
+        queryPattern:
+        `?inst \${schemaLabelProperty} ?search1
+        FILTER regex(COALESCE(str(?search1)), "\${text}", "i")
+        BIND(if(bound(?search1), 0, 1) as ?score)
+    `,
     },
     classTreeQuery: `
-        SELECT ?class ?label ?parent
-        WHERE {
-            {
-                ?class a rdfs:Class
-            } UNION {
-                ?class a owl:Class
-            }
+        SELECT ?class ?label ?parent WHERE {
+            { ?class a rdfs:Class }
+            UNION
+            { ?class a owl:Class }
             FILTER ISIRI(?class)
             OPTIONAL {
                 ?class rdfs:label ?label
@@ -690,13 +830,44 @@ const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
             OPTIONAL {?class rdfs:subClassOf ?parent. FILTER ISIRI(?parent)}
         }
     `,
-
-    // todo: think more, maybe add a limit here?
+    classLookupQuery: `
+        SELECT ?class ?label WHERE {
+            { ?class a rdfs:Class }
+            UNION
+            { ?class a owl:Class }
+            FILTER ISIRI(?class)
+            \${filterByText}
+            ?class \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
+    `,
+    propertyTypesLookupQuery: `
+        SELECT ?property ?label WHERE {
+            { ?property a rdf:Property }
+            UNION
+            { ?property a owl:DatatypeProperty }
+            FILTER NOT EXISTS { ?property a owl:ObjectProperty }
+            \${filterByText}
+            ?property \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
+    `,
     linkTypesPattern: `
         { ?link a rdf:Property }
         UNION
         { ?link a owl:ObjectProperty }
         BIND('' as ?instcount)
+    `,
+    linkTypesLookupQuery: `
+        SELECT ?link ?label WHERE {
+            { ?link a rdf:Property }
+            UNION
+            { ?link a owl:ObjectProperty }
+            FILTER NOT EXISTS { ?link a owl:DatatypeProperty }
+            \${filterByText}
+            ?link \${schemaLabelProperty} ?label.
+            \${labelLanguageFilter}
+        } ORDER BY ?score \${limit}
     `,
     elementInfoQuery: `
         CONSTRUCT {

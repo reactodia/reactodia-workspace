@@ -8,10 +8,13 @@
   border-radius: theme.$border-radius-s;
   margin: 0 0 2px 0;
   opacity: 1.0;
-  cursor: move;
 
   -webkit-user-select: none;
   user-select: none;
+
+  &[draggable] {
+    cursor: move;
+  }
 
   &--disabled {
     opacity: 0.4;
