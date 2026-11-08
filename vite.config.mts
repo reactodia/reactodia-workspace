@@ -11,6 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const EXAMPLES = [
     'basic',
     'classicWorkspace',
+    'components',
     'graphAuthoring',
     'i18n',
     'rdfExplorer',
@@ -128,6 +129,7 @@ export default defineConfig(({ command, mode }) => {
                         ? common.build.rolldownOptions.input
                         : undefined,
                     external: [
+                        '@floating-ui/react-dom',
                         '@reactodia/hashmap',
                         '@reactodia/worker-proxy',
                         '@reactodia/worker-proxy/protocol',

@@ -4,10 +4,24 @@ All notable changes to the Reactodia will be documented in this document.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+#### 🚀 New Features
+- Add AST-based lookup patterns to `DataProvider`:
+  * Support entity search with composable `LookupPattern` in `DataProvider.lookup()`;
+  * **[💥Breaking]** Only provide `inLinks` and `outLinks` for result items from `DataProvider.lookup()` when `withLinks: true` is specified and there is a top-level `connectedTo`-pattern with constant `fromValues` sub-pattern (i.e. including just passing `refElementId`);
+- Add extendable search UI to `InstancesSearch` and `SearchSectionEntities` based on lookup patterns:
+  * Add `SearchPattern`-derived types (separate from `LookupPattern`) to allow customizable search pattern display and editors;
+  * Add built-in search criteria options: `SearchCriterionAnd`, `SearchCriterionOr`, `SearchCriterionHasType`
+  `SearchCriterionConnectedTo`, `SearchCriterionFromValues`, `SearchCriterionHasProperty`;
+  * Add utility "building blocks" for custom search criteria: `SearchCriterionBlock`,
+  `SearchCriterionWhereGroup`, `SearchCriterionWhere`.
+
 #### 🐛 Fixed
 - Fix `SparqlDataProvider.connectedLinkStats()` error on a response with unbound counts (treat a missing count as 0).
 - Fix query syntax error in `SparqlDataProvider.lookup()` when a text search is combined with a type filter due to a missing ending `.` in the built-in `SparqlDataProviderSettings.filterTypePattern`.
 - Fix text search in `OwlRdfsSettings`/`OwlStatsSettings` being rejected by Virtuoso ("SQ200: index of column in order by out of range") due to `?score` being bound through an expression instead of a literal constant, which Virtuoso does not accept in `ORDER BY`.
+- Fix incorrect `limit` support in `SparqlDataProvider.lookup()` query if a connected element has more than one type (including transitive super-types) or it is connected by more than one link or direction:
+  * Projection variables `?link` and `?direction` are removed from `SparqlDataProviderSettings.lookupQuery`;
+  * Separate links query is issued instead of a complex single query to compute `inLinks` and `outLinks` for `DataProviderLookupItem`.
 
 #### ⏱ Performance
 - Optimize `SparqlDataProvider` queries to avoid catastrophic query plans on some endpoints (e.g. Virtuoso):
@@ -15,7 +29,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
   * Change link type statistics query for `OwlRdfsSettings`/`OwlStatsSettings` to count incoming and outgoing links via `UNION` with an outer `sum()` instead of joining two aggregate sub-queries to avoid being rejected by the Virtuoso cost estimator ("The estimated execution time ... exceeds the limit").
 
 #### 💅 Polish
+- Depend on `@floating-ui/react-dom` for better placed dropdown floating panels.
+- Improve element/link/property types processing in data providers:
+  * Add `lookupElementTypes()`, `lookupPropertyTypes()` and `lookupLinkTypes()` methods to `DataProvider` to allow to search for the corresponding types;
+  * Add `RdfDataProvider` options `propertyOrLinkBaseTypes` and `propertyTypeBaseTypes` (in addition to existing `linkTypeBaseTypes`) to distinguish between link and property types;
+  * Always compute counts for implicit element/link/property types in `RdfDataProvider`;
+  * Update `IndexedDbCachedProvider.DB_VERSION` to `5`.
+- Remove no entity type fallback to `owl:Thing` in `filterElementInfoPattern` for `OwlRdfsSettings` and `WikidataSettings`.
+- Clarify `useAsync()` behavior on `undefined` return value from `load` callback to keep the previous result.
 - Display a query error details (message) when possible below error status bar in the `InstancesSearch`.
+
+#### 🔧 Maintenance
+- Update dependencies: `n3` to `2.13.10`.
 
 ## [0.35.2] - 2026-08-08
 #### 🐛 Fixed
@@ -54,9 +79,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 #### ⏱ Performance
 - Fix canvas panning optimization not being applied due to incorrect `z-index` value.
 
-#### 🔧 Maintenance
-- Update dev-depencies: `vite` to v8, `typescript` to v6, other packages to lastest minor versions: `sass`, `vitest`, `playwright`, `@comunica/query-sparql-rdfjs-lite`, eslint-related.
-
 #### 💅 Polish
 - Improve `WorkspaceLayout*` item resize handing:
   * Enable size transition on expand/collapse `WorkspaceLayoutRow` items;
@@ -71,6 +93,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Allow to configure `SearchResults` utility component with `isItemDisabled` and `multiSelection` props:
   * Remove `singleSelectOnClick` mode from `SearchResults` as it mostly superseded by `multiSelection`.
 - Extend `ListElementView` utility component to accept any other additional HTML props.
+
+#### 🔧 Maintenance
+- Update dev-depencies: `vite` to v8, `typescript` to v6, other packages to lastest minor versions: `sass`, `vitest`, `playwright`, `@comunica/query-sparql-rdfjs-lite`, eslint-related.
 
 ## [0.34.1] - 2026-03-30
 #### 🐛 Fixed
@@ -744,7 +769,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Moved default type style and link customizations into opt-in `SemanticTypeStyles` and `OntologyLinkTemplates`.
 
 #### 🔧 Maintenance
-- Enabled full `strict` TypeScri[0.35.1]: https://github.com/reactodia/reactodia-workspace/compare/v0.35.0...v0.35.1pt compiler mode with null checks.
+- Enabled full `strict` TypeScript compiler mode with null checks.
 - Migrated from legacy React Context to the modern one (`React.createContext()`).
 - Use RDF/JS-compatible IRI and literal terms.
 - Removed blank nodes discovery support from `SparqlDataProvider` (might be reimplemented in the future).

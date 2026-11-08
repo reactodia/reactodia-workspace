@@ -17,10 +17,7 @@
     z-index: 2;
   }
 
-  .reactodia-btn + .reactodia-btn,
-  .reactodia-btn + .reactodia-btn-group,
-  .reactodia-btn-group + .reactodia-btn,
-  .reactodia-btn-group + .reactodia-btn-group {
+  :where(.reactodia-btn, .reactodia-btn-group) + :where(.reactodia-btn, .reactodia-btn-group) {
     margin-left: calc(-1 * theme.$button-border-width);
   }
 
@@ -37,6 +34,11 @@
   > .reactodia-btn:last-of-type {
     border-top-right-radius: theme.$button-border-radius;
     border-bottom-right-radius: theme.$button-border-radius;
+  }
+
+  &-s > .reactodia-btn {
+    padding: 2px 4px;
+    height: 25.6667px;
   }
 
   &-sm > .reactodia-btn {
