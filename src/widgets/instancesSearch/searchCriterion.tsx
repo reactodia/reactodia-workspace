@@ -2,7 +2,6 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { TranslatedText, useTranslation } from '../../coreUtils/i18n';
-import { LookupPattern } from '../../data/dataProvider';
 import { ElementIri } from '../../data/model';
 import { EntityElement } from '../../editor/dataElements';
 import { useProvidedEntities } from '../../editor/useProvidedEntities';
@@ -15,56 +14,32 @@ import { SchemaTypeView } from '../utility/schemaTypeView';
 import { EntitySelect } from './entitySelect';
 import { SchemaTypeSelect, LinkDirectionSelect, useSchemaType } from './schemaTypeSelect';
 import {
-    SearchPattern, SearchPatternType, SearchPatternState,
-    SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo, SearchPatternFromValues,
-    SearchPatternHasProperty, SearchPatternHasType,
+    SearchPattern, SearchPatternType, SearchPatternErrorItem, SerializedSearchPattern,
+    SearchPatternError, SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo,
+    SearchPatternFromValues, SearchPatternHasProperty, SearchPatternHasType,
 } from './searchPattern';
+import { LookupPattern } from '../../workspace';
 
-export interface SearchCriterionOption<out P extends SearchPatternType = SearchPatternType> {
-    readonly type: P;
+export interface SearchCriterionOption<out P extends SearchPattern = SearchPattern> {
+    readonly type: SearchPatternType<P>;
     readonly label?: string | TranslatedText;
-    readonly createState: () => SearchPatternState<P>;
+    readonly createPattern: () => P;
     readonly renderCriterion: (
         props: SearchCriterionProps<P>
     ) => React.ReactNode;
-    readonly generatePattern: (
-        state: SearchPatternState<P>,
-        target: SearchPattern,
-        context: SearchCriterionGenerateContext
-    ) => LookupPattern | SearchCriterionErrorPattern;
 }
 
-export interface SearchCriterionProps<in P extends SearchPatternType> {
-    pattern: SearchPattern<P>;
-    updatePattern: (state: SearchPattern<P> | undefined) => void;
-    replacePattern: (state: SearchPattern | undefined) => void;
+export interface SearchCriterionProps<in P extends SearchPattern> {
+    pattern: P;
+    setPattern: (state: SearchPattern | undefined) => void;
     editing: boolean;
     parent?: SearchPattern;
     controls?: React.ReactNode;
 }
 
-export interface SearchCriterionGenerateContext {
-    readonly generate: (
-        pattern: SearchPattern
-    ) => LookupPattern | SearchCriterionErrorPattern;
-    readonly generateMany: (
-        patterns: readonly SearchPattern[]
-    ) => LookupPattern[] | SearchCriterionErrorPattern;
-}
-
-export interface SearchCriterionErrorPattern {
-    readonly type: 'error';
-    readonly errors: readonly SearchCriterionError[];
-}
-
-export interface SearchCriterionError {
-    readonly target: SearchPattern;
-    readonly message: string | TranslatedText;
-}
-
 export interface SearchCriterionContext {
     readonly editing: boolean;
-    readonly errors: ReadonlyMap<SearchPattern, readonly SearchCriterionError[]>;
+    readonly errors: ReadonlyMap<SearchPattern, readonly SearchPatternErrorItem[]>;
     readonly patternOptions: readonly SearchCriterionOption[];
 }
 export const SearchCriterionContext = React.createContext<SearchCriterionContext>({
@@ -72,46 +47,6 @@ export const SearchCriterionContext = React.createContext<SearchCriterionContext
     errors: new Map(),
     patternOptions: [],
 });
-
-export function makePatternGenerator(
-    patternOptions: readonly SearchCriterionOption[]
-): SearchCriterionGenerateContext {
-    const generateSingle = (
-        pattern: SearchPattern
-    ): LookupPattern | SearchCriterionErrorPattern => {
-        const option = patternOptions.find(option => option.type === pattern.type);
-        if (!option) {
-            throw new Error(
-                `Found no option to generate lookup pattern for type: '${pattern.type}'`
-            );
-        }
-        return option.generatePattern(pattern.state, pattern, context);
-    };
-    const generateMany = (
-        patterns: readonly SearchPattern[]
-    ): LookupPattern[] | SearchCriterionErrorPattern => {
-        const results: LookupPattern[] = [];
-        const errors: SearchCriterionError[] = [];
-        let hasError = false;
-        for (const pattern of patterns) {
-            const result = generateSingle(pattern);
-            if (result.type === 'error') {
-                hasError = true;
-                for (const error of result.errors) {
-                    errors.push(error);
-                }
-            } else {
-                results.push(result);
-            }
-        }
-        return hasError ? {type: 'error', errors} : results;
-    };
-    const context: SearchCriterionGenerateContext = {
-        generate: generateSingle,
-        generateMany,
-    };
-    return context;
-}
 
 const CLASS_NAME = 'reactodia-search-criterion';
 
@@ -134,27 +69,25 @@ export function SearchCriterion(props: {
     }
     
     const isLogicalPattern = (
-        SearchPattern.hasType(pattern, SearchPatternAllOf) ||
-        SearchPattern.hasType(pattern, SearchPatternAnyOf)
+        pattern instanceof SearchPatternAllOf ||
+        pattern instanceof SearchPatternAnyOf
     );
     const controls = editing ? (
         <div className={`${CLASS_NAME}__controls reactodia-btn-group`}>
             {isLogicalPattern ? null : (
                 <AddCriterion
-                    onAdd={added =>  setPattern(SearchPattern.create(
-                        SearchPatternAllOf,
-                        {patterns: [pattern, added]}
-                    ))}
+                    onAdd={added => setPattern(new SearchPatternAllOf({
+                        patterns: [pattern, added],
+                    }))}
                     title={t.textOptional('search_entities.criteria_all_of_add.title')}>
                     {t.text('search_entities.criteria_all_of_add.label')}
                 </AddCriterion>
             )}
             {isLogicalPattern ? null : (
                 <AddCriterion
-                    onAdd={added => setPattern(SearchPattern.create(
-                        SearchPatternAnyOf,
-                        {patterns: [pattern, added]}
-                    ))}
+                    onAdd={added => setPattern(new SearchPatternAnyOf({
+                        patterns: [pattern, added]
+                    }))}
                     title={t.textOptional('search_entities.criteria_any_of_add.title')}>
                     {t.text('search_entities.criteria_any_of_add.label')}
                 </AddCriterion>
@@ -169,12 +102,11 @@ export function SearchCriterion(props: {
             />
         </div>
     ) : null;
-    const option = patternOptions.find(option => option.type === pattern.type)
+    const option = patternOptions.find(option => pattern instanceof option.type)
         ?? PlaceholderUnknownOption;
-    const optionProps: SearchCriterionProps<SearchPatternType<string, unknown>> = {
-        pattern: pattern as SearchPattern<SearchPatternType>,
-        updatePattern: setPattern,
-        replacePattern: setPattern,
+    const optionProps: SearchCriterionProps<SearchPattern> = {
+        pattern,
+        setPattern,
         editing,
         parent,
         controls,
@@ -200,13 +132,9 @@ export function AddCriterion(props: {
                 </AddCriterionButton>
             }>
             {patternOptions.map(option => option.label ? (
-                <DropdownMenuItem key={option.type}
+                <DropdownMenuItem key={option.type.fromJSONType}
                     onSelect={() => {
-                        const pattern = SearchPattern.create(
-                            option.type,
-                            option.createState()
-                        );
-                        onAdd(pattern);
+                        onAdd(option.createPattern());
                     }}>
                     {typeof option.label === 'string'
                         ? option.label
@@ -285,11 +213,9 @@ export function SearchCriterionWhereGroup(props: { children: React.ReactElement 
 
 export function SearchCriterionWhere(props: {
     part: string;
-    pattern: SearchPattern | undefined;
-    setPattern: (pattern: SearchPattern | undefined) => void;
-    parent: SearchPattern | undefined;
+    children: React.ReactNode;
 }) {
-    const {part, pattern, setPattern, parent} = props;
+    const {part, children} = props;
     const t = useTranslation();
     return (
         <>
@@ -299,10 +225,7 @@ export function SearchCriterionWhere(props: {
                 })}
             </dt>
             <dd>
-                <SearchCriterion pattern={pattern}
-                    setPattern={setPattern}
-                    parent={parent}
-                />
+                {children}
             </dd>
         </>
     );
@@ -331,17 +254,32 @@ function PlaceholderAnyCriterion(props: {
     );
 }
 
-const PlaceholderUnknownOption: SearchCriterionOption<SearchPatternType> = {
-    type: SearchPattern.type('urn:reactodia:unknownPattern').of<object>(),
-    createState: () => ({}),
-    renderCriterion: props => <PlaceholderUnknownCriterion {...props} />,
-    generatePattern: () => {
+class SearchPatternUnknown extends SearchPattern<Record<string, never>> {
+    generate(): LookupPattern | SearchPatternError {
         throw new Error('Unknown pattern type');
-    },
+    }
+
+    static readonly fromJSONType = 'unknown';
+
+    static fromJSON(): SearchPatternUnknown {
+        return new SearchPatternUnknown({});
+    }
+
+    toJSON(): SerializedSearchPattern {
+        return {'@type': 'unknown'};
+    }
+}
+
+SearchPattern.define(SearchPatternUnknown);
+
+const PlaceholderUnknownOption: SearchCriterionOption<SearchPatternUnknown> = {
+    type: SearchPatternUnknown,
+    createPattern: () => new SearchPatternUnknown({}),
+    renderCriterion: props => <PlaceholderUnknownCriterion {...props} />,
 };
 
 function PlaceholderUnknownCriterion(
-    props: SearchCriterionProps<typeof PlaceholderUnknownOption.type>
+    props: SearchCriterionProps<SearchPatternUnknown>
 ) {
     const {pattern, controls} = props;
     const t = useTranslation();
@@ -350,61 +288,29 @@ function PlaceholderUnknownCriterion(
             controls={controls}
             header={
                 <div>
-                    {t.text('search_entities.criteria_placeholder_unknown', {
-                        patternType: pattern.type,
-                    })}
+                    {t.text('search_entities.criteria_placeholder_unknown')}
                 </div>
             }
         />
     );
 }
 
-export const SearchCriterionAllOf: SearchCriterionOption<typeof SearchPatternAllOf> = {
+export const SearchCriterionAllOf: SearchCriterionOption<SearchPatternAllOf> = {
     type: SearchPatternAllOf,
-    createState: () => ({patterns: []}),
+    createPattern: () => new SearchPatternAllOf({patterns: []}),
     renderCriterion: props => <AnyAllOfCriterion {...props} />,
-    generatePattern: (state, target, context) => {
-        if (state.patterns.length === 0) {
-            return {
-                type: 'error',
-                errors: [{
-                    target,
-                    message: TranslatedText.text(
-                        'search_entities.error.required_at_least_one_pattern'
-                    ),
-                }],
-            };
-        }
-        const inner = context.generateMany(state.patterns);
-        return Array.isArray(inner) ? {type: 'allOf', patterns: inner} : inner;
-    },
 };
 
-export const SearchCriterionAnyOf: SearchCriterionOption<typeof SearchPatternAnyOf> = {
+export const SearchCriterionAnyOf: SearchCriterionOption<SearchPatternAnyOf> = {
     type: SearchPatternAnyOf,
-    createState: () => ({patterns: []}),
+    createPattern: () => new SearchPatternAnyOf({patterns: []}),
     renderCriterion: props => <AnyAllOfCriterion {...props} />,
-    generatePattern: (state, target, context) => {
-        if (state.patterns.length === 0) {
-            return {
-                type: 'error',
-                errors: [{
-                    target,
-                    message: TranslatedText.text(
-                        'search_entities.error.required_at_least_one_pattern'
-                    ),
-                }],
-            };
-        }
-        const inner = context.generateMany(state.patterns);
-        return Array.isArray(inner) ? {type: 'anyOf', patterns: inner} : inner;
-    },
 };
 
-function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPatternAllOf>(
+function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
     props: SearchCriterionProps<P>
 ) {
-    const {pattern, updatePattern, replacePattern, editing, parent} = props;
+    const {pattern, setPattern, editing, parent} = props;
     const t = useTranslation();
     const className = parent
         ? `${CLASS_NAME}__logical-group`
@@ -416,20 +322,26 @@ function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPa
                     {index > 0 ? (
                         <div className={`${CLASS_NAME}__logical-joiner`}>
                             {(
-                                pattern.type === SearchPatternAllOf ? t.text(
+                                pattern instanceof SearchPatternAllOf ? t.text(
                                     'search_entities.criteria_all_of_joiner'
-                                ) : pattern.type === SearchPatternAnyOf ? t.text(
+                                ) : pattern instanceof SearchPatternAnyOf ? t.text(
                                     'search_entities.criteria_any_of_joiner'
-                                ) : pattern.type
+                                ) : '-'
                             )}
                         </div>
                     ) : null}
-                    <SearchCriterion key={`${index}-${child.type}`}
+                    <SearchCriterion key={index}
                         pattern={child}
                         setPattern={next => {
                             const nextPatterns = [...pattern.state.patterns];
                             if (next) {
-                                if (SearchPattern.hasType(next, pattern.type)) {
+                                if ((
+                                    next instanceof SearchPatternAllOf &&
+                                    pattern instanceof SearchPatternAllOf
+                                ) || (
+                                    next instanceof SearchPatternAnyOf &&
+                                    pattern instanceof SearchPatternAnyOf
+                                )) {
                                     nextPatterns.splice(index, 1, ...next.state.patterns);
                                 } else {
                                     nextPatterns.splice(index, 1, next);
@@ -438,17 +350,16 @@ function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPa
                                 nextPatterns.splice(index, 1);
                             }
 
-                            replacePattern(
+                            setPattern(
                                 nextPatterns.length === 0 ? undefined :
                                 nextPatterns.length === 1 ? nextPatterns[0] :
-                                {
-                                    ...pattern,
-                                    state: {
-                                        patterns: nextPatterns,
-                                    } satisfies SearchPatternState<
-                                        typeof SearchPatternAllOf | typeof SearchCriterionAnyOf
-                                    >,
-                                }
+                                pattern instanceof SearchPatternAllOf ? new SearchPatternAllOf({
+                                    patterns: nextPatterns,
+                                }) :
+                                pattern instanceof SearchPatternAnyOf ? new SearchPatternAnyOf({
+                                    patterns: nextPatterns,
+                                }) :
+                                undefined
                             );
                         }}
                         parent={pattern}
@@ -457,25 +368,28 @@ function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPa
             ))}
             {editing && pattern.state.patterns.length === 0 ? (
                 <AddCriterion
-                    onAdd={added => updatePattern({
-                        ...pattern,
-                        state: {
-                            patterns: [added]
-                        } satisfies SearchPatternState<
-                            typeof SearchPatternAllOf | typeof SearchCriterionAnyOf
-                        > as SearchPatternState<P>,
-                    })}
+                    onAdd={added => {
+                        setPattern(
+                            pattern instanceof SearchPatternAllOf ? new SearchPatternAllOf({
+                                patterns: [added],
+                            }) :
+                            pattern instanceof SearchPatternAnyOf ? new SearchPatternAnyOf({
+                                patterns: [added],
+                            }) :
+                            undefined
+                        );
+                    }}
                     title={
-                        pattern.type === SearchPatternAllOf ? t.textOptional(
+                        pattern instanceof SearchPatternAllOf ? t.textOptional(
                             'search_entities.criteria_all_of_add.title'
-                        ) : pattern.type === SearchPatternAnyOf ? t.textOptional(
+                        ) : pattern instanceof SearchPatternAnyOf ? t.textOptional(
                             'search_entities.criteria_any_of_add.title'
                         ) : undefined
                     }>
                     {(
-                        pattern.type === SearchPatternAllOf ? t.text(
+                        pattern instanceof SearchPatternAllOf ? t.text(
                             'search_entities.criteria_all_of_add.label'
-                        ) : pattern.type === SearchPatternAnyOf ? t.text(
+                        ) : pattern instanceof SearchPatternAnyOf ? t.text(
                             'search_entities.criteria_any_of_add.label'
                         ) : t.text('search_entities.add_criterion.label')
                     )}
@@ -485,34 +399,17 @@ function AnyAllOfCriterion<P extends typeof SearchPatternAnyOf | typeof SearchPa
     );
 }
 
-export const SearchCriterionHasType: SearchCriterionOption<typeof SearchPatternHasType> = {
+export const SearchCriterionHasType: SearchCriterionOption<SearchPatternHasType> = {
     type: SearchPatternHasType,
     label: TranslatedText.text('search_entities.criteria_has_type.label'),
-    createState: () => ({elementType: ''}),
+    createPattern: () => new SearchPatternHasType({elementType: ''}),
     renderCriterion: props => <HasTypeCriterion {...props} />,
-    generatePattern: (state, target) => {
-        if (!state.elementType) {
-            return {
-                type: 'error',
-                errors: [{
-                    target,
-                    message: TranslatedText.text(
-                        'search_entities.error.required_element_type'
-                    ),
-                }],
-            };
-        }
-        return {
-            type: 'hasType',
-            elementType: state.elementType,
-        };
-    },
 };
 
 function HasTypeCriterion(
-    props: SearchCriterionProps<typeof SearchPatternHasType>
+    props: SearchCriterionProps<SearchPatternHasType>
 ) {
-    const {pattern, updatePattern, editing, controls} = props;
+    const {pattern, setPattern, editing, controls} = props;
     const t = useTranslation();
 
     const elementType = useSchemaType('elementType', pattern.state.elementType);
@@ -544,10 +441,10 @@ function HasTypeCriterion(
         where = (
             <SchemaTypeSelect typeKind='elementType'
                 selected={elementType}
-                setSelected={type => updatePattern({
-                    ...pattern,
-                    state: {...pattern.state, elementType: type ? type.id : ''},
-                })}
+                setSelected={type => setPattern(new SearchPatternHasType({
+                    ...pattern.state,
+                    elementType: type ? type.id : '',
+                }))}
             />
         );
     }
@@ -561,29 +458,17 @@ function HasTypeCriterion(
     );
 }
 
-export const SearchCriterionConnectedTo: SearchCriterionOption<typeof SearchPatternConnectedTo> = {
+export const SearchCriterionConnectedTo: SearchCriterionOption<SearchPatternConnectedTo> = {
     type: SearchPatternConnectedTo,
     label: TranslatedText.text('search_entities.criteria_connected.label'),
-    createState: () => ({}),
+    createPattern: () => new SearchPatternConnectedTo({}),
     renderCriterion: props => <ConnectedToCriterion {...props} />,
-    generatePattern: (state, _target, context) => {
-        const target = state.target ? context.generate(state.target) : undefined;
-        if (target?.type === 'error') {
-            return target;
-        }
-        return {
-            type: 'connectedTo',
-            linkType: state.linkType,
-            linkDirection: state.linkDirection,
-            target,
-        };
-    },
 };
 
 function ConnectedToCriterion(
-    props: SearchCriterionProps<typeof SearchPatternConnectedTo>
+    props: SearchCriterionProps<SearchPatternConnectedTo>
 ) {
-    const {pattern, updatePattern, editing, controls} = props;
+    const {pattern, setPattern, editing, controls} = props;
     const t = useTranslation();
 
     const {target, linkDirection} = pattern.state;
@@ -596,7 +481,7 @@ function ConnectedToCriterion(
 
     if (!editing) {
         let entity: React.ReactElement;
-        if (!target || SearchPattern.hasType(target, SearchPatternFromValues)) {
+        if (!target || target instanceof SearchPatternFromValues) {
             inlineEntity = true;
             entity = <FromValuesList values={target?.state.values ?? []} />;
         } else {
@@ -659,22 +544,16 @@ function ConnectedToCriterion(
             <div className={`${CLASS_NAME}__directed-link-selector`}>
                 <SchemaTypeSelect typeKind='linkType'
                     selected={linkType}
-                    setSelected={next => updatePattern({
-                        ...pattern,
-                        state: {
-                            ...pattern.state,
-                            linkType: next?.id,
-                        },
-                    })}
+                    setSelected={next => setPattern(new SearchPatternConnectedTo({
+                        ...pattern.state,
+                        linkType: next?.id,
+                    }))}
                 />
                 <LinkDirectionSelect selected={linkDirection}
-                    setSelected={next => updatePattern({
-                        ...pattern,
-                        state: {
-                            ...pattern.state,
-                            linkDirection: next,
-                        },
-                    })}
+                    setSelected={next => setPattern(new SearchPatternConnectedTo({
+                        ...pattern.state,
+                        linkDirection: next,
+                    }))}
                 />
             </div>
         );
@@ -688,35 +567,32 @@ function ConnectedToCriterion(
             {inlineEntity ? null : (
                 <SearchCriterionWhereGroup>
                     <SearchCriterionWhere
-                        part={t.text('search_entities.criteria_connected.target-part')}
-                        pattern={pattern.state.target}
-                        setPattern={target => updatePattern({
-                            ...pattern,
-                            state: {...pattern.state, target},
-                        })}
-                        parent={pattern}
-                    />
+                        part={t.text('search_entities.criteria_connected.target-part')}>
+                        <SearchCriterion pattern={pattern.state.target}
+                            setPattern={target => setPattern(new SearchPatternConnectedTo({
+                                ...pattern.state,
+                                target,
+                            }))}
+                            parent={pattern}
+                        />
+                    </SearchCriterionWhere>
                 </SearchCriterionWhereGroup>
             )}
         </SearchCriterionBlock>
     );
 }
 
-export const SearchCriterionFromValues: SearchCriterionOption<typeof SearchPatternFromValues> = {
+export const SearchCriterionFromValues: SearchCriterionOption<SearchPatternFromValues> = {
     type: SearchPatternFromValues,
     label: TranslatedText.text('search_entities.criteria_from_values.label'),
-    createState: () => ({values: []}),
+    createPattern: () => new SearchPatternFromValues({values: []}),
     renderCriterion: props => <FromValuesCriterion {...props} />,
-    generatePattern: state => ({
-        type: 'fromValues',
-        values: state.values,
-    }),
 };
 
 function FromValuesCriterion(
-    props: SearchCriterionProps<typeof SearchPatternFromValues>
+    props: SearchCriterionProps<SearchPatternFromValues>
 ) {
-    const {pattern, updatePattern, editing, controls} = props;
+    const {pattern, setPattern, editing, controls} = props;
     const t = useTranslation();
 
     let header: React.ReactNode;
@@ -731,7 +607,7 @@ function FromValuesCriterion(
         );
     } else {
         header = <div>{t.text('search_entities.criteria_from_values.header')}</div>;
-        where = <FromValuesSelector pattern={pattern} updatePattern={updatePattern} />;
+        where = <FromValuesSelector pattern={pattern} setPattern={setPattern} />;
     }
 
     return (
@@ -783,10 +659,10 @@ function FromValuesList(props: {
 }
 
 function FromValuesSelector(props: Pick<
-    SearchCriterionProps<typeof SearchPatternFromValues>,
-    'pattern' | 'updatePattern'
+    SearchCriterionProps<SearchPatternFromValues>,
+    'pattern' | 'setPattern'
 >) {
-    const {pattern, updatePattern} = props;
+    const {pattern, setPattern} = props;
     const {model} = useWorkspace();
     const providedEntities = useProvidedEntities(
         model.dataProvider,
@@ -803,46 +679,26 @@ function FromValuesSelector(props: Pick<
             selected={selected}
             setSelected={update => {
                 const nextValues = update(selected);
-                updatePattern({
-                    ...pattern,
-                    state: {
-                        values: nextValues.map(v => v.id),
-                    },
-                });
+                setPattern(new SearchPatternFromValues({
+                    ...pattern.state,
+                    values: nextValues.map(v => v.id),
+                }));
             }}
         />
     );
 }
 
-export const SearchCriterionHasProperty: SearchCriterionOption<typeof SearchPatternHasProperty> = {
+export const SearchCriterionHasProperty: SearchCriterionOption<SearchPatternHasProperty> = {
     type: SearchPatternHasProperty,
     label: TranslatedText.text('search_entities.criteria_has_property.label'),
-    createState: () => ({propertyType: ''}),
+    createPattern: () => new SearchPatternHasProperty({propertyType: ''}),
     renderCriterion: props => <HasPropertyCriterion {...props} />,
-    generatePattern: (state, target) => {
-        if (!state.propertyType) {
-            return {
-                type: 'error',
-                errors: [{
-                    target,
-                    message: TranslatedText.text(
-                        'search_entities.error.required_property_type'
-                    ),
-                }],
-            };
-        }
-        return {
-            type: 'hasProperty',
-            propertyType: state.propertyType,
-            values: state.values,
-        };
-    },
 };
 
 function HasPropertyCriterion(
-    props: SearchCriterionProps<typeof SearchPatternHasProperty>
+    props: SearchCriterionProps<SearchPatternHasProperty>
 ) {
-    const {pattern, updatePattern, editing, controls} = props;
+    const {pattern, setPattern, editing, controls} = props;
     const t = useTranslation();
 
     const propertyType = useSchemaType('propertyType', pattern.state.propertyType);
@@ -876,10 +732,10 @@ function HasPropertyCriterion(
             <SchemaTypeSelect typeKind='propertyType'
                 selected={propertyType}
                 setSelected={next => {
-                    updatePattern({
-                        ...pattern,
-                        state: {...pattern.state, propertyType: next?.id ?? ''},
-                    });
+                    setPattern(new SearchPatternHasProperty({
+                        ...pattern.state,
+                        propertyType: next?.id ?? '',
+                    }));
                 }}
             />
         );

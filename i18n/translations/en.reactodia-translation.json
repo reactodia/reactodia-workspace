@@ -221,7 +221,7 @@
     "criteria_connected_to_source": "Connected as {{sourceIcon}}\u00A0source by {{relationType}} to {{entity}}",
     "criteria_connected_to_target": "Connected as {{targetIcon}}\u00A0target by {{relationType}} from {{entity}}",
     "criteria_placeholder_any": "any entity",
-    "criteria_placeholder_unknown": "Unknown pattern type \"{patternType}\"",
+    "criteria_placeholder_unknown": "Unknown pattern type",
     "criteria_where_caption": "where\u00A0{{part}}:",
     "edit_criteria.label": "edit",
     "edit_criteria.title": "Edit search conditions",

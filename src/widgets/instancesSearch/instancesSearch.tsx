@@ -25,11 +25,11 @@ import { ProgressBar, ProgressState } from '../utility/progressBar';
 import { SearchInputStore, useSearchInputStore } from '../utility/searchInput';
 import { SearchResults } from '../utility/searchResults';
 
-import { InstanceCriteria } from './instanceCriteria';
+import { SearchCriteria, InstanceCriteria } from './instanceCriteria';
 import {
-    type SearchCriterionOption, DefaultSearchCriterionOptions, makePatternGenerator,
+    type SearchCriterionOption, DefaultSearchCriterionOptions,
 } from './searchCriterion';
-import { SearchCriteria } from './searchPattern';
+import { SearchPatternGenerateContext } from './searchPattern';
 
 /**
  * Props for {@link InstancesSearch} component.
@@ -389,10 +389,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 
     private queryItems(loadMoreItems: boolean) {
-        const {
-            criterionOptions = DefaultSearchCriterionOptions,
-            workspace: {model, triggerWorkspaceEvent},
-        } = this.props;
+        const {workspace: {model, triggerWorkspaceEvent}} = this.props;
 
         this.requestCancellation.abort();
 
@@ -407,7 +404,7 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 limit: typeof limit === 'number' ? (limit + ITEMS_PER_PAGE) : limit,
             };
         } else {
-            request = createRequest(this.state.criteria, criterionOptions);
+            request = createRequest(this.state.criteria);
         }
 
         if (!(
@@ -545,13 +542,10 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 }
 
-function createRequest(
-    criteria: SearchCriteria,
-    criteriaOptions: readonly SearchCriterionOption[]
-): DataProviderLookupParams {
+function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
     const {text, elementType, refElement, refElementLink, linkDirection, pattern} = criteria;
-    const generateContext = makePatternGenerator(criteriaOptions);
-    const generatedPattern = pattern ? generateContext.generate(pattern) : undefined;
+    const generateContext: SearchPatternGenerateContext = {};
+    const generatedPattern = pattern?.generate(generateContext);
     if (generatedPattern?.type === 'error') {
         throw new Error('Invalid generated search pattern');
     }

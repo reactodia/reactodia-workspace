@@ -4,13 +4,51 @@ import * as React from 'react';
 import { multimapArrayAdd } from '../../coreUtils/collections';
 import { useTranslation } from '../../coreUtils/i18n';
 
+import {
+    ElementIri, ElementTypeIri, LinkTypeIri, LinkDirection,
+} from '../../data/model';
+
 import { SearchInput, SearchInputStore } from '../utility/searchInput';
 
 import {
     SearchCriterion, SearchCriterionContext, SearchCriterionOption, AddCriterion,
-    SearchCriterionError, makePatternGenerator,
 } from './searchCriterion';
-import { SearchCriteria, SearchPattern, searchPatternFrom } from './searchPattern';
+import {
+    SearchPattern, SearchPatternErrorItem, SearchPatternAllOf, SearchPatternHasType,
+    SearchPatternConnectedTo, SearchPatternFromValues, SearchPatternGenerateContext,
+} from './searchPattern';
+
+/**
+ * A filter criteria for the entity lookup from a {@link DataProvider}.
+ *
+ * @see {@link DataProviderLookupParams}
+ */
+export interface SearchCriteria {
+    /**
+     * Filter by a text lookup.
+     */
+    readonly text?: string;
+    /**
+     * Filter by an element type.
+     */
+    readonly elementType?: ElementTypeIri;
+    /**
+     * Filter by having a connected element with specified IRI.
+     */
+    readonly refElement?: ElementIri;
+    /**
+     * Filter by connection link type.
+     */
+    readonly refElementLink?: LinkTypeIri;
+    /**
+     * Reference element link type direction ('in' | 'out').
+     */
+    readonly linkDirection?: LinkDirection;
+    /**
+     * Filter by a lookup pattern.
+     */
+    readonly pattern?: SearchPattern;
+}
 
 const CLASS_NAME = 'reactodia-instances-search';
 
@@ -27,7 +65,7 @@ export function InstanceCriteria(props: {
     const [pattern, setPattern] = React.useState(() => searchPatternFrom(criteria));
     const [editState, setEditState] = React.useState<{
         readonly original: SearchPattern | undefined;
-        readonly errors?: ReadonlyMap<SearchPattern, readonly SearchCriterionError[]>;
+        readonly errors?: ReadonlyMap<SearchPattern, readonly SearchPatternErrorItem[]>;
         readonly allowApply: boolean;
     }>();
 
@@ -47,10 +85,10 @@ export function InstanceCriteria(props: {
         if (pattern) {
             setPattern(pattern);
 
-            const generateContext = makePatternGenerator(criterionOptions);
-            const result = generateContext.generate(pattern);
+            const generateContext: SearchPatternGenerateContext = {};
+            const result = pattern.generate(generateContext);
             if (result.type === 'error') {
-                const errors = new Map<SearchPattern, SearchCriterionError[]>();
+                const errors = new Map<SearchPattern, SearchPatternErrorItem[]>();
                 for (const error of result.errors) {
                     multimapArrayAdd(errors, error.target, error);
                 }
@@ -161,5 +199,37 @@ export function InstanceCriteria(props: {
                 ) : null}
             </SearchCriterionContext.Provider>
         </div>
+    );
+}
+
+function searchPatternFrom(criteria: SearchCriteria): SearchPattern | undefined {
+    const {
+        elementType, refElement, refElementLink, linkDirection, pattern,
+    } = criteria;
+
+    const patterns: SearchPattern[] = [];
+
+    if (elementType) {
+        patterns.push(new SearchPatternHasType({elementType}));
+    }
+
+    if (refElement || refElementLink || linkDirection) {
+        patterns.push(new SearchPatternConnectedTo({
+            linkType: refElementLink,
+            linkDirection,
+            target: refElement
+                ? new SearchPatternFromValues({values: [refElement]})
+                : undefined,
+        }));
+    }
+
+    if (pattern) {
+        patterns.push(pattern);
+    }
+
+    return (
+        patterns.length === 0 ? undefined :
+        patterns.length === 1 ? patterns[0] :
+        new SearchPatternAllOf({patterns})
     );
 }

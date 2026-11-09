@@ -1,7 +1,6 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { delay } from '../../coreUtils/async';
 import { useObservedProperty } from '../../coreUtils/hooks';
 import { Translation, useTranslation } from '../../coreUtils/i18n';
 import { KeyedSyncStore, useKeyedSyncStore } from '../../coreUtils/keyedObserver';
@@ -44,10 +43,6 @@ export function SchemaTypeSelect<Kind extends keyof SchemaType>(
 
     const suggest = React.useCallback(async (text: string, options: { signal: AbortSignal }) => {
         const {signal} = options;
-        // await delay(2000);
-        // if (Math.random() > 0.5) {
-        //     throw new Error('Random error');
-        // }
         switch (typeKind) {
             case 'elementType': {
                 return dataProvider.lookupElementTypes({text, signal});
@@ -66,10 +61,6 @@ export function SchemaTypeSelect<Kind extends keyof SchemaType>(
             options: { signal: AbortSignal }
         ): Promise<readonly SchemaType[keyof SchemaType][]> => {
             const {signal} = options;
-            // await delay(2000);
-            // if (Math.random() > 0.5) {
-            //     throw new Error('Random error');
-            // }
             switch (typeKind) {
                 case 'elementType': {
                     const {elementTypes} = await dataProvider.knownElementTypes({signal});
