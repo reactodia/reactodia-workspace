@@ -27,9 +27,11 @@ import { SearchResults } from '../utility/searchResults';
 
 import { SearchCriteria, InstanceCriteria } from './instanceCriteria';
 import {
-    type SearchCriterionOption, DefaultSearchCriterionOptions,
+    type SearchCriteriaOption, SearchCriterionAllOf, SearchCriterionAnyOf,
+    SearchCriterionHasType, SearchCriterionConnectedTo, SearchCriterionFromValues,
+    SearchCriterionHasProperty,
 } from './searchCriterion';
-import { SearchPatternGenerateContext } from './searchPattern';
+import { SearchPatternGenerateContext, SearchPatternType } from './searchPattern';
 
 /**
  * Props for {@link InstancesSearch} component.
@@ -63,8 +65,34 @@ export interface InstancesSearchProps {
      * @default 3
      */
     minSearchTermLength?: number;
-    
-    criterionOptions?: readonly SearchCriterionOption[];
+    /**
+     * Supported search criteria options to display and edit corresponding
+     * {@link SearchPattern search patterns}.
+     *
+     * Built-in criteria options are always included to display or edit their
+     * {@link SearchCriteriaOption.type pattern types}, however these options
+     * can be overriden by including options for these pattern types instead.
+     *
+     * **Built-in criteria options**:
+     *  - {@link SearchCriterionAllOf}
+     *  - {@link SearchCriterionAnyOf}
+     *  - {@link SearchCriterionHasType}
+     *  - {@link SearchCriterionConnectedTo}
+     *  - {@link SearchCriterionFromValues}
+     *  - {@link SearchCriterionHasProperty}
+     */
+    criteriaOptions?: readonly SearchCriteriaOption[];
+    /**
+     * The order in which to display the built-in and extra search criteria options
+     * when adding a new search pattern from the UI.
+     *
+     * If specified, only options with corresponding types will be available
+     * for creation from the menu.
+     *
+     * **Default** order is built-in options then additional ones provided
+     * with {@link creatableOptions}.
+     */
+    addCriteriaOrder?: readonly SearchPatternType[];
     /**
      * Handler for the search criteria changes.
      */
@@ -105,6 +133,15 @@ export interface InstancesSearchCommands {
     };
 }
 
+const BuiltInCriterionOptions: readonly SearchCriteriaOption[] = [
+    SearchCriterionAllOf,
+    SearchCriterionAnyOf,
+    SearchCriterionHasType,
+    SearchCriterionConnectedTo,
+    SearchCriterionFromValues,
+    SearchCriterionHasProperty,
+];
+
 /**
  * Component to search for entities by various filter criteria
  * to add them as elements to the diagram.
@@ -116,6 +153,8 @@ export function InstancesSearch(props: InstancesSearchProps) {
         searchStore,
         searchTimeout = 'explicit',
         minSearchTermLength = 3,
+        criteriaOptions,
+        addCriteriaOrder,
     } = props;
     const uncontrolledSearch = useSearchInputStore({
         initialValue: '',
@@ -125,11 +164,32 @@ export function InstancesSearch(props: InstancesSearchProps) {
     const effectiveSearchStore = searchStore ?? uncontrolledSearch;
     const workspace = useWorkspace();
     const t = useTranslation();
+
+    const [allCriterions, creatableCriterions] = React.useMemo(() => {
+        const all = new Map<SearchPatternType, SearchCriteriaOption>();
+        for (const option of BuiltInCriterionOptions) {
+            all.set(option.type, option);
+        }
+        if (criteriaOptions) {
+            for (const option of criteriaOptions) {
+                all.set(option.type, option);
+            }
+        }
+        const allValues = Array.from(all.values());
+        const creatable = addCriteriaOrder
+            ? addCriteriaOrder.map(type => all.get(type))
+                .filter((option): option is SearchCriteriaOption => Boolean(option))
+            : allValues;
+        return [allValues, creatable];
+    }, [criteriaOptions, addCriteriaOrder]);
+
     return (
         <InstancesSearchInner {...props}
             isControlled={Boolean(searchStore)}
             searchStore={effectiveSearchStore}
             minSearchTermLength={minSearchTermLength}
+            allCriterions={allCriterions}
+            creatableCriterions={creatableCriterions}
             workspace={workspace}
             translation={t}
         />
@@ -140,6 +200,8 @@ interface InstancesSearchInnerProps extends InstancesSearchProps {
     isControlled: boolean;
     searchStore: SearchInputStore;
     minSearchTermLength: number;
+    allCriterions: readonly SearchCriteriaOption[];
+    creatableCriterions: readonly SearchCriteriaOption[];
     workspace: WorkspaceContext;
     translation: Translation;
 }
@@ -283,8 +345,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
 
     render() {
         const {
-            className, isControlled, searchStore, minSearchTermLength,
-            criterionOptions = DefaultSearchCriterionOptions,
+            className, isControlled, searchStore, minSearchTermLength, allCriterions,
+            creatableCriterions,
             translation: t,
         } = this.props;
 
@@ -311,7 +373,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                     () => this.props.onChangeCriteria?.(this.state.criteria)
                 )}
                 searchStore={isControlled ? undefined : searchStore}
-                criterionOptions={criterionOptions}
+                allCriterions={allCriterions}
+                creatableCriterions={creatableCriterions}
             />
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}

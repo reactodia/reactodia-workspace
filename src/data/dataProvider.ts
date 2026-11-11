@@ -300,48 +300,48 @@ export interface DataProviderLookupParams {
 }
 
 export type LookupPattern =
-    | AllOfLookupPattern
-    | AnyOfLookupPattern
-    | WithTextLookupPattern
-    | HasTypeLookupPattern
-    | ConnectedToLookupPattern
-    | FromValuesLookupPattern
-    | HasPropertyLookupPattern;
+    | LookupPatternAllOf
+    | LookupPatternAnyOf
+    | LookupPatternWithText
+    | LookupPatternHasType
+    | LookupPatternConnectedTo
+    | LookupPatternFromValues
+    | LookupPatternHasProperty;
 
-export interface AllOfLookupPattern {
+export interface LookupPatternAllOf {
     readonly type: 'allOf';
     readonly patterns: readonly LookupPattern[];
 }
 
-export interface AnyOfLookupPattern {
+export interface LookupPatternAnyOf {
     readonly type: 'anyOf';
     readonly patterns: readonly LookupPattern[];
 }
 
-export interface HasTypeLookupPattern {
+export interface LookupPatternHasType {
     readonly type: 'hasType';
     readonly elementType: ElementTypeIri;
 }
 
-export interface ConnectedToLookupPattern {
+export interface LookupPatternConnectedTo {
     readonly type: 'connectedTo';
     readonly linkType?: LinkTypeIri;
     readonly linkDirection?: 'in' | 'out';
     readonly target?: LookupPattern;
 }
 
-export interface FromValuesLookupPattern {
+export interface LookupPatternFromValues {
     readonly type: 'fromValues';
     readonly values: readonly ElementIri[];
 }
 
-export interface HasPropertyLookupPattern {
+export interface LookupPatternHasProperty {
     readonly type: 'hasProperty';
     readonly propertyType: PropertyTypeIri;
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
 }
 
-export interface WithTextLookupPattern {
+export interface LookupPatternWithText {
     readonly type: 'withText';
     readonly text: string;
 }

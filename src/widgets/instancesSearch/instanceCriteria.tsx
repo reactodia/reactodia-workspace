@@ -11,11 +11,12 @@ import {
 import { SearchInput, SearchInputStore } from '../utility/searchInput';
 
 import {
-    SearchCriterion, SearchCriterionContext, SearchCriterionOption, AddCriterion,
+    SearchCriterion, SearchCriterionContext, SearchCriteriaOption, AddCriterion,
 } from './searchCriterion';
 import {
-    SearchPattern, SearchPatternErrorItem, SearchPatternAllOf, SearchPatternHasType,
-    SearchPatternConnectedTo, SearchPatternFromValues, SearchPatternGenerateContext,
+    SearchPattern, SearchPatternType, SearchPatternErrorItem,
+    SearchPatternAllOf, SearchPatternHasType, SearchPatternConnectedTo,
+    SearchPatternFromValues, SearchPatternGenerateContext,
 } from './searchPattern';
 
 /**
@@ -56,9 +57,10 @@ export function InstanceCriteria(props: {
     criteria: SearchCriteria;
     setCriteria: (criteria: SearchCriteria) => void;
     searchStore: SearchInputStore | undefined;
-    criterionOptions: readonly SearchCriterionOption[];
+    allCriterions: readonly SearchCriteriaOption[];
+    creatableCriterions: readonly SearchCriteriaOption[];
 }) {
-    const {criteria, setCriteria, searchStore, criterionOptions} = props;
+    const {criteria, setCriteria, searchStore, allCriterions, creatableCriterions} = props;
     const t = useTranslation();
 
     const [outerCriteria, setOuterCriteria] = React.useState(criteria);
@@ -71,9 +73,10 @@ export function InstanceCriteria(props: {
 
     const context = React.useMemo((): SearchCriterionContext => ({
         editing: editState !== undefined,
-        patternOptions: criterionOptions,
         errors: editState?.errors ?? new Map(),
-    }), [editState, criterionOptions]);
+        allOptions: allCriterions,
+        creatableOptions: creatableCriterions,
+    }), [editState, allCriterions, creatableCriterions]);
 
     if (outerCriteria !== criteria) {
         setOuterCriteria(criteria);

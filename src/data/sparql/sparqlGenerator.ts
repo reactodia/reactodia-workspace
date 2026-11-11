@@ -6,8 +6,8 @@ import * as Rdf from '../rdf/rdfModel';
 
 import { LinkTypeIri, PropertyTypeIri } from '../model';
 import {
-    DataProviderLookupParams, LookupPattern, HasTypeLookupPattern, ConnectedToLookupPattern,
-    HasPropertyLookupPattern, WithTextLookupPattern, lookupPatternOf,
+    DataProviderLookupParams, LookupPattern, LookupPatternHasType, LookupPatternConnectedTo,
+    LookupPatternHasProperty, LookupPatternWithText, lookupPatternOf,
 } from '../dataProvider';
 
 import {
@@ -211,12 +211,12 @@ export class SparqlGenerator {
         if (supportFilterByPattern) {
             filterByPattern = this.generatePattern(pattern, generateParams);
         } else {
-            const hasType = findPattern<HasTypeLookupPattern>(pattern, p => p.type === 'hasType');
+            const hasType = findPattern<LookupPatternHasType>(pattern, p => p.type === 'hasType');
             if (hasType) {
                 filterByType = this.generatePattern(hasType, generateParams);
             }
 
-            const connectedTo = findPattern<ConnectedToLookupPattern>(
+            const connectedTo = findPattern<LookupPatternConnectedTo>(
                 pattern,
                 p => p.type === 'connectedTo'
             );
@@ -224,7 +224,7 @@ export class SparqlGenerator {
                 filterByRefElementLink = this.generatePattern(connectedTo, generateParams);
             }
 
-            const withText = findPattern<WithTextLookupPattern>(pattern, p => p.type === 'withText');
+            const withText = findPattern<LookupPatternWithText>(pattern, p => p.type === 'withText');
             if (withText) {
                 filterByText = this.generatePattern(withText, generateParams);
             }
@@ -427,7 +427,7 @@ export class SparqlGenerator {
     }
 
     private generateConnectedToPattern(
-        pattern: ConnectedToLookupPattern,
+        pattern: LookupPatternConnectedTo,
         params: {
             sourceTerm: Rdf.Variable;
             targetTerm: Rdf.Variable | Rdf.NamedNode;
@@ -576,7 +576,7 @@ export class SparqlGenerator {
     }
 
     private generateHasPropertyPattern(
-        pattern: HasPropertyLookupPattern,
+        pattern: LookupPatternHasProperty,
         params: {
             entityTerm: Rdf.Variable;
             valueTerm: Rdf.Variable;
@@ -670,7 +670,7 @@ export class SparqlGenerator {
     }
 
     private generateWithTextPattern(
-        pattern: WithTextLookupPattern,
+        pattern: LookupPatternWithText,
         params: {
             entityTerm: Rdf.Variable;
             labelTerm: Rdf.Variable;

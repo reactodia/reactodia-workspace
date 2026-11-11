@@ -7,6 +7,11 @@ import type * as Rdf from '../../data/rdf/rdfModel';
  * Abstract search pattern type for search criteria in
  * {@link SearchSectionEntities} and {@link InstancesSearch}.
  *
+ * Compared to {@link LookupPattern}, a search pattern represents
+ * displayed or edited state for a {@link SearchCriterionOption}.
+ * This state can be converted into {@link LookupPattern} with
+ * validation, serialized to/deserialized from a plain JSON value.
+ *
  * **Example**:
  * ```ts
  * class FromNamedSet extends SearchPattern<{
@@ -195,6 +200,11 @@ export interface SerializedSearchPattern {
     '@type': string;
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternAllOf}.
+ *
+ * @see {@link SearchCriterionAllOf}
+ */
 export class SearchPatternAllOf extends SearchPattern<{
     readonly patterns: readonly SearchPattern[];
 }> {
@@ -217,7 +227,7 @@ export class SearchPatternAllOf extends SearchPattern<{
         return Array.isArray(inner) ? {type: 'allOf', patterns: inner} : inner;
     }
 
-    static readonly fromJSONType = 'allOf';
+    static readonly fromJSONType = 'AllOf';
 
     static fromJSON(
         raw: SerializedAllOf,
@@ -232,7 +242,7 @@ export class SearchPatternAllOf extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedAllOf {
         const {patterns} = this.state;
         return {
-            '@type': 'allOf',
+            '@type': 'AllOf',
             patterns: patterns.map(p => context.toJson(p)),
         };
     }
@@ -241,10 +251,15 @@ export class SearchPatternAllOf extends SearchPattern<{
 SearchPattern.define(SearchPatternAllOf);
 
 interface SerializedAllOf {
-    '@type': 'allOf';
+    '@type': 'AllOf';
     patterns: SerializedSearchPattern[];
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternAnyOf}.
+ *
+ * @see {@link SearchCriterionAnyOf}
+ */
 export class SearchPatternAnyOf extends SearchPattern<{
     readonly patterns: readonly SearchPattern[];
 }> {
@@ -267,7 +282,7 @@ export class SearchPatternAnyOf extends SearchPattern<{
         return Array.isArray(inner) ? {type: 'anyOf', patterns: inner} : inner;
     }
 
-    static readonly fromJSONType = 'anyOf';
+    static readonly fromJSONType = 'AnyOf';
 
     static fromJSON(
         raw: SerializedAnyOf,
@@ -282,7 +297,7 @@ export class SearchPatternAnyOf extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedAnyOf {
         const {patterns} = this.state;
         return {
-            '@type': 'anyOf',
+            '@type': 'AnyOf',
             patterns: patterns.map(p => context.toJson(p)),
         };
     }
@@ -291,10 +306,15 @@ export class SearchPatternAnyOf extends SearchPattern<{
 SearchPattern.define(SearchPatternAnyOf);
 
 interface SerializedAnyOf {
-    '@type': 'anyOf';
+    '@type': 'AnyOf';
     patterns: SerializedSearchPattern[];
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternHasType}.
+ *
+ * @see {@link SearchCriterionHasType}
+ */
 export class SearchPatternHasType extends SearchPattern<{
     readonly elementType?: ElementTypeIri;
 }> {
@@ -319,7 +339,7 @@ export class SearchPatternHasType extends SearchPattern<{
         };
     }
 
-    static readonly fromJSONType = 'hasType';
+    static readonly fromJSONType = 'HasType';
 
     static fromJSON(raw: SerializedHasType): SearchPatternHasType {
         const {elementType} = raw;
@@ -329,7 +349,7 @@ export class SearchPatternHasType extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedHasType {
         const {elementType} = this.state;
         return {
-            '@type': 'hasType',
+            '@type': 'HasType',
             elementType,
         };
     }
@@ -338,10 +358,15 @@ export class SearchPatternHasType extends SearchPattern<{
 SearchPattern.define(SearchPatternHasType);
 
 interface SerializedHasType {
-    '@type': 'hasType';
+    '@type': 'HasType';
     elementType?: ElementTypeIri;
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternConnectedTo}.
+ *
+ * @see {@link SearchCriterionConnectedTo}
+ */
 export class SearchPatternConnectedTo extends SearchPattern<{
     readonly linkType?: LinkTypeIri;
     readonly linkDirection?: 'in' | 'out';
@@ -363,7 +388,7 @@ export class SearchPatternConnectedTo extends SearchPattern<{
         };
     }
 
-    static readonly fromJSONType = 'connectedTo';
+    static readonly fromJSONType = 'ConnectedTo';
 
     static fromJSON(
         raw: SerializedConnectedTo,
@@ -380,7 +405,7 @@ export class SearchPatternConnectedTo extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedConnectedTo {
         const {linkType, linkDirection, target} = this.state;
         return {
-            '@type': 'connectedTo',
+            '@type': 'ConnectedTo',
             linkType,
             linkDirection,
             target: target ? context.toJson(target) : undefined,
@@ -391,12 +416,17 @@ export class SearchPatternConnectedTo extends SearchPattern<{
 SearchPattern.define(SearchPatternConnectedTo);
 
 interface SerializedConnectedTo {
-    '@type': 'connectedTo';
+    '@type': 'ConnectedTo';
     linkType?: LinkTypeIri;
     linkDirection?: 'in' | 'out';
     target?: SerializedSearchPattern;
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternFromValues}.
+ *
+ * @see {@link SearchCriterionFromValues}
+ */
 export class SearchPatternFromValues extends SearchPattern<{
     readonly values: readonly ElementIri[];
 }> {
@@ -410,7 +440,7 @@ export class SearchPatternFromValues extends SearchPattern<{
         };
     }
 
-    static readonly fromJSONType = 'fromValues';
+    static readonly fromJSONType = 'FromValues';
 
     static fromJSON(raw: SerializedFromValues): SearchPatternFromValues {
         const {values} = raw;
@@ -420,7 +450,7 @@ export class SearchPatternFromValues extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedFromValues {
         const {values} = this.state;
         return {
-            '@type': 'fromValues',
+            '@type': 'FromValues',
             values,
         };
     }
@@ -429,10 +459,15 @@ export class SearchPatternFromValues extends SearchPattern<{
 SearchPattern.define(SearchPatternFromValues);
 
 interface SerializedFromValues {
-    '@type': 'fromValues';
+    '@type': 'FromValues';
     values: readonly ElementIri[];
 }
 
+/**
+ * Search pattern corresponding to {@link LookupPatternHasProperty}.
+ *
+ * @see {@link SearchCriterionHasProperty}
+ */
 export class SearchPatternHasProperty extends SearchPattern<{
     readonly propertyType?: PropertyTypeIri;
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
@@ -459,7 +494,7 @@ export class SearchPatternHasProperty extends SearchPattern<{
         };
     }
 
-    static readonly fromJSONType = 'hasProperty';
+    static readonly fromJSONType = 'HasProperty';
 
     static fromJSON(
         raw: SerializedHasProperty,
@@ -478,7 +513,7 @@ export class SearchPatternHasProperty extends SearchPattern<{
     toJSON(context: SearchPatternToJsonContext): SerializedHasProperty {
         const {propertyType, values} = this.state;
         return {
-            '@type': 'hasProperty',
+            '@type': 'HasProperty',
             propertyType,
             values,
         };
@@ -488,7 +523,7 @@ export class SearchPatternHasProperty extends SearchPattern<{
 SearchPattern.define(SearchPatternHasProperty);
 
 interface SerializedHasProperty {
-    '@type': 'hasProperty';
+    '@type': 'HasProperty';
     propertyType?: PropertyTypeIri;
     values?: readonly (
         | Pick<Rdf.NamedNode, 'termType' | 'value'>
