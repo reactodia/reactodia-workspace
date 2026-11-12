@@ -43,14 +43,14 @@ export interface SearchCriteriaOption<out P extends SearchPattern = SearchPatter
      * Renders the search patten in display or edit mode.
      */
     readonly renderCriterion: (
-        props: SearchCriterionProps<P>
+        props: SearchCriteriaRenderProps<P>
     ) => React.ReactNode;
 }
 
 /**
  * Props for rendering a component from {@link SearchCriteriaOption.renderCriterion}.
  */
-export interface SearchCriterionProps<in P extends SearchPattern> {
+export interface SearchCriteriaRenderProps<in P extends SearchPattern> {
     /**
      * Displayed or edited search pattern.
      */
@@ -164,7 +164,7 @@ export function SearchCriterion(props: {
     ) : null;
     const option = allOptions.find(option => pattern instanceof option.type)
         ?? PlaceholderUnknownOption;
-    const optionProps: SearchCriterionProps<SearchPattern> = {
+    const optionProps: SearchCriteriaRenderProps<SearchPattern> = {
         pattern,
         setPattern,
         inEditMode: editing,
@@ -382,7 +382,7 @@ const PlaceholderUnknownOption: SearchCriteriaOption<SearchPatternUnknown> = {
 };
 
 function PlaceholderUnknownCriterion(
-    props: SearchCriterionProps<SearchPatternUnknown>
+    props: SearchCriteriaRenderProps<SearchPatternUnknown>
 ) {
     const {pattern, controls} = props;
     const t = useTranslation();
@@ -417,7 +417,7 @@ export const SearchCriterionAnyOf: SearchCriteriaOption<SearchPatternAnyOf> = {
 };
 
 function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
-    props: SearchCriterionProps<P>
+    props: SearchCriteriaRenderProps<P>
 ) {
     const {pattern, setPattern, inEditMode, parent} = props;
     const t = useTranslation();
@@ -519,7 +519,7 @@ export const SearchCriterionHasType: SearchCriteriaOption<SearchPatternHasType> 
 };
 
 function HasTypeCriterion(
-    props: SearchCriterionProps<SearchPatternHasType>
+    props: SearchCriteriaRenderProps<SearchPatternHasType>
 ) {
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
@@ -581,7 +581,7 @@ export const SearchCriterionConnectedTo: SearchCriteriaOption<SearchPatternConne
 };
 
 function ConnectedToCriterion(
-    props: SearchCriterionProps<SearchPatternConnectedTo>
+    props: SearchCriteriaRenderProps<SearchPatternConnectedTo>
 ) {
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
@@ -708,7 +708,7 @@ export const SearchCriterionFromValues: SearchCriteriaOption<SearchPatternFromVa
 };
 
 function FromValuesCriterion(
-    props: SearchCriterionProps<SearchPatternFromValues>
+    props: SearchCriteriaRenderProps<SearchPatternFromValues>
 ) {
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
@@ -777,7 +777,7 @@ function FromValuesList(props: {
 }
 
 function FromValuesSelector(props: Pick<
-    SearchCriterionProps<SearchPatternFromValues>,
+    SearchCriteriaRenderProps<SearchPatternFromValues>,
     'pattern' | 'setPattern'
 >) {
     const {pattern, setPattern} = props;
@@ -817,7 +817,7 @@ export const SearchCriterionHasProperty: SearchCriteriaOption<SearchPatternHasPr
 };
 
 function HasPropertyCriterion(
-    props: SearchCriterionProps<SearchPatternHasProperty>
+    props: SearchCriteriaRenderProps<SearchPatternHasProperty>
 ) {
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();

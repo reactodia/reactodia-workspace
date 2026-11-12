@@ -198,15 +198,16 @@ export interface DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]>;
 
+    /**
+     * TODO
+     */
     supportsPattern(pattern: LookupPattern): DataProviderPatternSupport;
 
     /**
-     * Looks up elements with different filters:
-     *  - by an element type via `elementTypeId`;
-     *  - by a connected element via `refElementId`, `refElementLinkId` and `linkDirection`;
-     *  - by a text lookup via `text`;
+     * Finds entities in a data graph by specified lookup filters.
      *
-     * Filters can be combined to produce an intersection of the results.
+     * Support and validity for the provided lookup pattern can be checked
+     * with {@link DataProvider.supportsPattern}.
      */
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]>;
 }
@@ -246,36 +247,51 @@ export interface DataProviderPatternSupport {
 /**
  * Parameters for {@link DataProvider.lookup} operation.
  *
+ * Specified filters are be combined to produce an intersection of the results,
+ * same as nesting them in a {@link LookupPatternAllOf} pattern.
+ *
+ * All lookup filters can be combined into a single pattern
+ * with {@link lookupPatternOf}.
+ *
  * @category Data
  * @see {@link DataProvider.lookup}
  */
 export interface DataProviderLookupParams {
     /**
      * Filter by an element type.
+     *
+     * Same as {@link LookupPatternHasType}.
      */
     elementTypeId?: ElementTypeIri;
     
     /**
      * Filter by a text lookup.
+     *
+     * Same as {@link LookupPatternWithText}.
      */
     text?: string;
 
     /**
      * Filter by having a connected element with specified IRI.
+     *
+     * Same as {@link LookupPatternConnectedTo} (together with
+     * {@link refElementLinkId} and {@link linkDirection}).
      */
     refElementId?: ElementIri;
 
     /**
      * Filter by connection link type.
      *
-     * Only applicable when `refElementId` is set.
+     * Same as {@link LookupPatternConnectedTo} (together with
+     * {@link refElementId} and {@link linkDirection}).
      */
     refElementLinkId?: LinkTypeIri;
 
     /**
      * Reference element link type direction ('in' | 'out').
-     * 
-     * Only when `refElementLinkId` is set.
+     *
+     * Same as {@link LookupPatternConnectedTo} (together with
+     * {@link refElementId} and {@link refElementLinkId}).
      */
     linkDirection?: 'in' | 'out';
 
@@ -299,6 +315,11 @@ export interface DataProviderLookupParams {
     signal?: AbortSignal;
 }
 
+/**
+ * Describes a lookup pattern to find entities in a data graph.
+ *
+ * @see {@link DataProvider.lookup}
+ */
 export type LookupPattern =
     | LookupPatternAllOf
     | LookupPatternAnyOf
@@ -308,41 +329,149 @@ export type LookupPattern =
     | LookupPatternFromValues
     | LookupPatternHasProperty;
 
+/**
+ * Lookup pattern that filters entities by requiring all of the nested
+ * {@link patterns} to match.
+ */
 export interface LookupPatternAllOf {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'allOf';
+    /**
+     * Patterns list, all of which matching are required for this pattern to match.
+     *
+     * Empty list is considered to be an invalid pattern.
+     */
     readonly patterns: readonly LookupPattern[];
 }
 
+/**
+ * Lookup pattern that filters entities by requiring any of the nested
+ * {@link patterns} to match.
+ */
 export interface LookupPatternAnyOf {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'anyOf';
+    /**
+     * Patterns list, any of which matching is enough for this pattern to match.
+     *
+     * Empty list is considered to be an invalid pattern.
+     */
     readonly patterns: readonly LookupPattern[];
 }
 
+/**
+ * Lookup pattern that filters entities by an element type.
+ */
 export interface LookupPatternHasType {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'hasType';
+    /**
+     * Required element type for an entity.
+     */
     readonly elementType: ElementTypeIri;
 }
 
+/**
+ * Lookup pattern that filters entities by having another connected entity
+ * matching a {@link target} pattern by any or specific {@link linkType link type}
+ * and {@link linkDirection direction}.
+ *
+ * If provided as a top-level pattern (including as part of {@link LookupPatternAllOf}
+ * or {@link LookupPatternAnyOf}), provides {@link DataProviderLookupItem.inLinks} and
+ * {@link DataProviderLookupItem.outLinks} on the result items.
+ */
 export interface LookupPatternConnectedTo {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'connectedTo';
+    /**
+     * Required link type between {@link target} and the entity.
+     *
+     * If not specified, any link type is allowed.
+     */
     readonly linkType?: LinkTypeIri;
+    /**
+     * Required link direction between {@link target} and the entity:
+     *  - `out`: `target` → entity
+     *  - `in`: `target` ← entity
+     *
+     * If not specified, both directions are allowed.
+     */
     readonly linkDirection?: 'in' | 'out';
+    /**
+     * Required link pattern to match connected entities.
+     *
+     * If not specified, any connected entity is allowed.
+     */
     readonly target?: LookupPattern;
 }
 
+/**
+ * Lookup pattern that filters entities being in the fixed set of
+ * the matching {@link values}.
+ */
 export interface LookupPatternFromValues {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'fromValues';
+    /**
+     * Set of allowed entity IRIs.
+     *
+     * If empty, the pattern should never match.
+     */
     readonly values: readonly ElementIri[];
 }
 
+/**
+ * Lookup pattern that filters entities by having a property value
+ * with specified {@link propertyType property type}.
+ *
+ * The pattern can optionally match only when the property has at least
+ * one value from the provided set of values.
+ */
 export interface LookupPatternHasProperty {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'hasProperty';
+    /**
+     * Required property type with at least one value for the entity.
+     */
     readonly propertyType: PropertyTypeIri;
+    /**
+     * Set of matching property values: if non-empty, the pattern should match
+     * only if the property has at least one values from this set.
+     */
     readonly values?: ReadonlyArray<Rdf.NamedNode | Rdf.Literal>;
 }
 
+/**
+ * Lookup pattern that filters entities by having a matching text
+ * in its labels.
+ *
+ * If provided as a top-level pattern, depending on how close {@link text} matches
+ * entity label by provider-specific score may infuence the result item position
+ * in the {@link DataProvider.lookup} results.
+ */
 export interface LookupPatternWithText {
+    /**
+     * Lookup pattern type.
+     */
     readonly type: 'withText';
+    /**
+     * Text token to match in an entity label.
+     *
+     * The exact text matching behavior is provider-specific
+     * (e.g. how partial word matches are handled, etc).
+     */
     readonly text: string;
 }
 
@@ -359,24 +488,30 @@ export interface DataProviderLookupItem {
      */
     readonly element: ElementModel;
     /**
-     * Link types for connections in the form: `refElementId` ← `element`
-     * ({@link DataProviderLookupParams.refElementId refElementId}).
+     * Link types for connections in the form: `entity` → `target`
+     * ({@link LookupPatternConnectedTo.target}).
      *
-     * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}
+     * Only applicable if {@link LookupPatternConnectedTo} or equivalent filter
      * is specified in {@link DataProvider.lookup}.
      */
     readonly inLinks: ReadonlySet<LinkTypeIri>;
     /**
-     * Link types for connections in the form: `refElementId` → `element`
-     * ({@link DataProviderLookupParams.refElementId refElementId}).
+     * Link types for connections in the form: `entity` ← `target`
+     * ({@link LookupPatternConnectedTo.target}).
      *
-     * Only applicable if {@link DataProviderLookupParams.refElementId refElementId}
+     * Only applicable if {@link LookupPatternConnectedTo} or equivalent filter
      * is specified in {@link DataProvider.lookup}.
      */
     readonly outLinks: ReadonlySet<LinkTypeIri>;
 }
 
-export function lookupPatternOf(params: Omit<DataProviderLookupParams, 'limit' | 'signal'>): LookupPattern {
+/**
+ * Composes a a single lookup pattern from filters specified in
+ * {@link DataProviderLookupParams params} for {@link DataProvider.lookup}.
+ */
+export function lookupPatternOf(
+    params: Omit<DataProviderLookupParams, 'limit' | 'signal'>
+): LookupPattern {
     const {
         elementTypeId, refElementId, refElementLinkId, linkDirection, text, pattern,
     } = params;
