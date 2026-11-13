@@ -3,7 +3,6 @@ import * as N3 from 'n3';
 
 import { IndexQuadBy, type MemoryDataset, indexedDataset } from '../../src/data/rdf/memoryDataset';
 import * as Rdf from '../../src/data/rdf/rdfModel';
-import { rdfs as rdfsBase } from '../../src/data/rdf/vocabulary';
 import {
     SparqlDataProvider, type SparqlDataProviderOptions,
 } from '../../src/data/sparql/sparqlDataProvider';
@@ -15,26 +14,6 @@ import {
 } from '../../src/data/sparql/sparqlQuerySource';
 
 import TURTLE_DATA from '../../examples/resources/orgOntology.ttl?raw';
-
-const NAMESPACE_ORG = 'http://www.w3.org/ns/org#';
-export const org = {
-    $namespace: NAMESPACE_ORG,
-    FormalOrganization: `${NAMESPACE_ORG}FormalOrganization`,
-    Organization: `${NAMESPACE_ORG}Organization`,
-    OrganizationalUnit: `${NAMESPACE_ORG}OrganizationalUnit`,
-    Role: `${NAMESPACE_ORG}Role`,
-    identifier: `${NAMESPACE_ORG}identifier`,
-    hasUnit: `${NAMESPACE_ORG}hasUnit`,
-    location: `${NAMESPACE_ORG}location`,
-    memberOf: `${NAMESPACE_ORG}memberOf`,
-    subOrganizationOf: `${NAMESPACE_ORG}subOrganizationOf`,
-} as const;
-
-export const rdfs = {
-    ...rdfsBase,
-    comment: `${rdfsBase.$namespace}comment`,
-    domain: `${rdfsBase.$namespace}domain`,
-};
 
 const NAMESPACE_TEST = 'urn:reactodia:test:';
 

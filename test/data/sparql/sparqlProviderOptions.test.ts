@@ -13,7 +13,8 @@ import {
     OwlStatsSettings,
 } from '../../../src/data/sparql/sparqlDataProviderSettings';
 
-import { makeSparqlDataProvider, makeSparqlDataset, org, rdfs, test } from '../../mock/sparqlMocks';
+import { org, rdfs } from '../orgOntologyCases';
+import { makeSparqlDataProvider, makeSparqlDataset, test } from '../../mock/sparqlMocks';
 import { compareLinks } from '../../utilities/dataCompare';
 
 describe('SparqlDataProvider', () => {
