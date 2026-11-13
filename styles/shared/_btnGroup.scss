@@ -36,6 +36,11 @@
     border-bottom-right-radius: theme.$button-border-radius;
   }
 
+  &-s > .reactodia-btn {
+    padding: 2px 4px;
+    height: 25.6667px;
+  }
+
   &-sm > .reactodia-btn {
     font-size: 12px;
     line-height: 1.5;

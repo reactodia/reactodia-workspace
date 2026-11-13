@@ -6,7 +6,7 @@ import { Translation, useTranslation } from '../../coreUtils/i18n';
 import { KeyedSyncStore, useKeyedSyncStore } from '../../coreUtils/keyedObserver';
 
 import {
-    ElementTypeIri, PropertyTypeIri, LinkTypeIri, LinkDirection,
+    ElementTypeIri, PropertyTypeIri, LinkTypeIri,
 } from '../../data/model';
 import * as Rdf from '../../data/rdf/rdfModel';
 import { DataDiagramModel } from '../../editor/dataDiagramModel';
@@ -263,25 +263,4 @@ export function useSchemaType<Kind extends keyof SchemaType>(
 
     useKeyedSyncStore(subscribeTypes, typeId ? [typeId] : [], model);
     return typeData as SchemaType[Kind] | undefined;
-}
-
-export function LinkDirectionSelect(props: {
-    selected: LinkDirection | undefined;
-    setSelected: (direction: LinkDirection | undefined) => void;
-}) {
-    const {selected, setSelected} = props;
-    return (
-        <select className={`${CLASS_NAME}__select-direction`}
-            value={selected ?? ''}
-            onChange={e => {
-                const direction = e.currentTarget.value
-                    ? e.currentTarget.value as LinkDirection
-                    : undefined;
-                setSelected(direction);
-            }}>
-            <option value=''>in or out</option>
-            <option value={'in' satisfies LinkDirection}>in</option>
-            <option value={'out' satisfies LinkDirection}>out</option>
-        </select>
-    );
 }

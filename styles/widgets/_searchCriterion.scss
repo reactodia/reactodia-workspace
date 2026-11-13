@@ -104,6 +104,24 @@
     gap: 4px;
   }
 
+  &__direction-any {
+    @include codicon-button("arrow-both");
+  }
+
+  &__direction-in,
+  &__direction-out {
+    display: flex;
+    align-items: center;
+  }
+
+  &__direction-in::before {
+    @include icon("@images/direction-in.svg");
+  }
+
+  &__direction-out::before {
+    @include icon("@images/direction-out.svg");
+  }
+
   &__link-in,
   &__link-out {
     display: inline-block;

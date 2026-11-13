@@ -2,7 +2,7 @@ import cx from 'clsx';
 import * as React from 'react';
 
 import { TranslatedText, useTranslation } from '../../coreUtils/i18n';
-import { ElementIri } from '../../data/model';
+import { ElementIri, LinkDirection } from '../../data/model';
 import { EntityElement } from '../../editor/dataElements';
 import { useProvidedEntities } from '../../editor/useProvidedEntities';
 import { useWorkspace } from '../../workspace/workspaceContext';
@@ -12,7 +12,7 @@ import { InlineEntity } from '../utility/inlineEntity';
 import { SchemaTypeView } from '../utility/schemaTypeView';
 
 import { EntitySelect } from './entitySelect';
-import { SchemaTypeSelect, LinkDirectionSelect, useSchemaType } from './schemaTypeSelect';
+import { SchemaTypeSelect, useSchemaType } from './schemaTypeSelect';
 import {
     SearchPattern, SearchPatternType, SearchPatternErrorItem, SerializedSearchPattern,
     SearchPatternError, SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo,
@@ -614,13 +614,13 @@ function ConnectedToCriterion(
                 inline
             />
         ) : (
-            <div className={`${CLASS_NAME}__any-link-type`}>
+            <span className={`${CLASS_NAME}__any-link-type`}>
                 {t.text('search_entities.criteria_connected.any-link')}
-            </div>
+            </span>
         );
 
-        const sourceIcon = <span className={`${CLASS_NAME}__link-in`} />;
-        const targetIcon = <span className={`${CLASS_NAME}__link-out`} />;
+        const sourceIcon = <span className={`${CLASS_NAME}__link-in`} role="presentation" />;
+        const targetIcon = <span className={`${CLASS_NAME}__link-out`} role="presentation" />;
 
         header = (
             <span className={`${CLASS_NAME}__condition`}>
@@ -694,6 +694,67 @@ function ConnectedToCriterion(
                 </SearchCriterionWhereGroup>
             )}
         </SearchCriterionBlock>
+    );
+}
+
+export function LinkDirectionSelect(props: {
+    selected: LinkDirection | undefined;
+    setSelected: (direction: LinkDirection | undefined) => void;
+}) {
+    const {selected, setSelected} = props;
+    const t = useTranslation();
+    return (
+        <div className='reactodia-btn-group reactodia-btn-group-s'
+            role='radiogroup'>
+            <button type='button'
+                role='radio'
+                aria-checked={selected === undefined}
+                aria-label={t.text(
+                    'search_entities.criteria_connected.direction_any.title'
+                )}
+                className={cx(
+                    'reactodia-btn reactodia-btn-default',
+                    `${CLASS_NAME}__direction-any`,
+                    selected === undefined ? 'active' : ''
+                )}
+                title={t.text(
+                    'search_entities.criteria_connected.direction_any.title'
+                )}
+                onClick={() => setSelected(undefined)}
+            />
+            <button type='button'
+                role='radio'
+                aria-checked={selected === 'in'}
+                aria-label={t.text(
+                    'search_entities.criteria_connected.direction_in.title'
+                )}
+                className={cx(
+                    'reactodia-btn reactodia-btn-default',
+                    `${CLASS_NAME}__direction-in`,
+                    selected === 'in' ? 'active' : undefined
+                )}
+                title={t.text(
+                    'search_entities.criteria_connected.direction_in.title'
+                )}
+                onClick={() => setSelected('in')}
+            />
+            <button type='button'
+                role='radio'
+                aria-checked={selected === 'out'}
+                aria-label={t.text(
+                    'search_entities.criteria_connected.direction_out.title'
+                )}
+                className={cx(
+                    'reactodia-btn reactodia-btn-default',
+                    `${CLASS_NAME}__direction-out`,
+                    selected === 'out' ? 'active' : undefined
+                )}
+                title={t.text(
+                    'search_entities.criteria_connected.direction_out.title'
+                )}
+                onClick={() => setSelected('out')}
+            />
+        </div>
     );
 }
 
