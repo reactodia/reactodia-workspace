@@ -385,7 +385,7 @@ export class SparqlGenerator {
                 );
                 if (pattern.values && pattern.values.length > 0) {
                     const valueSet = new HashSet(Rdf.hashTerm, Rdf.equalTerms, pattern.values);
-                    valueSets.set(entityTerm.value, valueSet);
+                    valueSets.set(valueTerm.value, valueSet);
                 }
                 return parts.join('\n');
             }

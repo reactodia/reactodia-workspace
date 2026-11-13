@@ -459,7 +459,7 @@ export function getFilteredData(
             multimapAdd(resultTypes, iri, binding.classAll.value);
         }
 
-        if (!openWorldLinks && binding.link && binding.direction) {
+        if (binding.link && binding.direction) {
             const predicates = (
                 binding.direction.value === 'in' ? inPredicates :
                 binding.direction.value === 'out' ? outPredicates :
