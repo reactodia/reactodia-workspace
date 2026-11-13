@@ -265,7 +265,7 @@ export interface SparqlDataProviderSettings {
      *   - `${outerProjection}`
      *   - `${innerProjection}`
      *   - `${filterInnerPrelude}` from {@link filterInnerPrelude}
-     *   - `${filterByPattern}`
+     *   - `${filterByPattern}` generated from {@link DataProviderLookupParams.pattern}
      *   - `${filterAdditionalRestriction}` from {@link filterAdditionalRestriction}
      *   - `${orderBy}` (when {@link DataProviderLookupParams.text} is provided)
      *   - `${limit}` (when {@link DataProviderLookupParams.limit} is provided)
@@ -274,14 +274,14 @@ export interface SparqlDataProviderSettings {
      *     {@link linkConfigurations} is non-empty)
      *   - `${queryElementInfo}` from {@link filterElementInfoPattern}
      *
-     * For compatibility, the following deprecated variables are parametrized
-     * in case `${filterByPattern}` is not found in the query:
-     *   - `${filterByType}` from {@link filterTypePattern}
-     *     (when {@link DataProviderLookupParams.elementTypeId} is provided)
-     *   - `${filterByRefElementLink}` from {@link filterRefElementLinkPattern}
-     *     (when {@link DataProviderLookupParams.refElementId} is provided)
-     *   - `${filterByText}` from {@link fullTextSearch}
-     *     (when {@link DataProviderLookupParams.text} is provided)
+     * If `${filterByPattern}` not found in the query, the generated pattern
+     * is prepended to `${filterAdditionalRestriction}` instead.
+     *
+     * For compatibility, the following deprecated variables are replaced by
+     * an empty pattern:
+     *   - `${filterByType}`
+     *   - `${filterByRefElementLink}`
+     *   - `${filterByText}`
      *
      * Expected bindings:
      *   - `?inst` element IRI
@@ -577,9 +577,6 @@ export const RdfSettings: SparqlDataProviderSettings = {
     \${filterInnerPrelude}
     {
         SELECT DISTINCT \${innerProjection} WHERE {
-            \${filterByType}
-            \${filterByRefElementLink}
-            \${filterByText}
             \${filterByPattern}
             \${filterAdditionalRestriction}
         } \${orderBy} \${limit}

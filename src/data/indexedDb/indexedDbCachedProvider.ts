@@ -7,10 +7,12 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport, LookupPattern, lookupPatternOf,
+    LookupPattern, lookupPatternOf,
 } from '../dataProvider';
 
-import { AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange } from './adjacencyBlocks';
+import {
+    AdjacencyRange, AdjacencyBlock, subtractAdjacencyBlocks, hashAdjacencyRange,
+} from './adjacencyBlocks';
 import { Sha256 } from './sha256';
 
 /**
@@ -831,10 +833,6 @@ export class IndexedDbCachedProvider implements DataProvider {
             })
         );
         return result.stats;
-    }
-
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
-        return this.baseProvider.supportsPattern(pattern);
     }
 
     async lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

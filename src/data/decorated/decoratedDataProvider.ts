@@ -3,7 +3,7 @@ import { delay } from '../../coreUtils/async';
 import type * as Rdf from '../rdf/rdfModel';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport, LookupPattern,
+    LookupPattern,
 } from '../dataProvider';
 import {
     ElementTypeModel, ElementTypeGraph, LinkTypeModel, ElementModel, LinkModel,
@@ -164,10 +164,6 @@ export class DecoratedDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]> {
         return this.decorate('connectedLinkStats', [params]);
-    }
-
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
-        return this.baseProvider.supportsPattern(pattern);
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

@@ -179,9 +179,14 @@ export class SparqlGenerator {
         return {navigateElementFilterIn, navigateElementFilterOut};
     }
 
-    generateFilterQuery(params: DataProviderLookupParams): string {
+    supportsLookupPatterns(): boolean {
+        const {lookupQuery} = this.settings;
+        return /\${filterByPattern}/.test(lookupQuery);
+    }
+
+    generateLookupQuery(params: DataProviderLookupParams): string {
         const {
-            defaultPrefix, dataLabelProperty, lookupQuery,
+            defaultPrefix, dataLabelProperty, lookupQuery, filterAdditionalRestriction,
             filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
         } = this.settings;
 
@@ -194,11 +199,6 @@ export class SparqlGenerator {
         const valueSets = new Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>();
         const projections = new Set<'link' | 'direction' | 'score'>();
 
-        let filterByType = '';
-        let filterByRefElementLink = '';
-        let filterByText = '';
-        let filterByPattern = '';
-
         const generateParams = {
             entityTerm,
             path: '',
@@ -207,28 +207,8 @@ export class SparqlGenerator {
             withProjection: true,
         } as const;
 
-        const supportFilterByPattern = /\${filterByPattern}/.test(lookupQuery);
-        if (supportFilterByPattern) {
-            filterByPattern = this.generatePattern(pattern, generateParams);
-        } else {
-            const hasType = findPattern<LookupPatternHasType>(pattern, p => p.type === 'hasType');
-            if (hasType) {
-                filterByType = this.generatePattern(hasType, generateParams);
-            }
-
-            const connectedTo = findPattern<LookupPatternConnectedTo>(
-                pattern,
-                p => p.type === 'connectedTo'
-            );
-            if (connectedTo) {
-                filterByRefElementLink = this.generatePattern(connectedTo, generateParams);
-            }
-
-            const withText = findPattern<LookupPatternWithText>(pattern, p => p.type === 'withText');
-            if (withText) {
-                filterByText = this.generatePattern(withText, generateParams);
-            }
-        }
+        const generatedPattern = this.generatePattern(pattern, generateParams);
+        const hasFilterByPattern = /\${filterByPattern}/.test(lookupQuery);
 
         let prependedValueSets = '';
         for (const [variableName, setTerms] of valueSets) {
@@ -264,16 +244,20 @@ export class SparqlGenerator {
 
         const limitPart = formatLimit(params.limit);
 
+        const filterByPattern = prependedValueSets + generatedPattern;
+
         const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
         return completePrefix + resolveTemplate(lookupQuery, {
             innerProjection,
             outerProjection,
             filterInnerPrelude: this.settings.filterInnerPrelude,
-            filterByType,
-            filterByRefElementLink,
-            filterByText,
-            filterByPattern: prependedValueSets + filterByPattern,
-            filterAdditionalRestriction: this.settings.filterAdditionalRestriction,
+            filterByType: '',
+            filterByRefElementLink: '',
+            filterByText: '',
+            filterByPattern,
+            filterAdditionalRestriction: hasFilterByPattern
+                ? filterAdditionalRestriction
+                : `${filterByPattern}\n${filterAdditionalRestriction}`,
             orderBy,
             limit: limitPart,
             queryTypes,

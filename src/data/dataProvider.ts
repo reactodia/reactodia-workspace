@@ -199,11 +199,6 @@ export interface DataProvider {
     }): Promise<DataProviderLinkCount[]>;
 
     /**
-     * TODO
-     */
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport;
-
-    /**
      * Finds entities in a data graph by specified lookup filters.
      *
      * Support and validity for the provided lookup pattern can be checked
@@ -237,11 +232,6 @@ export interface DataProviderLinkCount {
      * in case when the values are non-zero.
      */
     readonly inexact?: boolean;
-}
-
-export interface DataProviderPatternSupport {
-    readonly ok: boolean;
-    readonly errors: readonly string[];
 }
 
 /**

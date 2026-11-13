@@ -6,7 +6,6 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport, LookupPattern,
 } from '../dataProvider';
 
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
@@ -178,12 +177,13 @@ export interface SparqlProviderChunkOptions {
  */
 export class SparqlDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
+
     private readonly source: SparqlQuerySource;
     private readonly options: SparqlDataProviderOptions;
     private readonly settings: SparqlDataProviderSettings;
     private readonly acceptBlankNodes = false;
     private readonly chunkMeasure: ChunkMeasure;
-
+    
     private readonly generator: SparqlGenerator;
     private readonly labelPredicate: PropertyTypeIri;
     private readonly imagePredicate: PropertyTypeIri;
@@ -498,7 +498,7 @@ export class SparqlDataProvider implements DataProvider {
         if (elementIds.length > 0) {
             await this.queryChunked(elementIds, async batch => {
                 const ids = batch.map(escapeIri).map(id => ` (${id})`).join(' ');
-                const {defaultPrefix, dataLabelProperty, filterOnlyLanguages, elementInfoQuery} = this.settings;
+                const {defaultPrefix, dataLabelProperty, elementInfoQuery} = this.settings;
                 const query = defaultPrefix + resolveTemplate(elementInfoQuery, {
                     ids,
                     dataLabelProperty,
@@ -768,10 +768,6 @@ export class SparqlDataProvider implements DataProvider {
         return foundLinkStats;
     }
 
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
-        return {ok: false, errors: []};
-    }
-
     async lookup(baseParams: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
         const {signal} = baseParams;
         const params: DataProviderLookupParams = {
@@ -786,7 +782,7 @@ export class SparqlDataProvider implements DataProvider {
             signal
         );
 
-        const filterQuery = this.generator.generateFilterQuery(params);
+        const filterQuery = this.generator.generateLookupQuery(params);
         const response = await this.executeSparqlSelect<ElementBinding & FilterBinding>(
             filterQuery,
             {signal}

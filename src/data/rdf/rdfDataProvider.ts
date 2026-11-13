@@ -7,7 +7,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
-    DataProviderPatternSupport, LookupPattern, lookupPatternOf,
+    lookupPatternOf,
 } from '../dataProvider';
 import { makeCaseInsensitiveFilter } from '../utils';
 
@@ -630,10 +630,6 @@ export class RdfDataProvider implements DataProvider {
             });
         }
         return Promise.resolve(counts);
-    }
-
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
-        return {ok: true, errors: []};
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {

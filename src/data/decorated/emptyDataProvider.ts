@@ -1,10 +1,9 @@
 import {
-    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri, PropertyTypeModel,
-    LinkTypeIri, ElementIri, ElementModel, LinkModel,
+    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
+    PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
 import {
-    DataProvider, DataProviderLinkCount, DataProviderPatternSupport,
-    DataProviderLookupParams, DataProviderLookupItem, LookupPattern,
+    DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
 } from '../dataProvider';
 import { DataFactory, DefaultDataFactory } from '../rdf/rdfModel';
 
@@ -100,10 +99,6 @@ export class EmptyDataProvider implements DataProvider {
         signal?: AbortSignal | undefined;
     }): Promise<DataProviderLinkCount[]> {
         return Promise.resolve([]);
-    }
-
-    supportsPattern(pattern: LookupPattern): DataProviderPatternSupport {
-        return {ok: false, errors: []};
     }
 
     lookup(params: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
