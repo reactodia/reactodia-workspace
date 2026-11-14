@@ -165,7 +165,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
                     },
                     {
                         type: 'connectedTo',
-                        target: {
+                        other: {
                             type: 'fromValues',
                             values: [org.Role],
                         },
@@ -214,11 +214,11 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
                 type: 'connectedTo',
                 linkType: rdfs.domain,
                 linkDirection: 'in',
-                target: {
+                other: {
                     type: 'connectedTo',
                     linkType: rdfs.range,
                     linkDirection: 'out',
-                    target: {
+                    other: {
                         type: 'fromValues',
                         values: [org.hasMembership],
                     },

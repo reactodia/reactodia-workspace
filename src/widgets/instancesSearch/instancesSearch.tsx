@@ -71,7 +71,7 @@ export interface InstancesSearchProps {
      *
      * Built-in criteria options are always included to display or edit their
      * {@link SearchCriteriaOption.type pattern types}, however these options
-     * can be overriden by including options for these pattern types instead.
+     * can also be overriden by including options for these pattern types instead.
      *
      * **Built-in criteria options**:
      *  - {@link SearchCriterionAllOf}

@@ -368,9 +368,9 @@ export interface LookupPatternHasType {
 }
 
 /**
- * Lookup pattern that filters entities by having another connected entity
- * matching a {@link target} pattern by any or specific {@link linkType link type}
- * and {@link linkDirection direction}.
+ * Lookup pattern that filters entities that connected to another entity
+ * matching an {@link other} pattern, optinally restricted by specific
+ * {@link linkType link type} and/or {@link linkDirection direction}.
  *
  * If provided as a top-level pattern (including as part of {@link LookupPatternAllOf}
  * or {@link LookupPatternAnyOf}), provides {@link DataProviderLookupItem.inLinks} and
@@ -382,15 +382,15 @@ export interface LookupPatternConnectedTo {
      */
     readonly type: 'connectedTo';
     /**
-     * Required link type between {@link target} and the entity.
+     * Required link type between {@link other} and the entity.
      *
      * If not specified, any link type is allowed.
      */
     readonly linkType?: LinkTypeIri;
     /**
-     * Required link direction between {@link target} and the entity:
-     *  - `out`: `target` → entity
-     *  - `in`: `target` ← entity
+     * Required link direction between {@link other} and the entity:
+     *  - `out`: `other` → entity
+     *  - `in`: `other` ← entity
      *
      * If not specified, both directions are allowed.
      */
@@ -400,7 +400,7 @@ export interface LookupPatternConnectedTo {
      *
      * If not specified, any connected entity is allowed.
      */
-    readonly target?: LookupPattern;
+    readonly other?: LookupPattern;
 }
 
 /**
@@ -520,7 +520,7 @@ export function lookupPatternOf(
             type: 'connectedTo',
             linkType: refElementLinkId,
             linkDirection: linkDirection,
-            target: refElementId ? {
+            other: refElementId ? {
                 type: 'fromValues',
                 values: [refElementId],
             } : undefined,

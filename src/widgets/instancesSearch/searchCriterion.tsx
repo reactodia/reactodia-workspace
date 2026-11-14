@@ -586,7 +586,7 @@ function ConnectedToCriterion(
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
 
-    const {target, linkDirection} = pattern.state;
+    const {linkDirection, other} = pattern.state;
 
     const linkType = useSchemaType('linkType', pattern.state.linkType);
 
@@ -596,13 +596,13 @@ function ConnectedToCriterion(
 
     if (!inEditMode) {
         let entity: React.ReactElement;
-        if (!target || target instanceof SearchPatternFromValues) {
+        if (!other || other instanceof SearchPatternFromValues) {
             inlineEntity = true;
-            entity = <FromValuesList values={target?.state.values ?? []} />;
+            entity = <FromValuesList values={other?.state.values ?? []} />;
         } else {
             entity = (
                 <span className={`${CLASS_NAME}__link-target`}>
-                    {t.text('search_entities.criteria_connected.target-part')}
+                    {t.text('search_entities.criteria_connected.other-part')}
                 </span>
             );
         }
@@ -649,7 +649,7 @@ function ConnectedToCriterion(
                 {t.template('search_entities.criteria_connected.header', {
                     entity: (
                         <span className={`${CLASS_NAME}__link-target`}>
-                            {t.text('search_entities.criteria_connected.target-part')}
+                            {t.text('search_entities.criteria_connected.other-part')}
                         </span>
                     ),
                 })}
@@ -682,11 +682,11 @@ function ConnectedToCriterion(
             {inlineEntity ? null : (
                 <SearchCriterionWhereGroup>
                     <SearchCriterionWhere
-                        part={t.text('search_entities.criteria_connected.target-part')}>
-                        <SearchCriterion pattern={pattern.state.target}
-                            setPattern={target => setPattern(new SearchPatternConnectedTo({
+                        part={t.text('search_entities.criteria_connected.other-part')}>
+                        <SearchCriterion pattern={pattern.state.other}
+                            setPattern={other => setPattern(new SearchPatternConnectedTo({
                                 ...pattern.state,
-                                target,
+                                other,
                             }))}
                             parent={pattern}
                         />

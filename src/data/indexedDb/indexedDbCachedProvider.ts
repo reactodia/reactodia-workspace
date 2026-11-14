@@ -1238,7 +1238,7 @@ function serializePattern(pattern: LookupPattern): SExprLike {
                 pattern.type,
                 pattern.linkType ?? null,
                 pattern.linkDirection ?? null,
-                pattern.target ? serializePattern(pattern.target) : null,
+                pattern.other ? serializePattern(pattern.other) : null,
             ];
         }
         case 'withText': {

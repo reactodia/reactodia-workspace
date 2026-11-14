@@ -93,8 +93,8 @@ function joinWithPattern(
             return items;
         }
         case 'connectedTo': {
-            const targets = pattern.target
-                ? Array.from(joinWithPattern(undefined, pattern.target, context).keys())
+            const targets = pattern.other
+                ? Array.from(joinWithPattern(undefined, pattern.other, context).keys())
                 : [null];
             const linkTerm = pattern.linkType ? decodeTerm(pattern.linkType, context.factory) : null;
             const items = makeItemMap();

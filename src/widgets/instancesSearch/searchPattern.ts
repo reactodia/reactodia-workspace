@@ -370,21 +370,21 @@ interface SerializedHasType {
 export class SearchPatternConnectedTo extends SearchPattern<{
     readonly linkType?: LinkTypeIri;
     readonly linkDirection?: 'in' | 'out';
-    readonly target?: SearchPattern;
+    readonly other?: SearchPattern;
 }> {
     generate(
         context: SearchPatternGenerateContext
     ): LookupPattern | SearchPatternError {
-        const {linkType, linkDirection, target} = this.state;
-        const targetPattern = target?.generate(context);
-        if (targetPattern?.type === 'error') {
-            return targetPattern;
+        const {linkType, linkDirection, other} = this.state;
+        const otherPattern = other?.generate(context);
+        if (otherPattern?.type === 'error') {
+            return otherPattern;
         }
         return {
             type: 'connectedTo',
             linkType,
             linkDirection,
-            target: targetPattern,
+            other: otherPattern,
         };
     }
 
@@ -394,21 +394,21 @@ export class SearchPatternConnectedTo extends SearchPattern<{
         raw: SerializedConnectedTo,
         context: SearchPatternFromJsonContext
     ): SearchPatternConnectedTo {
-        const {linkType, linkDirection, target} = raw;
+        const {linkType, linkDirection, other} = raw;
         return new SearchPatternConnectedTo({
             linkType,
             linkDirection,
-            target: target ? context.fromJson(target) : undefined,
+            other: other ? context.fromJson(other) : undefined,
         });
     }
 
     toJSON(context: SearchPatternToJsonContext): SerializedConnectedTo {
-        const {linkType, linkDirection, target} = this.state;
+        const {linkType, linkDirection, other} = this.state;
         return {
             '@type': 'ConnectedTo',
             linkType,
             linkDirection,
-            target: target ? context.toJson(target) : undefined,
+            other: other ? context.toJson(other) : undefined,
         };
     }
 }
@@ -419,7 +419,7 @@ interface SerializedConnectedTo {
     '@type': 'ConnectedTo';
     linkType?: LinkTypeIri;
     linkDirection?: 'in' | 'out';
-    target?: SerializedSearchPattern;
+    other?: SerializedSearchPattern;
 }
 
 /**

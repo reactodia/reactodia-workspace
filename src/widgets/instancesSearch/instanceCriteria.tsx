@@ -220,7 +220,7 @@ function searchPatternFrom(criteria: SearchCriteria): SearchPattern | undefined 
         patterns.push(new SearchPatternConnectedTo({
             linkType: refElementLink,
             linkDirection,
-            target: refElement
+            other: refElement
                 ? new SearchPatternFromValues({values: [refElement]})
                 : undefined,
         }));

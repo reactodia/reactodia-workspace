@@ -335,9 +335,9 @@ export class SparqlGenerator {
             case 'connectedTo': {
                 const parts: string[] = [];
                 const targetTerm =
-                    pattern.target?.type === 'fromValues' && pattern.target.values.length === 1
-                        ? this.factory.namedNode(pattern.target.values[0])
-                        : this.factory.variable!(`connectedTo_target${path}`);
+                    pattern.other?.type === 'fromValues' && pattern.other.values.length === 1
+                        ? this.factory.namedNode(pattern.other.values[0])
+                        : this.factory.variable!(`connectedTo_other${path}`);
                 parts.push(
                     this.generateConnectedToPattern(pattern, {
                         sourceTerm: entityTerm,
@@ -352,10 +352,10 @@ export class SparqlGenerator {
                     projections.add('link');
                     projections.add('direction');
                 }
-                if (pattern.target && targetTerm.termType === 'Variable') {
+                if (pattern.other && targetTerm.termType === 'Variable') {
                     parts.push(
-                        this.generatePattern(pattern.target, {
-                            path: `${path}_target`,
+                        this.generatePattern(pattern.other, {
+                            path: `${path}_other`,
                             entityTerm: targetTerm,
                             valueSets,
                             projections,
