@@ -1,31 +1,37 @@
 import cx from 'clsx';
 import * as React from 'react';
 
-import { EventObserver } from '../coreUtils/events';
-import { Debouncer } from '../coreUtils/scheduler';
-import { useTranslation, type Translation, TranslatedText } from '../coreUtils/i18n';
+import { EventObserver } from '../../coreUtils/events';
+import { Debouncer } from '../../coreUtils/scheduler';
+import { useTranslation, type Translation, TranslatedText } from '../../coreUtils/i18n';
 
-import { ElementModel, ElementIri, ElementTypeIri, LinkTypeIri } from '../data/model';
-import { DataProviderLookupParams, DataProviderLookupItem } from '../data/dataProvider';
+import { ElementModel, ElementIri } from '../../data/model';
+import { DataProviderLookupParams, DataProviderLookupItem } from '../../data/dataProvider';
 
-import type { CanvasApi } from '../diagram/canvasApi';
-import { placeElementsAroundTarget } from '../diagram/commands';
-import { Element, VoidElement } from '../diagram/elements';
-import { Vector, boundsOf } from '../diagram/geometry';
+import type { CanvasApi } from '../../diagram/canvasApi';
+import { placeElementsAroundTarget } from '../../diagram/commands';
+import { Element, VoidElement } from '../../diagram/elements';
+import { Vector, boundsOf } from '../../diagram/geometry';
 
+import { requestElementData, restoreLinksBetweenElements } from '../../editor/dataDiagramModel';
+import { EntityElement, EntityGroup } from '../../editor/dataElements';
+
+import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../../workspace/workspaceContext';
+import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
+
+import { ErrorMessage } from '../utility/errorMessage';
+import { NoSearchResults } from '../utility/noSearchResults';
+import { ProgressBar, ProgressState } from '../utility/progressBar';
+import { SearchInputStore, useSearchInputStore } from '../utility/searchInput';
+import { SearchResults } from '../utility/searchResults';
+
+import { SearchCriteria, InstanceCriteria } from './instanceCriteria';
 import {
-    DataGraphStructure, requestElementData, restoreLinksBetweenElements,
-} from '../editor/dataDiagramModel';
-import { EntityElement, EntityGroup, iterateEntitiesOf } from '../editor/dataElements';
-
-import { WorkspaceContext, WorkspaceEventKey, useWorkspace } from '../workspace/workspaceContext';
-import { InstancesSearchTopic } from '../workspace/commandBusTopic';
-
-import { InlineEntity } from './utility/inlineEntity';
-import { NoSearchResults } from './utility/noSearchResults';
-import { ProgressBar, ProgressState } from './utility/progressBar';
-import { SearchInput, SearchInputStore, useSearchInputStore } from './utility/searchInput';
-import { SearchResults } from './utility/searchResults';
+    type SearchCriteriaOption, SearchCriterionAllOf, SearchCriterionAnyOf,
+    SearchCriterionHasType, SearchCriterionConnectedTo, SearchCriterionFromValues,
+    SearchCriterionHasProperty,
+} from './searchCriterion';
+import { SearchPatternGenerateContext, SearchPatternType } from './searchPattern';
 
 /**
  * Props for {@link InstancesSearch} component.
@@ -59,6 +65,34 @@ export interface InstancesSearchProps {
      * @default 3
      */
     minSearchTermLength?: number;
+    /**
+     * Supported search criteria options to display and edit corresponding
+     * {@link SearchPattern search patterns}.
+     *
+     * Built-in criteria options are always included to display or edit their
+     * {@link SearchCriteriaOption.type pattern types}, however these options
+     * can be overriden by including options for these pattern types instead.
+     *
+     * **Built-in criteria options**:
+     *  - {@link SearchCriterionAllOf}
+     *  - {@link SearchCriterionAnyOf}
+     *  - {@link SearchCriterionHasType}
+     *  - {@link SearchCriterionConnectedTo}
+     *  - {@link SearchCriterionFromValues}
+     *  - {@link SearchCriterionHasProperty}
+     */
+    criteriaOptions?: readonly SearchCriteriaOption[];
+    /**
+     * The order in which to display the built-in and extra search criteria options
+     * when adding a new search pattern from the UI.
+     *
+     * If specified, only options with corresponding types will be available
+     * for creation from the menu.
+     *
+     * **Default** order is built-in options then additional ones provided
+     * with {@link creatableOptions}.
+     */
+    addCriteriaOrder?: readonly SearchPatternType[];
     /**
      * Handler for the search criteria changes.
      */
@@ -99,37 +133,14 @@ export interface InstancesSearchCommands {
     };
 }
 
-/**
- * A filter criteria for the entity lookup from a {@link DataProvider}.
- *
- * @see {@link DataProviderLookupParams}
- */
-export interface SearchCriteria {
-    /**
-     * Filter by a text lookup.
-     */
-    readonly text?: string;
-    /**
-     * Filter by an element type.
-     */
-    readonly elementType?: ElementTypeIri;
-    /**
-     * Filter by having a connected element with specified IRI.
-     */
-    readonly refElement?: ElementIri;
-    /**
-     * Filter by connection link type.
-     *
-     * Only applicable when {@link refElement} is set.
-     */
-    readonly refElementLink?: LinkTypeIri;
-    /**
-     * Reference element link type direction ('in' | 'out').
-     * 
-     * Only when {@link refElementLink} is set.
-     */
-    readonly linkDirection?: 'in' | 'out';
-}
+const BuiltInCriterionOptions: readonly SearchCriteriaOption[] = [
+    SearchCriterionAllOf,
+    SearchCriterionAnyOf,
+    SearchCriterionHasType,
+    SearchCriterionConnectedTo,
+    SearchCriterionFromValues,
+    SearchCriterionHasProperty,
+];
 
 /**
  * Component to search for entities by various filter criteria
@@ -142,6 +153,8 @@ export function InstancesSearch(props: InstancesSearchProps) {
         searchStore,
         searchTimeout = 'explicit',
         minSearchTermLength = 3,
+        criteriaOptions,
+        addCriteriaOrder,
     } = props;
     const uncontrolledSearch = useSearchInputStore({
         initialValue: '',
@@ -151,11 +164,32 @@ export function InstancesSearch(props: InstancesSearchProps) {
     const effectiveSearchStore = searchStore ?? uncontrolledSearch;
     const workspace = useWorkspace();
     const t = useTranslation();
+
+    const [allCriterions, creatableCriterions] = React.useMemo(() => {
+        const all = new Map<SearchPatternType, SearchCriteriaOption>();
+        for (const option of BuiltInCriterionOptions) {
+            all.set(option.type, option);
+        }
+        if (criteriaOptions) {
+            for (const option of criteriaOptions) {
+                all.set(option.type, option);
+            }
+        }
+        const allValues = Array.from(all.values());
+        const creatable = addCriteriaOrder
+            ? addCriteriaOrder.map(type => all.get(type))
+                .filter((option): option is SearchCriteriaOption => Boolean(option))
+            : allValues;
+        return [allValues, creatable];
+    }, [criteriaOptions, addCriteriaOrder]);
+
     return (
         <InstancesSearchInner {...props}
             isControlled={Boolean(searchStore)}
             searchStore={effectiveSearchStore}
             minSearchTermLength={minSearchTermLength}
+            allCriterions={allCriterions}
+            creatableCriterions={creatableCriterions}
             workspace={workspace}
             translation={t}
         />
@@ -166,6 +200,8 @@ interface InstancesSearchInnerProps extends InstancesSearchProps {
     isControlled: boolean;
     searchStore: SearchInputStore;
     minSearchTermLength: number;
+    allCriterions: readonly SearchCriteriaOption[];
+    creatableCriterions: readonly SearchCriteriaOption[];
     workspace: WorkspaceContext;
     translation: Translation;
 }
@@ -174,7 +210,7 @@ interface State {
     readonly criteria: SearchCriteria;
     readonly querying?: boolean;
     readonly resultId: number;
-    readonly error?: any;
+    readonly error?: unknown;
     readonly items?: ReadonlyArray<ElementModel>;
     readonly selection: ReadonlySet<ElementIri>;
     readonly moreItemsAvailable?: boolean;
@@ -309,7 +345,8 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
 
     render() {
         const {
-            className, isControlled, searchStore, minSearchTermLength,
+            className, isControlled, searchStore, minSearchTermLength, allCriterions,
+            creatableCriterions,
             translation: t,
         } = this.props;
 
@@ -322,7 +359,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         
         const resultItems = this.state.items ?? [];
         const actionsAreHidden = this.state.querying || this.state.selection.size === 0;
-        const queryError = this.state.error ? tryFormatQueryError(this.state.error) : undefined;
 
         return <div
             className={cx(
@@ -330,26 +366,20 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
                 isControlled ? `${CLASS_NAME}--controlled` : undefined,
                 className
             )}>
-            <div className={`${CLASS_NAME}__criteria`}>
-                {this.renderCriteria()}
-                {isControlled ? null : (
-                    <SearchInput store={searchStore}
-                        className={`${CLASS_NAME}__text-criteria`}
-                        inputProps={{
-                            name: 'reactodia-instances-search-text',
-                            placeholder: t.textOptional('search_entities.input.placeholder'),
-                        }}
-                    />
+            <InstanceCriteria
+                criteria={this.state.criteria}
+                setCriteria={criteria => this.setState(
+                    {criteria},
+                    () => this.props.onChangeCriteria?.(this.state.criteria)
                 )}
-            </div>
+                searchStore={isControlled ? undefined : searchStore}
+                allCriterions={allCriterions}
+                creatableCriterions={creatableCriterions}
+            />
             <ProgressBar state={progressState}
                 title={t.text('search_entities.query_progress.title')}
             />
-            {queryError ? (
-                <div className={`${CLASS_NAME}__error`}>
-                    {queryError}
-                </div>
-            ) : null}
+            {this.state.error ? <ErrorMessage error={this.state.error} /> : null}
             {/* specify resultId as key to reset scroll position when loaded new search results */}
             <div key={this.state.resultId}
                 className={`${CLASS_NAME}__rest reactodia-scrollable`}
@@ -406,104 +436,6 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
         this.setState({selection: newSelection});
     };
 
-    private renderCriteria(): React.ReactElement<any> {
-        const {workspace: {model}, translation: t} = this.props;
-        const {criteria} = this.state;
-        const criterions: React.ReactElement<any>[] = [];
-
-        if (criteria.elementType) {
-            const elementTypeInfo = model.getElementType(criteria.elementType);
-            const elementTypeLabel = t.formatLabel(
-                elementTypeInfo?.data?.label,
-                criteria.elementType,
-                model.language
-            );
-            criterions.push(
-                <div key='hasType' className={`${CLASS_NAME}__criterion`}>
-                    {this.renderRemoveCriterionButtons(() => this.setState(
-                        {
-                            criteria: {...criteria, elementType: undefined},
-                        },
-                        () => this.props.onChangeCriteria?.(this.state.criteria)
-                    ))}
-                    {t.template('search_entities.criteria_has_type', {
-                        entityType: (
-                            <span className={`${CLASS_NAME}__criterion-class`}
-                                title={criteria.elementType}>
-                                {elementTypeLabel}
-                            </span>
-                        )
-                    })}
-                </div>
-            );
-        } else if (criteria.refElement) {
-            const refElementData = findEntityData(model, criteria.refElement)
-                ?? EntityElement.placeholderData(criteria.refElement);
-
-            let linkTypeLabel: string | undefined;
-            if (criteria.refElementLink) {
-                const linkTypeData = model.getLinkType(criteria.refElementLink);
-                linkTypeLabel = t.formatLabel(
-                    linkTypeData?.data?.label,
-                    criteria.refElementLink,
-                    model.language
-                );
-            }
-
-            const entity = <InlineEntity target={refElementData} />;
-            const relationType = criteria.refElementLink ? (
-                <span className={`${CLASS_NAME}__criterion-link-type`}
-                    title={criteria.refElementLink}>
-                    {linkTypeLabel}
-                </span>
-            ) : undefined;
-            const sourceIcon = <span className={`${CLASS_NAME}__link-direction-in`} />;
-            const targetIcon = <span className={`${CLASS_NAME}__link-direction-out`} />;
-
-            criterions.push(
-                <div key='hasLinkedElement' className={`${CLASS_NAME}__criterion`}>
-                    {this.renderRemoveCriterionButtons(() => this.setState(
-                        {
-                            criteria: {...criteria, refElement: undefined, refElementLink: undefined},
-                        },
-                        () => this.props.onChangeCriteria?.(this.state.criteria)
-                    ))}
-                    {!criteria.refElementLink ? (
-                        t.template('search_entities.criteria_connected', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : criteria.linkDirection === 'in' ? (
-                        t.template('search_entities.criteria_connected_to_source', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : criteria.linkDirection == 'out' ? (
-                        t.template('search_entities.criteria_connected_to_target', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    ) : (
-                        t.template('search_entities.criteria_connected_via', {
-                            entity, relationType, sourceIcon, targetIcon,
-                        })
-                    )}
-                </div>
-            );
-        }
-
-        return <div className={`${CLASS_NAME}__criterions`}>{criterions}</div>;
-    }
-
-    private renderRemoveCriterionButtons(onClick: () => void) {
-        return <div className={`${CLASS_NAME}__criterion-remove reactodia-btn-group reactodia-btn-group-xs`}>
-            <button type='button' title='Remove criteria'
-                className={cx(
-                    `${CLASS_NAME}__criterion-remove-button`,
-                    'reactodia-btn reactodia-btn-default'
-                )}
-                onClick={onClick}>
-            </button>
-        </div>;
-    }
-
     private submitCriteriaUpdate(term: string, options: { triggerChange: boolean }): void {
         const {onChangeCriteria} = this.props;
         this.setState(
@@ -538,7 +470,13 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
             request = createRequest(this.state.criteria);
         }
 
-        if (!(request.text || request.elementTypeId || request.refElementId || request.refElementLinkId)) {
+        if (!(
+            request.text ||
+            request.elementTypeId ||
+            request.refElementId ||
+            request.refElementLinkId ||
+            request.pattern
+        )) {
             this.setState({
                 querying: false,
                 error: undefined,
@@ -667,26 +605,13 @@ class InstancesSearchInner extends React.Component<InstancesSearchInnerProps, St
     }
 }
 
-function findEntityData(graph: DataGraphStructure, iri: ElementIri): ElementModel | undefined {
-    for (const element of graph.elements) {
-        for (const entity of iterateEntitiesOf(element)) {
-            if (entity.id === iri) {
-                return entity;
-            }
-        }
+function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
+    const {text, elementType, refElement, refElementLink, linkDirection, pattern} = criteria;
+    const generateContext: SearchPatternGenerateContext = {};
+    const generatedPattern = pattern?.generate(generateContext);
+    if (generatedPattern?.type === 'error') {
+        throw new Error('Invalid generated search pattern');
     }
-    return undefined;
-}
-
-function tryFormatQueryError(error: unknown): string | undefined {
-    if (error instanceof Error) {
-        return error.message || error.name;
-    }
-    return undefined;
-}
-
-export function createRequest(criteria: SearchCriteria): DataProviderLookupParams {
-    const {text, elementType, refElement, refElementLink, linkDirection} = criteria;
     return {
         text,
         elementTypeId: elementType,
@@ -694,6 +619,7 @@ export function createRequest(criteria: SearchCriteria): DataProviderLookupParam
         refElementLinkId: refElementLink,
         linkDirection,
         limit: ITEMS_PER_PAGE,
+        pattern: generatedPattern,
     };
 }
 

@@ -42,13 +42,31 @@ export function mergeKnownLinkTypes(responses: CompositeResponse<LinkTypeModel[]
     return Array.from(result.values());
 }
 
-export function mergePropertyTypes(
-    responses: CompositeResponse<Map<PropertyTypeIri, PropertyTypeModel>>[],
-): Map<PropertyTypeIri, PropertyTypeModel> {
-    return mergeMapResponses(responses, mergePropertyModel);
+export function mergeElementTypes(
+    responses: CompositeResponse<ElementTypeModel[]>[]
+): ElementTypeModel[] {
+    return mergeArrayResponses(responses, mergeClassModel);
 }
 
-function mergePropertyModel(a: PropertyTypeModel, b: PropertyTypeModel): PropertyTypeModel {
+export function mergeIndexedElementTypes(
+    responses: CompositeResponse<Map<ElementTypeIri, ElementTypeModel>>[]
+): Map<ElementTypeIri, ElementTypeModel> {
+    return mergeMapResponses(responses, mergeClassModel);
+}
+
+export function mergePropertyTypes(
+    responses: CompositeResponse<PropertyTypeModel[]>[]
+): PropertyTypeModel[] {
+    return mergeArrayResponses(responses, mergePropertyType);
+}
+
+export function mergeIndexedPropertyTypes(
+    responses: CompositeResponse<Map<PropertyTypeIri, PropertyTypeModel>>[],
+): Map<PropertyTypeIri, PropertyTypeModel> {
+    return mergeMapResponses(responses, mergePropertyType);
+}
+
+function mergePropertyType(a: PropertyTypeModel, b: PropertyTypeModel): PropertyTypeModel {
     return {
         ...a,
         ...b,
@@ -56,13 +74,13 @@ function mergePropertyModel(a: PropertyTypeModel, b: PropertyTypeModel): Propert
     };
 }
 
-export function mergeElementTypes(
-    responses: CompositeResponse<Map<ElementTypeIri, ElementTypeModel>>[]
-): Map<ElementTypeIri, ElementTypeModel> {
-    return mergeMapResponses(responses, mergeClassModel);
+export function mergeLinkTypes(
+    responses: CompositeResponse<LinkTypeModel[]>[]
+): LinkTypeModel[] {
+    return mergeArrayResponses(responses, mergeLinkType);
 }
 
-export function mergeLinkTypes(
+export function mergeIndexedLinkTypes(
     responses: CompositeResponse<Map<LinkTypeIri, LinkTypeModel>>[]
 ): Map<LinkTypeIri, LinkTypeModel> {
     return mergeMapResponses(responses, mergeLinkType);
@@ -77,20 +95,6 @@ function mergeLinkType(a: LinkTypeModel, b: LinkTypeModel): LinkTypeModel {
             ? (a.count ?? 0) + (b.count ?? 0)
             : undefined,
     };
-}
-
-function mergeMapResponses<K extends string, V>(
-    responses: Iterable<CompositeResponse<Map<K, V>>>,
-    mergeItems: (a: V, b: V) => V
-): Map<K, V> {
-    const result = new Map<K, V>();
-    for (const [response] of responses) {
-        for (const [key, model] of response) {
-            const existing = result.get(key);
-            result.set(key, existing ? mergeItems(existing, model) : model);
-        }
-    }
-    return result;
 }
 
 export function mergeElementInfo(
@@ -296,4 +300,32 @@ function mergeCounts(a: number | undefined, b: number | undefined): number | und
         return undefined;
     }
     return (a ?? 0) + (b ?? 0);
+}
+
+function mergeArrayResponses<T extends { id: string }>(
+    responses: Iterable<CompositeResponse<T[]>>,
+    mergeItems: (a: T, b: T) => T
+): T[] {
+    const result = new Map<string, T>();
+    for (const [response] of responses) {
+        for (const model of response) {
+            const existing = result.get(model.id);
+            result.set(model.id, existing ? mergeItems(existing, model) : model);
+        }
+    }
+    return Array.from(result.values());
+}
+
+function mergeMapResponses<K extends string, V>(
+    responses: Iterable<CompositeResponse<Map<K, V>>>,
+    mergeItems: (a: V, b: V) => V
+): Map<K, V> {
+    const result = new Map<K, V>();
+    for (const [response] of responses) {
+        for (const [key, model] of response) {
+            const existing = result.get(key);
+            result.set(key, existing ? mergeItems(existing, model) : model);
+        }
+    }
+    return result;
 }

@@ -6,7 +6,9 @@ import type { CanvasDropEvent } from '../../diagram/canvasApi';
 import type { EntityElement } from '../../editor/dataElements';
 
 import { ClassTree } from '../classTree';
-import { InstancesSearch, SearchCriteria } from '../instancesSearch';
+import {
+    InstancesSearch, SearchCriteria, SearchCriteriaOption, SearchPatternType,
+} from '../instancesSearch';
 import { LinkTypesToolbox } from '../linksToolbox';
 
 import { InstancesSearchTopic } from '../../workspace/commandBusTopic';
@@ -88,8 +90,41 @@ export function SearchSectionEntities(props: {
      * @default 3
      */
     minSearchTermLength?: number;
+    /**
+     * Supported search criteria options to display and edit corresponding
+     * {@link SearchPattern search patterns}.
+     *
+     * Built-in criteria options are always included to display or edit their
+     * {@link SearchCriterionOption.type pattern types}, however these options
+     * can be overriden by including options for these pattern types instead.
+     *
+     * **Built-in criteria options**:
+     *  - {@link SearchCriterionAllOf}
+     *  - {@link SearchCriterionAnyOf}
+     *  - {@link SearchCriterionHasType}
+     *  - {@link SearchCriterionConnectedTo}
+     *  - {@link SearchCriterionFromValues}
+     *  - {@link SearchCriterionHasProperty}
+     */
+    criteriaOptions?: readonly SearchCriteriaOption[];
+    /**
+     * The order in which to display the built-in and extra search criteria options
+     * when adding a new search pattern from the UI.
+     *
+     * If specified, only options with corresponding types will be available
+     * for creation from the menu.
+     *
+     * **Default** order is built-in options then additional ones provided
+     * with {@link creatableOptions}.
+     */
+    addCriteriaOrder?: readonly SearchPatternType[];
 }) {
-    const {searchTimeout = 600, minSearchTermLength = 3} = props;
+    const {
+        searchTimeout = 600,
+        minSearchTermLength = 3,
+        criteriaOptions,
+        addCriteriaOrder,
+    } = props;
     const {getCommandBus} = useWorkspace();
     const {shouldRender, setSectionActive, searchStore} = useUnifiedSearchSection({
         searchTimeout,
@@ -108,6 +143,8 @@ export function SearchSectionEntities(props: {
     return (
         <InstancesSearch className={SECTION_ENTITIES_CLASS}
             searchStore={searchStore}
+            criteriaOptions={criteriaOptions}
+            addCriteriaOrder={addCriteriaOrder}
             onChangeCriteria={criteria => {
                 if (shouldRender) {
                     setSectionActive(true, criteriaAsSearchExtra(criteria));

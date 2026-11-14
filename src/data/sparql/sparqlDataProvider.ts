@@ -1,4 +1,3 @@
-import { multimapArrayAdd } from '../../coreUtils/collections';
 import * as Rdf from '../rdf/rdfModel';
 import { rdfs, schema } from '../rdf/vocabulary';
 import {
@@ -29,16 +28,17 @@ import {
     getLinkStatistics,
     getPropertyTypes,
     triplesToElementBinding,
-    isDirectLink,
-    isDirectProperty,
 } from './responseHandler';
 import {
     ClassBinding, ElementBinding, ElementTypeBinding, LinkBinding, PropertyBinding, FilterBinding,
     LinkCountBinding, LinkTypeBinding, ConnectedLinkTypeBinding, ElementImageBinding,
 } from './sparqlModels';
 import {
-    SparqlDataProviderSettings, OwlStatsSettings, LinkConfiguration, PropertyConfiguration,
+    SparqlDataProviderSettings, OwlStatsSettings, FullTextSearchSettings,
 } from './sparqlDataProviderSettings';
+import {
+    SparqlGenerator, escapeIri, formatValueClauseContent, resolveTemplate,
+} from './sparqlGenerator';
 import {
     SparqlQuerySource, HttpSparqlQuerySource, HttpSparqlQuerySourceOptions,
 } from './sparqlQuerySource';
@@ -177,19 +177,14 @@ export interface SparqlProviderChunkOptions {
  */
 export class SparqlDataProvider implements DataProvider {
     readonly factory: Rdf.DataFactory;
+
     private readonly source: SparqlQuerySource;
     private readonly options: SparqlDataProviderOptions;
     private readonly settings: SparqlDataProviderSettings;
     private readonly acceptBlankNodes = false;
     private readonly chunkMeasure: ChunkMeasure;
-
-    private linkByPredicate = new Map<string, LinkConfiguration[]>();
-    private linkById = new Map<LinkTypeIri, LinkConfiguration>();
-    private openWorldLinks: boolean;
-
-    private propertyByPredicate = new Map<string, PropertyConfiguration[]>();
-    private openWorldProperties: boolean;
-
+    
+    private readonly generator: SparqlGenerator;
     private readonly labelPredicate: PropertyTypeIri;
     private readonly imagePredicate: PropertyTypeIri;
 
@@ -246,21 +241,9 @@ export class SparqlDataProvider implements DataProvider {
             };
         }
 
-        for (const link of settings.linkConfigurations) {
-            this.linkById.set(link.id, link);
-            const predicate = isDirectLink(link) ? link.path : link.id;
-            multimapArrayAdd(this.linkByPredicate, predicate, link);
-        }
-        this.openWorldLinks = settings.linkConfigurations.length === 0 ||
-            Boolean(settings.openWorldLinks);
-
-        for (const property of settings.propertyConfigurations) {
-            const predicate = isDirectProperty(property) ? property.path : property.id;
-            multimapArrayAdd(this.propertyByPredicate, predicate, property);
-        }
-        this.openWorldProperties = settings.propertyConfigurations.length === 0 ||
-            Boolean(settings.openWorldProperties);
-
+        this.generator = new SparqlGenerator(factory, settings, {
+            acceptBlankNodes: this.acceptBlankNodes,
+        });
         this.labelPredicate = prepareLabelPredicate ?? rdfs.label;
         this.imagePredicate = prepareImagePredicate ?? schema.thumbnailUrl;
     }
@@ -281,14 +264,14 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<ElementTypeGraph> {
         const {signal} = params;
-        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, classTreeQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, classTreeQuery} = this.settings;
         if (!classTreeQuery) {
             return {elementTypes: [], subtypeOf: []};
         }
 
         const query = defaultPrefix + resolveTemplate(classTreeQuery, {
             schemaLabelProperty,
-            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+            labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
         });
         const response = await this.executeSparqlSelect<ClassBinding>(query, {signal});
         const classTree = getClassTree(response.results.bindings);
@@ -300,21 +283,131 @@ export class SparqlDataProvider implements DataProvider {
         return classTree;
     }
 
+    async knownLinkTypes(params: {
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        const {signal} = params;
+        const {
+            defaultPrefix, schemaLabelProperty, linkTypesQuery, linkTypesPattern,
+        } = this.settings;
+        if (!linkTypesQuery) {
+            return [];
+        }
+
+        const query = defaultPrefix + resolveTemplate(linkTypesQuery, {
+            linkTypesPattern,
+            schemaLabelProperty,
+            labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
+        });
+        const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
+        const linkTypes = getLinkTypes(response.results.bindings);
+
+        if (this.options.prepareLabels) {
+            await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
+        }
+
+        return Array.from(linkTypes.values());
+    }
+
+    async lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        const {classLookupQuery, classLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            classLookupQuery,
+            classLookupSettings,
+            this.factory.variable!('class'),
+            (bindings: ClassBinding[]) => getClassTree(bindings).elementTypes,
+            params
+        );
+    }
+
+    async lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        const {propertyTypesLookupQuery, propertyTypesLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            propertyTypesLookupQuery,
+            propertyTypesLookupSettings,
+            this.factory.variable!('property'),
+            (bindings: PropertyBinding[]) => Array.from(
+                getPropertyTypes(bindings).values()
+            ),
+            params
+        );
+    }
+
+    async lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        const {linkTypesLookupQuery, linkTypesLookupSettings} = this.settings;
+        return this.lookupSchemaItems(
+            linkTypesLookupQuery,
+            linkTypesLookupSettings,
+            this.factory.variable!('link'),
+            (bindings: LinkTypeBinding[]) => Array.from(
+                getLinkTypes(bindings).values()
+            ),
+            params
+        );
+    }
+
+    private async lookupSchemaItems<Binding, Item extends LabeledItem>(
+        lookupQuery: string | undefined,
+        lookupSettings: FullTextSearchSettings | undefined,
+        itemTerm: Rdf.Variable,
+        itemsFromResponse: (bindings: Binding[]) => Item[],
+        params: {
+            text: string;
+            limit?: number;
+            signal?: AbortSignal;
+        }
+    ): Promise<Item[]> {
+        const {text, limit, signal} = params;
+        const {schemaTextSearch} = this.settings;
+
+        const textSearchSettings = lookupSettings ?? schemaTextSearch;
+        if (!(lookupQuery && textSearchSettings)) {
+            return [];
+        }
+
+        const query = this.generator.generateLookupSchemaQuery({
+            lookupQuery,
+            textSearchSettings,
+            itemTerm,
+            text,
+            limit,
+        });
+        const response = await this.executeSparqlSelect<Binding>(query, {signal});
+        const items = Array.from(itemsFromResponse(response.results.bindings).values());
+
+        if (this.options.prepareLabels) {
+            await attachLabels(items, this.options.prepareLabels, signal);
+        }
+
+        return items;
+    }
+
     async propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
     }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
         const {propertyIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, propertyInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, propertyInfoQuery} = this.settings;
 
         const properties = new Map<PropertyTypeIri, MutablePropertyType>();
         if (propertyInfoQuery) {
             await this.queryChunked(propertyIds, async batch => {
-                const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
                 const query = defaultPrefix + resolveTemplate(propertyInfoQuery, {
-                    ids,
+                    ids: formatValueClauseContent(batch),
                     schemaLabelProperty,
-                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                    labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
                 });
                 const response = await this.executeSparqlSelect<PropertyBinding>(query, {signal});
                 collectPropertyTypes(response.results.bindings, properties);
@@ -337,16 +430,15 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
         const {classIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, classInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, classInfoQuery} = this.settings;
 
         const classes = new Map<ElementTypeIri, MutableClassModel>();
         if (classInfoQuery) {
             await this.queryChunked(classIds, async batch => {
-                const ids = batch.map(escapeIri).map(id => ` ( ${id} )`).join(' ');
                 const query = defaultPrefix + resolveTemplate(classInfoQuery, {
-                    ids,
+                    ids: formatValueClauseContent(batch),
                     schemaLabelProperty,
-                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                    labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
                 });
                 const response = await this.executeSparqlSelect<ClassBinding>(query, {signal});
                 collectClassInfo(response.results.bindings, classes);
@@ -369,7 +461,7 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
         const {linkTypeIds, signal} = params;
-        const {defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesInfoQuery} = this.settings;
+        const {defaultPrefix, schemaLabelProperty, linkTypesInfoQuery} = this.settings;
 
         const linkTypes = new Map<LinkTypeIri, MutableLinkType>();
         if (linkTypesInfoQuery) {
@@ -378,7 +470,7 @@ export class SparqlDataProvider implements DataProvider {
                 const query = defaultPrefix + resolveTemplate(linkTypesInfoQuery, {
                     ids,
                     schemaLabelProperty,
-                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
+                    labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
                 });
                 const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
                 collectLinkTypes(response.results.bindings, linkTypes);
@@ -396,32 +488,6 @@ export class SparqlDataProvider implements DataProvider {
         return linkTypes;
     }
 
-    async knownLinkTypes(params: {
-        signal?: AbortSignal;
-    }): Promise<LinkTypeModel[]> {
-        const {signal} = params;
-        const {
-            defaultPrefix, schemaLabelProperty, filterOnlyLanguages, linkTypesQuery, linkTypesPattern,
-        } = this.settings;
-        if (!linkTypesQuery) {
-            return [];
-        }
-
-        const query = defaultPrefix + resolveTemplate(linkTypesQuery, {
-            linkTypesPattern,
-            schemaLabelProperty,
-            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
-        });
-        const response = await this.executeSparqlSelect<LinkTypeBinding>(query, {signal});
-        const linkTypes = getLinkTypes(response.results.bindings);
-
-        if (this.options.prepareLabels) {
-            await attachLabels(Array.from(linkTypes.values()), this.options.prepareLabels, signal);
-        }
-
-        return Array.from(linkTypes.values());
-    }
-
     async elements(params: {
         elementIds: ReadonlyArray<ElementIri>;
         signal?: AbortSignal;
@@ -432,13 +498,18 @@ export class SparqlDataProvider implements DataProvider {
         if (elementIds.length > 0) {
             await this.queryChunked(elementIds, async batch => {
                 const ids = batch.map(escapeIri).map(id => ` (${id})`).join(' ');
-                const {defaultPrefix, dataLabelProperty, filterOnlyLanguages, elementInfoQuery} = this.settings;
+                const {defaultPrefix, dataLabelProperty, elementInfoQuery} = this.settings;
                 const query = defaultPrefix + resolveTemplate(elementInfoQuery, {
                     ids,
                     dataLabelProperty,
-                    labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
-                    valueLanguageFilter: formatLanguageFilter('?propValue', filterOnlyLanguages),
-                    propertyConfigurations: this.formatPropertyInfo(),
+                    labelLanguageFilter: this.generator.formatLanguageFilter('?label'),
+                    valueLanguageFilter: this.generator.formatLanguageFilter('?propValue'),
+                    propertyConfigurations: this.generator.formatPropertyUnion({
+                        entityTerm: this.factory.variable!('inst'),
+                        valueTerm: this.factory.variable!('propValue'),
+                        predicateTerm: this.factory.variable!('propType'),
+                        withProjection: true,
+                    }),
                 });
                 const response = await this.executeSparqlConstruct(query);
                 for (const triple of response) {
@@ -456,9 +527,9 @@ export class SparqlDataProvider implements DataProvider {
         const elementModels = getElementsInfo(
             bindings,
             await types,
-            this.propertyByPredicate,
+            this.generator.propertyByPredicate,
             this.labelPredicate,
-            this.openWorldProperties
+            this.generator.openWorldProperties
         );
 
         if (this.options.prepareLabels) {
@@ -518,10 +589,10 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<LinkModel[]> {
         const {primary, secondary, linkTypeIds, signal} = params;
-        const {filterOnlyLanguages, linksInfoQuery} = this.settings;
+        const {linksInfoQuery} = this.settings;
 
-        const propLanguageFilter = formatLanguageFilter('?propValue', filterOnlyLanguages);
-        const linkConfigurations = this.formatLinkLinks();
+        const propLanguageFilter = this.generator.formatLanguageFilter('?propValue');
+        const linkConfigurations = this.generator.formatLinkLinks();
 
         let bindings: Promise<ReadonlyArray<LinkBinding>>;
         if (primary.length > 0 && secondary.length > 0) {
@@ -545,7 +616,7 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         let elementsForTypes: Set<ElementIri> | undefined;
-        if (this.linkByPredicate.size > 0) {
+        if (this.generator.linkByPredicate.size > 0) {
             // Optimization for common case without link configurations
             elementsForTypes = new Set(primary);
             for (const iri of secondary) {
@@ -561,8 +632,8 @@ export class SparqlDataProvider implements DataProvider {
         let linksInfo = getLinksInfo(
             await bindings,
             await types,
-            this.linkByPredicate,
-            this.openWorldLinks
+            this.generator.linkByPredicate,
+            this.generator.openWorldLinks
         );
         if (linkTypeIds) {
             const allowedLinkTypes = new Set(linkTypeIds);
@@ -641,70 +712,34 @@ export class SparqlDataProvider implements DataProvider {
         signal?: AbortSignal;
     }): Promise<DataProviderLinkCount[]> {
         const {elementId, inexactCount, signal} = params;
-        const {defaultPrefix, linkTypesOfQuery, linkTypesStatisticsQuery, filterTypePattern} = this.settings;
-
-        const bindDirection = /\?direction\b/.test(linkTypesOfQuery);
-
-        const elementIri = escapeIri(elementId);
-        const forAll = this.formatLinkUnion(
-            elementId, undefined, undefined, '?outObject', '?inObject', bindDirection
-        );
-        if (forAll.usePredicatePart) {
-            forAll.unionParts.push(
-                `{ ${elementIri} ?link ?outObject ${bindDirection ? 'BIND("out" AS ?direction)' : ''} }`
-            );
-            forAll.unionParts.push(
-                `{ ?inObject ?link ${elementIri} ${bindDirection ? 'BIND("in" AS ?direction)' : ''} }`
-            );
-        }
-
-        const query = defaultPrefix + resolveTemplate(linkTypesOfQuery, {
-            elementIri,
-            linkConfigurations: forAll.unionParts.join('\nUNION\n'),
+        
+        const elementTerm = this.factory.namedNode(elementId);
+        const targetOut = this.factory.variable!('outObject');
+        const targetIn = this.factory.variable!('inObject');
+        const {query, bindDirection} = this.generator.generateLinkTypesOfQuery({
+            elementTerm,
+            targetIn,
+            targetOut,
         });
 
-        const linkTypeResponse = await this.executeSparqlSelect<ConnectedLinkTypeBinding>(query, {signal});
+        const linkTypeResponse = await this.executeSparqlSelect<ConnectedLinkTypeBinding>(
+            query,
+            {signal}
+        );
         const connectedLinkTypes = getConnectedLinkTypes(
             linkTypeResponse.results.bindings,
-            this.linkByPredicate,
-            this.openWorldLinks
+            this.generator.linkByPredicate,
+            this.generator.openWorldLinks
         );
 
-        const navigateElementFilterOut = this.acceptBlankNodes
-            ? 'FILTER (IsIri(?outObject) || IsBlank(?outObject))'
-            : 'FILTER IsIri(?outObject)';
-        // Specifically use isBlank() as opposed to isIri() for filtering to avoid 
-        // a full scan on some endpoints (e.g. Virtuoso)
-        const navigateElementFilterIn = this.acceptBlankNodes
-            ? ''
-            : 'FILTER(!isBlank(?inObject))';
+        const {
+            navigateElementFilterIn,
+            navigateElementFilterOut,
+        } = this.generator.formatLinkStatsNavigateFilters();
 
         const foundLinkStats: DataProviderLinkCount[] = [];
         await Promise.all(connectedLinkTypes.map(async ({linkType, hasInLink, hasOutLink}) => {
-            const linkConfig = this.linkById.get(linkType);
-            let linkConfigurationOut: string;
-            let linkConfigurationIn: string;
-
-            if (!linkConfig || isDirectLink(linkConfig)) {
-                const predicate = escapeIri(
-                    linkConfig && isDirectLink(linkConfig) ? linkConfig.path : linkType
-                );
-                linkConfigurationOut = `${elementIri} ${predicate} ?outObject`;
-                linkConfigurationIn = `?inObject ${predicate} ${elementIri}`;
-            } else {
-                linkConfigurationOut = this.formatLinkPath(linkConfig.path, elementIri, '?outObject');
-                linkConfigurationIn = this.formatLinkPath(linkConfig.path, '?inObject', elementIri);
-            }
-
-            if (linkConfig && linkConfig.domain && linkConfig.domain.length > 0) {
-                const commaSeparatedDomains = linkConfig.domain.map(escapeIri).join(', ');
-                const restrictionOut = filterTypePattern.replace(/[?$]inst\b/g, elementIri);
-                const restrictionIn = filterTypePattern.replace(/[?$]inst\b/g, '?inObject');
-                linkConfigurationOut += ` { ${restrictionOut} FILTER(?class IN (${commaSeparatedDomains})) }`;
-                linkConfigurationIn += ` { ${restrictionIn} FILTER(?class IN (${commaSeparatedDomains})) }`;
-            }
-
-            if (!linkTypesStatisticsQuery || (inexactCount && bindDirection)) {
+            if (!this.settings.linkTypesStatisticsQuery || (inexactCount && bindDirection)) {
                 foundLinkStats.push({
                     id: linkType,
                     inCount: hasInLink ? 1 : 0,
@@ -712,15 +747,18 @@ export class SparqlDataProvider implements DataProvider {
                     inexact: true,
                 });
             } else {
-                const statsQuery = defaultPrefix + resolveTemplate(linkTypesStatisticsQuery, {
-                    linkId: escapeIri(linkType),
-                    elementIri,
-                    linkConfigurationOut,
-                    linkConfigurationIn,
-                    navigateElementFilterOut,
+                const statsQuery = this.generator.generateLinkStatsQuery({
+                    elementTerm,
+                    targetIn,
+                    targetOut,
+                    linkType,
                     navigateElementFilterIn,
+                    navigateElementFilterOut,
                 });
-                const statsResponse = await this.executeSparqlSelect<LinkCountBinding>(statsQuery, {signal});
+                const statsResponse = await this.executeSparqlSelect<LinkCountBinding>(
+                    statsQuery,
+                    {signal}
+                );
                 const linkStats = getLinkStatistics(statsResponse.results.bindings);
                 if (linkStats) {
                     foundLinkStats.push(linkStats);
@@ -744,15 +782,18 @@ export class SparqlDataProvider implements DataProvider {
             signal
         );
 
-        const filterQuery = this.createFilterQuery(params);
-        const response = await this.executeSparqlSelect<ElementBinding & FilterBinding>(filterQuery, {signal});
+        const filterQuery = this.generator.generateLookupQuery(params);
+        const response = await this.executeSparqlSelect<ElementBinding & FilterBinding>(
+            filterQuery,
+            {signal}
+        );
 
         const linkedElements = getFilteredData(
             response.results.bindings,
             await types,
-            this.linkByPredicate,
+            this.generator.linkByPredicate,
             this.labelPredicate,
-            this.openWorldLinks
+            this.generator.openWorldLinks
         );
 
         if (this.options.prepareLabels) {
@@ -766,81 +807,6 @@ export class SparqlDataProvider implements DataProvider {
         }
 
         return linkedElements;
-    }
-
-    private createFilterQuery(params: DataProviderLookupParams): string {
-        if (!params.refElementId && params.refElementLinkId) {
-            throw new Error('Cannot execute refElementLink filter without refElement');
-        }
-
-        let outerProjection = '?inst ?class ?label';
-        let innerProjection = '?inst';
-
-        let filterByRefElementLink = '';
-        let queryTypes = '';
-        if (params.refElementId) {
-            outerProjection += ' ?link ?direction';
-            innerProjection += ' ?link ?direction';
-            filterByRefElementLink = this.createRefQueryPart({
-                elementId: params.refElementId,
-                linkId: params.refElementLinkId,
-                direction: params.linkDirection,
-            });
-
-            if (this.settings.linkConfigurations.length > 0) {
-                outerProjection += ' ?classAll';
-                queryTypes = this.settings.filterTypePattern.replace(/[?$]class\b/g, '?classAll');
-            }
-        }
-
-        let filterByType = '';
-        if (params.elementTypeId) {
-            const elementTypeIri = escapeIri(params.elementTypeId);
-            filterByType = this.settings.filterTypePattern.replace(/[?$]class\b/g, elementTypeIri);
-        }
-
-        const {
-            defaultPrefix, dataLabelProperty, lookupQuery, filterOnlyLanguages,
-            filterElementInfoPattern, fullTextSearch,
-        } = this.settings;
-
-        const queryElementInfo = resolveTemplate(filterElementInfoPattern, {
-            dataLabelProperty,
-            labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
-        });
-
-        let filterByText = '';
-        let orderBy = '';
-        if (params.text) {
-            innerProjection += ' ?score';
-            if (this.settings.fullTextSearch.extractLabel) {
-                filterByText += sparqlExtractLabel('?inst', '?extractedLabel');
-            }
-            filterByText = resolveTemplate(fullTextSearch.queryPattern, {text: params.text, dataLabelProperty});
-            if (filterByText) {
-                orderBy = 'ORDER BY DESC(?score)';
-            }
-        }
-
-        let limitPart = '';
-        if (typeof params.limit === 'number') {
-            limitPart = `LIMIT ${params.limit}`;
-        }
-
-        const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
-        return completePrefix + resolveTemplate(lookupQuery, {
-            innerProjection,
-            outerProjection,
-            filterInnerPrelude: this.settings.filterInnerPrelude,
-            filterByType,
-            filterByRefElementLink,
-            filterByText,
-            filterAdditionalRestriction: this.settings.filterAdditionalRestriction,
-            orderBy,
-            limit: limitPart,
-            queryTypes,
-            queryElementInfo,
-        });
     }
 
     /**
@@ -874,148 +840,6 @@ export class SparqlDataProvider implements DataProvider {
             factory: this.factory,
             signal: options?.signal,
         });
-    }
-
-    protected createRefQueryPart(params: { elementId: ElementIri; linkId?: LinkTypeIri; direction?: 'in' | 'out' }) {
-        const {elementId, linkId, direction} = params;
-
-        const {unionParts, usePredicatePart} = this.formatLinkUnion(
-            elementId, linkId, direction, '?inst', '?inst', true
-        );
-
-        if (usePredicatePart) {
-            const refElementIRI = escapeIri(params.elementId);
-            let refLinkType: string | undefined;
-            if (linkId) {
-                const link = this.linkById.get(linkId);
-                refLinkType = link && isDirectLink(link) ? escapeIri(link.path) : escapeIri(linkId);
-            }
-
-            const linkPattern = refLinkType || '?link';
-            const bindType = refLinkType ? `BIND(${refLinkType} as ?link)` : '';
-            // Specifically use isBlank() as opposed to isIri() when possible for filtering
-            // to avoid a full scan on some endpoints (e.g. Virtuoso)
-            const outFilter = this.acceptBlankNodes
-                ? 'FILTER(isIri(?inst) || isBlank(?inst))'
-                : 'FILTER(isIri(?inst))';
-            const inFilter = this.acceptBlankNodes
-                ? ''
-                : 'FILTER(!isBlank(?inst))';
-
-            if (!direction || direction === 'out') {
-                unionParts.push(`{ ${refElementIRI} ${linkPattern} ?inst BIND("out" as ?direction) ${bindType} ${outFilter} }`);
-            }
-            if (!direction || direction === 'in') {
-                unionParts.push(`{ ?inst ${linkPattern} ${refElementIRI} BIND("in" as ?direction) ${bindType} ${inFilter} }`);
-            }
-        }
-
-        let resultPattern = unionParts.length === 0 ? 'FILTER(false)' : unionParts.join('\nUNION\n');
-
-        const useAllLinksPattern = !linkId && this.settings.filterRefElementLinkPattern.length > 0;
-        if (useAllLinksPattern) {
-            resultPattern += `\n${this.settings.filterRefElementLinkPattern}`;
-        }
-
-        return resultPattern;
-    }
-
-    private formatLinkUnion(
-        refElementIri: ElementIri,
-        linkIri: LinkTypeIri | undefined,
-        direction: 'in' | 'out' | undefined,
-        outElementVar: string,
-        inElementVar: string,
-        bindDirection: boolean
-    ) {
-        const {linkConfigurations} = this.settings;
-        const fixedIri = escapeIri(refElementIri);
-
-        const unionParts: string[] = [];
-        let hasDirectLink = false;
-
-        for (const link of linkConfigurations) {
-            if (linkIri && link.id !== linkIri) { continue; }
-            if (isDirectLink(link)) {
-                hasDirectLink = true;
-            } else {
-                const linkType = escapeIri(link.id);
-                if (!direction || direction === 'out') {
-                    const path = this.formatLinkPath(link.path, fixedIri, outElementVar);
-                    const boundedDirection = bindDirection ? 'BIND("out" as ?direction) ' : '';
-                    unionParts.push(
-                        `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
-                    );
-                }
-                if (!direction || direction === 'in') {
-                    const path = this.formatLinkPath(link.path, inElementVar, fixedIri);
-                    const boundedDirection = bindDirection ? 'BIND("in" as ?direction) ' : '';
-                    unionParts.push(
-                        `{ ${path} BIND(${linkType} as ?link) ${boundedDirection}}`
-                    );
-                }
-            }
-        }
-
-        const usePredicatePart = this.openWorldLinks || hasDirectLink;
-        return {unionParts, usePredicatePart};
-    }
-
-    private formatLinkLinks(): string {
-        const unionParts: string[] = [];
-        let hasDirectLink = false;
-        for (const link of this.settings.linkConfigurations) {
-            if (isDirectLink(link)) {
-                hasDirectLink = true;
-            } else {
-                const linkType = escapeIri(link.id);
-                unionParts.push(
-                    `${this.formatLinkPath(link.path, '?source', '?target')} BIND(${linkType} as ?type)`
-                );
-            }
-        }
-
-        const usePredicatePart = this.openWorldLinks || hasDirectLink;
-        if (usePredicatePart) {
-            unionParts.push('?source ?type ?target');
-        }
-
-        return (
-            unionParts.length === 0 ? '' :
-            unionParts.length === 1 ? unionParts[0] :
-            '{ ' + unionParts.join(' }\nUNION\n{ ') + ' }'
-        );
-    }
-
-    private formatLinkPath(path: string, source: string, target: string): string {
-        return path.replace(/[?$]source\b/g, source).replace(/[?$]target\b/g, target);
-    }
-
-    private formatPropertyInfo(): string {
-        const unionParts: string[] = [];
-        let hasDirectProperty = false;
-        for (const property of this.settings.propertyConfigurations) {
-            if (isDirectProperty(property)) {
-                hasDirectProperty = true;
-            } else {
-                const propType = escapeIri(property.id);
-                const formatted = this.formatPropertyPath(property.path, '?inst', '?propValue');
-                unionParts.push(
-                    `{ ${formatted} BIND(${propType} as ?propType) }`
-                );
-            }
-        }
-
-        const usePredicatePart = this.openWorldProperties || hasDirectProperty;
-        if (usePredicatePart) {
-            unionParts.push('{ ?inst ?propType ?propValue }');
-        }
-
-        return unionParts.join('\nUNION\n');
-    }
-
-    private formatPropertyPath(path: string, subject: string, value: string): string {
-        return path.replace(/[?$]inst\b/g, subject).replace(/[?$]value\b/g, value);
     }
 
     private async querySingleElementTypes(
@@ -1124,53 +948,4 @@ function prepareElementImages(
             }
         }
     });
-}
-
-function resolveTemplate(template: string, values: { [key: string]: string | undefined }) {
-    let result = template;
-    for (const replaceKey in values) {
-        if (!Object.prototype.hasOwnProperty.call(values, replaceKey)) { continue; }
-        const replaceValue = values[replaceKey] || '';
-        result = result.replace(new RegExp('\\${' + replaceKey + '}', 'g'), replaceValue);
-    }
-    return result;
-}
-
-function formatLanguageFilter(
-    variable: string,
-    languages: ReadonlyArray<string> | undefined
-): string {
-    if (!languages) {
-        return '';
-    }
-    const parts = [`FILTER(!isLiteral(${variable}) || lang(${variable}) = ""`];
-    for (const language of languages) {
-        parts.push(` || lang(${variable}) = "${language}"`);
-    }
-    parts.push(')');
-    return parts.join('');
-}
-
-function sparqlExtractLabel(subject: string, label: string): string {
-    return  `
-        BIND ( str( ${subject} ) as ?uriStr)
-        BIND ( strafter(?uriStr, "#") as ?label3)
-        BIND ( strafter(strafter(?uriStr, "//"), "/") as ?label6)
-        BIND ( strafter(?label6, "/") as ?label5)
-        BIND ( strafter(?label5, "/") as ?label4)
-        BIND (if (?label3 != "", ?label3,
-            if (?label4 != "", ?label4,
-            if (?label5 != "", ?label5, ?label6))) as ${label})
-    `;
-}
-
-function formatValueClauseContent(iris: Iterable<string>): string {
-    return Array.from(iris, iri => `(${escapeIri(iri)})`).join(' ');
-}
-
-function escapeIri(iri: string) {
-    if (typeof iri !== 'string') {
-        throw new Error(`Cannot escape IRI of type "${typeof iri}"`);
-    }
-    return `<${iri}>`;
 }

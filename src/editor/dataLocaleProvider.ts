@@ -228,7 +228,7 @@ export function useResolvedAssetUrl(
 ): UseAsyncResult<string | undefined> {
     return useAsync({
         input: [locale, assetIri],
-        load: ([locale, assetIri], {signal}) => {
+        load: async ([locale, assetIri], {signal}) => {
             return assetIri === undefined ? undefined : locale.resolveAssetUrl(assetIri, {signal});
         },
     });

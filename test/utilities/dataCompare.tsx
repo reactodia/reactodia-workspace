@@ -1,3 +1,4 @@
+import type { DataProviderLookupItem } from '../../src/data/dataProvider';
 import type { LinkModel } from '../../src/data/model';
 
 export function compareLinks(a: LinkModel, b: LinkModel): number {
@@ -23,4 +24,15 @@ export function compareLinks(a: LinkModel, b: LinkModel): number {
         0
     );
     return result;
+}
+
+export function compareLookupItemsByIri(
+    a: DataProviderLookupItem,
+    b: DataProviderLookupItem
+): number {
+    return (
+        a.element.id < b.element.id ? -1 :
+        a.element.id > b.element.id ? 1 :
+        0
+    );
 }

@@ -8,15 +8,18 @@ import {
 } from '../model';
 import {
     CompositeResponse,
+    mergeConnectedLinkStats,
+    mergeElementInfo,
+    mergeElementTypes,
+    mergeIndexedElementTypes,
+    mergeIndexedLinkTypes,
+    mergeIndexedPropertyTypes,
     mergeKnownElementTypes,
     mergeKnownLinkTypes,
-    mergeElementTypes,
-    mergePropertyTypes,
-    mergeLinkTypes,
-    mergeElementInfo,
     mergeLinksInfo,
-    mergeConnectedLinkStats,
+    mergeLinkTypes,
     mergeLookup,
+    mergePropertyTypes,
 } from './mergeUtils';
 
 /**
@@ -114,25 +117,49 @@ export class CompositeDataProvider implements DataProvider {
         return this.requestWithMerge(p => p.knownLinkTypes(params), mergeKnownLinkTypes);
     }
 
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        return this.requestWithMerge(p => p.lookupElementTypes(params), mergeElementTypes);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        return this.requestWithMerge(p => p.lookupPropertyTypes(params), mergePropertyTypes);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        return this.requestWithMerge(p => p.lookupLinkTypes(params), mergeLinkTypes);
+    }
+
     elementTypes(params: {
         classIds: ReadonlyArray<ElementTypeIri>;
         signal?: AbortSignal;
     }): Promise<Map<ElementTypeIri, ElementTypeModel>> {
-        return this.requestWithMerge(p => p.elementTypes(params), mergeElementTypes);
+        return this.requestWithMerge(p => p.elementTypes(params), mergeIndexedElementTypes);
     }
 
     propertyTypes(params: {
         propertyIds: ReadonlyArray<PropertyTypeIri>;
         signal?: AbortSignal;
     }): Promise<Map<PropertyTypeIri, PropertyTypeModel>> {
-        return this.requestWithMerge(p => p.propertyTypes(params), mergePropertyTypes);
+        return this.requestWithMerge(p => p.propertyTypes(params), mergeIndexedPropertyTypes);
     }
 
     linkTypes(params: {
         linkTypeIds: ReadonlyArray<LinkTypeIri>;
         signal?: AbortSignal;
     }): Promise<Map<LinkTypeIri, LinkTypeModel>> {
-        return this.requestWithMerge(p => p.linkTypes(params), mergeLinkTypes);
+        return this.requestWithMerge(p => p.linkTypes(params), mergeIndexedLinkTypes);
     }
 
     elements(params: {

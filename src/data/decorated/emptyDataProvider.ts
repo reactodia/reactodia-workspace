@@ -1,6 +1,6 @@
 import {
-    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri, PropertyTypeModel,
-    LinkTypeIri, ElementIri, ElementModel, LinkModel,
+    ElementTypeGraph, LinkTypeModel, ElementTypeIri, ElementTypeModel, PropertyTypeIri,
+    PropertyTypeModel, LinkTypeIri, ElementIri, ElementModel, LinkModel,
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
@@ -28,6 +28,30 @@ export class EmptyDataProvider implements DataProvider {
 
     knownLinkTypes(params: {
         signal?: AbortSignal | undefined;
+    }): Promise<LinkTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        return Promise.resolve([]);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
     }): Promise<LinkTypeModel[]> {
         return Promise.resolve([]);
     }
