@@ -337,7 +337,7 @@ describe('SparqlDataProvider', () => {
 
     it.each(
         lookupPatternOrgOntologyCases   
-    )('provides lookup() by "%s"', async (name, params, expectedIds) => {
+    )('provides lookup() by pattern "%s"', async (name, params, expectedIds) => {
         const provider = await makeSparqlDataProvider(
             {},
             {...OwlStatsSettings, filterOnlyLanguages: ['en']},

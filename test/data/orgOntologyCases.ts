@@ -13,9 +13,10 @@ export const org = {
     Membership: `${NAMESPACE_ORG}Membership`,
     Role: `${NAMESPACE_ORG}Role`,
     Site: `${NAMESPACE_ORG}Site`,
-    identifier: `${NAMESPACE_ORG}identifier`,
+    classification: `${NAMESPACE_ORG}classification`,
     hasMembership: `${NAMESPACE_ORG}hasMembership`,
     hasUnit: `${NAMESPACE_ORG}hasUnit`,
+    identifier: `${NAMESPACE_ORG}identifier`,
     location: `${NAMESPACE_ORG}location`,
     member: `${NAMESPACE_ORG}member`,
     memberDuring: `${NAMESPACE_ORG}memberDuring`,
@@ -234,8 +235,75 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
                 type: 'hasProperty',
                 propertyType: rdfs.label,
                 values: [Rdf.DefaultDataFactory.literal('Formal Organization', 'en')],
-            }
+            },
         },
         [org.FormalOrganization],
+    ],
+    [
+        '(has-type) or (has-type)',
+        {
+            pattern: {
+                type: 'anyOf',
+                patterns: [
+                    {
+                        type: 'hasType',
+                        elementType: owl.AnnotationProperty,
+                    },
+                    {
+                        type: 'hasType',
+                        elementType: owl.DatatypeProperty,
+                    },
+                ],
+            },
+        },
+        [org.identifier, org.location, org.roleProperty],
+    ],
+    [
+        '(with-text) or (with-text)',
+        {
+            pattern: {
+                type: 'anyOf',
+                patterns: [
+                    {
+                        type: 'withText',
+                        text: 'formal',
+                    },
+                    {
+                        type: 'withText',
+                        text: 'classification',
+                    },
+                ],
+            },
+        },
+        [org.FormalOrganization, org.classification],
+    ],
+    [
+        '(connected-to (has-type)) and (connected-to (has-type))',
+        {
+            pattern: {
+                type: 'allOf',
+                patterns: [
+                    {
+                        type: 'connectedTo',
+                        linkType: rdfs.range,
+                        linkDirection: 'out',
+                        other: {
+                            type: 'hasType',
+                            elementType: owl.FunctionalProperty,
+                        },
+                    },
+                    {
+                        type: 'connectedTo',
+                        linkType: rdfs.domain,
+                        linkDirection: 'out',
+                        other: {
+                            type: 'hasType',
+                            elementType: owl.DatatypeProperty,
+                        },
+                    },
+                ],
+            },
+        },
+        [org.Organization],
     ],
 ];

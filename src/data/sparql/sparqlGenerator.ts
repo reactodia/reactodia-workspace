@@ -297,7 +297,6 @@ export class SparqlGenerator {
                         if (existing) {
                             if (pattern.type === 'allOf') {
                                 keepOnlyIntersection(existing, setValues);
-                                
                             } else {
                                 // Union with existing
                                 for (const item of setValues) {
@@ -768,23 +767,6 @@ export function escapeIri(iri: string) {
         throw new Error(`Cannot escape IRI of type "${typeof iri}"`);
     }
     return escapeTerm(Rdf.DefaultDataFactory.namedNode(iri));
-}
-
-function findPattern<T extends LookupPattern>(
-    root: LookupPattern,
-    matches: (p: LookupPattern) => p is T
-): T | undefined {
-    if (matches(root)) {
-        return root;
-    } else if (root.type === 'allOf') {
-        for (const pattern of root.patterns) {
-            const found = findPattern(pattern, matches);
-            if (found) {
-                return found;
-            }
-        }
-    }
-    return undefined;
 }
 
 interface BasicSet<T> extends Iterable<T> {
