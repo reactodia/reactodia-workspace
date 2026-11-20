@@ -264,10 +264,10 @@ export class SparqlGenerator {
     ): string {
         const {path, entityTerm, valueSets, projections, withProjection} = params;
         switch (pattern.type) {
-            case 'allOf':
-            case 'anyOf': {
+            case 'and':
+            case 'or': {
                 if (pattern.patterns.length === 0) {
-                    return pattern.type === 'allOf' ? 'FILTER(false)' : '';
+                    return pattern.type === 'and' ? 'FILTER(false)' : '';
                 }
                 const allValues = new Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>();
                 const parts = pattern.patterns.map((branch, index) => {
@@ -282,7 +282,7 @@ export class SparqlGenerator {
                     for (const [setName, setValues] of branchValues) {
                         const existing = allValues.get(setName);
                         if (existing) {
-                            if (pattern.type === 'allOf') {
+                            if (pattern.type === 'and') {
                                 keepOnlyIntersection(existing, setValues);
                             } else {
                                 // Union with existing
@@ -304,7 +304,7 @@ export class SparqlGenerator {
                     valueSets.set(setName, setValues);
                 }
 
-                return '{\n' + parts.join(pattern.type === 'allOf' ? '\n' : '}\nUNION\n{') + '\n}';
+                return '{\n' + parts.join(pattern.type === 'and' ? '\n' : '}\nUNION\n{') + '\n}';
             }
             case 'hasType': {
                 const part = replaceVariables(this.settings.filterTypePattern, varName => {

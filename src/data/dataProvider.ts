@@ -238,7 +238,7 @@ export interface DataProviderLinkCount {
  * Parameters for {@link DataProvider.lookup} operation.
  *
  * Specified filters are be combined to produce an intersection of the results,
- * same as nesting them in a {@link LookupPatternAllOf} pattern.
+ * same as nesting them in a {@link LookupPatternAnd} pattern.
  *
  * All lookup filters can be combined into a single pattern
  * with {@link lookupPatternOf}.
@@ -319,8 +319,8 @@ export interface DataProviderLookupParams {
  * @see {@link DataProvider.lookup}
  */
 export type LookupPattern =
-    | LookupPatternAllOf
-    | LookupPatternAnyOf
+    | LookupPatternAnd
+    | LookupPatternOr
     | LookupPatternWithText
     | LookupPatternHasType
     | LookupPatternConnectedTo
@@ -331,11 +331,11 @@ export type LookupPattern =
  * Lookup pattern that filters entities by requiring all of the nested
  * {@link patterns} to match.
  */
-export interface LookupPatternAllOf {
+export interface LookupPatternAnd {
     /**
      * Lookup pattern type.
      */
-    readonly type: 'allOf';
+    readonly type: 'and';
     /**
      * Patterns list, all of which matching are required for this pattern to match.
      *
@@ -348,11 +348,11 @@ export interface LookupPatternAllOf {
  * Lookup pattern that filters entities by requiring any of the nested
  * {@link patterns} to match.
  */
-export interface LookupPatternAnyOf {
+export interface LookupPatternOr {
     /**
      * Lookup pattern type.
      */
-    readonly type: 'anyOf';
+    readonly type: 'or';
     /**
      * Patterns list, any of which matching is enough for this pattern to match.
      *
@@ -380,8 +380,8 @@ export interface LookupPatternHasType {
  * matching an {@link other} pattern, optinally restricted by specific
  * {@link linkType link type} and/or {@link linkDirection direction}.
  *
- * If provided as a top-level pattern (including as part of {@link LookupPatternAllOf}
- * or {@link LookupPatternAnyOf}), provides {@link DataProviderLookupItem.inLinks} and
+ * If provided as a top-level pattern (including as part of {@link LookupPatternAnd}
+ * or {@link LookupPatternOr}), provides {@link DataProviderLookupItem.inLinks} and
  * {@link DataProviderLookupItem.outLinks} on the result items.
  */
 export interface LookupPatternConnectedTo {
@@ -547,7 +547,7 @@ export function lookupPatternOf(
     }
 
     return patterns.length === 1 ? patterns[0] : {
-        type: 'allOf',
+        type: 'and',
         patterns,
     };
 }

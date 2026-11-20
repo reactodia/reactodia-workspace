@@ -5,13 +5,13 @@ export {
 export {
     type SearchCriteriaOption, type SearchCriteriaRenderProps, SearchCriterion,
     SearchCriterionBlock, SearchCriterionWhereGroup, SearchCriterionWhere,
-    SearchCriterionAllOf, SearchCriterionAnyOf, SearchCriterionHasType,
+    SearchCriterionAnd, SearchCriterionOr, SearchCriterionHasType,
     SearchCriterionConnectedTo, SearchCriterionFromValues, SearchCriterionHasProperty,
 } from './searchCriterion';
 export {
     SearchPattern, type SearchPatternType, type SerializedSearchPattern,
     type SearchPatternError, type SearchPatternErrorItem, type SearchPatternGenerateContext,
     type SearchPatternFromJsonContext, type SearchPatternToJsonContext,
-    SearchPatternAllOf, SearchPatternAnyOf, SearchPatternHasType, SearchPatternConnectedTo,
+    SearchPatternAnd, SearchPatternOr, SearchPatternHasType, SearchPatternConnectedTo,
     SearchPatternFromValues, SearchPatternHasProperty,
 } from './searchPattern';

@@ -129,7 +129,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-type) and (from-values)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'hasType',
@@ -158,7 +158,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(from-values) and (from-values)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'fromValues',
@@ -177,7 +177,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(from-values) or (from-values)',
         {
             pattern: {
-                type: 'anyOf',
+                type: 'or',
                 patterns: [
                     {
                         type: 'fromValues',
@@ -196,7 +196,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-type) and (connected-to (from-values)) and (with-text)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'hasType',
@@ -222,14 +222,14 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-property) and ((has-type) or (has-type))',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'hasProperty',
                         propertyType: rdfs.comment,
                     },
                     {
-                        type: 'anyOf',
+                        type: 'or',
                         patterns: [
                             {
                                 type: 'hasType',
@@ -281,7 +281,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-property) and (has-property)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'hasProperty',
@@ -304,7 +304,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-property) or (has-property)',
         {
             pattern: {
-                type: 'anyOf',
+                type: 'or',
                 patterns: [
                     {
                         type: 'hasProperty',
@@ -325,7 +325,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-type) and (has-type)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'hasType',
@@ -344,7 +344,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(has-type) or (has-type)',
         {
             pattern: {
-                type: 'anyOf',
+                type: 'or',
                 patterns: [
                     {
                         type: 'hasType',
@@ -363,7 +363,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(with-text) and (with-text)',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'withText',
@@ -382,7 +382,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(with-text) or (with-text)',
         {
             pattern: {
-                type: 'anyOf',
+                type: 'or',
                 patterns: [
                     {
                         type: 'withText',
@@ -401,7 +401,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         '(connected-to (has-type)) and (connected-to (has-type))',
         {
             pattern: {
-                type: 'allOf',
+                type: 'and',
                 patterns: [
                     {
                         type: 'connectedTo',

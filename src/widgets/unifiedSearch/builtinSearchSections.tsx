@@ -99,8 +99,8 @@ export function SearchSectionEntities(props: {
      * can be overriden by including options for these pattern types instead.
      *
      * **Built-in criteria options**:
-     *  - {@link SearchCriterionAllOf}
-     *  - {@link SearchCriterionAnyOf}
+     *  - {@link SearchCriterionAnd}
+     *  - {@link SearchCriterionOr}
      *  - {@link SearchCriterionHasType}
      *  - {@link SearchCriterionConnectedTo}
      *  - {@link SearchCriterionFromValues}

@@ -34,7 +34,7 @@ function joinWithPattern(
     context: MatchPatternContext
 ): HashMap<Rdf.NamedNode | Rdf.BlankNode, MatchItem> {
     switch (pattern.type) {
-        case 'allOf': {
+        case 'and': {
             if (pattern.patterns.length === 0) {
                 return makeItemMap();
             }
@@ -44,7 +44,7 @@ function joinWithPattern(
             }
             return items ?? makeItemMap();
         }
-        case 'anyOf': {
+        case 'or': {
             const items = makeItemMap();
             for (const p of pattern.patterns) {
                 const next = joinWithPattern(previous, p, context);

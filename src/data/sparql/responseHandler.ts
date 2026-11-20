@@ -544,8 +544,8 @@ export function createConnectedToLinkMatcher(
     const otherIris = new Set<ElementIri>();
     const visit = (pattern: LookupPattern): ConnectedToMatcher['match'] | undefined => {
         switch (pattern.type) {
-            case 'allOf':
-            case 'anyOf': {
+            case 'and':
+            case 'or': {
                 const matchers: ConnectedToMatcher['match'][] = [];
                 for (const p of pattern.patterns) {
                     const matcher = visit(p);
@@ -564,7 +564,7 @@ export function createConnectedToLinkMatcher(
                         anyMatch ||= doesMatch;
                         allMatch &&= doesMatch;
                     }
-                    return pattern.type === 'allOf' ? allMatch : anyMatch;
+                    return pattern.type === 'and' ? allMatch : anyMatch;
                 };
             }
             case 'connectedTo': {

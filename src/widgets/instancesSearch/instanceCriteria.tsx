@@ -14,9 +14,9 @@ import {
     SearchCriterion, SearchCriterionContext, SearchCriteriaOption, AddCriterion,
 } from './searchCriterion';
 import {
-    SearchPattern, SearchPatternType, SearchPatternErrorItem,
-    SearchPatternAllOf, SearchPatternHasType, SearchPatternConnectedTo,
-    SearchPatternFromValues, SearchPatternGenerateContext,
+    SearchPattern, SearchPatternErrorItem, SearchPatternGenerateContext,
+    SearchPatternAnd, SearchPatternHasType, SearchPatternConnectedTo,
+    SearchPatternFromValues,
 } from './searchPattern';
 
 /**
@@ -233,6 +233,6 @@ function searchPatternFrom(criteria: SearchCriteria): SearchPattern | undefined 
     return (
         patterns.length === 0 ? undefined :
         patterns.length === 1 ? patterns[0] :
-        new SearchPatternAllOf({patterns})
+        new SearchPatternAnd({patterns})
     );
 }

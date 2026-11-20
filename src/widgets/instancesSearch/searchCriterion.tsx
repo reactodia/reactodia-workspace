@@ -15,7 +15,7 @@ import { EntitySelect } from './entitySelect';
 import { SchemaTypeSelect, useSchemaType } from './schemaTypeSelect';
 import {
     SearchPattern, SearchPatternType, SearchPatternErrorItem, SerializedSearchPattern,
-    SearchPatternError, SearchPatternAllOf, SearchPatternAnyOf, SearchPatternConnectedTo,
+    SearchPatternError, SearchPatternAnd, SearchPatternOr, SearchPatternConnectedTo,
     SearchPatternFromValues, SearchPatternHasProperty, SearchPatternHasType,
 } from './searchPattern';
 import { LookupPattern } from '../../workspace';
@@ -129,27 +129,27 @@ export function SearchCriterion(props: {
     }
     
     const isLogicalPattern = (
-        pattern instanceof SearchPatternAllOf ||
-        pattern instanceof SearchPatternAnyOf
+        pattern instanceof SearchPatternAnd ||
+        pattern instanceof SearchPatternOr
     );
     const controls = editing ? (
         <div className={`${CLASS_NAME}__controls reactodia-btn-group`}>
             {isLogicalPattern ? null : (
                 <AddCriterion
-                    onAdd={added => setPattern(new SearchPatternAllOf({
+                    onAdd={added => setPattern(new SearchPatternAnd({
                         patterns: [pattern, added],
                     }))}
-                    title={t.textOptional('search_entities.criteria_all_of_add.title')}>
-                    {t.text('search_entities.criteria_all_of_add.label')}
+                    title={t.textOptional('search_entities.criteria_and_add.title')}>
+                    {t.text('search_entities.criteria_and_add.label')}
                 </AddCriterion>
             )}
             {isLogicalPattern ? null : (
                 <AddCriterion
-                    onAdd={added => setPattern(new SearchPatternAnyOf({
+                    onAdd={added => setPattern(new SearchPatternOr({
                         patterns: [pattern, added]
                     }))}
-                    title={t.textOptional('search_entities.criteria_any_of_add.title')}>
-                    {t.text('search_entities.criteria_any_of_add.label')}
+                    title={t.textOptional('search_entities.criteria_or_add.title')}>
+                    {t.text('search_entities.criteria_or_add.label')}
                 </AddCriterion>
             )}
             <button type='button'
@@ -399,24 +399,24 @@ function PlaceholderUnknownCriterion(
 }
 
 /**
- * Search criteria option corresponding to {@link LookupPatternAllOf}.
+ * Search criteria option corresponding to {@link LookupPatternAnd}.
  */
-export const SearchCriterionAllOf: SearchCriteriaOption<SearchPatternAllOf> = {
-    type: SearchPatternAllOf,
-    createPattern: () => new SearchPatternAllOf({patterns: []}),
-    renderCriterion: props => <AnyAllOfCriterion {...props} />,
+export const SearchCriterionAnd: SearchCriteriaOption<SearchPatternAnd> = {
+    type: SearchPatternAnd,
+    createPattern: () => new SearchPatternAnd({patterns: []}),
+    renderCriterion: props => <AndOrCriterion {...props} />,
 };
 
 /**
- * Search criteria option corresponding to {@link LookupPatternAnyOf}.
+ * Search criteria option corresponding to {@link LookupPatternOr}.
  */
-export const SearchCriterionAnyOf: SearchCriteriaOption<SearchPatternAnyOf> = {
-    type: SearchPatternAnyOf,
-    createPattern: () => new SearchPatternAnyOf({patterns: []}),
-    renderCriterion: props => <AnyAllOfCriterion {...props} />,
+export const SearchCriterionOr: SearchCriteriaOption<SearchPatternOr> = {
+    type: SearchPatternOr,
+    createPattern: () => new SearchPatternOr({patterns: []}),
+    renderCriterion: props => <AndOrCriterion {...props} />,
 };
 
-function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
+function AndOrCriterion<P extends SearchPatternOr | SearchPatternAnd>(
     props: SearchCriteriaRenderProps<P>
 ) {
     const {pattern, setPattern, inEditMode, parent} = props;
@@ -431,10 +431,10 @@ function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
                     {index > 0 ? (
                         <div className={`${CLASS_NAME}__logical-joiner`}>
                             {(
-                                pattern instanceof SearchPatternAllOf ? t.text(
-                                    'search_entities.criteria_all_of_joiner'
-                                ) : pattern instanceof SearchPatternAnyOf ? t.text(
-                                    'search_entities.criteria_any_of_joiner'
+                                pattern instanceof SearchPatternAnd ? t.text(
+                                    'search_entities.criteria_and_joiner'
+                                ) : pattern instanceof SearchPatternOr ? t.text(
+                                    'search_entities.criteria_or_joiner'
                                 ) : '-'
                             )}
                         </div>
@@ -445,11 +445,11 @@ function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
                             const nextPatterns = [...pattern.state.patterns];
                             if (next) {
                                 if ((
-                                    next instanceof SearchPatternAllOf &&
-                                    pattern instanceof SearchPatternAllOf
+                                    next instanceof SearchPatternAnd &&
+                                    pattern instanceof SearchPatternAnd
                                 ) || (
-                                    next instanceof SearchPatternAnyOf &&
-                                    pattern instanceof SearchPatternAnyOf
+                                    next instanceof SearchPatternOr &&
+                                    pattern instanceof SearchPatternOr
                                 )) {
                                     nextPatterns.splice(index, 1, ...next.state.patterns);
                                 } else {
@@ -462,10 +462,10 @@ function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
                             setPattern(
                                 nextPatterns.length === 0 ? undefined :
                                 nextPatterns.length === 1 ? nextPatterns[0] :
-                                pattern instanceof SearchPatternAllOf ? new SearchPatternAllOf({
+                                pattern instanceof SearchPatternAnd ? new SearchPatternAnd({
                                     patterns: nextPatterns,
                                 }) :
-                                pattern instanceof SearchPatternAnyOf ? new SearchPatternAnyOf({
+                                pattern instanceof SearchPatternOr ? new SearchPatternOr({
                                     patterns: nextPatterns,
                                 }) :
                                 undefined
@@ -479,27 +479,27 @@ function AnyAllOfCriterion<P extends SearchPatternAnyOf | SearchPatternAllOf>(
                 <AddCriterion
                     onAdd={added => {
                         setPattern(
-                            pattern instanceof SearchPatternAllOf ? new SearchPatternAllOf({
+                            pattern instanceof SearchPatternAnd ? new SearchPatternAnd({
                                 patterns: [added],
                             }) :
-                            pattern instanceof SearchPatternAnyOf ? new SearchPatternAnyOf({
+                            pattern instanceof SearchPatternOr ? new SearchPatternOr({
                                 patterns: [added],
                             }) :
                             undefined
                         );
                     }}
                     title={
-                        pattern instanceof SearchPatternAllOf ? t.textOptional(
-                            'search_entities.criteria_all_of_add.title'
-                        ) : pattern instanceof SearchPatternAnyOf ? t.textOptional(
-                            'search_entities.criteria_any_of_add.title'
+                        pattern instanceof SearchPatternAnd ? t.textOptional(
+                            'search_entities.criteria_and_add.title'
+                        ) : pattern instanceof SearchPatternOr ? t.textOptional(
+                            'search_entities.criteria_or_add.title'
                         ) : undefined
                     }>
                     {(
-                        pattern instanceof SearchPatternAllOf ? t.text(
-                            'search_entities.criteria_all_of_add.label'
-                        ) : pattern instanceof SearchPatternAnyOf ? t.text(
-                            'search_entities.criteria_any_of_add.label'
+                        pattern instanceof SearchPatternAnd ? t.text(
+                            'search_entities.criteria_and_add.label'
+                        ) : pattern instanceof SearchPatternOr ? t.text(
+                            'search_entities.criteria_or_add.label'
                         ) : t.text('search_entities.add_criterion.label')
                     )}
                 </AddCriterion>

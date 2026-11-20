@@ -1210,8 +1210,8 @@ function rehydrateTerm(
 
 function hasTextPatternOrFilter(pattern: LookupPattern): boolean {
     switch (pattern.type) {
-        case 'allOf':
-        case 'anyOf': {
+        case 'and':
+        case 'or': {
             return pattern.patterns.some(hasTextPatternOrFilter);
         }
         case 'withText': {
@@ -1235,8 +1235,8 @@ function serializeTextLookup(text: string): SExprLike {
 
 function serializePattern(pattern: LookupPattern): SExprLike {
     switch (pattern.type) {
-        case 'allOf':
-        case 'anyOf': {
+        case 'and':
+        case 'or': {
             return [pattern.type, pattern.patterns.map(serializePattern)];
         }
         case 'hasType': {
