@@ -9,84 +9,45 @@
 
   &__criteria {
     flex-shrink: 0;
-    margin: 10px 0 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px;
+    max-height: 50%;
   }
 
   &--controlled &__criteria {
     margin-top: 0;
-    margin-bottom: 0;
   }
 
   &__criterions {
-    padding-left: 15px;
-    margin-bottom: 10px;
-    &:empty { margin-bottom: 0; }
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    overflow-x: hidden;
   }
 
-  &__criterion {
-    display: block;
-    position: relative;
-    width: 100%;
+  &__criterions:empty {
+    display: none;
   }
 
-  &__criterion-class {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
+  &__criterions-controls {
+    align-self: flex-end;
   }
 
-  &__criterion-element {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
+  &__criterions-edit {
+    @include codicon-button("edit");
   }
-
-  &__criterion-link-type {
-    border: theme.$color-primary 1px dashed;
-    color: theme.$color-primary-contrast-foreground;
-    background-color: theme.$color-primary-contrast-background;
-    padding: 0 .5em 0 .5em;
-    word-wrap: break-word;
+  &__criterions-clear {
+    @include codicon-button("trash");
   }
-
-  &__link-direction-in,
-  &__link-direction-out {
-    display: inline-block;
-    width: 1em;
-    height: 1em;
-    opacity: 0.5;
-    vertical-align: middle;
-    mask-position: 0 0;
-    mask-size: contain;
-    mask-repeat: no-repeat;
-    background-color: currentColor;
+  &__criterions-apply {
+    @include codicon-button("check");
   }
-
-  &__link-direction-in {
-    -webkit-mask-image: url("@images/direction-in.svg");
-    mask-image: url("@images/direction-in.svg");
+  &__criterions-cancel {
+    @include codicon-button("close");
   }
-
-  &__link-direction-out {
-    -webkit-mask-image: url("@images/direction-out.svg");
-    mask-image: url("@images/direction-out.svg");
-  }
-
-  &__criterion-remove {
-    float: right;
-    margin: 0 10px 4px 4px;
-  }
-  &__criterion-remove-button {
-    &::before {
-      @include codicon("close");
-    }
-  }
-
-  &__text-criteria { margin: 0 10px; }
 
   &__search-button {
     height: 34px;

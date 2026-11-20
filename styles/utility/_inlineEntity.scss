@@ -12,3 +12,13 @@
     padding: 0 2px;
   }
 }
+
+div.reactodia-inline-entity {
+  display: flex;
+  white-space: nowrap;
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

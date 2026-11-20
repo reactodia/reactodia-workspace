@@ -1,0 +1,91 @@
+@use "../mixin/icons" as *;
+@use "../theme/theme";
+
+.reactodia-schema-type-view {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 1px;
+  border: 1px solid;
+  border-color: transparent;
+  border-radius: theme.$border-radius-s;
+  cursor: default;
+
+  &--inline {
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  &:hover {
+    background: theme.$tree-background-color-focus;
+    border-color: theme.$tree-border-color-focus;
+    cursor: pointer;
+  }
+
+  &--selected {
+    background-color: theme.$tree-background-color-active;
+    border-color: theme.$tree-border-color-active;
+  }
+
+  &__icon-container {
+    height: 20px;
+  }
+
+  &--inline &__icon-container {
+    align-self: center;
+    height: unset;
+  }
+
+  &__icon {
+    display: block;
+    height: 100%;
+  }
+
+  &__icon--monochrome {
+    filter: theme.$monochrome-icon-filter;
+  }
+
+  &__default-icon {
+    @include codicon("symbol-method");
+    width: 20px;
+    height: 20px;
+    color: var(--reactodia-element-style-color);
+  }
+
+  &--property-type &__default-icon {
+    @include codicon("symbol-string");
+  }
+
+  &--link-type &__default-icon {
+    @include codicon("symbol-interface");
+  }
+
+  &__label {
+    margin-left: 5px;
+    color: theme.$font-color-base;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__highlighted-term {
+    font-weight: bold;
+  }
+
+  &--size-s {
+    padding: 0;
+  }
+
+  &--size-s &__icon-container {
+    height: 16px;
+  }
+
+  &--size-s &__default-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--size-s &__label {
+    font-size: 13px;
+  }
+}

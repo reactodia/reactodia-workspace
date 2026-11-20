@@ -67,6 +67,10 @@ export function Spinner(props: SpinnerProps) {
  */
 export function HtmlSpinner(props: {
     /**
+     * Additional CSS class for the component.
+     */
+    className?: string;
+    /**
      * SVG canvas width to render spinner on.
      */
     width: number;
@@ -82,10 +86,10 @@ export function HtmlSpinner(props: {
      */
     errorOccurred?: boolean;
 }) {
-    const {width, height, errorOccurred} = props;
+    const {className, width, height, errorOccurred} = props;
     const size = Math.min(width, height);
     return (
-        <svg width={width} height={height}>
+        <svg className={className} width={width} height={height}>
             <Spinner size={size}
                 position={{x: width / 2, y: height / 2}}
                 errorOccurred={errorOccurred}

@@ -10,8 +10,11 @@ import {
     PropertyTypeIri, PropertyTypeModel,
     hashLink, equalLinks,
 } from '../../src/data/model';
+import { makeCaseInsensitiveFilter } from '../../src/data/utils';
 
 export class MockDataProvider extends EmptyDataProvider {
+    private readonly defaultLimit = 100;
+
     knownElementTypes(params: {
         signal?: AbortSignal | undefined;
     }): Promise<ElementTypeGraph> {
@@ -61,6 +64,84 @@ export class MockDataProvider extends EmptyDataProvider {
             },
         ];
         return Promise.resolve(linkTypes);
+    }
+
+    lookupElementTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<ElementTypeModel[]> {
+        const { text, limit = this.defaultLimit } = params;
+        const filter = makeCaseInsensitiveFilter(text);
+        const result: ElementTypeModel[] = [];
+        for (let i = 0; result.length < Math.min(limit, this.defaultLimit * 2); i++) {
+            const prefix = (
+                i % 3 === 0 ? 'aa' :
+                i % 3 === 1 ? 'bb' :
+                'cc'
+            );
+            const part = `${prefix}${i}`;
+            if (!filter(part)) {
+                continue;
+            }
+            result.push({
+                id: elementType(part),
+                label: [],
+            });
+        }
+        return Promise.resolve(result);
+    }
+
+    lookupPropertyTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<PropertyTypeModel[]> {
+        const { text, limit = this.defaultLimit } = params;
+        const filter = makeCaseInsensitiveFilter(text);
+        const result: PropertyTypeModel[] = [];
+        for (let i = 0; result.length < Math.min(limit, this.defaultLimit * 2); i++) {
+            const prefix = (
+                i % 3 === 0 ? 'aa' :
+                i % 3 === 1 ? 'bb' :
+                'cc'
+            );
+            const part = `${prefix}${i}`;
+            if (!filter(part)) {
+                continue;
+            }
+            result.push({
+                id: propertyType(part),
+                label: [],
+            });
+        }
+        return Promise.resolve(result);
+    }
+
+    lookupLinkTypes(params: {
+        text: string;
+        limit?: number;
+        signal?: AbortSignal;
+    }): Promise<LinkTypeModel[]> {
+        const { text, limit = this.defaultLimit } = params;
+        const filter = makeCaseInsensitiveFilter(text);
+        const result: LinkTypeModel[] = [];
+        for (let i = 0; result.length < Math.min(limit, this.defaultLimit * 2); i++) {
+            const prefix = (
+                i % 3 === 0 ? 'aa' :
+                i % 3 === 1 ? 'bb' :
+                'cc'
+            );
+            const part = `${prefix}${i}`;
+            if (!filter(part)) {
+                continue;
+            }
+            result.push({
+                id: linkType(part),
+                label: [],
+            });
+        }
+        return Promise.resolve(result);
     }
 
     elements(params: {

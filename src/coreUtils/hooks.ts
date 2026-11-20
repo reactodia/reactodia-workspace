@@ -164,7 +164,22 @@ export interface UseAsyncResult<T> {
  * @category Hooks
  */
 export function useAsync<const I extends React.DependencyList, T>(params: {
+    /**
+     * Input dependecies to load a value, compared with shallow array comparison.
+     */
     input: I;
+    /**
+     * Callback to asynchronously load a value.
+     *
+     * Does not need to have stable identity, the latest provided callback
+     * will be used on load. To reload a value on a callback change, it can
+     * be added to the `input`.
+     *
+     * @param input provided input
+     * @param options load operation options
+     * @returns a promise with load result or `undefined` to cancel load operation
+     *    while keeping the last result (`data` or `error`)
+     */
     load: (input: I, options: { signal: AbortSignal }) => Promise<T> | undefined;
 }): UseAsyncResult<T> {
     const {input, load} = params;
@@ -192,7 +207,10 @@ export function useAsync<const I extends React.DependencyList, T>(params: {
                 }
             );
         } else {
-            setResult({data: undefined, status: 'completed', error: undefined});
+            setResult(previous => ({
+                ...previous,
+                status: previous.status === 'loading' ? 'completed' : previous.status,
+            }));
         }
         return () => controller.abort();
     }, input);
@@ -205,4 +223,27 @@ export function useLatest<T>(value: T): { readonly current: T } {
         ref.current = value;
     });
     return ref;
+}
+
+export function useCombinedRef<T>(
+    refA: React.Ref<T> | undefined,
+    refB: React.Ref<T> | undefined
+): React.RefCallback<T> {
+    return React.useCallback((value: T) => {
+        if (refA) {
+            if (typeof refA === 'function') {
+                refA(value);
+            } else {
+                (refA as React.MutableRefObject<T>).current = value;
+            }
+        }
+
+        if (refB) {
+            if (typeof refB === 'function') {
+                refB(value);
+            } else {
+                (refB as React.MutableRefObject<T>).current = value;
+            }
+        }
+    }, [refA, refB]);
 }

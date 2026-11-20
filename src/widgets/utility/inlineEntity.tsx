@@ -1,3 +1,4 @@
+import cx from 'clsx';
 import * as React from 'react';
 
 import { useTranslation } from '../../coreUtils/i18n';
@@ -11,9 +12,15 @@ import { formatEntityTitle } from '../utility/listElementView';
 const CLASS_NAME = 'reactodia-inline-entity';
 
 export function InlineEntity(props: {
+    className?: string;
     target: ElementModel;
+    /**
+     * @default false
+     */
+    block?: boolean;
+    children?: React.ReactNode;
 }) {
-    const {target} = props;
+    const {className, target, block, children} = props;
     const {model, getElementTypeStyle} = useWorkspace();
     const t = useTranslation();
     const label = model.locale.formatEntityLabel(target, model.language);
@@ -21,13 +28,15 @@ export function InlineEntity(props: {
     const style = {
         '--reactodia-inline-entity-color': color,
     } as React.CSSProperties;
+    const Tag = block ? 'div' : 'span';
     return (
-        <span className={CLASS_NAME}
+        <Tag className={cx(CLASS_NAME, className)}
             style={style}
             title={formatEntityTitle(target, model, t)}>
-            <span className={`${CLASS_NAME}__label`}>
+            <Tag className={`${CLASS_NAME}__label`}>
                 {label}
-            </span>
-        </span>
+            </Tag>
+            {children}
+        </Tag>
     );
 }
