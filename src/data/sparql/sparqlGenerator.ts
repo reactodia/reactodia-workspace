@@ -6,8 +6,7 @@ import * as Rdf from '../rdf/rdfModel';
 
 import { LinkTypeIri, PropertyTypeIri } from '../model';
 import {
-    DataProviderLookupParams, LookupPattern, LookupPatternHasType, LookupPatternConnectedTo,
-    LookupPatternHasProperty, LookupPatternWithText, lookupPatternOf,
+    LookupPattern, LookupPatternConnectedTo, LookupPatternHasProperty, LookupPatternWithText,
 } from '../dataProvider';
 
 import {
@@ -184,20 +183,23 @@ export class SparqlGenerator {
         return /\${filterByPattern}/.test(lookupQuery);
     }
 
-    generateLookupQuery(params: DataProviderLookupParams): string {
+    generateLookupQuery(params: {
+        pattern: LookupPattern;
+        limit: number | null;
+    }): string {
+        const {pattern, limit} = params;
         const {
             defaultPrefix, dataLabelProperty, lookupQuery, filterAdditionalRestriction,
             filterOnlyLanguages, filterElementInfoPattern, fullTextSearch,
         } = this.settings;
 
-        let outerProjection = '?inst ?class ?label';
+        const outerProjection = '?inst ?class ?label';
         let innerProjection = '?inst';
 
         const entityTerm = this.factory.variable!('inst');
-        const pattern = lookupPatternOf(params);
 
         const valueSets = new Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>();
-        const projections = new Set<'link' | 'direction' | 'score'>();
+        const projections = new Set<'score'>();
 
         const generateParams = {
             entityTerm,
@@ -216,21 +218,6 @@ export class SparqlGenerator {
             prependedValueSets += `VALUES(?${variableName}) { ${valueSetContent} }\n`;
         }
 
-        let queryTypes = '';
-        if (projections.has('link')) {
-            outerProjection += ' ?link';
-            innerProjection += ' ?link';
-            if (this.settings.linkConfigurations.length > 0) {
-                outerProjection += ' ?classAll';
-                queryTypes = this.settings.filterTypePattern.replace(/[?$]class\b/g, '?classAll');
-            }
-        }
-
-        if (projections.has('direction')) {
-            outerProjection += ' ?direction';
-            innerProjection += ' ?direction';
-        }
-
         let orderBy = '';
         if (projections.has('score')) {
             innerProjection += ' ?score';
@@ -242,7 +229,7 @@ export class SparqlGenerator {
             labelLanguageFilter: formatLanguageFilter('?label', filterOnlyLanguages),
         });
 
-        const limitPart = formatLimit(params.limit);
+        const limitPart = formatLimit(limit);
 
         const filterByPattern = prependedValueSets + generatedPattern;
 
@@ -260,7 +247,7 @@ export class SparqlGenerator {
                 : `${filterByPattern}\n${filterAdditionalRestriction}`,
             orderBy,
             limit: limitPart,
-            queryTypes,
+            queryTypes: '',
             queryElementInfo,
         });
     }
@@ -271,7 +258,7 @@ export class SparqlGenerator {
             path: string;
             entityTerm: Rdf.Variable;
             valueSets: Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>;
-            projections: Set<'link' | 'direction' | 'score'>;
+            projections: Set<'score'>;
             withProjection?: boolean;
         }
     ): string {
@@ -344,13 +331,8 @@ export class SparqlGenerator {
                         predicateTerm: withProjection
                             ? this.factory.variable!('link')
                             : this.factory.variable!(`connectedTo_link${path}`),
-                        withProjection,
                     })
                 );
-                if (withProjection) {
-                    projections.add('link');
-                    projections.add('direction');
-                }
                 if (pattern.other && targetTerm.termType === 'Variable') {
                     parts.push(
                         this.generatePattern(pattern.other, {
@@ -389,10 +371,11 @@ export class SparqlGenerator {
                 return parts.join('\n');
             }
             case 'withText': {
-                const scoreTerm = withProjection
+                const bindScore = withProjection && !projections.has('score');
+                const scoreTerm = bindScore
                     ? this.factory.variable!('score')
                     : this.factory.variable!(`withText_score${path}`);
-                if (withProjection) {
+                if (bindScore) {
                     projections.add('score');
                 }
                 return this.generateWithTextPattern(pattern, {
@@ -415,10 +398,9 @@ export class SparqlGenerator {
             sourceTerm: Rdf.Variable;
             targetTerm: Rdf.Variable | Rdf.NamedNode;
             predicateTerm: Rdf.Variable;
-            withProjection?: boolean;
         }
     ): string {
-        const {sourceTerm, targetTerm, predicateTerm, withProjection} = params;
+        const {sourceTerm, targetTerm, predicateTerm} = params;
 
         const {linkType, linkDirection} = pattern;
         const {unionParts, usePredicatePart} = this.formatLinkUnion({
@@ -427,7 +409,6 @@ export class SparqlGenerator {
             targetOut: sourceTerm,
             linkType,
             linkDirection,
-            withProjection
         });
 
         if (usePredicatePart) {
@@ -442,7 +423,6 @@ export class SparqlGenerator {
             }
 
             const linkPattern = refLinkType || escapeTerm(predicateTerm);
-            const bindType = refLinkType ? `BIND(${refLinkType} as ${escapeTerm(predicateTerm)})` : '';
             // Specifically use isBlank() as opposed to isIri() when possible for filtering
             // to avoid a full scan on some endpoints (e.g. Virtuoso)
             const outFilter = this.acceptBlankNodes
@@ -453,12 +433,10 @@ export class SparqlGenerator {
                 : `FILTER(!isBlank(${source}))`;
 
             if (!linkDirection || linkDirection === 'out') {
-                const binds = withProjection ? `BIND("out" as ?direction) ${bindType}` : '';
-                unionParts.push(`{ ${target} ${linkPattern} ${source} ${binds} ${outFilter} }`);
+                unionParts.push(`{ ${target} ${linkPattern} ${source} ${outFilter} }`);
             }
             if (!linkDirection || linkDirection === 'in') {
-                const binds = withProjection ? `BIND("in" as ?direction) ${bindType}` : '';
-                unionParts.push(`{ ${source} ${linkPattern} ${target} ${binds} ${inFilter} }`);
+                unionParts.push(`{ ${source} ${linkPattern} ${target} ${inFilter} }`);
             }
         }
 

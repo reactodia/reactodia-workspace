@@ -291,6 +291,14 @@ export interface DataProviderLookupParams {
     pattern?: LookupPattern;
 
     /**
+     * Whether to provide {@link DataProviderLookupItem.inLinks} and
+     * {@link DataProviderLookupItem.outLinks} when applicable.
+     *
+     * @default false
+     */
+    withLinks?: boolean;
+
+    /**
      * Limit number of elements returned.
      *
      * Pass `null` to explicitly disable the limit.
@@ -466,11 +474,9 @@ export interface LookupPatternWithText {
 }
 
 /**
- * Describes an element with information on which link types and directions
- * are used to connect it to other elements.
+ * Describes a result entity item returned from {@link DataProvider.lookup}.
  *
  * @category Data
- * @see {@link DataProvider.lookup}
  */
 export interface DataProviderLookupItem {
     /**
@@ -478,19 +484,21 @@ export interface DataProviderLookupItem {
      */
     readonly element: ElementModel;
     /**
-     * Link types for connections in the form: `entity` → `target`
-     * ({@link LookupPatternConnectedTo.target}).
+     * Link types for connections in the form: `entity` → `other`
+     * ({@link LookupPatternConnectedTo.other}).
      *
-     * Only applicable if {@link LookupPatternConnectedTo} or equivalent filter
-     * is specified in {@link DataProvider.lookup}.
+     * Only applicable if {@link LookupPatternConnectedTo} with
+     * nested {@link LookupPatternFromValues} (or equivalent) filter
+     * is specified at top level in {@link DataProvider.lookup}.
      */
     readonly inLinks: ReadonlySet<LinkTypeIri>;
     /**
-     * Link types for connections in the form: `entity` ← `target`
-     * ({@link LookupPatternConnectedTo.target}).
+     * Link types for connections in the form: `entity` ← `other`
+     * ({@link LookupPatternConnectedTo.other}).
      *
-     * Only applicable if {@link LookupPatternConnectedTo} or equivalent filter
-     * is specified in {@link DataProvider.lookup}.
+     * Only applicable if {@link LookupPatternConnectedTo} with
+     * nested {@link LookupPatternFromValues} (or equivalent) filter
+     * is specified at top level in {@link DataProvider.lookup}.
      */
     readonly outLinks: ReadonlySet<LinkTypeIri>;
 }

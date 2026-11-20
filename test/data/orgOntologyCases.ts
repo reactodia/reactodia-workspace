@@ -1,7 +1,7 @@
-import type { DataProvider } from '../../src/data/dataProvider';
+import type { DataProvider, DataProviderLookupItem } from '../../src/data/dataProvider';
 import type { LinkModel } from '../../src/data/model';
 import * as Rdf from '../../src/data/rdf/rdfModel';
-import { owl as owlBase, rdfs as rdfsBase } from '../../src/data/rdf/vocabulary';
+import { owl as owlBase, rdf, rdfs as rdfsBase } from '../../src/data/rdf/vocabulary';
 
 const NAMESPACE_ORG = 'http://www.w3.org/ns/org#';
 export const org = {
@@ -145,7 +145,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         [org.identifier, org.location],
     ],
     [
-        '(from-values) - empty',
+        '(from-values [])',
         {
             pattern: {
                 type: 'fromValues',
@@ -153,6 +153,44 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
             },
         },
         [],
+    ],
+    [
+        '(from-values) and (from-values)',
+        {
+            pattern: {
+                type: 'allOf',
+                patterns: [
+                    {
+                        type: 'fromValues',
+                        values: [org.organization, org.transitiveSubOrganizationOf],
+                    },
+                    {
+                        type: 'fromValues',
+                        values: [org.member, org.organization],
+                    }
+                ],
+            },
+        },
+        [org.organization],
+    ],
+    [
+        '(from-values) or (from-values)',
+        {
+            pattern: {
+                type: 'anyOf',
+                patterns: [
+                    {
+                        type: 'fromValues',
+                        values: [org.organization, org.transitiveSubOrganizationOf],
+                    },
+                    {
+                        type: 'fromValues',
+                        values: [org.member, org.organization],
+                    }
+                ],
+            },
+        },
+        [org.member, org.organization, org.transitiveSubOrganizationOf],
     ],
     [
         '(has-type) and (connected-to (from-values)) and (with-text)',
@@ -240,6 +278,69 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         [org.FormalOrganization],
     ],
     [
+        '(has-property) and (has-property)',
+        {
+            pattern: {
+                type: 'allOf',
+                patterns: [
+                    {
+                        type: 'hasProperty',
+                        propertyType: rdfs.label,
+                        values: [
+                            Rdf.DefaultDataFactory.literal('Formal Organization', 'en'),
+                            Rdf.DefaultDataFactory.literal('SomethingElse')
+                        ],
+                    },
+                    {
+                        type: 'hasProperty',
+                        propertyType: rdfs.comment,
+                    },
+                ],
+            },
+        },
+        [org.FormalOrganization],
+    ],
+    [
+        '(has-property) or (has-property)',
+        {
+            pattern: {
+                type: 'anyOf',
+                patterns: [
+                    {
+                        type: 'hasProperty',
+                        propertyType: rdfs.label,
+                        values: [Rdf.DefaultDataFactory.literal('Formal Organization', 'en')],
+                    },
+                    {
+                        type: 'hasProperty',
+                        propertyType: rdfs.label,
+                        values: [Rdf.DefaultDataFactory.literal('member', 'en')],
+                    },
+                ],
+            },
+        },
+        [org.FormalOrganization, org.member],
+    ],
+    [
+        '(has-type) and (has-type)',
+        {
+            pattern: {
+                type: 'allOf',
+                patterns: [
+                    {
+                        type: 'hasType',
+                        elementType: owl.ObjectProperty,
+                    },
+                    {
+                        type: 'hasType',
+                        elementType: owl.TransitiveProperty,
+                    },
+                ],
+            },
+        },
+        [org.transitiveSubOrganizationOf],
+    ],
+    [
         '(has-type) or (has-type)',
         {
             pattern: {
@@ -257,6 +358,25 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
             },
         },
         [org.identifier, org.location, org.roleProperty],
+    ],
+    [
+        '(with-text) and (with-text)',
+        {
+            pattern: {
+                type: 'allOf',
+                patterns: [
+                    {
+                        type: 'withText',
+                        text: 'formal',
+                    },
+                    {
+                        type: 'withText',
+                        text: 'formal organ',
+                    },
+                ],
+            },
+        },
+        [org.FormalOrganization],
     ],
     [
         '(with-text) or (with-text)',
@@ -305,5 +425,92 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
             },
         },
         [org.Organization],
+    ],
+];
+
+export type LookupWithLinksTestCase = [
+    name: string,
+    params: Parameters<DataProvider['lookup']>[0],
+    getExpectedItems: readonly DataProviderLookupItem[]
+];
+
+export const lookupWithLinksOrgOntologyCases: readonly LookupWithLinksTestCase[] = [
+    [
+        'type',
+        {
+            elementTypeId: owl.DatatypeProperty,
+            withLinks: true,
+        },
+        [
+            {
+                element: {
+                    id: org.identifier,
+                    types: [rdf.Property, owl.DatatypeProperty],
+                    properties: {
+                        [rdfs.label]: [Rdf.DefaultDataFactory.literal('identifier', 'en')],
+                    }
+                },
+                inLinks: new Set(),
+                outLinks: new Set(),
+            },
+            {
+                element: {
+                    id: org.location,
+                    types: [rdf.Property, owl.DatatypeProperty],
+                    properties: {
+                        [rdfs.label]: [Rdf.DefaultDataFactory.literal('location', 'en')],
+                    }
+                },
+                inLinks: new Set(),
+                outLinks: new Set(),
+            },
+        ] as const
+    ],
+    [
+        'connected by entity',
+        {
+            refElementId: org.roleProperty,
+            withLinks: true,
+        },
+        [
+            {
+                element: {
+                    id: rdf.Property,
+                    types: [],
+                    properties: {}
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdf.type, rdfs.range]),
+            },
+            {
+                element: {
+                    id: owl.AnnotationProperty,
+                    types: [],
+                    properties: {}
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdf.type]),
+            },
+            {
+                element: {
+                    id: 'http://www.w3.org/ns/org',
+                    types: [],
+                    properties: {},
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdfs.isDefinedBy]),
+            },
+            {
+                element: {
+                    id: org.Role,
+                    types: [rdfs.Class, owl.Class],
+                    properties: {
+                        [rdfs.label]: [Rdf.DefaultDataFactory.literal('Role', 'en')],
+                    }
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdfs.domain]),
+            },
+        ] as const,
     ],
 ];

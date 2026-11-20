@@ -6,6 +6,7 @@ import {
 } from '../model';
 import {
     DataProvider, DataProviderLinkCount, DataProviderLookupParams, DataProviderLookupItem,
+    lookupPatternOf,
 } from '../dataProvider';
 
 import { chunkArray, chunkUndirectedCrossProduct } from './requestChunking';
@@ -18,11 +19,13 @@ import {
     collectElementTypes,
     collectLinkTypes,
     collectPropertyTypes,
+    createConnectedToLinkMatcher,
     enrichElementsWithImages,
     getClassTree,
     getConnectedLinkTypes,
     getElementsInfo,
     getFilteredData,
+    getFilteredIris,
     getLinksInfo,
     getLinkTypes,
     getLinkStatistics,
@@ -769,31 +772,43 @@ export class SparqlDataProvider implements DataProvider {
     }
 
     async lookup(baseParams: DataProviderLookupParams): Promise<DataProviderLookupItem[]> {
-        const {signal} = baseParams;
-        const params: DataProviderLookupParams = {
-            ...baseParams,
+        const {withLinks, signal} = baseParams;
+
+        const pattern = lookupPatternOf(baseParams);
+        const matcher = withLinks ? createConnectedToLinkMatcher(pattern) : undefined;
+
+        const filterQuery = this.generator.generateLookupQuery({
+            pattern,
             limit: baseParams.limit === undefined ? 100 : baseParams.limit,
-        };
-
-        // query types to match link configuration domains
-        const types = this.querySingleElementTypes(
-            params.refElementId && this.settings.linkConfigurations.length > 0
-                ? params.refElementId : undefined,
-            signal
-        );
-
-        const filterQuery = this.generator.generateLookupQuery(params);
-        const response = await this.executeSparqlSelect<ElementBinding & FilterBinding>(
+        });
+        const response = await this.executeSparqlSelect<FilterBinding>(
             filterQuery,
             {signal}
         );
 
+        let links: LinkModel[] | undefined;
+        if (matcher) {
+            const iris = getFilteredIris(response.results.bindings);
+            links = await this.links({
+                primary: Array.from(iris),
+                secondary: Array.from(matcher.otherIris),
+                signal,
+            });
+        } else {
+            links = [];
+        }
+
+        const checkLinks = Boolean(
+            matcher &&
+            this.settings.linkConfigurations.length > 0 &&
+            !this.generator.openWorldLinks
+        );
         const linkedElements = getFilteredData(
             response.results.bindings,
-            await types,
-            this.generator.linkByPredicate,
-            this.labelPredicate,
-            this.generator.openWorldLinks
+            matcher,
+            links,
+            checkLinks,
+            this.labelPredicate
         );
 
         if (this.options.prepareLabels) {

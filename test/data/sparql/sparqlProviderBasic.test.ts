@@ -16,7 +16,7 @@ import {
 
 import {
     linksOrgOntologyCases, lookupBasicOrgOntologyCases, lookupPatternOrgOntologyCases,
-    org, owl, rdfs,
+    lookupWithLinksOrgOntologyCases, org, owl, rdfs,
 } from '../orgOntologyCases';
 import { makeSparqlDataProvider, makeSparqlDataset } from '../../mock/sparqlMocks';
 import { compareLinks, compareLookupItemsByIri } from '../../utilities/dataCompare';
@@ -233,96 +233,6 @@ describe('SparqlDataProvider', () => {
         expect(links).toEqual(expectedLinks);
     });
 
-    it('provides lookup() by type (with links)', async () => {
-        const provider = await makeSparqlDataProvider(
-            {},
-            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
-        );
-        const items = await provider.lookup({
-            elementTypeId: owl.DatatypeProperty,
-        });
-        expect(items).toEqual(
-            [
-                {
-                    element: {
-                        id: org.identifier,
-                        types: [rdf.Property, owl.DatatypeProperty],
-                        properties: {
-                            [rdfs.label]: [provider.factory.literal('identifier', 'en')],
-                        }
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set(),
-                },
-                {
-                    element: {
-                        id: org.location,
-                        types: [rdf.Property, owl.DatatypeProperty],
-                        properties: {
-                            [rdfs.label]: [provider.factory.literal('location', 'en')],
-                        }
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set(),
-                },
-            ] satisfies DataProviderLookupItem[]
-        );
-    });
-
-    it('provides lookup() by connected to (with links)', async () => {
-        const provider = await makeSparqlDataProvider(
-            {},
-            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
-        );
-        const items = await provider.lookup({
-            refElementId: org.roleProperty,
-        });
-        items.sort(compareLookupItemsByIri);
-        expect(items).toEqual(
-            [
-                {
-                    element: {
-                        id: rdf.Property,
-                        types: [owl.Thing],
-                        properties: {}
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set([rdf.type, rdfs.range]),
-                },
-                {
-                    element: {
-                        id: owl.AnnotationProperty,
-                        types: [owl.Thing],
-                        properties: {}
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set([rdf.type]),
-                },
-                {
-                    element: {
-                        id: 'http://www.w3.org/ns/org',
-                        types: [owl.Thing],
-                        properties: {},
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set([rdfs.isDefinedBy]),
-                },
-                {
-                    element: {
-                        id: org.Role,
-                        types: [rdfs.Class, owl.Class],
-                        properties: {
-                            [rdfs.label]: [provider.factory.literal('Role', 'en')],
-                        }
-                    },
-                    inLinks: new Set(),
-                    outLinks: new Set([rdfs.domain]),
-                },
-                
-            ] satisfies DataProviderLookupItem[]
-        );
-    });
-
     it.each(
         lookupBasicOrgOntologyCases   
     )('provides lookup() by "%s"', async (name, params, expectedIds) => {
@@ -345,6 +255,18 @@ describe('SparqlDataProvider', () => {
         const items = await provider.lookup(params);
         items.sort(compareLookupItemsByIri);
         expect(items.map(item => item.element.id)).toEqual(expectedIds);
+    });
+
+    it.each(
+        lookupWithLinksOrgOntologyCases   
+    )('provides lookup({withLinks: true}) by "%s"', async (name, params, expectedItems) => {
+        const provider = await makeSparqlDataProvider(
+            {},
+            {...OwlStatsSettings, filterOnlyLanguages: ['en']},
+        );
+        const items = await provider.lookup(params);
+        items.sort(compareLookupItemsByIri);
+        expect(items).toEqual(expectedItems);
     });
 });
 

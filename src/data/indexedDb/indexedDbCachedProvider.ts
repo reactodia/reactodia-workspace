@@ -134,7 +134,11 @@ interface ConnectedLinkStatsRecord {
     readonly stats: DataProviderLinkCount[];
 }
 
-type LookupKey = [pattern: string, limit: string];
+type LookupKey = [
+    pattern: string,
+    options: string,
+    limit: string
+];
 const LOOKUP_KEY_PROPERTIES: Array<keyof LookupRecord> = ['pattern', 'limit'];
 interface LookupRecord {
     readonly pattern: string;
@@ -840,8 +844,13 @@ export class IndexedDbCachedProvider implements DataProvider {
         if (!this.cacheTextLookups && hasTextPatternOrFilter(fullPattern)) {
             return this.baseProvider.lookup(params);
         }
+        const keyOptions: [string, unknown][] = [];
+        if (params.withLinks) {
+            keyOptions.push(['withLinks', true]);
+        }
         const key: LookupKey = [
             JSON.stringify(serializePattern(fullPattern)),
+            JSON.stringify(keyOptions),
             (
                 params.limit === undefined ? '' :
                 params.limit === null ? 'null' :

@@ -70,8 +70,4 @@ export interface ElementTypeBinding {
     class: Rdf.NamedNode;
 }
 
-export interface FilterBinding {
-    classAll?: Rdf.NamedNode;
-    link?: Rdf.NamedNode;
-    direction?: Rdf.Literal;
-}
+export type FilterBinding = ElementBinding;

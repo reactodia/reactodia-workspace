@@ -269,9 +269,6 @@ export interface SparqlDataProviderSettings {
      *   - `${filterAdditionalRestriction}` from {@link filterAdditionalRestriction}
      *   - `${orderBy}` (when {@link DataProviderLookupParams.text} is provided)
      *   - `${limit}` (when {@link DataProviderLookupParams.limit} is provided)
-     *   - `${queryTypes}` from {@link filterTypePattern}
-     *     (when {@link DataProviderLookupParams.refElementId} is provided and
-     *     {@link linkConfigurations} is non-empty)
      *   - `${queryElementInfo}` from {@link filterElementInfoPattern}
      *
      * If `${filterByPattern}` not found in the query, the generated pattern
@@ -287,10 +284,6 @@ export interface SparqlDataProviderSettings {
      *   - `?inst` element IRI
      *   - `?class` element type
      *   - `?label` element label
-     *   - `?link` connected via link type
-     *     (when {@link ConnectedToLookupPattern} is provided at top level)
-     *   - `?direction` connected via link direction (`"in"` or `"out"`)
-     *     (when {@link ConnectedToLookupPattern} is provided at top level)
      *   - `?score` element lookup score (higher ordered first)
      *     (for order only; when {@link WithTextLookupPattern} is provided at top level)
      */
@@ -581,7 +574,6 @@ export const RdfSettings: SparqlDataProviderSettings = {
             \${filterAdditionalRestriction}
         } \${orderBy} \${limit}
     }
-    \${queryTypes}
     \${queryElementInfo}
 } \${orderBy}`,
 
@@ -772,8 +764,7 @@ const WikidataSettingsOverride: Partial<SparqlDataProviderSettings> = {
                         FILTER exists {?inst ?someprop ?someobj}
 `,
     filterElementInfoPattern: `
-        OPTIONAL {?inst wdt:P31 ?foundClass}
-        BIND (coalesce(?foundClass, owl:Thing) as ?class)
+        OPTIONAL { ?inst wdt:P31 ?class }
         OPTIONAL {
             ?inst rdfs:label ?label
             \${labelLanguageFilter}
@@ -911,8 +902,7 @@ const OwlRdfsSettingsOverride: Partial<SparqlDataProviderSettings> = {
     filterRefElementLinkPattern: '',
     filterTypePattern: '?inst a ?instType. ?instType rdfs:subClassOf* ?class.',
     filterElementInfoPattern: `
-        OPTIONAL {?inst rdf:type ?foundClass}
-        BIND (coalesce(?foundClass, owl:Thing) as ?class)
+        OPTIONAL { ?inst a ?class }
         OPTIONAL {
             ?inst \${dataLabelProperty} ?label
             \${labelLanguageFilter}

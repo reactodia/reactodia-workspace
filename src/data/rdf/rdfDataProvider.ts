@@ -639,6 +639,7 @@ export class RdfDataProvider implements DataProvider {
             dataset: this.dataset,
             typePredicate: this.typePredicate,
             labelPredicate: this.labelPredicate,
+            withLinks: params.withLinks ?? false,
         });
 
         const linkedElements: DataProviderLookupItem[] = [];

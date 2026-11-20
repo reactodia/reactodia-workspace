@@ -18,6 +18,7 @@ export interface MatchPatternContext {
     readonly factory: Rdf.DataFactory;
     readonly typePredicate: Rdf.NamedNode;
     readonly labelPredicate: Rdf.NamedNode | null;
+    readonly withLinks: boolean;
 }
 
 export function matchPattern(
@@ -93,6 +94,7 @@ function joinWithPattern(
             return items;
         }
         case 'connectedTo': {
+            const computeLinks = context.withLinks && pattern.other?.type === 'fromValues';
             const targets = pattern.other
                 ? Array.from(joinWithPattern(undefined, pattern.other, context).keys())
                 : [null];
@@ -112,11 +114,13 @@ function joinWithPattern(
                                 item = {term};
                                 items.set(term, item);
                             }
-                            const predicate: LinkTypeIri = encodeTerm(t.predicate);
-                            if (!item.outLinks) {
-                                item.outLinks = new Set();
+                            if (computeLinks) {
+                                const predicate: LinkTypeIri = encodeTerm(t.predicate);
+                                if (!item.outLinks) {
+                                    item.outLinks = new Set();
+                                }
+                                item.outLinks.add(predicate);
                             }
-                            item.outLinks.add(predicate);
                         }
                     }
                 }
@@ -135,11 +139,13 @@ function joinWithPattern(
                                 item = {term};
                                 items.set(term, item);
                             }
-                            const predicate: LinkTypeIri = encodeTerm(t.predicate);
-                            if (!item.inLinks) {
-                                item.inLinks = new Set();
+                            if (computeLinks) {
+                                const predicate: LinkTypeIri = encodeTerm(t.predicate);
+                                if (!item.inLinks) {
+                                    item.inLinks = new Set();
+                                }
+                                item.inLinks.add(predicate);
                             }
-                            item.inLinks.add(predicate);
                         }
                     }
                 }
@@ -171,7 +177,11 @@ function joinWithPattern(
             for (const t of iterable) {
                 if (
                     isResourceTerm(t.subject) &&
-                    (!previous || providedTerms.find(value => Rdf.equalTerms(t.object, value)))
+                    (
+                        !previous ||
+                        providedTerms.length === 0 ||
+                        providedTerms.find(value => Rdf.equalTerms(t.object, value))
+                    )
                 ) {
                     items.set(t.subject, {term: t.subject});
                 }
@@ -180,7 +190,7 @@ function joinWithPattern(
         }
     }
 };
-        
+
 function makeItemMap() {
     return new HashMap<Rdf.NamedNode | Rdf.BlankNode, MatchItem>(
         Rdf.hashTerm, Rdf.equalTerms
