@@ -15,6 +15,9 @@ export const org = {
     Site: `${NAMESPACE_ORG}Site`,
     classification: `${NAMESPACE_ORG}classification`,
     hasMembership: `${NAMESPACE_ORG}hasMembership`,
+    hasPrimarySite: `${NAMESPACE_ORG}hasPrimarySite`,
+    hasRegisteredSite: `${NAMESPACE_ORG}hasRegisteredSite`,
+    hasSubOrganization: `${NAMESPACE_ORG}hasSubOrganization`,
     hasUnit: `${NAMESPACE_ORG}hasUnit`,
     identifier: `${NAMESPACE_ORG}identifier`,
     location: `${NAMESPACE_ORG}location`,
@@ -22,10 +25,12 @@ export const org = {
     memberDuring: `${NAMESPACE_ORG}memberDuring`,
     memberOf: `${NAMESPACE_ORG}memberOf`,
     organization: `${NAMESPACE_ORG}organization`,
+    purpose: `${NAMESPACE_ORG}purpose`,
     role: `${NAMESPACE_ORG}role`,
     roleProperty: `${NAMESPACE_ORG}roleProperty`,
     subOrganizationOf: `${NAMESPACE_ORG}subOrganizationOf`,
     transitiveSubOrganizationOf: `${NAMESPACE_ORG}transitiveSubOrganizationOf`,
+    unitOf: `${NAMESPACE_ORG}unitOf`,
 } as const;
 
 export const owl = {
@@ -43,6 +48,7 @@ export const rdfs = {
     domain: `${rdfsBase.$namespace}domain`,
     isDefinedBy: `${rdfsBase.$namespace}isDefinedBy`,
     range: `${rdfsBase.$namespace}range`,
+    subPropertyOf: `${rdfsBase.$namespace}subPropertyOf`,
 };
 
 export type LinksTestCase = readonly [
@@ -145,7 +151,7 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         [org.identifier, org.location],
     ],
     [
-        '(from-values [])',
+        '(from-values [values=empty])',
         {
             pattern: {
                 type: 'fromValues',
@@ -251,12 +257,12 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         {
             pattern: {
                 type: 'connectedTo',
-                linkType: rdfs.domain,
-                linkDirection: 'in',
+                allowLinks: [rdfs.domain],
+                direction: 'in',
                 other: {
                     type: 'connectedTo',
-                    linkType: rdfs.range,
-                    linkDirection: 'out',
+                    allowLinks: [rdfs.range],
+                    direction: 'out',
                     other: {
                         type: 'fromValues',
                         values: [org.hasMembership],
@@ -360,6 +366,58 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
         [org.identifier, org.location, org.roleProperty],
     ],
     [
+        '(has-type) minus (has-type)',
+        {
+            pattern: {
+                type: 'minus',
+                pattern: {
+                    type: 'hasType',
+                    elementType: rdf.Property,
+                },
+                exclude: {
+                    type: 'hasType',
+                    elementType: owl.ObjectProperty,
+                }
+            },
+        },
+        [org.identifier, org.location, org.purpose, org.roleProperty],
+    ],
+    [
+        '(has-type) minus ((has-type) minus (connected-to (from-values)))',
+        {
+            pattern: {
+                type: 'minus',
+                pattern: {
+                    type: 'hasType',
+                    elementType: rdf.Property,
+                },
+                exclude: {
+                    type: 'minus',
+                    pattern: {
+                        type: 'hasType',
+                        elementType: owl.ObjectProperty,
+                    },
+                    exclude: {
+                        type: 'connectedTo',
+                        other: {
+                            type: 'fromValues',
+                            values: [org.transitiveSubOrganizationOf, org.hasUnit],
+                        },
+                    },
+                }
+            },
+        },
+        [
+            org.hasSubOrganization,
+            org.identifier,
+            org.location,
+            org.purpose,
+            org.roleProperty,
+            org.subOrganizationOf,
+            org.unitOf,
+        ],
+    ],
+    [
         '(with-text) and (with-text)',
         {
             pattern: {
@@ -405,8 +463,8 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
                 patterns: [
                     {
                         type: 'connectedTo',
-                        linkType: rdfs.range,
-                        linkDirection: 'out',
+                        allowLinks: [rdfs.range],
+                        direction: 'out',
                         other: {
                             type: 'hasType',
                             elementType: owl.FunctionalProperty,
@@ -414,8 +472,8 @@ export const lookupPatternOrgOntologyCases: readonly LookupTestCase[] = [
                     },
                     {
                         type: 'connectedTo',
-                        linkType: rdfs.domain,
-                        linkDirection: 'out',
+                        allowLinks: [rdfs.domain],
+                        direction: 'out',
                         other: {
                             type: 'hasType',
                             elementType: owl.DatatypeProperty,
@@ -510,6 +568,83 @@ export const lookupWithLinksOrgOntologyCases: readonly LookupWithLinksTestCase[]
                 },
                 inLinks: new Set(),
                 outLinks: new Set([rdfs.domain]),
+            },
+        ] as const,
+    ],
+    [
+        'connected with fully ignored links',
+        {
+            pattern: {
+                type: 'connectedTo',
+                ignoreLinks: [rdfs.domain, rdfs.range, rdf.type],
+                other: {
+                    type: 'fromValues',
+                    values: [org.hasRegisteredSite],
+                },
+            },
+            withLinks: true,
+        },
+        [
+            {
+                element: {
+                    id: 'http://www.w3.org/ns/org',
+                    types: [],
+                    properties: {},
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdfs.isDefinedBy]),
+            },
+            {
+                element: {
+                    id: org.hasPrimarySite,
+                    types: [rdf.Property, owl.ObjectProperty],
+                    properties: {
+                        [rdfs.label]: [Rdf.DefaultDataFactory.literal('primary Site', 'en')],
+                    }
+                },
+                inLinks: new Set(),
+                outLinks: new Set([rdfs.subPropertyOf]),
+            },
+        ] as const,
+    ],
+    [
+        'connected with partially ignored links',
+        {
+            pattern: {
+                type: 'and',
+                patterns: [
+                    {
+                        type: 'hasType',
+                        elementType: owl.TransitiveProperty,
+                    },
+                    {
+                        type: 'connectedTo',
+                        ignoreLinks: [rdfs.domain],
+                        other: {
+                            type: 'fromValues',
+                            values: [org.Organization],
+                        },
+                    },
+                ],
+            },
+            withLinks: true,
+        },
+        [
+            {
+                element: {
+                    id: org.transitiveSubOrganizationOf,
+                    types: [rdf.Property, owl.ObjectProperty, owl.TransitiveProperty],
+                    properties: {
+                        [rdfs.label]: [
+                            Rdf.DefaultDataFactory.literal(
+                                'transitive sub-organization',
+                                'en'
+                            )
+                        ],
+                    }
+                },
+                inLinks: new Set([rdfs.range]),
+                outLinks: new Set(),
             },
         ] as const,
     ],

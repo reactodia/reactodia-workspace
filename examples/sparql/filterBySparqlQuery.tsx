@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as Reactodia from '../../src/workspace';
 
 export class FilterBySparqlQueryPattern extends Reactodia.SearchPattern<{
+    readonly initial?: boolean;
     readonly query: string;
     readonly resultItems?: readonly Reactodia.ElementIri[];
 }> {
@@ -61,7 +62,7 @@ export const FilterBySparqlQueryCriterion:
 {
     type: FilterBySparqlQueryPattern,
     label: 'from SPARQL query',
-    createPattern: () => new FilterBySparqlQueryPattern({query: ''}),
+    createPattern: () => new FilterBySparqlQueryPattern({initial: true, query: ''}),
     renderCriterion: props => <FilterBySparqlQuery {...props} />,
 };
 
@@ -82,10 +83,6 @@ function FilterBySparqlQuery(
     );
     const {onRefresh, status: refreshStatus} = useRefreshQueryResult({pattern, setPattern});
 
-    if (!inEditMode) {
-        return statusLine;
-    }
-
     const onEditQuery = () => {
         overlay.showDialog({
             style: {
@@ -103,6 +100,21 @@ function FilterBySparqlQuery(
             ),
         });
     };
+
+    React.useEffect(() => {
+        if (pattern.state.initial) {
+            onEditQuery();
+            setPattern(new FilterBySparqlQueryPattern({
+                ...pattern.state,
+                initial: undefined,
+            }));
+        }
+    }, [pattern.state]);
+
+    if (!inEditMode) {
+        return statusLine;
+    }
+
     return (
         <Reactodia.SearchCriterionBlock target={pattern}
             controls={controls}

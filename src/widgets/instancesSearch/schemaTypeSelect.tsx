@@ -14,7 +14,7 @@ import { iterateEntitiesOf, iterateRelationsOf } from '../../editor/dataElements
 import {
     subscribeElementTypes, subscribeLinkTypes, subscribePropertyTypes,
 } from '../../editor/observedElement';
-import { useFetchStatus } from '../../editor/withFetchStatus';
+import { WithFetchStatus } from '../../editor/withFetchStatus';
 import { useWorkspace } from '../../workspace/workspaceContext';
 
 import { Autocomplete } from '../utility/autocomplete';
@@ -25,8 +25,9 @@ const CLASS_NAME = 'reactodia-schema-type-select';
 
 interface SchemaTypeSelectProps<Kind extends keyof SchemaType> {
     typeKind: Kind;
-    selected: SchemaType[Kind] | undefined;
-    setSelected: (item: SchemaType[Kind] | undefined) => void;
+    selected: readonly SchemaType[Kind][];
+    setSelected: (item: readonly SchemaType[Kind][]) => void;
+    placeholder?: string;
     /**
      * @default "m"
      */
@@ -36,14 +37,12 @@ interface SchemaTypeSelectProps<Kind extends keyof SchemaType> {
 export function SchemaTypeSelect<Kind extends keyof SchemaType>(
     props: SchemaTypeSelectProps<Kind>
 ) {
-    const {typeKind, selected, setSelected, sizeVariant} = props;
+    const {typeKind, selected, setSelected, placeholder, sizeVariant} = props;
     const t = useTranslation();
-    const {model} = useWorkspace();    
+    const {model} = useWorkspace();
     const {dataProvider} = model;
 
     const language = useObservedProperty(model.events, 'changeLanguage', () => model.language);
-
-    const typeStatus = useFetchStatus({type: typeKind, target: selected?.id});
 
     const suggest = React.useCallback(async (text: string, options: { signal: AbortSignal }) => {
         const {signal} = options;
@@ -96,28 +95,38 @@ export function SchemaTypeSelect<Kind extends keyof SchemaType>(
         [t, language]
     );
 
+    const selectedTypeIds = new Set<SchemaType[Kind]['id']>(
+        selected.map(item => item.id)
+    );
+
     return (
         <Autocomplete className={CLASS_NAME}
             inlineContent={
-                selected ? (
-                    <SchemaTypeView typeKind={typeKind}
-                        typeData={selected}
-                        className={`${CLASS_NAME}__selected`}
-                        sizeVariant={sizeVariant}>
-                        <button
-                            className={cx(
-                                `${CLASS_NAME}__selected-remove`,
-                                'reactodia-btn reactodia-btn-default'
-                            )}
-                            onClick={() => setSelected(undefined)}
-                        />
-                    </SchemaTypeView>
-                ) : undefined
+                selected.map(typeData => (
+                    <WithFetchStatus key={typeData.id}
+                        type={typeKind}
+                        target={typeData.id}>
+                        <SchemaTypeView typeKind={typeKind}
+                            typeData={typeData}
+                            className={`${CLASS_NAME}__selected`}
+                            sizeVariant={sizeVariant}>
+                            <button
+                                className={cx(
+                                    `${CLASS_NAME}__selected-remove`,
+                                    'reactodia-btn reactodia-btn-default'
+                                )}
+                                onClick={() => setSelected(
+                                    selected.filter(item => item.id !== typeData.id)
+                                )}
+                            />
+                        </SchemaTypeView>
+                    </WithFetchStatus>
+                ))
             }
-            inlineStatus={typeStatus}
             suggest={suggest}
             suggestDefault={suggestDefault}
             suggestDefaultComparator={comparator}
+            placeholder={placeholder}
             sizeVariant={sizeVariant}>
             {({items: suggestions, highlightText}) => (
                 <ul className={`${CLASS_NAME}__items`}>
@@ -126,8 +135,12 @@ export function SchemaTypeSelect<Kind extends keyof SchemaType>(
                             typeKind={typeKind}
                             typeData={item}
                             highlightText={highlightText}
-                            selected={item.id === selected?.id}
-                            onSelect={() => setSelected(item)}
+                            selected={selectedTypeIds.has(item.id)}
+                            onSelect={() => {
+                                if (!selectedTypeIds.has(item.id)) {
+                                    setSelected([...selected, item]);
+                                }
+                            }}
                         />
                     ))}
                 </ul>
@@ -210,54 +223,48 @@ function SchemaTypeAutocompleteItem<Kind extends keyof SchemaType>(props: {
     );
 }
 
-export function useSchemaType<Kind extends keyof SchemaType>(
+export function useProvidedSchemaTypes<Kind extends keyof SchemaType>(
     typeKind: Kind,
-    typeId: SchemaType[Kind]['id'] | undefined
-): SchemaType[Kind] | undefined {
+    typeIds: readonly SchemaType[Kind]['id'][]
+): SchemaType[Kind][] {
     const {model} = useWorkspace();
 
     type SubscribeTypes = KeyedSyncStore<SchemaType[Kind]['id'], typeof model>;
     let subscribeTypes: SubscribeTypes;
-    let typeData: SchemaType[keyof SchemaType] | undefined;
+    let typeData: SchemaType[keyof SchemaType][] = [];
 
     switch (typeKind) {
         case 'elementType': {
-            const elementTypeId = typeId as ElementTypeIri;
+            const elementTypeIds = typeIds as readonly ElementTypeIri[];
             subscribeTypes = subscribeElementTypes as SubscribeTypes;
-            if (typeId) {
-                const data: SchemaType['elementType'] =
-                    model.createElementType(elementTypeId).data ?? {
-                        id: elementTypeId,
-                        label: [],
-                    };
-                typeData = data;
-            }
+            typeData = elementTypeIds.map(typeId =>
+                model.createElementType(typeId).data ?? {
+                    id: typeId,
+                    label: [],
+                }
+            );
             break;
         }
         case 'propertyType': {
-            const propertyTypeId = typeId as PropertyTypeIri;
+            const propertyTypeIds = typeIds as readonly PropertyTypeIri[];
             subscribeTypes = subscribePropertyTypes as SubscribeTypes;
-            if (typeId) {
-                const data: SchemaType['propertyType'] =
-                    model.createPropertyType(propertyTypeId).data ?? {
-                        id: propertyTypeId,
-                        label: [],
-                    };
-                typeData = data;
-            }
+            typeData = propertyTypeIds.map(typeId =>
+                model.createPropertyType(typeId).data ?? {
+                    id: typeId,
+                    label: [],
+                }
+            );
             break;
         }
         case 'linkType': {
-            const linkTypeId = typeId as LinkTypeIri;
+            const linkTypeIds = typeIds as readonly LinkTypeIri[];
             subscribeTypes = subscribeLinkTypes as SubscribeTypes;
-            if (typeId) {
-                const data: SchemaType['linkType'] =
-                    model.createLinkType(linkTypeId).data ?? {
-                        id: linkTypeId,
-                        label: [],
-                    };
-                typeData = data;
-            }
+            typeData = linkTypeIds.map(typeId =>
+                model.createLinkType(typeId).data ?? {
+                    id: typeId,
+                    label: [],
+                }
+            );
             break;
         }
         default: {
@@ -265,6 +272,6 @@ export function useSchemaType<Kind extends keyof SchemaType>(
         }
     }
 
-    useKeyedSyncStore(subscribeTypes, typeId ? [typeId] : [], model);
-    return typeData as SchemaType[Kind] | undefined;
+    useKeyedSyncStore(subscribeTypes, typeIds, model);
+    return typeData as SchemaType[Kind][];
 }

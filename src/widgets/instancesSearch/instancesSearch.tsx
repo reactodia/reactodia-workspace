@@ -28,7 +28,7 @@ import { SearchResults } from '../utility/searchResults';
 
 import { SearchCriteria, InstanceCriteria } from './instanceCriteria';
 import {
-    type SearchCriteriaOption, SearchCriterionAnd, SearchCriterionOr,
+    type SearchCriteriaOption, SearchCriterionAnd, SearchCriterionOr, SearchCriterionMinus,
     SearchCriterionHasType, SearchCriterionConnectedTo, SearchCriterionFromValues,
     SearchCriterionHasProperty,
 } from './searchCriterion';
@@ -77,6 +77,7 @@ export interface InstancesSearchProps {
      * **Built-in criteria options**:
      *  - {@link SearchCriterionAnd}
      *  - {@link SearchCriterionOr}
+     *  - {@link SearchCriterionMinus}
      *  - {@link SearchCriterionHasType}
      *  - {@link SearchCriterionConnectedTo}
      *  - {@link SearchCriterionFromValues}
@@ -137,6 +138,7 @@ export interface InstancesSearchCommands {
 const BuiltInCriterionOptions: readonly SearchCriteriaOption[] = [
     SearchCriterionAnd,
     SearchCriterionOr,
+    SearchCriterionMinus,
     SearchCriterionHasType,
     SearchCriterionConnectedTo,
     SearchCriterionFromValues,

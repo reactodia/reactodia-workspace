@@ -6,14 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ## [Unreleased]
 #### 🚀 New Features
 - Add AST-based lookup patterns to `DataProvider`:
-  * Support entity search with composable `LookupPattern` in `DataProvider.lookup()`;
-  * **[💥Breaking]** Only provide `inLinks` and `outLinks` for result items from `DataProvider.lookup()` when `withLinks: true` is specified and there is a top-level `connectedTo`-pattern with constant `fromValues` sub-pattern (i.e. including just passing `refElementId`);
+  * **[💥Breaking]** Support entity search with composable `LookupPattern` in `DataProvider.lookup()`;
+  * Supported lookup patterns: `LookupPatternAnd`, `LookupPatternOr`, `LookupPatternMinus`, `LookupPatternHasType`, `LookupPatternConnectedTo`, `LookupPatternHasProperty`, `LookupPatternWithText`;
+  * **[💥Breaking]** Only provide `inLinks` and `outLinks` for result items from `DataProvider.lookup()` when `withLinks: true` is specified and there is a top-level `connectedTo`-pattern with constant `fromValues` sub-pattern (i.e. including just passing `refElementId`).
 - Add extendable search UI to `InstancesSearch` and `SearchSectionEntities` based on lookup patterns:
   * Add `SearchPattern`-derived types (separate from `LookupPattern`) to allow customizable search pattern display and editors;
-  * Add built-in search criteria options: `SearchCriterionAnd`, `SearchCriterionOr`, `SearchCriterionHasType`
-  `SearchCriterionConnectedTo`, `SearchCriterionFromValues`, `SearchCriterionHasProperty`;
-  * Add utility "building blocks" for custom search criteria: `SearchCriterionBlock`,
-  `SearchCriterionWhereGroup`, `SearchCriterionWhere`.
+  * Add built-in search criteria options: `SearchCriterionAnd`, `SearchCriterionOr`, `SearchCriterionMinus`, `SearchCriterionHasType`, `SearchCriterionConnectedTo`, `SearchCriterionFromValues`, `SearchCriterionHasProperty`;
+  * Add utility "building blocks" for custom search criteria: `SearchCriterion`, `SearchCriterionBlock`.
 
 #### 🐛 Fixed
 - Fix `SparqlDataProvider.connectedLinkStats()` error on a response with unbound counts (treat a missing count as 0).
@@ -21,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - Fix text search in `OwlRdfsSettings`/`OwlStatsSettings` being rejected by Virtuoso ("SQ200: index of column in order by out of range") due to `?score` being bound through an expression instead of a literal constant, which Virtuoso does not accept in `ORDER BY`.
 - Fix incorrect `limit` support in `SparqlDataProvider.lookup()` query if a connected element has more than one type (including transitive super-types) or it is connected by more than one link or direction:
   * Projection variables `?link` and `?direction` are removed from `SparqlDataProviderSettings.lookupQuery`;
+  * Binding `?direction` is removed from `SparqlDataProviderSettings.filterRefElementLinkPattern`;
   * Separate links query is issued instead of a complex single query to compute `inLinks` and `outLinks` for `DataProviderLookupItem`.
 
 #### ⏱ Performance

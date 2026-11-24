@@ -301,7 +301,6 @@ export interface SparqlDataProviderSettings {
      *
      * Available bindings:
      *   - `?link` link type
-     *   - `?direction` link direction, either `"in"` or `"out"`
      */
     filterRefElementLinkPattern: string;
 

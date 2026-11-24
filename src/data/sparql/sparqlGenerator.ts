@@ -98,7 +98,8 @@ export class SparqlGenerator {
             sourceTerm: elementTerm,
             targetIn: targetOut,
             targetOut: targetIn,
-            withProjection: true,
+            bindLink: true,
+            bindDirection,
         });
         if (forAll.usePredicatePart) {
             const bindOut = bindDirection ? 'BIND("out" AS ?direction)' : '';
@@ -212,12 +213,6 @@ export class SparqlGenerator {
         const generatedPattern = this.generatePattern(pattern, generateParams);
         const hasFilterByPattern = /\${filterByPattern}/.test(lookupQuery);
 
-        let prependedValueSets = '';
-        for (const [variableName, setTerms] of valueSets) {
-            const valueSetContent = formatValueClauseContent(setTerms);
-            prependedValueSets += `VALUES(?${variableName}) { ${valueSetContent} }\n`;
-        }
-
         let orderBy = '';
         if (projections.has('score')) {
             innerProjection += ' ?score';
@@ -231,7 +226,7 @@ export class SparqlGenerator {
 
         const limitPart = formatLimit(limit);
 
-        const filterByPattern = prependedValueSets + generatedPattern;
+        const filterByPattern = formatValueSets(valueSets) + generatedPattern;
 
         const completePrefix = defaultPrefix + '\n' + fullTextSearch.prefix + '\n';
         return completePrefix + resolveTemplate(lookupQuery, {
@@ -305,6 +300,27 @@ export class SparqlGenerator {
                 }
 
                 return '{\n' + parts.join(pattern.type === 'and' ? '\n' : '}\nUNION\n{') + '\n}';
+            }
+            case 'minus': {
+                const includeBranch = this.generatePattern(pattern.pattern, {
+                    path: `${path}_include`,
+                    entityTerm,
+                    valueSets,
+                    projections,
+                    withProjection,
+                });
+
+                const exludeValues = new Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>();
+                const excludeBranch = this.generatePattern(pattern.exclude, {
+                    path: `${path}_exclude`,
+                    entityTerm,
+                    valueSets: exludeValues,
+                    projections,
+                    withProjection,
+                });
+
+                const exludedSets = formatValueSets(exludeValues);
+                return `{\n${includeBranch}\n}\nMINUS\n{\n${exludedSets}\n${excludeBranch}\n}`;
             }
             case 'hasType': {
                 const part = replaceVariables(this.settings.filterTypePattern, varName => {
@@ -402,27 +418,53 @@ export class SparqlGenerator {
     ): string {
         const {sourceTerm, targetTerm, predicateTerm} = params;
 
-        const {linkType, linkDirection} = pattern;
-        const {unionParts, usePredicatePart} = this.formatLinkUnion({
+        const {allowLinks, ignoreLinks, direction} = pattern;
+        const {unionParts, usePredicatePart, restPredicates} = this.formatLinkUnion({
             sourceTerm: targetTerm,
             targetIn: sourceTerm,
             targetOut: sourceTerm,
-            linkType,
-            linkDirection,
+            allowLinks,
+            ignoreLinks,
+            direction,
         });
 
+        let usePlainLink = false;
         if (usePredicatePart) {
             const source = escapeTerm(sourceTerm);
             const target = escapeTerm(targetTerm);
-            let refLinkType: string | undefined;
-            if (linkType) {
-                const link = this.linkById.get(linkType);
-                refLinkType = link && isDirectLink(link)
-                    ? escapeIri(link.path)
-                    : escapeIri(linkType);
+
+            let linkPattern: string;
+            let linkFilter = '';
+            if (restPredicates) {
+                const pathParts = Array.from(restPredicates, predicate => {
+                    const link = this.linkById.get(predicate);
+                    return link && isDirectLink(link)
+                        ? escapeIri(link.path)
+                        : escapeIri(predicate);
+                });
+                linkPattern = pathParts.join('|');
+            } else if (ignoreLinks && ignoreLinks.length > 0) {
+                if (this.settings.filterRefElementLinkPattern) {
+                    // Keep link variable to be able to apply
+                    // additional restriction on the link
+                    linkPattern = escapeTerm(predicateTerm);
+                    const ignoredList = ignoreLinks.map(escapeIri).join(', ');
+                    linkFilter = `FILTER(${linkPattern} NOT IN (${ignoredList}))`;
+                    usePlainLink = true;
+                } else {
+                    const pathParts = Array.from(ignoreLinks, predicate => {
+                        const link = this.linkById.get(predicate);
+                        return link && isDirectLink(link)
+                            ? escapeIri(link.path)
+                            : escapeIri(predicate);
+                    });
+                    linkPattern = `!(${pathParts.join('|')})`;
+                }
+            } else {
+                linkPattern = escapeTerm(predicateTerm);
+                usePlainLink = true;
             }
 
-            const linkPattern = refLinkType || escapeTerm(predicateTerm);
             // Specifically use isBlank() as opposed to isIri() when possible for filtering
             // to avoid a full scan on some endpoints (e.g. Virtuoso)
             const outFilter = this.acceptBlankNodes
@@ -432,19 +474,22 @@ export class SparqlGenerator {
                 ? ''
                 : `FILTER(!isBlank(${source}))`;
 
-            if (!linkDirection || linkDirection === 'out') {
-                unionParts.push(`{ ${target} ${linkPattern} ${source} ${outFilter} }`);
+            if (!direction || direction === 'out') {
+                unionParts.push(`{ ${target} ${linkPattern} ${source} ${linkFilter} ${outFilter} }`);
             }
-            if (!linkDirection || linkDirection === 'in') {
-                unionParts.push(`{ ${source} ${linkPattern} ${target} ${inFilter} }`);
+            if (!direction || direction === 'in') {
+                unionParts.push(`{ ${source} ${linkPattern} ${target} ${linkFilter} ${inFilter} }`);
             }
         }
 
         let resultPattern = unionParts.length === 0 ? 'FILTER(false)' : unionParts.join('\nUNION\n');
 
-        const useAllLinksPattern = !linkType && this.settings.filterRefElementLinkPattern.length > 0;
-        if (useAllLinksPattern) {
-            resultPattern += `\n${this.settings.filterRefElementLinkPattern}`;
+        if (usePlainLink && this.settings.filterRefElementLinkPattern.length > 0) {
+            const filterPattern = replaceVariables(
+                this.settings.filterRefElementLinkPattern,
+                varName => varName === 'link' ? predicateTerm : undefined
+            );
+            resultPattern += `\n${filterPattern}`;
         }
 
         return resultPattern;
@@ -454,42 +499,69 @@ export class SparqlGenerator {
         sourceTerm: Rdf.Variable | Rdf.NamedNode;
         targetIn: Rdf.Variable;
         targetOut: Rdf.Variable;
-        linkType?: LinkTypeIri;
-        linkDirection?: 'in' | 'out';
-        withProjection?: boolean;
+        allowLinks?: readonly LinkTypeIri[];
+        ignoreLinks?: readonly LinkTypeIri[];
+        direction?: 'in' | 'out';
+        bindLink?: boolean;
+        bindDirection?: boolean;
     }) {
-        const {sourceTerm, targetIn, targetOut, linkType, linkDirection, withProjection} = params;
+        const {
+            sourceTerm, targetIn, targetOut, allowLinks, ignoreLinks,
+            direction, bindLink, bindDirection,
+        } = params;
         const {linkConfigurations} = this.settings;
+
+        const restPredicates = allowLinks && allowLinks.length > 0
+            ? new Set(allowLinks) : undefined;
+        const ignorePredicates = !restPredicates && ignoreLinks && ignoreLinks.length > 0
+            ? new Set(ignoreLinks) : undefined;
 
         const unionParts: string[] = [];
         let hasDirectLink = false;
 
         for (const link of linkConfigurations) {
-            if (linkType && link.id !== linkType) {
+            if (
+                restPredicates && !restPredicates.has(link.id) ||
+                ignorePredicates && ignorePredicates.has(link.id)
+            ) {
                 continue;
             }
 
             if (isDirectLink(link)) {
                 hasDirectLink = true;
             } else {
+                restPredicates?.delete(link.id);
+
                 const linkType = escapeIri(link.id);
-                if (!linkDirection || linkDirection === 'out') {
+                if (!direction || direction === 'out') {
                     const path = this.formatLinkPath(link.path, sourceTerm, targetOut);
-                    const binds = withProjection
-                        ? `BIND(${linkType} as ?link) BIND("out" as ?direction)` : '';
-                    unionParts.push(`{ ${path} ${binds} }`);
+                    let binds = '';
+                    if (bindLink) {
+                        binds += ` BIND(${linkType} as ?link)`;
+                    }
+                    if (bindDirection) {
+                        binds += ' BIND("out" as ?direction)';
+                    }
+                    unionParts.push(`{ ${path}${binds} }`);
                 }
-                if (!linkDirection || linkDirection === 'in') {
+                if (!direction || direction === 'in') {
                     const path = this.formatLinkPath(link.path, targetIn, sourceTerm);
-                    const binds = withProjection
-                        ? `BIND(${linkType} as ?link) BIND("in" as ?direction)` : '';
-                    unionParts.push(`{ ${path} ${binds} }`);
+                    let binds = '';
+                    if (bindLink) {
+                        binds += ` BIND(${linkType} as ?link)`;
+                    }
+                    if (bindDirection) {
+                        binds += ' BIND("in" as ?direction)';
+                    }
+                    unionParts.push(`{ ${path}${binds} }`);
                 }
             }
         }
 
-        const usePredicatePart = this.openWorldLinks || hasDirectLink;
-        return {unionParts, usePredicatePart};
+        const usePredicatePart =
+            (this.openWorldLinks || hasDirectLink) &&
+            (!restPredicates || restPredicates.size > 0);
+        return {unionParts, usePredicatePart, restPredicates};
     }
 
     formatLinkLinks(): string {
@@ -721,6 +793,17 @@ function sparqlExtractLabel(subject: string, label: string): string {
             if (?label4 != "", ?label4,
             if (?label5 != "", ?label5, ?label6))) as ${label})
     `;
+}
+
+function formatValueSets(
+    valueSets: Map<string, HashSet<Rdf.NamedNode | Rdf.Literal>>
+): string {
+    const parts: string[] = [];
+    for (const [variableName, setTerms] of valueSets) {
+        const valueSetContent = formatValueClauseContent(setTerms);
+        parts.push(`VALUES(?${variableName}) { ${valueSetContent} }`);
+    }
+    return parts.join('\n');
 }
 
 export function formatValueClauseContent(

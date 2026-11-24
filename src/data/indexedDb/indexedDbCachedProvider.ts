@@ -1239,14 +1239,24 @@ function serializePattern(pattern: LookupPattern): SExprLike {
         case 'or': {
             return [pattern.type, pattern.patterns.map(serializePattern)];
         }
+        case 'minus': {
+            return [
+                pattern.type,
+                [
+                    serializePattern(pattern.pattern),
+                    serializePattern(pattern.exclude),
+                ]
+            ];
+        }
         case 'hasType': {
             return [pattern.type, pattern.elementType];
         }
         case 'connectedTo': {
             return [
                 pattern.type,
-                pattern.linkType ?? null,
-                pattern.linkDirection ?? null,
+                pattern.allowLinks ?? [],
+                pattern.ignoreLinks ?? [],
+                pattern.direction ?? null,
                 pattern.other ? serializePattern(pattern.other) : null,
             ];
         }

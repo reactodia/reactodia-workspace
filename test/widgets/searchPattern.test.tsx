@@ -23,8 +23,9 @@ describe('SearchPattern', () => {
                     ],
                 }),
                 new SearchPatternConnectedTo({
-                    linkType: 'http://example.com/schema/sameAs',
-                    linkDirection: 'in',
+                    mode: 'allow',
+                    linkTypes: ['http://example.com/schema/sameAs'],
+                    direction: 'in',
                     other: new SearchPatternFromValues({
                         values: [
                             'http://example.com/data/Adam_Johann_von_Krusenstern',
@@ -85,8 +86,9 @@ describe('SearchPattern', () => {
                 },
                 {
                     type: 'connectedTo',
-                    linkType: 'http://example.com/schema/sameAs',
-                    linkDirection: 'in',
+                    allowLinks: ['http://example.com/schema/sameAs'],
+                    ignoreLinks: undefined,
+                    direction: 'in',
                     other: {
                         type: 'fromValues',
                         values: [
@@ -152,8 +154,9 @@ describe('SearchPattern', () => {
                     ],
                 }),
                 new SearchPatternConnectedTo({
-                    linkType: 'http://example.com/schema/sameAs',
-                    linkDirection: 'in',
+                    mode: 'allow',
+                    linkTypes: ['http://example.com/schema/sameAs'],
+                    direction: 'in',
                     other: new SearchPatternFromValues({
                         values: [
                             'http://example.com/data/Adam_Johann_von_Krusenstern',

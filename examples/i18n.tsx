@@ -29,11 +29,25 @@ function I18nExample() {
                     'search_defaults': {
                         'input_term_too_short': 'Minimum search term length is {{termLength}}',
                     },
-                    'search_entities': {
-                        'criteria_connected_to_source':
-                            '{{sourceIcon}}\u00A0{{entity}} (source) via {{relationType}}',
-                        'criteria_connected_to_target':
-                            '{{targetIcon}}\u00A0{{entity}} (target) via {{relationType}}',
+                    'search_criteria': {
+                        'from_values.any_entity': 'any node',
+                        'from_values.many_entities': 'one of {{count}} nodes',
+                        'from_values.header': 'One of nodes',
+                        'from_values.input.placeholder': 'Search for nodes...',
+                        'from_values.label': 'one of nodes',
+                        'has_type.input.placeholder': 'Search for node types...',
+                        'connected.any_link': 'any edge',
+                        'connected.input.placeholder': 'Search for edge types...',
+                        'connected.label': 'has edge to',
+                        'connected.mode_ignore.label': 'any edge except',
+                        'connected.other_entity': 'node',
+                        'connected.to_source':
+                            'Has edge to {{sourceIcon}}\u00A0{{entity}} (source) as {{relationType}}',
+                        'connected.to_target':
+                            'Has edge to {{targetIcon}}\u00A0{{entity}} (target) as {{relationType}}',
+                        'connected.to_source_or_target':
+                            'Has edge to {{entity}} as {{relationType}}',
+                        'placeholder_any': 'any node',
                     },
                     'toolbar_action': {
                         'layout.label': 'Layout the graph',
