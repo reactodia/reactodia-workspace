@@ -25,9 +25,10 @@
   }
 
   &__block-errors {
+    grid-column: span 2;
+    list-style-type: none;
     margin: 0;
     padding: 0;
-    grid-column: span 2;
   }
 
   &__block-error {
@@ -72,8 +73,13 @@
   dd > &__logical-group {
     margin-left: 0;
   }
+
   &__logical-joiner {
-    color: theme.$color-emphasis-600;
+    color: var(--reactodia-color-primary);
+    margin: 2px 0;
+  }
+  &__logical-joiner-selector {
+    width: min-content;
   }
 
   &__where-group {
@@ -96,6 +102,10 @@
   &__any-link-type,
   &__any-property-type {
     font-style: italic;
+  }
+
+  &__connected-mode-selector {
+    display: inline-flex;
   }
 
   &__directed-link-selector {
@@ -147,5 +157,25 @@
 
   &__link-target {
     font-weight: bold;
+  }
+
+  &__logical-joiner-toggle,
+  &__connected-mode-toggle {
+    display: flex;
+    align-items: center;
+    color: var(--reactodia-color-primary);
+    border: none;
+    background: none;
+    padding: 2px 0;
+    cursor: pointer;
+
+    &::after {
+      @include codicon("chevron-down");
+    }
+  }
+
+  &__logical-joiner-toggle.active::after,
+  &__connected-mode-toggle.active::after {
+    @include codicon("chevron-up");
   }
 }

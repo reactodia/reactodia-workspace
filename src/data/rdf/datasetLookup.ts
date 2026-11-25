@@ -55,6 +55,14 @@ function joinWithPattern(
             }
             return items;
         }
+        case 'minus': {
+            const items = joinWithPattern(previous, pattern.pattern, context);
+            const excluded = joinWithPattern(items, pattern.exclude, context);
+            for (const excludeItem of excluded.keys()) {
+                items.delete(excludeItem);
+            }
+            return items;
+        }
         case 'withText': {
             const items = makeItemMap();
             if (context.labelPredicate) {
@@ -98,53 +106,63 @@ function joinWithPattern(
             const targets = pattern.other
                 ? Array.from(joinWithPattern(undefined, pattern.other, context).keys())
                 : [null];
-            const linkTerm = pattern.linkType ? decodeTerm(pattern.linkType, context.factory) : null;
+            const hasAllowLinks = pattern.allowLinks && pattern.allowLinks.length > 0;
+            const predicates = hasAllowLinks
+                ? pattern.allowLinks.map(linkType => decodeTerm(linkType, context.factory))
+                : [null];
+            const ignoredPredicates = hasAllowLinks ? undefined : new Set(pattern.ignoreLinks);
             const items = makeItemMap();
-            if (!pattern.linkDirection || pattern.linkDirection === 'out') {
-                for (const valueTerm of targets) {
-                    for (const t of context.dataset.iterateMatches(valueTerm, linkTerm, null)) {
-                        if (
-                            t.predicate.termType === 'NamedNode' &&
-                            isResourceTerm(t.object) &&
-                            (!previous || previous.has(t.object))
-                        ) {
-                            const term = t.object;
-                            let item = items.get(term);
-                            if (!item) {
-                                item = {term};
-                                items.set(term, item);
-                            }
-                            if (computeLinks) {
-                                const predicate: LinkTypeIri = encodeTerm(t.predicate);
-                                if (!item.outLinks) {
-                                    item.outLinks = new Set();
+            if (!pattern.direction || pattern.direction === 'out') {
+                for (const predicate of predicates) {
+                    for (const valueTerm of targets) {
+                        for (const t of context.dataset.iterateMatches(valueTerm, predicate, null)) {
+                            if (
+                                t.predicate.termType === 'NamedNode' &&
+                                isResourceTerm(t.object) &&
+                                (!previous || previous.has(t.object)) &&
+                                (!ignoredPredicates || !ignoredPredicates.has(t.predicate.value))
+                            ) {
+                                const term = t.object;
+                                let item = items.get(term);
+                                if (!item) {
+                                    item = {term};
+                                    items.set(term, item);
                                 }
-                                item.outLinks.add(predicate);
+                                if (computeLinks) {
+                                    const predicate: LinkTypeIri = encodeTerm(t.predicate);
+                                    if (!item.outLinks) {
+                                        item.outLinks = new Set();
+                                    }
+                                    item.outLinks.add(predicate);
+                                }
                             }
                         }
                     }
                 }
             }
-            if (!pattern.linkDirection || pattern.linkDirection === 'in') {
-                for (const valueTerm of targets) {
-                    for (const t of context.dataset.iterateMatches(null, linkTerm, valueTerm)) {
-                        if (
-                            t.predicate.termType === 'NamedNode' &&
-                            isResourceTerm(t.subject) &&
-                            (!previous || previous.has(t.subject))
-                        ) {
-                            const term = t.subject;
-                            let item = items.get(term);
-                            if (!item) {
-                                item = {term};
-                                items.set(term, item);
-                            }
-                            if (computeLinks) {
-                                const predicate: LinkTypeIri = encodeTerm(t.predicate);
-                                if (!item.inLinks) {
-                                    item.inLinks = new Set();
+            if (!pattern.direction || pattern.direction === 'in') {
+                for (const predicate of predicates) {
+                    for (const valueTerm of targets) {
+                        for (const t of context.dataset.iterateMatches(null, predicate, valueTerm)) {
+                            if (
+                                t.predicate.termType === 'NamedNode' &&
+                                isResourceTerm(t.subject) &&
+                                (!previous || previous.has(t.subject)) &&
+                                (!ignoredPredicates || !ignoredPredicates.has(t.predicate.value))
+                            ) {
+                                const term = t.subject;
+                                let item = items.get(term);
+                                if (!item) {
+                                    item = {term};
+                                    items.set(term, item);
                                 }
-                                item.inLinks.add(predicate);
+                                if (computeLinks) {
+                                    const predicate: LinkTypeIri = encodeTerm(t.predicate);
+                                    if (!item.inLinks) {
+                                        item.inLinks = new Set();
+                                    }
+                                    item.inLinks.add(predicate);
+                                }
                             }
                         }
                     }

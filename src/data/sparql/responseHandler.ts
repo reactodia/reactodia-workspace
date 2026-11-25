@@ -489,13 +489,14 @@ export function getFilteredData(
 
             const foundLinks = linksByInstance.get(instance.id);
             const doesMatch = foundLinks && matcher.match(
-                (other, linkType) => {
+                (other, allowLinks, ignoreLinks) => {
                     let hasInLink = false;
                     for (const link of foundLinks) {
                         if (
                             link.sourceId === instance.id &&
                             link.targetId === other &&
-                            (!linkType || link.linkTypeId === linkType)
+                            (!allowLinks || allowLinks.has(link.linkTypeId)) &&
+                            (!ignoreLinks || !ignoreLinks.has(link.linkTypeId))
                         ) {
                             inLinks.add(link.linkTypeId);
                             hasInLink = true;
@@ -503,13 +504,14 @@ export function getFilteredData(
                     }
                     return hasInLink;
                 },
-                (other, linkType) => {
+                (other, allowLinks, ignoreLinks) => {
                     let hasOutLink = false;
                     for (const link of foundLinks) {
                         if (
                             link.sourceId === other &&
                             link.targetId === instance.id &&
-                            (!linkType || link.linkTypeId === linkType)
+                            (!allowLinks || allowLinks.has(link.linkTypeId)) &&
+                            (!ignoreLinks || !ignoreLinks.has(link.linkTypeId))
                         ) {
                             outLinks.add(link.linkTypeId);
                             hasOutLink = true;
@@ -569,8 +571,13 @@ export function createConnectedToLinkMatcher(
             }
             case 'connectedTo': {
                 if (pattern.other?.type === 'fromValues') {
-                    const {linkType, linkDirection} = pattern;
+                    const {allowLinks, ignoreLinks, direction} = pattern;
                     const otherValues = pattern.other.values;
+
+                    const allowSet = allowLinks && allowLinks.length > 0
+                        ? new Set(allowLinks) : undefined;
+                    const ignoreSet = !allowSet && ignoreLinks && ignoreLinks.length > 0
+                        ? new Set(ignoreLinks) : undefined;
 
                     for (const otherIri of otherValues) {
                         otherIris.add(otherIri);
@@ -579,12 +586,12 @@ export function createConnectedToLinkMatcher(
                     return (addInLink, addOutLink) => {
                         let foundLink = false;
                         for (const otherIri of otherValues) {
-                            if (!linkDirection || linkDirection === 'in') {
-                                foundLink ||= addInLink(otherIri, linkType);
+                            if (!direction || direction === 'in') {
+                                foundLink ||= addInLink(otherIri, allowSet, ignoreSet);
                             }
 
-                            if (!linkDirection || linkDirection === 'out') {
-                                foundLink ||= addOutLink(otherIri, linkType);
+                            if (!direction || direction === 'out') {
+                                foundLink ||= addOutLink(otherIri, allowSet, ignoreSet);
                             }
                         }
                         return foundLink;
@@ -603,8 +610,16 @@ export function createConnectedToLinkMatcher(
 export interface ConnectedToMatcher {
     otherIris: ReadonlySet<ElementIri>;
     match: (
-        addInLink: (other: ElementIri, linkType: LinkTypeIri | undefined) => boolean,
-        addOutLink: (other: ElementIri, linkType: LinkTypeIri | undefined) => boolean
+        addInLink: (
+            other: ElementIri,
+            allowLinks: ReadonlySet<LinkTypeIri> | undefined,
+            ignoreLinks: ReadonlySet<LinkTypeIri> | undefined
+        ) => boolean,
+        addOutLink: (
+            other: ElementIri,
+            allowLinks: ReadonlySet<LinkTypeIri> | undefined,
+            ignoreLinks: ReadonlySet<LinkTypeIri> | undefined
+        ) => boolean
     ) => boolean;
 }
 

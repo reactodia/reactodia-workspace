@@ -319,6 +319,7 @@ export interface DataProviderLookupParams {
 export type LookupPattern =
     | LookupPatternAnd
     | LookupPatternOr
+    | LookupPatternMinus
     | LookupPatternWithText
     | LookupPatternHasType
     | LookupPatternConnectedTo
@@ -326,7 +327,7 @@ export type LookupPattern =
     | LookupPatternHasProperty;
 
 /**
- * Lookup pattern that filters entities by requiring all of the nested
+ * Lookup pattern that matches entities by requiring all of the nested
  * {@link patterns} to match.
  *
  * @category Data
@@ -345,7 +346,7 @@ export interface LookupPatternAnd {
 }
 
 /**
- * Lookup pattern that filters entities by requiring any of the nested
+ * Lookup pattern that matches entities by requiring any of the nested
  * {@link patterns} to match.
  *
  * @category Data
@@ -361,6 +362,25 @@ export interface LookupPatternOr {
      * Empty list is considered to be an invalid pattern.
      */
     readonly patterns: readonly LookupPattern[];
+}
+
+/**
+ * Lookup pattern that matches entities matching base {@link pattern}
+ * while excluding entities also matching {@link exclude} (subtracted) pattern.
+ */
+export interface LookupPatternMinus {
+    /**
+     * Lookup pattern type.
+     */
+    readonly type: 'minus';
+    /**
+     * Pattern matching "base" ("original") set of entities.
+     */
+    readonly pattern: LookupPattern;
+    /**
+     * Pattern matching "removed" ("subtracted") set of entities.
+     */
+    readonly exclude: LookupPattern;
 }
 
 /**
@@ -382,7 +402,8 @@ export interface LookupPatternHasType {
 /**
  * Lookup pattern that filters entities that connected to another entity
  * matching an {@link other} pattern, optinally restricted by specific
- * {@link linkType link type} and/or {@link linkDirection direction}.
+ * {@link allowLinks allowed link types}, {@link ignoreLinks ignored link types}
+ * and/or {@link direction link direction}.
  *
  * @category Data
  */
@@ -392,11 +413,20 @@ export interface LookupPatternConnectedTo {
      */
     readonly type: 'connectedTo';
     /**
-     * Required link type between {@link other} and the entity.
+     * Allowed link types between {@link other} and the entity.
+     * There should be at least one link with any of the specified types.
      *
-     * If not specified, any link type is allowed.
+     * If not specified or empty, any link type is allowed
+     * unless {@link excludeLinks} is non-empty.
      */
-    readonly linkType?: LinkTypeIri;
+    readonly allowLinks?: readonly LinkTypeIri[];
+    /**
+     * Ignored link types between {@link other} and the entity that
+     * are treated as not existing when matching the pattern.
+     *
+     * This property is completely ignored when {@link allowLinks} is non-empty.
+     */
+    readonly ignoreLinks?: readonly LinkTypeIri[];
     /**
      * Required link direction between {@link other} and the entity:
      *  - `out`: `other` → entity
@@ -404,9 +434,9 @@ export interface LookupPatternConnectedTo {
      *
      * If not specified, both directions are allowed.
      */
-    readonly linkDirection?: 'in' | 'out';
+    readonly direction?: 'in' | 'out';
     /**
-     * Required link pattern to match connected entities.
+     * Required pattern to match connected entities.
      *
      * If not specified, any connected entity is allowed.
      */
@@ -538,8 +568,8 @@ export function lookupPatternOf(
     if (refElementId || refElementLinkId || linkDirection) {
         patterns.push({
             type: 'connectedTo',
-            linkType: refElementLinkId,
-            linkDirection: linkDirection,
+            allowLinks: refElementLinkId ? [refElementLinkId] : undefined,
+            direction: linkDirection,
             other: refElementId ? {
                 type: 'fromValues',
                 values: [refElementId],

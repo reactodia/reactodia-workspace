@@ -227,7 +227,7 @@ export class SearchPatternAnd extends SearchPattern<{
                 errors: [{
                     target: this,
                     message: TranslatedText.text(
-                        'search_entities.error.required_at_least_one_pattern'
+                        'search_criteria.error.required_at_least_one_pattern'
                     ),
                 }],
             };
@@ -282,7 +282,7 @@ export class SearchPatternOr extends SearchPattern<{
                 errors: [{
                     target: this,
                     message: TranslatedText.text(
-                        'search_entities.error.required_at_least_one_pattern'
+                        'search_criteria.error.required_at_least_one_pattern'
                     ),
                 }],
             };
@@ -320,6 +320,62 @@ interface RawPatternOr {
 }
 
 /**
+ * Search pattern corresponding to {@link LookupPatternMinus}.
+ *
+ * @see {@link SearchCriterionMinus}
+ */
+export class SearchPatternMinus extends SearchPattern<{
+    readonly pattern: SearchPattern;
+    readonly exclude: SearchPattern;
+}> {
+    generate(
+        context: SearchPatternGenerateContext
+    ): LookupPattern | SearchPatternError {
+        const {pattern, exclude} = this.state;
+        const generated = SearchPattern.generateMany([pattern, exclude], context);
+        if (!Array.isArray(generated)) {
+            return generated;
+        }
+        const [generatedPattern, generatedExclude] = generated;
+        return {
+            type: 'minus',
+            pattern: generatedPattern,
+            exclude: generatedExclude,
+        };
+    }
+
+    static readonly fromJSONType: RawPatternMinus['@type'] = 'PatternMinus';
+
+    static fromJSON(
+        raw: RawPatternMinus,
+        context: SearchPatternFromJsonContext
+    ): SearchPatternMinus {
+        const {pattern, exclude} = raw;
+        return new SearchPatternMinus({
+            pattern: context.fromJson(pattern),
+            exclude: context.fromJson(exclude),
+        });
+    }
+
+    toJSON(context: SearchPatternToJsonContext): RawPatternMinus {
+        const {pattern, exclude} = this.state;
+        return {
+            '@type': 'PatternMinus',
+            pattern: context.toJson(pattern),
+            exclude: context.toJson(exclude),
+        };
+    }
+}
+
+SearchPattern.define(SearchPatternMinus);
+
+interface RawPatternMinus {
+    '@type': 'PatternMinus';
+    pattern: RawSearchPattern;
+    exclude: RawSearchPattern;
+}
+
+/**
  * Search pattern corresponding to {@link LookupPatternHasType}.
  *
  * @see {@link SearchCriterionHasType}
@@ -337,7 +393,7 @@ export class SearchPatternHasType extends SearchPattern<{
                 errors: [{
                     target: this,
                     message: TranslatedText.text(
-                        'search_entities.error.required_element_type'
+                        'search_criteria.error.required_element_type'
                     ),
                 }],
             };
@@ -377,22 +433,26 @@ interface RawPatternHasType {
  * @see {@link SearchCriterionConnectedTo}
  */
 export class SearchPatternConnectedTo extends SearchPattern<{
-    readonly linkType?: LinkTypeIri;
-    readonly linkDirection?: 'in' | 'out';
+    readonly mode: 'allow' | 'ignore';
+    readonly linkTypes: readonly LinkTypeIri[];
+    readonly direction?: 'in' | 'out';
     readonly other?: SearchPattern;
 }> {
     generate(
         context: SearchPatternGenerateContext
     ): LookupPattern | SearchPatternError {
-        const {linkType, linkDirection, other} = this.state;
+        const {mode, linkTypes, direction, other} = this.state;
         const otherPattern = other?.generate(context);
         if (otherPattern?.type === 'error') {
             return otherPattern;
         }
         return {
             type: 'connectedTo',
-            linkType,
-            linkDirection,
+            allowLinks: mode === 'allow' && linkTypes.length > 0
+                ? linkTypes : undefined,
+            ignoreLinks: mode === 'ignore' && linkTypes.length > 0
+                ? linkTypes : undefined,
+            direction,
             other: otherPattern,
         };
     }
@@ -403,20 +463,22 @@ export class SearchPatternConnectedTo extends SearchPattern<{
         raw: RawPatternConnectedTo,
         context: SearchPatternFromJsonContext
     ): SearchPatternConnectedTo {
-        const {linkType, linkDirection, other} = raw;
+        const {mode, linkTypes, direction, other} = raw;
         return new SearchPatternConnectedTo({
-            linkType,
-            linkDirection,
+            mode,
+            linkTypes: [...linkTypes],
+            direction,
             other: other ? context.fromJson(other) : undefined,
         });
     }
 
     toJSON(context: SearchPatternToJsonContext): RawPatternConnectedTo {
-        const {linkType, linkDirection, other} = this.state;
+        const {mode, linkTypes, direction, other} = this.state;
         return {
             '@type': 'PatternConnectedTo',
-            linkType,
-            linkDirection,
+            mode,
+            linkTypes: [...linkTypes],
+            direction,
             other: other ? context.toJson(other) : undefined,
         };
     }
@@ -426,8 +488,9 @@ SearchPattern.define(SearchPatternConnectedTo);
 
 interface RawPatternConnectedTo {
     '@type': 'PatternConnectedTo';
-    linkType?: LinkTypeIri;
-    linkDirection?: 'in' | 'out';
+    mode: 'allow' | 'ignore';
+    linkTypes: LinkTypeIri[];
+    direction?: 'in' | 'out';
     other?: RawSearchPattern;
 }
 
@@ -491,7 +554,7 @@ export class SearchPatternHasProperty extends SearchPattern<{
                 errors: [{
                     target: this,
                     message: TranslatedText.text(
-                        'search_entities.error.required_property_type'
+                        'search_criteria.error.required_property_type'
                     ),
                 }],
             };

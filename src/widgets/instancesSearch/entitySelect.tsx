@@ -18,12 +18,15 @@ export function EntitySelect(props: {
     setSelected: (
         update: (previous: readonly ElementModel[]) => readonly ElementModel[]
     ) => void;
+    placeholder?: string;
     /**
      * @default "m"
      */
     sizeVariant?: 'm' | 's';
 }) {
-    const {dataProvider, selectedStatus, selected, setSelected, sizeVariant} = props;
+    const {
+        dataProvider, selectedStatus, selected, setSelected, placeholder, sizeVariant,
+    } = props;
 
     const suggest = React.useCallback(async (text: string, options: { signal: AbortSignal }) => {
         const {signal} = options;
@@ -57,6 +60,7 @@ export function EntitySelect(props: {
             }
             inlineStatus={selectedStatus}
             suggest={suggest}
+            placeholder={placeholder}
             sizeVariant={sizeVariant}>
             {({items: suggestions, highlightText}) => (
                 <ul className={`${CLASS_NAME}__items`}>

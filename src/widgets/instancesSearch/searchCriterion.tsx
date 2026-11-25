@@ -12,11 +12,12 @@ import { InlineEntity } from '../utility/inlineEntity';
 import { SchemaTypeView } from '../utility/schemaTypeView';
 
 import { EntitySelect } from './entitySelect';
-import { SchemaTypeSelect, useSchemaType } from './schemaTypeSelect';
+import { SchemaTypeSelect, useProvidedSchemaTypes } from './schemaTypeSelect';
 import {
     SearchPattern, SearchPatternType, SearchPatternErrorItem, RawSearchPattern,
-    SearchPatternError, SearchPatternAnd, SearchPatternOr, SearchPatternConnectedTo,
-    SearchPatternFromValues, SearchPatternHasProperty, SearchPatternHasType,
+    SearchPatternError, SearchPatternAnd, SearchPatternOr, SearchPatternMinus,
+    SearchPatternConnectedTo, SearchPatternFromValues, SearchPatternHasProperty,
+    SearchPatternHasType,
 } from './searchPattern';
 import { LookupPattern } from '../../workspace';
 
@@ -80,12 +81,14 @@ export interface SearchCriteriaRenderProps<in P extends SearchPattern> {
 export interface SearchCriterionContext {
     readonly editing: boolean;
     readonly errors: ReadonlyMap<SearchPattern, readonly SearchPatternErrorItem[]>;
+    readonly tryScrollToError: (element: HTMLElement) => void;
     readonly allOptions: readonly SearchCriteriaOption[];
     readonly creatableOptions: readonly SearchCriteriaOption[];
 }
 export const SearchCriterionContext = React.createContext<SearchCriterionContext>({
     editing: false,
     errors: new Map(),
+    tryScrollToError: () => {},
     allOptions: [],
     creatableOptions: [],
 });
@@ -130,7 +133,8 @@ export function SearchCriterion(props: {
     
     const isLogicalPattern = (
         pattern instanceof SearchPatternAnd ||
-        pattern instanceof SearchPatternOr
+        pattern instanceof SearchPatternOr ||
+        pattern instanceof SearchPatternMinus
     );
     const controls = editing ? (
         <div className={`${CLASS_NAME}__controls reactodia-btn-group`}>
@@ -139,8 +143,8 @@ export function SearchCriterion(props: {
                     onAdd={added => setPattern(new SearchPatternAnd({
                         patterns: [pattern, added],
                     }))}
-                    title={t.textOptional('search_entities.criteria_and_add.title')}>
-                    {t.text('search_entities.criteria_and_add.label')}
+                    title={t.textOptional('search_criteria.and_add.title')}>
+                    {t.text('search_criteria.and_add.label')}
                 </AddCriterion>
             )}
             {isLogicalPattern ? null : (
@@ -148,8 +152,8 @@ export function SearchCriterion(props: {
                     onAdd={added => setPattern(new SearchPatternOr({
                         patterns: [pattern, added]
                     }))}
-                    title={t.textOptional('search_entities.criteria_or_add.title')}>
-                    {t.text('search_entities.criteria_or_add.label')}
+                    title={t.textOptional('search_criteria.or_add.title')}>
+                    {t.text('search_criteria.or_add.label')}
                 </AddCriterion>
             )}
             <button type='button'
@@ -245,14 +249,23 @@ export function SearchCriterionBlock(props: {
      */
     controls: React.ReactNode;
     /**
-     * Criterion editing UI, e.g. inputs, {@link SearchCriterionWhereGroup}, etc.
+     * Criterion editing UI, e.g. inputs, layout elements, etc.
      */
     children?: React.ReactNode;
 }) {
     const {target, header, controls, children} = props;
     const t = useTranslation();
-    const {errors} = React.useContext(SearchCriterionContext);
+    const {errors, tryScrollToError} = React.useContext(SearchCriterionContext);
+
+    const errorListRef = React.useRef<HTMLUListElement | null>(null);
     const targetErrors = errors.get(target);
+    React.useEffect(() => {
+        const errorList = errorListRef.current;
+        if (errorList) {
+            tryScrollToError(errorList);
+        }
+    }, [targetErrors]);
+
     return (
         <div className={`${CLASS_NAME}__block`}>
             <div className={`${CLASS_NAME}__block-header`}>
@@ -265,7 +278,8 @@ export function SearchCriterionBlock(props: {
                 {children}
             </div>
             {targetErrors ? (
-                <ul className={`${CLASS_NAME}__block-errors`}>
+                <ul ref={errorListRef}
+                    className={`${CLASS_NAME}__block-errors`}>
                     {targetErrors.map((error, index) => (
                         <li key={index}
                             className={`${CLASS_NAME}__block-error`}>
@@ -287,7 +301,7 @@ export function SearchCriterionBlock(props: {
  * @category Components
  * @see {@link SearchCriterionWhere}
  */
-export function SearchCriterionWhereGroup(props: {
+function SearchCriterionWhereGroup(props: {
     /**
      * Definition list content, e.g. {@link SearchCriterionWhere} items.
      */
@@ -308,28 +322,21 @@ export function SearchCriterionWhereGroup(props: {
  * @category Components
  * @see {@link SearchCriterionWhereGroup}
  */
-export function SearchCriterionWhere(props: {
+function SearchCriterionWhere(props: {
     /**
      * Definition label, e.g. "target" or "sub-pattern" to display.
      */
-    part: string;
+    caption: React.ReactNode;
     /**
      * Definition content.
      */
     children: React.ReactNode;
 }) {
-    const {part, children} = props;
-    const t = useTranslation();
+    const {caption, children} = props;
     return (
         <>
-            <dt>
-                {t.template('search_entities.criteria_where_caption', {
-                    part: <span className={`${CLASS_NAME}__where-part`}>{part}</span>,
-                })}
-            </dt>
-            <dd>
-                {children}
-            </dd>
+            <dt>{caption}</dt>
+            <dd>{children}</dd>
         </>
     );
 }
@@ -345,7 +352,7 @@ function PlaceholderAnyCriterion(props: {
     if (!editing) {
         return topLevel ? null : (
             <div className={`${CLASS_NAME}__placeholder-any`}>
-                {t.text('search_entities.criteria_placeholder_any')}
+                {t.text('search_criteria.placeholder_any')}
             </div>
         );
     }
@@ -391,7 +398,7 @@ function PlaceholderUnknownCriterion(
             controls={controls}
             header={
                 <div>
-                    {t.text('search_entities.criteria_placeholder_unknown')}
+                    {t.text('search_criteria.placeholder_unknown')}
                 </div>
             }
         />
@@ -404,7 +411,7 @@ function PlaceholderUnknownCriterion(
 export const SearchCriterionAnd: SearchCriteriaOption<SearchPatternAnd> = {
     type: SearchPatternAnd,
     createPattern: () => new SearchPatternAnd({patterns: []}),
-    renderCriterion: props => <AndOrCriterion {...props} />,
+    renderCriterion: props => <LogicalCriterion {...props} />,
 };
 
 /**
@@ -413,10 +420,24 @@ export const SearchCriterionAnd: SearchCriteriaOption<SearchPatternAnd> = {
 export const SearchCriterionOr: SearchCriteriaOption<SearchPatternOr> = {
     type: SearchPatternOr,
     createPattern: () => new SearchPatternOr({patterns: []}),
-    renderCriterion: props => <AndOrCriterion {...props} />,
+    renderCriterion: props => <LogicalCriterion {...props} />,
 };
 
-function AndOrCriterion<P extends SearchPatternOr | SearchPatternAnd>(
+/**
+ * Search criteria option corresponding to {@link LookupPatternMinus}.
+ */
+export const SearchCriterionMinus: SearchCriteriaOption<SearchPatternMinus> = {
+    type: SearchPatternMinus,
+    createPattern: () => new SearchPatternMinus({
+        pattern: new SearchPatternUnknown({}),
+        exclude: new SearchPatternUnknown({}),
+    }),
+    renderCriterion: props => <LogicalCriterion {...props} />,
+};
+
+function LogicalCriterion<
+    P extends SearchPatternOr | SearchPatternAnd | SearchPatternMinus
+>(
     props: SearchCriteriaRenderProps<P>
 ) {
     const {pattern, setPattern, inEditMode, parent} = props;
@@ -424,58 +445,73 @@ function AndOrCriterion<P extends SearchPatternOr | SearchPatternAnd>(
     const className = parent
         ? `${CLASS_NAME}__logical-group`
         : `${CLASS_NAME}__logical-group-root`;
+    
+    const subPatterns = pattern instanceof SearchPatternMinus
+        ? [pattern.state.pattern, pattern.state.exclude] as const
+        : pattern.state.patterns;
+
+    const replaceAtIndex = (
+        index: number,
+        count: number,
+        next: SearchPattern | undefined
+    ) => {
+        const nextPatterns = [...subPatterns];
+        if (next) {
+            if ((
+                next instanceof SearchPatternAnd &&
+                pattern instanceof SearchPatternAnd
+            ) || (
+                next instanceof SearchPatternOr &&
+                pattern instanceof SearchPatternOr
+            )) {
+                nextPatterns.splice(index, count, ...next.state.patterns);
+            } else {
+                nextPatterns.splice(index, count, next);
+            }
+        } else {
+            nextPatterns.splice(index, count);
+        }
+
+        setPattern(
+            nextPatterns.length === 0 ? undefined :
+            nextPatterns.length === 1 ? nextPatterns[0] :
+            pattern instanceof SearchPatternAnd ? new SearchPatternAnd({
+                patterns: nextPatterns,
+            }) :
+            pattern instanceof SearchPatternOr ? new SearchPatternOr({
+                patterns: nextPatterns,
+            }) :
+            pattern instanceof SearchPatternMinus ? new SearchPatternMinus({
+                pattern: nextPatterns[0],
+                exclude: nextPatterns[1],
+            }) :
+            undefined
+        );
+    };
+
     return (
         <div className={className}>
-            {pattern.state.patterns.map((child, index) => (
+            {subPatterns.map((child, index) => (
                 <React.Fragment key={index}>
                     {index > 0 ? (
-                        <div className={`${CLASS_NAME}__logical-joiner`}>
-                            {(
-                                pattern instanceof SearchPatternAnd ? t.text(
-                                    'search_entities.criteria_and_joiner'
-                                ) : pattern instanceof SearchPatternOr ? t.text(
-                                    'search_entities.criteria_or_joiner'
-                                ) : '-'
-                            )}
-                        </div>
+                        <LogicalJoiner pattern={pattern}
+                            inEditMode={inEditMode}
+                            onReplace={createPattern => {
+                                replaceAtIndex(index - 1, 2, createPattern(
+                                    subPatterns[index - 1],
+                                    subPatterns[index]
+                                ));
+                            }}
+                        />
                     ) : null}
                     <SearchCriterion key={index}
                         pattern={child}
-                        setPattern={next => {
-                            const nextPatterns = [...pattern.state.patterns];
-                            if (next) {
-                                if ((
-                                    next instanceof SearchPatternAnd &&
-                                    pattern instanceof SearchPatternAnd
-                                ) || (
-                                    next instanceof SearchPatternOr &&
-                                    pattern instanceof SearchPatternOr
-                                )) {
-                                    nextPatterns.splice(index, 1, ...next.state.patterns);
-                                } else {
-                                    nextPatterns.splice(index, 1, next);
-                                }
-                            } else {
-                                nextPatterns.splice(index, 1);
-                            }
-
-                            setPattern(
-                                nextPatterns.length === 0 ? undefined :
-                                nextPatterns.length === 1 ? nextPatterns[0] :
-                                pattern instanceof SearchPatternAnd ? new SearchPatternAnd({
-                                    patterns: nextPatterns,
-                                }) :
-                                pattern instanceof SearchPatternOr ? new SearchPatternOr({
-                                    patterns: nextPatterns,
-                                }) :
-                                undefined
-                            );
-                        }}
+                        setPattern={next => replaceAtIndex(index, 1, next)}
                         parent={pattern}
                     />
                 </React.Fragment>
             ))}
-            {inEditMode && pattern.state.patterns.length === 0 ? (
+            {inEditMode && subPatterns.length === 0 ? (
                 <AddCriterion
                     onAdd={added => {
                         setPattern(
@@ -490,16 +526,16 @@ function AndOrCriterion<P extends SearchPatternOr | SearchPatternAnd>(
                     }}
                     title={
                         pattern instanceof SearchPatternAnd ? t.textOptional(
-                            'search_entities.criteria_and_add.title'
+                            'search_criteria.and_add.title'
                         ) : pattern instanceof SearchPatternOr ? t.textOptional(
-                            'search_entities.criteria_or_add.title'
+                            'search_criteria.or_add.title'
                         ) : undefined
                     }>
                     {(
                         pattern instanceof SearchPatternAnd ? t.text(
-                            'search_entities.criteria_and_add.label'
+                            'search_criteria.and_add.label'
                         ) : pattern instanceof SearchPatternOr ? t.text(
-                            'search_entities.criteria_or_add.label'
+                            'search_criteria.or_add.label'
                         ) : t.text('search_entities.add_criterion.label')
                     )}
                 </AddCriterion>
@@ -508,12 +544,86 @@ function AndOrCriterion<P extends SearchPatternOr | SearchPatternAnd>(
     );
 }
 
+function LogicalJoiner(props: {
+    pattern: SearchPatternOr | SearchPatternAnd | SearchPatternMinus;
+    inEditMode: boolean;
+    onReplace: (
+        createPattern: (first: SearchPattern, second: SearchPattern) => SearchPattern
+    ) => void;
+}) {
+    const {pattern, inEditMode, onReplace} = props;
+    const t = useTranslation();
+    const joiner = (
+        pattern instanceof SearchPatternAnd ? t.text(
+            'search_criteria.and_joiner.label'
+        ) : pattern instanceof SearchPatternOr ? t.text(
+            'search_criteria.or_joiner.label'
+        ) : pattern instanceof SearchPatternMinus ? t.text(
+            'search_criteria.minus_joiner.label'
+        ) : '-'
+    );
+    if (!inEditMode) {
+        return (
+            <div className={`${CLASS_NAME}__logical-joiner`}>
+                {joiner}
+            </div>
+        );
+    }
+    return (
+        <DropdownMenu className={`${CLASS_NAME}__logical-joiner-selector`}
+            toggle={<LogicalJoinerToggle>{joiner}</LogicalJoinerToggle>}>
+            <DropdownMenuItem
+                disabled={pattern instanceof SearchPatternAnd}
+                onSelect={() => onReplace((a, b) => new SearchPatternAnd({
+                    patterns: [a, b],
+                }))}
+                title={t.text('search_criteria.and_joiner.title')}>
+                {t.text('search_criteria.and_joiner.label')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                disabled={pattern instanceof SearchPatternOr}
+                onSelect={() => onReplace((a, b) => new SearchPatternOr({
+                    patterns: [a, b],
+                }))}
+                title={t.text('search_criteria.or_joiner.title')}>
+                {t.text('search_criteria.or_joiner.label')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                disabled={pattern instanceof SearchPatternMinus}
+                onSelect={() => onReplace((a, b) => new SearchPatternMinus({
+                    pattern: a,
+                    exclude: b,
+                }))}
+                title={t.text('search_criteria.minus_joiner.title')}>
+                {t.text('search_criteria.minus_joiner.label')}
+            </DropdownMenuItem>
+        </DropdownMenu>
+    );
+}
+
+function LogicalJoinerToggle(props: {
+    children: React.ReactNode;
+}) {
+    const {children} = props;
+    const {expanded, setExpanded} = useDropdownMenu();
+    return (
+        <button
+            className={cx(
+                `${CLASS_NAME}__logical-joiner-toggle`,
+                expanded ? 'active': undefined
+            )}
+            onClick={() => setExpanded(previous => !previous)}>
+            {children}
+        </button>
+    );
+}
+
 /**
  * Search criteria option corresponding to {@link LookupPatternHasType}.
  */
 export const SearchCriterionHasType: SearchCriteriaOption<SearchPatternHasType> = {
     type: SearchPatternHasType,
-    label: TranslatedText.text('search_entities.criteria_has_type.label'),
+    label: TranslatedText.text('search_criteria.has_type.label'),
     createPattern: () => new SearchPatternHasType({elementType: ''}),
     renderCriterion: props => <HasTypeCriterion {...props} />,
 };
@@ -524,7 +634,10 @@ function HasTypeCriterion(
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
 
-    const elementType = useSchemaType('elementType', pattern.state.elementType);
+    const [elementType] = useProvidedSchemaTypes(
+        'elementType',
+        pattern.state.elementType ? [pattern.state.elementType] : []
+    );
 
     let header: React.ReactNode;
     let where: React.ReactNode | null = null;
@@ -537,26 +650,27 @@ function HasTypeCriterion(
             />
         ) : (
             <div className={`${CLASS_NAME}__any-element-type`}>
-                {t.text('search_entities.criteria_has_type.any_type')}
+                {t.text('search_criteria.has_type.any_type')}
             </div>
         );
 
         header = (
             <span className={`${CLASS_NAME}__condition`}>
-                {t.template('search_entities.criteria_has_type', {
+                {t.template('search_criteria.has_type', {
                     entityType: typeView,
                 })}
             </span>
         );
     } else {
-        header = <div>{t.text('search_entities.criteria_has_type.header')}</div>;
+        header = <div>{t.text('search_criteria.has_type.header')}</div>;
         where = (
             <SchemaTypeSelect typeKind='elementType'
-                selected={elementType}
-                setSelected={type => setPattern(new SearchPatternHasType({
+                selected={elementType ? [elementType] : []}
+                setSelected={([type]) => setPattern(new SearchPatternHasType({
                     ...pattern.state,
-                    elementType: type ? type.id : '',
+                    elementType: type ? type.id : undefined,
                 }))}
+                placeholder={t.text('search_criteria.has_type.input.placeholder')}
                 sizeVariant='s'
             />
         );
@@ -576,8 +690,11 @@ function HasTypeCriterion(
  */
 export const SearchCriterionConnectedTo: SearchCriteriaOption<SearchPatternConnectedTo> = {
     type: SearchPatternConnectedTo,
-    label: TranslatedText.text('search_entities.criteria_connected.label'),
-    createPattern: () => new SearchPatternConnectedTo({}),
+    label: TranslatedText.text('search_criteria.connected.label'),
+    createPattern: () => new SearchPatternConnectedTo({
+        mode: 'allow',
+        linkTypes: [],
+    }),
     renderCriterion: props => <ConnectedToCriterion {...props} />,
 };
 
@@ -587,9 +704,9 @@ function ConnectedToCriterion(
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
 
-    const {linkDirection, other} = pattern.state;
+    const {mode, linkTypes, direction, other} = pattern.state;
 
-    const linkType = useSchemaType('linkType', pattern.state.linkType);
+    const selectedLinks = useProvidedSchemaTypes('linkType', linkTypes);
 
     let inlineEntity = false;
     let header: React.ReactNode;
@@ -603,42 +720,63 @@ function ConnectedToCriterion(
         } else {
             entity = (
                 <span className={`${CLASS_NAME}__link-target`}>
-                    {t.text('search_entities.criteria_connected.other-part')}
+                    {t.text('search_criteria.connected.other_entity')}
                 </span>
             );
         }
 
-        const relationType = linkType ? (
-            <SchemaTypeView typeKind='linkType'
-                typeData={linkType}
-                selected
-                inline
-            />
-        ) : (
-            <span className={`${CLASS_NAME}__any-link-type`}>
-                {t.text('search_entities.criteria_connected.any-link')}
-            </span>
-        );
+        let relationType: React.ReactNode;
+        if (selectedLinks.length === 0) {
+            relationType = (
+                <span className={`${CLASS_NAME}__any-link-type`}>
+                    {t.text('search_criteria.connected.any_link')}
+                </span>
+            );
+        } else {
+            relationType = (
+                <>
+                    {mode === 'ignore' ? (
+                        <span>
+                            {t.text('search_criteria.connected.mode_ignore.label')}{' '}
+                        </span>
+                    ) : null}
+                    {selectedLinks.map((linkType, index) => (
+                        <React.Fragment key={linkType.id}>
+                            {index === 0 ? null : (
+                                <span className={`${CLASS_NAME}__values-joiner`}>
+                                    {t.text('search_criteria.from_values.joiner')}
+                                </span>
+                            )}
+                            <SchemaTypeView typeKind='linkType'
+                                typeData={linkType}
+                                selected
+                                inline
+                            />
+                        </React.Fragment>
+                    ))}
+                </>
+            );
+        }
 
         const sourceIcon = <span className={`${CLASS_NAME}__link-in`} role="presentation" />;
         const targetIcon = <span className={`${CLASS_NAME}__link-out`} role="presentation" />;
 
         header = (
             <span className={`${CLASS_NAME}__condition`}>
-                {!linkType && !linkDirection ? (
-                    t.template('search_entities.criteria_connected', {
+                {selectedLinks.length === 0 && !direction ? (
+                    t.template('search_criteria.connected', {
                         entity, relationType, sourceIcon, targetIcon,
                     })
-                ) : linkDirection === 'in' ? (
-                    t.template('search_entities.criteria_connected_to_source', {
+                ) : direction === 'in' ? (
+                    t.template('search_criteria.connected.to_source', {
                         entity, relationType, sourceIcon, targetIcon,
                     })
-                ) : linkDirection == 'out' ? (
-                    t.template('search_entities.criteria_connected_to_target', {
+                ) : direction == 'out' ? (
+                    t.template('search_criteria.connected.to_target', {
                         entity, relationType, sourceIcon, targetIcon,
                     })
                 ) : (
-                    t.template('search_entities.criteria_connected_via', {
+                    t.template('search_criteria.connected.to_source_or_target', {
                         entity, relationType, sourceIcon, targetIcon,
                     })
                 )}
@@ -647,11 +785,20 @@ function ConnectedToCriterion(
     } else {
         header = (
             <div>
-                {t.template('search_entities.criteria_connected.header', {
+                {t.template('search_criteria.connected.header', {
                     entity: (
                         <span className={`${CLASS_NAME}__link-target`}>
-                            {t.text('search_entities.criteria_connected.other-part')}
+                            {t.text('search_criteria.connected.other_entity')}
                         </span>
+                    ),
+                    mode: (
+                        <ConnectedToModeSelector
+                            value={mode}
+                            setValue={nextMode => setPattern(new SearchPatternConnectedTo({
+                                ...pattern.state,
+                                mode: nextMode,
+                            }))}
+                        />
                     ),
                 })}
             </div>
@@ -659,17 +806,18 @@ function ConnectedToCriterion(
         where = (
             <div className={`${CLASS_NAME}__directed-link-selector`}>
                 <SchemaTypeSelect typeKind='linkType'
-                    selected={linkType}
+                    selected={selectedLinks}
                     setSelected={next => setPattern(new SearchPatternConnectedTo({
                         ...pattern.state,
-                        linkType: next?.id,
+                        linkTypes: next.map(item => item.id),
                     }))}
+                    placeholder={t.text('search_criteria.connected.input.placeholder')}
                     sizeVariant='s'
                 />
-                <LinkDirectionSelect selected={linkDirection}
+                <LinkDirectionSelect selected={direction}
                     setSelected={next => setPattern(new SearchPatternConnectedTo({
                         ...pattern.state,
-                        linkDirection: next,
+                        direction: next,
                     }))}
                 />
             </div>
@@ -684,7 +832,13 @@ function ConnectedToCriterion(
             {inlineEntity ? null : (
                 <SearchCriterionWhereGroup>
                     <SearchCriterionWhere
-                        part={t.text('search_entities.criteria_connected.other-part')}>
+                        caption={t.template('search_criteria.connected.other_caption', {
+                            entity: (
+                                <span className={`${CLASS_NAME}__link-target`}>
+                                    {t.text('search_criteria.connected.other_entity')}
+                                </span>
+                            ),
+                        })}>
                         <SearchCriterion pattern={pattern.state.other}
                             setPattern={other => setPattern(new SearchPatternConnectedTo({
                                 ...pattern.state,
@@ -699,7 +853,51 @@ function ConnectedToCriterion(
     );
 }
 
-export function LinkDirectionSelect(props: {
+function ConnectedToModeSelector(props: {
+    value: SearchPatternConnectedTo['state']['mode'];
+    setValue: (value: SearchPatternConnectedTo['state']['mode']) => void;
+}) {
+    const {value, setValue} = props;
+    const t = useTranslation();
+    return (
+        <DropdownMenu className={`${CLASS_NAME}__connected-mode-selector`}
+            toggle={<ConnectedToModeToggle value={value} />}>
+            <DropdownMenuItem
+                onSelect={() => setValue('allow')}
+                title={t.text('search_criteria.connected.mode_allow.title')}>
+                {t.text('search_criteria.connected.mode_allow.label')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+                onSelect={() => setValue('ignore')}
+                title={t.text('search_criteria.connected.mode_ignore.title')}>
+                {t.text('search_criteria.connected.mode_ignore.label')}
+            </DropdownMenuItem>
+        </DropdownMenu>
+    );
+}
+
+function ConnectedToModeToggle(props: {
+    value: 'allow' | 'ignore';
+}) {
+    const {value} = props;
+    const t = useTranslation();
+    const {expanded, setExpanded} = useDropdownMenu();
+    return (
+        <button
+            className={cx(
+                `${CLASS_NAME}__connected-mode-toggle`,
+                expanded ? 'active': undefined
+            )}
+            onClick={() => setExpanded(previous => !previous)}
+            data-value={value}>
+            {value === 'allow'
+                ? t.text('search_criteria.connected.mode_allow.label')
+                : t.text('search_criteria.connected.mode_ignore.label')}
+        </button>
+    );
+}
+
+function LinkDirectionSelect(props: {
     selected: LinkDirection | undefined;
     setSelected: (direction: LinkDirection | undefined) => void;
 }) {
@@ -712,7 +910,7 @@ export function LinkDirectionSelect(props: {
                 role='radio'
                 aria-checked={selected === undefined}
                 aria-label={t.text(
-                    'search_entities.criteria_connected.direction_any.title'
+                    'search_criteria.connected.direction_any.title'
                 )}
                 className={cx(
                     'reactodia-btn reactodia-btn-default',
@@ -720,7 +918,7 @@ export function LinkDirectionSelect(props: {
                     selected === undefined ? 'active' : ''
                 )}
                 title={t.text(
-                    'search_entities.criteria_connected.direction_any.title'
+                    'search_criteria.connected.direction_any.title'
                 )}
                 onClick={() => setSelected(undefined)}
             />
@@ -728,7 +926,7 @@ export function LinkDirectionSelect(props: {
                 role='radio'
                 aria-checked={selected === 'in'}
                 aria-label={t.text(
-                    'search_entities.criteria_connected.direction_in.title'
+                    'search_criteria.connected.direction_in.title'
                 )}
                 className={cx(
                     'reactodia-btn reactodia-btn-default',
@@ -736,7 +934,7 @@ export function LinkDirectionSelect(props: {
                     selected === 'in' ? 'active' : undefined
                 )}
                 title={t.text(
-                    'search_entities.criteria_connected.direction_in.title'
+                    'search_criteria.connected.direction_in.title'
                 )}
                 onClick={() => setSelected('in')}
             />
@@ -744,7 +942,7 @@ export function LinkDirectionSelect(props: {
                 role='radio'
                 aria-checked={selected === 'out'}
                 aria-label={t.text(
-                    'search_entities.criteria_connected.direction_out.title'
+                    'search_criteria.connected.direction_out.title'
                 )}
                 className={cx(
                     'reactodia-btn reactodia-btn-default',
@@ -752,7 +950,7 @@ export function LinkDirectionSelect(props: {
                     selected === 'out' ? 'active' : undefined
                 )}
                 title={t.text(
-                    'search_entities.criteria_connected.direction_out.title'
+                    'search_criteria.connected.direction_out.title'
                 )}
                 onClick={() => setSelected('out')}
             />
@@ -765,7 +963,7 @@ export function LinkDirectionSelect(props: {
  */
 export const SearchCriterionFromValues: SearchCriteriaOption<SearchPatternFromValues> = {
     type: SearchPatternFromValues,
-    label: TranslatedText.text('search_entities.criteria_from_values.label'),
+    label: TranslatedText.text('search_criteria.from_values.label'),
     createPattern: () => new SearchPatternFromValues({values: []}),
     renderCriterion: props => <FromValuesCriterion {...props} />,
 };
@@ -781,13 +979,13 @@ function FromValuesCriterion(
     if (!inEditMode) {
         header = (
             <span className={`${CLASS_NAME}__condition`}>
-                {t.template('search_entities.criteria_from_values', {
+                {t.template('search_criteria.from_values', {
                     values: <FromValuesList values={pattern.state.values} />,
                 })}
             </span>
         );
     } else {
-        header = <div>{t.text('search_entities.criteria_from_values.header')}</div>;
+        header = <div>{t.text('search_criteria.from_values.header')}</div>;
         where = <FromValuesSelector pattern={pattern} setPattern={setPattern} />;
     }
 
@@ -808,7 +1006,7 @@ function FromValuesList(props: {
     const {model} = useWorkspace();
     const providedEntities = useProvidedEntities(model.dataProvider, values);
     if (values.length === 0) {
-        return <span>{t.text('search_entities.criteria_from_values.any-entity')}</span>;
+        return <span>{t.text('search_criteria.from_values.any_entity')}</span>;
     } else if (values.length <= 10) {
         return (
             <span>
@@ -819,7 +1017,7 @@ function FromValuesList(props: {
                         <React.Fragment key={index}>
                             {index === 0 ? null : (
                                 <span className={`${CLASS_NAME}__values-joiner`}>
-                                    {t.text('search_entities.criteria_from_values.joiner')}
+                                    {t.text('search_criteria.from_values.joiner')}
                                 </span>
                             )}
                             <InlineEntity target={data} />
@@ -831,7 +1029,7 @@ function FromValuesList(props: {
     } else {
         return (
             <span>
-                {t.text('search_entities.criteria_from_values.many-entities', {
+                {t.text('search_criteria.from_values.many_entities', {
                     count: values.length,
                 })}
             </span>
@@ -844,6 +1042,7 @@ function FromValuesSelector(props: Pick<
     'pattern' | 'setPattern'
 >) {
     const {pattern, setPattern} = props;
+    const t = useTranslation();
     const {model} = useWorkspace();
     const providedEntities = useProvidedEntities(
         model.dataProvider,
@@ -865,6 +1064,7 @@ function FromValuesSelector(props: Pick<
                     values: nextValues.map(v => v.id),
                 }));
             }}
+            placeholder={t.text('search_criteria.from_values.input.placeholder')}
             sizeVariant='s'
         />
     );
@@ -875,7 +1075,7 @@ function FromValuesSelector(props: Pick<
  */
 export const SearchCriterionHasProperty: SearchCriteriaOption<SearchPatternHasProperty> = {
     type: SearchPatternHasProperty,
-    label: TranslatedText.text('search_entities.criteria_has_property.label'),
+    label: TranslatedText.text('search_criteria.has_property.label'),
     createPattern: () => new SearchPatternHasProperty({propertyType: ''}),
     renderCriterion: props => <HasPropertyCriterion {...props} />,
 };
@@ -886,7 +1086,10 @@ function HasPropertyCriterion(
     const {pattern, setPattern, inEditMode, controls} = props;
     const t = useTranslation();
 
-    const propertyType = useSchemaType('propertyType', pattern.state.propertyType);
+    const [propertyType] = useProvidedSchemaTypes(
+        'propertyType',
+        pattern.state.propertyType ? [pattern.state.propertyType] : []
+    );
 
     let header: React.ReactNode;
     let where: React.ReactNode = null;
@@ -900,28 +1103,29 @@ function HasPropertyCriterion(
             />
         ) : (
             <div className={`${CLASS_NAME}__any-property-type`}>
-                {t.text('search_entities.criteria_has_property.any-property')}
+                {t.text('search_criteria.has_property.any_property')}
             </div>
         );
 
         header = (
             <span className={`${CLASS_NAME}__condition`}>
-                {t.template('search_entities.criteria_has_property', {
+                {t.template('search_criteria.has_property', {
                     propertyType: propertyView,
                 })}
             </span>
         );
     } else {
-        header = <div>{t.text('search_entities.criteria_has_property.header')}</div>;
+        header = <div>{t.text('search_criteria.has_property.header')}</div>;
         where = (
             <SchemaTypeSelect typeKind='propertyType'
-                selected={propertyType}
-                setSelected={next => {
+                selected={propertyType ? [propertyType] : []}
+                setSelected={([next]) => {
                     setPattern(new SearchPatternHasProperty({
                         ...pattern.state,
                         propertyType: next?.id ?? '',
                     }));
                 }}
+                placeholder={t.text('search_criteria.has_property.input.placeholder')}
                 sizeVariant='s'
             />
         );

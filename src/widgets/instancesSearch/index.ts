@@ -3,8 +3,8 @@ export {
     InstancesSearch, type InstancesSearchProps, type InstancesSearchCommands,
 } from './instancesSearch';
 export {
-    type SearchCriteriaOption, type SearchCriteriaRenderProps, SearchCriterion,
-    SearchCriterionBlock, SearchCriterionWhereGroup, SearchCriterionWhere,
+    type SearchCriteriaOption, type SearchCriteriaRenderProps,
+    SearchCriterion, SearchCriterionBlock,
     SearchCriterionAnd, SearchCriterionOr, SearchCriterionHasType,
     SearchCriterionConnectedTo, SearchCriterionFromValues, SearchCriterionHasProperty,
 } from './searchCriterion';

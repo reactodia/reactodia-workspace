@@ -73,10 +73,17 @@ export function InstanceCriteria(props: {
         readonly errors?: ReadonlyMap<SearchPattern, readonly SearchPatternErrorItem[]>;
         readonly allowApply: boolean;
     }>();
+    const focusedAtErrorFrom = React.useRef<typeof editState | undefined>();
 
     const context = React.useMemo((): SearchCriterionContext => ({
         editing: editState !== undefined,
         errors: editState?.errors ?? new Map(),
+        tryScrollToError: element => {
+            if (focusedAtErrorFrom.current !== editState) {
+                focusedAtErrorFrom.current = editState;
+                element.scrollIntoView({block: 'nearest'});
+            }
+        },
         allOptions: allCriterions,
         creatableOptions: creatableCriterions,
     }), [editState, allCriterions, creatableCriterions]);
@@ -104,14 +111,15 @@ export function InstanceCriteria(props: {
                 return false;
             }
 
-            setCriteria({pattern});
+            setCriteria({text: criteria.text, pattern});
         } else {
-            setCriteria({});
+            setCriteria({text: criteria.text});
         }
 
         setEditState(undefined);
         return true;
     };
+    const clearPattern = () => setCriteria({text: criteria.text});
 
     return (
         <div className={`${CLASS_NAME}__criteria`}>
@@ -197,7 +205,7 @@ export function InstanceCriteria(props: {
                                         `${CLASS_NAME}__criterions-clear`,
                                         'reactodia-btn reactodia-btn-default'
                                     )}
-                                    onClick={() => setCriteria({})}
+                                    onClick={clearPattern}
                                     title={t.text('search_entities.clear_criteria.title')}>
                                     {t.text('search_entities.clear_criteria.label')}
                                 </button>
@@ -223,8 +231,9 @@ function searchPatternFrom(criteria: SearchCriteria): SearchPattern | undefined 
 
     if (refElement || refElementLink || linkDirection) {
         patterns.push(new SearchPatternConnectedTo({
-            linkType: refElementLink,
-            linkDirection,
+            mode: 'allow',
+            linkTypes: refElementLink ? [refElementLink] : [],
+            direction: linkDirection,
             other: refElement
                 ? new SearchPatternFromValues({values: [refElement]})
                 : undefined,

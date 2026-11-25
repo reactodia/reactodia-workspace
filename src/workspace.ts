@@ -276,7 +276,7 @@ export {
     SearchPatternFromValues,
     SearchPatternHasProperty,
     type SearchCriteriaOption, type SearchCriteriaRenderProps,
-    SearchCriterion, SearchCriterionBlock, SearchCriterionWhereGroup, SearchCriterionWhere,
+    SearchCriterion, SearchCriterionBlock,
     SearchCriterionAnd,
     SearchCriterionOr,
     SearchCriterionHasType,

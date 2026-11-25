@@ -7,7 +7,7 @@ import {
 } from '../src/widgets/utility/searchInput';
 import { EntitySelect } from '../src/widgets/instancesSearch/entitySelect';
 import {
-    SchemaTypeSelect, useSchemaType,
+    SchemaTypeSelect, useProvidedSchemaTypes,
 } from '../src/widgets/instancesSearch/schemaTypeSelect';
 
 import { mountOnLoad } from './resources/common';
@@ -67,11 +67,11 @@ function InputSizing() {
     const {data: entityData} = Reactodia.useProvidedEntities(dataProvider, entityIris);
     const entities = React.useMemo(() => Array.from(entityData.values()), [entityData]);
 
-    const [elementTypeIri, setElementTypeIri] =
-        React.useState<Reactodia.ElementTypeIri | undefined>(
-            'http://www.w3.org/ns/org#ChangeEvent'
+    const [elementTypeIris, setElementTypeIris] =
+        React.useState<readonly Reactodia.ElementTypeIri[]>(
+            ['http://www.w3.org/ns/org#ChangeEvent']
         );
-    const elementType = useSchemaType('elementType', elementTypeIri);
+    const elementTypes = useProvidedSchemaTypes('elementType', elementTypeIris);
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', gap: 5, margin: 10}}>
@@ -88,13 +88,13 @@ function InputSizing() {
                 sizeVariant='s'
             />
             <SchemaTypeSelect typeKind='elementType'
-                selected={elementType}
-                setSelected={item => setElementTypeIri(item?.id)}
+                selected={elementTypes}
+                setSelected={next => setElementTypeIris(next.map(item => item.id))}
                 sizeVariant='m'
             />
             <SchemaTypeSelect typeKind='elementType'
-                selected={elementType}
-                setSelected={item => setElementTypeIri(item?.id)}
+                selected={elementTypes}
+                setSelected={next => setElementTypeIris(next.map(item => item.id))}
                 sizeVariant='s'
             />
         </div>
